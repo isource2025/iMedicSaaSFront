@@ -1,0 +1,172 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937; /* text-gray-800 */
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cardsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+}
+
+.cardBedsTotal {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+  border-left: 4px solid #00B5E2; /* Pantone-313u */
+}
+
+.cardPatients {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+  border-left: 4px solid #61D6EB; /* Pantone-311u */
+}
+
+.cardAppointments {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+  border-left: 4px solid #0083A9; /* Pantone-314c */
+}
+
+.cardStaff {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+  border-left: 4px solid #2DCCE5; /* Pantone-311c */
+}
+
+.cardLabel {
+  font-size: 0.875rem;
+  color: #6b7280; /* text-gray-500 */
+}
+
+.cardValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937; /* text-gray-800 */
+}
+
+.cardStats {
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.statGreen {
+  color: #10b981; /* text-green-500 */
+  font-weight: 500;
+}
+
+.statRed {
+  color: #ef4444; /* text-red-500 */
+  font-weight: 500;
+}
+
+.statBlue {
+  color: #3b82f6; /* text-blue-500 */
+  font-weight: 500;
+}
+
+.statOrange {
+  color: #f97316; /* text-orange-500 */
+  font-weight: 500;
+}
+
+.statPurple {
+  color: #8b5cf6; /* text-purple-500 */
+  font-weight: 500;
+}
+
+.divider {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+}
+
+.activitySection {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+}
+
+.activityTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937; /* text-gray-800 */
+  margin-bottom: 1rem;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+}
+
+.activityIconContainer {
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background-color: rgba(97, 214, 235, 0.2); /* bg-pantone-311u with opacity */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activityContent {
+  flex: 1;
+}
+
+.activityAction {
+  font-size: 0.875rem;
+  color: #1f2937; /* text-gray-800 */
+  font-weight: 500;
+}
+
+.activityDetails {
+  font-size: 0.75rem;
+  color: #6b7280; /* text-gray-500 */
+}
+
+.activityTime {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #9ca3af; /* text-gray-400 */
+}
