@@ -4,12 +4,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { bedsService } from '../services/bedsService';
 import { Bed, BedEstado } from '../types/beds';
 
+interface BedState {
+  id: string;
+  valor: string;
+  descripcion: string;
+}
+
 export const useBedsManagement = () => {
   const [beds, setBeds] = useState<Bed[]>([]);
+  const [bedStates, setBedStates] = useState<BedState[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<BedEstado | 'all'>('all');
+  const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const fetchBedStates = useCallback(async () => {
+    try {
+      const states = await bedsService.getBedStates();
+      setBedStates(states);
+    } catch (err: any) {
+      console.error('Error al cargar estados de cama:', err);
+    }
+  }, []);
 
   const fetchBeds = useCallback(async () => {
     setLoading(true);
@@ -26,10 +42,16 @@ export const useBedsManagement = () => {
 
   useEffect(() => {
     fetchBeds();
-  }, [fetchBeds]);
+    fetchBedStates();
+  }, [fetchBeds, fetchBedStates]);
 
   const filteredBeds = beds.filter(bed => {
-    const estadoMatch = filter === 'all' || bed.estado === filter;
+    // Si el filtro es 'all', mostramos todas las camas
+    const estadoMatch = 
+      filter === 'all' || 
+      // Ahora comparamos con el valor original del estado
+      bed.valorEstadoOriginal === filter;
+    
     const searchMatch = bed.numeroCama?.toLowerCase().includes(searchTerm.toLowerCase());
     return estadoMatch && searchMatch;
   });
@@ -37,6 +59,7 @@ export const useBedsManagement = () => {
   return {
     beds: filteredBeds,
     allBeds: beds,
+    bedStates,
     loading,
     error,
     filter,

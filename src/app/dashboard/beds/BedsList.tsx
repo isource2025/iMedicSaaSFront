@@ -6,6 +6,7 @@ import styles from './BedsList.module.css';
 export const BedsList = () => {
   const {
     beds,
+    bedStates,
     loading,
     error,
     filter,
@@ -24,11 +25,13 @@ export const BedsList = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <select value={filter} onChange={(e) => setFilter(e.target.value as any)}>
-          <option value="all">Todas</option>
-          <option value="disponible">Disponibles</option>
-          <option value="ocupada">Ocupadas</option>
-          <option value="mantenimiento">Mantenimiento</option>
+        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <option value="all">Todos los estados</option>
+          {bedStates.map(state => (
+            <option key={state.id} value={state.valor}>
+              {state.descripcion}
+            </option>
+          ))}
         </select>
         <button onClick={refreshBeds}>🔄 Refrescar</button>
       </div>

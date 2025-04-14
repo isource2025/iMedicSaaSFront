@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/axios": "^0.9.36",
     "autoprefixer": "^10.4.16",
+    "axion": "^0.1.0",
     "axios": "^1.8.4",
     "next": "14.1.0",
     "postcss": "^8.4.31",

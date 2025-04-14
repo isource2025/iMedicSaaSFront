@@ -1,4 +1,4 @@
-import { LoginCredentials, LoginResponse } from '../types/AuthInterface';
+import { LoginCredentials, LoginResponse, Sector } from '../types/AuthInterface';
 import { apiService } from './axios';
 
 /**
@@ -28,6 +28,39 @@ export const authService = {
         // Something happened in setting up the request that triggered an Error
         throw new Error('Error al procesar la solicitud.');
       }
+    }
+  },
+
+  /**
+   * Obtiene los sectores disponibles desde la tabla impersonalsectores
+   * @returns Promise con la lista de sectores
+   */
+  getSectores: async (): Promise<Sector[]> => {
+    try {
+      const response = await apiService.get<{success: boolean, data: Sector[]}>('/auth/sectores');
+      return response.data.data || [];
+    } catch (error: any) {
+      console.error('Error al obtener sectores:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Obtiene los sectores disponibles para un usuario específico
+   * @param username Nombre de usuario
+   * @returns Promise con la lista de sectores filtrados
+   */
+  getSectoresPorUsuario: async (username: string): Promise<Sector[]> => {
+    if (!username) {
+      return [];
+    }
+    
+    try {
+      const response = await apiService.get<{success: boolean, data: Sector[]}>(`/auth/sectores/${username}`);
+      return response.data.data || [];
+    } catch (error: any) {
+      console.error(`Error al obtener sectores para usuario ${username}:`, error);
+      return [];
     }
   },
 
