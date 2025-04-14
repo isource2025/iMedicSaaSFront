@@ -8,23 +8,46 @@ export default function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
     if (!username || !password) {
       setError('Por favor, complete todos los campos');
+      setLoading(false);
       return;
     }
     
-    // Validate credentials - admin/admin
-    if (username === 'admin' && password === 'admin') {
-      console.log('Login successful');
-      router.push('/dashboard');
-    } else {
-      setError('Credenciales inválidas. Por favor, intente de nuevo.');
+    try {
+      // Conectar con el backend para validar contra la tabla impassword
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        console.log('Login successful', data);
+        // Guardar token en localStorage o cookies para mantener la sesión
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('/dashboard');
+      } else {
+        setError(data.message || 'Credenciales inválidas. Por favor, intente de nuevo.');
+      }
+    } catch (err) {
+      console.error('Error de autenticación:', err);
+      setError('Error de conexión. Por favor, intente de nuevo más tarde.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,7 +84,8 @@ export default function LoginForm() {
               className="input-field"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ingrese su usuario"
+              placeholder="Ingrese su nombre de usuario"
+              disabled={loading}
             />
           </div>
           
@@ -76,6 +100,7 @@ export default function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              disabled={loading}
             />
           </div>
           
@@ -99,8 +124,9 @@ export default function LoginForm() {
           <button
             type="submit"
             className="btn-primary w-full"
+            disabled={loading}
           >
-            Ingresar
+            {loading ? 'Procesando...' : 'Ingresar'}
           </button>
         </form>
       </div>
