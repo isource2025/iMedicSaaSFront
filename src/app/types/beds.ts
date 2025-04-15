@@ -15,10 +15,14 @@ export interface Bed {
   numeroCama: string;
   estado: BedEstado;
   valorEstadoOriginal: string; // Valor original del estado (A, I, C, U, O, H, R)
+  estadoDescripcion: string; // Descripción completa del estado de la cama
   fechaIngreso: number;
   fechaEgreso: number;
   numeroVisita: number;
+  mostrarNumeroVisita: string;
   observaciones: string;
+  nombrePaciente: string;
+  diagnosticoDescripcion: string;
 }
 
 export interface BedState {

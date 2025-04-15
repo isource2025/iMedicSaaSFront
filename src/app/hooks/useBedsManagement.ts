@@ -32,22 +32,21 @@ export const useBedsManagement = () => {
     }
   }, []);
 
+  const fetchSectores = useCallback(async () => {
+    try {
+      const sectoresData = await bedsService.getSectores();
+      setSectors(sectoresData);
+    } catch (err: any) {
+      console.error('Error al cargar sectores:', err);
+    }
+  }, []);
+
   const fetchBeds = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await bedsService.getAllBeds();
       setBeds(data);
-      
-      // Extraer sectores únicos de las camas
-      const uniqueSectors = Array.from(new Set(data.map(bed => bed.sector)))
-        .map(sector => ({
-          id: sector,
-          valor: sector,
-          descripcion: sector
-        }));
-      
-      setSectors(uniqueSectors);
     } catch (err: any) {
       setError(err.message || 'Error al cargar camas');
     } finally {
@@ -58,7 +57,8 @@ export const useBedsManagement = () => {
   useEffect(() => {
     fetchBeds();
     fetchBedStates();
-  }, [fetchBeds, fetchBedStates]);
+    fetchSectores();
+  }, [fetchBeds, fetchBedStates, fetchSectores]);
 
   const filteredBeds = beds.filter(bed => {
     // Filtrar por estado de cama
@@ -71,8 +71,10 @@ export const useBedsManagement = () => {
       sectorFilter === 'all' || 
       bed.sector === sectorFilter;
     
-    // Filtrar por término de búsqueda
-    const searchMatch = bed.numeroCama?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Filtrar por nombre de paciente (nuevo)
+    const searchMatch = 
+      !searchTerm || 
+      (bed.nombrePaciente && bed.nombrePaciente.toLowerCase().includes(searchTerm.toLowerCase()));
     
     return estadoMatch && sectorMatch && searchMatch;
   });

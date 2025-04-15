@@ -26,15 +26,34 @@ export const BedsList = () => {
       <div className={styles.controls}>
         <input
           type="text"
-          placeholder="Buscar por número"
+          placeholder="Buscar por paciente"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className={styles.searchInput}
         />
         
+{/* aca  */}
+{/* Dropdown para filtrar por sector */}
+<div className={styles.filterGroup}>
+          <label htmlFor="sectorFilter">Sector</label>
+          <select 
+            id="sectorFilter"
+            value={sectorFilter} 
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className={styles.selectFilter}
+          >
+            <option value="all">Todos los sectores</option>
+            {sectors.map(sector => (
+              <option key={sector.id} value={sector.valor}>
+                {sector.descripcion}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Dropdown para filtrar por estado */}
         <div className={styles.filterGroup}>
-          <label htmlFor="estadoFilter">Estado:</label>
+          <label htmlFor="estadoFilter">Estado</label>
           <select 
             id="estadoFilter"
             value={filter} 
@@ -50,26 +69,10 @@ export const BedsList = () => {
           </select>
         </div>
         
-        {/* Dropdown para filtrar por sector */}
-        <div className={styles.filterGroup}>
-          <label htmlFor="sectorFilter">Sector:</label>
-          <select 
-            id="sectorFilter"
-            value={sectorFilter} 
-            onChange={(e) => setSectorFilter(e.target.value)}
-            className={styles.selectFilter}
-          >
-            <option value="all">Todos los sectores</option>
-            {sectors.map(sector => (
-              <option key={sector.id} value={sector.valor}>
-                {sector.descripcion}
-              </option>
-            ))}
-          </select>
-        </div>
+        
         
         <button onClick={refreshBeds} className={styles.refreshButton}>
-          🔄 Refrescar
+          Actualizar
         </button>
       </div>
 
@@ -90,44 +93,61 @@ export const BedsList = () => {
           {beds.map(bed => (
             <div key={bed.id} className={`${styles.bedCard} ${styles[`estado-${bed.estado.replace(/\s+/g, '-').toLowerCase()}`]}`}>
               <div className={styles.cardHeader}>
-                <h3>{bed.numeroCama}</h3>
-                <span className={styles.sectorBadge}>{bed.sector}</span>
-              </div>
-              
-              <div className={styles.cardBody}>
-                <div className={styles.statusBadge}>
-                  {bed.estado}
+                <div className={styles.headerLeft}>
+                  <span className={styles.sectorBadge}>{bed.sector}</span>
+                  <span className={styles.bedNumber}>{bed.numeroCama}</span>
                 </div>
-                
-                <div className={styles.cardInfo}>
-                  {bed.fechaIngreso && (
-                    <div className={styles.infoItem}>
-                      <span className={styles.infoLabel}>Ingreso:</span>
-                      <span>{formatDate(bed.fechaIngreso)}</span>
-                    </div>
-                  )}
-                  
-                  {bed.fechaEgreso && (
-                    <div className={styles.infoItem}>
-                      <span className={styles.infoLabel}>Egreso:</span>
-                      <span>{formatDate(bed.fechaEgreso)}</span>
-                    </div>
-                  )}
-                  
-                  {bed.numeroVisita && (
-                    <div className={styles.infoItem}>
-                      <span className={styles.infoLabel}>Visita:</span>
-                      <span>{bed.numeroVisita}</span>
-                    </div>
-                  )}
-                </div>
-                
-                {bed.observaciones && (
-                  <div className={styles.observaciones}>
-                    <span className={styles.obsTitle}>Observaciones:</span>
-                    <p>{bed.observaciones}</p>
+                {/* Mostrar número de visita solo si existe y no está vacío */}
+                {bed.mostrarNumeroVisita && bed.mostrarNumeroVisita !== '' && (
+                  <div className={styles.headerRight}>
+                    <span className={styles.visitNumber}>{bed.mostrarNumeroVisita}</span>
                   </div>
                 )}
+              </div>
+              
+              <div className={` ${styles.cardBody}`}>
+                {bed.nombrePaciente && (
+                  <div className={styles.patientName}>
+                    {bed.nombrePaciente}
+                  </div>
+                )}
+                
+                {/* Mostrar el estado solo si la cama NO está ocupada (no es O) como badge */}
+                {bed.valorEstadoOriginal !== 'O' && (
+                  <div className={styles.statusBadge}>
+                    {bed.estado}
+                  </div>
+                )}
+                
+                {/* Mostrar la descripción del estado en el margen izquierdo inferior en mayúscula solo si la cama NO está ocupada */}
+                {/* {bed.valorEstadoOriginal !== 'O' && (
+                  <div className={styles.estadoDescripcion}>
+                    {bed.estadoDescripcion.toUpperCase()}
+                  </div>
+                )} */}
+                
+                <div className={styles.cardInfo}>
+                  {/* Mostrar la fecha de ingreso solo si existe y no es cero */}
+                  {bed.fechaIngreso !== 0 
+                    ? (
+                      <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>Fecha de ingreso</span>
+                        <span>{formatDate(bed.fechaIngreso)}</span>
+                      </div>
+                    ) 
+                    : null}
+
+                  
+                  {/* Mostrar el diagnóstico solo si existe y no es vacío, nulo o cero */}
+                  {bed.diagnosticoDescripcion && 
+                   bed.diagnosticoDescripcion !== '0' && 
+                   bed.diagnosticoDescripcion !== '' && (
+                    <div className={styles.diagnostico}>
+                      <div className={styles.diagnosticoLabel}>Diagnóstico:</div>
+                      <div className={styles.diagnosticoDescripcion}>{bed.diagnosticoDescripcion}</div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}

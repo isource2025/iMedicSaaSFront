@@ -15,10 +15,14 @@ export const bedsService = {
       numeroCama: item.ValorHabitacionCama,
       estado: parseEstado(item.ValorEstadoCama),
       valorEstadoOriginal: item.ValorEstadoCama, 
+      estadoDescripcion: item.EstadoDescripcion || '',
       fechaIngreso: item.FechaIngreso,
       fechaEgreso: item.FechaEgreso,
       numeroVisita: item.NumeroVisita,
-      observaciones: item.Observaciones
+      mostrarNumeroVisita: item.mostrarNumeroVisita || '',
+      observaciones: item.Observaciones,
+      nombrePaciente: item.NombrePaciente || '',
+      diagnosticoDescripcion: item.DiagnosticoDescripcion || ''
     }));
   },
   
@@ -36,6 +40,24 @@ export const bedsService = {
       }));
     } catch (error) {
       console.error("Error fetching bed states:", error);
+      return [];
+    }
+  },
+  
+  getSectores: async (): Promise<{id: string, valor: string, descripcion: string}[]> => {
+    try {
+      const res = await fetch(`${BASE_URL}/beds/sectores`);
+      const json = await res.json();
+      
+      if (!json.success) throw new Error('Error al obtener sectores');
+      
+      return json.data.map((item: any) => ({
+        id: item.valor,
+        valor: item.valor,
+        descripcion: item.descripcion
+      }));
+    } catch (error) {
+      console.error("Error fetching sectores:", error);
       return [];
     }
   }
