@@ -8,7 +8,9 @@ export default function LoginForm() {
     credentials,
     error,
     loading,
+    loadingSectores,
     rememberMe,
+    sectores,
     handleInputChange,
     handleRememberMeChange,
     handleSubmit
@@ -64,6 +66,30 @@ export default function LoginForm() {
               placeholder="••••••••"
               disabled={loading}
             />
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="sector">
+              Sector
+            </label>
+            <select
+              id="sector"
+              className={styles.inputField}
+              value={credentials.sector}
+              onChange={handleInputChange}
+              disabled={loading || loadingSectores}
+            >
+              <option value="">Seleccione un sector</option>
+              {loadingSectores ? (
+                <option value="" disabled>Cargando sectores...</option>
+              ) : (
+                sectores.map(sector => (
+                  <option key={sector.ValorPersonalSector} value={sector.ValorPersonalSector}>
+                    {sector.DescripcionPersonalSector}
+                  </option>
+                ))
+              )}
+            </select>
           </div>
           
           <div className={styles.formOptions}>
