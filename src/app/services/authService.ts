@@ -1,18 +1,14 @@
 import { LoginCredentials, LoginResponse, Sector } from '../types/AuthInterface';
 import { apiService } from './axios';
 
-/**
- * Service for authentication related API calls
- */
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export const authService = {
-  /**
-   * Log in a user with the provided credentials
-   * @param credentials User login credentials
-   * @returns Promise with the login response
-   */
+  
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
-      const response = await apiService.post<LoginResponse>('/auth/login', credentials);
+      const response = await apiService.post<LoginResponse>(`${BASE_URL}/auth/login`, credentials);
       return response.data;
     } catch (error: any) {
       // Handle specific login errors

@@ -21,8 +21,8 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               className={styles.menuButton}
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              <span className="sr-only">Open sidebar</span>
-              <span className="text-2xl">☰</span>
+              <span className={styles.srOnly}>Open sidebar</span>
+              <span className={styles.menuIcon}>☰</span>
             </button>
             
             {/* Page title */}
@@ -35,13 +35,13 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
           <div className={styles.rightSection}>
             {/* Notifications */}
             <button className={styles.notificationButton}>
-              <span className="sr-only">Ver notificaciones</span>
-              <span className="text-xl">🔔</span>
+              <span className={styles.srOnly}>Ver notificaciones</span>
+              <span className={styles.notificationIcon}>🔔</span>
             </button>
             
             {/* User profile dropdown */}
             <div className={styles.userSection}>
-              <div className="flex items-center">
+              <div className={styles.userContainer}>
                 <button className={styles.userButton}>
                   <div className={styles.userAvatar}>
                     A

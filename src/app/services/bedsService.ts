@@ -1,10 +1,12 @@
 import { Bed } from "../types/beds";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export const bedsService = {
   getAllBeds: async (): Promise<Bed[]> => {
     const res = await fetch(`${BASE_URL}/beds`);
     const json = await res.json();
-
+    
     if (!json.success) throw new Error('Error en la API de camas');
 
     return json.data.map((item: any): Bed => ({
