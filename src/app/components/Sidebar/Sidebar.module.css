@@ -10,7 +10,7 @@
   top: 0;
   left: 0;
   z-index: 30;
-  width: 16rem;
+  min-width: 200px;
   height: 100%;
   overflow-y: auto;
   transition-property: transform;

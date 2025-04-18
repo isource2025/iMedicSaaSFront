@@ -5,11 +5,11 @@ import { authService } from '../services/authService';
 import { useAppContext } from '../contexts/AppContext';
 
 export function useLoginForm() {
-  const [credentials, setCredentials] = useState<LoginCredentials & { sector?: string }>({
+  const [credentials, setCredentials] = useState<LoginCredentials & { sector: string }>({
     username: '',
     password: '',
     sector: ''
-  }); 
+  });
 
 
   const [error, setError] = useState<string>('');
@@ -115,61 +115,60 @@ export function useLoginForm() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setLoading(true);
 
-    try {
-      const loginData = {
-        username: credentials.username,
-        password: credentials.password,
-        sector: credentials.sector
-      };
-      
-      const data = await authService.login(loginData);
-      
-      if (data.success) {
-        // Guardar datos de autenticación
-        localStorage.setItem('token', data.token || '');
-        
-        if (data.usuario) {
-          localStorage.setItem('user', JSON.stringify(data.usuario));
-          localStorage.setItem('sector', credentials.sector || '');
-        }
-        
-        // Guardar información del sector seleccionado
-        if (data.sectorSeleccionado) {
-          // Guardar en el contexto global para acceso desde cualquier componente
-          setSectorSeleccionado(data.sectorSeleccionado);
-          
-          // También guardar en localStorage para persistencia
-          localStorage.setItem('sectorSeleccionado', JSON.stringify(data.sectorSeleccionado));
-          
-          console.log('Sector seleccionado guardado globalmente:', data.sectorSeleccionado);
-        }
-        
-        if (rememberMe) {
-          localStorage.setItem('rememberUser', 'true');
-        }
-        
-        router.push('/dashboard');
-      } else {
-        setError(data.mensaje || 'Credenciales inválidas. Por favor, intente de nuevo.');
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+
+  if (!validateForm()) return;
+
+  setLoading(true);
+
+  try {
+    // Descomponer el valor combinado del select: "5127-DIABETES"
+    let [sectorId, sectorDescripcion] = credentials.sector.split('-');
+
+    const loginData = {
+      username: credentials.username,
+      password: credentials.password,
+      sector: sectorId,
+      descripcionSector: sectorDescripcion
+    };
+
+    const data = await authService.login(loginData);
+
+    if (data.success) {
+      localStorage.setItem('token', data.token || '');
+
+      if (data.usuario) {
+        localStorage.setItem('user', JSON.stringify(data.usuario));
       }
-    } catch (err) {
-      console.error('Error de autenticación:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Error de conexión. Por favor, intente de nuevo más tarde.';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+
+      if (data.sectorSeleccionado) {
+        setSectorSeleccionado(data.sectorSeleccionado);
+        localStorage.setItem('sectorSeleccionado', JSON.stringify(data.sectorSeleccionado.descripcion));
+        console.log('Sector seleccionado guardado globalmente:', data.sectorSeleccionado);
+      }
+
+      if (rememberMe) {
+        localStorage.setItem('rememberUser', 'true');
+      }
+
+      router.push('/dashboard');
+    } else {
+      setError(data.mensaje || 'Credenciales inválidas. Por favor, intente de nuevo.');
     }
-  };
+  } catch (err) {
+    console.error('Error de autenticación:', err);
+    const errorMessage = err instanceof Error
+      ? err.message
+      : 'Error de conexión. Por favor, intente de nuevo más tarde.';
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return {
     credentials,

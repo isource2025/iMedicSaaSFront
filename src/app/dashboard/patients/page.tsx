@@ -50,98 +50,100 @@ export default function PatientsPage() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Administración de Pacientes</h1>
-      <div className={styles.controls}>
-        <input
-          type="text"
-          placeholder="Buscar por nombre o historia clínica"
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-          className={styles.searchInput}
+      <div className={styles.content}>
+        <div className={styles.controls}>
+          <input
+            type="text"
+            placeholder="Buscar por nombre o historia clínica"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className={styles.searchInput}
+          />
+          <button
+            className={styles.addButton}
+            onClick={openAddModal}
+            aria-label="Agregar nuevo paciente"
+          >
+            <span className={styles.addIcon}>➕</span> Agregar paciente
+          </button>
+        </div>
+        <PatientList 
+          patients={patients}
+          loading={loading}
+          error={error}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          onEdit={openEditModal}
+          onDelete={openDeleteModal}
+          onView={openViewModal}
+          onAdmission={handleNewAdmission}
+          onViewHistory={handleViewHistory}
         />
-        <button
-          className={styles.addButton}
-          onClick={openAddModal}
-          aria-label="Agregar nuevo paciente"
-        >
-          <span className={styles.addIcon}>➕</span> Agregar paciente
-        </button>
-      </div>
-      <PatientList 
-        patients={patients}
-        loading={loading}
-        error={error}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        onEdit={openEditModal}
-        onDelete={openDeleteModal}
-        onView={openViewModal}
-        onAdmission={handleNewAdmission}
-        onViewHistory={handleViewHistory}
-      />
 
-      <Modal 
-        isOpen={isAddModalOpen} 
-        onClose={closeAddModal} 
-        title="Añadir Paciente"
-        size="medium"
-      >
-        <PatientForm 
-          onSubmit={createPatient} 
-          onCancel={closeAddModal} 
-          isSubmitting={loading} 
-        />
-      </Modal>
-
-      {selectedPatient && (
         <Modal 
-          isOpen={isEditModalOpen} 
-          onClose={closeEditModal} 
-          title="Editar Paciente"
-          size="medium" 
+          isOpen={isAddModalOpen} 
+          onClose={closeAddModal} 
+          title="Añadir Paciente"
+          size="medium"
         >
           <PatientForm 
-            patient={selectedPatient} 
-            onSubmit={(data) => updatePatient(selectedPatient.IDPaciente, data)} 
-            onCancel={closeEditModal} 
+            onSubmit={createPatient} 
+            onCancel={closeAddModal} 
             isSubmitting={loading} 
           />
         </Modal>
-      )}
 
-      {selectedPatient && (
-        <Modal 
-          isOpen={isDeleteModalOpen} 
-          onClose={closeDeleteModal} 
-          title="Eliminar Paciente"
-          size="small" 
-        >
-          <DeleteConfirmation 
-            patient={selectedPatient}
-            onConfirm={() => deletePatient(selectedPatient.IDPaciente)}
-            onCancel={closeDeleteModal}
-            isDeleting={loading}
-          />
-        </Modal>
-      )}
+        {selectedPatient && (
+          <Modal 
+            isOpen={isEditModalOpen} 
+            onClose={closeEditModal} 
+            title="Editar Paciente"
+            size="medium" 
+          >
+            <PatientForm 
+              patient={selectedPatient} 
+              onSubmit={(data) => updatePatient(selectedPatient.IDPaciente, data)} 
+              onCancel={closeEditModal} 
+              isSubmitting={loading} 
+            />
+          </Modal>
+        )}
 
-      {selectedPatient && (
-        <Modal 
-          isOpen={isViewModalOpen} 
-          onClose={closeViewModal} 
-          title="Detalles del Paciente"
-          size="medium" 
-        >
-          <PatientDetails 
-            patient={selectedPatient}
-            onClose={closeViewModal}
-            onEdit={() => {
-              closeViewModal();
-              openEditModal(selectedPatient);
-            }}
-          />
-        </Modal>
-      )}
+        {selectedPatient && (
+          <Modal 
+            isOpen={isDeleteModalOpen} 
+            onClose={closeDeleteModal} 
+            title="Eliminar Paciente"
+            size="small" 
+          >
+            <DeleteConfirmation 
+              patient={selectedPatient}
+              onConfirm={() => deletePatient(selectedPatient.IDPaciente)}
+              onCancel={closeDeleteModal}
+              isDeleting={loading}
+            />
+          </Modal>
+        )}
+
+        {selectedPatient && (
+          <Modal 
+            isOpen={isViewModalOpen} 
+            onClose={closeViewModal} 
+            title="Detalles del Paciente"
+            size="medium" 
+          >
+            <PatientDetails 
+              patient={selectedPatient}
+              onClose={closeViewModal}
+              onEdit={() => {
+                closeViewModal();
+                openEditModal(selectedPatient);
+              }}
+            />
+          </Modal>
+        )}
+      </div>
     </div>
   );
 }

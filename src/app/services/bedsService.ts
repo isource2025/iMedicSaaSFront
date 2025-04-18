@@ -22,7 +22,12 @@ export const bedsService = {
       mostrarNumeroVisita: item.mostrarNumeroVisita || '',
       observaciones: item.Observaciones,
       nombrePaciente: item.NombrePaciente || '',
-      diagnosticoDescripcion: item.DiagnosticoDescripcion || ''
+      documentoPaciente: item.DocumentoPaciente || '',
+      diagnosticoDescripcion: item.DiagnosticoDescripcion || '',
+      razonSocialCliente: item.RazonSocialCliente || '',
+      sexoPaciente: item.SexoPaciente || '',
+      descripcionSexo: item.DescripcionSexo || '',
+      servicioMedicoDescripcion: item.ServicioMedicoDescripcion || ''
     }));
   },
   

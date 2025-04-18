@@ -24,11 +24,6 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               <span className={styles.srOnly}>Open sidebar</span>
               <span className={styles.menuIcon}>☰</span>
             </button>
-            
-            {/* Page title */}
-            <h1 className={styles.pageTitle}>
-              Dashboard
-            </h1>
           </div>
 
           {/* Right side - User options */}
