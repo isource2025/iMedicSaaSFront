@@ -1,6 +1,6 @@
 'use client';
 
-import { ModalBaseProps } from '@/app/types/modals/ModalComponents';
+import { ModalBaseProps } from '../../types/modals/ModalComponents';
 import styles from './ModalBase.module.css';
 
 /**
@@ -11,15 +11,14 @@ export const ModalBase: React.FC<ModalBaseProps> = ({
   onClose,
   title,
   children,
-  size = 'medium'
+  size 
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div 
-        className={`${styles.modalContent} ${styles[`size-${size}`]}`} 
-        onClick={(e) => e.stopPropagation()}
+        className={styles.modalContent}
       >
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{title}</h2>

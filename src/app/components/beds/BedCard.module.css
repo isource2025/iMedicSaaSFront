@@ -86,19 +86,18 @@
 }
 .primaryData{
   display: flex;
-  justify-content: space-between;
   
   border-bottom: 1px solid #cccccc;
 }
 .patientData{
   display: flex;
+  width: 100%;
   flex-direction: column;
 }
 .patientName {
   max-width: 100%;
   font-size: .9rem;
   font-weight: 500;
-  line-height: 20px;
   color: #2d3748;
 }
 
@@ -180,12 +179,10 @@
 }
 
 .date {
-  white-space: nowrap;
   display: flex;
-  font-size: 12px;
-  flex-direction: column;
   align-items: self-start;
-  margin-left: 16px;
+  justify-content: space-between;
+  font-size: 12px;
 }
 
 .dateLabel {
@@ -195,8 +192,7 @@
 }
 
 .documentNumber {
-  font-size: 0.7rem;
-  margin-bottom: .2rem;
+  font-size: 0.6rem;
 }
 
 @media (max-width: 640px) {

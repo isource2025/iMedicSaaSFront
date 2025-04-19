@@ -29,6 +29,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const [isMobile, setIsMobile] = useState(false);
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -106,6 +107,18 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       ]
     },
     {
+      name: 'Facturación',
+      icon: CreditCard,
+      hasSubmenu: true,
+      submenuName: 'billing',
+      submenuItems: [
+        { name: 'Convenios', href: '/dashboard/billing/convenios' },
+        { name: 'Rendiciones', href: '/dashboard/billing/rendiciones' },
+        { name: 'Liquidaciones', href: '/dashboard/billing/liquidaciones' },
+        { name: 'Tablas de facturación', href: '/dashboard/billing/tablas' },
+      ]
+    },
+    {
       name: 'Reportes',
       icon: BarChart,
       hasSubmenu: true,
@@ -114,17 +127,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         { name: 'Estadísticas', href: '/dashboard/reports/stats' },
         { name: 'Facturación', href: '/dashboard/reports/billing' },
         { name: 'Ocupación', href: '/dashboard/reports/occupation' },
-      ]
-    },
-    {
-      name: 'Facturación',
-      icon: CreditCard,
-      hasSubmenu: true,
-      submenuName: 'billing',
-      submenuItems: [
-        { name: 'Facturas', href: '/dashboard/billing/invoices' },
-        { name: 'Pagos', href: '/dashboard/billing/payments' },
-        { name: 'Coberturas', href: '/dashboard/billing/coverage' },
       ]
     },
     {
@@ -220,7 +222,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           <div className={styles.userInfo}>
             <div className={styles.userAvatar}>A</div>
             <div className={styles.userDetails}>
-              <p className={styles.userName}>Admin</p>
+              <p className={styles.userName}>Bienvenido/a <strong>{user?.nombre}</strong> </p>
               <Link onClick={handleLogOut} href="/" className={styles.logoutLink}>
                 <LogOut size={14} className={styles.logoutIcon} /> Cerrar Sesión
               </Link>

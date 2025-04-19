@@ -35,7 +35,6 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [edad, setEdad] = useState<number | null>(null);
-  const [reducido, setReducido] = useState(false);
 
   useEffect(() => {
     if (isOpen && numeroVisita) {
@@ -186,20 +185,21 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 
   return (
     <div className={styles.modalOverlay}>
-      <div className={`${styles.modalContainer}${reducido ? ' ' + styles.reducido : ''}`}>
-        <button
-          className={styles.resizeButton}
-          onClick={() => setReducido(r => !r)}
-          title={reducido ? 'Restaurar tamaño' : 'Reducir tamaño'}
-        >
-          {reducido ? '⤢' : '⤡'}
-        </button>
+      <div className={styles.modalContainer}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitulo}>{titulo}</h2>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
         
         <div className={styles.pacienteHeader}>
+          <div className={styles.nombrePaciente}>
+            <h3>
+              <span className={styles.documentoNumero}>{pacienteData.numeroDocumento}</span>
+              {pacienteData.apellidoYNombre}
+              <span className={`${styles.sexoIcono} ${claseSexo}`}>{iconoSexo}</span>
+              <span className={styles.edadPaciente}>{edad !== null ? `${edad} años` : ''}</span>
+            </h3>
+          </div>
           <div className={styles.headerInfoFields}>
             <div className={styles.headerField}>
               <span className={styles.headerLabel}>ID:</span>
@@ -227,16 +227,8 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
             </div>
           </div>
           
-          <div className={styles.nombrePaciente}>
-            <h3>
-              <span className={styles.documentoNumero}>{pacienteData.numeroDocumento}</span>
-              {pacienteData.apellidoYNombre}
-              <span className={`${styles.sexoIcono} ${claseSexo}`}>{iconoSexo}</span>
-              <span className={styles.edadPaciente}>{edad !== null ? `${edad} años` : ''}</span>
-            </h3>
-          </div>
         </div>
-        
+          
         <div className={styles.separador}></div>
         
         <div className={styles.modalContent}>

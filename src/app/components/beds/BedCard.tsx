@@ -6,8 +6,8 @@ import {
   IoDocumentTextOutline,
   IoMale,
   IoFemale,
-  
 } from 'react-icons/io5';
+import { formatDate } from '../../utils/dateUtils';
 
 /**
  * Componente que muestra la información de una cama en formato de tarjeta
@@ -60,34 +60,44 @@ export const BedCard: React.FC<BedCardProps> = ({
           <span className={styles.sectorLabel}>{bed.sector}</span>
           <span className={styles.bedNumber}>{bed.numeroCama}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-          {bed.numeroVisita}
-          {renderGenderIcon()}
-        </div>
+        {bed.numeroVisita && bed.numeroVisita !== 0 ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            {bed.numeroVisita}
+            {renderGenderIcon()}
+          </div>
+        ) : null}
       </div>
-
       <div className={styles.cardBody}>
         {isOcupada ? (
           <>
           <div className={styles.primaryData}>
             <div className={styles.patientData}>
-              <span className={styles.patientName}>{bed.nombrePaciente}</span>
-              <span className={styles.documentNumber}>Documento: {bed.documentoPaciente}</span>
-            </div>
               
+              <span className={styles.documentNumber}>{bed.documentoPaciente}</span>
+            <span className={styles.patientName}><strong>{bed.nombrePaciente}</strong> </span>
               
               {bed.fechaIngreso && (
                 <span className={styles.date}>
                   <p className={styles.dateLabel}>Fecha de ingreso</p>
-                  {new Date(bed.fechaIngreso).toLocaleDateString()}
+                  {formatDate(bed.fechaIngreso, { 
+                    isClarionDate: true,
+                  })}
                 </span>
               )}
+              {bed.servicioMedicoDescripcion && (
+                <span className={styles.date}>
+                  {bed.servicioMedicoDescripcion}
+                </span>
+              )}
+              {bed.razonSocialCliente && (
+                <span className={styles.date}>
+                  {bed.razonSocialCliente}
+                </span>
+              )}
+            </div>
           </div>
-            {bed.observaciones && (
-              <p className={styles.observation}>
-                <span className={styles.label}>Observación:</span> {bed.observaciones}
-              </p>
-            )}
+          
+           
             {bed.diagnosticoDescripcion && (
               <div className={styles.diagnosticSection}>
                 <p className={styles.diagnostic}>{bed.diagnosticoDescripcion}</p>

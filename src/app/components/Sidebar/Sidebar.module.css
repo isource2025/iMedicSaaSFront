@@ -72,13 +72,13 @@
 .logoContainer {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0083A9; /* Pantone-314c */
+  color: #00B5E2; /* Pantone-314c */
   display: flex;
   align-items: center;
 }
 
 .logoIcon {
-  background: linear-gradient(to right, #00B5E2, #0083A9); /* Pantone-313u to Pantone-314c */
+  background: linear-gradient(to right, #00B5E2, #00B5E2); /* Pantone-313u to Pantone-314c */
   color: white;
   padding: 0.25rem;
   border-radius: 0.25rem;
@@ -248,6 +248,10 @@
 }
 
 .userDetails {
+  width: max-content;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin-left: 0.75rem;
   flex-grow: 1;
 }
@@ -259,6 +263,8 @@
 }
 
 .logoutLink {
+  display: flex;
+  align-items: center;
   font-size: 0.75rem;
   color: #ef4444;
 }

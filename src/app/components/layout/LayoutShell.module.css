@@ -23,4 +23,8 @@
   .sidebarWrapper {
     width: 260px;
   }
-  
+  @media (max-width: 1023px) {
+    .sidebarWrapper {
+      width:0;
+    }
+  }

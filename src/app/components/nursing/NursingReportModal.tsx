@@ -34,8 +34,7 @@ const formatTime = (timeString: string) => {
 export const NursingReportModal: React.FC<NursingReportModalProps> = ({ 
   isOpen, 
   onClose, 
-  numeroVisita, 
-  nombrePaciente 
+  numeroVisita 
 }) => {
   const [loading, setLoading] = useState(true);
   const [controls, setControls] = useState<ControlFrecuente[]>([]);
@@ -43,7 +42,6 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
   const [showNewIndicationForm, setShowNewIndicationForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'tabla' | 'grafico'>('tabla');
   const [parametro, setParametro] = useState<string>('pulso');
-  const [reducido, setReducido] = useState(true); // Por defecto reducido
 
   useEffect(() => {
     if (isOpen && numeroVisita) {
@@ -92,15 +90,8 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
       titulo="Reporte de Enfermería"
       numeroVisita={String(numeroVisita)}
     >
-      <div className={reducido ? styles.reducido + ' ' + styles.nursingReportContainer : styles.nursingReportContainer}>
-        <div className={styles.modalActions}>
-          <button 
-            className={styles.newIndicationButton} 
-            onClick={handleNewIndication}
-          >
-            Nueva Indicación
-          </button>
-        </div>
+      <div className={styles.nursingReportContainer}>
+        
         
         {showNewIndicationForm && (
           <div className={styles.newIndicationForm}>
@@ -126,25 +117,23 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
         ) : (
           <>
             <div className={styles.tabsContainer}>
-              <button
-                className={`${styles.tabButton} ${activeTab === 'tabla' ? styles.activeTab : ''}`}
-                onClick={() => setActiveTab('tabla')}
-              >
-                Tabla
-              </button>
-              <button
-                className={`${styles.tabButton} ${activeTab === 'grafico' ? styles.activeTab : ''}`}
-                onClick={() => setActiveTab('grafico')}
-              >
-                Gráfico
-              </button>
-              <button
-                style={{marginLeft:'auto', fontSize:'1.1em', background:'#e6f7fa', border:'none', borderRadius:4, cursor:'pointer', padding:'2px 10px'}}
-                title={reducido ? 'Restaurar tamaño' : 'Reducir tamaño'}
-                onClick={()=>setReducido(r=>!r)}
-              >
-                {reducido ? '⤢' : '⤡'}
-              </button>
+              <div>
+
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'tabla' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('tabla')}
+                >
+                  Tabla
+                </button>
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'grafico' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('grafico')}
+                >
+                  Gráfico
+                </button>
+              </div>
+              
+              
             </div>
 
             {activeTab === 'tabla' ? (

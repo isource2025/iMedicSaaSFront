@@ -6,9 +6,9 @@
 
 .tabsContainer {
   display: flex;
-  gap: 0.3rem;
-  margin-bottom: 8px;
-  margin-top: 4px;
+  justify-content: space-between;
+  align-items: end;
+  margin-top: 12px;
 }
 
 .tabButton {
@@ -58,9 +58,8 @@
   padding: 0 1.2rem 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  max-height: 48vh;
   overflow-y: auto;
+  min-height: 420px;
 }
 
 .tableContainer {
@@ -113,4 +112,14 @@
   .controlsTable td {
     padding: 0.4rem;
   }
+}
+.newIndicationButton{
+  background: #0083A9;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
 }
