@@ -55,29 +55,23 @@
   color: white;
 }
 
-.headerFields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-left: 15px;
-}
 
 .headerField {
   display: flex;
-  align-items: center;
-  background-color: rgba(255, 255, 255, 0.15);
-  padding: 3px 8px;
-  border-radius: 4px;
+  flex-direction: column;
+  align-items: self-start;
   font-size: 14px;
 }
 
+
 .headerLabel {
   font-weight: 500;
-  margin-right: 5px;
+  color: #64748b; /* Pantone 314C */
 }
 
 .headerValue {
   font-weight: 600;
+  color: #333;
 }
 
 .closeButton {
@@ -101,7 +95,10 @@
 }
 
 .pacienteHeader {
-  padding: 0 16px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  padding: 8px 48px 8px 16px;
   background-color: #f8f9fa;
   border-bottom: 1px solid #e1e1e1;
 }
@@ -109,52 +106,27 @@
 .headerInfoFields {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 32px;
 }
-
-.headerField {
+.pacienteData{
   display: flex;
-  align-items: center;
-  background-color: rgba(0, 181, 226, 0.1); /* Pantone 313U con opacidad */
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  border-left: 3px solid #00B5E2; /* Pantone 313U */
-}
-
-.headerLabel {
-  font-weight: 500;
-  margin-right: 5px;
-  color: #0083A9; /* Pantone 314C */
-}
-
-.headerValue {
-  font-weight: 600;
-  color: #333;
-}
-
-.nombrePaciente {
-  margin: 12px 0;
+  justify-content: center;
+  gap: 16px;
 }
 
 .nombrePaciente h3 {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 600;
   margin: 0;
   color: #333;
   display: flex;
-  align-items: center;
+  align-items: self-start;
   flex-wrap: wrap;
 }
 
 .documentoNumero {
-  background-color: #61D6EB; /* Pantone 311U */
-  color: white;
-  padding: 2px 8px;
   border-radius: 4px;
-  margin-right: 10px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -162,20 +134,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5rem;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  background-color: transparent;
 }
 
 .masculino {
-  color: #00B5E2; /* Pantone-313u */
+  color: black; 
+  background-color: transparent;
 }
 
 .femenino {
-  color: #61D6EB; /* Pantone 311U - reemplazando el rosa con azul claro de la paleta */
+  color: black; 
+  background-color: transparent;
 }
 
 .otro {
-  color: #41C8DC; /* Pantone 311C */
+  color: black; 
+  background-color: transparent;
 }
 
 .edadPaciente {

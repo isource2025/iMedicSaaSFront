@@ -192,37 +192,38 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
         </div>
         
         <div className={styles.pacienteHeader}>
-          <div className={styles.nombrePaciente}>
-            <h3>
+          <div className={styles.pacienteData}>
+
+            <div>
               <span className={styles.documentoNumero}>{pacienteData.numeroDocumento}</span>
-              {pacienteData.apellidoYNombre}
-              <span className={`${styles.sexoIcono} ${claseSexo}`}>{iconoSexo}</span>
               <span className={styles.edadPaciente}>{edad !== null ? `${edad} años` : ''}</span>
-            </h3>
+              <span className={`${styles.sexoIcono} ${claseSexo}`}>{iconoSexo}</span>
+            <h3>{pacienteData.apellidoYNombre}</h3>
+            </div>
           </div>
           <div className={styles.headerInfoFields}>
             <div className={styles.headerField}>
-              <span className={styles.headerLabel}>ID:</span>
+              <span className={styles.headerLabel}>ID</span>
               <span className={styles.headerValue}>{pacienteData.idPaciente}</span>
             </div>
             <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Visita:</span>
+              <span className={styles.headerLabel}>Visita</span>
               <span className={styles.headerValue}>{pacienteData.numeroVisita}</span>
             </div>
             <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Sector:</span>
+              <span className={styles.headerLabel}>Sector</span>
               <span className={styles.headerValue}>{pacienteData.valorSector}</span>
             </div>
             <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Cama:</span>
+              <span className={styles.headerLabel}>Cama</span>
               <span className={styles.headerValue}>{pacienteData.valorHabitacionCama}</span>
             </div>
             <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Fecha:</span>
+              <span className={styles.headerLabel}>Fecha</span>
               <span className={styles.headerValue}>{formatearFecha(pacienteData.fechaAdmision)}</span>
             </div>
             <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Cobertura:</span>
+              <span className={styles.headerLabel}>Cobertura</span>
               <span className={styles.headerValue}>{pacienteData.coberturaSocial}</span>
             </div>
           </div>

@@ -92,13 +92,44 @@ export const formatDate = (
 };
 
 /**
+ * Formatea un tiempo para mostrar solo horas y minutos (HH:MM)
+ * @param timeString Cadena de tiempo a formatear
+ * @returns Tiempo formateado como HH:MM o el valor original si no se puede formatear
+ */
+export const formatTime = (timeString: string | null | undefined): string => {
+  if (!timeString) return '-';
+  
+  try {
+    // Si ya tiene formato de hora con ":" (por ejemplo, "14:30:00")
+    if (timeString.includes(':')) {
+      // Extraer solo horas y minutos (HH:MM)
+      return timeString.substring(0, 5);
+    }
+    
+    // Si es un número (segundos desde medianoche)
+    const numericTime = parseInt(timeString, 10);
+    if (!isNaN(numericTime)) {
+      const hours = Math.floor(numericTime / 3600);
+      const minutes = Math.floor((numericTime % 3600) / 60);
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    
+    return timeString;
+  } catch (error) {
+    console.error('Error al formatear hora:', error);
+    return timeString;
+  }
+};
+
+/**
  * Hook para formatear fechas en el sistema
  * @returns Objeto con funciones de utilidad para fechas
  */
 export const useDateFormatter = () => {
   return {
     formatDate,
-    clarionDateToDate
+    clarionDateToDate,
+    formatTime
   };
 };
 
