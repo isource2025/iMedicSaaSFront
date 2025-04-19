@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
 import { 
-  Home, 
-  Bed, 
-  Users, 
+  Home,
   Calendar, 
   BarChart, 
   Settings, 
@@ -28,9 +26,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const [isMobile, setIsMobile] = useState(false);
+  const [user, setUser] = useState({});
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
   useEffect(() => {
+    const storageUser = JSON.parse(localStorage.getItem("user") || "{}");
+    setUser(storageUser)
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
     };
