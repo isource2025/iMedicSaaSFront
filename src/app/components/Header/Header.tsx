@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
+import { useAppContext } from '../../contexts/AppContext';
 
 type HeaderProps = {
   sidebarOpen: boolean;
@@ -10,38 +11,44 @@ type HeaderProps = {
 };
 
 export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
+  // Obtener el sector seleccionado del contexto
+  const { sectorSeleccionado } = useAppContext();
+
   return (
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.headerContent}>
-          {/* Left side - Menu icon for mobile */}
+          {/* Left side - Menu icon for mobile and Sector info */}
           <div className={styles.leftSection}>
             <button
               type="button"
               className={styles.menuButton}
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              <span className="sr-only">Open sidebar</span>
-              <span className="text-2xl">☰</span>
+              <span className={styles.srOnly}>Open sidebar</span>
+              <span className={styles.menuIcon}>☰</span>
             </button>
             
-            {/* Page title */}
-            <h1 className={styles.pageTitle}>
-              Dashboard
-            </h1>
+            {/* Mostrar el sector seleccionado */}
+            {sectorSeleccionado && (
+              <div className={styles.sectorInfo}>
+                <span className={styles.sectorLabel}>Sector:</span>
+                <span className={styles.sectorDescription}>{sectorSeleccionado.descripcion}</span>
+              </div>
+            )}
           </div>
 
           {/* Right side - User options */}
           <div className={styles.rightSection}>
             {/* Notifications */}
             <button className={styles.notificationButton}>
-              <span className="sr-only">Ver notificaciones</span>
-              <span className="text-xl">🔔</span>
+              <span className={styles.srOnly}>Ver notificaciones</span>
+              <span className={styles.notificationIcon}>🔔</span>
             </button>
             
             {/* User profile dropdown */}
             <div className={styles.userSection}>
-              <div className="flex items-center">
+              <div className={styles.userContainer}>
                 <button className={styles.userButton}>
                   <div className={styles.userAvatar}>
                     A

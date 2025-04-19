@@ -5,12 +5,13 @@ import { authService } from '../services/authService';
 import { useAppContext } from '../contexts/AppContext';
 
 export function useLoginForm() {
-  const [credentials, setCredentials] = useState<LoginCredentials & { sector?: string }>({
+  const [credentials, setCredentials] = useState<LoginCredentials & { sector: string }>({
     username: '',
     password: '',
     sector: ''
   });
-  
+
+
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
@@ -33,11 +34,11 @@ export function useLoginForm() {
     try {
       // Datos de prueba en caso de que falle la conexión
       const mockSectores = [
-        { ValorPersonalSector: "01", DescripcionPersonalSector: "Urgencias" },
-        { ValorPersonalSector: "02", DescripcionPersonalSector: "Pediatría" },
-        { ValorPersonalSector: "03", DescripcionPersonalSector: "Cardiología" },
-        { ValorPersonalSector: "04", DescripcionPersonalSector: "Oncología" },
-        { ValorPersonalSector: "05", DescripcionPersonalSector: "Neurología" }
+        { ValorPersonalSector: "01", ValorSector: "URG", DescripcionPersonalSector: "Urgencias" },
+        { ValorPersonalSector: "02", ValorSector: "PED", DescripcionPersonalSector: "Pediatría" },
+        { ValorPersonalSector: "03", ValorSector: "CAR", DescripcionPersonalSector: "Cardiología" },
+        { ValorPersonalSector: "04", ValorSector: "ONC", DescripcionPersonalSector: "Oncología" },
+        { ValorPersonalSector: "05", ValorSector: "NEU", DescripcionPersonalSector: "Neurología" }
       ];
 
       let data;
@@ -114,61 +115,62 @@ export function useLoginForm() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setLoading(true);
 
-    try {
-      const loginData = {
-        username: credentials.username,
-        password: credentials.password,
-        sector: credentials.sector
-      };
-      
-      const data = await authService.login(loginData);
-      
-      if (data.success) {
-        // Guardar datos de autenticación
-        localStorage.setItem('token', data.token || '');
-        
-        if (data.usuario) {
-          localStorage.setItem('user', JSON.stringify(data.usuario));
-          localStorage.setItem('sector', credentials.sector || '');
-        }
-        
-        // Guardar información del sector seleccionado
-        if (data.sectorSeleccionado) {
-          // Guardar en el contexto global para acceso desde cualquier componente
-          setSectorSeleccionado(data.sectorSeleccionado);
-          
-          // También guardar en localStorage para persistencia
-          localStorage.setItem('sectorSeleccionado', JSON.stringify(data.sectorSeleccionado));
-          
-          console.log('Sector seleccionado guardado globalmente:', data.sectorSeleccionado);
-        }
-        
-        if (rememberMe) {
-          localStorage.setItem('rememberUser', 'true');
-        }
-        
-        router.push('/dashboard');
-      } else {
-        setError(data.mensaje || 'Credenciales inválidas. Por favor, intente de nuevo.');
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+
+  if (!validateForm()) return;
+
+  setLoading(true);
+
+  try {
+    // Descomponer el valor combinado del select: "5127-2-DIABETES"
+    // Donde: 5127 es ValorPersonalSector, 2 es ValorSector y DIABETES es DescripcionPersonalSector
+    const [idPersonal, idSector, sectorDescripcion] = credentials.sector.split('-');
+
+    const loginData = {
+      username: credentials.username,
+      password: credentials.password,
+      sector: idPersonal, // Enviamos el idpersonal como antes (para compatibilidad)
+      idsector: idSector // Ahora también enviamos el idsector
+    };
+
+    console.log('Datos de login:', loginData);
+
+    const data = await authService.login(loginData);
+
+    if (data.success) {
+      localStorage.setItem('token', data.token || '');
+
+      if (data.usuario) {
+        localStorage.setItem('user', JSON.stringify(data.usuario));
       }
-    } catch (err) {
-      console.error('Error de autenticación:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Error de conexión. Por favor, intente de nuevo más tarde.';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+
+      if (data.sectorSeleccionado) {
+        setSectorSeleccionado(data.sectorSeleccionado);
+        console.log('Sector seleccionado guardado globalmente:', data.sectorSeleccionado);
+      }
+
+      if (rememberMe) {
+        localStorage.setItem('rememberUser', 'true');
+      }
+
+      router.push('/dashboard');
+    } else {
+      setError(data.mensaje || 'Credenciales inválidas. Por favor, intente de nuevo.');
     }
-  };
+  } catch (err) {
+    console.error('Error de autenticación:', err);
+    const errorMessage = err instanceof Error
+      ? err.message
+      : 'Error de conexión. Por favor, intente de nuevo más tarde.';
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return {
     credentials,

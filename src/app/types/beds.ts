@@ -22,7 +22,12 @@ export interface Bed {
   mostrarNumeroVisita: string;
   observaciones: string;
   nombrePaciente: string;
+  documentoPaciente: string;
   diagnosticoDescripcion: string;
+  razonSocialCliente: string; // Razón social del cliente (obra social)
+  sexoPaciente: string; // Sexo del paciente (F: femenino, M: masculino, otro)
+  descripcionSexo: string; // Descripción completa del sexo desde la tabla imSexo
+  servicioMedicoDescripcion: string; // Descripción del servicio médico desde imServiciosMedicos
 }
 
 export interface BedState {

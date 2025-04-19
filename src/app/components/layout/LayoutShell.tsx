@@ -10,7 +10,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
   return (
     <div className={styles.container}>
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className={`${styles.sidebarWrapper}`}>
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      </div>
 
       <div className={styles.content}>
         <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

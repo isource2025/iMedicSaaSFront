@@ -1,9 +1,10 @@
-import { BedsList } from "./BedsList";
+import { BedsList } from "../../components/beds/BedsList";
+import styles from "./page.module.css";
 
 export default function BedsPage() {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Gestión de Camas</h1>
+    <main className={styles.container}>
+      <h1 className={styles.title}>Gestión de Camas</h1>
       <BedsList />
     </main>
   );
