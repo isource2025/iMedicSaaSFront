@@ -106,7 +106,7 @@ export const BedCard: React.FC<BedCardProps> = ({
                 title="Últimas Indicaciones"
                 onClick={() => onRecentIndications && onRecentIndications(bed.id)}
               >
-                <IoDocumentTextOutline className={styles.actionIcon} />
+                <IoDocumentTextOutline  className={styles.actionIcon} />
               </span>
               <span
                 className={styles.iconWrapper}

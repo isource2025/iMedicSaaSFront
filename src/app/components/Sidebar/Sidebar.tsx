@@ -29,24 +29,17 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detectar si estamos en una pantalla móvil
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
     };
-    
-    // Verificar al cargar
     checkMobile();
-    
-    // Verificar al cambiar el tamaño de pantalla
     window.addEventListener('resize', checkMobile);
-    
     return () => {
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
-  
-  // Cerrar menú al cambiar de ruta en móvil
+
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
@@ -58,33 +51,21 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     localStorage.setItem('token', JSON.stringify(""));
     localStorage.setItem('sectorSeleccionado', JSON.stringify({}));
   }
-  
-  // Maneja la expansión/contracción de menús desplegables
+
   const toggleSubmenu = (menuName: string) => {
     setExpandedMenus(prev => {
-      // Si el menú ya está expandido, lo cerramos
       if (prev[menuName]) {
-        return {
-          ...prev,
-          [menuName]: false
-        };
+        return { ...prev, [menuName]: false };
       }
-      
-      // Si el menú está cerrado, lo abrimos y cerramos todos los demás
       const newState: Record<string, boolean> = {};
-      
-      // Cerramos todos los menús
       Object.keys(prev).forEach(key => {
         newState[key] = false;
       });
-      
-      // Abrimos solo el menú seleccionado
       newState[menuName] = true;
-      
       return newState;
     });
   };
-  
+
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     {
@@ -162,44 +143,28 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Sidebar Backdrop */}
       {sidebarOpen && (
-        <div 
-          className={styles.backdrop}
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
+        <div className={styles.backdrop} onClick={() => setSidebarOpen(false)} aria-hidden="true" />
       )}
-
-      {/* Sidebar */}
-      <aside
-        className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden}`}
-      >
-        {/* Sidebar Header */}
+      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden}`}>
         <div className={styles.sidebarHeader}>
           <div className={styles.logoContainer}>
-            <span className={styles.logoIcon}>
-              i
-            </span>
+            <span className={styles.logoIcon}>i</span>
             MedicWS
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className={styles.closeButton}
-            aria-label="Cerrar menú"
-          >
+          <button onClick={() => setSidebarOpen(false)} className={styles.closeButton} aria-label="Cerrar menú">
             <span className="text-xl">×</span>
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className={styles.navigation}>
           <ul className={styles.navList}>
             {navigation.map((item) => {
-              const isActive = item.href ? (pathname === item.href || pathname.startsWith(`${item.href}/`)) : 
-                (item.submenuItems && item.submenuItems.some(subitem => 
-                  pathname === subitem.href || pathname.startsWith(`${subitem.href}/`)));
-              
+              const cleanPath = pathname.split('?')[0].split('#')[0];
+              const isActive = item.href
+                ? cleanPath === item.href
+                : item.submenuItems?.some(subitem => cleanPath.startsWith(subitem.href));
+
               return (
                 <li key={item.name}>
                   {item.hasSubmenu ? (
@@ -209,17 +174,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                         className={`${styles.navItem} ${styles.navItemSubmenu} ${isActive ? styles.navItemActive : styles.navItemInactive}`}
                       >
                         <span className={styles.navIcon}>
-                          {<item.icon size={20} color={isActive ? "#00B5E2" : "#64748b"} />}
+                          {<item.icon size={20} color={isActive ? "white" : "#64748b"} />}
                         </span>
                         {item.name}
                         <span className={styles.submenuArrow}>
-                          {expandedMenus[item.submenuName] ? 
-                            <ChevronDown size={16} /> : 
-                            <ChevronRight size={16} />
-                          }
+                          {expandedMenus[item.submenuName] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         </span>
                       </button>
-                      
                       {expandedMenus[item.submenuName] && (
                         <ul className={styles.submenuList}>
                           {item.submenuItems.map((subitem) => {
@@ -244,7 +205,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                       className={`${styles.navItem} ${isActive ? styles.navItemActive : styles.navItemInactive}`}
                     >
                       <span className={styles.navIcon}>
-                        {<item.icon size={20} color={isActive ? "#00B5E2" : "#64748b"} />}
+                        {<item.icon size={20} color={isActive ? "white" : "#64748b"} />}
                       </span>
                       {item.name}
                     </Link>
@@ -254,13 +215,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             })}
           </ul>
         </nav>
-        
-        {/* Sidebar Footer */}
+
         <div className={styles.sidebarFooter}>
           <div className={styles.userInfo}>
-            <div className={styles.userAvatar}>
-              A
-            </div>
+            <div className={styles.userAvatar}>A</div>
             <div className={styles.userDetails}>
               <p className={styles.userName}>Admin</p>
               <Link onClick={handleLogOut} href="/" className={styles.logoutLink}>

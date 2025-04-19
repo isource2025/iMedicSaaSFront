@@ -10,6 +10,7 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    width: 100%;
     overflow: hidden;
   }
   
@@ -18,5 +19,8 @@
     overflow-y: auto;
     padding: 16px;
     background-color: #f9fafb;
+  }
+  .sidebarWrapper {
+    width: 260px;
   }
   

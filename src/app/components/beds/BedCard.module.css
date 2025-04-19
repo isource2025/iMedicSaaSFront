@@ -70,7 +70,7 @@
 .statusBadge {
   background-color: #e2e8f0;
   color: #334155;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 500;
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
@@ -142,10 +142,10 @@
   justify-content: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   margin: 0 0.35rem;
-  border: 1px solid #61D6EB; /* Pantone 311U */
+  border: 1px solid #00B5E2; 
 }
 .actionIcon:hover {
-  background-color: #0083A9; /* Pantone 314C */
+  background-color: #00B5E2; 
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 3px 4px rgba(0, 0, 0, 0.2);
@@ -207,17 +207,15 @@
     padding: 0.35rem 0.5rem;
   }
   .bedNumber {
-    font-size: 0.9rem;
+    font-size: 14px;
   }
   .patientName {
-    font-size: 0.7rem;
+    font-size: 11px;
   }
   .iconsContainer {
     padding: 0.6rem 0.3rem;
   }
   .actionIcon {
-    font-size: 0.8rem;
-    width: 0.8rem;
-    height: 0.8rem;
+    font-size: 24px;
   }
 }

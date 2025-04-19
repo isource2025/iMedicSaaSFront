@@ -192,10 +192,12 @@
 }
 
 .navItemActive {
-  background-color: #61D6EB; /* Pantone-311u */
-  color: #0083A9; /* Pantone-314c */
+  background-color: #00B5E2; /* Pantone-311u */
+  color: white; /* Pantone-314c */
 }
-
+.navItemActive:hover{
+  color: white;
+}
 .navItemInactive {
   color: #4b5563;
 }
@@ -214,9 +216,6 @@
   flex-shrink: 0;
 }
 
-.navItemActive .navIcon svg {
-  color: #00B5E2 !important; /* Pantone 313U */
-}
 
 .logoutIcon {
   margin-right: 0.4rem;
