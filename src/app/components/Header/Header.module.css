@@ -73,6 +73,49 @@
   font-weight: 600;
 }
 
+.sectorInfo {
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+  background-color: #f8f9fa;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #00B5E2; /* Pantone 313U */
+}
+
+.sectorLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+
+.sectorDescription {
+  font-size: 0.85rem;
+  color: #0083A9; /* Pantone 314C */
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .sectorInfo {
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .sectorLabel {
+    font-size: 0.7rem;
+    margin-right: 0.3rem;
+  }
+  
+  .sectorDescription {
+    font-size: 0.75rem;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 @media (min-width: 1024px) {
   .pageTitle {
     margin-left: 0;

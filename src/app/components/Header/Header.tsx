@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
+import { useAppContext } from '../../contexts/AppContext';
 
 type HeaderProps = {
   sidebarOpen: boolean;
@@ -10,11 +11,14 @@ type HeaderProps = {
 };
 
 export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
+  // Obtener el sector seleccionado del contexto
+  const { sectorSeleccionado } = useAppContext();
+
   return (
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.headerContent}>
-          {/* Left side - Menu icon for mobile */}
+          {/* Left side - Menu icon for mobile and Sector info */}
           <div className={styles.leftSection}>
             <button
               type="button"
@@ -24,6 +28,14 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               <span className={styles.srOnly}>Open sidebar</span>
               <span className={styles.menuIcon}>☰</span>
             </button>
+            
+            {/* Mostrar el sector seleccionado */}
+            {sectorSeleccionado && (
+              <div className={styles.sectorInfo}>
+                <span className={styles.sectorLabel}>Sector:</span>
+                <span className={styles.sectorDescription}>{sectorSeleccionado.descripcion}</span>
+              </div>
+            )}
           </div>
 
           {/* Right side - User options */}

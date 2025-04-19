@@ -1,0 +1,223 @@
+/* Estilos fusionados y mejorados provenientes de BedsList y BedCard para la tarjeta de cama */
+
+.bedCard {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-top: 6px solid #cccccc;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bedCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Estados visuales (puedes ajustar los nombres de clase según tus props) */
+.estado-ocupada {
+  border-top-color: #e74c3c;
+}
+.estado-libre {
+  border-top-color: #00B5E2;
+}
+.estado-aislada {
+  border-top-color: #0083A9;
+}
+.estado-cerrada {
+  border-top-color: #95a5a6;
+}
+.estado-que-haceres-domesticos {
+  border-top-color: #f1c40f;
+}
+.estado-reparacion {
+  border-top-color: #e67e22;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem 0.7rem;
+  background-color: #f5f7fa;
+}
+
+.bedInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sectorLabel {
+  background-color: #334155;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 1rem;
+  color:white;
+  margin-bottom: 1px;
+}
+
+.bedNumber {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.statusBadge {
+  background-color: #e2e8f0;
+  color: #334155;
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+}
+
+.cardBody {
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.35rem;
+  flex: 1;
+}
+.primaryData{
+  display: flex;
+  justify-content: space-between;
+  
+  border-bottom: 1px solid #cccccc;
+}
+.patientData{
+  display: flex;
+  flex-direction: column;
+}
+.patientName {
+  max-width: 100%;
+  font-size: .9rem;
+  font-weight: 500;
+  line-height: 20px;
+  color: #2d3748;
+}
+
+.diagnosticSection {
+  display: flex;
+  font-size: 0.7rem;
+  border-bottom: 1px solid #cccccc;
+  gap: 0.2rem;
+  padding-bottom: 0.15rem;
+}
+
+.diagnostic {
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 0.7rem;
+}
+
+.iconsContainer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.iconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionIcon {
+  font-size: 28px;
+  padding: 4px;
+  color: #00B5E2; /* Pantone 313U */
+  cursor: pointer;
+  border-radius: 50%;
+  background-color: #ebf8ff;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  margin: 0 0.35rem;
+  border: 1px solid #61D6EB; /* Pantone 311U */
+}
+.actionIcon:hover {
+  background-color: #0083A9; /* Pantone 314C */
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.2);
+}
+.actionIcon:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.cardFooter {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  font-size: 0.65rem;
+}
+
+.observation {
+  margin: 0 0 0.35rem 0;
+  color: #475569;
+}
+
+.label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  color: #64748b;
+}
+
+.date {
+  white-space: nowrap;
+  display: flex;
+  font-size: 12px;
+  flex-direction: column;
+  align-items: self-start;
+  margin-left: 16px;
+}
+
+.dateLabel {
+  font-size: 0.65rem;
+  color: #718096;
+  margin-bottom: 0.15rem;
+}
+
+.documentNumber {
+  font-size: 0.7rem;
+  margin-bottom: .2rem;
+}
+
+@media (max-width: 640px) {
+  .bedCard {
+    border-radius: 4px;
+  }
+  .cardHeader, .cardBody, .cardFooter {
+    padding: 0.35rem 0.5rem;
+  }
+  .bedNumber {
+    font-size: 0.9rem;
+  }
+  .patientName {
+    font-size: 0.7rem;
+  }
+  .iconsContainer {
+    padding: 0.6rem 0.3rem;
+  }
+  .actionIcon {
+    font-size: 0.8rem;
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+}

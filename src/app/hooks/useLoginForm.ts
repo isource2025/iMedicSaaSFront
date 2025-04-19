@@ -34,11 +34,11 @@ export function useLoginForm() {
     try {
       // Datos de prueba en caso de que falle la conexión
       const mockSectores = [
-        { ValorPersonalSector: "01", DescripcionPersonalSector: "Urgencias" },
-        { ValorPersonalSector: "02", DescripcionPersonalSector: "Pediatría" },
-        { ValorPersonalSector: "03", DescripcionPersonalSector: "Cardiología" },
-        { ValorPersonalSector: "04", DescripcionPersonalSector: "Oncología" },
-        { ValorPersonalSector: "05", DescripcionPersonalSector: "Neurología" }
+        { ValorPersonalSector: "01", ValorSector: "URG", DescripcionPersonalSector: "Urgencias" },
+        { ValorPersonalSector: "02", ValorSector: "PED", DescripcionPersonalSector: "Pediatría" },
+        { ValorPersonalSector: "03", ValorSector: "CAR", DescripcionPersonalSector: "Cardiología" },
+        { ValorPersonalSector: "04", ValorSector: "ONC", DescripcionPersonalSector: "Oncología" },
+        { ValorPersonalSector: "05", ValorSector: "NEU", DescripcionPersonalSector: "Neurología" }
       ];
 
       let data;
@@ -125,15 +125,18 @@ const handleSubmit = async (e: React.FormEvent) => {
   setLoading(true);
 
   try {
-    // Descomponer el valor combinado del select: "5127-DIABETES"
-    let [sectorId, sectorDescripcion] = credentials.sector.split('-');
+    // Descomponer el valor combinado del select: "5127-2-DIABETES"
+    // Donde: 5127 es ValorPersonalSector, 2 es ValorSector y DIABETES es DescripcionPersonalSector
+    const [idPersonal, idSector, sectorDescripcion] = credentials.sector.split('-');
 
     const loginData = {
       username: credentials.username,
       password: credentials.password,
-      sector: sectorId,
-      descripcionSector: sectorDescripcion
+      sector: idPersonal, // Enviamos el idpersonal como antes (para compatibilidad)
+      idsector: idSector // Ahora también enviamos el idsector
     };
+
+    console.log('Datos de login:', loginData);
 
     const data = await authService.login(loginData);
 
@@ -146,7 +149,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       if (data.sectorSeleccionado) {
         setSectorSeleccionado(data.sectorSeleccionado);
-        localStorage.setItem('sectorSeleccionado', JSON.stringify(data.sectorSeleccionado.descripcion));
         console.log('Sector seleccionado guardado globalmente:', data.sectorSeleccionado);
       }
 

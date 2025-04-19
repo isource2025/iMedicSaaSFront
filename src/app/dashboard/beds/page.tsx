@@ -1,5 +1,5 @@
-import { BedsList } from "./BedsList";
-import styles from "./beds.module.css";
+import { BedsList } from "../../components/beds/BedsList";
+import styles from "./page.module.css";
 
 export default function BedsPage() {
   return (

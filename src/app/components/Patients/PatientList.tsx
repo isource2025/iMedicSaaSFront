@@ -52,12 +52,12 @@ export default function PatientList({
           <thead className={styles.tableHeader}>
             <tr>
               <th scope="col">ID</th>
-              <th scope="col">👤 Nombre y Apellido</th>
-              <th scope="col">🏠 Domicilio</th>
-              <th scope="col">🚻 Sexo</th>
-              <th scope="col">📄 Número HC</th>
-              <th scope="col">🎂 Fecha de Nacimiento</th>
-              <th scope="col">💍 Estado Civil</th>
+              <th scope="col">Nombre y Apellido</th>
+              <th scope="col">Domicilio</th>
+              <th scope="col">Sexo</th>
+              <th scope="col">Número HC</th>
+              <th scope="col">Fecha de Nacimiento</th>
+              <th scope="col">Estado Civil</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>

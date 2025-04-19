@@ -44,5 +44,6 @@ export interface AuthError {
 
 export interface Sector {
   ValorPersonalSector: string;
+  ValorSector: string;       // ID del sector (idsector) en la tabla impersonalsectores
   DescripcionPersonalSector: string;
 }

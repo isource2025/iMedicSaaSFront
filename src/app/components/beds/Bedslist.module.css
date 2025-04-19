@@ -1,0 +1,28 @@
+.container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.loadingState, .errorState, .emptyState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.errorState {
+  color: #d1335b;
+  font-weight: 500;
+}
+
+.bedsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}

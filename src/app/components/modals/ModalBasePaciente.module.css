@@ -1,0 +1,322 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(3px);
+}
+
+.modalContainer {
+  width: 1050px;
+  max-width: 98vw;
+  min-width: 720px;
+  min-height: 650px;
+  max-height: 90vh;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px #0002;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s, min-width 0.2s, min-height 0.2s;
+}
+
+.modalContainer.reducido {
+  width: 840px;
+  min-width: 540px;
+  min-height: 520px;
+}
+
+.resizeButton {
+  position: absolute;
+  top: 14px;
+  right: 48px;
+  background: #61D6EB;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 2;
+}
+
+.resizeButton:hover {
+  background: #0083A9;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e1e1e1;
+  background-color: #00B5E2; /* Pantone 313U - Color primario */
+  color: white;
+  border-radius: 10px 10px 0 0;
+}
+
+.headerTituloInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+}
+
+.modalTitulo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.headerFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: 15px;
+}
+
+.headerField {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.headerLabel {
+  font-weight: 500;
+  margin-right: 5px;
+}
+
+.headerValue {
+  font-weight: 600;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.pacienteHeader {
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.headerInfoFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.headerField {
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 181, 226, 0.1); /* Pantone 313U con opacidad */
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  border-left: 3px solid #00B5E2; /* Pantone 313U */
+}
+
+.headerLabel {
+  font-weight: 500;
+  margin-right: 5px;
+  color: #0083A9; /* Pantone 314C */
+}
+
+.headerValue {
+  font-weight: 600;
+  color: #333;
+}
+
+.nombrePaciente {
+  margin: 12px 0;
+}
+
+.nombrePaciente h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.documentoNumero {
+  background-color: #61D6EB; /* Pantone 311U */
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sexoIcono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
+  font-size: 1rem;
+}
+
+.masculino {
+  color: #00B5E2; /* Pantone-313u */
+}
+
+.femenino {
+  color: #61D6EB; /* Pantone 311U - reemplazando el rosa con azul claro de la paleta */
+}
+
+.otro {
+  color: #41C8DC; /* Pantone 311C */
+}
+
+.edadPaciente {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: normal;
+  margin-left: 0.5rem;
+}
+
+.separador {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 0;
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 12px;
+  margin-top: 8px;
+}
+
+.tabButton {
+  padding: 7px 32px;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  background: #e6f7fa;
+  color: #0083A9;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  outline: none;
+  border-bottom: 2px solid transparent;
+}
+
+.tabButton:hover {
+  background: #b6e6f2;
+  color: #00B5E2;
+}
+
+.activeTab {
+  background: #00B5E2;
+  color: #fff;
+  border-bottom: 2px solid #0083A9;
+  z-index: 1;
+}
+
+.modalContent {
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 200px);
+}
+
+.loadingContainer, .errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  min-height: 150px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  background-color: #f8f9fa;
+}
+
+.cancelButton {
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelButton:hover {
+  background-color: #e2e8f0;
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+  .modalContainer {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .headerRow {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .modalContent {
+    max-height: calc(95vh - 250px);
+    padding: 1rem;
+  }
+  
+  .itemGrupo {
+    min-width: 100px;
+  }
+}

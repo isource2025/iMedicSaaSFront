@@ -84,7 +84,7 @@ export default function LoginForm() {
                 <option value="" disabled>Cargando sectores...</option>
               ) : (
                 sectores.map((sector, index) => (
-                  <option key={index} value={`${sector.ValorPersonalSector}-${sector.DescripcionPersonalSector}`}>
+                  <option key={index} value={`${sector.ValorPersonalSector}-${sector.ValorSector}-${sector.DescripcionPersonalSector}`}>
                     {sector.DescripcionPersonalSector}
                   </option>
                 ))
