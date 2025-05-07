@@ -1,0 +1,98 @@
+.nuevaIndicacionContainer {
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.formGroup label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.formControl {
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid #e1e1e1;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.25);
+}
+
+.textArea {
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid #e1e1e1;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.textArea:focus {
+  outline: none;
+  border-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.25);
+}
+
+.saveButton {
+  background-color: #00B5E2; /* Pantone 313U - Color principal */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-right: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.saveButton:hover {
+  background-color: #61D6EB; /* Pantone 311U - Celeste claro para hover */
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.saveButton:active {
+  background-color: #0083A9; /* Pantone 314C - Azul oscuro para presionado */
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    flex-direction: column;
+    gap: 16px;
+  }
+}

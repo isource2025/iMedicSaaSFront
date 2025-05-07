@@ -1,0 +1,266 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* Header styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.backButton, .menuButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  font-size: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.backButton:hover, .menuButton:hover {
+  background-color: #f3f4f6;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+}
+
+.statusBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+}
+
+/* Content container with sidebar */
+.contentContainer {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 280px;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  height: 100%;
+  position: absolute;
+  left: -280px;
+  top: 0;
+  transition: left 0.3s ease;
+  z-index: 10;
+}
+
+.sidebarOpen {
+  left: 0;
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sidebarHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.closeSidebarButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.sidebarContent {
+  padding: 1rem 0;
+}
+
+.sidebarMenu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebarMenuItem {
+  margin-bottom: 0.5rem;
+}
+
+.sidebarButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #333;
+}
+
+.sidebarButton:hover {
+  background-color: #f3f4f6;
+  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+}
+
+/* Main content styles */
+.mainContent {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebarOpen + .mainContent {
+  margin-left: 280px;
+}
+
+/* Patient card styles */
+.patientCard {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+}
+
+.patientHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.patientName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.patientDocument {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.patientDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.detailValue {
+  font-size: 1rem;
+  color: #111827;
+}
+
+/* Section grid styles */
+.sectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.section {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  border-bottom: 2px solid #61D6EB; /* Pantone 311U - Azul celeste claro */
+  padding-bottom: 0.5rem;
+}
+
+.sectionContent {
+  min-height: 100px;
+}
+
+.emptyState {
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* Backdrop for sidebar when open */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .sectionGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .patientHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .patientDocument {
+    margin-top: 0.5rem;
+  }
+}

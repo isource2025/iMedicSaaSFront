@@ -49,7 +49,7 @@ export default function PatientsPage() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Administración de Pacientes</h1>
+      <h1 className={styles.title}>Administrador de Pacientes</h1>
       <div className={styles.content}>
         <div className={styles.controls}>
           <input

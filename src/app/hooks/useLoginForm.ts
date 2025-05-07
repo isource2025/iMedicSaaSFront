@@ -15,7 +15,7 @@ export function useLoginForm() {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
-  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sectores, setSectores] = useState<Sector[] | undefined>([]);
   const [loadingSectores, setLoadingSectores] = useState<boolean>(false);
   
   // Obtener la función para establecer el sector seleccionado desde el contexto global
@@ -32,15 +32,6 @@ export function useLoginForm() {
     
     setLoadingSectores(true);
     try {
-      // Datos de prueba en caso de que falle la conexión
-      const mockSectores = [
-        { ValorPersonalSector: "01", ValorSector: "URG", DescripcionPersonalSector: "Urgencias" },
-        { ValorPersonalSector: "02", ValorSector: "PED", DescripcionPersonalSector: "Pediatría" },
-        { ValorPersonalSector: "03", ValorSector: "CAR", DescripcionPersonalSector: "Cardiología" },
-        { ValorPersonalSector: "04", ValorSector: "ONC", DescripcionPersonalSector: "Oncología" },
-        { ValorPersonalSector: "05", ValorSector: "NEU", DescripcionPersonalSector: "Neurología" }
-      ];
-
       let data;
       try {
         // Intentar obtener los sectores filtrados por usuario
@@ -50,11 +41,11 @@ export function useLoginForm() {
         // Si no hay resultados, usar datos de prueba
         if (!data || data.length === 0) {
           console.log("No se encontraron sectores para el usuario, usando datos de prueba");
-          data = mockSectores;
+          
         }
       } catch (apiError) {
         console.error(`Error al obtener sectores para usuario ${username}:`, apiError);
-        data = mockSectores;
+        
       }
       
       setSectores(data);
@@ -125,24 +116,24 @@ const handleSubmit = async (e: React.FormEvent) => {
   setLoading(true);
 
   try {
-    // Descomponer el valor combinado del select: "5127-2-DIABETES"
-    // Donde: 5127 es ValorPersonalSector, 2 es ValorSector y DIABETES es DescripcionPersonalSector
     const [idPersonal, idSector, sectorDescripcion] = credentials.sector.split('-');
 
     const loginData = {
       username: credentials.username,
       password: credentials.password,
-      sector: idPersonal, // Enviamos el idpersonal como antes (para compatibilidad)
-      idsector: idSector // Ahora también enviamos el idsector
+      sector: idPersonal, // Enviamos el idPersonal como sector (para compatibilidad)
+      idSector: idSector  // Enviamos el idSector directamente
     };
 
     console.log('Datos de login:', loginData);
 
-    const data = await authService.login(loginData);
+    const data: LoginResponse = await authService.login(loginData);
 
+    console.log('Datos de respuesta LOGIN:', data);
+    
     if (data.success) {
       localStorage.setItem('token', data.token || '');
-
+      
       if (data.usuario) {
         localStorage.setItem('user', JSON.stringify(data.usuario));
       }

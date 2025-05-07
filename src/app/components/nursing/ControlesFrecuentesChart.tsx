@@ -51,11 +51,15 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
     const fecha = new Date(ctrl.FechaControl).toLocaleDateString('es-AR');
     const hora = formatTime(ctrl.HoraControl);
     
+    // Obtener el valor del parámetro seleccionado
+    const valor = ctrl[PARAM_MAP[parametro]];
+    
+    // Solo incluir valores que no sean 0, nulos o undefined
     return {
       fechaHora: `${fecha} ${hora}`,
-      valor: ctrl[PARAM_MAP[parametro]] ?? null
+      valor: (valor !== 0 && valor !== null && valor !== undefined) ? valor : null
     };
-  });
+  }).filter(item => item.valor !== null); // Filtrar puntos sin valor
 
   // Determinar la clase CSS para el título según el parámetro
   const titleClassName = styles[`chartTitle${parametro.charAt(0).toUpperCase() + parametro.slice(1)}`] || '';

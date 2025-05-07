@@ -96,6 +96,29 @@
   font-weight: 600;
 }
 
+.empresaInfo {
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+  background-color: #f8f9fa;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #41C8DC; /* Pantone 311C */
+}
+
+.empresaLabel {
+  font-size: 0.75rem;
+  color: #0083A9; /* Pantone 314C */
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+
+.empresaDescription {
+  font-size: 0.85rem;
+  color: #0083A9; /* Pantone 314C */
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .sectorInfo {
     margin-left: 0.5rem;

@@ -6,17 +6,22 @@ import {
   IoDocumentTextOutline,
   IoMale,
   IoFemale,
+  IoFlaskOutline,
+  IoExitOutline
 } from 'react-icons/io5';
 import { formatDate } from '../../utils/dateUtils';
 
 /**
  * Componente que muestra la información de una cama en formato de tarjeta
  */
-export const BedCard: React.FC<BedCardProps> = ({
+const BedCard: React.FC<BedCardProps> = ({
   bed,
   onNursingReport,
   onRecentIndications,
-  onChangeBed
+  onChangeBed,
+  onBedClick,
+  onLabResults,
+  onDischarge
 }) => {
   const renderGenderIcon = () => {
     const sexoValue = bed.sexoPaciente.toLowerCase();
@@ -54,7 +59,10 @@ export const BedCard: React.FC<BedCardProps> = ({
   else if (bed.estado) estadoClass = styles[`estado-${bed.estado}`] || '';
 
   return (
-    <div className={`${styles.bedCard} ${estadoClass}`}>
+    <div 
+      className={`${styles.bedCard} ${estadoClass}`} 
+      onClick={() => onBedClick && onBedClick(bed.id)}
+    >
       <div className={styles.cardHeader}>
         <div className={styles.bedInfo}>
           <span className={styles.sectorLabel}>{bed.sector}</span>
@@ -107,23 +115,54 @@ export const BedCard: React.FC<BedCardProps> = ({
               <span
                 className={styles.iconWrapper}
                 title="Reporte de Enfermería"
-                onClick={() => onNursingReport(bed)}
+                onClick={(e) => {
+                  e.stopPropagation(); // Detener la propagación del evento
+                  onNursingReport(bed);
+                }}
               >
                 <IoMedicalOutline className={styles.actionIcon} />
               </span>
+
+              <span
+                className={styles.iconWrapper}
+                title="Resultados de Laboratorio"
+                onClick={(e) => {
+                  e.stopPropagation(); // Detener la propagación del evento
+                  onLabResults && onLabResults(bed.id);
+                }}
+              >
+                <IoFlaskOutline className={styles.actionIcon} />
+              </span>
+
               <span
                 className={styles.iconWrapper}
                 title="Últimas Indicaciones"
-                onClick={() => onRecentIndications && onRecentIndications(bed.id)}
+                onClick={(e) => {
+                  e.stopPropagation(); // Detener la propagación del evento
+                  onRecentIndications && onRecentIndications(bed.id);
+                }}
               >
                 <IoDocumentTextOutline  className={styles.actionIcon} />
               </span>
               <span
                 className={styles.iconWrapper}
                 title="Cambiar Cama"
-                onClick={() => onChangeBed && onChangeBed(bed.id)}
+                onClick={(e) => {
+                  e.stopPropagation(); // Detener la propagación del evento
+                  onChangeBed && onChangeBed(bed.id);
+                }}
               >
                 <IoSwapHorizontalOutline className={styles.actionIcon} />
+              </span>
+              <span
+                className={styles.iconWrapper}
+                title="Egreso del Paciente"
+                onClick={(e) => {
+                  e.stopPropagation(); // Detener la propagación del evento
+                  onDischarge && onDischarge(bed.id);
+                }}
+              >
+                <IoExitOutline className={styles.actionIcon} />
               </span>
             </div>
           </>

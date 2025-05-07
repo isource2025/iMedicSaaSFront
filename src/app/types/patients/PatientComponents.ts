@@ -1,4 +1,4 @@
-import { Patient } from '../patients';
+import { Patient } from '../PatientInterface';
 
 /**
  * Props para el componente PatientForm

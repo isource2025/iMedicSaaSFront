@@ -83,9 +83,9 @@ export default function LoginForm() {
               {loadingSectores ? (
                 <option value="" disabled>Cargando sectores...</option>
               ) : (
-                sectores.map((sector, index) => (
-                  <option key={index} value={`${sector.ValorPersonalSector}-${sector.ValorSector}-${sector.DescripcionPersonalSector}`}>
-                    {sector.DescripcionPersonalSector}
+                sectores?.map((sector, index) => (
+                  <option key={index} value={`${sector.idPersonal}-${sector.idSector}-${sector.descripcionSector}`}>
+                    {sector.descripcionSector}
                   </option>
                 ))
               )}
@@ -115,6 +115,11 @@ export default function LoginForm() {
             type="submit"
             className={styles.submitButton}
             disabled={loading}
+            style={{ 
+              backgroundColor: '#00B5E2', // Pantone 313U
+              borderColor: '#0083A9',    // Pantone 314C
+              color: 'white'
+            }}
           >
             {loading ? 'Procesando...' : 'Ingresar'}
           </button>

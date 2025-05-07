@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { bedsService } from '../services/bedsService';
 import { Bed, BedState } from '../types/beds';
 import { useAppContext } from '../contexts/AppContext';
 
 export const useBedsManagement = () => {
-  const { sectorSeleccionado } = useAppContext();
+  const { sectorSeleccionado, idsector } = useAppContext();
   const [beds, setBeds] = useState<Bed[]>([]);
   const [bedStates, setBedStates] = useState<BedState[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,13 +15,24 @@ export const useBedsManagement = () => {
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sectors, setSectors] = useState<{id: string, valor: string, descripcion: string}[]>([]);
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
+  const [refreshInterval, setRefreshInterval] = useState<number>(30000); // 30 segundos por defecto
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUpdateTimeRef = useRef<number>(Date.now());
 
   // Cargar el sector del usuario desde el contexto global
   useEffect(() => {
-    if (sectorSeleccionado && sectorSeleccionado.idsector) {
-      setSectorFilter(sectorSeleccionado.idsector);
+    // Usar el idsector del contexto directamente si está disponible
+    if (idsector) {
+      console.log('Estableciendo sector inicial desde contexto:', idsector);
+      setSectorFilter(idsector);
+    } 
+    // Alternativamente, usar el sectorSeleccionado si está disponible
+    else if (sectorSeleccionado && sectorSeleccionado.idSector) {
+      console.log('Estableciendo sector inicial desde sectorSeleccionado:', sectorSeleccionado.idSector);
+      setSectorFilter(sectorSeleccionado.idSector);
     }
-  }, [sectorSeleccionado]);
+  }, [sectorSeleccionado, idsector]);
 
   const fetchBedStates = useCallback(async () => {
     try {
@@ -60,6 +71,21 @@ export const useBedsManagement = () => {
     fetchSectores();
   }, [fetchBeds, fetchBedStates, fetchSectores]);
 
+  useEffect(() => {
+    if (autoRefresh) {
+      pollingIntervalRef.current = setInterval(fetchBeds, refreshInterval);
+      lastUpdateTimeRef.current = Date.now();
+    } else if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [autoRefresh, refreshInterval, fetchBeds]);
+
   const filteredBeds = beds.filter(bed => {
     // Filtrar por estado de cama
     const estadoMatch = 
@@ -92,6 +118,10 @@ export const useBedsManagement = () => {
     setSectorFilter,
     searchTerm,
     setSearchTerm,
-    refreshBeds: fetchBeds
+    refreshBeds: fetchBeds,
+    autoRefresh,
+    setAutoRefresh,
+    refreshInterval,
+    setRefreshInterval
   };
 };

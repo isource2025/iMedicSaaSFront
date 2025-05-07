@@ -96,30 +96,23 @@ export const formatDate = (
  * @param timeString Cadena de tiempo a formatear
  * @returns Tiempo formateado como HH:MM o el valor original si no se puede formatear
  */
-export const formatTime = (timeString: string | null | undefined): string => {
-  if (!timeString) return '-';
-  
+export const formatTime = (clarionTime: number | string | null | undefined): string => {
+  if (!clarionTime || Number(clarionTime) === 0) return '-';
+
   try {
-    // Si ya tiene formato de hora con ":" (por ejemplo, "14:30:00")
-    if (timeString.includes(':')) {
-      // Extraer solo horas y minutos (HH:MM)
-      return timeString.substring(0, 5);
-    }
-    
-    // Si es un número (segundos desde medianoche)
-    const numericTime = parseInt(timeString, 10);
-    if (!isNaN(numericTime)) {
-      const hours = Math.floor(numericTime / 3600);
-      const minutes = Math.floor((numericTime % 3600) / 60);
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    return timeString;
-  } catch (error) {
-    console.error('Error al formatear hora:', error);
-    return timeString;
+    const totalSeconds = Math.floor(Number(clarionTime) / 100); // Clarion → centésimas de segundo
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  } catch (err) {
+    console.error('Error al convertir hora Clarion:', err);
+    return '-';
   }
 };
+
+
+
 
 /**
  * Hook para formatear fechas en el sistema

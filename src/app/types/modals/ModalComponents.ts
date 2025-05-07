@@ -1,11 +1,6 @@
 import React from 'react';
 
 /**
- * Tamaños disponibles para los modales
- */
-export type ModalSize = 'small' | 'medium' | 'large' | 'full';
-
-/**
  * Props para el componente ModalBase
  */
 export interface ModalBaseProps {
@@ -13,7 +8,6 @@ export interface ModalBaseProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  size?: ModalSize;
 }
 
 /**

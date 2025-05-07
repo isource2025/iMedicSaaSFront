@@ -1,0 +1,296 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContainer {
+  background-color: white;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 2px solid #61D6EB; /* Pantone 311U - Azul celeste claro */
+  background-color: #f8fafc;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.modalContent {
+  padding: 1.5rem;
+  overflow: hidden;
+  flex: 1;
+}
+.formGroup{
+  display: flex;
+  width: 100%;
+  margin-bottom: 16px;
+
+}
+.formGroup input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding:8px;
+  
+}
+.searchForm {
+  margin-bottom: 1.5rem;
+}
+
+.searchHint {
+  display: block;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
+.searchInputContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.2);
+}
+
+.searchButton {
+  padding: 0.75rem 1rem;
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.searchButton:hover {
+  background-color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.errorMessage {
+  background-color: #ffecec;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #e74c3c;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  height: 50vh;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.loadingSpinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid #e2e8f0;
+  border-top-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.diagnosticosTable {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 50vh;
+}
+
+.tableHeader {
+  display: flex;
+  background-color: #e6f7fb;
+  border-bottom: 1px solid #61D6EB; /* Pantone 311U - Azul celeste claro */
+  font-weight: 600;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.tableBody {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.tableRow {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background-color: #f1f5f9;
+}
+
+.codeColumn {
+  width: 25%;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.descriptionColumn {
+  width: 75%;
+  padding: 0.75rem 1rem;
+}
+
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-radius: 0.375rem;
+}
+
+.paginationContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.paginationButton {
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.paginationButton:hover:not(:disabled) {
+  background-color: #e2e8f0;
+}
+
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.cancelButton {
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.cancelButton:hover {
+  background-color: #e2e8f0;
+}
+
+.submitButton {
+  padding: 0.5rem 1rem;
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+  border: 1px solid #00B5E2;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.submitButton:hover {
+  background-color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
