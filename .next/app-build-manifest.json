@@ -12,9 +12,10 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/dashboard/beds/page": [
+    "/not-found": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
+<<<<<<< HEAD
       "static/css/app/dashboard/beds/page.css",
       "static/chunks/app/dashboard/beds/page.js"
     ],
@@ -29,6 +30,9 @@
       "static/chunks/main-app.js",
       "static/css/app/dashboard/bed-detail/page.css",
       "static/chunks/app/dashboard/bed-detail/page.js"
+=======
+      "static/chunks/app/not-found.js"
+>>>>>>> 584acaccfce93bf026155b31264c922f82c76b5b
     ]
   }
 }

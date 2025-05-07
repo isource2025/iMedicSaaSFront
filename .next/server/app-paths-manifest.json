@@ -1,3 +1,8 @@
 {
+<<<<<<< HEAD
   "/dashboard/beds/page": "app/dashboard/beds/page.js"
+=======
+  "/not-found": "app/not-found.js",
+  "/page": "app/page.js"
+>>>>>>> 584acaccfce93bf026155b31264c922f82c76b5b
 }
