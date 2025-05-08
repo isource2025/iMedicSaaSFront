@@ -5,14 +5,13 @@ import { useRouter } from 'next/navigation';
 import ModalBasePaciente from './ModalBasePaciente';
 import ModalBusquedaDiagnosticos from './ModalBusquedaDiagnosticos';
 import styles from './ModalCambiarCama.module.css';
-import visitaService from '../../services/visitaService';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
-import disposicionEgresoService from '../../services/disposicionEgresoService';
 import diagnosticosService from '../../services/diagnosticosService';
+import estadoAmbulatorioService from '../../services/estadoAmbulatorioService';
 import { DiagnosticoCie10 } from '../../types/diagnosticos';
+import { EstadoAmbulatorio } from '../../types/estadoAmbulatorio';
 import { useAppContext } from '../../contexts/AppContext';
 import { useBedsManagement } from '../../hooks/useBedsManagement';
-import { Bed, BedEstado } from '../../types/beds';
 import BedFilters from '../beds/BedFilters';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 
@@ -50,11 +49,11 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Datos del formulario para el egreso
+  // Datos del formulario para la nueva ubicación
   const [fechaEgreso, setFechaEgreso] = useState('');
   const [horaEgreso, setHoraEgreso] = useState('');
-  const [disposicionEgreso, setDisposicionEgreso] = useState('');
-  const [disposiciones, setDisposiciones] = useState<DisposicionEgreso[]>([]);
+  const [estadoAmbulatorio, setEstadoAmbulatorio] = useState('');
+  const [estadosAmbulatorios, setEstadosAmbulatorios] = useState<EstadoAmbulatorio[]>([]);
   
   // Estado para la ubicación actual
   const [ubicacionActual, setUbicacionActual] = useState<{
@@ -92,6 +91,29 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   const [camaSeleccionada, setCamaSeleccionada] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   
+  // Estado para la información completa del traslado
+  const [infoTraslado, setInfoTraslado] = useState<{
+    numeroVisita: number;
+    camaOrigen: string;
+    sectorOrigen: string;
+    camaDestino: string | null;
+    sectorDestino: string | null;
+    fechaTraslado: string;
+    horaTraslado: string;
+    disposicionTraslado: string | null;
+    diagnosticoTraslado: string | null;
+  }>({    
+    numeroVisita: numeroVisita,
+    camaOrigen: bedId,
+    sectorOrigen: bedSector,
+    camaDestino: null,
+    sectorDestino: null,
+    fechaTraslado: '',
+    horaTraslado: '',
+    disposicionTraslado: null,
+    diagnosticoTraslado: null
+  });
+  
   // Estados para la búsqueda de diagnósticos
   const [busquedaDiagnostico, setBusquedaDiagnostico] = useState('');
   const [diagnosticosEncontrados, setDiagnosticosEncontrados] = useState<DiagnosticoCie10[]>([]);
@@ -111,6 +133,8 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     horaEgreso?: string;
     disposicionEgreso?: string;
     camaSeleccionada?: string;
+    estadoAmbulatorio?: string;
+    diagnostico?: string;
   }>({});
 
   // Inicializar fecha y hora cuando se abre el modal o cuando se monta el componente
@@ -118,8 +142,16 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     const setCurrentDateTime = () => {
       const now = new Date();
       const formattedDate = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      const formattedTime = now.toTimeString().substring(0, 5); // Formato HH:MM
       setFechaEgreso(formattedDate);
-      setHoraEgreso(now.toTimeString().substring(0, 5)); // Formato HH:MM
+      setHoraEgreso(formattedTime);
+      
+      // Actualizar la información de traslado con fecha y hora
+      setInfoTraslado(prev => ({
+        ...prev,
+        fechaTraslado: formattedDate,
+        horaTraslado: formattedTime
+      }));
     };
 
     // Establecer fecha y hora actual al abrir el modal
@@ -159,21 +191,23 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     }
   };
 
-  // Cargar disposiciones de egreso cuando se abre el modal
+  
+  
+  // Cargar estados ambulatorios cuando se abre el modal
   useEffect(() => {
     if (!isOpen) return;
     
-    const fetchDisposiciones = async () => {
+    const fetchEstadosAmbulatorios = async () => {
       try {
-        const data = await disposicionEgresoService.getDisposicionesEgreso();
-        setDisposiciones(data as DisposicionEgreso[]);
+        const data = await estadoAmbulatorioService.getEstadosAmbulatorios();
+        setEstadosAmbulatorios(data as EstadoAmbulatorio[]);
       } catch (err) {
-        console.error('Error cargando disposiciones:', err);
-        setError('No se pudieron cargar las disposiciones de egreso');
+        console.error('Error cargando estados ambulatorios:', err);
+        setError('No se pudieron cargar los estados ambulatorios');
       }
     };
 
-    fetchDisposiciones();
+    fetchEstadosAmbulatorios();
   }, [isOpen]);
 
   // Filtrar camas disponibles basado en los filtros seleccionados
@@ -190,12 +224,12 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                          cama.numeroCama.toLowerCase().includes(searchTerm.toLowerCase());
       
       // Excluir la cama actual
-      const notCurrentBed = cama.numeroCama !== bedId;
+      const notCurrentBed = cama.id !== bedId;
       
       return estadoMatch && sectorMatch && searchMatch && notCurrentBed;
     })
     .map((cama) => ({
-      id: cama.numeroCama,
+      id: cama.id,
       sector: cama.sector,
       numeroCama: cama.numeroCama
     }));
@@ -214,44 +248,47 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  // Buscar diagnósticos automáticamente cuando se escribe
-  const buscarDiagnosticosAutomatico = async () => {
-    if (!busquedaDiagnostico || busquedaDiagnostico.length < 3) {
-      setDiagnosticosEncontrados([]);
-      setMostrarResultados(false);
-      return;
-    }
-
-    setBuscandoDiagnostico(true);
-    setErrorDiagnostico(null);
-    setMostrarResultados(true);
-
-    try {
-      const diagnosticos = await diagnosticosService.buscarDiagnosticosCie10(busquedaDiagnostico);
-      
-      if (Array.isArray(diagnosticos) && diagnosticos.length > 0) {
-        // Verificar que cada diagnóstico tenga un código OMS válido
-        const diagnosticosValidos = diagnosticos.filter(diag => diag.CodigoOMS);
+  // Buscar diagnósticos al escribir
+  useEffect(() => {
+    const buscarDiagnosticosAutomatico = async () => {
+      if (busquedaDiagnostico.length >= 1) {
+        setBuscandoDiagnostico(true);
+        setErrorDiagnostico(null);
         
-        if (diagnosticosValidos.length === 0) {
-          setErrorDiagnostico("No se encontraron diagnósticos con código CIE-10 válido");
-          setDiagnosticosEncontrados([]);
-        } else {
-          setDiagnosticosEncontrados(diagnosticosValidos);
+        try {
+          const resultados: DiagnosticoCie10[] = await diagnosticosService.buscarDiagnosticosCie10(busquedaDiagnostico);
+          
+          // Verificar que cada diagnóstico tenga el código OMS
+          const resultadosValidos = resultados.map(diag => {
+            // Si no tiene CodigoOMS pero tiene otro campo que podría contenerlo
+            if (!diag.CodigoOMS && (diag as any).codigoCie10) {
+              return {
+                ...diag,
+                CodigoOMS: (diag as any).codigoCie10
+              };
+            }
+            return diag;
+          }).filter(diag => diag.CodigoOMS || diag.idDiagnostico);
+          
+          console.log('Diagnósticos encontrados:', resultadosValidos);
+          setDiagnosticosEncontrados(resultadosValidos);
+          setMostrarResultados(resultadosValidos.length > 0);
+          
+        } catch (err) {
+          console.error('Error al buscar diagnósticos:', err);
+          setErrorDiagnostico('Error al buscar diagnósticos');
+        } finally {
+          setBuscandoDiagnostico(false);
         }
       } else {
-        setErrorDiagnostico("No se encontraron diagnósticos que coincidan con la búsqueda");
         setDiagnosticosEncontrados([]);
+        setMostrarResultados(false);
       }
-    } catch (err) {
-      console.error("Error buscando diagnósticos:", err);
-      setErrorDiagnostico("Error al buscar diagnósticos. Intente nuevamente.");
-      setDiagnosticosEncontrados([]);
-    } finally {
-      setBuscandoDiagnostico(false);
-    }
-  };
+    };
+    
+    const timeoutId = setTimeout(buscarDiagnosticosAutomatico, 300);
+    return () => clearTimeout(timeoutId);
+  }, [busquedaDiagnostico]);
 
   // Funciones para manejo de diagnósticos
   const abrirModalBusqueda = () => {
@@ -274,38 +311,55 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     setBusquedaDiagnostico('');
     setMostrarResultados(false);
     setErrorDiagnostico(null);
+    
+    // Actualizar la información de traslado con el diagnóstico seleccionado
+    setInfoTraslado(prev => ({
+      ...prev,
+      diagnosticoTraslado: diagnostico.CodigoOMS
+    }));
   };
 
   const eliminarDiagnosticoSeleccionado = () => {
     setDiagnosticoSeleccionado(null);
+    
+    // Actualizar la información de traslado eliminando el diagnóstico
+    setInfoTraslado(prev => ({
+      ...prev,
+      diagnosticoTraslado: null
+    }));
   };
 
-  const handleBusquedaKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      buscarDiagnosticosAutomatico();
-    }
-  };
+ 
 
   // Validación del formulario
   const validarFormulario = () => {
     const errores: {
       fechaEgreso?: string;
       horaEgreso?: string;
-      disposicionEgreso?: string;
       camaSeleccionada?: string;
+      diagnostico?: string;
+      estadoAmbulatorio?: string;
     } = {};
     
-    if (!fechaEgreso) errores.fechaEgreso = "La fecha de egreso es obligatoria";
-    if (!horaEgreso) errores.horaEgreso = "La hora de egreso es obligatoria";
-    if (!disposicionEgreso) errores.disposicionEgreso = "La disposición de egreso es obligatoria";
+    // Validar campos obligatorios
+    if (!fechaEgreso) errores.fechaEgreso = "La fecha es obligatoria";
+    if (!horaEgreso) errores.horaEgreso = "La hora es obligatoria";
     if (!camaSeleccionada) errores.camaSeleccionada = "Debe seleccionar una cama destino";
+    if (!estadoAmbulatorio) errores.estadoAmbulatorio = "Debe seleccionar un estado ambulatorio";
+    
+    // Validar formato de fecha y hora
+    const fechaActual = new Date();
+    const fechaSeleccionada = new Date(`${fechaEgreso}T${horaEgreso}:00`);
+    
+    if (fechaEgreso && fechaSeleccionada < fechaActual) {
+      errores.fechaEgreso = "La fecha y hora no pueden ser anteriores a la actual";
+    }
     
     setFormErrors(errores);
     return Object.keys(errores).length === 0;
   };
 
-  // Maneja el cambio de cama y registra el egreso
+  // Maneja el cambio de cama y registra la nueva ubicación
   const handleSubmit = async () => {
     if (!validarFormulario()) return;
     
@@ -314,51 +368,70 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     setSuccess(false);
     
     try {
-      // 1. Registrar el egreso de la cama actual
-      const fechaHoraEgreso = `${fechaEgreso}T${horaEgreso}:00`;
-      const [fechaEgresoSplit, horaEgresoSplit] = [fechaEgreso, horaEgreso];
-      
-      // Crear objeto con datos de egreso
-      const datosEgreso = {
-        fechaEgreso: fechaEgresoSplit,
-        horaEgreso: horaEgresoSplit,
-        disposicionEgreso: disposicionEgreso ? parseInt(disposicionEgreso) : null,
-        diagnostico: diagnosticoSeleccionado?.CodigoOMS || null,
-      };
-      
-      // Registrar el egreso
-      const responseEgreso = await visitaMovimientoService.actualizarUltimoMovimiento(numeroVisita, datosEgreso);
-      
-      if (!responseEgreso.success) {
-        throw new Error(responseEgreso.message || 'Error al registrar el egreso');
+      // Verificar que toda la información necesaria esté en el objeto infoTraslado
+      if (!camaSeleccionada || !fechaEgreso || !horaEgreso) {
+        throw new Error('Faltan datos necesarios para el traslado');
       }
       
-      // 2. Registrar el ingreso a la nueva cama
-      // Aquí deberíamos tener un endpoint para cambiar de cama, pero como no existe,
-      // vamos a simular el proceso con una llamada a la API
+      // Buscar la cama seleccionada para obtener su sector
+      const camaDestino = camasDisponibles.find(cama => cama.id === camaSeleccionada);
+      if (!camaDestino) {
+        throw new Error('La cama seleccionada ya no está disponible');
+      }
+      
+      // Formatear fecha y hora para la API
+      const fechaHoraTraslado = `${fechaEgreso}T${horaEgreso}:00`;
+      
+      // Preparar los datos simplificados para enviar al backend
+      const datosTraslado = {
+        // Datos principales solicitados
+        camaDestino: camaSeleccionada,
+        fecha: fechaEgreso,
+        hora: horaEgreso,
+        diagnostico: diagnosticoSeleccionado?.CodigoOMS || null,
+        estadoAmbulatorio: estadoAmbulatorio,
+        
+        // Datos adicionales que podrían ser útiles para el backend
+        numeroVisita: numeroVisita,
+        camaOrigen: bedId,
+        sectorOrigen: bedSector,
+        sectorDestino: camaDestino.sector,
+      };
+      
+      console.log('Datos de traslado a enviar al backend:', datosTraslado);
+      
+      // Registrar la nueva ubicación en el backend
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds/cambiar-cama`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            numeroVisita,
-            camaAnterior: bedId,
-            camaNueva: camaSeleccionada,
-            fechaHora: fechaHoraEgreso,
-            
-          }),
+          body: JSON.stringify(datosTraslado),
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al cambiar de cama');
+        }
         
         const data = await response.json();
         if (!data.success) {
           throw new Error(data.message || 'Error al cambiar de cama');
         }
+        
+        console.log('Respuesta del backend:', data);
       } catch (err: any) {
         console.error('Error en el cambio de cama:', err);
-        // Si el endpoint no existe, mostramos un mensaje de éxito simulado
-        console.log('Simulando cambio de cama exitoso debido a que el endpoint puede no existir');
+        
+        // Si estamos en desarrollo o el endpoint no existe, simulamos éxito
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Simulando cambio de cama exitoso en entorno de desarrollo');
+          console.log('Datos enviados al backend:', datosTraslado);
+        } else {
+          // En producción, propagamos el error
+          throw err;
+        }
       }
       
       setSuccess(true);
@@ -429,8 +502,208 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
           
           {!loading && !success && (
             <>
+<div className={styles.formSubSection}>
+                <h3 className={styles.sectionTitle}>Información para Traslado</h3>
+                
+              {/* SELECCION DE CAMAS  */}
+              <div className={styles.formSubSection}>
+                <h4 className={styles.subSectionTitle}>Seleccionar Cama Destino</h4>
+                
+                <div className={styles.filtersSection}>
+                  <BedFilters
+                    sectors={sectors}
+                    placeHolder='Buscar cama...'
+                    bedStates={bedStates.filter(state => state.valor === 'D' || state.valor === 'L')}
+                    filter={filter}
+                    setFilter={setFilter}
+                    sectorFilter={sectorFilter}
+                    setSectorFilter={setSectorFilter}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    refreshBeds={handleRefreshBeds}
+                    autoRefresh={false}
+                    setAutoRefresh={() => {}}
+                    refreshInterval={30000}
+                    setRefreshInterval={() => {}}
+                    lastUpdateTime={lastUpdateTime}
+                  />
+                </div>
+                
+                <div className={styles.camasDisponiblesContainer}>
+                  <h5 className={styles.camasDisponiblesTitle}>Camas Disponibles ({camasDisponibles.length})</h5>
+                  
+                  {loadingBeds ? (
+                    <div className={styles.loadingMessage}>Cargando camas disponibles...</div>
+                  ) : errorBeds ? (
+                    <div className={styles.errorMessage}>{errorBeds}</div>
+                  ) : camasDisponibles.length === 0 ? (
+                    <div className={styles.errorMessage}>No hay camas disponibles con los filtros seleccionados</div>
+                  ) : (
+                    <>
+                      <div className={styles.camasGrid}>
+                        {camasDisponibles.map((cama) => (
+                          <div
+                            key={cama.id}
+                            className={`${styles.camaCard} ${camaSeleccionada === cama.id ? styles.camaSeleccionada : ''}`}
+                            onClick={() => {
+                              console.log('Cama seleccionada:', cama);
+                              setCamaSeleccionada(cama.id);
+                            }}
+                          >
+                            <div className={styles.camaInfo}>
+                              <span className={styles.camaSector}>{cama.sector}</span>
+                              <span className={styles.camaNumeroCama}>{cama.numeroCama}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {formErrors.camaSeleccionada && (
+                        <span className={styles.fieldError}>{formErrors.camaSeleccionada}</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+               {/* SELECCION DE CAMAS  */}
+
+               <div className={styles.formGrid}>
+                  {/* Fecha de traslado */}
+                  <div className={styles.formGroup}>
+                    <label htmlFor="fechaEgreso" className={styles.label}>Fecha de traslado</label>
+                    <input
+                      type="date"
+                      id="fechaEgreso"
+                      value={fechaEgreso}
+                      onChange={(e) => setFechaEgreso(e.target.value)}
+                      className={`${styles.input} ${formErrors.fechaEgreso ? styles.inputError : ''}`}
+                      disabled={loading || success}
+                    />
+                    {formErrors.fechaEgreso && (
+                      <span className={styles.fieldError}>{formErrors.fechaEgreso}</span>
+                    )}
+                  </div>
+
+                  {/* Hora de traslado */}
+                  <div className={styles.formGroup}>
+                    <label htmlFor="horaEgreso" className={styles.label}>Hora de traslado</label>
+                    <input
+                      type="time"
+                      id="horaEgreso"
+                      value={horaEgreso}
+                      onChange={(e) => setHoraEgreso(e.target.value)}
+                      className={`${styles.input} ${formErrors.horaEgreso ? styles.inputError : ''}`}
+                      disabled={loading || success}
+                    />
+                    {formErrors.horaEgreso && (
+                      <span className={styles.fieldError}>{formErrors.horaEgreso}</span>
+                    )}
+                  </div>
+
+                  {/* Estado Ambulatorio */}
+                  <div className={styles.formGroup}>
+                    <label htmlFor="estadoAmbulatorio" className={styles.label}>Estado Ambulatorio</label>
+                    <select
+                      id="estadoAmbulatorio"
+                      value={estadoAmbulatorio}
+                      onChange={(e) => setEstadoAmbulatorio(e.target.value)}
+                      className={`${styles.select} ${formErrors.estadoAmbulatorio ? styles.inputError : ''}`}
+                      disabled={loading || success}
+                    >
+                      <option value="">Seleccione un estado ambulatorio</option>
+                      {estadosAmbulatorios.map((estado) => (
+                        <option key={estado.valor} value={estado.valor || ''}>
+                          {estado.descripcion}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.estadoAmbulatorio && (
+                      <span className={styles.fieldError}>{formErrors.estadoAmbulatorio}</span>
+                    )}
+                  </div>
+
+                  {/* Diagnóstico */}
+                  <div className={styles.formGroup}>
+                <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico CIE-10</label>
+                <div className={styles.diagnosticoContainer}>
+                  <div className={styles.diagnosticoInputContainer}>
+                    <input
+                      id="diagnosticoEgreso"
+                      type="text"
+                      value={busquedaDiagnostico}
+                      onChange={(e) => setBusquedaDiagnostico(e.target.value)}
+                      disabled={loading || success || !!diagnosticoSeleccionado}
+                      placeholder="Buscar por código o descripción"
+                      className={styles.input}
+                      ref={busquedaInputRef}
+                    />
+                    <button
+                      type="button"
+                      onClick={abrirModalBusqueda}
+                      disabled={loading || success}
+                      className={styles.buscarDiagnosticoBtn}
+                      aria-label="Búsqueda avanzada de diagnósticos"
+                      title="Búsqueda avanzada de diagnósticos"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  {errorDiagnostico && !diagnosticoSeleccionado && (
+                    <span className={styles.fieldError}>{errorDiagnostico}</span>
+                  )}
+                  
+                  {mostrarResultados && diagnosticosEncontrados.length > 0 && !diagnosticoSeleccionado && (
+                    <div className={styles.resultadosDiagnosticosUp} ref={resultadosRef}>
+                      {buscandoDiagnostico ? (
+                        <div className={styles.loadingResults}>Buscando...</div>
+                      ) : (
+                        diagnosticosEncontrados.map((diag) => (
+                          <div 
+                            key={diag.idDiagnostico} 
+                            className={styles.resultadoDiagnostico}
+                            onClick={() => seleccionarDiagnostico(diag)}
+                          >
+                            <span className={styles.diagnosticoCode}>{diag.CodigoOMS}</span> - {diag.descripcion}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                  
+                  {diagnosticoSeleccionado && (
+                    <div className={styles.selectedDiagnostico}>
+                      <span className={styles.diagnosticoCode}>{diagnosticoSeleccionado.CodigoOMS}</span>
+                      <span className={styles.diagnosticoDesc}>{diagnosticoSeleccionado.descripcion}</span>
+                      <button
+                        type="button"
+                        onClick={eliminarDiagnosticoSeleccionado}
+                        className={styles.eliminarDiagnosticoBtn}
+                        aria-label="Eliminar diagnóstico"
+                        disabled={loading || success}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                  
+                  {!diagnosticoSeleccionado && (
+                    <span className={styles.fieldInfo}>
+                      Busque por código o descripción del diagnóstico CIE-10
+                    </span>
+                  )}
+                </div>
+                  </div>
+                </div>
+              </div>
+
+            {/* SECTION UBICACION ACTUAL  */}
             <h3 className={styles.sectionTitle}>Ubicación Actual</h3>
             
+
+            <div className={styles.egresoSection}>
             {loadingUbicacion ? (
               <div className={styles.loadingMessage}>
                 <span>Cargando datos de ubicación...</span>
@@ -501,7 +774,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                 
                 {ubicacionActual.horaEgreso && (
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>Hora de Egreso</label>
+                    <label className={styles.label}>Hora de Nueva Ubicación</label>
                     <input 
                       type="text" 
                       className={styles.input} 
@@ -514,7 +787,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                 
                 {ubicacionActual.disposicionEgreso !== undefined && (
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>Disposición de Egreso</label>
+                    <label className={styles.label}>Disposición de Nueva Ubicación</label>
                     <input 
                       type="text" 
                       className={styles.input} 
@@ -543,196 +816,6 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                 No se encontraron datos de ubicación actual para esta visita.
               </div>
             )}
-            
-            <h3 className={styles.sectionTitle}>Seleccionar Cama Destino</h3>
-            
-            <div className={styles.filtersSection}>
-              <BedFilters
-                sectors={sectors}
-                bedStates={bedStates.filter(state => state.valor === 'D' || state.valor === 'L')}
-                filter={filter}
-                setFilter={setFilter}
-                sectorFilter={sectorFilter}
-                setSectorFilter={setSectorFilter}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                refreshBeds={handleRefreshBeds}
-                autoRefresh={false}
-                setAutoRefresh={() => {}}
-                refreshInterval={30000}
-                setRefreshInterval={() => {}}
-                lastUpdateTime={lastUpdateTime}
-              />
-            </div>
-            
-            <div className={styles.camasDisponiblesContainer}>
-              <h4 className={styles.camasDisponiblesTitle}>Camas Disponibles ({camasDisponibles.length})</h4>
-              
-              {loadingBeds ? (
-                <div className={styles.loadingMessage}>Cargando camas disponibles...</div>
-              ) : errorBeds ? (
-                <div className={styles.errorMessage}>{errorBeds}</div>
-              ) : camasDisponibles.length === 0 ? (
-                <div className={styles.errorMessage}>No hay camas disponibles con los filtros seleccionados</div>
-              ) : (
-                <>
-                  <div className={styles.camasList}>
-                    {camasDisponibles.map((cama) => (
-                      <div 
-                        key={cama.id}
-                        className={`${styles.camaItem} ${camaSeleccionada === cama.id ? styles.camaItemSelected : ''}`}
-                        onClick={() => setCamaSeleccionada(cama.id)}
-                      >
-                        <span className={styles.camaItemSector}>{cama.sector}</span>
-                        <span className={styles.camaItemNumero}>{cama.numeroCama}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {formErrors.camaSeleccionada && (
-                    <span className={styles.fieldError}>{formErrors.camaSeleccionada}</span>
-                  )}
-                </>
-              )}
-            </div>
-            
-            <div className={styles.egresoSection}>
-              <h3 className={styles.sectionTitle}>Datos de Egreso</h3>
-              
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="fechaEgreso" className={styles.label}>Fecha de Egreso</label>
-                  <input
-                    type="date"
-                    id="fechaEgreso"
-                    value={fechaEgreso}
-                    onChange={(e) => setFechaEgreso(e.target.value)}
-                    className={`${styles.input} ${formErrors.fechaEgreso ? styles.inputError : ''}`}
-                    disabled={loading || success}
-                  />
-                  {formErrors.fechaEgreso && (
-                    <span className={styles.fieldError}>{formErrors.fechaEgreso}</span>
-                  )}
-                </div>
-                
-                <div className={styles.formGroup}>
-                  <label htmlFor="horaEgreso" className={styles.label}>Hora de Egreso</label>
-                  <input
-                    type="time"
-                    id="horaEgreso"
-                    value={horaEgreso}
-                    onChange={(e) => setHoraEgreso(e.target.value)}
-                    className={`${styles.input} ${formErrors.horaEgreso ? styles.inputError : ''}`}
-                    disabled={loading || success}
-                  />
-                  {formErrors.horaEgreso && (
-                    <span className={styles.fieldError}>{formErrors.horaEgreso}</span>
-                  )}
-                </div>
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label htmlFor="disposicionEgreso" className={styles.label}>Disposición</label>
-                <select
-                  id="disposicionEgreso"
-                  value={disposicionEgreso}
-                  onChange={(e) => setDisposicionEgreso(e.target.value)}
-                  className={`${styles.select} ${formErrors.disposicionEgreso ? styles.inputError : ''}`}
-                  disabled={loading || success}
-                >
-                  <option value="">Seleccione una disposición</option>
-                  {disposiciones.map((disp) => (
-                    <option key={disp.valor} value={disp.valor || ''}>
-                      {disp.descripcion}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.disposicionEgreso && (
-                  <span className={styles.fieldError}>{formErrors.disposicionEgreso}</span>
-                )}
-              </div>
-             
-              <div className={styles.formGroup}>
-                <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico de Egreso (CIE-10)</label>
-                <div className={styles.diagnosticoContainer}>
-                  <div className={styles.diagnosticoInputContainer}>
-                    <input
-                      type="text"
-                      id="diagnosticoEgreso"
-                      value={busquedaDiagnostico}
-                      onChange={(e) => {
-                        setBusquedaDiagnostico(e.target.value);
-                        if (e.target.value.length >= 3) {
-                          buscarDiagnosticosAutomatico();
-                        } else {
-                          setMostrarResultados(false);
-                        }
-                      }}
-                      onKeyDown={handleBusquedaKeyDown}
-                      disabled={loading || success || !!diagnosticoSeleccionado}
-                      placeholder="Buscar por código o descripción"
-                      className={styles.input}
-                      ref={busquedaInputRef}
-                    />
-                    <button
-                      type="button"
-                      onClick={abrirModalBusqueda}
-                      disabled={loading || success}
-                      className={styles.buscarDiagnosticoBtn}
-                      aria-label="Búsqueda avanzada de diagnósticos"
-                      title="Búsqueda avanzada de diagnósticos"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  {errorDiagnostico && !diagnosticoSeleccionado && (
-                    <span className={styles.fieldError}>{errorDiagnostico}</span>
-                  )}
-                  
-                  {mostrarResultados && diagnosticosEncontrados.length > 0 && !diagnosticoSeleccionado && (
-                    <div className={styles.resultadosDiagnosticosUp} ref={resultadosRef}>
-                      {buscandoDiagnostico ? (
-                        <div className={styles.loadingResults}>Buscando...</div>
-                      ) : (
-                        diagnosticosEncontrados.map((diag) => (
-                          <div 
-                            key={diag.idDiagnostico} 
-                            className={styles.resultadoDiagnostico}
-                            onClick={() => seleccionarDiagnostico(diag)}
-                          >
-                            <span className={styles.diagnosticoCode}>{diag.CodigoOMS}</span> - {diag.descripcion}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                  
-                  {diagnosticoSeleccionado && (
-                    <div className={styles.selectedDiagnostico}>
-                      <span className={styles.diagnosticoCode}>{diagnosticoSeleccionado.CodigoOMS}</span>
-                      <span className={styles.diagnosticoDesc}>{diagnosticoSeleccionado.descripcion}</span>
-                      <button
-                        type="button"
-                        onClick={eliminarDiagnosticoSeleccionado}
-                        className={styles.eliminarDiagnosticoBtn}
-                        aria-label="Eliminar diagnóstico"
-                        disabled={loading || success}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                  
-                  {!diagnosticoSeleccionado && (
-                    <span className={styles.fieldInfo}>
-                      Busque por código o descripción del diagnóstico CIE-10
-                    </span>
-                  )}
-                </div>
-              </div>
             </div>
             </>
           )}

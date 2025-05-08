@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './ModalBasePaciente.module.css';
-import { formatDate, clarionDateToDate } from '../../utils/dateUtils';
+import { formatDate, formatTime, clarionDateToDate } from '../../utils/dateUtils';
 import { usePatients } from '../../hooks/usePatients';
+import visitaMovimientoService from '../../services/visitaMovimientoService';
 
 interface PacienteData {
   numeroVisita: string;
@@ -11,6 +12,9 @@ interface PacienteData {
   apellidoYNombre: string;
   numeroDocumento: string;
   fechaAdmision: string;
+  horaAdmision?: string;
+  FechaAdmisionClarion?: number; // Formato Clarion
+  HoraAdmisionClarion?: number; // Formato Clarion
   sexo: string;
   fechaNacimiento: string;
   valorSector: string;
@@ -51,24 +55,34 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
     setError(null);
 
     try {
+      // Obtener datos de la cama
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
       if (!res.ok) throw new Error('Error al obtener información del paciente');
 
       const data = await res.json();
       if (!data.success) throw new Error(data.message || 'Error al obtener datos');
 
+      // Obtener datos del último movimiento de la visita
+      const movimiento = await visitaMovimientoService.getUltimoMovimiento(numeroVisita);
+      
       const cama = data.data.find((c: any) => String(c.NumeroVisita) === numeroVisita);
       if (cama) {
         const pacienteInfo = allPatients.find(p => p.IDPaciente === Number(cama.IdPaciente));
+
+        // Fecha y hora de admisión desde el movimiento o desde la cama
+        const fechaAdmisionISO = cama.FechaIngreso 
+          ? clarionDateToDate(cama.FechaIngreso)?.toISOString() || new Date().toISOString()
+          : new Date().toISOString();
 
         const pd: PacienteData = {
           numeroVisita,
           idPaciente: cama.IdPaciente || 'N/A',
           apellidoYNombre: pacienteInfo?.ApellidoyNombre || cama.NombrePaciente || 'N/A',
           numeroDocumento: cama.DocumentoPaciente || 'N/A',
-          fechaAdmision: cama.FechaIngreso 
-            ? clarionDateToDate(cama.FechaIngreso)?.toISOString() || new Date().toISOString()
-            : new Date().toISOString(),
+          fechaAdmision: fechaAdmisionISO,
+          // Agregar datos de fecha y hora desde el movimiento si existen
+          FechaAdmisionClarion: movimiento?.FechaAdmision,
+          HoraAdmisionClarion: movimiento?.HoraAdmision,
           sexo: pacienteInfo?.Sexo || cama.SexoPaciente || 'N/A',
           fechaNacimiento: pacienteInfo?.FechaNacimiento || '',
           valorSector: cama.ValorSector || 'N/A',
@@ -170,7 +184,19 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
                     <div className={styles.headerFields}>
                       <div className={styles.headerField}>
                         <span className={styles.headerLabel}>Fecha de ingreso</span>
-                        <span className={styles.headerValue}>{formatDate(pacienteData.fechaAdmision)}</span>
+                        <span className={styles.headerValue}>
+                          {pacienteData.FechaAdmisionClarion 
+                            ? formatDate(pacienteData.FechaAdmisionClarion, { isClarionDate: true }) 
+                            : formatDate(pacienteData.fechaAdmision)}
+                        </span>
+                      </div>
+                      <div className={styles.headerField}>
+                        <span className={styles.headerLabel}>Hora de ingreso</span>
+                        <span className={styles.headerValue}>
+                          {pacienteData.HoraAdmisionClarion 
+                            ? formatTime(pacienteData.HoraAdmisionClarion.toString()) 
+                            : '-'}
+                        </span>
                       </div>
                       <div className={styles.headerField}>
                         <span className={styles.headerLabel}>Cobertura</span>

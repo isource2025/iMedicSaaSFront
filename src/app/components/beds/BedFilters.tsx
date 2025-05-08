@@ -6,6 +6,7 @@ export interface BedFiltersProps {
   sectors: { id: string; valor: string; descripcion: string }[];
   bedStates: { id: string; valor: string; descripcion: string }[];
   filter: string;
+  placeHolder: string;
   setFilter: (filter: string) => void;
   sectorFilter: string;
   setSectorFilter: (sector: string) => void;
@@ -22,6 +23,7 @@ export interface BedFiltersProps {
 export const BedFilters: React.FC<BedFiltersProps> = ({
   sectors,
   bedStates,
+  placeHolder,
   filter,
   setFilter,
   sectorFilter,
@@ -103,7 +105,7 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="Buscar paciente..."
+            placeholder={placeHolder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

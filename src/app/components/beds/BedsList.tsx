@@ -132,6 +132,7 @@ const BedsList = () => {
   return (
     <div className={styles.container}>
       <BedFilters
+        placeHolder='Buscar paciente...'
         sectors={sectors}
         bedStates={bedStates}
         filter={filter}
