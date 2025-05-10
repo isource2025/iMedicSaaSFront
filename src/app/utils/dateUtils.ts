@@ -118,11 +118,91 @@ export const formatTime = (clarionTime: number | string | null | undefined): str
  * Hook para formatear fechas en el sistema
  * @returns Objeto con funciones de utilidad para fechas
  */
+/**
+ * Formatea una fecha en formato SQL (como '2025-04-29 18:21:44.410') a un formato legible
+ * @param sqlDate Fecha en formato SQL como string
+ * @param options Opciones de formato
+ * @returns Fecha y/u hora formateada como string o '-' si la fecha no es válida
+ */
+export const formatSqlDate = (
+  sqlDate: string | null | undefined,
+  options: {
+    locale?: string;
+    showDate?: boolean;
+    showTime?: boolean;
+    showSeconds?: boolean;
+    adjustTimezone?: boolean;
+  } = {}
+): string => {
+  const {
+    locale = 'es-ES',
+    showDate = true,
+    showTime = true,
+    showSeconds = false,
+    adjustTimezone = true // Por defecto, ajustar a la zona horaria local
+  } = options;
+
+  if (!sqlDate) return '-';
+
+  try {
+    // Crear objeto Date a partir de la fecha SQL
+    const date = new Date(sqlDate);
+    
+    if (isNaN(date.getTime())) {
+      return '-';
+    }
+
+    // Si la fecha viene con 'Z' al final (UTC), ajustar a la zona horaria local
+    // o mantener la hora original según la opción adjustTimezone
+    let dateToFormat = date;
+    
+    if (!adjustTimezone && sqlDate.endsWith('Z')) {
+      // Si no queremos ajustar la zona horaria y la fecha es UTC,
+      // creamos una fecha con los componentes UTC pero sin conversión
+      const utcYear = date.getUTCFullYear();
+      const utcMonth = date.getUTCMonth();
+      const utcDay = date.getUTCDate();
+      const utcHours = date.getUTCHours();
+      const utcMinutes = date.getUTCMinutes();
+      const utcSeconds = date.getUTCSeconds();
+      
+      dateToFormat = new Date(utcYear, utcMonth, utcDay, utcHours, utcMinutes, utcSeconds);
+    }
+
+    let result = '';
+    
+    if (showDate) {
+      result += dateToFormat.toLocaleDateString(locale, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+    
+    if (showTime) {
+      if (showDate) result += ' ';
+      
+      result += dateToFormat.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: showSeconds ? '2-digit' : undefined,
+        hour12: true // Usar formato 12 horas (AM/PM)
+      });
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error al formatear fecha SQL:', error);
+    return '-';
+  }
+};
+
 export const useDateFormatter = () => {
   return {
     formatDate,
     clarionDateToDate,
-    formatTime
+    formatTime,
+    formatSqlDate
   };
 };
 

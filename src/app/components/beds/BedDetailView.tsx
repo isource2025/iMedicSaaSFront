@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bed } from '../../types/beds';
 import styles from './BedDetailView.module.css';
-import { IoMedicalOutline, IoDocumentTextOutline, IoArrowBack, IoMenu } from 'react-icons/io5';
+import { IoMedicalOutline, IoDocumentTextOutline, IoArrowBack, IoChevronDown, IoChevronUp} from 'react-icons/io5';
 import { formatDate } from '../../utils/dateUtils';
 
 interface BedDetailViewProps {
@@ -13,81 +13,80 @@ interface BedDetailViewProps {
 
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleBack = () => {
     router.back();
   };
+  
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+  // Función para manejar clicks en los items del menú
+  const handleMenuItemClick = (option: string) => {
+    console.log(`Opción seleccionada: ${option}`);
+    // Aquí se implementará la lógica para cada opción
+    setMenuOpen(false);
   };
 
   return (
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <div className={styles.headerLeft}>
+        
+        <div className={styles.headerTop}>
           <button className={styles.backButton} onClick={handleBack}>
-            <IoArrowBack />
+            <IoArrowBack className={styles.icon}/>
             <span>Volver</span>
           </button>
-          <button className={styles.menuButton} onClick={toggleSidebar}>
-            <IoMenu />
-          </button>
+          
+          
+        </div>
+
+        <div className={styles.headerBottom}>
           <h1 className={styles.title}>
             Cama {bed.numeroCama} - {bed.sector}
           </h1>
-        </div>
-        <div className={styles.headerRight}>
           <span className={styles.statusBadge}>
             {bed.estadoDescripcion || 'Sin estado'}
           </span>
+
+          {/* MENU PACIENTE  */}
+          <div className={styles.menuContainer}>
+            <button className={styles.menuButton} onClick={toggleMenu}>
+              <span>Administrar Internación</span>
+              {menuOpen ? <IoChevronUp className={styles.icon} /> : <IoChevronDown className={styles.icon} />}
+            </button>
+            
+            {menuOpen && (
+              <div className={styles.dropdownMenu}>
+                <button 
+                  className={styles.menuItem} 
+                  onClick={() => handleMenuItemClick('indicaciones')}
+                >
+                  <IoMedicalOutline className={styles.menuIcon} />
+                  <span>Indicaciones médicas</span>
+                </button>
+                <button 
+                  className={styles.menuItem} 
+                  onClick={() => handleMenuItemClick('evolucion')}
+                >
+                  <IoDocumentTextOutline className={styles.menuIcon} />
+                  <span>Evolución</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+
+
       </div>
 
       {/* Main content with sidebar */}
       <div className={styles.contentContainer}>
-        {/* Sidebar - hidden by default */}
-        <div className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-          <div className={styles.sidebarHeader}>
-            <h2>Menú</h2>
-            <button className={styles.closeSidebarButton} onClick={toggleSidebar}>
-              ×
-            </button>
-          </div>
-          <div className={styles.sidebarContent}>
-            <ul className={styles.sidebarMenu}>
-              <li className={styles.sidebarMenuItem}>
-                <button className={styles.sidebarButton}>
-                  <IoMedicalOutline />
-                  <span>Reporte de Enfermería</span>
-                </button>
-              </li>
-              <li className={styles.sidebarMenuItem}>
-                <button className={styles.sidebarButton}>
-                  <IoDocumentTextOutline />
-                  <span>Últimas Indicaciones</span>
-                </button>
-              </li>
-              <li className={styles.sidebarMenuItem}>
-                <button className={styles.sidebarButton}>
-                  <span>Historial Clínico</span>
-                </button>
-              </li>
-              <li className={styles.sidebarMenuItem}>
-                <button className={styles.sidebarButton}>
-                  <span>Estudios</span>
-                </button>
-              </li>
-              <li className={styles.sidebarMenuItem}>
-                <button className={styles.sidebarButton}>
-                  <span>Medicación</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
+        
 
         {/* Main content */}
         <div className={styles.mainContent}>
@@ -162,9 +161,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
         </div>
       </div>
       
-      {/* Backdrop for sidebar when open */}
-      {sidebarOpen && (
-        <div className={styles.backdrop} onClick={toggleSidebar}></div>
+      {/* Backdrop para cerrar el menú cuando está abierto */}
+      {menuOpen && (
+        <div className={styles.backdrop} onClick={() => setMenuOpen(false)}></div>
       )}
     </div>
   );

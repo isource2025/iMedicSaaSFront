@@ -56,8 +56,7 @@
   margin-bottom: 1.5rem;
   border-left: 4px solid #41C8DC;
 }
-
-.formGrid {
+.formGridIngreso{
   display: grid;
   gap: 0.5rem 1rem; 
   grid-template-columns: 1fr; /* Default: mobile */
@@ -70,6 +69,22 @@
   /* Pantallas grandes: 4 columnas */
   @media (min-width: 1200px) {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+}
+.formGridEgreso {
+  display: grid;
+  gap: 0.5rem 1rem; 
+  grid-template-columns: 1fr; /* Default: mobile */
+  margin: 16px 0 0 0;
+  /* Tablet o pantallas medianas: 2 columnas */
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Pantallas grandes: 4 columnas */
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 

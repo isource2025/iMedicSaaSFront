@@ -91,6 +91,10 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   const [camaSeleccionada, setCamaSeleccionada] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   
+  // Estado para la fecha y hora actual
+  const [fechaActual, setFechaActual] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [horaActual, setHoraActual] = useState<string>(new Date().toTimeString().substring(0, 5));
+  
   // Estado para la información completa del traslado
   const [infoTraslado, setInfoTraslado] = useState<{
     numeroVisita: number;
@@ -461,7 +465,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
         onClick={handleSubmit}
         disabled={loading || success}
       >
-        {loading ? 'Procesando...' : 'Cambiar Cama'}
+        {loading ? 'Procesando...' : 'Confirmar Movimiento'}
       </button>
     </div>
   );
@@ -477,7 +481,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       <ModalBasePaciente
         isOpen={isOpen}
         onClose={onClose}
-        titulo="Cambiar Paciente a Cama Vacía"
+        titulo="Mover Paciente de Cama"
         numeroVisita={numeroVisita.toString()}
         footerButtons={<FooterButtons />}
       >
@@ -503,11 +507,10 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
           {!loading && !success && (
             <>
 <div className={styles.formSubSection}>
-                <h3 className={styles.sectionTitle}>Información para Traslado</h3>
-                
+                <h3 className={styles.sectionTitle}>Nueva Ubicación</h3>
+
               {/* SELECCION DE CAMAS  */}
               <div className={styles.formSubSection}>
-                <h4 className={styles.subSectionTitle}>Seleccionar Cama Destino</h4>
                 
                 <div className={styles.filtersSection}>
                   <BedFilters
@@ -567,10 +570,10 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
               </div>
                {/* SELECCION DE CAMAS  */}
 
-               <div className={styles.formGrid}>
-                  {/* Fecha de traslado */}
+               <div className={styles.formGridIngreso}>
+                  {/* Fecha de ingreso */}
                   <div className={styles.formGroup}>
-                    <label htmlFor="fechaEgreso" className={styles.label}>Fecha de traslado</label>
+                    <label htmlFor="fechaEgreso" className={styles.label}>Fecha de Ingreso</label>
                     <input
                       type="date"
                       id="fechaEgreso"
@@ -584,9 +587,9 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     )}
                   </div>
 
-                  {/* Hora de traslado */}
+                  {/* Hora de ingreso */}
                   <div className={styles.formGroup}>
-                    <label htmlFor="horaEgreso" className={styles.label}>Hora de traslado</label>
+                    <label htmlFor="horaEgreso" className={styles.label}>Hora de Ingreso</label>
                     <input
                       type="time"
                       id="horaEgreso"
@@ -709,7 +712,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                 <span>Cargando datos de ubicación...</span>
               </div>
             ) : ubicacionActual ? (
-              <div className={styles.formGrid}>
+              <div className={styles.formGridEgreso}>
                 
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Sector</label>
@@ -733,57 +736,49 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                   />
                 </div>
                 
-                {ubicacionActual.FechaAdmision && (
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Fecha de Admisión</label>
-                    <input 
-                      type="text" 
-                      className={styles.input} 
-                      value={formatDate(ubicacionActual.FechaAdmision, { isClarionDate: true })} 
-                      disabled 
-                      readOnly
-                    />
-                  </div>
-                )}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Fecha de Admisión</label>
+                  <input 
+                    type="text" 
+                    className={styles.input} 
+                    value={ubicacionActual.FechaAdmision ? formatDate(ubicacionActual.FechaAdmision, { isClarionDate: true }) : 'No disponible'} 
+                    disabled 
+                    readOnly
+                  />
+                </div>
                 
-                {ubicacionActual.HoraAdmision && (
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Hora de Admisión</label>
-                    <input 
-                      type="text" 
-                      className={styles.input} 
-                      value={formatTime(ubicacionActual.HoraAdmision.toString())} 
-                      disabled 
-                      readOnly
-                    />
-                  </div>
-                )}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Hora de Admisión</label>
+                  <input 
+                    type="text" 
+                    className={styles.input} 
+                    value={ubicacionActual.HoraAdmision ? formatTime(ubicacionActual.HoraAdmision.toString()) : 'No disponible'} 
+                    disabled 
+                    readOnly
+                  />
+                </div>
                 
-                {ubicacionActual.fechaEgreso && (
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Fecha de Egreso</label>
-                    <input 
-                      type="text" 
-                      className={styles.input} 
-                      value={ubicacionActual.fechaEgreso} 
-                      disabled 
-                      readOnly
-                    />
-                  </div>
-                )}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Fecha de Egreso</label>
+                  <input 
+                    type="text" 
+                    className={styles.input} 
+                    value={fechaEgreso} 
+                    disabled 
+                    readOnly
+                  />
+                </div>
                 
-                {ubicacionActual.horaEgreso && (
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Hora de Nueva Ubicación</label>
-                    <input 
-                      type="text" 
-                      className={styles.input} 
-                      value={formatTime(ubicacionActual.horaEgreso)} 
-                      disabled 
-                      readOnly
-                    />
-                  </div>
-                )}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Hora de Egreso</label>
+                  <input 
+                    type="text" 
+                    className={styles.input} 
+                    value={horaEgreso} 
+                    disabled 
+                    readOnly
+                  />
+                </div>
                 
                 {ubicacionActual.disposicionEgreso !== undefined && (
                   <div className={styles.formGroup}>
@@ -810,6 +805,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     />
                   </div>
                 )}
+
               </div>
             ) : (
               <div className={styles.infoMessage}>

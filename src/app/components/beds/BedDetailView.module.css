@@ -8,20 +8,59 @@
 /* Header styles */
 .header {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
+  align-items: self-start;
+  width: 100%;
   padding: 1rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 1.5rem;
 }
 
-.headerLeft {
+.headerBottom {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.backButton, .menuButton {
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  color: #0083A9;
+  font-size: 1rem;
+  border-radius: 4px;
+  padding: 8px;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.backButton:hover{
+ transform: scale(1.1);
+}
+.icon{
+  font-size: 20px;
+}
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+}
+
+/* Estilos para el menú desplegable */
+.menuContainer {
+  position: relative;
+}
+
+.menuButton {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -29,26 +68,58 @@
   border: none;
   cursor: pointer;
   color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
-  font-size: 1rem;
-  padding: 0.5rem;
-  border-radius: 0.25rem;
+  font-size: 18px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border-radius: 4px;
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); */
+  border: solid 1px #0083A9;
+  min-width: 250px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
   transition: background-color 0.2s;
+  color: #333;
 }
 
-.backButton:hover, .menuButton:hover {
+.menuItem:hover {
   background-color: #f3f4f6;
+  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
 }
 
-.title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
+.menuIcon {
+  font-size: 18px;
   color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
 }
 
-.headerRight {
-  display: flex;
-  align-items: center;
+/* Backdrop para cerrar el menú */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
 }
 
 .statusBadge {
@@ -59,97 +130,16 @@
   color: white;
 }
 
-/* Content container with sidebar */
-.contentContainer {
-  display: flex;
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-}
 
-/* Sidebar styles */
-.sidebar {
-  width: 280px;
-  background-color: #ffffff;
-  border-right: 1px solid #e5e7eb;
-  height: 100%;
-  position: absolute;
-  left: -280px;
-  top: 0;
-  transition: left 0.3s ease;
-  z-index: 10;
-}
 
-.sidebarOpen {
-  left: 0;
-}
-
-.sidebarHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.sidebarHeader h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
-}
-
-.closeSidebarButton {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
-}
-
-.sidebarContent {
-  padding: 1rem 0;
-}
-
-.sidebarMenu {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebarMenuItem {
-  margin-bottom: 0.5rem;
-}
-
-.sidebarButton {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  color: #333;
-}
-
-.sidebarButton:hover {
-  background-color: #f3f4f6;
-  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
-}
 
 /* Main content styles */
 .mainContent {
   flex: 1;
-  padding: 1.5rem;
+  padding:.5rem 1rem;
   overflow-y: auto;
   margin-left: 0;
   transition: margin-left 0.3s ease;
-}
-
-.sidebarOpen + .mainContent {
-  margin-left: 280px;
 }
 
 /* Patient card styles */
@@ -238,16 +228,7 @@
   margin-top: 2rem;
 }
 
-/* Backdrop for sidebar when open */
-.backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 5;
-}
+
 
 /* Responsive styles */
 @media (max-width: 768px) {

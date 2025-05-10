@@ -65,8 +65,8 @@
 
 .headerField {
   display: flex;
-  align-items: self-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
   font-size: 14px;
 }
@@ -78,8 +78,8 @@
 }
 
 .headerValue {
-  font-weight: 600;
-  color: #333;
+  font-weight: 800;
+  color: #0083A9;
 }
 
 .closeButton {
@@ -123,6 +123,40 @@
   background-color: white;
   padding: 0px 16px ;
   gap: 16px;
+}
+
+.admisionInfo {
+  display: flex;
+  align-items: center;
+}
+
+.admisionLabel {
+  font-weight: 500;
+  color: #64748b; /* Pantone 314C - Azul turquesa oscuro */
+  margin-right: 8px;
+  font-size: 0.9rem;
+}
+
+.admisionValueContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.admisionValueItem {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.admisionIcon {
+  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  font-size: 1rem;
+}
+
+.admisionValue {
+  font-weight: 800;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  font-size: 0.9rem;
 }
 
 .nombrePaciente h3 {

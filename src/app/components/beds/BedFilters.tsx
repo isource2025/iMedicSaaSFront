@@ -68,7 +68,7 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
   return (
     <div className={styles.filtersContainer}>
       <div className={styles.filterGroup}>
-        <label className={styles.filterLabel}>Sector</label>
+        <label className={styles.filterLabel}>Sectores</label>
         <select
           className={styles.filterSelect}
           value={sectorFilter}
@@ -84,7 +84,7 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
       </div>
 
       <div className={styles.filterGroup}>
-        <label className={styles.filterLabel}>Estado</label>
+        <label className={styles.filterLabel}>Estados de camas</label>
         <select
           className={styles.filterSelect}
           value={filter}

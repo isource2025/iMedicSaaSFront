@@ -2,15 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './ModalBasePaciente.module.css';
-import { formatDate, formatTime, clarionDateToDate } from '../../utils/dateUtils';
+import { formatDate, formatTime, clarionDateToDate, formatSqlDate } from '../../utils/dateUtils';
 import { usePatients } from '../../hooks/usePatients';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
+import { FiCalendar, FiClock } from 'react-icons/fi';
 
 interface PacienteData {
   numeroVisita: string;
   idPaciente: string;
   apellidoYNombre: string;
   numeroDocumento: string;
+  fechaAdmisionS: string;
   fechaAdmision: string;
   horaAdmision?: string;
   FechaAdmisionClarion?: number; // Formato Clarion
@@ -65,6 +67,17 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
       // Obtener datos del último movimiento de la visita
       const movimiento = await visitaMovimientoService.getUltimoMovimiento(numeroVisita);
       
+      // Obtener datos de la visita para tener acceso a FechaAdmisionS
+      const visitaResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/patients/visitas/${numeroVisita}`);
+      let visitaData = null;
+      if (visitaResponse.ok) {
+        const visitaResult = await visitaResponse.json();
+        if (visitaResult.success) {
+          visitaData = visitaResult.data;
+          console.log('Datos de visita obtenidos:', visitaData);
+        }
+      }
+      
       const cama = data.data.find((c: any) => String(c.NumeroVisita) === numeroVisita);
       if (cama) {
         const pacienteInfo = allPatients.find(p => p.IDPaciente === Number(cama.IdPaciente));
@@ -79,6 +92,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
           idPaciente: cama.IdPaciente || 'N/A',
           apellidoYNombre: pacienteInfo?.ApellidoyNombre || cama.NombrePaciente || 'N/A',
           numeroDocumento: cama.DocumentoPaciente || 'N/A',
+          fechaAdmisionS: visitaData?.fechaAdmisionS || '',
           fechaAdmision: fechaAdmisionISO,
           // Agregar datos de fecha y hora desde el movimiento si existen
           FechaAdmisionClarion: movimiento?.FechaAdmision,
@@ -106,6 +120,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
           idPaciente: 'N/A',
           apellidoYNombre: 'Paciente',
           numeroDocumento: 'N/A',
+          fechaAdmisionS: visitaData?.fechaAdmisionS || '',
           fechaAdmision: new Date().toISOString(),
           sexo: 'N/A',
           fechaNacimiento: '',
@@ -162,6 +177,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
           <>
             <div className={styles.pacienteHeader}>
               <div className={styles.cardHeader}>
+
                 <div className={styles.bedInfo}>
                   <div>
                     <span className={styles.sectorLabel}>{pacienteData.valorSector}</span>
@@ -183,23 +199,28 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 
                     <div className={styles.headerFields}>
                       <div className={styles.headerField}>
-                        <span className={styles.headerLabel}>Fecha de ingreso</span>
-                        <span className={styles.headerValue}>
-                          {pacienteData.FechaAdmisionClarion 
-                            ? formatDate(pacienteData.FechaAdmisionClarion, { isClarionDate: true }) 
-                            : formatDate(pacienteData.fechaAdmision)}
-                        </span>
-                      </div>
-                      <div className={styles.headerField}>
-                        <span className={styles.headerLabel}>Hora de ingreso</span>
-                        <span className={styles.headerValue}>
-                          {pacienteData.HoraAdmisionClarion 
-                            ? formatTime(pacienteData.HoraAdmisionClarion.toString()) 
-                            : '-'}
-                        </span>
-                      </div>
-                      <div className={styles.headerField}>
-                        <span className={styles.headerLabel}>Cobertura</span>
+                    <div className={styles.admisionInfo}>
+                      <span className={styles.admisionLabel}>Admisión:</span>
+                      {pacienteData?.fechaAdmisionS ? (
+                        <div className={styles.admisionValueContainer}>
+                          <div className={styles.admisionValueItem}>
+                            <FiCalendar className={styles.admisionIcon} />
+                            <span className={styles.admisionValue}>
+                              {formatSqlDate(pacienteData.fechaAdmisionS, { locale: 'es-AR', showTime: false, adjustTimezone: false })}
+                            </span>
+                          </div>
+                          <div className={styles.admisionValueItem}>
+                            <FiClock className={styles.admisionIcon} />
+                            <span className={styles.admisionValue}>
+                              {formatSqlDate(pacienteData.fechaAdmisionS, { locale: 'es-AR', showDate: false, showTime: true, adjustTimezone: false })}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className={styles.admisionValue}>No disponible</span>
+                      )}
+                    </div>
+                        <span className={styles.headerLabel}>Cobertura:</span>
                         <span className={styles.headerValue}>{pacienteData.coberturaSocial}</span>
                       </div>
                     </div>

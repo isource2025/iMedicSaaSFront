@@ -62,7 +62,6 @@ export default function BedDetailPage() {
 
   return (
     <main className={styles.container}>
-      <h1 className={styles.title}>Detalle de Cama</h1>
       {loading ? (
         <div className={styles.loadingState}>Cargando información de la cama...</div>
       ) : bedData ? (
