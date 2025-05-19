@@ -12,6 +12,9 @@ export interface BedFiltersProps {
   setFilter: (filter: string) => void;
   sectorFilter: string;
   setSectorFilter: (sector: string) => void;
+  serviciosMedicos?: string[];
+  servicioFilter?: string;
+  setServicioFilter?: (servicio: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   refreshBeds: () => void;
@@ -31,6 +34,9 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
   setFilter,
   sectorFilter,
   setSectorFilter,
+  serviciosMedicos = [],
+  servicioFilter = 'all',
+  setServicioFilter = () => {},
   searchTerm,
   setSearchTerm,
   refreshBeds,
@@ -94,6 +100,22 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
           {bedStates.map((state) => (
             <option key={state.id} value={state.valor}>
               {state.descripcion}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.filterGroup}>
+        <label className={styles.filterLabel}>Servicios médicos</label>
+        <select
+          className={styles.filterSelect}
+          value={servicioFilter}
+          onChange={(e) => setServicioFilter(e.target.value)}
+        >
+          <option value="all">Todos los servicios</option>
+          {serviciosMedicos.map((servicio) => (
+            <option key={servicio} value={servicio}>
+              {servicio}
             </option>
           ))}
         </select>

@@ -17,12 +17,15 @@ const BedsList = () => {
     beds,
     bedStates,
     sectors,
+    serviciosMedicos,
     loading,
     error,
     filter,
     setFilter,
     sectorFilter,
     setSectorFilter,
+    servicioFilter,
+    setServicioFilter,
     searchTerm,
     setSearchTerm,
     refreshBeds,
@@ -139,6 +142,9 @@ const BedsList = () => {
         setFilter={setFilter}
         sectorFilter={sectorFilter}
         setSectorFilter={setSectorFilter}
+        serviciosMedicos={serviciosMedicos}
+        servicioFilter={servicioFilter}
+        setServicioFilter={setServicioFilter}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         refreshBeds={handleRefreshBeds}

@@ -1,5 +1,11 @@
 {
   "pages": {
+    "/dashboard/beds/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/beds/page.css",
+      "static/chunks/app/dashboard/beds/page.js"
+    ],
     "/dashboard/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -11,24 +17,6 @@
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
-    ],
-    "/dashboard/patients/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/patients/page.css",
-      "static/chunks/app/dashboard/patients/page.js"
-    ],
-    "/dashboard/beds/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/beds/page.css",
-      "static/chunks/app/dashboard/beds/page.js"
-    ],
-    "/dashboard/bed-detail/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/bed-detail/page.css",
-      "static/chunks/app/dashboard/bed-detail/page.js"
     ]
   }
 }

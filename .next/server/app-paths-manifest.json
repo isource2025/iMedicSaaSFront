@@ -1,5 +1,3 @@
 {
-  "/dashboard/patients/page": "app/dashboard/patients/page.js",
-  "/dashboard/beds/page": "app/dashboard/beds/page.js",
-  "/dashboard/bed-detail/page": "app/dashboard/bed-detail/page.js"
+  "/dashboard/beds/page": "app/dashboard/beds/page.js"
 }

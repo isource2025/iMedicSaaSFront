@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { bedsService } from '../services/bedsService';
 import { Bed, BedState } from '../types/beds';
 import { useAppContext } from '../contexts/AppContext';
@@ -13,6 +13,7 @@ export const useBedsManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
   const [sectorFilter, setSectorFilter] = useState<string>('all');
+  const [servicioFilter, setServicioFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sectors, setSectors] = useState<{id: string, valor: string, descripcion: string}[]>([]);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
@@ -101,6 +102,17 @@ export const useBedsManagement = () => {
     };
   }, [autoRefresh, refreshInterval, fetchBeds]);
 
+  // Obtener la lista de servicios médicos únicos
+  const serviciosMedicos = useMemo(() => {
+    const servicios = beds
+      .map(bed => bed.servicioMedicoDescripcion)
+      .filter(servicio => servicio && servicio.trim() !== '') // Filtrar valores vacíos
+      .filter((servicio, index, self) => self.indexOf(servicio) === index) // Eliminar duplicados
+      .sort(); // Ordenar alfabéticamente
+    
+    return servicios;
+  }, [beds]);
+
   const filteredBeds = beds.filter(bed => {
     // Filtrar por estado de cama
     const estadoMatch = 
@@ -111,6 +123,11 @@ export const useBedsManagement = () => {
     const sectorMatch = 
       sectorFilter === 'all' || 
       bed.sector === sectorFilter;
+    
+    // Filtrar por servicio médico
+    const servicioMatch = 
+      servicioFilter === 'all' || 
+      bed.servicioMedicoDescripcion === servicioFilter;
     
     // Filtrar por término de búsqueda (nombre, DNI o número de visita)
     const searchMatch = !searchTerm || (
@@ -124,7 +141,7 @@ export const useBedsManagement = () => {
       (bed.mostrarNumeroVisita && bed.mostrarNumeroVisita.toString().includes(searchTerm))
     );
     
-    return estadoMatch && sectorMatch && searchMatch;
+    return estadoMatch && sectorMatch && servicioMatch && searchMatch;
   });
 
   return {
@@ -132,12 +149,15 @@ export const useBedsManagement = () => {
     allBeds: beds,
     bedStates,
     sectors,
+    serviciosMedicos,
     loading,
     error,
     filter,
     setFilter,
     sectorFilter,
     setSectorFilter,
+    servicioFilter,
+    setServicioFilter,
     searchTerm,
     setSearchTerm,
     refreshBeds: fetchBeds,
