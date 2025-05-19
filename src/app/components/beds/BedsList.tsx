@@ -132,7 +132,7 @@ const BedsList = () => {
   return (
     <div className={styles.container}>
       <BedFilters
-        placeHolder='Buscar paciente...'
+        placeHolder='Buscar por nombre, DNI, HC o admisión...'
         sectors={sectors}
         bedStates={bedStates}
         filter={filter}

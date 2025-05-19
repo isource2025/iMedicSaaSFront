@@ -1,7 +1,8 @@
-import { useState } from 'react';
 import { Patient } from '../../types/PatientInterface';
 import styles from './PatientList.module.css';
 import Pagination from '../UI/Pagination';
+import { IoDocumentTextOutline, IoMedicalOutline, IoPencil, IoTrashOutline } from 'react-icons/io5';
+import { clarionDateToDate, calculateAge } from '../../utils/dateUtils';
 
 interface PatientListProps {
   patients: Patient[];
@@ -32,39 +33,65 @@ export default function PatientList({
 }: PatientListProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-AR');
+
+    let date: Date | null;
+
+    if (/^\d+$/.test(dateString)) {
+      date = clarionDateToDate(dateString);
+    } else {
+      date = new Date(dateString);
+    }
+
+    if (!date || isNaN(date.getTime())) return '-';
+
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+
+    return `${day}/${month}/${year}`;
+  };
+
+  const getAgeText = (dateString?: string) => {
+    if (!dateString) return '';
+
+    let age: number | null;
+
+    if (/^\d+$/.test(dateString)) {
+      age = calculateAge(dateString, true);
+    } else {
+      age = calculateAge(dateString);
+    }
+
+    if (age === null) return '';
+
+    return `${age} años`;
   };
 
   return (
     <div className={styles.container}>
-      {/* Mensaje de error */}
       {error && (
         <div className={styles.errorContainer} role="alert">
           <strong className={styles.errorTitle}>Error!</strong>
           <span className={styles.errorMessage}> {error}</span>
         </div>
       )}
-      
-      {/* Tabla de pacientes */}
+
       <div className={styles.tableContainer}>
         <table className={styles.table} aria-label="Lista de pacientes">
           <thead className={styles.tableHeader}>
             <tr>
               <th scope="col">ID</th>
-              <th scope="col">Nombre y Apellido</th>
-              <th scope="col">Domicilio</th>
-              <th scope="col">Sexo</th>
-              <th scope="col">Número HC</th>
-              <th scope="col">Fecha de Nacimiento</th>
-              <th scope="col">Estado Civil</th>
+              <th scope="col">Documento / HC</th>
+              <th scope="col">Nombre y Domicilio</th>
+              <th scope="col">Fecha Nac. / Edad</th>
+              <th scope="col">Cobertura</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className={styles.loadingContainer}>
+                <td colSpan={6} className={styles.loadingContainer}>
                   <div className={styles.loadingContent}>
                     <div className={styles.loadingSpinner}></div>
                     <span className={styles.loadingText}>Cargando...</span>
@@ -73,13 +100,17 @@ export default function PatientList({
               </tr>
             ) : patients.length === 0 ? (
               <tr>
-                <td colSpan={8} className={styles.noResults}>No se encontraron pacientes</td>
+                <td colSpan={6} className={styles.noResults}>No se encontraron pacientes</td>
               </tr>
             ) : (
               patients.map((patient) => (
                 <tr key={patient.IDPaciente} className={styles.tableRow}>
                   <td>{patient.IDPaciente}</td>
-                  <td className={styles.patientName}>
+                  <td className={styles.documentColumn}>
+                    <div>{patient.Numerodocumento || '-'}</div>
+                    <div className={styles.hcNumber}>{patient.NumeroHC}</div>
+                  </td>
+                  <td className={styles.patientColumn}>
                     <button 
                       className={styles.viewButton} 
                       onClick={() => onView(patient)}
@@ -88,12 +119,17 @@ export default function PatientList({
                     >
                       {patient.ApellidoyNombre}
                     </button>
+                    <div className={styles.addressText}>{patient.Domicilio || '-'}</div>
                   </td>
-                  <td>{patient.Domicilio || '-'}</td>
-                  <td>{patient.Sexo}</td>
-                  <td>{patient.NumeroHC}</td>
-                  <td>{formatDate(patient.FechaNacimiento)}</td>
-                  <td>{patient.EstadoCivil || '-'}</td>
+                  <td className={styles.birthDateColumn}>
+                    <div>{formatDate(patient.FechaNacimiento)}</div>
+                    <div className={styles.ageText}>
+                      {getAgeText(patient.FechaNacimiento)}
+                    </div>
+                  </td>
+                  <td className={styles.coverageColumn}>
+                    {patient.Cobertura || '-'}
+                  </td>
                   <td>
                     <div className={styles.actionButtons}>
                       <button
@@ -102,7 +138,7 @@ export default function PatientList({
                         title="Ver historia clínica"
                         aria-label={`Ver historia clínica de ${patient.ApellidoyNombre}`}
                       >
-                        📋
+                        <IoDocumentTextOutline size={20} />
                       </button>
                       <button
                         onClick={() => onAdmission(patient)}
@@ -110,7 +146,7 @@ export default function PatientList({
                         title="Nueva admisión"
                         aria-label={`Nueva admisión para ${patient.ApellidoyNombre}`}
                       >
-                        🏥
+                        <IoMedicalOutline size={20} />
                       </button>
                       <button
                         onClick={() => onEdit(patient)}
@@ -118,7 +154,7 @@ export default function PatientList({
                         title="Editar"
                         aria-label={`Editar ${patient.ApellidoyNombre}`}
                       >
-                        ✏️
+                        <IoPencil size={18} />
                       </button>
                       <button
                         onClick={() => onDelete(patient)}
@@ -126,7 +162,7 @@ export default function PatientList({
                         title="Eliminar"
                         aria-label={`Eliminar ${patient.ApellidoyNombre}`}
                       >
-                        🗑️
+                        <IoTrashOutline size={18} />
                       </button>
                     </div>
                   </td>
@@ -137,7 +173,6 @@ export default function PatientList({
         </table>
       </div>
 
-      {/* Paginación */}
       {!loading && patients.length > 0 && (
         <Pagination
           currentPage={currentPage}

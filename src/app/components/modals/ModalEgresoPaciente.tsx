@@ -60,6 +60,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
     fechaEgreso?: string;
     horaEgreso?: string;
     disposicionEgreso?: string;
+    
   }>({});
 
   // Inicializar fecha y hora cuando se abre el modal o cuando se monta el componente
@@ -227,7 +228,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
         diagnostico: diagnosticoSeleccionado?.CodigoOMS || null,
         bedId: bedId
       };
-      
+      console.log('Datos de egreso:', datosEgreso);
       // Actualizamos el movimiento con los datos de egreso
       await visitaMovimientoService.actualizarUltimoMovimiento(numeroVisita, datosEgreso);
       
@@ -370,7 +371,6 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
             </div>
             
             <div className={styles.formSection}>
-              <h3 className={styles.formTitle}>Diagnóstico de Egreso</h3>
               
               <div className={styles.formGroup}>
                 <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico CIE-10</label>

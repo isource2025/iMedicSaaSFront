@@ -1,6 +1,8 @@
 import React from 'react';
 import styles from './BedFilters.module.css';
-import { IoRefreshOutline, IoSearch, IoTimeOutline } from 'react-icons/io5';
+import { IoRefreshOutline, IoTimeOutline } from 'react-icons/io5';
+import { SearchInput } from './SearchInput';
+import useSearchManager from '../../hooks/useSearchManager';
 
 export interface BedFiltersProps {
   sectors: { id: string; valor: string; descripcion: string }[];
@@ -18,6 +20,7 @@ export interface BedFiltersProps {
   refreshInterval: number;
   setRefreshInterval: (interval: number) => void;
   lastUpdateTime?: number;
+  beds?: any[]; // Datos de camas para filtrado local
 }
 
 export const BedFilters: React.FC<BedFiltersProps> = ({
@@ -31,11 +34,8 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
   searchTerm,
   setSearchTerm,
   refreshBeds,
-  autoRefresh,
-  setAutoRefresh,
-  refreshInterval,
-  setRefreshInterval,
-  lastUpdateTime
+  lastUpdateTime,
+  beds = []
 }) => {
   // Formatear la última actualización
   const formatLastUpdate = () => {
@@ -99,18 +99,23 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
         </select>
       </div>
 
-      <div className={styles.searchGroup}>
-        <div className={styles.searchInputContainer}>
-          <IoSearch className={styles.searchIcon} />
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder={placeHolder}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+      <SearchInput
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        placeholder={placeHolder}
+        tooltipContent={
+          <>
+            <p>Filtrar por:</p>
+            <ul className={styles.tooltipList}>
+              <li>Nombre del paciente</li>
+              <li>Número de documento (DNI)</li>
+              <li>Número de historia clínica</li>
+              <li>Número de admisión</li>
+            </ul>
+          </>
+        }
+        isSearching={searchTerm.length > 0}
+      />
 
       <div className={styles.refreshGroup}>
         <button 
@@ -121,36 +126,6 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
           <IoRefreshOutline />
         </button>
         
-        {/* <div className={styles.autoRefreshContainer}>
-          <label className={styles.switchLabel}>
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className={styles.switchInput}
-            />
-            <span className={styles.switchSlider}></span>
-            Auto
-          </label>
-          
-          <select
-            className={styles.intervalSelect}
-            value={refreshInterval}
-            onChange={(e) => setRefreshInterval(Number(e.target.value))}
-            disabled={!autoRefresh}
-          >
-            {intervalOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        <div className={styles.lastUpdateInfo}>
-          <IoTimeOutline className={styles.timeIcon} />
-          <span className={styles.updateText}>{formatLastUpdate()}</span>
-        </div> */}
       </div>
     </div>
   );

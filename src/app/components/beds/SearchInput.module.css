@@ -1,0 +1,198 @@
+/* Estilos para el grupo de búsqueda */
+.searchGroup {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.searchInputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  color: #9ca3af;
+  width: 1rem;
+  height: 1rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #0083A9;
+  box-shadow: 0 0 0 2px rgba(0, 131, 169, 0.2);
+}
+
+/* Botón para limpiar la búsqueda */
+.clearButton {
+  position: absolute;
+  right: 2.5rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.clearButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #4b5563;
+}
+
+/* Indicador de carga */
+.loadingIndicator {
+  position: absolute;
+  right: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinningIcon {
+  animation: spin 1s linear infinite;
+  color: #0083A9;
+  width: 1rem;
+  height: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilos para el ícono de información */
+.infoIconContainer {
+  position: relative;
+  margin-left: 0.25rem;
+  cursor: pointer;
+}
+
+.infoIcon {
+  color: #0083A9;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* Estilos para el tooltip */
+.tooltip {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0.75rem;
+  width: 220px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  font-size: 0.85rem;
+  color: #4b5563;
+  margin-top: 0.5rem;
+}
+
+.tooltipList {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.tooltipList li {
+  margin-bottom: 0.25rem;
+}
+
+.tooltipList li:last-child {
+  margin-bottom: 0;
+}
+
+/* Contenedor de resultados */
+.resultsContainer {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+/* Mensaje de error */
+.errorMessage {
+  padding: 0.75rem;
+  color: #ef4444;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Mensaje de no resultados */
+.noResults {
+  padding: 0.75rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Estilos para los resultados */
+.resultItem {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItem:hover {
+  background-color: #f9fafb;
+}
+
+.resultItemSelected {
+  background-color: #f0f9ff;
+}
+
+.resultItemTitle {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.resultItemSubtitle {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .searchGroup {
+    width: 100%;
+  }
+  
+  .tooltip {
+    width: 200px;
+    right: -10px;
+  }
+  
+  .resultsContainer {
+    max-height: 250px;
+  }
+}

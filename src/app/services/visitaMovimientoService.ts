@@ -16,6 +16,7 @@ interface VisitaMovimiento {
   FechaAdmision?: number; // Formato Clarion
   HoraAdmision?: number; // Formato Clarion
   bedId?: string; // ID de la cama
+  ValorSector?: string; // Sector de la cama
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -82,6 +83,51 @@ const visitaMovimientoService = {
       return response.data;
     } catch (error: any) {
       console.error('Error al actualizar movimiento con datos de egreso:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Mueve un paciente a una cama vacía
+   * @param numeroVisita Número de visita del paciente
+   * @param datosCambio Datos para el cambio de cama
+   * @returns Resultado del cambio de cama
+   */
+  moverPacienteACamaVacia: async (numeroVisita: string | number, datosCambio: {
+    FechaAdmision: number; // Formato Clarion
+    HoraAdmision: number; // Formato Clarion
+    FechaEgreso: number; // Formato Clarion
+    HoraEgreso: number; // Formato Clarion
+    EstadoAmbulatorio: string;
+    Diagnostico?: string;
+    bedId: string; // ID de la cama destino
+    ValorSector: string; // Sector de la cama destino
+    Operador: string;
+    FechaCarga: number; // Formato Clarion
+    HoraCarga: number; // Formato Clarion
+  }): Promise<any> => {
+    try {
+      console.log('=== SERVICIO FRONTEND: MOVER PACIENTE A CAMA VACÍA ===');
+      console.log(`Parámetro numeroVisita (tipo: ${typeof numeroVisita}): '${numeroVisita}'`);
+      console.log('Datos de cambio de cama:', JSON.stringify(datosCambio, null, 2));
+      
+      const url = `${BASE_URL}/patients/visitas/${numeroVisita}/mover-cama`;
+      console.log(`URL completa: ${url}`);
+      console.log('=================================================');
+      
+      const response = await apiService.put<ApiResponse>(
+        url,
+        datosCambio
+      );
+      
+      if (!response.data || !response.data.success) {
+        console.error('Error en respuesta de cambio de cama:', response.data);
+        throw new Error(response.data?.message || 'Error al mover al paciente a la nueva cama');
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Error al mover paciente a nueva cama:', error);
       throw error;
     }
   }

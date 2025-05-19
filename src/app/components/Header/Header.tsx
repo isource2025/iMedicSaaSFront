@@ -29,7 +29,7 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
             {/* Mostrar la información de la empresa */}
             {empresaInfo && (
               <div className={styles.empresaInfo}>
-                <span className={styles.empresaLabel}>Empresa:</span>
+                <span className={styles.empresaLabel}></span>
                 <span className={styles.empresaDescription}>{empresaInfo.descripcion}</span>
               </div>
             )}

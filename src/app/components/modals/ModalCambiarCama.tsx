@@ -13,7 +13,7 @@ import { EstadoAmbulatorio } from '../../types/estadoAmbulatorio';
 import { useAppContext } from '../../contexts/AppContext';
 import { useBedsManagement } from '../../hooks/useBedsManagement';
 import BedFilters from '../beds/BedFilters';
-import { formatDate, formatTime } from '../../utils/dateUtils';
+import { formatDate, formatTime, dateToClarionDate, timeToClarionTime } from '../../utils/dateUtils';
 
 interface ModalCambiarCamaProps {
   isOpen: boolean;
@@ -348,15 +348,47 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     // Validar campos obligatorios
     if (!fechaEgreso) errores.fechaEgreso = "La fecha es obligatoria";
     if (!horaEgreso) errores.horaEgreso = "La hora es obligatoria";
-    if (!camaSeleccionada) errores.camaSeleccionada = "Debe seleccionar una cama destino";
-    if (!estadoAmbulatorio) errores.estadoAmbulatorio = "Debe seleccionar un estado ambulatorio";
+    if (!camaSeleccionada) errores.camaSeleccionada = "Debe seleccionar una cama destino"
     
     // Validar formato de fecha y hora
     const fechaActual = new Date();
     const fechaSeleccionada = new Date(`${fechaEgreso}T${horaEgreso}:00`);
     
-    if (fechaEgreso && fechaSeleccionada < fechaActual) {
-      errores.fechaEgreso = "La fecha y hora no pueden ser anteriores a la actual";
+    
+    // Validar que la hora de nueva ubicación sea al menos un minuto después que la hora de ubicación actual
+    if (ubicacionActual && ubicacionActual.FechaAdmision && ubicacionActual.HoraAdmision) {
+      // Obtener la fecha y hora de ingreso de la ubicación actual
+      let fechaIngresoStr = '';
+      let horaIngresoStr = '';
+      
+      // Convertir fecha de Clarion a formato legible si es necesario
+      if (typeof ubicacionActual.FechaAdmision === 'number') {
+        fechaIngresoStr = formatDate(ubicacionActual.FechaAdmision, { isClarionDate: true });
+      } else {
+        fechaIngresoStr = String(ubicacionActual.FechaAdmision);
+      }
+      
+      // Convertir hora de Clarion a formato legible si es necesario
+      if (typeof ubicacionActual.HoraAdmision === 'number') {
+        horaIngresoStr = formatTime(String(ubicacionActual.HoraAdmision));
+      } else {
+        horaIngresoStr = String(ubicacionActual.HoraAdmision);
+      }
+      console.log('Fecha de ingreso actual:', fechaIngresoStr);
+      console.log('Hora de ingreso actual:', horaIngresoStr);
+      // Crear objeto Date para la fecha y hora de ingreso de la ubicación actual
+      const fechaIngresoActual = new Date(`${fechaIngresoStr}T${horaIngresoStr}:00`);
+      
+      // Verificar que la fecha/hora seleccionada sea posterior a la fecha de ingreso actual
+      if (fechaSeleccionada <= fechaIngresoActual) {
+        // Si las fechas son iguales, el error es en la hora
+        if (fechaEgreso === fechaIngresoStr) {
+          errores.horaEgreso = `La hora de la nueva ubicación debe ser mayor a la hora de ingreso actual (${horaIngresoStr})`;
+        } else {
+          // Si la fecha es diferente pero anterior o igual, es un error
+          errores.fechaEgreso = `La fecha y hora de la nueva ubicación deben ser mayores a las del movimiento actual (${fechaIngresoStr} ${horaIngresoStr})`;
+        }
+      }
     }
     
     setFormErrors(errores);
@@ -365,7 +397,46 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
 
   // Maneja el cambio de cama y registra la nueva ubicación
   const handleSubmit = async () => {
-    if (!validarFormulario()) return;
+    // Validar el formulario
+    if (!validarFormulario()) {
+      // Verificar específicamente si hay errores de fecha/hora
+      if (formErrors.fechaEgreso || formErrors.horaEgreso) {
+        const mensajeError = formErrors.fechaEgreso || formErrors.horaEgreso;
+        setError(`Error de validación: ${mensajeError}`);
+      }
+      return;
+    }
+    
+    // Verificar explícitamente la validación de fecha/hora con la ubicación actual
+    if (ubicacionActual && ubicacionActual.FechaAdmision && ubicacionActual.HoraAdmision) {
+      // Obtener la fecha y hora de ingreso de la ubicación actual
+      let fechaIngresoStr = '';
+      let horaIngresoStr = '';
+      
+      // Convertir fecha de Clarion a formato legible si es necesario
+      if (typeof ubicacionActual.FechaAdmision === 'number') {
+        fechaIngresoStr = formatDate(ubicacionActual.FechaAdmision, { isClarionDate: true });
+      } else {
+        fechaIngresoStr = String(ubicacionActual.FechaAdmision);
+      }
+      
+      // Convertir hora de Clarion a formato legible si es necesario
+      if (typeof ubicacionActual.HoraAdmision === 'number') {
+        horaIngresoStr = formatTime(String(ubicacionActual.HoraAdmision));
+      } else {
+        horaIngresoStr = String(ubicacionActual.HoraAdmision);
+      }
+      
+      // Crear objeto Date para comparación
+      const fechaIngresoActual = new Date(`${fechaIngresoStr}T${horaIngresoStr}:00`);
+      const fechaSeleccionada = new Date(`${fechaEgreso}T${horaEgreso}:00`);
+      
+      // Verificar que la fecha/hora seleccionada sea posterior a la fecha de ingreso actual
+      if (fechaSeleccionada <= fechaIngresoActual) {
+        setError(`La fecha y hora deben ser mayores a las del movimiento actual (${fechaIngresoStr} ${horaIngresoStr})`);
+        return;
+      }
+    }
     
     setLoading(true);
     setError(null);
@@ -383,60 +454,49 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
         throw new Error('La cama seleccionada ya no está disponible');
       }
       
-      // Formatear fecha y hora para la API
-      const fechaHoraTraslado = `${fechaEgreso}T${horaEgreso}:00`;
+      // Convertir fecha y hora a formato Clarion
+      const fechaActualObj = new Date(`${fechaEgreso}T${horaEgreso}:00`);
       
-      // Preparar los datos simplificados para enviar al backend
-      const datosTraslado = {
-        // Datos principales solicitados
-        camaDestino: camaSeleccionada,
-        fecha: fechaEgreso,
-        hora: horaEgreso,
-        diagnostico: diagnosticoSeleccionado?.CodigoOMS || null,
-        estadoAmbulatorio: estadoAmbulatorio,
-        
-        // Datos adicionales que podrían ser útiles para el backend
-        numeroVisita: numeroVisita,
-        camaOrigen: bedId,
-        sectorOrigen: bedSector,
-        sectorDestino: camaDestino.sector,
+      // Usar las funciones de utilidad para convertir a formato Clarion
+      const clarionDate = dateToClarionDate(fechaActualObj);
+      const clarionTime = timeToClarionTime(fechaActualObj);
+      
+      console.log('Fecha JS:', fechaActualObj);
+      console.log('Fecha Clarion:', clarionDate);
+      console.log('Hora Clarion:', clarionTime);
+      
+      // Extraer solo el número de cama sin el sector (formato esperado: "S2-11B" -> "11B")
+      const numeroCamaSinSector = camaSeleccionada.includes('-') 
+        ? camaSeleccionada.split('-')[1] 
+        : camaSeleccionada;
+      
+      console.log('Cama seleccionada completa:', camaSeleccionada);
+      console.log('Número de cama sin sector:', numeroCamaSinSector);
+      
+      // Preparar los datos para el servicio moverPacienteACamaVacia
+      const datosCambio = {
+        FechaAdmision: clarionDate, // Fecha en formato Clarion
+        HoraAdmision: clarionTime, // Hora en formato Clarion
+        FechaEgreso: clarionDate, // Misma fecha para egreso (es el mismo día)
+        HoraEgreso: clarionTime, // Misma hora para egreso (es inmediato)
+        EstadoAmbulatorio: estadoAmbulatorio,
+        Diagnostico: diagnosticoSeleccionado?.CodigoOMS || '',
+        bedId: numeroCamaSinSector, // Solo el número de cama sin el sector
+        ValorSector: camaDestino.sector, // Sector de la cama destino
+        Operador: "738", // Código del operador (hardcodeado por ahora)
+        FechaCarga: clarionDate, // Fecha actual en formato Clarion
+        HoraCarga: clarionTime // Hora actual en formato Clarion
       };
       
-      console.log('Datos de traslado a enviar al backend:', datosTraslado);
+      console.log('Datos de traslado a enviar al backend:', datosCambio);
       
-      // Registrar la nueva ubicación en el backend
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds/cambiar-cama`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(datosTraslado),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Error al cambiar de cama');
-        }
-        
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.message || 'Error al cambiar de cama');
-        }
-        
-        console.log('Respuesta del backend:', data);
-      } catch (err: any) {
-        console.error('Error en el cambio de cama:', err);
-        
-        // Si estamos en desarrollo o el endpoint no existe, simulamos éxito
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Simulando cambio de cama exitoso en entorno de desarrollo');
-          console.log('Datos enviados al backend:', datosTraslado);
-        } else {
-          // En producción, propagamos el error
-          throw err;
-        }
-      }
+      // Llamar al servicio para mover al paciente
+      const response = await visitaMovimientoService.moverPacienteACamaVacia(
+        numeroVisita,
+        datosCambio
+      );
+      
+      console.log('Respuesta del backend:', response);
       
       setSuccess(true);
       
@@ -726,7 +786,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                 </div>
                 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Numero de Cama</label>
+                  <label className={styles.label}>Cama</label>
                   <input 
                     type="text" 
                     className={styles.input} 
@@ -737,7 +797,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                 </div>
                 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Fecha de Admisión</label>
+                  <label className={styles.label}>Fecha de Ingreso</label>
                   <input 
                     type="text" 
                     className={styles.input} 
@@ -748,7 +808,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                 </div>
                 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Hora de Admisión</label>
+                  <label className={styles.label}>Hora de Ingreso</label>
                   <input 
                     type="text" 
                     className={styles.input} 

@@ -2,6 +2,7 @@
 
 import { useLoginForm } from '../../hooks/useLoginForm';
 import styles from './LoginForm.module.css';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginForm() {
   const {
@@ -11,9 +12,11 @@ export default function LoginForm() {
     loadingSectores,
     rememberMe,
     sectores,
+    showPassword,
     handleInputChange,
     handleRememberMeChange,
-    handleSubmit
+    handleSubmit,
+    togglePasswordVisibility
   } = useLoginForm();
 
   return (
@@ -57,15 +60,28 @@ export default function LoginForm() {
             <label className={styles.label} htmlFor="password">
               Contraseña
             </label>
-            <input
-              id="password"
-              type="password"
-              className={styles.inputField}
-              value={credentials.password}
-              onChange={handleInputChange}
-              placeholder="••••••••"
-              disabled={loading}
-            />
+            <div className={styles.passwordInputContainer}>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                className={`${styles.inputField} ${styles.passwordInput}`}
+                value={credentials.password}
+                onChange={handleInputChange}
+                placeholder="••••••••"
+                disabled={loading}
+              />
+              <button 
+                type="button" 
+                className={styles.passwordToggle} 
+                onClick={togglePasswordVisibility}
+                tabIndex={-1}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {showPassword ? 
+                  <EyeOff size={20} color="#0083A9" /> : 
+                  <Eye size={20} color="#0083A9" />}
+              </button>
+            </div>
           </div>
           
           <div className={styles.formGroup}>

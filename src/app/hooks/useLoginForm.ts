@@ -17,6 +17,7 @@ export function useLoginForm() {
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [sectores, setSectores] = useState<Sector[] | undefined>([]);
   const [loadingSectores, setLoadingSectores] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   
   // Obtener la función para establecer el sector seleccionado desde el contexto global
   const { setSectorSeleccionado } = useAppContext();
@@ -163,6 +164,10 @@ const handleSubmit = async (e: React.FormEvent) => {
 };
 
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
+
   return {
     credentials,
     error,
@@ -170,8 +175,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     loadingSectores,
     rememberMe,
     sectores,
+    showPassword,
     handleInputChange,
     handleRememberMeChange,
-    handleSubmit
+    handleSubmit,
+    togglePasswordVisibility
   };
 }

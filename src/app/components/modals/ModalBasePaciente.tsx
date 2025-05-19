@@ -185,7 +185,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
                   </div>
                   {Number(pacienteData.numeroVisita) > 0 && (
                     <div className={styles.numeroVisita}>
-                      Nº De Visita <strong>{pacienteData.numeroVisita}</strong>
+                      Nº De Visita: <strong>{pacienteData.numeroVisita}</strong>
                     </div>
                   )}
                 </div>

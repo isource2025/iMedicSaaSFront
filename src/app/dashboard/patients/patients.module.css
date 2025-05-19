@@ -17,9 +17,10 @@
 }
 .controls {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
   align-items: center;
-  border-radius: 8px;
+  gap: 1rem;
 }
 .toolbar {
   display: flex;

@@ -34,19 +34,22 @@ export const patientService = {
    */
   searchPatients: async (searchTerm: string): Promise<Patient[]> => {
     try {
-      const response = await apiService.get<ApiResponse<Patient[]>>(`/patients/search?searchTerm=${encodeURIComponent(searchTerm)}`);
-      
-      if (response.data.success && response.data.data) {
-        return response.data.data;
+      const { data } = await apiService.get<ApiResponse<Patient[]>>(
+        `/patients/search`,
+        { params: { searchTerm } }
+      );
+
+      if (data.success && data.data) {
+        return data.data;
       }
-      
-      throw new Error(response.data.mensaje || 'Error al buscar pacientes');
+
+      throw new Error(data.mensaje || 'Error al buscar pacientes');
     } catch (error: any) {
       console.error('Error searching patients:', error);
-      if (error.response) {
-        throw new Error(error.response.data?.mensaje || 'Error al buscar pacientes');
-      }
-      throw error;
+
+      const mensaje =
+        error?.response?.data?.mensaje || 'Error al buscar pacientes';
+      throw new Error(mensaje);
     }
   },
   

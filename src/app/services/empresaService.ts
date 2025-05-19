@@ -30,6 +30,8 @@ export const obtenerInfoEmpresa = async (): Promise<EmpresaInfo> => {
     
     const data = await response.json();
     
+    console.log("Esta es la empresa:", data);
+    
     if (data.success) {
       return data.data;
     } else {
