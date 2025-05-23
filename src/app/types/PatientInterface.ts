@@ -1,6 +1,6 @@
 export interface Patient {
   IDPaciente: number;
-  Numerodocumento?: string;
+  NumeroDocumento?: string;
   ApellidoyNombre: string;
   Domicilio?: string;
   Sexo: string;
