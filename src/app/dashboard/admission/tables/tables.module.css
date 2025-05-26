@@ -1,0 +1,543 @@
+.container {
+  max-width: 1200px;
+}
+
+/* Estilos para la cuadrícula de tarjetas */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Estilos para las tarjetas */
+.card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cardHeader {
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.cardBody {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.cardCount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.cardLabel {
+  color: #666;
+  text-align: center;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.description {
+  text-align: center;
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.searchContainer {
+  margin-bottom: 1.5rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
+}
+
+.tableContainer {
+  overflow-x: auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th {
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+}
+
+.table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.table tr:hover {
+  background-color: rgba(97, 214, 235, 0.1); /* Pantone 311U - Azul celeste claro (con transparencia) */
+}
+
+.statusEnabled {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background-color: #e6f7f5;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  font-weight: 500;
+}
+
+.statusDisabled {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  color: #999;
+  font-weight: 500;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #666;
+}
+
+.error {
+  padding: 1rem;
+  background-color: #fff0f0;
+  border-left: 4px solid #ff4d4f;
+  color: #cf1322;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.noResults {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Estilos para formularios */
+.formContainer {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formLabel {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.formInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.primaryButton {
+  background-color: #00B5E2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+
+.primaryButton:hover {
+  background-color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.secondaryButton {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.secondaryButton:hover {
+  background-color: #e0e0e0;
+}
+
+.dangerButton {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.dangerButton:hover {
+  background-color: #cf1322;
+}
+
+.actionButton {
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editButton {
+  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+}
+
+.editButton:hover {
+  background-color: rgba(0, 181, 226, 0.1);
+}
+
+.deleteButton {
+  color: #ff4d4f;
+}
+
+.deleteButton:hover {
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+/* Estilos para modales */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Estilos para la cuadrícula de opciones en el modal */
+.opcionesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.opcionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: solid 1px #bad0d6;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: background-color 0.2s, transform 0.1s;
+  cursor: pointer;
+  text-align: center;
+}
+
+.opcionItem:hover {
+  background-color: rgba(0, 181, 226, 0.1);
+  transform: translateY(-2px);
+}
+
+.opcionIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.5rem;
+  object-fit: contain;
+}
+
+.opcionLabel {
+  font-size: 0.9rem;
+  color: #333;
+  word-break: break-word;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.modalCloseButton {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #999;
+}
+
+.modalCloseButton:hover {
+  color: #333;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+}
+
+/* Estilos para el encabezado */
+.headerContainer {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.titleIcon {
+  margin-right: 0.5rem;
+}
+
+/* Estilos para botones y acciones */
+.buttonContainerEnd {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.formContainerWithMargin {
+  margin-bottom: 2rem;
+}
+
+/* Estilos para botones de acción */
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  gap: 6px;
+}
+
+.actionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botón de guardar mejorado */
+.saveButton {
+  background-color: #00B5E2;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 181, 226, 0.3);
+  transition: all 0.2s ease;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: #0083A9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 131, 169, 0.4);
+}
+
+.saveButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 131, 169, 0.4);
+}
+
+.saveButton:disabled {
+  background-color: #a0d8e8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Estilos para la cuadrícula de opciones */
+.opcionesGridResponsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Estilos para los items de opción */
+.opcionItemPadded {
+  position: relative;
+  padding: 2rem 1rem;
+}
+
+.actionButtonsContainer {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.opcionLabelHighlighted {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.opcionDetailText {
+  color: #666;
+}
+
+.deleteConfirmText {
+  font-weight: bold;
+  color: #ff4d4f;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .table th, 
+  .table td {
+    padding: 0.5rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .modalContent {
+    width: 90%;
+    padding: 1rem;
+  }
+  
+  .buttonContainer {
+    flex-direction: column;
+  }
+  
+  .cardsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  
+  .opcionesGrid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .opcionIcon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .opcionLabel {
+    font-size: 0.8rem;
+  }
+  
+  .opcionesGridResponsive {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}

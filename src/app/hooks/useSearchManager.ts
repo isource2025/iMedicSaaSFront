@@ -68,24 +68,16 @@ export const useSearchManager = <T>({
     
     // Actualizar la referencia del término de búsqueda
     prevSearchTermRef.current = searchTerm;
-    
-    // Si el término está vacío, mostrar todos los resultados del dataset o vacío
-    if (!normalizedTerm) {
-      setResults(dataset || []);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+  
     
     // Si el término es demasiado corto, no realizar búsqueda
     if (normalizedTerm.length < minSearchLength) {
       return;
     }
     
-    // Si el término es el mismo que el anterior y no ha cambiado nada, no hacer nada
-    // Comparamos con prevResultsRef en lugar de results.length para evitar bucles infinitos
-    if (normalizedTerm === prevNormalizedTerm && 
-        JSON.stringify(prevResultsRef.current) === JSON.stringify(results)) {
+    // Si el término es el mismo que el anterior, no realizar búsqueda nuevamente
+    // Eliminamos la comparación con results para evitar bucles infinitos
+    if (normalizedTerm === prevNormalizedTerm) {
       return;
     }
     

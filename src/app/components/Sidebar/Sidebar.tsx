@@ -73,9 +73,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     {
       name: 'Internación', icon: Activity, hasSubmenu: true, submenuName: 'inpatient', submenuItems: [
         { name: 'Gestión de Camas', href: '/dashboard/beds' },
-        { name: 'Ocupación de camas', href: '/dashboard/inpatient/occupation' },
-        { name: 'Evolución pacientes', href: '/dashboard/inpatient/progress' },
-        { name: 'Alta/Traslado', href: '/dashboard/inpatient/discharge' },
+        { name: 'Ocupación de camas', href: '/dashboard/beds/occupation' },
+        { name: 'Tablas de internación', href: '/dashboard/beds/tables' },
       ]
     },
     {
@@ -83,7 +82,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         { name: 'Convenios', href: '/dashboard/billing/convenios' },
         { name: 'Rendiciones', href: '/dashboard/billing/rendiciones' },
         { name: 'Liquidaciones', href: '/dashboard/billing/liquidaciones' },
-        { name: 'Tablas de facturación', href: '/dashboard/billing/tablas' },
+        { name: 'Tablas de facturación', href: '/dashboard/billing/tables' },
       ]
     },
     {
