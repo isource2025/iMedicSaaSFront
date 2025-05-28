@@ -27,7 +27,7 @@ export const localidadService = {
    */
   getLocalidades: async (): Promise<Localidad[]> => {
     try {
-      const response = await apiService.get<ApiResponse<Localidad[]>>('/localidad');
+      const response = await apiService.get<ApiResponse<Localidad[]>>('/localidad/1');
       
       if (response.data.success && response.data.data) {
         return response.data.data;

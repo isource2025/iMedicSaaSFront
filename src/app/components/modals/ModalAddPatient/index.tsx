@@ -57,7 +57,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
     IDPaciente: initialData.IDPaciente || undefined,
     NumeroHC: initialData.NumeroHC || '',
     TipoDocumento: initialData.TipoDocumento || 'DNI',
-    Numerodocumento: initialData.Numerodocumento || '',
+    NumeroDocumento: initialData.NumeroDocumento || '',
     ApellidoyNombre: initialData.ApellidoyNombre || '',
     Domicilio: initialData.Domicilio || '',
     ValorLocalidad: initialData.ValorLocalidad || '',
@@ -142,7 +142,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
     
     // Validar campos obligatorios del header
     if (!formData.TipoDocumento) errors.TipoDocumento = 'El tipo de documento es obligatorio';
-    if (!formData.Numerodocumento) errors.Numerodocumento = 'El número de documento es obligatorio';
+    if (!formData.NumeroDocumento) errors.NumeroDocumento = 'El número de documento es obligatorio';
     if (!formData.ApellidoyNombre) errors.ApellidoyNombre = 'El nombre y apellido es obligatorio';
     
     // Validación de campos de datos personales
@@ -174,8 +174,10 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
     setIsSubmitting(true);
     
     try {
-      await onSubmit(formData);
-      onClose();
+      const resp = await onSubmit(formData);
+      if (resp) {
+        onClose();
+      }
     } catch (error) {
       console.error('Error al guardar paciente:', error);
     } finally {
@@ -195,6 +197,12 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
           {/* Header con datos de identificación */}
           <div className={styles.formHeader}>
             <div className={styles.headerTitle}></div>
+            <div className="grid grid-cols-3 gap-4">
+            <div className={styles.headerRow}>
+               <div className={styles.formGroup}>
+                <img className={styles.foto} src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
+              </div>
+            </div>
             
             <div className={styles.headerRow}>
               {isEditing && (
@@ -208,7 +216,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
                   />
                 </div>
               )}
-              
+            
               <div className={styles.formGroup}>
                 <label className={styles.label}>Número HC</label>
                 <input
@@ -216,7 +224,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
                   name="NumeroHC"
                   value={formData.NumeroHC}
                   onChange={handleChange}
-                  className={`${styles.input} ${styles.halfWidthInput}`}
+                  className={`${styles.input}`}
                 />
               </div>
               
@@ -226,7 +234,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
                   name="TipoDocumento"
                   value={formData.TipoDocumento}
                   onChange={handleChange}
-                  className={styles.select}
+                  className={`${styles.select}`}
                   required
                 >
                   {tiposDocumento.map(tipo => (
@@ -239,8 +247,8 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
                 <label className={`${styles.label} ${styles.requiredField}`}>Nº Documento</label>
                 <input
                   type="text"
-                  name="Numerodocumento"
-                  value={formData.Numerodocumento}
+                  name="NumeroDocumento"
+                  value={formData.NumeroDocumento}
                   onChange={handleChange}
                   className={styles.input}
                   required
@@ -271,6 +279,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
             {formErrors.ApellidoyNombre && (
               <div className={styles.errorMessage}>{formErrors.ApellidoyNombre}</div>
             )}
+            </div>
           </div>
           
           {/* Título de la sección */}
