@@ -6,6 +6,7 @@ import { apiService } from './axios';
 export interface Localidad {
   valor: string;
   descripcion: string;
+  valorProvincia: string;
 }
 
 /**
@@ -27,7 +28,7 @@ export const localidadService = {
    */
   getLocalidades: async (): Promise<Localidad[]> => {
     try {
-      const response = await apiService.get<ApiResponse<Localidad[]>>('/localidad/1');
+      const response = await apiService.get<ApiResponse<Localidad[]>>('/localidad');
       
       if (response.data.success && response.data.data) {
         return response.data.data;

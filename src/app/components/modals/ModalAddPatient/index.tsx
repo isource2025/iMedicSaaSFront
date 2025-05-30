@@ -7,6 +7,7 @@ import Modal from '../../UI/Modal';
 import { clarionDateToDate } from '../../../utils/dateUtils';
 import { sexoService, Sexo } from '../../../services/sexoService';
 import { localidadService, Localidad } from '../../../services/localidadService';
+import { provinciaService } from '../../../services/provinciaService';
 
 interface ModalAddPatientProps {
   isOpen: boolean;
@@ -32,8 +33,6 @@ const estadosCiviles = [
   { value: 'VIUDO', label: 'Viudo/a' },
   { value: 'OTRO', label: 'Otro' }
 ];
-
-
 
 const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
   isOpen,
@@ -74,6 +73,8 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
     NumeroSSN: initialData.NumeroSSN || ''
   });
 
+  const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
+
   // Cargar opciones de sexo y localidades desde la API
   useEffect(() => {
     const fetchSexos = async () => {
@@ -104,6 +105,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
     fetchLocalidades();
   }, []);
 
+
   // Convertir fecha de nacimiento si viene en formato Clarion
   useEffect(() => {
     if (initialData.FechaNacimiento && /^\d+$/.test(initialData.FechaNacimiento)) {
@@ -120,8 +122,28 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
     }
   }, [initialData.FechaNacimiento]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    if (name === 'ValorLocalidad') {
+      const selected = localidadOptions.find(
+        l => String(l.valor).trim() === value.trim()
+      );
+      setSelectedLocalidad(selected || null);
+      if (selected?.valorProvincia) {
+        try {
+          const provincia = await provinciaService.getProvincia(selected.valorProvincia);
+          const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
+          setFormData(prev => ({
+            ...prev,
+            Provincia: provinciaData?.descripcion || ''
+          }));
+        } catch (error) {
+          console.error('Error al obtener provincia:', error);
+        }
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -307,7 +329,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
               <div className={styles.errorMessage}>{formErrors.Domicilio}</div>
             )}
             
-            <div className={styles.formRow}>
+            <div className={`${styles.formRow} ${styles.double}`}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Localidad</label>
                 <select
@@ -323,12 +345,6 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
                 </select>
                 {loading.localidad && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#0083A9' }}>Cargando...</span>}
               </div>
-            </div>
-            {formErrors.ValorLocalidad && (
-              <div className={styles.errorMessage}>{formErrors.ValorLocalidad}</div>
-            )}
-            
-            <div className={styles.formRow}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Provincia</label>
                 <input
@@ -340,6 +356,9 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
                 />
               </div>
             </div>
+            {formErrors.ValorLocalidad && (
+              <div className={styles.errorMessage}>{formErrors.ValorLocalidad}</div>
+            )}
             {formErrors.Provincia && (
               <div className={styles.errorMessage}>{formErrors.Provincia}</div>
             )}
@@ -479,7 +498,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
               <div className={styles.errorMessage}>{formErrors.Mail}</div>
             )}
             
-            <div className={styles.formRow}>
+            <div className={`${styles.formRow} ${styles.double}`}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Cobertura</label>
                 <input

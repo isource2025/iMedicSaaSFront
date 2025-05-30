@@ -51,7 +51,7 @@ export default function PatientsPage() {
     isSearching
   } = useSearchManager<Patient>({
     fetchRemote: (term) => patientService.searchPatients(term),
-    searchKeys: ['ApellidoyNombre', 'Numerodocumento', 'NumeroHC', 'IDPaciente'],
+    searchKeys: ['ApellidoyNombre', 'NumeroDocumento', 'NumeroHC', 'IDPaciente'],
     minSearchLength: 3,
   });
   
@@ -146,7 +146,7 @@ export default function PatientsPage() {
             isOpen={isEditModalOpen} 
             onClose={closeEditModal} 
             title="Editar Paciente"
-            size="medium" 
+            size="large" 
           >
             <PatientForm 
               patient={selectedPatient} 
