@@ -76,12 +76,15 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     allBeds,
     bedStates,
     sectors,
+    serviciosMedicos,
     loading: loadingBeds,
     error: errorBeds,
     filter,
     setFilter,
     sectorFilter,
     setSectorFilter,
+    servicioFilter,
+    setServicioFilter,
     searchTerm,
     setSearchTerm,
     refreshBeds
@@ -223,6 +226,9 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       // Filtrar por sector si hay un filtro de sector seleccionado
       const sectorMatch = sectorFilter === 'all' || cama.sector === sectorFilter;
       
+      // Filtrar por servicio médico
+      const servicioMatch = servicioFilter === 'all' || cama.servicioMedicoDescripcion === servicioFilter;
+      
       // Filtrar por término de búsqueda (número de cama)
       const searchMatch = !searchTerm || 
                          cama.numeroCama.toLowerCase().includes(searchTerm.toLowerCase());
@@ -230,7 +236,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       // Excluir la cama actual
       const notCurrentBed = cama.id !== bedId;
       
-      return estadoMatch && sectorMatch && searchMatch && notCurrentBed;
+      return estadoMatch && sectorMatch && servicioMatch && searchMatch && notCurrentBed;
     })
     .map((cama) => ({
       id: cama.id,
@@ -581,6 +587,9 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     setFilter={setFilter}
                     sectorFilter={sectorFilter}
                     setSectorFilter={setSectorFilter}
+                    serviciosMedicos={serviciosMedicos}
+                    servicioFilter={servicioFilter}
+                    setServicioFilter={setServicioFilter}
                     searchTerm={searchTerm}
                     setSearchTerm={setSearchTerm}
                     refreshBeds={handleRefreshBeds}

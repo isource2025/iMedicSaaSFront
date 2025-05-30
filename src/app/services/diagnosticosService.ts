@@ -1,7 +1,7 @@
 import { DiagnosticoCie10, DiagnosticosResponse } from '../types/diagnosticos';
 import { apiService } from './axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5006/api';
 
 /**
  * Normaliza un diagnóstico para asegurar que tenga la propiedad CodigoOMS
