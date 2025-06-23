@@ -348,6 +348,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
               <div className={styles.formGroup}>
                 <label className={styles.label}>Provincia</label>
                 <input
+                  disabled
                   type="text"
                   name="Provincia"
                   value={formData.Provincia}

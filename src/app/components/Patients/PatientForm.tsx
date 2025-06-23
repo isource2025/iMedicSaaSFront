@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Patient, PatientFormData } from '../../types/PatientInterface';
 import styles from '../../components/modals/ModalAddPatient/styles.module.css';
+import { Localidad, localidadService } from '../../services/localidadService';
+import { provinciaService } from '../../services/provinciaService';
 
 interface PatientFormProps {
   patient?: Patient;
@@ -14,7 +16,7 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
   const [formData, setFormData] = useState<PatientFormData>({
       ApellidoyNombre: '',
       TipoDocumento: 'DNI', 
-      NumeroDocumento: '',
+      Numerodocumento: '',
       Domicilio: '',
       ValorLocalidad: '',
       Provincia: '',
@@ -31,6 +33,8 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
       NumeroSSN: '',
   });
 
+  const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
+  const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
   const tiposDocumento = [
     { value: 'DNI', label: 'DNI' },
     { value: 'LC', label: 'LC' },
@@ -49,15 +53,32 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
   ];
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState({
+    sexo: false,
+    localidad: false
+  });
 
   // Si hay un paciente, cargamos sus datos en el formulario
   useEffect(() => {
     if (patient) {
+    
+      const fetchLocalidades = async () => {
+        try {
+          setLoading(prev => ({ ...prev, localidad: true }));
+          const data = await localidadService.getLocalidades();
+          setLocalidadOptions(data);
+        } catch (error) {
+          console.error('Error al cargar opciones de localidad:', error);
+        } finally {
+          setLoading(prev => ({ ...prev, localidad: false }));
+        }
+      };
+
       setFormData({
         IDPaciente: patient.IDPaciente || undefined,
         NumeroHC: patient.NumeroHC || '',
         TipoDocumento: patient.TipoDocumento || 'DNI',
-        NumeroDocumento: patient.NumeroDocumento || '',
+        Numerodocumento: patient.Numerodocumento || '',
         ApellidoyNombre: patient.ApellidoyNombre || '',
         Domicilio: patient.Domicilio || '',
         ValorLocalidad: patient.ValorLocalidad || '',
@@ -73,11 +94,38 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
         NumeroCuenta: patient.NumeroCuenta || '',
         NumeroSSN: patient.NumeroSSN || ''
       });
+
+      handleGetProvincia(patient.Provincia);
+      fetchLocalidades();
     }
   }, [patient]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleGetProvincia = async (valorProvincia: string) => {
+    const provincia = await provinciaService.getProvincia(valorProvincia);
+    const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
+    setFormData(prev => ({
+      ...prev,
+      Provincia: provinciaData?.descripcion || ''
+    }));
+  }
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    if (name === 'ValorLocalidad') {
+      const selected = localidadOptions.find(
+        l => String(l.valor).trim() === value.trim()
+      );
+      setSelectedLocalidad(selected || null);
+      if (selected?.valorProvincia) {
+        try {
+          await handleGetProvincia(selected.valorProvincia);
+        } catch (error) {
+          console.error('Error al obtener provincia:', error);
+        }
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
     
     // Limpiar errores al editar el campo
@@ -168,8 +216,8 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
                 <label className={`${styles.label} ${styles.requiredField}`}>Nº Documento</label>
                 <input
                   type="text"
-                  name="NumeroDocumento"
-                  value={formData.NumeroDocumento}
+                  name="Numerodocumento"
+                  value={formData.Numerodocumento}
                   onChange={handleChange}
                   className={styles.input}
                   required
@@ -238,15 +286,16 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
                   className={styles.select}
                 >
                   <option value="">Seleccione...</option>
-                  {/* {localidadOptions.map(localidad => (
+                  {localidadOptions.map(localidad => (
                     <option key={localidad.valor} value={localidad.valor}>{localidad.descripcion}</option>
-                  ))} */}
+                  ))}
                 </select>
                 {/* {loading.localidad && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#0083A9' }}>Cargando...</span>} */}
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Provincia</label>
                 <input
+                  disabled
                   type="text"
                   name="Provincia"
                   value={formData.Provincia}

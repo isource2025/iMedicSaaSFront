@@ -82,7 +82,6 @@ export const patientService = {
    * @returns Promise con el paciente creado
    */
   createPatient: async (data: PatientFormData): Promise<Patient> => {
-    console.log(data);
     try {
       const response = await apiService.post<ApiResponse<Patient>>('/patients', data);
       
