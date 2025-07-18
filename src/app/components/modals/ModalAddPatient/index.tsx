@@ -194,7 +194,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
     }
     
     setIsSubmitting(true);
-    
+
     try {
       const resp = await onSubmit(formData);
       if (resp) {
@@ -220,11 +220,11 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
           <div className={styles.formHeader}>
             <div className={styles.headerTitle}></div>
             <div className="grid grid-cols-3 gap-4">
-            <div className={styles.headerRow}>
+            {/* <div className={styles.headerRow}>
                <div className={styles.formGroup}>
                 <img className={styles.foto} src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
               </div>
-            </div>
+            </div> */}
             
             <div className={styles.headerRow}>
               {isEditing && (

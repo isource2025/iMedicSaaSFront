@@ -3,6 +3,8 @@ import { Patient, PatientFormData } from '../../types/PatientInterface';
 import styles from '../../components/modals/ModalAddPatient/styles.module.css';
 import { Localidad, localidadService } from '../../services/localidadService';
 import { provinciaService } from '../../services/provinciaService';
+import { Sexo, sexoService } from '../../services/sexoService';
+import { clarionDateToDate } from '../../utils/dateUtils';
 
 interface PatientFormProps {
   patient?: Patient;
@@ -33,6 +35,7 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
       NumeroSSN: '',
   });
 
+  const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
   const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
   const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
   const tiposDocumento = [
@@ -62,6 +65,18 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
   useEffect(() => {
     if (patient) {
     
+      const fetchSexos = async () => {
+        try {
+          setLoading(prev => ({ ...prev, sexo: true }));
+          const data = await sexoService.getSexos();
+          setSexoOptions(data);
+        } catch (error) {
+          console.error('Error al cargar opciones de sexo:', error);
+        } finally {
+          setLoading(prev => ({ ...prev, sexo: false }));
+        }
+      };
+
       const fetchLocalidades = async () => {
         try {
           setLoading(prev => ({ ...prev, localidad: true }));
@@ -97,8 +112,24 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
 
       handleGetProvincia(patient.Provincia);
       fetchLocalidades();
+      fetchSexos();
     }
   }, [patient]);
+
+  useEffect(() => {
+    if (formData.FechaNacimiento && /^\d+$/.test(formData.FechaNacimiento)) {
+      const date = clarionDateToDate(formData.FechaNacimiento);
+      if (date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        setFormData(prev => ({
+          ...prev,
+          FechaNacimiento: `${year}-${month}-${day}`
+        }));
+      }
+    }
+  }, [formData.FechaNacimiento]);
 
   const handleGetProvincia = async (valorProvincia: string) => {
     const provincia = await provinciaService.getProvincia(valorProvincia);
@@ -179,11 +210,11 @@ export default function PatientForm({ patient, onSubmit, onCancel, isSubmitting,
           <div className={styles.formHeader}>
             <div className={styles.headerTitle}></div>
             <div className="grid grid-cols-3 gap-4">
-            <div className={styles.headerRow}>
+            {/* <div className={styles.headerRow}>
                <div className={styles.formGroup}>
                 <img className={styles.foto} src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
               </div>
-            </div>
+            </div> */}
             
             <div className={styles.headerRow}>
               <div className={styles.formGroup}>
