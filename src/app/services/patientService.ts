@@ -108,7 +108,7 @@ export const patientService = {
   updatePatient: async (id: number, data: PatientFormData): Promise<Patient> => {
     try {
       const response = await apiService.put<ApiResponse<Patient>>(`/patients/${id}`, data);
-      
+      console.log(data);
       if (response.data.success && response.data.data) {
         return response.data.data;
       }

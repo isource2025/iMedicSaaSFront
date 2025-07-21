@@ -2,7 +2,7 @@ export interface Patient {
   IDPaciente: number;
   ApellidoyNombre: string;
   TipoDocumento: string, 
-  Numerodocumento: string,
+  NumeroDocumento: string,
   Domicilio: string,
   ValorLocalidad: string,
   Provincia: string,
@@ -27,7 +27,7 @@ export interface PatientFormData {
   IDPaciente?: number;
   NumeroHC: string;
   TipoDocumento: string;
-  Numerodocumento: string;
+  NumeroDocumento: string;
   ApellidoyNombre: string;
 
   // Datos personales y de contacto (solapa)

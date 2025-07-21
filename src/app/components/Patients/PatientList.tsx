@@ -107,7 +107,7 @@ export default function PatientList({
                 <tr key={patient.IDPaciente} className={styles.tableRow}>
                   <td>{patient.IDPaciente}</td>
                   <td className={styles.documentColumn}>
-                    <div>{patient.Numerodocumento || '-'}</div>
+                    <div>{patient.NumeroDocumento || '-'}</div>
                     <div className={styles.hcNumber}>{patient.NumeroHC}</div>
                   </td>
                   <td className={styles.patientColumn}>
