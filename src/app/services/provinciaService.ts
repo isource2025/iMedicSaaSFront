@@ -6,6 +6,7 @@ import { apiService } from './axios';
 export interface Provincia {
   valor: string;
   descripcion: string;
+  nacionalidad: string;
 }
 
 /**

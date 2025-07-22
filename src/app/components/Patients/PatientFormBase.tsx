@@ -53,11 +53,11 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
   // Estado civil options
   const estadosCiviles = [
-    { value: 'SOLTERO', label: 'Soltero/a' },
-    { value: 'CASADO', label: 'Casado/a' },
-    { value: 'DIVORCIADO', label: 'Divorciado/a' },
-    { value: 'VIUDO', label: 'Viudo/a' },
-    { value: 'OTRO', label: 'Otro' }
+    { value: 'S', label: 'Soltero/a' },
+    { value: 'C', label: 'Casado/a' },
+    { value: 'D', label: 'Divorciado/a' },
+    { value: 'V', label: 'Viudo/a' },
+    { value: 'O', label: 'Otro' }
   ];
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -149,6 +149,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
   const handleGetProvincia = async (valorProvincia: string) => {
     const provincia = await provinciaService.getProvincia(valorProvincia);
     const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
+    formData.Nacionalidad = provinciaData?.nacionalidad || '';
     setFormData(prev => ({
       ...prev,
       Provincia: provinciaData?.descripcion || ''
@@ -212,8 +213,18 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      onSubmit(formData);
+    if (!validateForm()) return;
+    
+    try {
+      setIsSubmitting(true);
+      const success = await onSubmit(formData);
+      if (success) {
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error al guardar el paciente:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -231,35 +242,35 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
                 <div className="grid grid-cols-3 gap-4">
                     <div className={styles.headerRow}>
                         <div className={styles.formGroup}>
-                        <label className={styles.label}>Número HC</label>
-                        <input
-                            type="text"
-                            name="NumeroHC"
-                            value={formData.NumeroHC}
-                            onChange={handleChange}
-                            className={`${styles.input} ${errors.NumeroHC ? styles.error : ''}`}
-                        />
-                        {errors.NumeroHC && (
-                            <div className={styles.errorMessage}>{errors.NumeroHC}</div>
-                        )}
+                          <label className={styles.label}>Número HC</label>
+                          <input
+                              type="text"
+                              name="NumeroHC"
+                              value={formData.NumeroHC}
+                              onChange={handleChange}
+                              className={`${styles.input} ${errors.NumeroHC ? styles.error : ''}`}
+                          />
+                          {errors.NumeroHC && (
+                              <div className={styles.errorMessage}>{errors.NumeroHC}</div>
+                          )}
                         </div>
                         
                         <div className={styles.formGroup}>
-                        <label className={`${styles.label} ${styles.requiredField}`}>Tipo Documento</label>
-                        <select
-                            name="TipoDocumento"
-                            value={formData.TipoDocumento}
-                            onChange={handleChange}
-                            className={`${styles.select} ${errors.TipoDocumento ? styles.error : ''}`}
-                            required
-                        >
-                            {tiposDocumento.map(tipo => (
-                            <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
-                            ))}
-                        </select>
-                        {errors.TipoDocumento && (
-                            <div className={styles.errorMessage}>{errors.TipoDocumento}</div>
-                        )}
+                          <label className={`${styles.label} ${styles.requiredField}`}>Tipo Documento</label>
+                          <select
+                              name="TipoDocumento"
+                              value={formData.TipoDocumento}
+                              onChange={handleChange}
+                              className={`${styles.select} ${errors.TipoDocumento ? styles.error : ''}`}
+                              required
+                          >
+                              {tiposDocumento.map(tipo => (
+                              <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                              ))}
+                          </select>
+                          {errors.TipoDocumento && (
+                              <div className={styles.errorMessage}>{errors.TipoDocumento}</div>
+                          )}
                         </div>
                         
                         <div className={styles.formGroup}>
@@ -355,6 +366,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Nacionalidad</label>
                     <input
+                        disabled
                         type="text"
                         name="Nacionalidad"
                         value={formData.Nacionalidad}
@@ -440,36 +452,35 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
                 </div>
             </div>
 
-            <div className={styles.formRow}>
+            <div className={styles.formContent}>
+              <div className={`${styles.formRow} ${styles.double}`}>
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Teléfono Particular</label>
-                    <input
-                        type="text"
-                        name="TelefonoParticular"
-                        value={formData.TelefonoParticular}
-                        onChange={handleChange}
-                        className={`${styles.input} ${errors.TelefonoParticular ? styles.error : ''}`}
-                    />
-                    {errors.TelefonoParticular && (
-                        <div className={styles.errorMessage}>{errors.TelefonoParticular}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Teléfono Negocio</label>
-                    <input
-                        type="text"
-                        name="TelefonoNegocio"
-                        value={formData.TelefonoNegocio}
-                        onChange={handleChange}
-                        className={`${styles.input} ${errors.TelefonoNegocio ? styles.error : ''}`}
-                    />
-                    {errors.TelefonoNegocio && (
-                        <div className={styles.errorMessage}>{errors.TelefonoNegocio}</div>
-                    )}
-                </div>
+                      <label className={styles.label}>Teléfono Particular</label>
+                      <input
+                          type="text"
+                          name="TelefonoParticular"
+                          value={formData.TelefonoParticular}
+                          onChange={handleChange}
+                          className={`${styles.input} ${errors.TelefonoParticular ? styles.error : ''}`}
+                      />
+                      {errors.TelefonoParticular && (
+                          <div className={styles.errorMessage}>{errors.TelefonoParticular}</div>
+                      )}
+                  </div>
+                  <div className={styles.formGroup}>
+                      <label className={styles.label}>Teléfono Negocio</label>
+                      <input
+                          type="text"
+                          name="TelefonoNegocio"
+                          value={formData.TelefonoNegocio}
+                          onChange={handleChange}
+                          className={`${styles.input} ${errors.TelefonoNegocio ? styles.error : ''}`}
+                      />
+                      {errors.TelefonoNegocio && (
+                          <div className={styles.errorMessage}>{errors.TelefonoNegocio}</div>
+                      )}
+                  </div>
+              </div>
             </div>
 
             <div className={styles.formRow}>
@@ -488,36 +499,35 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
                 </div>
             </div>
 
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Número de Cuenta</label>
-                    <input
-                    type="text"
-                    name="NumeroCuenta"
-                    value={formData.NumeroCuenta}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.NumeroCuenta ? styles.error : ''}`}
-                    />
-                    {errors.NumeroCuenta && (
-                    <div className={styles.errorMessage}>{errors.NumeroCuenta}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>SSN</label>
-                    <input
-                    type="text"
-                    name="NumeroSSN"
-                    value={formData.NumeroSSN}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.NumeroSSN ? styles.error : ''}`}
-                    />
-                    {errors.NumeroSSN && (
-                    <div className={styles.errorMessage}>{errors.NumeroSSN}</div>
-                    )}
-                </div>
+            <div className={styles.formContent}>
+              <div className={`${styles.formRow} ${styles.double}`}>
+                  <div className={styles.formGroup}>
+                      <label className={styles.label}>Número de Cuenta</label>
+                      <input
+                      type="text"
+                      name="NumeroCuenta"
+                      value={formData.NumeroCuenta}
+                      onChange={handleChange}
+                      className={`${styles.input} ${errors.NumeroCuenta ? styles.error : ''}`}
+                      />
+                      {errors.NumeroCuenta && (
+                      <div className={styles.errorMessage}>{errors.NumeroCuenta}</div>
+                      )}
+                  </div>
+                  <div className={styles.formGroup}>
+                      <label className={styles.label}>SSN</label>
+                      <input
+                      type="text"
+                      name="NumeroSSN"
+                      value={formData.NumeroSSN}
+                      onChange={handleChange}
+                      className={`${styles.input} ${errors.NumeroSSN ? styles.error : ''}`}
+                      />
+                      {errors.NumeroSSN && (
+                      <div className={styles.errorMessage}>{errors.NumeroSSN}</div>
+                      )}
+                  </div>
+              </div>
             </div>
 
             <div className={styles.buttonContainer}>
