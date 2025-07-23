@@ -98,6 +98,51 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
     }
   };
 
+  const [buscandoRenaper, setBuscandoRenaper] = useState(false);
+  const getRenaperInfo = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, NumeroDocumento: number, Sexo: string) => {
+    e.preventDefault();
+    setBuscandoRenaper(true);
+    var sexoOpt = 2;
+    if (Sexo == 'F') {
+      sexoOpt = 1;
+    }
+
+    const resp = await fetch(`http://localhost:4000/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`);
+    const data = await resp.json(); 
+    console.log(data.persona);
+    if (data.persona) {
+      const localidad = await fetch(`http://localhost:4000/api/localidad/search-by-localidad/${data.persona.ciudad}`);
+      const dataLocalidad = await localidad.json();
+      
+      await fetchLocalidades();
+
+      setFormData({
+        IDPaciente: initialData.IDPaciente || undefined,
+        NumeroHC: initialData.NumeroHC || '',
+        TipoDocumento: initialData.TipoDocumento || 'DNI',
+        NumeroDocumento: `${data.persona.numeroDocumento}`,
+        ApellidoyNombre: `${data.persona.apellido}, ${data.persona.nombres}`,
+        Domicilio: `${data.persona.calle} ${data.persona.numero}, ${data.persona.monoblock}`,
+        ValorLocalidad: `${dataLocalidad.data.Valor}`,
+        Provincia: initialData.Provincia || '',
+        Nacionalidad: initialData.Nacionalidad || 'Argentina',
+        FechaNacimiento: `${data.persona.fechaNacimiento}`,
+        CUIT: initialData.CUIT || '',
+        Sexo: `${data.persona.sexo}`,
+        EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
+        TelefonoParticular: initialData.TelefonoParticular || '',
+        TelefonoNegocio: initialData.TelefonoNegocio || '',
+        Mail: initialData.Mail || '',
+        NumeroCuenta: initialData.NumeroCuenta || '',
+        NumeroSSN: initialData.NumeroSSN || ''
+      })
+
+      await handleGetProvincia(dataLocalidad.data.ValorProvincia);
+    }
+
+    setBuscandoRenaper(false);
+  }
+
   // Si hay un paciente, cargamos sus datos en el formulario
   useEffect(() => {
     if (initialData) {
@@ -158,15 +203,15 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-
+    console.log(name);
     if (name === 'ValorLocalidad') {
       const selected = localidadOptions.find(
-        l => String(l.valor).trim() === value.trim()
+        l => String(l.Valor).trim() === value.trim()
       );
       setSelectedLocalidad(selected || null);
-      if (selected?.valorProvincia) {
+      if (selected?.ValorProvincia) {
         try {
-          await handleGetProvincia(selected.valorProvincia);
+          await handleGetProvincia(selected.ValorProvincia);
         } catch (error) {
           console.error('Error al obtener provincia:', error);
         }
@@ -239,55 +284,79 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
             {/* Header con datos de identificación */}
             <div className={styles.formHeader}>
                 <div className={styles.headerTitle}></div>
-                <div className="grid grid-cols-3 gap-4">
-                    <div className={styles.headerRow}>
-                        <div className={styles.formGroup}>
-                          <label className={styles.label}>Número HC</label>
-                          <input
-                              type="text"
-                              name="NumeroHC"
-                              value={formData.NumeroHC}
-                              onChange={handleChange}
-                              className={`${styles.input} ${errors.NumeroHC ? styles.error : ''}`}
-                          />
-                          {errors.NumeroHC && (
-                              <div className={styles.errorMessage}>{errors.NumeroHC}</div>
-                          )}
-                        </div>
-                        
-                        <div className={styles.formGroup}>
-                          <label className={`${styles.label} ${styles.requiredField}`}>Tipo Documento</label>
-                          <select
-                              name="TipoDocumento"
-                              value={formData.TipoDocumento}
-                              onChange={handleChange}
-                              className={`${styles.select} ${errors.TipoDocumento ? styles.error : ''}`}
-                              required
-                          >
-                              {tiposDocumento.map(tipo => (
-                              <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
-                              ))}
-                          </select>
-                          {errors.TipoDocumento && (
-                              <div className={styles.errorMessage}>{errors.TipoDocumento}</div>
-                          )}
-                        </div>
-                        
-                        <div className={styles.formGroup}>
-                        <label className={`${styles.label} ${styles.requiredField}`}>Nº Documento</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className={styles.headerRow}>
+                      <div className={styles.formGroup}>
+                        <label className={styles.label}>Número HC</label>
                         <input
+                            type="text"
+                            name="NumeroHC"
+                            value={formData.NumeroHC}
+                            onChange={handleChange}
+                            className={`${styles.input} ${errors.NumeroHC ? styles.error : ''}`}
+                        />
+                        {errors.NumeroHC && (
+                            <div className={styles.errorMessage}>{errors.NumeroHC}</div>
+                        )}
+                      </div>
+                      
+                      <div className={styles.formGroup}>
+                        <label className={`${styles.label} ${styles.requiredField}`}>Tipo Documento</label>
+                        <select
+                            name="TipoDocumento"
+                            value={formData.TipoDocumento}
+                            onChange={handleChange}
+                            className={`${styles.select} ${errors.TipoDocumento ? styles.error : ''}`}
+                            required
+                        >
+                            {tiposDocumento.map(tipo => (
+                            <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                            ))}
+                        </select>
+                        {errors.TipoDocumento && (
+                            <div className={styles.errorMessage}>{errors.TipoDocumento}</div>
+                        )}
+                      </div>
+                      
+                      <div className={styles.formGroup}>
+                        <label className={`${styles.label} ${styles.requiredField}`}>Nº Documento</label>
+
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input
                             type="text"
                             name="NumeroDocumento"
                             value={formData.NumeroDocumento}
                             onChange={handleChange}
                             className={`${styles.input} ${errors.NumeroDocumento ? styles.error : ''}`}
                             required
-                        />
-                        {errors.NumeroDocumento && (
-                            <div className={styles.errorMessage}>{errors.NumeroDocumento}</div>
-                        )}
+                          />
+
+                          {!buscandoRenaper ? 
+                            <button type="button" onClick={(e: any) => getRenaperInfo(e, Number(formData.NumeroDocumento), formData.Sexo)} className={`${styles.buttonBuscar}`}>
+                              <svg viewBox="0 0 24 24" width={20} height={20} color={"currentColor"} fill={"none"}>
+                                  <path d="M17 17L21 21" stroke="#141B34" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19C15.4183 19 19 15.4183 19 11Z" stroke="#141B34" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                          :
+                            <svg className='animate-spin' viewBox="0 0 24 24" width={24} height={24} color={"currentColor"} fill={"none"}>
+                                <path d="M12 3V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                                <path d="M12 18V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                                <path d="M21 12L18 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                                <path d="M6 12L3 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                                <path d="M18.3635 5.63672L16.2422 7.75804" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                                <path d="M7.75804 16.2422L5.63672 18.3635" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                                <path d="M18.3635 18.3635L16.2422 16.2422" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                                <path d="M7.75804 7.75804L5.63672 5.63672" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                            </svg>
+                          }
                         </div>
-                    </div>
+
+                        {errors.NumeroDocumento && (
+                          <div className={styles.errorMessage}>{errors.NumeroDocumento}</div>
+                        )}
+                      </div>
+                  </div>
                 </div>
                 <div className={styles.formGroup}>
                     <label className={`${styles.label} ${styles.requiredField}`}>Apellido y Nombre</label>
@@ -341,7 +410,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
                 >
                     <option value="">Seleccione...</option>
                     {localidadOptions.map(localidad => (
-                    <option key={localidad.valor} value={localidad.valor}>{localidad.descripcion}</option>
+                    <option key={localidad.Valor} value={localidad.Valor}>{localidad.NombreLocalidad}</option>
                     ))}
                 </select>
                 {loading.localidad && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#0083A9' }}>Cargando...</span>}

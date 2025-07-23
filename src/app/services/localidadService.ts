@@ -4,9 +4,9 @@ import { apiService } from './axios';
  * Interfaz para los datos de localidad
  */
 export interface Localidad {
-  valor: string;
-  descripcion: string;
-  valorProvincia: string;
+  Valor: string;
+  NombreLocalidad: string;
+  ValorProvincia: string;
 }
 
 /**
