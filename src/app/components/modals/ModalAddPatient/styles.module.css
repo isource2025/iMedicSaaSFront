@@ -64,7 +64,6 @@
   padding: 0.25rem 0;
 }
 
-
 .formGroup {
   display: grid;
   grid-template-columns: 120px 1fr;
@@ -78,6 +77,21 @@
   grid-template-columns: repeat(1, 1fr);
   gap: 0.5rem;
   margin-bottom: 0.25rem;
+}
+
+.formRow.double {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.formRow.double .formGroup {
+  flex: 1;
+}
+
+.formRow.double .formGroup:last-child {
+  margin-left: 0;
 }
 
 .perfil {

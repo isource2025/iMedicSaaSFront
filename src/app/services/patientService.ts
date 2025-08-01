@@ -82,7 +82,6 @@ export const patientService = {
    * @returns Promise con el paciente creado
    */
   createPatient: async (data: PatientFormData): Promise<Patient> => {
-    console.log(data);
     try {
       const response = await apiService.post<ApiResponse<Patient>>('/patients', data);
       
@@ -109,7 +108,7 @@ export const patientService = {
   updatePatient: async (id: number, data: PatientFormData): Promise<Patient> => {
     try {
       const response = await apiService.put<ApiResponse<Patient>>(`/patients/${id}`, data);
-      
+      console.log(data);
       if (response.data.success && response.data.data) {
         return response.data.data;
       }

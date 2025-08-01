@@ -4,8 +4,9 @@ import { apiService } from './axios';
  * Interfaz para los datos de localidad
  */
 export interface Localidad {
-  valor: string;
-  descripcion: string;
+  Valor: string;
+  NombreLocalidad: string;
+  ValorProvincia: string;
 }
 
 /**
@@ -27,7 +28,7 @@ export const localidadService = {
    */
   getLocalidades: async (): Promise<Localidad[]> => {
     try {
-      const response = await apiService.get<ApiResponse<Localidad[]>>('/localidad/1');
+      const response = await apiService.get<ApiResponse<Localidad[]>>('/localidad');
       
       if (response.data.success && response.data.data) {
         return response.data.data;
