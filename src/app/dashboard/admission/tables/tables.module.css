@@ -35,7 +35,6 @@
 }
 
 .cardBody {
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -339,8 +338,8 @@
 .opcionIcon {
   width: 48px;
   height: 48px;
-  margin-bottom: 0.5rem;
   object-fit: contain;
+  color: #333;
 }
 
 .opcionLabel {
@@ -468,7 +467,7 @@
 /* Estilos para los items de opción */
 .opcionItemPadded {
   position: relative;
-  padding: 2rem 1rem;
+  padding: 1rem .5rem;
 }
 
 .actionButtonsContainer {
@@ -479,11 +478,62 @@
   gap: 0.5rem;
 }
 
+.actionButtonsContainerBottom {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.opcionContentWithButtons {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 140px;
+  position: relative;
+}
+
+.opcionContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.opcionContent:hover {
+  transform: translateY(-3px);
+}
+
+.viewDataLabel {
+  font-size: 0.8rem;
+  color: #00B5E2;
+  margin-top: 4px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.opcionContent:hover .viewDataLabel {
+  color: #0083A9;
+  text-decoration: underline;
+}
+
 .opcionLabelHighlighted {
   font-size: 1.1rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
+  text-align: center;
 }
+
+.opcionIconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+}
+
 
 .opcionDetailText {
   color: #666;
@@ -526,11 +576,6 @@
   .opcionesGrid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 0.75rem;
-  }
-  
-  .opcionIcon {
-    width: 36px;
-    height: 36px;
   }
   
   .opcionLabel {

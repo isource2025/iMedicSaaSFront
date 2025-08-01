@@ -7,9 +7,10 @@ import ModalBusquedaDiagnosticos from './ModalBusquedaDiagnosticos';
 import styles from './ModalEgresoPaciente.module.css';
 import visitaService from '../../services/visitaService';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
-import disposicionEgresoService from '../../services/disposicionEgresoService';
+import { getDisposicionesEgreso } from '../../services/disposicionEgresoService';
 import diagnosticosService from '../../services/diagnosticosService';
 import { DiagnosticoCie10 } from '../../types/diagnosticos';
+import { DisposicionEgreso } from '../../types/disposicionEgreso.types';
 import { useAppContext } from '../../contexts/AppContext';
 
 interface ModalEgresoPacienteProps {
@@ -19,10 +20,7 @@ interface ModalEgresoPacienteProps {
   bedId: string;
 }
 
-interface DisposicionEgreso {
-  valor: string | null;
-  descripcion: string | null;
-}
+// La interfaz DisposicionEgreso ahora se importa desde types
 
 const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
   isOpen,
@@ -84,7 +82,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
     
     const fetchDisposiciones = async () => {
       try {
-        const data = await disposicionEgresoService.getDisposicionesEgreso();
+        const data = await getDisposicionesEgreso();
         setDisposiciones(data as DisposicionEgreso[]);
       } catch (err) {
         console.error('Error cargando disposiciones:', err);
@@ -359,8 +357,8 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                 >
                   <option value="">Seleccione una disposición</option>
                   {disposiciones.map((disp, index) => (
-                    <option key={index} value={disp.valor || ''}>
-                      {disp.descripcion}
+                    <option key={index} value={disp.Valor?.toString() || ''}>
+                      {disp.Descripcion}
                     </option>
                   ))}
                 </select>

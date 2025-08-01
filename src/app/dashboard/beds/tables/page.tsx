@@ -35,6 +35,11 @@ export default function BedsTablesPage() {
     }
   }, [opcionesAgrupadas]);
   
+  // Función para manejar errores de carga de imágenes
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src = '/images/ConfigGral.ico';
+  };
+  
   // Iniciar edición de una opción
   const handleStartEdit = (opcion: OpcGrd) => {
     setEditingOpcion(opcion.descripcion);
@@ -192,36 +197,44 @@ export default function BedsTablesPage() {
             <div className={styles.opcionesGridResponsive}>
               {internacionOpciones.map((opcion, index) => (
                 <div key={index} className={`${styles.opcionItem} ${styles.opcionItemPadded}`}>
-                  {/* Botones de acción */}
-                  {!editingOpcion && !deletingOpcion && (
-                    <div className={styles.actionButtonsContainer}>
-                      <button 
-                        className={`${styles.actionButton} ${styles.editButton}`}
-                        onClick={() => handleStartEdit(opcion)}
-                        title="Editar"
-                      >
-                        <FaEdit size={14} />
-                      </button>
-                      <button 
-                        className={`${styles.actionButton} ${styles.deleteButton}`}
-                        onClick={() => handleStartDelete(opcion)}
-                        title="Eliminar"
-                      >
-                        <FaTrash size={14} />
-                      </button>
-                    </div>
-                  )}
                   
                   {/* Modo de visualización */}
                   {editingOpcion !== opcion.descripcion && deletingOpcion !== opcion.descripcion && (
-                    <>
-                      <div className={`${styles.opcionLabel} ${styles.opcionLabelHighlighted}`}>
-                        {opcion.descripcion}
+                    <div className={styles.opcionContentWithButtons}>
+                      <div className={styles.opcionContent}>
+                        <div className={styles.opcionIconContainer}>
+                          <img 
+                            src={`/images/${opcion.icono}`} 
+                            alt="Icono" 
+                            className={styles.opcionIcon} 
+                            onError={handleImageError}
+                          />
+                        </div>
+                        <div className={`${styles.opcionLabel} ${styles.opcionLabelHighlighted}`}>
+                          {opcion.descripcion}
+                        </div>
                       </div>
-                      <div className={styles.opcionDetail}>
-                        <span className={styles.opcionDetailText}>Orden:</span> {opcion.orden}
-                      </div>
-                    </>
+                      
+                      {/* Botones de acción */}
+                      {!editingOpcion && !deletingOpcion && (
+                        <div className={styles.actionButtonsContainerBottom}>
+                          <button 
+                            className={`${styles.actionButton} ${styles.editButton}`}
+                            onClick={() => handleStartEdit(opcion)}
+                            title="Editar"
+                          >
+                            <FaEdit size={14} />
+                          </button>
+                          <button 
+                            className={`${styles.actionButton} ${styles.deleteButton}`}
+                            onClick={() => handleStartDelete(opcion)}
+                            title="Eliminar"
+                          >
+                            <FaTrash size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                   
                   {/* Modo de edición */}

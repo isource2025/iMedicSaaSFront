@@ -1,0 +1,455 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.closeButton:hover {
+  transform: scale(1.1);
+}
+
+.actionBarContainer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.searchContainer {
+  flex: 1;
+}
+
+.searchInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: #6c757d;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
+}
+
+.tableContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.table th {
+  background-color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  color: white;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+}
+
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+  color: #333;
+}
+
+.table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.table tr:hover {
+  background-color: rgba(97, 214, 235, 0.1); /* Pantone 311U - Azul celeste claro (con transparencia) */
+}
+
+.noResults {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Estilos para los botones de acción */
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addButton:hover {
+  background-color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  transform: translateY(-2px);
+}
+
+.addButton:disabled {
+  background-color: #a0d8e8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Estilos para el formulario */
+.formContainer {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.formTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.formFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formLabel {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.formInput {
+  padding: 0.6rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
+}
+
+.formInput:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.formButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton {
+  background-color: #f8f9fa;
+  color: #212529;
+  border: 1px solid #dee2e6;
+}
+
+.cancelButton:hover {
+  background-color: #e9ecef;
+}
+
+.saveButton {
+  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  color: white;
+}
+
+.saveButton:hover {
+  background-color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.formButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Columna de acciones en la tabla */
+.actionColumn {
+  width: 80px;
+  text-align: center;
+}
+
+.actionCell {
+  text-align: center;
+}
+
+.editButton {
+  background-color: transparent;
+  border: none;
+  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.editButton:hover {
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  background-color: rgba(0, 181, 226, 0.1);
+}
+
+.deleteButton {
+  background-color: transparent;
+  border: none;
+  color: #D32F2F; /* Rojo para acciones de eliminación */
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 3px;
+  transition: all 0.2s;
+  margin-left: 5px;
+}
+
+.deleteButton:hover {
+  color: #B71C1C; /* Rojo oscuro al pasar el mouse */
+  background-color: rgba(211, 47, 47, 0.1);
+}
+
+.formButton.deleteButton {
+  background-color: #D32F2F;
+  color: white;
+}
+
+.formButton.deleteButton:hover {
+  background-color: #B71C1C;
+}
+
+.deleteConfirmText {
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.deleteWarningText {
+  color: #D32F2F;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .modalContent {
+    width: 95%;
+    max-height: 80vh;
+  }
+  
+  .modalTitle {
+    font-size: 1.1rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .searchInput {
+    padding: 0.6rem 1rem 0.6rem 2.25rem;
+  }
+}
+
+/* Estilos para Controles de Paginación (originales, podrían removerse si no se usan fuera de la tabla) */
+.paginationControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa; /* Un fondo ligero para distinguir la sección */
+}
+
+.paginationButton {
+  background-color: #00B5E2; /* Pantone 313U */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  background-color: #0083A9; /* Pantone 314C */
+}
+
+.paginationButton:disabled {
+  background-color: #a0d8e8; /* Un azul más claro para el estado deshabilitado */
+  color: #e0f7fa;
+  cursor: not-allowed;
+}
+
+.paginationInfo {
+  font-size: 0.9rem;
+  color: #495057; /* Un gris oscuro para el texto */
+  font-weight: 500;
+}
+
+/* Ajustes responsivos para paginación si es necesario */
+@media (max-width: 768px) {
+  .paginationControls {
+    padding: 0.75rem 1rem;
+    flex-direction: column; /* Apilar en pantallas pequeñas */
+    gap: 0.75rem;
+  }
+
+  .paginationButton {
+    width: 100%; /* Hacer que los botones ocupen todo el ancho */
+  }
+  
+  .paginationInfo {
+    order: -1; /* Mover la información de página al principio en móviles */
+  }
+}
+
+/* Estilos para la celda contenedora de la paginación en tfoot */
+.paginationCellContainer {
+  padding: 0.75rem 1rem; /* Ajustar padding según sea necesario */
+  text-align: center; /* Centrar el div de controles si no ocupa todo el ancho */
+}
+
+/* Estilos para el div que contiene los botones de paginación en tfoot */
+.paginationControlsInTable {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem; /* Espacio entre botones y texto */
+  max-width: 400px; /* Opcional: limitar el ancho para que no se extienda demasiado en tablas anchas */
+  margin: 0 auto; /* Centrar el contenedor si tiene max-width */
+}
+
+/* Ajustes responsivos para los controles de paginación en la tabla */
+@media (max-width: 480px) { /* Un breakpoint más pequeño para estos controles específicos */
+  .paginationControlsInTable {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .paginationControlsInTable .paginationButton {
+    width: 100%;
+  }
+
+  .paginationControlsInTable .paginationInfo {
+    margin-bottom: 0.5rem; /* Espacio si se apilan */
+    order: -1; /* Mover info de página arriba en móviles */
+  }
+}
+
+/* Estilos para el Footer del Modal */
+.modalFooter {
+  display: flex;
+  justify-content: flex-end; /* Alinea los elementos (botones) a la derecha */
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef; /* Línea separadora superior */
+  background-color: #f8f9fa; /* Un fondo ligero, opcional */
+}
