@@ -1,16 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './ModalBasePaciente.module.css';
+import { formatDate, formatTime, clarionDateToDate, formatSqlDate } from '../../utils/dateUtils';
+import { usePatients } from '../../hooks/usePatients';
+import visitaMovimientoService from '../../services/visitaMovimientoService';
+import { FiCalendar, FiClock } from 'react-icons/fi';
 
 interface PacienteData {
   numeroVisita: string;
   idPaciente: string;
   apellidoYNombre: string;
-  numeroDocumento: string; 
+  numeroDocumento: string;
+  fechaAdmisionS: string;
   fechaAdmision: string;
+  horaAdmision?: string;
+  FechaAdmisionClarion?: number; // Formato Clarion
+  HoraAdmisionClarion?: number; // Formato Clarion
   sexo: string;
-  fechaNacimiento: string; 
+  fechaNacimiento: string;
   valorSector: string;
   valorHabitacionCama: string;
   coberturaSocial: string;
@@ -20,8 +28,9 @@ interface ModalBasePacienteProps {
   isOpen: boolean;
   onClose: () => void;
   titulo: string;
-  numeroVisita: string; 
+  numeroVisita: string;
   children: React.ReactNode;
+  footerButtons?: React.ReactNode;
 }
 
 const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
@@ -29,217 +38,209 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
   onClose,
   titulo,
   numeroVisita,
-  children
+  children,
+  footerButtons,
 }) => {
+  const { allPatients } = usePatients();
+  const modalRef = useRef<HTMLDivElement>(null);
+
   const [pacienteData, setPacienteData] = useState<PacienteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [edad, setEdad] = useState<number | null>(null);
+  const [yaConsultado, setYaConsultado] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && numeroVisita) {
-      fetchPacienteData();
-    }
-  }, [isOpen, numeroVisita]);
+  const cargarDatosPaciente = useCallback(async () => {
+    if (!isOpen || !numeroVisita || yaConsultado) return;
 
-  const fetchPacienteData = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
+      // Obtener datos de la cama
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+      if (!res.ok) throw new Error('Error al obtener información del paciente');
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Error al obtener datos');
+
+      // Obtener datos del último movimiento de la visita
+      const movimiento = await visitaMovimientoService.getUltimoMovimiento(numeroVisita);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
-      
-      if (!response.ok) {
-        throw new Error('Error al obtener información del paciente');
+      // Obtener datos de la visita para tener acceso a FechaAdmisionS
+      const visitaResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/patients/visitas/${numeroVisita}`);
+      let visitaData = null;
+      if (visitaResponse.ok) {
+        const visitaResult = await visitaResponse.json();
+        if (visitaResult.success) {
+          visitaData = visitaResult.data;
+          console.log('Datos de visita obtenidos:', visitaData);
+        }
       }
       
-      const data = await response.json();
-      
-      if (data.success) {
-        const camaConVisita = data.data.find((cama: any) => 
-          cama.NumeroVisita && String(cama.NumeroVisita) === numeroVisita
-        );
-        
-        if (camaConVisita) {
-          setPacienteData({
-            numeroVisita: numeroVisita,
-            idPaciente: camaConVisita.IdPaciente || 'N/A',
-            apellidoYNombre: camaConVisita.NombrePaciente || 'N/A',
-            numeroDocumento: camaConVisita.DocumentoPaciente || 'N/A',
-            fechaAdmision: camaConVisita.FechaIngreso ? new Date(camaConVisita.FechaIngreso).toISOString() : new Date().toISOString(),
-            sexo: camaConVisita.SexoPaciente || 'N/A',
-            fechaNacimiento: '', 
-            valorSector: camaConVisita.ValorSector || 'N/A',
-            valorHabitacionCama: camaConVisita.ValorHabitacionCama || 'N/A',
-            coberturaSocial: camaConVisita.RazonSocialCliente || 'N/A'
-          });
-          
-          if (!camaConVisita.fechaNacimiento) {
-            setEdad(null);
-          }
-        } else {
-          setPacienteData({
-            numeroVisita: numeroVisita,
-            idPaciente: 'N/A',
-            apellidoYNombre: 'Paciente',
-            numeroDocumento: 'N/A',
-            fechaAdmision: new Date().toISOString(),
-            sexo: 'N/A',
-            fechaNacimiento: '',
-            valorSector: 'N/A',
-            valorHabitacionCama: 'N/A',
-            coberturaSocial: 'N/A'
-          });
+      const cama = data.data.find((c: any) => String(c.NumeroVisita) === numeroVisita);
+      if (cama) {
+        const pacienteInfo = allPatients.find(p => p.IDPaciente === Number(cama.IdPaciente));
+
+        // Fecha y hora de admisión desde el movimiento o desde la cama
+        const fechaAdmisionISO = cama.FechaIngreso 
+          ? clarionDateToDate(cama.FechaIngreso)?.toISOString() || new Date().toISOString()
+          : new Date().toISOString();
+
+        const pd: PacienteData = {
+          numeroVisita,
+          idPaciente: cama.IdPaciente || 'N/A',
+          apellidoYNombre: pacienteInfo?.ApellidoyNombre || cama.NombrePaciente || 'N/A',
+          numeroDocumento: cama.DocumentoPaciente || 'N/A',
+          fechaAdmisionS: visitaData?.fechaAdmisionS || '',
+          fechaAdmision: fechaAdmisionISO,
+          // Agregar datos de fecha y hora desde el movimiento si existen
+          FechaAdmisionClarion: movimiento?.FechaAdmision,
+          HoraAdmisionClarion: movimiento?.HoraAdmision,
+          sexo: pacienteInfo?.Sexo || cama.SexoPaciente || 'N/A',
+          fechaNacimiento: pacienteInfo?.FechaNacimiento || '',
+          valorSector: cama.ValorSector || 'N/A',
+          valorHabitacionCama: cama.ValorHabitacionCama || 'N/A',
+          coberturaSocial: cama.RazonSocialCliente || 'N/A',
+        };
+
+        setPacienteData(pd);
+
+        if (pd.fechaNacimiento) {
+          const fn = new Date(pd.fechaNacimiento);
+          const hoy = new Date();
+          let calc = hoy.getFullYear() - fn.getFullYear();
+          const m = hoy.getMonth() - fn.getMonth();
+          if (m < 0 || (m === 0 && hoy.getDate() < fn.getDate())) calc--;
+          setEdad(calc);
         }
       } else {
-        throw new Error(data.message || 'No se pudo obtener la información del paciente');
+        setPacienteData({
+          numeroVisita,
+          idPaciente: 'N/A',
+          apellidoYNombre: 'Paciente',
+          numeroDocumento: 'N/A',
+          fechaAdmisionS: visitaData?.fechaAdmisionS || '',
+          fechaAdmision: new Date().toISOString(),
+          sexo: 'N/A',
+          fechaNacimiento: '',
+          valorSector: 'N/A',
+          valorHabitacionCama: 'N/A',
+          coberturaSocial: 'N/A',
+        });
       }
+      setYaConsultado(true);
     } catch (err: any) {
+      console.error(err);
       setError(err.message || 'Error al cargar datos del paciente');
-      console.error('Error al cargar datos del paciente:', err);
-      
-      setPacienteData({
-        numeroVisita: numeroVisita,
-        idPaciente: 'N/A',
-        apellidoYNombre: 'Paciente',
-        numeroDocumento: 'N/A',
-        fechaAdmision: new Date().toISOString(),
-        sexo: 'N/A',
-        fechaNacimiento: '',
-        valorSector: 'N/A',
-        valorHabitacionCama: 'N/A',
-        coberturaSocial: 'N/A'
-      });
+      setPacienteData(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [isOpen, numeroVisita, yaConsultado, allPatients]);
 
   useEffect(() => {
-    if (pacienteData?.fechaNacimiento) {
-      const fechaNac = new Date(pacienteData.fechaNacimiento);
-      const hoy = new Date();
-      let edad = hoy.getFullYear() - fechaNac.getFullYear();
-      const mes = hoy.getMonth() - fechaNac.getMonth();
-      
-      if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
-        edad--;
-      }
-      
-      setEdad(edad);
+    if (isOpen) {
+      if (pacienteData?.numeroVisita !== numeroVisita) setYaConsultado(false);
+      cargarDatosPaciente();
     }
-  }, [pacienteData?.fechaNacimiento]);
+  }, [isOpen, numeroVisita, cargarDatosPaciente, pacienteData?.numeroVisita]);
 
   if (!isOpen) return null;
 
-  if (loading) {
-    return (
-      <div className={styles.modalOverlay}>
-        <div className={styles.modalContainer}>
-          <div className={styles.modalHeader}>
-            <h2 className={styles.modalTitulo}>{titulo}</h2>
-            <button className={styles.closeButton} onClick={onClose}>×</button>
-          </div>
-          <div className={styles.loadingContainer}>
-            <div className={styles.loading}>Cargando información del paciente...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !pacienteData) {
-    return (
-      <div className={styles.modalOverlay}>
-        <div className={styles.modalContainer}>
-          <div className={styles.modalHeader}>
-            <h2 className={styles.modalTitulo}>{titulo}</h2>
-            <button className={styles.closeButton} onClick={onClose}>×</button>
-          </div>
-          <div className={styles.errorContainer}>
-            <div className={styles.error}>{error || 'No se pudo obtener la información del paciente'}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const formatearFecha = (fechaStr: string): string => {
-    try {
-      const fecha = new Date(fechaStr);
-      return fecha.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return fechaStr;
-    }
-  };
-  
-  const iconoSexo = pacienteData.sexo === 'M' ? '♂️' : pacienteData.sexo === 'F' ? '♀️' : '⚧';
-  
-  const claseSexo = pacienteData.sexo === 'M' ? styles.masculino : 
-                     pacienteData.sexo === 'F' ? styles.femenino : 
-                     styles.otro;
+  const iconoSexo =
+    pacienteData?.sexo === 'M' ? '♂️' : pacienteData?.sexo === 'F' ? '♀️' : '⚧';
+  const claseSexo =
+    pacienteData?.sexo === 'M'
+      ? styles.masculino
+      : pacienteData?.sexo === 'F'
+      ? styles.femenino
+      : styles.otro;
 
   return (
     <div className={styles.modalOverlay}>
-      <div className={styles.modalContainer}>
+      <div className={styles.modalContainer} ref={modalRef}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitulo}>{titulo}</h2>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
-        
-        <div className={styles.pacienteHeader}>
-          <div className={styles.nombrePaciente}>
-            <h3>
-              <span className={styles.documentoNumero}>{pacienteData.numeroDocumento}</span>
-              {pacienteData.apellidoYNombre}
-              <span className={`${styles.sexoIcono} ${claseSexo}`}>{iconoSexo}</span>
-              <span className={styles.edadPaciente}>{edad !== null ? `${edad} años` : ''}</span>
-            </h3>
+
+        {loading ? (
+          <div className={styles.loadingContainer}>
+            <div className={styles.loading}>Cargando información del paciente...</div>
           </div>
-          <div className={styles.headerInfoFields}>
-            <div className={styles.headerField}>
-              <span className={styles.headerLabel}>ID:</span>
-              <span className={styles.headerValue}>{pacienteData.idPaciente}</span>
-            </div>
-            <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Visita:</span>
-              <span className={styles.headerValue}>{pacienteData.numeroVisita}</span>
-            </div>
-            <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Sector:</span>
-              <span className={styles.headerValue}>{pacienteData.valorSector}</span>
-            </div>
-            <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Cama:</span>
-              <span className={styles.headerValue}>{pacienteData.valorHabitacionCama}</span>
-            </div>
-            <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Fecha:</span>
-              <span className={styles.headerValue}>{formatearFecha(pacienteData.fechaAdmision)}</span>
-            </div>
-            <div className={styles.headerField}>
-              <span className={styles.headerLabel}>Cobertura:</span>
-              <span className={styles.headerValue}>{pacienteData.coberturaSocial}</span>
-            </div>
+        ) : error || !pacienteData ? (
+          <div className={styles.errorContainer}>
+            <div className={styles.error}>{error || 'No se pudo obtener la información'}</div>
           </div>
-          
-        </div>
-          
-        <div className={styles.separador}></div>
-        
-        <div className={styles.modalContent}>
-          {children}
-        </div>
-        
-        <div className={styles.modalFooter}>
-          <button className={styles.cancelButton} onClick={onClose}>
-            Cerrar
-          </button>
-        </div>
+        ) : (
+          <>
+            <div className={styles.pacienteHeader}>
+              <div className={styles.cardHeader}>
+
+                <div className={styles.bedInfo}>
+                  <div>
+                    <span className={styles.sectorLabel}>{pacienteData.valorSector}</span>
+                    <span className={styles.bedNumber}>{pacienteData.valorHabitacionCama}</span>
+                  </div>
+                  {Number(pacienteData.numeroVisita) > 0 && (
+                    <div className={styles.numeroVisita}>
+                      Nº De Visita: <strong>{pacienteData.numeroVisita}</strong>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.pacienteData}>
+                  <div>
+                    <span className={styles.documentoNumero}>{pacienteData.numeroDocumento}</span>
+                    <span className={styles.edadPaciente}>{edad !== null ? `${edad} años` : ''}</span>
+                    <span className={`${styles.sexoIcono} ${claseSexo}`}>{iconoSexo}</span>
+                    <h3>{pacienteData.apellidoYNombre}</h3>
+
+                    <div className={styles.headerFields}>
+                      <div className={styles.headerField}>
+                    <div className={styles.admisionInfo}>
+                      <span className={styles.admisionLabel}>Admisión:</span>
+                      {pacienteData?.fechaAdmisionS ? (
+                        <div className={styles.admisionValueContainer}>
+                          <div className={styles.admisionValueItem}>
+                            <FiCalendar className={styles.admisionIcon} />
+                            <span className={styles.admisionValue}>
+                              {formatSqlDate(pacienteData.fechaAdmisionS, { locale: 'es-AR', showTime: false, adjustTimezone: false })}
+                            </span>
+                          </div>
+                          <div className={styles.admisionValueItem}>
+                            <FiClock className={styles.admisionIcon} />
+                            <span className={styles.admisionValue}>
+                              {formatSqlDate(pacienteData.fechaAdmisionS, { locale: 'es-AR', showDate: false, showTime: true, adjustTimezone: false })}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className={styles.admisionValue}>No disponible</span>
+                      )}
+                    </div>
+                        <span className={styles.headerLabel}>Cobertura:</span>
+                        <span className={styles.headerValue}>{pacienteData.coberturaSocial}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.separador}></div>
+
+            <div className={styles.modalContent}>
+              {children}
+            </div>
+
+            <div className={styles.modalFooter}>
+              {footerButtons}
+              <button className={styles.cancelButton} onClick={onClose}>Cerrar</button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

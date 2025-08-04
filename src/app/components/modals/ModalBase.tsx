@@ -10,8 +10,7 @@ export const ModalBase: React.FC<ModalBaseProps> = ({
   isOpen,
   onClose,
   title,
-  children,
-  size 
+  children, 
 }) => {
   if (!isOpen) return null;
 

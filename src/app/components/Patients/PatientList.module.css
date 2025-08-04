@@ -65,6 +65,35 @@
   color: #111827;
 }
 
+.documentColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hcNumber {
+  font-size: 0.75rem;
+  color: #0083A9;
+  font-weight: 500;
+}
+
+.birthDateColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ageText {
+  font-size: 0.75rem;
+  color: #0083A9;
+  font-weight: 500;
+}
+
+.coverageColumn {
+  color: #00B5E2;
+  font-size: 0.875rem;
+}
+
 .loadingContainer {
   padding: 1rem 1.5rem;
   text-align: center;

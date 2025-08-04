@@ -1,0 +1,28 @@
+.buttonContainer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.createButton {
+  background-color: #00B5E2; /* Pantone 313U */
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+  margin-bottom: 2rem;
+}
+
+.createButton:hover {
+  background-color: #0083A9; /* Pantone 314C */
+}
+
+.hidden {
+  display: none;
+}

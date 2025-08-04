@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  cursor: pointer; /* Añadir cursor pointer para mostrar que es clickeable */
 }
 
 .bedCard:hover {
@@ -77,6 +78,7 @@
 }
 
 .cardBody {
+  position: relative;
   padding: 0.7rem;
   display: flex;
   flex-direction: column;
@@ -116,6 +118,8 @@
 }
 
 .iconsContainer {
+  position: relative;
+  z-index: 100;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -176,6 +180,37 @@
   flex-wrap: wrap;
   gap: 0.7rem;
   color: #64748b;
+}
+
+.dateTimeContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.date, .time {
+  display: flex;
+  font-size: 0.7rem;
+  color: #4a5568;
+}
+
+.dateLabel {
+  font-size: 0.6rem;
+  color: #718096;
+  margin: 0;
+  padding: 0;
+}
+
+.timeValue {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.timeIcon {
+  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  font-size: 0.8rem;
 }
 
 .date {

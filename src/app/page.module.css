@@ -1,0 +1,78 @@
+.loginPage {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb;
+}
+
+.loginGrid {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.imageSection {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: none; /* Oculto en móviles por defecto */
+}
+
+.healthImageContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/images/healthcare-tech.jpg');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0, 131, 169, 0.7), rgba(0, 181, 226, 0.6)); /* Pantone 314C y 313U con transparencia */
+  z-index: 1;
+}
+
+.formSection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: white;
+}
+
+/* Media query para tablets y escritorio */
+@media (min-width: 768px) {
+  .imageSection {
+    display: block;
+  }
+  
+  .loginGrid {
+    max-width: 1200px;
+    max-height: 800px;
+    height: 85vh;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+  }
+  
+  .formSection {
+    border-radius: 0 1rem 1rem 0;
+  }
+}

@@ -95,8 +95,8 @@ export const usePatients = () => {
       setLoading(true);
       setError(null);
       await patientService.updatePatient(id, patientData);
-      setIsEditModalOpen(false);
-      await loadPatients();
+      //setIsEditModalOpen(false);
+      //await loadPatients();
       return true;
     } catch (err: any) {
       setError(err.message || 'Error al actualizar paciente');
@@ -105,7 +105,7 @@ export const usePatients = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadPatients]);
+  }, []);
   
   // Eliminar paciente
   const deletePatient = useCallback(async (id: number) => {

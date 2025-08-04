@@ -1,0 +1,39 @@
+.container {
+  width: 100%;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  font-size: 1rem;
+  color: #41C8DC; /* Pantone 311C - Azul celeste medio */
+}
+
+.errorState, .errorContainer {
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  border-left: 4px solid #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  margin-bottom: 1rem;
+}
+
+.errorContainer h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+}
+
+.errorContainer p {
+  margin: 0;
+  color: #555;
+}

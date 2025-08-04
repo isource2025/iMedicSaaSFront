@@ -1,0 +1,68 @@
+.chartContainer {
+  width: 100%;
+  height: 330px;
+}
+
+.chartTitle {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.chartTitlePulso {
+  color: #00B5E2; /* Pantone 313U */
+}
+
+.chartTitleMaximo {
+  color: #0083A9; /* Pantone 314C */
+}
+
+.chartTitleMinimo {
+  color: #61D6EB; /* Pantone 311U */
+}
+
+.chartTitlePam {
+  color: #41C8DC; /* Pantone 311C */
+}
+
+.chartTitleFrecResp {
+  color: #FFB347; /* Naranja suave */
+}
+
+.chartTitleAxilar {
+  color: #FF6F61; /* Rojo suave */
+}
+
+.chartTitleSaturometria {
+  color: #7ED957; /* Verde suave */
+}
+
+.chartContent {
+  width: 100%;
+  height: 300px;
+}
+
+.paramSelector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.paramButton {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.paramButton:hover {
+  background-color: #e9ecef;
+}
+
+.paramButtonActive {
+  background-color: #00B5E2; /* Pantone 313U */
+  color: white;
+  border-color: #00B5E2;
+}

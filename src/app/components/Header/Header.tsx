@@ -1,7 +1,4 @@
 'use client';
-
-import React from 'react';
-import Link from 'next/link';
 import styles from './Header.module.css';
 import { useAppContext } from '../../contexts/AppContext';
 
@@ -11,14 +8,14 @@ type HeaderProps = {
 };
 
 export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
-  // Obtener el sector seleccionado del contexto
-  const { sectorSeleccionado } = useAppContext();
+  // Obtener el sector seleccionado y la información de empresa del contexto
+  const { sectorSeleccionado, empresaInfo,usuario } = useAppContext();
 
   return (
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.headerContent}>
-          {/* Left side - Menu icon for mobile and Sector info */}
+          {/* Left side - Menu icon for mobile, Empresa info and Sector info */}
           <div className={styles.leftSection}>
             <button
               type="button"
@@ -28,6 +25,14 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               <span className={styles.srOnly}>Open sidebar</span>
               <span className={styles.menuIcon}>☰</span>
             </button>
+            
+            {/* Mostrar la información de la empresa */}
+            {empresaInfo && (
+              <div className={styles.empresaInfo}>
+                <span className={styles.empresaLabel}></span>
+                <span className={styles.empresaDescription}>{empresaInfo.descripcion}</span>
+              </div>
+            )}
             
             {/* Mostrar el sector seleccionado */}
             {sectorSeleccionado && (
@@ -51,10 +56,10 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               <div className={styles.userContainer}>
                 <button className={styles.userButton}>
                   <div className={styles.userAvatar}>
-                    A
+                    {usuario?.nombre?.charAt(0).toUpperCase()}
                   </div>
                   <span className={styles.userName}>
-                    Admin
+                    {usuario?.nombre}
                   </span>
                   <span className={styles.dropdownArrow}>▼</span>
                 </button>

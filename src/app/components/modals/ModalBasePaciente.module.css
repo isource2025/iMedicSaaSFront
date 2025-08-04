@@ -10,13 +10,16 @@
   align-items: center;
   z-index: 100;
   backdrop-filter: blur(3px);
+  will-change: opacity; /* Optimización para el navegador */
+  backface-visibility: hidden; /* Reducir parpadeos en transiciones */
+  transform: translateZ(0); /* Forzar aceleración por hardware */
+  transition: opacity 0.2s ease; /* Suavizar la aparición */
 }
 
 .modalContainer {
   width: 1400px;
   max-width: 98vw;
   min-width: 720px;
-  min-height: 650px;
   max-height: 90vh;
   background: white;
   border-radius: 16px;
@@ -25,7 +28,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width 0.2s, min-width 0.2s, min-height 
+  will-change: transform, opacity; /* Optimización para animaciones */
+  backface-visibility: hidden; /* Reducir parpadeos */
+  transform: translateZ(0); /* Forzar aceleración por hardware */
+  transition: transform 0.2s ease, opacity 0.2s ease; /* Transiciones suaves */
+  transform: translate3d(0, 0, 0); /* Prevenir problemas de composición */
 }
 
 .modalHeader {
@@ -55,29 +62,24 @@
   color: white;
 }
 
-.headerFields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-left: 15px;
-}
 
 .headerField {
   display: flex;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.15);
-  padding: 3px 8px;
-  border-radius: 4px;
+  justify-content: center;
+  gap: 8px;
   font-size: 14px;
 }
 
+
 .headerLabel {
   font-weight: 500;
-  margin-right: 5px;
+  color: #64748b; /* Pantone 314C */
 }
 
 .headerValue {
-  font-weight: 600;
+  font-weight: 800;
+  color: #0083A9;
 }
 
 .closeButton {
@@ -101,60 +103,75 @@
 }
 
 .pacienteHeader {
-  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  justify-content: space-between;
   background-color: #f8f9fa;
   border-bottom: 1px solid #e1e1e1;
 }
 
-.headerInfoFields {
+.headerFields {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 32px;
+}
+.pacienteData{
+  width: 100%;
+  display: flex;
+  justify-content: start;
+  background-color: white;
+  padding: 0px 16px ;
+  gap: 16px;
 }
 
-.headerField {
+.admisionInfo {
   display: flex;
   align-items: center;
-  background-color: rgba(0, 181, 226, 0.1); /* Pantone 313U con opacidad */
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  border-left: 3px solid #00B5E2; /* Pantone 313U */
 }
 
-.headerLabel {
+.admisionLabel {
   font-weight: 500;
-  margin-right: 5px;
-  color: #0083A9; /* Pantone 314C */
+  color: #64748b; /* Pantone 314C - Azul turquesa oscuro */
+  margin-right: 8px;
+  font-size: 0.9rem;
 }
 
-.headerValue {
-  font-weight: 600;
-  color: #333;
+.admisionValueContainer {
+  display: flex;
+  gap: 8px;
 }
 
-.nombrePaciente {
-  margin: 12px 0;
+.admisionValueItem {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.admisionIcon {
+  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  font-size: 1rem;
+}
+
+.admisionValue {
+  font-weight: 800;
+  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+  font-size: 0.9rem;
 }
 
 .nombrePaciente h3 {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 600;
   margin: 0;
   color: #333;
   display: flex;
-  align-items: center;
+  align-items: self-start;
   flex-wrap: wrap;
 }
 
 .documentoNumero {
-  background-color: #61D6EB; /* Pantone 311U */
-  color: white;
-  padding: 2px 8px;
   border-radius: 4px;
-  margin-right: 10px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -162,20 +179,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5rem;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  background-color: transparent;
 }
 
 .masculino {
-  color: #00B5E2; /* Pantone-313u */
+  color: black; 
+  background-color: transparent;
 }
 
 .femenino {
-  color: #61D6EB; /* Pantone 311U - reemplazando el rosa con azul claro de la paleta */
+  color: black; 
+  background-color: transparent;
 }
 
 .otro {
-  color: #41C8DC; /* Pantone 311C */
+  color: black; 
+  background-color: transparent;
 }
 
 .edadPaciente {
@@ -225,8 +245,11 @@
 }
 
 .modalContent {
-  overflow-y: auto;
-  max-height: calc(90vh - 200px);
+  overflow-y: hidden;
+  min-height: 400px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .loadingContainer, .errorContainer {
@@ -252,12 +275,16 @@
 }
 
 .modalFooter {
-  padding: 1rem 1.5rem;
+  position: relative;
+  bottom: 0;
+  padding: 0.75rem 1.5rem;
+  margin-top: 0;
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
   background-color: #f8f9fa;
+  border-radius: 0 0 16px 16px; /* Match the bottom radius of the modal */
 }
 
 .cancelButton {
@@ -295,4 +322,40 @@
   .itemGrupo {
     min-width: 100px;
   }
+}
+
+
+
+/* HEADER STYLE FROM BEDCARD  */
+
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  justify-content: space-between;
+  background-color: #f5f7fa;
+}
+.bedInfo {
+  font-size: 20px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  padding: 8px 16px ;
+  gap: 8px;
+}
+.sectorLabel {
+  background-color: #334155;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 1rem;
+  color:white;
+  margin-bottom: 1px;
+  margin-right: 8px;
+}
+
+.bedNumber {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
 }
