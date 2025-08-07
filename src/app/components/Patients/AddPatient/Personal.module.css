@@ -1,0 +1,167 @@
+/* Estilos para PersonalDataTab.module.css */
+
+.formContent {
+	padding: 0.5rem 0.25rem;
+}
+
+/* Estructura para una fila de un solo campo */
+.formRow {
+	margin-bottom: 1.25rem;
+}
+
+/* Variante para filas con dos campos, lado a lado */
+.formRow.double {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem;
+	align-items: start; /* Alinea los grupos al inicio */
+}
+
+/* Contenedor de un par label-input */
+.formGroup {
+	display: grid;
+	/* Columna fija para la etiqueta, el resto para el input */
+	grid-template-columns: 120px 1fr;
+	align-items: center; /* Centra verticalmente la etiqueta con el input */
+	gap: 1rem;
+}
+
+.label {
+	font-size: 0.725rem;
+	font-weight: 500;
+	color: #4b5563;
+	text-align: right; /* Alineado a la derecha para un look clásico */
+	padding-right: 0.5rem;
+}
+
+/* Añade el asterisco rojo a los campos requeridos */
+.requiredField::after {
+	content: ' *';
+	color: #ef4444;
+	font-weight: bold;
+}
+
+.input,
+.select {
+	width: 100%;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.375rem;
+	font-size: 0.675rem;
+	background-color: #ffffff;
+	height: 2.1rem;
+	box-sizing: border-box;
+	transition: all 0.15s ease-in-out;
+}
+
+.input:focus,
+.select:focus {
+	outline: none;
+	border-color: #00b5e2; /* Pantone 313U */
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+}
+
+.input:disabled {
+	background-color: #f3f4f6;
+	cursor: not-allowed;
+	color: #6b7280;
+}
+
+/* Clase para marcar inputs con errores */
+.error {
+	border-color: #ef4444;
+}
+
+.errorMessage {
+	grid-column: 2; /* Se posiciona debajo del input */
+	color: #ef4444;
+	font-size: 0.75rem;
+	margin-top: 0.25rem;
+}
+
+/* Estilo para el texto "Cargando..." */
+.loadingText {
+	grid-column: 2; /* Se posiciona al lado del select */
+	font-size: 0.75rem;
+	color: #0083a9; /* Pantone 314C */
+}
+
+.buttonContainer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+	margin-top: 2rem;
+	padding-top: 1rem;
+	border-top: 1px solid #e5e7eb;
+}
+
+.cancelButton {
+	padding: 0.625rem 1.25rem;
+	background-color: white;
+	color: #6b7280;
+	border: 1px solid #d1d5db;
+	border-radius: 0.375rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s ease-in-out;
+}
+
+.cancelButton:hover {
+	background-color: #f9fafb;
+}
+
+.submitButton {
+	padding: 0.625rem 1.25rem;
+	background-color: #00b5e2; /* Pantone 313U */
+	color: white;
+	border: none;
+	border-radius: 0.375rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s ease-in-out;
+}
+
+.submitButton:hover:not(:disabled) {
+	background-color: #0083a9; /* Pantone 314C */
+}
+
+.submitButton:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* --- Media Queries para Responsividad --- */
+@media (max-width: 768px) {
+	/* En pantallas medianas, las filas dobles se mantienen pero con menos espacio */
+	.formRow.double {
+		gap: 1rem;
+	}
+
+	.formGroup {
+		grid-template-columns: 90px 1fr; /* Reduce el espacio de la etiqueta */
+	}
+}
+
+@media (max-width: 600px) {
+	/* En pantallas pequeñas, todo se apila verticalmente */
+	.formRow.double {
+		grid-template-columns: 1fr;
+		gap: 1.25rem;
+	}
+
+	.formGroup {
+		grid-template-columns: 1fr; /* La etiqueta pasa arriba del input */
+		gap: 0.25rem;
+		align-items: start;
+	}
+
+	.label {
+		text-align: left; /* La etiqueta se alinea a la izquierda */
+		padding-right: 0;
+	}
+
+	.errorMessage,
+	.loadingText {
+		grid-column: 1; /* Ocupa toda la columna debajo del input */
+	}
+}
