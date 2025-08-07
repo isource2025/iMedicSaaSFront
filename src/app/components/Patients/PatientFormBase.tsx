@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Patient, PatientFormData } from '../../types/PatientInterface';
 import { Sexo, sexoService } from '../../services/sexoService';
 import { Localidad, localidadService } from '../../services/localidadService';
 import { provinciaService } from '../../services/provinciaService';
 import { clarionDateToDate } from '../../utils/dateUtils';
-import styles from '../../components/modals/ModalAddPatient/styles.module.css';
 import HeaderAddPatient from './AddPatient/HeaderAddPatient';
 import PersonalDataTab from './AddPatient/PersonalDataTab';
+import OtherDataTab from './AddPatient/OtherDataTab';
+import LaboralDataTab from './AddPatient/LaboralDataTab';
+import { CSSTransition, SwitchTransition } from 'react-transition-group';
+import styles from '../../components/modals/ModalAddPatient/styles.module.css';
 
 interface PatientFormBaseProps {
 	onSubmit: (data: PatientFormData) => Promise<boolean>;
@@ -14,6 +17,8 @@ interface PatientFormBaseProps {
 	isEditing?: boolean;
 	onClose: () => void;
 }
+
+type Tab = 'personal' | 'other' | 'laboral';
 
 export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	onSubmit,
@@ -41,6 +46,11 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		NumeroCuenta: initialData.NumeroCuenta || '',
 		NumeroSSN: initialData.NumeroSSN || '',
 	});
+	const [activeTab, setActiveTab] = useState<Tab>('personal');
+	const containerRef = useRef<HTMLDivElement>(null);
+	const nodeRef = useRef<HTMLDivElement>(null);
+	const tabsRef = useRef<(HTMLDivElement | null)[]>([]);
+	const [indicatorStyle, setIndicatorStyle] = useState({});
 
 	const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
 	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
@@ -290,6 +300,19 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		fetchLocalidades();
 	}, []);
 
+	useEffect(() => {
+		const tabIds: Tab[] = ['personal', 'other', 'laboral'];
+		const activeIndex = tabIds.indexOf(activeTab);
+		const activeTabNode = tabsRef.current[activeIndex];
+
+		if (activeTabNode) {
+			setIndicatorStyle({
+				left: activeTabNode.offsetLeft,
+				width: activeTabNode.offsetWidth,
+			});
+		}
+	}, [activeTab]);
+
 	return (
 		<form onSubmit={handleSubmit} className={styles.form}>
 			<div className={styles.modalContainer}>
@@ -303,29 +326,113 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					buscandoRenaper={buscandoRenaper}
 				/>
 				{/* Título de la sección */}
-				<div className={styles.tabs}>
-					<div className={`${styles.tab} ${styles.tabActive}`}>
+				<div className={styles.tabsContainer}>
+					<div
+						ref={(el) => {
+							tabsRef.current[0] = el;
+						}}
+						className={`${styles.tab} ${
+							activeTab === 'personal' ? styles.tabActive : ''
+						}`}
+						onClick={() => setActiveTab('personal')}
+					>
 						Datos Personales y Contacto
 					</div>
 
-					<div className={styles.tab}>Otros Datos</div>
+					<div
+						ref={(el) => {
+							tabsRef.current[1] = el;
+						}}
+						className={`${styles.tab} ${
+							activeTab === 'other' ? styles.tabActive : ''
+						}`}
+						onClick={() => setActiveTab('other')}
+					>
+						Otros Datos
+					</div>
 
-					<div className={styles.tab}>Datos Laborales</div>
+					<div
+						ref={(el) => {
+							tabsRef.current[2] = el;
+						}}
+						className={`${styles.tab} ${
+							activeTab === 'laboral' ? styles.tabActive : ''
+						}`}
+						onClick={() => setActiveTab('laboral')}
+					>
+						Datos Laborales
+					</div>
+
+					<div className={styles.indicator} style={indicatorStyle} />
 				</div>
 
-				{/* Contenido del formulario Data personal */}
-				<PersonalDataTab
-					formData={formData}
-					errors={errors}
-					handleChange={handleChange}
-					localidadOptions={localidadOptions}
-					loading={loading}
-					sexoOptions={sexoOptions}
-					estadosCiviles={estadosCiviles}
-					onClose={onClose}
-					isSubmitting={isSubmitting}
-					isEditing={isEditing}
-				/>
+				<div ref={containerRef} className={styles.tabContentContainer}>
+					<SwitchTransition mode='out-in'>
+						<CSSTransition
+							key={activeTab}
+							nodeRef={nodeRef} // Usamos la ref para el nodo
+							timeout={300}
+							classNames={{
+								enter: styles['fade-slide-enter'],
+								enterActive: styles['fade-slide-enter-active'],
+								exit: styles['fade-slide-exit'],
+								exitActive: styles['fade-slide-exit-active'],
+							}}
+							unmountOnExit
+							// --- CORRECCIÓN: Funciones sin argumentos que usan las refs ---
+							onEnter={() => {
+								// Antes de entrar, el contenedor tiene altura 0
+								if (containerRef.current) {
+									containerRef.current.style.height = '0px';
+								}
+							}}
+							onEntering={() => {
+								// Al entrar, se ajusta a la altura del nuevo contenido
+								if (containerRef.current && nodeRef.current) {
+									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
+								}
+							}}
+							onExit={() => {
+								// Al salir, se ajusta a la altura del contenido que se va
+								if (containerRef.current && nodeRef.current) {
+									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
+								}
+							}}
+						>
+							<div ref={nodeRef}>
+								{activeTab === 'personal' && (
+									<PersonalDataTab
+										formData={formData}
+										errors={errors}
+										handleChange={handleChange}
+										localidadOptions={localidadOptions}
+										loading={loading}
+										sexoOptions={sexoOptions}
+										estadosCiviles={estadosCiviles}
+										onClose={onClose}
+										isSubmitting={isSubmitting}
+										isEditing={isEditing}
+									/>
+								)}
+
+								{activeTab === 'other' && (
+									<OtherDataTab
+										formData={formData}
+										handleChange={handleChange}
+										errors={errors}
+									/>
+								)}
+
+								{activeTab === 'laboral' && (
+									<LaboralDataTab
+										formData={formData}
+										setFormData={setFormData}
+									/>
+								)}
+							</div>
+						</CSSTransition>
+					</SwitchTransition>
+				</div>
 
 				<div className={styles.buttonContainer}>
 					<button

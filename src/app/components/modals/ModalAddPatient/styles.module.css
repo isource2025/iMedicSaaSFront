@@ -35,24 +35,44 @@
 	gap: 0.5rem;
 }
 
-.tabs {
+.tabsContainer {
 	display: flex;
-	border-bottom: 1px solid #e5e7eb;
-	margin-bottom: 0.75rem;
+	position: relative; /* ¡MUY IMPORTANTE! Ancla para el indicador */
+	border-bottom: 1px solid #e5e7eb; /* La línea de fondo gris */
 }
 
+/* Estilo para cada pestaña individual */
 .tab {
 	padding: 0.75rem 1.5rem;
 	font-weight: 500;
-	color: #6b7280;
+	color: #6b7280; /* Color para pestañas inactivas */
 	cursor: pointer;
-	border-bottom: 2px solid transparent;
-	transition: all 0.2s ease;
+	background-color: transparent;
+	border: none;
+	border-bottom: 2px solid transparent; /* Borde invisible para mantener la altura */
+	transition: color 0.2s ease;
+	white-space: nowrap; /* Evita que el texto se parta */
 }
 
+.tab:hover {
+	color: #0083a9; /* Color al pasar el mouse */
+}
+
+/* Estilo para la pestaña que está activa */
 .tabActive {
-	color: #00b5e2; /* Pantone 313U */
-	border-bottom-color: #00b5e2; /* Pantone 313U */
+	color: #00b5e2; /* Color para la pestaña activa */
+}
+
+/* El indicador deslizante */
+.indicator {
+	position: absolute;
+	bottom: -1px; /* Se alinea justo sobre el borde del contenedor */
+	height: 2px;
+	background-color: #00b5e2; /* El color de la línea activa */
+	border-radius: 2px;
+	/* LA MAGIA DE LA ANIMACIÓN */
+	transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1),
+		width 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab:hover:not(.tabActive) {
@@ -218,4 +238,31 @@
 	margin-top: 0.125rem;
 	margin-bottom: 0.125rem;
 	grid-column: 2;
+}
+
+/* Estilos para la transición de los tabs*/
+.tabContentContainer {
+	position: relative;
+	overflow: hidden; /* Oculta el contenido mientras la altura cambia */
+	transition: height 300ms ease-in-out; /* ¡LA TRANSICIÓN DE ALTURA! */
+}
+
+/* Clases para la animación de fundido y deslizamiento suave */
+.fade-slide-enter {
+	opacity: 0;
+	transform: translateY(15px);
+}
+.fade-slide-enter-active {
+	opacity: 1;
+	transform: translateY(0);
+	transition: opacity 300ms, transform 300ms;
+}
+.fade-slide-exit {
+	opacity: 1;
+	transform: translateY(0);
+}
+.fade-slide-exit-active {
+	opacity: 0;
+	transform: translateY(-15px);
+	transition: opacity 300ms, transform 300ms;
 }
