@@ -1,0 +1,110 @@
+.uploaderStyle {
+	border: 1.5px dashed #bbb;
+	border-radius: 8px;
+	padding: 0;
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 0.3s;
+	width: 110px;
+	height: 140px;
+	min-width: 110px;
+	min-height: 140px;
+	max-width: 110px;
+	max-height: 140px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	position: relative;
+	background: #f8f8f8;
+	overflow: hidden;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+	margin-left: auto;
+}
+
+.previewImg {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.removeBtn {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	z-index: 2;
+	background: rgba(0, 0, 0, 0.55);
+	color: white;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	font-size: 14px;
+	line-height: 20px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.removeBtn:hover {
+	background-color: rgba(239, 68, 68, 0.8); /* Rojo al pasar el mouse */
+}
+
+.placeholderContainer {
+	display: flex;
+	flex-direction: column; /* Apila el ícono sobre el texto */
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem; /* Espacio entre el ícono y el texto */
+	padding: 0.5rem;
+}
+
+.iconContainer {
+	width: 32px;
+	height: 32px;
+	color: #9ca3af; /* Gris para el ícono */
+}
+
+.placeholderText {
+	font-size: 0.7rem; /* Texto pequeño */
+	color: #6b7280; /* Gris oscuro para el texto */
+	text-align: center;
+	line-height: 1.2;
+	margin: 0; /* Quita el margen por defecto del párrafo */
+}
+
+.iconoCamara {
+	font-size: 22px;
+	color: #aaa;
+	user-select: none;
+}
+
+/*Estilos para la carga de una imagen*/
+.loadingContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+}
+
+.spinner {
+	width: 30px;
+	height: 30px;
+	border: 3px solid #ccc;
+	border-top: 3px solid #007bff;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+	margin-bottom: 8px;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

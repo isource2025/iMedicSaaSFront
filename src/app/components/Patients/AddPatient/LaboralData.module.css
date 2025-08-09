@@ -1,0 +1,210 @@
+.toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 1rem;
+}
+
+.addButton {
+	background-color: #22c55e;
+	color: white;
+	padding: 0.5rem 1rem;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	font-weight: 500;
+	font-size: 0.875rem;
+	transition: background-color 0.2s;
+	margin-top: 0.75rem;
+}
+
+.addButton:hover {
+	background-color: #16a34a;
+}
+
+.trabajoListContainer {
+	border: 1px solid #e5e7eb;
+	border-radius: 0.75rem;
+	background-color: #ffffff;
+	padding: 0.75rem;
+	min-height: 450px;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.trabajoItem {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem;
+	background-color: #f9fafb;
+	border-radius: 6px;
+	border: 1px solid transparent;
+	transition: all 0.2s ease-in-out;
+}
+
+.trabajoItem:hover {
+	border-color: #d1d5db;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+.trabajoInfo {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem; /* Menos espacio entre título y subtítulo */
+}
+
+.trabajoInfo strong {
+	font-weight: 600;
+	color: #1f2937; /* Texto principal más oscuro */
+}
+
+.trabajoInfo span {
+	font-size: 0.875rem;
+	color: #6b7280;
+}
+
+.trabajoActions {
+	display: flex;
+	gap: 0.75rem;
+}
+
+/* --- Estilo refinado para los botones de acción --- */
+.editButton,
+.deleteButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem; /* Botones cuadrados */
+	height: 2rem; /* Botones cuadrados */
+	padding: 0;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	background-color: white;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.editButton svg,
+.deleteButton svg {
+	width: 1rem;
+	height: 1rem;
+}
+
+.editButton {
+	color: #4b5563;
+}
+.editButton:hover {
+	background-color: #f3f4f6;
+	border-color: #9ca3af;
+}
+
+.deleteButton {
+	color: #ef4444; /* Color rojo para el ícono */
+	border-color: #fecaca;
+}
+.deleteButton:hover {
+	background-color: #fee2e2;
+	border-color: #fca5a5;
+	color: #b91c1c;
+}
+
+.noDataText {
+	flex-grow: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #9ca3af;
+	font-size: 0.9rem;
+	text-align: center;
+	min-height: 300px;
+	max-height: 400px;
+	padding: 2rem;
+}
+.tableWrapper {
+	width: 100%;
+	overflow-x: auto;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+	font-size: 0.875rem;
+}
+
+.table thead th {
+	text-align: left;
+	background: #f3f4f6;
+	color: #374151;
+	font-weight: 600;
+	padding: 10px 12px;
+	border-bottom: 1px solid #e5e7eb;
+	white-space: nowrap;
+}
+
+.table tbody td {
+	padding: 10px 12px;
+	border-bottom: 1px solid #f1f5f9;
+	color: #111827;
+}
+
+.table tbody tr:hover {
+	background: #f9fafb;
+}
+
+.colAcciones {
+	width: 120px;
+}
+
+.actionsCell {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.editButton,
+.deleteButton {
+	border: 1px solid #e5e7eb;
+	background: #fff;
+	padding: 6px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.85rem;
+}
+
+.editButton:hover {
+	background: #eef2ff;
+	border-color: #c7d2fe;
+}
+.deleteButton:hover {
+	background: #fee2e2;
+	border-color: #fecaca;
+}
+
+/* Toolbar existente */
+.toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 12px;
+}
+
+.addButton {
+	background: #00b5e2;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 8px 12px;
+	cursor: pointer;
+}
+.addButton:hover {
+	background: #0083a9;
+}
+
+/* Texto vacío */
+.noDataText {
+	color: #6b7280;
+	font-size: 0.9rem;
+	padding: 8px 0;
+}
