@@ -83,3 +83,28 @@
 	color: #aaa;
 	user-select: none;
 }
+
+/*Estilos para la carga de una imagen*/
+.loadingContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+}
+
+.spinner {
+	width: 30px;
+	height: 30px;
+	border: 3px solid #ccc;
+	border-top: 3px solid #007bff;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+	margin-bottom: 8px;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

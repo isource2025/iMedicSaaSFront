@@ -213,19 +213,22 @@
 /* Select que parece un botón / campo */
 .select {
 	position: relative;
-	background-color: white;
 	border: 1px solid #d1d5db; /* gris claro */
-	border-radius: 4px;
-	padding: 8px 12px;
-	font-size: 0.875rem;
 	color: #1f2937; /* texto oscuro */
 	cursor: pointer;
 	user-select: none;
-	transition: border-color 0.2s ease;
 	min-height: 38px; /* tamaño fijo */
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	width: 100%;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.375rem;
+	font-size: 0.675rem;
+	background-color: #ffffff;
+	height: 2.1rem;
+	box-sizing: border-box;
+	transition: all 0.15s ease-in-out;
 }
 
 /* Cuando el select está enfocado o abierto */
@@ -277,11 +280,12 @@
 	background: white;
 	border: 1px solid #d1d5db;
 	border-radius: 6px;
+	font-size: 0.675rem;
 	max-height: 220px;
 	overflow-y: auto;
 	box-shadow: 0 4px 10px rgb(0 0 0 / 0.12);
 	z-index: 1000;
-	font-size: 0.875rem;
+	width: 100%;
 }
 
 /* Cada item del dropdown */

@@ -95,13 +95,18 @@ export const patientService = {
 	 */
 	createPatient: async (data: PatientFormData): Promise<Patient> => {
 		try {
-			const response = await apiService.post<ApiResponse<Patient>>('/patients', data);
+			const response = await fetch('http://localhost:5006/api/patients', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			});
+			const result: ApiResponse<Patient> = await response.json();
 
-			if (response.data.success && response.data.data) {
-				return response.data.data;
+			if (response.ok && result?.data) {
+				return result.data;
 			}
 
-			throw new Error(response.data.mensaje || 'Error al crear el paciente');
+			throw new Error(result?.mensaje || 'Error al crear el paciente');
 		} catch (error: any) {
 			console.error('Error creating patient:', error);
 			if (error.response) {

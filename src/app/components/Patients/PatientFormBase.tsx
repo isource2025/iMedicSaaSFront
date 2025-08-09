@@ -16,6 +16,7 @@ interface PatientFormBaseProps {
 	initialData?: Partial<PatientFormData>;
 	isEditing?: boolean;
 	onClose: () => void;
+	isSubmitting: boolean;
 }
 
 type Tab = 'personal' | 'other' | 'laboral';
@@ -24,6 +25,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	onSubmit,
 	initialData = {},
 	isEditing = false,
+	isSubmitting,
 	onClose,
 }) => {
 	const [formData, setFormData] = useState<PatientFormData>({
@@ -51,7 +53,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const nodeRef = useRef<HTMLDivElement>(null);
 	const tabsRef = useRef<(HTMLDivElement | null)[]>([]);
 	const [indicatorStyle, setIndicatorStyle] = useState({});
-
+	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 	const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
 	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
 	const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
@@ -77,8 +79,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		sexo: false,
 		localidad: false,
 	});
-
-	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Funciones para cargar datos
 	const fetchSexos = async () => {
@@ -136,7 +136,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
 				await fetchLocalidades();
 
-				setFormData({
+				setFormData((prev) => ({
+					...prev, // ✅ conserva Foto, Trabajos y otros
 					IDPaciente: initialData.IDPaciente || undefined,
 					NumeroHC: initialData.NumeroHC || '',
 					TipoDocumento: initialData.TipoDocumento || 'DNI',
@@ -155,7 +156,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					Mail: initialData.Mail || '',
 					NumeroCuenta: initialData.NumeroCuenta || '',
 					NumeroSSN: initialData.NumeroSSN || '',
-				});
+				}));
 
 				await handleGetProvincia(dataLocalidad.data.ValorProvincia);
 			}
@@ -165,39 +166,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			setBuscandoRenaper(false);
 		}
 	};
-
-	// Si hay un paciente, cargamos sus datos en el formulario
-	useEffect(() => {
-		if (initialData) {
-			setFormData({
-				IDPaciente: initialData.IDPaciente || undefined,
-				NumeroHC: initialData.NumeroHC || '',
-				TipoDocumento: initialData.TipoDocumento || 'DNI',
-				NumeroDocumento: initialData.NumeroDocumento || '',
-				ApellidoyNombre: initialData.ApellidoyNombre || '',
-				Domicilio: initialData.Domicilio || '',
-				ValorLocalidad: initialData.ValorLocalidad || '',
-				Provincia: initialData.Provincia || '',
-				Nacionalidad: initialData.Nacionalidad || 'Argentina',
-				FechaNacimiento: initialData.FechaNacimiento || '',
-				CUIT: initialData.CUIT || '',
-				Sexo: initialData.Sexo || 'M',
-				EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-				TelefonoParticular: initialData.TelefonoParticular || '',
-				TelefonoNegocio: initialData.TelefonoNegocio || '',
-				Mail: initialData.Mail || '',
-				NumeroCuenta: initialData.NumeroCuenta || '',
-				NumeroSSN: initialData.NumeroSSN || '',
-			});
-
-			// Si hay valor de provincia, cargar la provincia
-			if (initialData.Provincia) {
-				handleGetProvincia(initialData.Provincia);
-			}
-			fetchLocalidades();
-			fetchSexos();
-		}
-	}, [initialData]);
 
 	useEffect(() => {
 		if (formData.FechaNacimiento && /^\d+$/.test(formData.FechaNacimiento)) {
@@ -217,9 +185,10 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const handleGetProvincia = async (valorProvincia: string) => {
 		const provincia = await provinciaService.getProvincia(valorProvincia);
 		const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
-		formData.Nacionalidad = provinciaData?.nacionalidad || '';
+
 		setFormData((prev) => ({
 			...prev,
+			Nacionalidad: provinciaData?.nacionalidad || '',
 			Provincia: provinciaData?.descripcion || '',
 		}));
 	};
@@ -228,7 +197,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 	) => {
 		const { name, value } = e.target;
-		console.log(name);
+
+		// Si cambia localidad, resuelve provincia
 		if (name === 'ValorLocalidad') {
 			const selected = localidadOptions.find(
 				(l) => String(l.Valor).trim() === value.trim(),
@@ -243,14 +213,36 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			}
 		}
 
-		setFormData((prev) => ({ ...prev, [name]: value }));
+		// Coerciones ligeras
+		let nextValue: any = value;
 
-		// Limpiar errores al editar el campo
+		// Campos numéricos opcionales
+		if (name === 'OrdenNacimiento') {
+			nextValue = value === '' ? '' : isNaN(Number(value)) ? value : Number(value);
+		}
+		if (name === 'Raza' || name === 'ValorLocalidad') {
+			nextValue = value; // si tu backend los quiere como string, deja así
+		}
+
+		// Boolean-like (si decides guardar "SI"/"NO" o "true"/"false", ajusta aquí)
+		if (name === 'DadorOrganos') {
+			// ejemplo: normalizar a "SI"/"NO"
+			nextValue =
+				value === 'SI' || value === 'true'
+					? 'SI'
+					: value === 'NO' || value === 'false'
+					? 'NO'
+					: value;
+		}
+
+		setFormData((prev) => ({ ...prev, [name]: nextValue }));
+
+		// limpiar error del campo editado
 		if (errors[name]) {
 			setErrors((prev) => {
-				const newErrors = { ...prev };
-				delete newErrors[name];
-				return newErrors;
+				const n = { ...prev };
+				delete n[name];
+				return n;
 			});
 		}
 	};
@@ -276,6 +268,14 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			}
 		}
 
+		if (!formData.Trabajos || formData.Trabajos.length === 0) {
+			newErrors.Trabajos = 'Debe cargar al menos un empleo';
+		}
+
+		if (!formData.Foto) {
+			newErrors.Foto = 'La foto es obligatoria';
+		}
+
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
@@ -286,23 +286,63 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		if (!validateForm()) return;
 
 		try {
-			setIsSubmitting(true);
-			console.log('Submitting form data:', formData);
 			const success = await onSubmit(formData);
 			if (success) {
 				onClose();
 			}
 		} catch (error) {
 			console.error('Error al guardar el paciente:', error);
-		} finally {
-			setIsSubmitting(false);
 		}
 	};
 
 	useEffect(() => {
-		fetchSexos();
+		if (!initialData) return;
+
+		setFormData((prev) => ({
+			...prev,
+			IDPaciente: initialData.IDPaciente || undefined,
+			NumeroHC: initialData.NumeroHC || '',
+			TipoDocumento: initialData.TipoDocumento || 'DNI',
+			NumeroDocumento: initialData.NumeroDocumento || '',
+			ApellidoyNombre: initialData.ApellidoyNombre || '',
+			Domicilio: initialData.Domicilio || '',
+			ValorLocalidad: initialData.ValorLocalidad || '',
+			Provincia: initialData.Provincia || '',
+			Nacionalidad: initialData.Nacionalidad || 'Argentina',
+			FechaNacimiento: initialData.FechaNacimiento || '',
+			CUIT: initialData.CUIT || '',
+			Sexo: initialData.Sexo || 'M',
+			EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
+			TelefonoParticular: initialData.TelefonoParticular || '',
+			TelefonoNegocio: initialData.TelefonoNegocio || '',
+			Mail: initialData.Mail || '',
+			NumeroCuenta: initialData.NumeroCuenta || '',
+			NumeroSSN: initialData.NumeroSSN || '',
+
+			// Otros
+			Raza: initialData.Raza ?? prev.Raza ?? '',
+			Idioma: initialData.Idioma ?? prev.Idioma ?? '',
+			Religion: initialData.Religion ?? prev.Religion ?? '',
+			GrupoEtnico: initialData.GrupoEtnico ?? prev.GrupoEtnico ?? '',
+			EstadoMilitar: initialData.EstadoMilitar ?? prev.EstadoMilitar ?? '',
+			LicenciaConducir: initialData.LicenciaConducir ?? prev.LicenciaConducir ?? '',
+			DadorOrganos: initialData.DadorOrganos ?? prev.DadorOrganos ?? '',
+			OrdenNacimiento: initialData.OrdenNacimiento ?? prev.OrdenNacimiento ?? '',
+			LugarNacimiento: initialData.LugarNacimiento ?? prev.LugarNacimiento ?? '',
+			FechaDefuncion: initialData.FechaDefuncion ?? prev.FechaDefuncion ?? '',
+			HoraDefuncion: initialData.HoraDefuncion ?? prev.HoraDefuncion ?? '',
+			Foto: initialData.Foto ?? prev.Foto ?? null,
+
+			// Laboral
+			Trabajos: initialData.Trabajos ?? prev.Trabajos ?? [],
+		}));
+
+		if (initialData.Provincia) {
+			handleGetProvincia(initialData.Provincia);
+		}
 		fetchLocalidades();
-	}, []);
+		fetchSexos();
+	}, [initialData]);
 
 	useEffect(() => {
 		const tabIds: Tab[] = ['personal', 'other', 'laboral'];
@@ -328,6 +368,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					tiposDocumento={tiposDocumento}
 					getRenaperInfo={getRenaperInfo}
 					buscandoRenaper={buscandoRenaper}
+					onPhotoChange={(url) => setFormData((prev) => ({ ...prev, Foto: url }))}
+					setPhotoUploading={setIsPhotoUploading}
 				/>
 				{/* Título de la sección */}
 				<div className={styles.tabsContainer}>
@@ -413,9 +455,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										loading={loading}
 										sexoOptions={sexoOptions}
 										estadosCiviles={estadosCiviles}
-										onClose={onClose}
-										isSubmitting={isSubmitting}
-										isEditing={isEditing}
 									/>
 								)}
 
@@ -452,7 +491,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						className={`${styles.submitButton} ${
 							isSubmitting ? styles.loading : ''
 						}`}
-						disabled={isSubmitting}
+						disabled={isSubmitting || isPhotoUploading}
 					>
 						{isSubmitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
 					</button>

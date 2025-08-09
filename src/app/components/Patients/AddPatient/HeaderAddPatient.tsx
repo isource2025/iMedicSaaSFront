@@ -13,6 +13,8 @@ interface HeaderAddPatientProps {
 		Sexo: string,
 	) => Promise<void>;
 	buscandoRenaper: boolean;
+	onPhotoChange: (url: string | null) => void;
+	setPhotoUploading: (isUploading: boolean) => void;
 }
 
 export default function HeaderAddPatient({
@@ -22,17 +24,18 @@ export default function HeaderAddPatient({
 	tiposDocumento,
 	getRenaperInfo,
 	buscandoRenaper,
+	onPhotoChange,
+	setPhotoUploading,
 }: HeaderAddPatientProps) {
-	const handleFileSelect = (file: File | null) => {
-		// Lógica para manejar la selección de archivos
-		console.log('Selected file:', file);
-	};
-
 	return (
 		<div className={styles.headerContainer}>
 			{/* Componente para subir la foto del paciente */}
 			<div className={styles.headerPhoto}>
-				<PhotoUploader onFileSelect={handleFileSelect} />
+				<PhotoUploader
+					onPhotoChange={onPhotoChange}
+					initialPreview={formData.Foto ?? null}
+					setPhotoUploading={setPhotoUploading}
+				/>
 			</div>
 			{/* Contenedor de todos los campos con layout de grid */}
 			<div className={styles.fieldsGrid}>

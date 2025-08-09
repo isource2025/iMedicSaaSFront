@@ -1,10 +1,9 @@
 import { PatientFormData } from '@/src/app/types/PatientInterface';
 import { Localidad } from '@/src/app/services/localidadService';
 import styles from './Personal.module.css';
-// import styles from '@/src/app/components/modals/ModalAddPatient/styles.module.css';
+import LoadingSelect from './LoadingSelect';
 
-interface PersonalDataTabProps {
-	// Define the props needed for this component
+interface OtherDataTabProps {
 	formData: PatientFormData;
 	errors: Record<string, string>;
 	handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
@@ -15,10 +14,8 @@ interface PersonalDataTabProps {
 	};
 	sexoOptions: { valor: string; descripcion: string }[];
 	estadosCiviles: { value: string; label: string }[];
-	onClose: () => void;
-	isSubmitting: boolean;
-	isEditing?: boolean;
 }
+
 export default function PersonalDataTab({
 	formData,
 	errors,
@@ -27,10 +24,20 @@ export default function PersonalDataTab({
 	loading,
 	sexoOptions,
 	estadosCiviles,
-	onClose,
-	isSubmitting,
-	isEditing = false,
-}: PersonalDataTabProps) {
+}: OtherDataTabProps) {
+	// mapear opciones al formato del LoadingSelect
+	const localidadSelectOptions = localidadOptions.map((l) => ({
+		value: String(l.Valor),
+		label: l.NombreLocalidad,
+	}));
+
+	const sexoSelectOptions = sexoOptions.map((s) => ({
+		value: s.valor,
+		label: s.descripcion,
+	}));
+
+	const estadoCivilSelectOptions = estadosCiviles; // ya viene en {value,label}
+
 	return (
 		<>
 			<div className={styles.formContent}>
@@ -53,36 +60,23 @@ export default function PersonalDataTab({
 						)}
 					</div>
 				</div>
+
 				<div className={`${styles.formRow} ${styles.double}`}>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Localidad</label>
-						<select
+					<div className={styles.double}>
+						<LoadingSelect
+							label='Localidad'
 							name='ValorLocalidad'
-							value={formData.ValorLocalidad}
-							onChange={handleChange}
-							className={`${styles.select} ${
-								errors.ValorLocalidad ? styles.error : ''
-							}`}
-						>
-							<option value=''>Seleccione...</option>
-							{localidadOptions.map((localidad) => (
-								<option key={localidad.Valor} value={localidad.Valor}>
-									{localidad.NombreLocalidad}
-								</option>
-							))}
-						</select>
-						{loading.localidad && (
-							<span
-								style={{
-									marginLeft: '0.5rem',
-									fontSize: '0.75rem',
-									color: '#0083A9',
-								}}
-							>
-								Cargando...
-							</span>
-						)}
+							value={formData.ValorLocalidad || ''}
+							onChange={(val) =>
+								handleChange({
+									target: { name: 'ValorLocalidad', value: val },
+								} as any)
+							}
+							isLoading={loading.localidad}
+							options={localidadSelectOptions}
+						/>
 					</div>
+
 					<div className={styles.formGroup}>
 						<label className={styles.label}>Provincia</label>
 						<input
@@ -139,49 +133,17 @@ export default function PersonalDataTab({
 				</div>
 
 				<div className={styles.formRow}>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>CUIT/CUIL</label>
-						<input
-							type='text'
-							name='CUIT'
-							value={formData.CUIT}
-							onChange={handleChange}
-							className={`${styles.input} ${errors.CUIT ? styles.error : ''}`}
-							placeholder='XX-XXXXXXXX-X'
-						/>
-						{errors.CUIT && (
-							<div className={styles.errorMessage}>{errors.CUIT}</div>
-						)}
-					</div>
-				</div>
-
-				<div className={styles.formRow}>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Sexo</label>
-						<select
+					<div className={styles.double}>
+						<LoadingSelect
+							label='Sexo'
 							name='Sexo'
-							value={formData.Sexo}
-							onChange={handleChange}
-							className={`${styles.select} ${errors.Sexo ? styles.error : ''}`}
-						>
-							<option value=''>Seleccione...</option>
-							{sexoOptions.map((sexo) => (
-								<option key={sexo.valor} value={sexo.valor}>
-									{sexo.descripcion}
-								</option>
-							))}
-						</select>
-						{loading.sexo && (
-							<span
-								style={{
-									marginLeft: '0.5rem',
-									fontSize: '0.75rem',
-									color: '#0083A9',
-								}}
-							>
-								Cargando...
-							</span>
-						)}
+							value={formData.Sexo || ''}
+							onChange={(val) =>
+								handleChange({ target: { name: 'Sexo', value: val } } as any)
+							}
+							isLoading={loading.sexo}
+							options={sexoSelectOptions}
+						/>
 						{errors.Sexo && (
 							<div className={styles.errorMessage}>{errors.Sexo}</div>
 						)}
@@ -189,22 +151,19 @@ export default function PersonalDataTab({
 				</div>
 
 				<div className={styles.formRow}>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Estado Civil</label>
-						<select
+					<div className={styles.double}>
+						<LoadingSelect
+							label='Estado Civil'
 							name='EstadoCivil'
-							value={formData.EstadoCivil}
-							onChange={handleChange}
-							className={`${styles.select} ${
-								errors.EstadoCivil ? styles.error : ''
-							}`}
-						>
-							{estadosCiviles.map((estado) => (
-								<option key={estado.value} value={estado.value}>
-									{estado.label}
-								</option>
-							))}
-						</select>
+							value={formData.EstadoCivil || ''}
+							onChange={(val) =>
+								handleChange({
+									target: { name: 'EstadoCivil', value: val },
+								} as any)
+							}
+							isLoading={false}
+							options={estadoCivilSelectOptions}
+						/>
 						{errors.EstadoCivil && (
 							<div className={styles.errorMessage}>{errors.EstadoCivil}</div>
 						)}

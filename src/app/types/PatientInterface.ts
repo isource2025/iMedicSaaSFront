@@ -70,7 +70,7 @@ export interface ApiResponse<T> {
 }
 
 export interface Trabajo {
-	id: number | string; // Un ID único para cada trabajo, puede ser un número o un string temporal
+	id: number | string;
 	Ocupacion?: string;
 	DocumentoEmpresa?: string;
 	RazonSocial?: string;

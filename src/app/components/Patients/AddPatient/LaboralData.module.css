@@ -118,5 +118,93 @@
 	color: #9ca3af;
 	font-size: 0.9rem;
 	text-align: center;
+	min-height: 300px;
+	max-height: 400px;
 	padding: 2rem;
+}
+.tableWrapper {
+	width: 100%;
+	overflow-x: auto;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+	font-size: 0.875rem;
+}
+
+.table thead th {
+	text-align: left;
+	background: #f3f4f6;
+	color: #374151;
+	font-weight: 600;
+	padding: 10px 12px;
+	border-bottom: 1px solid #e5e7eb;
+	white-space: nowrap;
+}
+
+.table tbody td {
+	padding: 10px 12px;
+	border-bottom: 1px solid #f1f5f9;
+	color: #111827;
+}
+
+.table tbody tr:hover {
+	background: #f9fafb;
+}
+
+.colAcciones {
+	width: 120px;
+}
+
+.actionsCell {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.editButton,
+.deleteButton {
+	border: 1px solid #e5e7eb;
+	background: #fff;
+	padding: 6px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.85rem;
+}
+
+.editButton:hover {
+	background: #eef2ff;
+	border-color: #c7d2fe;
+}
+.deleteButton:hover {
+	background: #fee2e2;
+	border-color: #fecaca;
+}
+
+/* Toolbar existente */
+.toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 12px;
+}
+
+.addButton {
+	background: #00b5e2;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 8px 12px;
+	cursor: pointer;
+}
+.addButton:hover {
+	background: #0083a9;
+}
+
+/* Texto vacío */
+.noDataText {
+	color: #6b7280;
+	font-size: 0.9rem;
+	padding: 8px 0;
 }

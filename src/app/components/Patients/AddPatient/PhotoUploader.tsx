@@ -1,19 +1,20 @@
-// /components/pacientes/agregar/FotoUploader.tsx
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import styles from './photo.module.css';
 
 interface FotoUploaderProps {
-	onFileSelect: (file: File | null) => void;
+	onPhotoChange: (file: string | null) => void;
 	initialPreview?: string | null;
+	setPhotoUploading: (isUploading: boolean) => void;
 }
 
 export const PhotoUploader: React.FC<FotoUploaderProps> = ({
-	onFileSelect,
+	onPhotoChange,
 	initialPreview = null,
+	setPhotoUploading,
 }) => {
 	const [preview, setPreview] = useState<string | null>(initialPreview);
+	const [loading, setLoading] = useState<boolean>(false);
 
 	useEffect(() => {
 		setPreview(initialPreview);
@@ -28,17 +29,45 @@ export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 	}, [preview]);
 
 	const onDrop = useCallback(
-		(acceptedFiles: File[]) => {
-			if (acceptedFiles && acceptedFiles.length > 0) {
-				const file = acceptedFiles[0];
-				onFileSelect(file);
-				if (preview && preview.startsWith('blob:')) {
-					URL.revokeObjectURL(preview);
+		async (acceptedFiles: File[]) => {
+			if (!acceptedFiles?.length) return;
+			setLoading(true);
+			setPhotoUploading(true);
+
+			const file = acceptedFiles[0];
+
+			// NO seteamos preview local (blob). Mostramos spinner hasta terminar.
+			const formData = new FormData();
+			formData.append('file', file);
+			formData.append('upload_preset', 'testMedic'); // tu preset
+			formData.append('cloud_name', 'dsvghulau'); // tu cloud_name
+
+			try {
+				const res = await fetch(
+					`https://api.cloudinary.com/v1_1/dsvghulau/image/upload`,
+					{
+						method: 'POST',
+						body: formData,
+					},
+				);
+				const data = await res.json();
+
+				if (data.secure_url) {
+					console.log('Imagen subida:', data.secure_url);
+					setPreview(data.secure_url);
+					onPhotoChange(data.secure_url);
+				} else {
+					onPhotoChange(null);
 				}
-				setPreview(URL.createObjectURL(file));
+			} catch (err) {
+				console.error('Error subiendo imagen:', err);
+				onPhotoChange(null);
+			} finally {
+				setLoading(false);
+				setPhotoUploading(false);
 			}
 		},
-		[onFileSelect, preview],
+		[onPhotoChange],
 	);
 
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -47,11 +76,10 @@ export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 		multiple: false,
 	});
 
-	// Handler para eliminar la foto
 	const handleRemovePhoto = (e: React.MouseEvent) => {
 		e.stopPropagation();
 		setPreview(null);
-		onFileSelect(null);
+		onPhotoChange(null);
 	};
 
 	return (
@@ -62,7 +90,12 @@ export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 			title='Foto del paciente'
 		>
 			<input {...getInputProps()} />
-			{preview ? (
+			{loading ? (
+				<div className={styles.loadingContainer}>
+					<div className={styles.spinner}></div>
+					<p>Cargando foto...</p>
+				</div>
+			) : preview ? (
 				<>
 					<img src={preview} alt='Vista previa' className={styles.previewImg} />
 					<button

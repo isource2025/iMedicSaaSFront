@@ -13,7 +13,14 @@ interface OtherDataTabProps {
 	handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 	errors: Record<string, string>;
 }
-
+let cachedDropdowns: {
+	razaOptions: Option[];
+	idiomaOptions: Option[];
+	religionOptions: Option[];
+	etniaOptions: Option[];
+	militarOptions: Option[];
+	dadorOptions: Option[];
+} | null = null;
 export default function OtherDataTab({ formData, handleChange, errors }: OtherDataTabProps) {
 	const [razaOptions, setRazaOptions] = useState<Option[]>([]);
 	const [idiomaOptions, setIdiomaOptions] = useState<Option[]>([]);
@@ -24,47 +31,73 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		// --- Simulación de una llamada a la API para obtener los datos de los selects ---
-		const fetchDropdownData = () => {
-			setTimeout(() => {
-				// Mock de datos (en un futuro, esto vendría de tu backend)
-				setRazaOptions([
-					{ value: '1', label: 'Caucásica' },
-					{ value: '2', label: 'Mongoloide' },
-					{ value: '3', label: 'Negroide' },
-				]);
-				setIdiomaOptions([
-					{ value: 'spa', label: 'Español' },
-					{ value: 'eng', label: 'Inglés' },
-					{ value: 'por', label: 'Portugués' },
-				]);
-				setReligionOptions([
-					{ value: '1', label: 'Catolicismo' },
-					{ value: '2', label: 'Cristianismo' },
-					{ value: '3', label: 'Judaísmo' },
-					{ value: '4', label: 'Ateísmo/Agnosticismo' },
-				]);
-				setEtniaOptions([
-					{ value: '1', label: 'Latino/Hispano' },
-					{ value: '2', label: 'Afrodescendiente' },
-					{ value: '3', label: 'Indígena' },
-				]);
-				setMilitarOptions([
-					{ value: 'N', label: 'Ninguno' },
-					{ value: 'A', label: 'Activo' },
-					{ value: 'R', label: 'Retirado' },
-				]);
-				setDadorOptions([
-					{ value: 'S', label: 'Sí' },
-					{ value: 'N', label: 'No' },
-					{ value: 'D', label: 'Desconocido' },
-				]);
+		// Si ya tenemos caché, úsalo y NO simules carga de nuevo
+		if (cachedDropdowns) {
+			setRazaOptions(cachedDropdowns.razaOptions);
+			setIdiomaOptions(cachedDropdowns.idiomaOptions);
+			setReligionOptions(cachedDropdowns.religionOptions);
+			setEtniaOptions(cachedDropdowns.etniaOptions);
+			setMilitarOptions(cachedDropdowns.militarOptions);
+			setDadorOptions(cachedDropdowns.dadorOptions);
+			setIsLoading(false);
+			return;
+		}
 
-				setIsLoading(false); // Terminamos la carga
-			}, 700); // Simulamos un retraso de 700ms
-		};
+		// Primera vez: simular carga y luego guardar en caché
+		const t = setTimeout(() => {
+			const raza = [
+				{ value: '1', label: 'Caucásica' },
+				{ value: '2', label: 'Mongoloide' },
+				{ value: '3', label: 'Negroide' },
+			];
+			const idioma = [
+				{ value: 'spa', label: 'Español' },
+				{ value: 'eng', label: 'Inglés' },
+				{ value: 'por', label: 'Portugués' },
+			];
+			const religion = [
+				{ value: '1', label: 'Catolicismo' },
+				{ value: '2', label: 'Cristianismo' },
+				{ value: '3', label: 'Judaísmo' },
+				{ value: '4', label: 'Ateísmo/Agnosticismo' },
+			];
+			const etnia = [
+				{ value: '1', label: 'Latino/Hispano' },
+				{ value: '2', label: 'Afrodescendiente' },
+				{ value: '3', label: 'Indígena' },
+			];
+			const militar = [
+				{ value: 'N', label: 'Ninguno' },
+				{ value: 'A', label: 'Activo' },
+				{ value: 'R', label: 'Retirado' },
+			];
+			const dador = [
+				{ value: 'S', label: 'Sí' },
+				{ value: 'N', label: 'No' },
+				{ value: 'D', label: 'Desconocido' },
+			];
 
-		fetchDropdownData();
+			// setea estado
+			setRazaOptions(raza);
+			setIdiomaOptions(idioma);
+			setReligionOptions(religion);
+			setEtniaOptions(etnia);
+			setMilitarOptions(militar);
+			setDadorOptions(dador);
+			setIsLoading(false);
+
+			// guarda en caché de módulo
+			cachedDropdowns = {
+				razaOptions: raza,
+				idiomaOptions: idioma,
+				religionOptions: religion,
+				etniaOptions: etnia,
+				militarOptions: militar,
+				dadorOptions: dador,
+			};
+		}, 700);
+
+		return () => clearTimeout(t);
 	}, []);
 
 	return (
