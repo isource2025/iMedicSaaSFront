@@ -209,3 +209,114 @@
 		transform: rotate(360deg);
 	}
 }
+
+/* Select que parece un botón / campo */
+.select {
+	position: relative;
+	background-color: white;
+	border: 1px solid #d1d5db; /* gris claro */
+	border-radius: 4px;
+	padding: 8px 12px;
+	font-size: 0.875rem;
+	color: #1f2937; /* texto oscuro */
+	cursor: pointer;
+	user-select: none;
+	transition: border-color 0.2s ease;
+	min-height: 38px; /* tamaño fijo */
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+/* Cuando el select está enfocado o abierto */
+.select:focus,
+.select:hover {
+	border-color: var(--pantone-313u);
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.2);
+	outline: none;
+}
+
+/* Añadimos un pequeño icono flecha abajo al final */
+.select::after {
+	content: '';
+	border-style: solid;
+	border-width: 6px 5px 0 5px;
+	border-color: #999 transparent transparent transparent;
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+/* Spinner durante carga */
+.spinnerIcon {
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	width: 16px;
+	height: 16px;
+	border: 2px solid #ccc;
+	border-top-color: var(--pantone-313u);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+.selectDisabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	user-select: none;
+}
+/* Dropdown con sombra y borde redondeado */
+.dropdown {
+	position: absolute;
+	top: calc(100% + 6px);
+	left: 0;
+	right: 0;
+	background: white;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	max-height: 220px;
+	overflow-y: auto;
+	box-shadow: 0 4px 10px rgb(0 0 0 / 0.12);
+	z-index: 1000;
+	font-size: 0.875rem;
+}
+
+/* Cada item del dropdown */
+.dropdownItem {
+	padding: 10px 14px;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	color: #1f2937;
+	user-select: none;
+}
+
+/* Hover sobre el item */
+.dropdownItem:hover {
+	background-color: var(--pantone-311c);
+	color: white;
+}
+
+/* Opción deshabilitada */
+.dropdownItemDisabled {
+	padding: 10px 14px;
+	color: #9ca3af;
+	cursor: default;
+	user-select: none;
+}
+
+/* Evitar que el dropdown se superponga en pantallas chicas */
+@media (max-width: 600px) {
+	.dropdown {
+		max-height: 150px;
+	}
+}
+
+/* Animación spin */
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

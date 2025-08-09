@@ -122,45 +122,48 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		if (Sexo == 'F') {
 			sexoOpt = 1;
 		}
-
-		const resp = await fetch(
-			`http://localhost:4000/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
-		);
-		const data = await resp.json();
-		console.log(data.persona);
-		if (data.persona) {
-			const localidad = await fetch(
-				`http://localhost:4000/api/localidad/search-by-localidad/${data.persona.ciudad}`,
+		try {
+			const resp = await fetch(
+				`http://localhost:5006/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
 			);
-			const dataLocalidad = await localidad.json();
+			const data = await resp.json();
+			console.log(data.persona);
+			if (data.persona) {
+				const localidad = await fetch(
+					`http://localhost:5006/api/localidad/search-by-localidad/${data.persona.ciudad}`,
+				);
+				const dataLocalidad = await localidad.json();
 
-			await fetchLocalidades();
+				await fetchLocalidades();
 
-			setFormData({
-				IDPaciente: initialData.IDPaciente || undefined,
-				NumeroHC: initialData.NumeroHC || '',
-				TipoDocumento: initialData.TipoDocumento || 'DNI',
-				NumeroDocumento: `${data.persona.numeroDocumento}`,
-				ApellidoyNombre: `${data.persona.apellido}, ${data.persona.nombres}`,
-				Domicilio: `${data.persona.calle} ${data.persona.numero}, ${data.persona.monoblock}`,
-				ValorLocalidad: `${dataLocalidad.data.Valor}`,
-				Provincia: initialData.Provincia || '',
-				Nacionalidad: initialData.Nacionalidad || 'Argentina',
-				FechaNacimiento: `${data.persona.fechaNacimiento}`,
-				CUIT: initialData.CUIT || '',
-				Sexo: `${data.persona.sexo}`,
-				EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-				TelefonoParticular: initialData.TelefonoParticular || '',
-				TelefonoNegocio: initialData.TelefonoNegocio || '',
-				Mail: initialData.Mail || '',
-				NumeroCuenta: initialData.NumeroCuenta || '',
-				NumeroSSN: initialData.NumeroSSN || '',
-			});
+				setFormData({
+					IDPaciente: initialData.IDPaciente || undefined,
+					NumeroHC: initialData.NumeroHC || '',
+					TipoDocumento: initialData.TipoDocumento || 'DNI',
+					NumeroDocumento: `${data.persona.numeroDocumento}`,
+					ApellidoyNombre: `${data.persona.apellido}, ${data.persona.nombres}`,
+					Domicilio: `${data.persona.calle} ${data.persona.numero}, ${data.persona.monoblock}`,
+					ValorLocalidad: `${dataLocalidad.data.Valor}`,
+					Provincia: initialData.Provincia || '',
+					Nacionalidad: initialData.Nacionalidad || 'Argentina',
+					FechaNacimiento: `${data.persona.fechaNacimiento}`,
+					CUIT: initialData.CUIT || '',
+					Sexo: `${data.persona.sexo}`,
+					EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
+					TelefonoParticular: initialData.TelefonoParticular || '',
+					TelefonoNegocio: initialData.TelefonoNegocio || '',
+					Mail: initialData.Mail || '',
+					NumeroCuenta: initialData.NumeroCuenta || '',
+					NumeroSSN: initialData.NumeroSSN || '',
+				});
 
-			await handleGetProvincia(dataLocalidad.data.ValorProvincia);
+				await handleGetProvincia(dataLocalidad.data.ValorProvincia);
+			}
+		} catch (error) {
+			console.error('Error al buscar información en Renaper:', error);
+		} finally {
+			setBuscandoRenaper(false);
 		}
-
-		setBuscandoRenaper(false);
 	};
 
 	// Si hay un paciente, cargamos sus datos en el formulario
@@ -284,6 +287,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
 		try {
 			setIsSubmitting(true);
+			console.log('Submitting form data:', formData);
 			const success = await onSubmit(formData);
 			if (success) {
 				onClose();

@@ -26,7 +26,6 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 	useEffect(() => {
 		// --- Simulación de una llamada a la API para obtener los datos de los selects ---
 		const fetchDropdownData = () => {
-			console.log("Simulando carga de datos para 'Otros Datos'...");
 			setTimeout(() => {
 				// Mock de datos (en un futuro, esto vendría de tu backend)
 				setRazaOptions([
@@ -62,7 +61,6 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 				]);
 
 				setIsLoading(false); // Terminamos la carga
-				console.log('Datos simulados cargados.');
 			}, 700); // Simulamos un retraso de 700ms
 		};
 
@@ -76,7 +74,9 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					label='Raza'
 					name='Raza'
 					value={formData.Raza || ''}
-					onChange={handleChange}
+					onChange={(val) =>
+						handleChange({ target: { name: 'Raza', value: val } } as any)
+					}
 					isLoading={isLoading}
 					options={razaOptions}
 				/>
@@ -84,7 +84,9 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					label='Idioma'
 					name='Idioma'
 					value={formData.Idioma || ''}
-					onChange={handleChange}
+					onChange={(val) =>
+						handleChange({ target: { name: 'Idioma', value: val } } as any)
+					}
 					isLoading={isLoading}
 					options={idiomaOptions}
 				/>
@@ -95,7 +97,9 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					label='Religión'
 					name='Religion'
 					value={formData.Religion || ''}
-					onChange={handleChange}
+					onChange={(val) =>
+						handleChange({ target: { name: 'Religion', value: val } } as any)
+					}
 					isLoading={isLoading}
 					options={religionOptions}
 				/>
@@ -103,7 +107,9 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					label='Grupo Étnico'
 					name='GrupoEtnico'
 					value={formData.GrupoEtnico || ''}
-					onChange={handleChange}
+					onChange={(val) =>
+						handleChange({ target: { name: 'GrupoEtnico', value: val } } as any)
+					}
 					isLoading={isLoading}
 					options={etniaOptions}
 				/>
@@ -114,7 +120,9 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					label='Estado Militar'
 					name='EstadoMilitar'
 					value={formData.EstadoMilitar || ''}
-					onChange={handleChange}
+					onChange={(val) =>
+						handleChange({ target: { name: 'EstadoMilitar', value: val } } as any)
+					}
 					isLoading={isLoading}
 					options={militarOptions}
 				/>
@@ -122,7 +130,9 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					label='Dador de Órganos'
 					name='DadorOrganos'
 					value={formData.DadorOrganos || ''}
-					onChange={handleChange}
+					onChange={(val) =>
+						handleChange({ target: { name: 'DadorOrganos', value: val } } as any)
+					}
 					isLoading={isLoading}
 					options={dadorOptions}
 				/>

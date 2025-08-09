@@ -30,6 +30,10 @@ export default function HeaderAddPatient({
 
 	return (
 		<div className={styles.headerContainer}>
+			{/* Componente para subir la foto del paciente */}
+			<div className={styles.headerPhoto}>
+				<PhotoUploader onFileSelect={handleFileSelect} />
+			</div>
 			{/* Contenedor de todos los campos con layout de grid */}
 			<div className={styles.fieldsGrid}>
 				{/* --- Campo Número HC --- */}
@@ -207,11 +211,6 @@ export default function HeaderAddPatient({
 						<div className={styles.headerError}>{errors.ApellidoyNombre}</div>
 					)}
 				</div>
-			</div>
-
-			{/* Componente para subir la foto del paciente */}
-			<div className={styles.headerPhoto}>
-				<PhotoUploader onFileSelect={handleFileSelect} />
 			</div>
 		</div>
 	);
