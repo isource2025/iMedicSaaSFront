@@ -54,6 +54,7 @@ export default function PersonalDataTab({
 							className={`${styles.input} ${
 								errors.Domicilio ? styles.error : ''
 							}`}
+							required
 						/>
 						{errors.Domicilio && (
 							<div className={styles.errorMessage}>{errors.Domicilio}</div>
@@ -116,7 +117,9 @@ export default function PersonalDataTab({
 
 				<div className={styles.formRow}>
 					<div className={styles.formGroup}>
-						<label className={styles.label}>Fecha de Nacimiento</label>
+						<label className={`${styles.label} ${styles.requiredField}`}>
+							Fecha de Nacimiento
+						</label>
 						<input
 							type='date'
 							name='FechaNacimiento'
@@ -125,6 +128,7 @@ export default function PersonalDataTab({
 							className={`${styles.input} ${
 								errors.FechaNacimiento ? styles.error : ''
 							}`}
+							required
 						/>
 						{errors.FechaNacimiento && (
 							<div className={styles.errorMessage}>{errors.FechaNacimiento}</div>
