@@ -93,20 +93,32 @@ export const patientService = {
 	 * @param data Datos del paciente
 	 * @returns Promise con el paciente creado
 	 */
-	createPatient: async (data: PatientFormData): Promise<Patient> => {
+	createPatient: async (data: PatientFormData, fotoFile?: File | null): Promise<Patient> => {
 		try {
-			const response = await fetch('http://localhost:5006/api/patients', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data),
-			});
-			const result: ApiResponse<Patient> = await response.json();
+			let payload: any = data;
+			let config: any = {};
+			if (fotoFile) {
+				const formData = new FormData();
+				Object.entries(data).forEach(([key, value]) => {
+					if (value !== undefined && value !== null) {
+						formData.append(key, String(value));
+					}
+				});
+				formData.append('Foto', fotoFile);
+				payload = formData;
+				config.headers = { 'Content-Type': 'multipart/form-data' };
+			}
+			const response = await apiService.post<ApiResponse<Patient>>(
+				'/patients',
+				payload,
+				config,
+			);
 
-			if (response.ok && result?.data) {
-				return result.data;
+			if (response.data.success && response.data.data) {
+				return response.data.data;
 			}
 
-			throw new Error(result?.mensaje || 'Error al crear el paciente');
+			throw new Error(response.data.mensaje || 'Error al crear el paciente');
 		} catch (error: any) {
 			console.error('Error creating patient:', error);
 			if (error.response) {
@@ -122,17 +134,31 @@ export const patientService = {
 	 * @param data Datos actualizados del paciente
 	 * @returns Promise con el paciente actualizado
 	 */
-	updatePatient: async (id: number, data: PatientFormData): Promise<Patient> => {
+	updatePatient: async (id: number, data: PatientFormData | any): Promise<Patient> => {
 		try {
+			let payload: any = data;
+			let config: any = {};
+			const fotoFile: File | null = data._fotoFile || null;
+			if (fotoFile) {
+				const formData = new FormData();
+				Object.entries(data).forEach(([key, value]) => {
+					if (key === '_fotoFile') return; // campo interno
+					if (value !== undefined && value !== null) {
+						formData.append(key, String(value));
+					}
+				});
+				formData.append('Foto', fotoFile);
+				payload = formData;
+				config.headers = { 'Content-Type': 'multipart/form-data' };
+			}
 			const response = await apiService.put<ApiResponse<Patient>>(
 				`/patients/${id}`,
-				data,
+				payload,
+				config,
 			);
-			console.log(data);
 			if (response.data.success && response.data.data) {
 				return response.data.data;
 			}
-
 			throw new Error(response.data.mensaje || 'Error al actualizar el paciente');
 		} catch (error: any) {
 			console.error(`Error updating patient with id ${id}:`, error);
