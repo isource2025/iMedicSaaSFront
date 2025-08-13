@@ -26,7 +26,7 @@ export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 				URL.revokeObjectURL(preview);
 			};
 		}
-	}, [preview]);
+	}, [preview, initialPreview]);
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {

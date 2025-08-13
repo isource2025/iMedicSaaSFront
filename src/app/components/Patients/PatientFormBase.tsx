@@ -49,6 +49,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		NumeroSSN: initialData.NumeroSSN || '',
 	});
 	const [activeTab, setActiveTab] = useState<Tab>('personal');
+	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const nodeRef = useRef<HTMLDivElement>(null);
 	const tabsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -80,6 +81,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		localidad: false,
 	});
 
+	const [fotoFile, setFotoFile] = useState<File | null>(null);
+
 	// Funciones para cargar datos
 	const fetchSexos = async () => {
 		try {
@@ -105,7 +108,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			setLocalidadOptions(data);
 		} catch (error) {
 			console.error('Error al cargar opciones de localidad:', error);
-		} finally {
 			setLoading((prev) => ({ ...prev, localidad: false }));
 		}
 	};
@@ -167,20 +169,56 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		}
 	};
 
+	// Si hay un paciente, cargamos sus datos en el formulario
 	useEffect(() => {
-		if (formData.FechaNacimiento && /^\d+$/.test(formData.FechaNacimiento)) {
-			const date = clarionDateToDate(formData.FechaNacimiento);
-			if (date) {
-				const year = date.getFullYear();
-				const month = String(date.getMonth() + 1).padStart(2, '0');
-				const day = String(date.getDate()).padStart(2, '0');
-				setFormData((prev) => ({
-					...prev,
-					FechaNacimiento: `${year}-${month}-${day}`,
-				}));
+		if (initialData) {
+			setFormData({
+				IDPaciente: initialData.IDPaciente || undefined,
+				NumeroHC: initialData.NumeroHC || '',
+				TipoDocumento: initialData.TipoDocumento || 'DNI',
+				NumeroDocumento: initialData.NumeroDocumento || '',
+				ApellidoyNombre: initialData.ApellidoyNombre || '',
+				Domicilio: initialData.Domicilio || '',
+				ValorLocalidad: initialData.ValorLocalidad || '',
+				Provincia: initialData.Provincia || '',
+				Nacionalidad: initialData.Nacionalidad || 'Argentina',
+				FechaNacimiento: initialData.FechaNacimiento || '',
+				CUIT: initialData.CUIT || '',
+				Sexo: initialData.Sexo || 'M',
+				EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
+				TelefonoParticular: initialData.TelefonoParticular || '',
+				TelefonoNegocio: initialData.TelefonoNegocio || '',
+				Mail: initialData.Mail || '',
+				NumeroCuenta: initialData.NumeroCuenta || '',
+				NumeroSSN: initialData.NumeroSSN || '',
+			});
+
+			// Si hay valor de provincia, cargar la provincia
+			if (initialData.Provincia) {
+				handleGetProvincia(initialData.Provincia);
 			}
+			fetchLocalidades();
+			fetchSexos();
+			setPhotoPreview(initialData.FotoURL || null);
 		}
-	}, [formData.FechaNacimiento]);
+	}, [initialData]);
+
+	// Normaliza sólo una vez si viene en formato Clarion numérico; evita parpadeos
+	useEffect(() => {
+		const val = formData.FechaNacimiento;
+		if (!val) return;
+		// Si ya está en formato YYYY-MM-DD no hacer nada
+		if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return;
+		// Si no es puramente numérico, tampoco tocar (entrada manual parcial)
+		if (!/^\d+$/.test(val)) return;
+		const date = clarionDateToDate(val);
+		if (!date) return;
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		setFormData((prev) => ({ ...prev, FechaNacimiento: `${year}-${month}-${day}` }));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleGetProvincia = async (valorProvincia: string) => {
 		const provincia = await provinciaService.getProvincia(valorProvincia);
@@ -260,7 +298,13 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			newErrors.NumeroHC = 'El número de historia clínica debe contener solo números';
 		}
 
-		if (formData.FechaNacimiento) {
+		if (!formData.Domicilio.trim()) {
+			newErrors.Domicilio = 'El domicilio es obligatorio';
+		}
+
+		if (!formData.FechaNacimiento) {
+			newErrors.FechaNacimiento = 'La fecha de nacimiento es obligatoria';
+		} else if (formData.FechaNacimiento) {
 			const today = new Date();
 			const birthDate = new Date(formData.FechaNacimiento);
 			if (birthDate > today) {
@@ -286,7 +330,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		if (!validateForm()) return;
 
 		try {
-			const success = await onSubmit(formData);
+			const payload: any = { ...formData };
+			if (fotoFile) payload._fotoFile = fotoFile;
+			const success = await onSubmit(payload);
 			if (success) {
 				onClose();
 			}

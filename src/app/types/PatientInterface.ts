@@ -20,6 +20,7 @@ export interface Patient {
 	Mail: string;
 	NumeroSSN: string;
 	NumeroCuenta: string;
+	FotoURL?: string | null;
 }
 
 export interface PatientFormData {
@@ -44,6 +45,7 @@ export interface PatientFormData {
 	Mail: string;
 	NumeroCuenta: string;
 	NumeroSSN: string;
+	FotoURL?: string | null;
 
 	// Otros Datos
 	Raza?: string;
