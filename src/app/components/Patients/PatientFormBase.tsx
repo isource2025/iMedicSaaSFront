@@ -51,13 +51,14 @@ const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => 
 	Sexo: d?.Sexo || 'M',
 	EstadoCivil: d?.EstadoCivil || 'SOLTERO',
 	TelefonoParticular: d?.TelefonoParticular || '',
-	TelefonoNegocio: d?.TelefonoNegocio || '',
+	TelefonoCelular: d?.TelefonoCelular || '',
 	Mail: d?.Mail || '',
-	NumeroCuenta: d?.NumeroCuenta || '',
-	NumeroSSN: d?.NumeroSSN || '',
+	Cobertura: d?.Cobertura || '',
+	nAfiliado: d?.nAfiliado || '',
 	FotoURL: d?.FotoURL || null,
 	Raza: d?.Raza || '',
-	Idioma: d?.Idioma || '',
+	// Mapear posible campo backend IdiomaPrimario al alias Idioma
+	Idioma: d?.Idioma || d?.IdiomaPrimario || '',
 	Religion: d?.Religion || '',
 	GrupoEtnico: d?.GrupoEtnico || '',
 	EstadoMilitar: d?.EstadoMilitar || '',
@@ -240,6 +241,12 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		try {
 			setInternalSubmitting(true);
 			const payload: any = { ...formData };
+			// Normalizar código de idioma indeterminado
+			if (payload.Idioma === 'und') payload.Idioma = '';
+			// Normalizar campo Idioma -> IdiomaPrimario para backend si corresponde
+			if (payload.Idioma && !payload.IdiomaPrimario) {
+				payload.IdiomaPrimario = payload.Idioma;
+			}
 			if (fotoFile) payload._fotoFile = fotoFile;
 			console.log('[PatientFormBase] Enviando payload', payload);
 			const success = await onSubmit(payload);
@@ -271,6 +278,19 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		fetchSexos();
 		fetchLocalidades();
 	}, []);
+
+	// Sincronizar cuando initialData (paciente a editar) llega asincrónicamente
+	useEffect(() => {
+		if (isEditing && initialData) {
+			setFormData((prev) => {
+				// Si no hay paciente previo cargado o cambió el ID
+				if (!prev.IDPaciente || prev.IDPaciente !== initialData.IDPaciente) {
+					return buildInitialFormData(initialData);
+				}
+				return prev; // evita sobreescribir cambios del usuario
+			});
+		}
+	}, [initialData, isEditing]);
 
 	// Indicador tabs
 	useEffect(() => {

@@ -11,11 +11,10 @@ export const patientService = {
 	 */
 	getAllPatients: async (): Promise<Patient[]> => {
 		try {
-			const response = await apiService.get<ApiResponse<Patient[]>>('/patients');
-			if (response.data.success && response.data.data) {
-				return response.data.data;
-			}
-			throw new Error(response.data.mensaje || 'Error al obtener pacientes');
+			const res = await fetch('http://localhost:5006/api/patients');
+			if (!res.ok) throw new Error('Error al obtener pacientes');
+			const { data } = await res.json();
+			return data;
 		} catch (error: any) {
 			console.error('Error fetching patients:', error);
 			if (error.response) {
@@ -59,7 +58,28 @@ export const patientService = {
 			const response = await apiService.get<ApiResponse<Patient>>(`/patients/${id}`);
 
 			if (response.data.success && response.data.data) {
-				return response.data.data;
+				const p = response.data.data as any;
+				// Debug y normalización de campos para selects
+				if (p.IdiomaPrimario && !p.Idioma) p.Idioma = p.IdiomaPrimario;
+				// Forzar a string IDs numéricos para que los selects (que usan comparación estricta) encuentren coincidencia
+				[
+					'ValorLocalidad',
+					'Raza',
+					'GrupoEtnico',
+					'EstadoMilitar',
+					'OrdenNacimiento',
+				].forEach((k) => {
+					if (p[k] !== undefined && p[k] !== null) p[k] = String(p[k]);
+				});
+				// Consistencia para IdiomaPrimario también
+				if (p.IdiomaPrimario != null) p.IdiomaPrimario = String(p.IdiomaPrimario);
+				// Mapear backend -> frontend nuevos alias
+				if (p.TelefonoNegocio && !p.TelefonoCelular)
+					p.TelefonoCelular = p.TelefonoNegocio;
+				if (p.NumeroSSN && !p.nAfiliado) p.nAfiliado = p.NumeroSSN;
+				if (p.NumeroCuenta && !p.Cobertura) p.Cobertura = p.NumeroCuenta; // placeholder: ajustar si hay catálogo real
+				console.log('[patientService.getPatientById][debug] recibido:', p);
+				return p;
 			}
 
 			throw new Error(response.data.mensaje || 'Paciente no encontrado');
@@ -81,23 +101,27 @@ export const patientService = {
 	 */
 	createPatient: async (data: PatientFormData, fotoFile?: File | null): Promise<Patient> => {
 		try {
-			let payload: any = data;
+			// Mapear frontend -> backend (siempre sobrescribir para reflejar cambios)
+			const base = { ...data } as any;
+			if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
+			if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
+			if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;
+
+			let payload: any = base;
 			let config: any = {};
 			if (fotoFile) {
 				const formData = new FormData();
-				Object.entries(data).forEach(([key, value]) => {
-					if (value !== undefined && value !== null && key !== 'Foto') {
+				Object.entries(base).forEach(([key, value]) => {
+					if (value === undefined || value === null || key === 'Foto') return;
+					if (key === 'Trabajos' && Array.isArray(value)) {
+						formData.append(key, JSON.stringify(value));
+					} else {
 						formData.append(key, String(value));
 					}
 				});
 				formData.append('Foto', fotoFile);
 				payload = formData;
-				console.log('[createPatient] payload antes de enviar', payload);
 				config.headers = { 'Content-Type': 'multipart/form-data' };
-				// debug
-				if (process.env.NODE_ENV !== 'production') {
-					console.log('[createPatient] Enviando multipart con foto', fotoFile.name);
-				}
 			}
 			const response = await apiService.post<ApiResponse<Patient>>(
 				'/patients',
@@ -130,14 +154,32 @@ export const patientService = {
 	 */
 	updatePatient: async (id: number, data: PatientFormData | any): Promise<Patient> => {
 		try {
-			let payload: any = data;
+			// Mapear alias frontend -> backend (siempre sobrescribir)
+			const base = { ...data };
+			if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
+			if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
+			if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;
+			if (process.env.NODE_ENV !== 'production') {
+				console.log('[patientService.updatePatient] mapping aliases', {
+					TelefonoCelular: base.TelefonoCelular,
+					TelefonoNegocio: base.TelefonoNegocio,
+					nAfiliado: base.nAfiliado,
+					NumeroSSN: base.NumeroSSN,
+					Cobertura: base.Cobertura,
+					NumeroCuenta: base.NumeroCuenta,
+				});
+			}
+			let payload: any = base;
 			let config: any = {};
 			const fotoFile: File | null = data._fotoFile || null;
 			if (fotoFile) {
 				const formData = new FormData();
-				Object.entries(data).forEach(([key, value]) => {
+				Object.entries(base).forEach(([key, value]) => {
 					if (key === '_fotoFile' || key === 'Foto') return; // campo interno / evitar duplicado
-					if (value !== undefined && value !== null) {
+					if (value === undefined || value === null) return;
+					if (key === 'Trabajos' && Array.isArray(value)) {
+						formData.append(key, JSON.stringify(value));
+					} else {
 						formData.append(key, String(value));
 					}
 				});
