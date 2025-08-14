@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import styles from './photo.module.css';
 
 interface FotoUploaderProps {
-	onPhotoChange: (file: string | null) => void;
+	onPhotoChange: (file: File | null) => void;
 	initialPreview?: string | null;
 	setPhotoUploading: (isUploading: boolean) => void;
 }
@@ -26,48 +26,23 @@ export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 				URL.revokeObjectURL(preview);
 			};
 		}
-	}, [preview]);
+	}, [preview, initialPreview]);
 
 	const onDrop = useCallback(
-		async (acceptedFiles: File[]) => {
+		(acceptedFiles: File[]) => {
 			if (!acceptedFiles?.length) return;
 			setLoading(true);
 			setPhotoUploading(true);
 
 			const file = acceptedFiles[0];
-
-			// NO seteamos preview local (blob). Mostramos spinner hasta terminar.
-			const formData = new FormData();
-			formData.append('file', file);
-			formData.append('upload_preset', 'testMedic'); // tu preset
-			formData.append('cloud_name', 'dsvghulau'); // tu cloud_name
-
-			try {
-				const res = await fetch(
-					`https://api.cloudinary.com/v1_1/dsvghulau/image/upload`,
-					{
-						method: 'POST',
-						body: formData,
-					},
-				);
-				const data = await res.json();
-
-				if (data.secure_url) {
-					console.log('Imagen subida:', data.secure_url);
-					setPreview(data.secure_url);
-					onPhotoChange(data.secure_url);
-				} else {
-					onPhotoChange(null);
-				}
-			} catch (err) {
-				console.error('Error subiendo imagen:', err);
-				onPhotoChange(null);
-			} finally {
-				setLoading(false);
-				setPhotoUploading(false);
-			}
+			// Mostrar preview local
+			const previewUrl = URL.createObjectURL(file);
+			setPreview(previewUrl);
+			onPhotoChange(file);
+			setLoading(false);
+			setPhotoUploading(false);
 		},
-		[onPhotoChange],
+		[onPhotoChange, setPhotoUploading],
 	);
 
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({

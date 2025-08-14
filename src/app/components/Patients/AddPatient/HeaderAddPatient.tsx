@@ -13,7 +13,7 @@ interface HeaderAddPatientProps {
 		Sexo: string,
 	) => Promise<void>;
 	buscandoRenaper: boolean;
-	onPhotoChange: (url: string | null) => void;
+	onPhotoChange: (file: File | null) => void;
 	setPhotoUploading: (isUploading: boolean) => void;
 }
 
@@ -33,7 +33,7 @@ export default function HeaderAddPatient({
 			<div className={styles.headerPhoto}>
 				<PhotoUploader
 					onPhotoChange={onPhotoChange}
-					initialPreview={formData.Foto ?? null}
+					initialPreview={formData.FotoURL ?? null}
 					setPhotoUploading={setPhotoUploading}
 				/>
 			</div>
@@ -41,13 +41,16 @@ export default function HeaderAddPatient({
 			<div className={styles.fieldsGrid}>
 				{/* --- Campo Número HC --- */}
 				<div className={styles.headerField}>
-					<label className={styles.headerLabel}>Número HC</label>
+					<label className={`${styles.headerLabel} ${styles.requiredField}`}>
+						Número HC
+					</label>
 					<input
 						type='text'
 						name='NumeroHC'
 						value={formData.NumeroHC}
 						onChange={handleChange}
 						className={styles.headerInput}
+						required
 					/>
 					{errors.NumeroHC && (
 						<div className={styles.headerError}>{errors.NumeroHC}</div>

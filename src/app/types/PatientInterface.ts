@@ -1,10 +1,10 @@
 export interface Patient {
 	IDPaciente: number;
 	ApellidoyNombre: string;
-	TipoDocumento: string;
+	TipoDocumento: string; // presente en backend obtenerPacientePorId
 	NumeroDocumento: string;
 	Domicilio: string;
-	ValorLocalidad: string;
+	ValorLocalidad: string; // se maneja como string en selects aunque provenga numérico
 	Provincia: string;
 	Nacionalidad: string;
 	Sexo: string;
@@ -16,10 +16,21 @@ export interface Patient {
 	Religion: string;
 	Raza: string;
 	TelefonoParticular: string;
-	TelefonoNegocio: string;
+	TelefonoCelular: string;
 	Mail: string;
-	NumeroSSN: string;
-	NumeroCuenta: string;
+	Cobertura: string;
+	nAfiliado: string;
+	FotoURL?: string | null;
+	LicenciaConducir?: string | null;
+	DadorOrganos?: string | null;
+	OrdenNacimiento?: number | null;
+	LugarNacimiento?: string | null;
+	FechaDefuncion?: string | null;
+	HoraDefuncion?: string | null;
+	IdiomaPrimario?: string | null;
+	GrupoEtnico?: string | null;
+	EstadoMilitar?: string | null;
+	Ciudadania?: string | null;
 }
 
 export interface PatientFormData {
@@ -40,14 +51,16 @@ export interface PatientFormData {
 	Sexo: string;
 	EstadoCivil: string;
 	TelefonoParticular: string;
-	TelefonoNegocio: string;
+	TelefonoCelular: string;
 	Mail: string;
-	NumeroCuenta: string;
-	NumeroSSN: string;
+	Cobertura: string;
+	nAfiliado: string;
+	FotoURL?: string | null;
 
 	// Otros Datos
 	Raza?: string;
-	Idioma?: string;
+	Idioma?: string; // alias frontend
+	IdiomaPrimario?: string; // backend field
 	Religion?: string;
 	GrupoEtnico?: string;
 	EstadoMilitar?: string;

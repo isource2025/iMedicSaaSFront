@@ -39,32 +39,34 @@ export default function PersonalDataTab({
 	const estadoCivilSelectOptions = estadosCiviles; // ya viene en {value,label}
 
 	return (
-		<>
-			<div className={styles.formContent}>
-				<div className={styles.formRow}>
-					<div className={styles.formGroup}>
-						<label className={`${styles.label} ${styles.requiredField}`}>
-							Domicilio
-						</label>
-						<input
-							type='text'
-							name='Domicilio'
-							value={formData.Domicilio}
-							onChange={handleChange}
-							className={`${styles.input} ${
-								errors.Domicilio ? styles.error : ''
-							}`}
-						/>
-						{errors.Domicilio && (
-							<div className={styles.errorMessage}>{errors.Domicilio}</div>
-						)}
-					</div>
+		<div className={styles.formContent}>
+			{/* Domicilio */}
+			<div className={styles.formRow}>
+				<div className={styles.formGroup}>
+					<label className={`${styles.label} ${styles.requiredField}`}>
+						Domicilio en:
+					</label>
+					<input
+						type='text'
+						name='Domicilio'
+						value={formData.Domicilio}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.Domicilio ? styles.error : ''}`}
+						required
+					/>
+					{errors.Domicilio && (
+						<div className={styles.errorMessage}>{errors.Domicilio}</div>
+					)}
 				</div>
+			</div>
 
-				<div className={`${styles.formRow} ${styles.double}`}>
-					<div className={styles.double}>
+			{/* Localidad / Provincia */}
+			<div className={`${styles.formRow} ${styles.double}`}>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Localidad:</label>
+					<div>
 						<LoadingSelect
-							label='Localidad'
+							label=''
 							name='ValorLocalidad'
 							value={formData.ValorLocalidad || ''}
 							onChange={(val) =>
@@ -76,66 +78,72 @@ export default function PersonalDataTab({
 							options={localidadSelectOptions}
 						/>
 					</div>
-
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Provincia</label>
-						<input
-							disabled
-							type='text'
-							name='Provincia'
-							value={formData.Provincia}
-							onChange={handleChange}
-							className={`${styles.input} ${
-								errors.Provincia ? styles.error : ''
-							}`}
-						/>
-						{errors.Provincia && (
-							<div className={styles.errorMessage}>{errors.Provincia}</div>
-						)}
-					</div>
 				</div>
-
-				<div className={styles.formRow}>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Nacionalidad</label>
-						<input
-							disabled
-							type='text'
-							name='Nacionalidad'
-							value={formData.Nacionalidad}
-							onChange={handleChange}
-							className={`${styles.input} ${
-								errors.Nacionalidad ? styles.error : ''
-							}`}
-						/>
-						{errors.Nacionalidad && (
-							<div className={styles.errorMessage}>{errors.Nacionalidad}</div>
-						)}
-					</div>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Provincia:</label>
+					<input
+						disabled
+						type='text'
+						name='Provincia'
+						value={formData.Provincia}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.Provincia ? styles.error : ''}`}
+					/>
+					{errors.Provincia && (
+						<div className={styles.errorMessage}>{errors.Provincia}</div>
+					)}
 				</div>
+			</div>
 
-				<div className={styles.formRow}>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Fecha de Nacimiento</label>
-						<input
-							type='date'
-							name='FechaNacimiento'
-							value={formData.FechaNacimiento}
-							onChange={handleChange}
-							className={`${styles.input} ${
-								errors.FechaNacimiento ? styles.error : ''
-							}`}
-						/>
-						{errors.FechaNacimiento && (
-							<div className={styles.errorMessage}>{errors.FechaNacimiento}</div>
-						)}
-					</div>
+			{/* Nacionalidad */}
+			<div className={styles.formRow}>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Nacionalidad:</label>
+					<input
+						disabled
+						type='text'
+						name='Nacionalidad'
+						value={formData.Nacionalidad}
+						onChange={handleChange}
+						className={`${styles.input} ${
+							errors.Nacionalidad ? styles.error : ''
+						}`}
+					/>
+					{errors.Nacionalidad && (
+						<div className={styles.errorMessage}>{errors.Nacionalidad}</div>
+					)}
 				</div>
+			</div>
 
-				<div className={styles.formRow}>
-					<div className={styles.double}>
+			{/* Fecha Nacimiento */}
+			<div className={styles.formRow}>
+				<div className={styles.formGroup}>
+					<label className={`${styles.label} ${styles.requiredField}`}>
+						Fecha de Nacimiento:
+					</label>
+					<input
+						type='date'
+						name='FechaNacimiento'
+						value={formData.FechaNacimiento}
+						onChange={handleChange}
+						className={`${styles.input} ${
+							errors.FechaNacimiento ? styles.error : ''
+						}`}
+						required
+					/>
+					{errors.FechaNacimiento && (
+						<div className={styles.errorMessage}>{errors.FechaNacimiento}</div>
+					)}
+				</div>
+			</div>
+
+			{/* Sexo y Estado Civil en la misma fila */}
+			<div className={`${styles.formRow} ${styles.double}`}>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Sexo:</label>
+					<div>
 						<LoadingSelect
-							label='Sexo'
+							label=''
 							name='Sexo'
 							value={formData.Sexo || ''}
 							onChange={(val) =>
@@ -144,16 +152,14 @@ export default function PersonalDataTab({
 							isLoading={loading.sexo}
 							options={sexoSelectOptions}
 						/>
-						{errors.Sexo && (
-							<div className={styles.errorMessage}>{errors.Sexo}</div>
-						)}
 					</div>
+					{errors.Sexo && <div className={styles.errorMessage}>{errors.Sexo}</div>}
 				</div>
-
-				<div className={styles.formRow}>
-					<div className={styles.double}>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Estado Civil:</label>
+					<div>
 						<LoadingSelect
-							label='Estado Civil'
+							label=''
 							name='EstadoCivil'
 							value={formData.EstadoCivil || ''}
 							onChange={(val) =>
@@ -164,104 +170,91 @@ export default function PersonalDataTab({
 							isLoading={false}
 							options={estadoCivilSelectOptions}
 						/>
-						{errors.EstadoCivil && (
-							<div className={styles.errorMessage}>{errors.EstadoCivil}</div>
-						)}
 					</div>
-				</div>
-
-				<div className={styles.formContent}>
-					<div className={`${styles.formRow} ${styles.double}`}>
-						<div className={styles.formGroup}>
-							<label className={styles.label}>Teléfono Particular</label>
-							<input
-								type='text'
-								name='TelefonoParticular'
-								value={formData.TelefonoParticular}
-								onChange={handleChange}
-								className={`${styles.input} ${
-									errors.TelefonoParticular ? styles.error : ''
-								}`}
-							/>
-							{errors.TelefonoParticular && (
-								<div className={styles.errorMessage}>
-									{errors.TelefonoParticular}
-								</div>
-							)}
-						</div>
-						<div className={styles.formGroup}>
-							<label className={styles.label}>Teléfono Negocio</label>
-							<input
-								type='text'
-								name='TelefonoNegocio'
-								value={formData.TelefonoNegocio}
-								onChange={handleChange}
-								className={`${styles.input} ${
-									errors.TelefonoNegocio ? styles.error : ''
-								}`}
-							/>
-							{errors.TelefonoNegocio && (
-								<div className={styles.errorMessage}>
-									{errors.TelefonoNegocio}
-								</div>
-							)}
-						</div>
-					</div>
-				</div>
-
-				<div className={styles.formRow}>
-					<div className={styles.formGroup}>
-						<label className={styles.label}>Mail</label>
-						<input
-							type='email'
-							name='Mail'
-							value={formData.Mail}
-							onChange={handleChange}
-							className={`${styles.input} ${errors.Mail ? styles.error : ''}`}
-						/>
-						{errors.Mail && (
-							<div className={styles.errorMessage}>{errors.Mail}</div>
-						)}
-					</div>
-				</div>
-
-				<div className={styles.formContent}>
-					<div className={`${styles.formRow} ${styles.double}`}>
-						<div className={styles.formGroup}>
-							<label className={styles.label}>Número de Cuenta</label>
-							<input
-								type='text'
-								name='NumeroCuenta'
-								value={formData.NumeroCuenta}
-								onChange={handleChange}
-								className={`${styles.input} ${
-									errors.NumeroCuenta ? styles.error : ''
-								}`}
-							/>
-							{errors.NumeroCuenta && (
-								<div className={styles.errorMessage}>
-									{errors.NumeroCuenta}
-								</div>
-							)}
-						</div>
-						<div className={styles.formGroup}>
-							<label className={styles.label}>SSN</label>
-							<input
-								type='text'
-								name='NumeroSSN'
-								value={formData.NumeroSSN}
-								onChange={handleChange}
-								className={`${styles.input} ${
-									errors.NumeroSSN ? styles.error : ''
-								}`}
-							/>
-							{errors.NumeroSSN && (
-								<div className={styles.errorMessage}>{errors.NumeroSSN}</div>
-							)}
-						</div>
-					</div>
+					{errors.EstadoCivil && (
+						<div className={styles.errorMessage}>{errors.EstadoCivil}</div>
+					)}
 				</div>
 			</div>
-		</>
+
+			{/* Teléfonos */}
+			<div className={`${styles.formRow} ${styles.double}`}>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Teléfono Particular:</label>
+					<input
+						type='text'
+						name='TelefonoParticular'
+						value={formData.TelefonoParticular}
+						onChange={handleChange}
+						className={`${styles.input} ${
+							errors.TelefonoParticular ? styles.error : ''
+						}`}
+					/>
+					{errors.TelefonoParticular && (
+						<div className={styles.errorMessage}>{errors.TelefonoParticular}</div>
+					)}
+				</div>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Teléfono Celular:</label>
+					<input
+						type='text'
+						name='TelefonoCelular'
+						value={formData.TelefonoCelular}
+						onChange={handleChange}
+						className={`${styles.input} ${
+							errors.TelefonoCelular ? styles.error : ''
+						}`}
+					/>
+					{errors.TelefonoCelular && (
+						<div className={styles.errorMessage}>{errors.TelefonoCelular}</div>
+					)}
+				</div>
+			</div>
+
+			{/* Mail */}
+			<div className={styles.formRow}>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Correo Electrónico:</label>
+					<input
+						type='email'
+						name='Mail'
+						value={formData.Mail}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.Mail ? styles.error : ''}`}
+					/>
+					{errors.Mail && <div className={styles.errorMessage}>{errors.Mail}</div>}
+				</div>
+			</div>
+
+			{/* Cuenta / SSN */}
+			<div className={`${styles.formRow} ${styles.double}`}>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Número de Cobertura:</label>
+					<input
+						type='text'
+						name='Cobertura'
+						value={formData.Cobertura}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.Cobertura ? styles.error : ''}`}
+					/>
+					{errors.Cobertura && (
+						<div className={styles.errorMessage}>{errors.Cobertura}</div>
+					)}
+				</div>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Número de Afiliado:</label>
+					<input
+						type='text'
+						name='nAfiliado'
+						value={formData.nAfiliado}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.nAfiliado ? styles.error : ''}`}
+					/>
+					{errors.nAfiliado && (
+						<div className={styles.errorMessage}>{errors.nAfiliado}</div>
+					)}
+				</div>
+			</div>
+		</div>
 	);
 }

@@ -288,6 +288,27 @@
 	width: 100%;
 }
 
+/* Portal dropdown (posición fixed para sobreponer todo) */
+.dropdownPortal {
+	background: white;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-size: 0.675rem;
+	max-height: 240px;
+	overflow-y: auto;
+	box-shadow: 0 6px 16px rgb(0 0 0 / 0.18);
+	z-index: 99999; /* por encima de modales internos */
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Variante cuando abre hacia arriba - solo invertimos sombra ligera si se requiere */
+.openUp {
+	/* pequeño ajuste visual cuando abre hacia arriba */
+	box-shadow: 0 -4px 12px rgb(0 0 0 / 0.14);
+}
+
 /* Cada item del dropdown */
 .dropdownItem {
 	padding: 10px 14px;
@@ -309,6 +330,64 @@
 	color: #9ca3af;
 	cursor: default;
 	user-select: none;
+}
+
+/* ====== OTROS DATOS (grupo especial) ====== */
+.otherDataList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+
+.otherRow {
+	/* reutilizamos diseño base de formGroup */
+	display: grid;
+	grid-template-columns: 120px 1fr;
+	align-items: center;
+	gap: 1rem;
+}
+
+/* Contenedor de los cuadros (nacimientos múltiples / defunción) */
+.groupBoxes {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.25rem;
+	margin-top: 1rem;
+}
+
+.groupBox {
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
+	background: #ffffff;
+	padding: 0.75rem 0.75rem 0.5rem;
+	position: relative;
+}
+
+.groupTitle {
+	font-size: 0.765rem;
+	font-weight: 600;
+	color: #374151;
+	margin: 0 0 0.5rem;
+	text-transform: none;
+}
+
+.groupInner {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.formGroupCompact {
+	display: grid;
+	grid-template-columns: 110px 1fr;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+@media (max-width: 900px) {
+	.groupBoxes {
+		grid-template-columns: 1fr; /* apilar en pantallas pequeñas */
+	}
 }
 
 /* Evitar que el dropdown se superponga en pantallas chicas */
