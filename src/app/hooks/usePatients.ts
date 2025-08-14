@@ -83,7 +83,7 @@ export const usePatients = () => {
 			try {
 				setLoading(true);
 				setError(null);
-				const file: File | null = patientData._fotoFile || null;
+				const file: File | null = patientData._fotoFile || null; // mantenemos compatibilidad si viene
 				await patientService.createPatient(patientData, file);
 				setIsAddModalOpen(false);
 				await loadPatients();
@@ -100,22 +100,25 @@ export const usePatients = () => {
 	);
 
 	// Actualizar paciente
-	const updatePatient = useCallback(async (id: number, patientData: PatientFormData | any) => {
-		try {
-			setLoading(true);
-			setError(null);
-			await patientService.updatePatient(id, patientData);
-			setIsEditModalOpen(false);
-			await loadPatients();
-			return true;
-		} catch (err: any) {
-			setError(err.message || 'Error al actualizar paciente');
-			console.error('Error updating patient:', err);
-			return false;
-		} finally {
-			setLoading(false);
-		}
-	}, [loadPatients]);
+	const updatePatient = useCallback(
+		async (id: number, patientData: PatientFormData | any) => {
+			try {
+				setLoading(true);
+				setError(null);
+				await patientService.updatePatient(id, patientData);
+				setIsEditModalOpen(false);
+				await loadPatients();
+				return true;
+			} catch (err: any) {
+				setError(err.message || 'Error al actualizar paciente');
+				console.error('Error updating patient:', err);
+				return false;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[loadPatients],
+	);
 
 	// Eliminar paciente
 	const deletePatient = useCallback(

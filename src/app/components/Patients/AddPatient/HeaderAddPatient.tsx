@@ -13,7 +13,7 @@ interface HeaderAddPatientProps {
 		Sexo: string,
 	) => Promise<void>;
 	buscandoRenaper: boolean;
-	onPhotoChange: (url: string | null) => void;
+	onPhotoChange: (file: File | null) => void;
 	setPhotoUploading: (isUploading: boolean) => void;
 }
 
@@ -33,7 +33,7 @@ export default function HeaderAddPatient({
 			<div className={styles.headerPhoto}>
 				<PhotoUploader
 					onPhotoChange={onPhotoChange}
-					initialPreview={formData.Foto ?? null}
+					initialPreview={formData.FotoURL ?? null}
 					setPhotoUploading={setPhotoUploading}
 				/>
 			</div>

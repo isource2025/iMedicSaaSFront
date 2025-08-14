@@ -157,7 +157,7 @@ export default function PatientsPage() {
 						isOpen={isEditModalOpen}
 						onClose={closeEditModal}
 						title='Editar Paciente'
-						size='large'
+						size='full'
 					>
 						<PatientForm
 							patient={selectedPatient}

@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { Patient, PatientFormData } from '../../types/PatientInterface';
+import { PatientFormData } from '../../types/PatientInterface';
 import { Sexo, sexoService } from '../../services/sexoService';
 import { Localidad, localidadService } from '../../services/localidadService';
 import { provinciaService } from '../../services/provinciaService';
@@ -10,272 +9,202 @@ import OtherDataTab from './AddPatient/OtherDataTab';
 import LaboralDataTab from './AddPatient/LaboralDataTab';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
 import styles from '../../components/modals/ModalAddPatient/styles.module.css';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface PatientFormBaseProps {
-	onSubmit: (data: PatientFormData) => Promise<boolean>;
+	onSubmit: (data: any) => Promise<boolean> | boolean;
 	initialData?: Partial<PatientFormData>;
 	isEditing?: boolean;
+	isSubmitting?: boolean; // externo (lista)
 	onClose: () => void;
-	isSubmitting: boolean;
 }
 
 type Tab = 'personal' | 'other' | 'laboral';
 
+// Adaptamos a formato {value,label} que esperan los subcomponentes
+const tiposDocumento = [
+	{ value: 'DNI', label: 'DNI' },
+	{ value: 'LC', label: 'LC' },
+	{ value: 'LE', label: 'LE' },
+	{ value: 'PAS', label: 'PAS' },
+];
+const estadosCiviles = [
+	{ value: 'SOLTERO', label: 'SOLTERO' },
+	{ value: 'CASADO', label: 'CASADO' },
+	{ value: 'DIVORCIADO', label: 'DIVORCIADO' },
+	{ value: 'VIUDO', label: 'VIUDO' },
+	{ value: 'UNIÓN CIVIL', label: 'UNIÓN CIVIL' },
+];
+
+const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => ({
+	IDPaciente: d?.IDPaciente,
+	NumeroHC: d?.NumeroHC || '',
+	TipoDocumento: d?.TipoDocumento || 'DNI',
+	NumeroDocumento: d?.NumeroDocumento || '',
+	ApellidoyNombre: d?.ApellidoyNombre || '',
+	Domicilio: d?.Domicilio || '',
+	ValorLocalidad: d?.ValorLocalidad || '',
+	Provincia: d?.Provincia || '',
+	Nacionalidad: d?.Nacionalidad || 'Argentina',
+	FechaNacimiento: d?.FechaNacimiento || '',
+	CUIT: d?.CUIT || '',
+	Sexo: d?.Sexo || 'M',
+	EstadoCivil: d?.EstadoCivil || 'SOLTERO',
+	TelefonoParticular: d?.TelefonoParticular || '',
+	TelefonoNegocio: d?.TelefonoNegocio || '',
+	Mail: d?.Mail || '',
+	NumeroCuenta: d?.NumeroCuenta || '',
+	NumeroSSN: d?.NumeroSSN || '',
+	FotoURL: d?.FotoURL || null,
+	Raza: d?.Raza || '',
+	Idioma: d?.Idioma || '',
+	Religion: d?.Religion || '',
+	GrupoEtnico: d?.GrupoEtnico || '',
+	EstadoMilitar: d?.EstadoMilitar || '',
+	LicenciaConducir: d?.LicenciaConducir || '',
+	DadorOrganos: d?.DadorOrganos || '',
+	OrdenNacimiento: d?.OrdenNacimiento || '',
+	LugarNacimiento: d?.LugarNacimiento || '',
+	FechaDefuncion: d?.FechaDefuncion || '',
+	HoraDefuncion: d?.HoraDefuncion || '',
+	Foto: d?.Foto || null,
+	Trabajos: d?.Trabajos || [],
+});
+
 export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	onSubmit,
-	initialData = {},
+	initialData,
 	isEditing = false,
 	isSubmitting,
 	onClose,
 }) => {
-	const [formData, setFormData] = useState<PatientFormData>({
-		IDPaciente: initialData.IDPaciente || undefined,
-		NumeroHC: initialData.NumeroHC || '',
-		TipoDocumento: initialData.TipoDocumento || 'DNI',
-		NumeroDocumento: initialData.NumeroDocumento || '',
-		ApellidoyNombre: initialData.ApellidoyNombre || '',
-		Domicilio: initialData.Domicilio || '',
-		ValorLocalidad: initialData.ValorLocalidad || '',
-		Provincia: initialData.Provincia || '',
-		Nacionalidad: initialData.Nacionalidad || 'Argentina',
-		FechaNacimiento: initialData.FechaNacimiento || '',
-		CUIT: initialData.CUIT || '',
-		Sexo: initialData.Sexo || 'M',
-		EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-		TelefonoParticular: initialData.TelefonoParticular || '',
-		TelefonoNegocio: initialData.TelefonoNegocio || '',
-		Mail: initialData.Mail || '',
-		NumeroCuenta: initialData.NumeroCuenta || '',
-		NumeroSSN: initialData.NumeroSSN || '',
-	});
+	const [formData, setFormData] = useState<PatientFormData>(() =>
+		buildInitialFormData(initialData),
+	);
+	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [activeTab, setActiveTab] = useState<Tab>('personal');
-	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-	const containerRef = useRef<HTMLDivElement>(null);
-	const nodeRef = useRef<HTMLDivElement>(null);
-	const tabsRef = useRef<(HTMLDivElement | null)[]>([]);
-	const [indicatorStyle, setIndicatorStyle] = useState({});
-	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+	const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({
+		left: 0,
+		width: 0,
+	});
 	const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
 	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
 	const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
-	const tiposDocumento = [
-		{ value: 'DNI', label: 'DNI' },
-		{ value: 'LC', label: 'LC' },
-		{ value: 'LE', label: 'LE' },
-		{ value: 'PASAPORTE', label: 'Pasaporte' },
-		{ value: 'OTRO', label: 'Otro' },
-	];
-
-	// Estado civil options
-	const estadosCiviles = [
-		{ value: 'S', label: 'Soltero/a' },
-		{ value: 'C', label: 'Casado/a' },
-		{ value: 'D', label: 'Divorciado/a' },
-		{ value: 'V', label: 'Viudo/a' },
-		{ value: 'O', label: 'Otro' },
-	];
-
-	const [errors, setErrors] = useState<Record<string, string>>({});
-	const [loading, setLoading] = useState({
-		sexo: false,
+	const [loading, setLoading] = useState<{ localidad: boolean; sexo: boolean }>({
 		localidad: false,
+		sexo: false,
 	});
-
 	const [fotoFile, setFotoFile] = useState<File | null>(null);
+	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+	const [internalSubmitting, setInternalSubmitting] = useState(false);
+	const [buscandoRenaper, setBuscandoRenaper] = useState(false);
 
-	// Funciones para cargar datos
+	const tabsRef = useRef<HTMLDivElement[]>([]);
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const nodeRef = useRef<HTMLDivElement | null>(null);
+
 	const fetchSexos = async () => {
 		try {
-			setLoading((prev) => ({ ...prev, sexo: true }));
+			setLoading((p) => ({ ...p, sexo: true }));
 			const data = await sexoService.getSexos();
-			// Asegurar que el valor actual coincida con alguna opción
-			const validSexo = data.some((sexo) => sexo.valor === formData.Sexo);
-			if (!validSexo) {
-				setFormData((prev) => ({ ...prev, Sexo: data[0]?.valor || 'M' }));
-			}
 			setSexoOptions(data);
-		} catch (error) {
-			console.error('Error al cargar opciones de sexo:', error);
+		} catch (e) {
+			console.error('Error sexos', e);
 		} finally {
-			setLoading((prev) => ({ ...prev, sexo: false }));
+			setLoading((p) => ({ ...p, sexo: false }));
 		}
 	};
 
 	const fetchLocalidades = async () => {
 		try {
-			setLoading((prev) => ({ ...prev, localidad: true }));
+			setLoading((p) => ({ ...p, localidad: true }));
 			const data = await localidadService.getLocalidades();
 			setLocalidadOptions(data);
-		} catch (error) {
-			console.error('Error al cargar opciones de localidad:', error);
-			setLoading((prev) => ({ ...prev, localidad: false }));
+		} catch (e) {
+			console.error('Error localidades', e);
+		} finally {
+			setLoading((p) => ({ ...p, localidad: false }));
 		}
 	};
 
-	const [buscandoRenaper, setBuscandoRenaper] = useState(false);
+	const handleGetProvincia = async (valorProvincia: string) => {
+		try {
+			const provincia = await provinciaService.getProvincia(valorProvincia);
+			const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
+			setFormData((prev) => ({
+				...prev,
+				Nacionalidad: provinciaData?.nacionalidad || prev.Nacionalidad || 'Argentina',
+				Provincia: provinciaData?.descripcion || prev.Provincia || '',
+			}));
+		} catch (err) {
+			console.error('Error al obtener provincia:', err);
+		}
+	};
+
 	const getRenaperInfo = async (
-		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+		e: React.MouseEvent | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 		NumeroDocumento: number,
-		Sexo: string,
+		SexoVal: string,
 	) => {
 		e.preventDefault();
+		if (!NumeroDocumento || !SexoVal) return;
 		setBuscandoRenaper(true);
-		var sexoOpt = 2;
-		if (Sexo == 'F') {
-			sexoOpt = 1;
-		}
+		const sexoOpt = SexoVal === 'F' ? 1 : 2;
 		try {
 			const resp = await fetch(
 				`http://localhost:5006/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
 			);
 			const data = await resp.json();
-			console.log(data.persona);
-			if (data.persona) {
-				const localidad = await fetch(
+			if (data?.persona) {
+				const locResp = await fetch(
 					`http://localhost:5006/api/localidad/search-by-localidad/${data.persona.ciudad}`,
 				);
-				const dataLocalidad = await localidad.json();
-
+				const dataLocalidad = await locResp.json();
 				await fetchLocalidades();
-
 				setFormData((prev) => ({
-					...prev, // ✅ conserva Foto, Trabajos y otros
-					IDPaciente: initialData.IDPaciente || undefined,
-					NumeroHC: initialData.NumeroHC || '',
-					TipoDocumento: initialData.TipoDocumento || 'DNI',
-					NumeroDocumento: `${data.persona.numeroDocumento}`,
-					ApellidoyNombre: `${data.persona.apellido}, ${data.persona.nombres}`,
-					Domicilio: `${data.persona.calle} ${data.persona.numero}, ${data.persona.monoblock}`,
-					ValorLocalidad: `${dataLocalidad.data.Valor}`,
-					Provincia: initialData.Provincia || '',
-					Nacionalidad: initialData.Nacionalidad || 'Argentina',
-					FechaNacimiento: `${data.persona.fechaNacimiento}`,
-					CUIT: initialData.CUIT || '',
-					Sexo: `${data.persona.sexo}`,
-					EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-					TelefonoParticular: initialData.TelefonoParticular || '',
-					TelefonoNegocio: initialData.TelefonoNegocio || '',
-					Mail: initialData.Mail || '',
-					NumeroCuenta: initialData.NumeroCuenta || '',
-					NumeroSSN: initialData.NumeroSSN || '',
+					...prev,
+					NumeroDocumento: String(data.persona.numeroDocumento || ''),
+					ApellidoyNombre:
+						`${data.persona.apellido}, ${data.persona.nombres}`.trim(),
+					Domicilio: `${data.persona.calle || ''} ${
+						data.persona.numero || ''
+					}`.trim(),
+					ValorLocalidad: dataLocalidad?.data?.Valor
+						? String(dataLocalidad.data.Valor)
+						: prev.ValorLocalidad,
+					FechaNacimiento: data.persona.fechaNacimiento || prev.FechaNacimiento,
+					Sexo: data.persona.sexo || prev.Sexo,
 				}));
-
-				await handleGetProvincia(dataLocalidad.data.ValorProvincia);
+				if (dataLocalidad?.data?.ValorProvincia) {
+					await handleGetProvincia(String(dataLocalidad.data.ValorProvincia));
+				}
 			}
-		} catch (error) {
-			console.error('Error al buscar información en Renaper:', error);
+		} catch (err) {
+			console.error('Error Renaper:', err);
 		} finally {
 			setBuscandoRenaper(false);
 		}
-	};
-
-	// Si hay un paciente, cargamos sus datos en el formulario
-	useEffect(() => {
-		if (initialData) {
-			setFormData({
-				IDPaciente: initialData.IDPaciente || undefined,
-				NumeroHC: initialData.NumeroHC || '',
-				TipoDocumento: initialData.TipoDocumento || 'DNI',
-				NumeroDocumento: initialData.NumeroDocumento || '',
-				ApellidoyNombre: initialData.ApellidoyNombre || '',
-				Domicilio: initialData.Domicilio || '',
-				ValorLocalidad: initialData.ValorLocalidad || '',
-				Provincia: initialData.Provincia || '',
-				Nacionalidad: initialData.Nacionalidad || 'Argentina',
-				FechaNacimiento: initialData.FechaNacimiento || '',
-				CUIT: initialData.CUIT || '',
-				Sexo: initialData.Sexo || 'M',
-				EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-				TelefonoParticular: initialData.TelefonoParticular || '',
-				TelefonoNegocio: initialData.TelefonoNegocio || '',
-				Mail: initialData.Mail || '',
-				NumeroCuenta: initialData.NumeroCuenta || '',
-				NumeroSSN: initialData.NumeroSSN || '',
-			});
-
-			// Si hay valor de provincia, cargar la provincia
-			if (initialData.Provincia) {
-				handleGetProvincia(initialData.Provincia);
-			}
-			fetchLocalidades();
-			fetchSexos();
-			setPhotoPreview(initialData.FotoURL || null);
-		}
-	}, [initialData]);
-
-	// Normaliza sólo una vez si viene en formato Clarion numérico; evita parpadeos
-	useEffect(() => {
-		const val = formData.FechaNacimiento;
-		if (!val) return;
-		// Si ya está en formato YYYY-MM-DD no hacer nada
-		if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return;
-		// Si no es puramente numérico, tampoco tocar (entrada manual parcial)
-		if (!/^\d+$/.test(val)) return;
-		const date = clarionDateToDate(val);
-		if (!date) return;
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, '0');
-		const day = String(date.getDate()).padStart(2, '0');
-		setFormData((prev) => ({ ...prev, FechaNacimiento: `${year}-${month}-${day}` }));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	const handleGetProvincia = async (valorProvincia: string) => {
-		const provincia = await provinciaService.getProvincia(valorProvincia);
-		const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
-
-		setFormData((prev) => ({
-			...prev,
-			Nacionalidad: provinciaData?.nacionalidad || '',
-			Provincia: provinciaData?.descripcion || '',
-		}));
 	};
 
 	const handleChange = async (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 	) => {
 		const { name, value } = e.target;
-
-		// Si cambia localidad, resuelve provincia
+		// Localidad -> provincia
 		if (name === 'ValorLocalidad') {
 			const selected = localidadOptions.find(
 				(l) => String(l.Valor).trim() === value.trim(),
 			);
 			setSelectedLocalidad(selected || null);
-			if (selected?.ValorProvincia) {
-				try {
-					await handleGetProvincia(selected.ValorProvincia);
-				} catch (error) {
-					console.error('Error al obtener provincia:', error);
-				}
-			}
+			if (selected?.ValorProvincia) await handleGetProvincia(selected.ValorProvincia);
 		}
-
-		// Coerciones ligeras
 		let nextValue: any = value;
-
-		// Campos numéricos opcionales
-		if (name === 'OrdenNacimiento') {
+		if (name === 'OrdenNacimiento')
 			nextValue = value === '' ? '' : isNaN(Number(value)) ? value : Number(value);
-		}
-		if (name === 'Raza' || name === 'ValorLocalidad') {
-			nextValue = value; // si tu backend los quiere como string, deja así
-		}
-
-		// Boolean-like (si decides guardar "SI"/"NO" o "true"/"false", ajusta aquí)
-		if (name === 'DadorOrganos') {
-			// ejemplo: normalizar a "SI"/"NO"
-			nextValue =
-				value === 'SI' || value === 'true'
-					? 'SI'
-					: value === 'NO' || value === 'false'
-					? 'NO'
-					: value;
-		}
-
+		if (name === 'DadorOrganos')
+			nextValue = value === 'SI' ? 'SI' : value === 'NO' ? 'NO' : value;
 		setFormData((prev) => ({ ...prev, [name]: nextValue }));
-
-		// limpiar error del campo editado
 		if (errors[name]) {
 			setErrors((prev) => {
 				const n = { ...prev };
@@ -287,126 +216,78 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
 	const validateForm = (): boolean => {
 		const newErrors: Record<string, string> = {};
-
-		if (!formData.ApellidoyNombre.trim()) {
+		if (!formData.ApellidoyNombre.trim())
 			newErrors.ApellidoyNombre = 'El nombre y apellido es obligatorio';
-		}
-
-		if (!formData.NumeroHC.trim()) {
+		if (!formData.NumeroHC.trim())
 			newErrors.NumeroHC = 'El número de historia clínica es obligatorio';
-		} else if (!/^\d+$/.test(formData.NumeroHC)) {
-			newErrors.NumeroHC = 'El número de historia clínica debe contener solo números';
-		}
-
-		if (!formData.Domicilio.trim()) {
-			newErrors.Domicilio = 'El domicilio es obligatorio';
-		}
-
-		if (!formData.FechaNacimiento) {
+		else if (!/^\d+$/.test(formData.NumeroHC))
+			newErrors.NumeroHC = 'Debe contener solo números';
+		if (!formData.Domicilio.trim()) newErrors.Domicilio = 'El domicilio es obligatorio';
+		if (!formData.FechaNacimiento)
 			newErrors.FechaNacimiento = 'La fecha de nacimiento es obligatoria';
-		} else if (formData.FechaNacimiento) {
-			const today = new Date();
-			const birthDate = new Date(formData.FechaNacimiento);
-			if (birthDate > today) {
-				newErrors.FechaNacimiento = 'La fecha de nacimiento no puede ser futura';
-			}
+		else {
+			const birth = new Date(formData.FechaNacimiento);
+			if (birth > new Date()) newErrors.FechaNacimiento = 'No puede ser futura';
 		}
-
-		if (!formData.Trabajos || formData.Trabajos.length === 0) {
-			newErrors.Trabajos = 'Debe cargar al menos un empleo';
-		}
-
-		if (!formData.Foto) {
-			newErrors.Foto = 'La foto es obligatoria';
-		}
-
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-
+		if (internalSubmitting) return;
 		if (!validateForm()) return;
-
 		try {
+			setInternalSubmitting(true);
 			const payload: any = { ...formData };
 			if (fotoFile) payload._fotoFile = fotoFile;
+			console.log('[PatientFormBase] Enviando payload', payload);
 			const success = await onSubmit(payload);
-			if (success) {
-				onClose();
-			}
-		} catch (error) {
-			console.error('Error al guardar el paciente:', error);
+			if (success) onClose();
+		} catch (err) {
+			console.error('Error submit:', err);
+		} finally {
+			setInternalSubmitting(false);
 		}
 	};
 
+	// Normalizar clarion date si llega numérica (una sola vez al montar)
 	useEffect(() => {
-		if (!initialData) return;
+		const val = formData.FechaNacimiento;
+		if (!val) return;
+		if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return;
+		if (!/^\d+$/.test(val)) return;
+		const date = clarionDateToDate(val);
+		if (!date) return;
+		const y = date.getFullYear();
+		const m = String(date.getMonth() + 1).padStart(2, '0');
+		const d = String(date.getDate()).padStart(2, '0');
+		setFormData((prev) => ({ ...prev, FechaNacimiento: `${y}-${m}-${d}` }));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
-		setFormData((prev) => ({
-			...prev,
-			IDPaciente: initialData.IDPaciente || undefined,
-			NumeroHC: initialData.NumeroHC || '',
-			TipoDocumento: initialData.TipoDocumento || 'DNI',
-			NumeroDocumento: initialData.NumeroDocumento || '',
-			ApellidoyNombre: initialData.ApellidoyNombre || '',
-			Domicilio: initialData.Domicilio || '',
-			ValorLocalidad: initialData.ValorLocalidad || '',
-			Provincia: initialData.Provincia || '',
-			Nacionalidad: initialData.Nacionalidad || 'Argentina',
-			FechaNacimiento: initialData.FechaNacimiento || '',
-			CUIT: initialData.CUIT || '',
-			Sexo: initialData.Sexo || 'M',
-			EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-			TelefonoParticular: initialData.TelefonoParticular || '',
-			TelefonoNegocio: initialData.TelefonoNegocio || '',
-			Mail: initialData.Mail || '',
-			NumeroCuenta: initialData.NumeroCuenta || '',
-			NumeroSSN: initialData.NumeroSSN || '',
-
-			// Otros
-			Raza: initialData.Raza ?? prev.Raza ?? '',
-			Idioma: initialData.Idioma ?? prev.Idioma ?? '',
-			Religion: initialData.Religion ?? prev.Religion ?? '',
-			GrupoEtnico: initialData.GrupoEtnico ?? prev.GrupoEtnico ?? '',
-			EstadoMilitar: initialData.EstadoMilitar ?? prev.EstadoMilitar ?? '',
-			LicenciaConducir: initialData.LicenciaConducir ?? prev.LicenciaConducir ?? '',
-			DadorOrganos: initialData.DadorOrganos ?? prev.DadorOrganos ?? '',
-			OrdenNacimiento: initialData.OrdenNacimiento ?? prev.OrdenNacimiento ?? '',
-			LugarNacimiento: initialData.LugarNacimiento ?? prev.LugarNacimiento ?? '',
-			FechaDefuncion: initialData.FechaDefuncion ?? prev.FechaDefuncion ?? '',
-			HoraDefuncion: initialData.HoraDefuncion ?? prev.HoraDefuncion ?? '',
-			Foto: initialData.Foto ?? prev.Foto ?? null,
-
-			// Laboral
-			Trabajos: initialData.Trabajos ?? prev.Trabajos ?? [],
-		}));
-
-		if (initialData.Provincia) {
-			handleGetProvincia(initialData.Provincia);
-		}
-		fetchLocalidades();
+	// Cargar catálogos base
+	useEffect(() => {
 		fetchSexos();
-	}, [initialData]);
+		fetchLocalidades();
+	}, []);
 
+	// Indicador tabs
 	useEffect(() => {
-		const tabIds: Tab[] = ['personal', 'other', 'laboral'];
-		const activeIndex = tabIds.indexOf(activeTab);
-		const activeTabNode = tabsRef.current[activeIndex];
-
-		if (activeTabNode) {
-			setIndicatorStyle({
-				left: activeTabNode.offsetLeft,
-				width: activeTabNode.offsetWidth,
-			});
-		}
+		const ids: Tab[] = ['personal', 'other', 'laboral'];
+		const idx = ids.indexOf(activeTab);
+		const node = tabsRef.current[idx];
+		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
 	}, [activeTab]);
 
 	return (
-		<form onSubmit={handleSubmit} className={styles.form}>
-			<div className={styles.modalContainer}>
-				{/* Header con datos de identificación */}
+		<form
+			id='patient-create-form'
+			onSubmit={handleSubmit}
+			className={styles.form}
+			style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+		>
+			<div className={'modalFullCenterWrapper ' + styles.modalContainer}>
 				<HeaderAddPatient
 					formData={formData}
 					handleChange={handleChange}
@@ -414,14 +295,24 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					tiposDocumento={tiposDocumento}
 					getRenaperInfo={getRenaperInfo}
 					buscandoRenaper={buscandoRenaper}
-					onPhotoChange={(url) => setFormData((prev) => ({ ...prev, Foto: url }))}
+					onPhotoChange={(file: File | null) => {
+						setFotoFile(file);
+						if (file) {
+							const objectUrl = URL.createObjectURL(file);
+							setPhotoPreview(objectUrl);
+							setFormData((prev) => ({ ...prev, Foto: objectUrl }));
+						} else {
+							setPhotoPreview(null);
+							setFormData((prev) => ({ ...prev, Foto: null }));
+						}
+					}}
 					setPhotoUploading={setIsPhotoUploading}
 				/>
-				{/* Título de la sección */}
+
 				<div className={styles.tabsContainer}>
 					<div
 						ref={(el) => {
-							tabsRef.current[0] = el;
+							if (el) tabsRef.current[0] = el;
 						}}
 						className={`${styles.tab} ${
 							activeTab === 'personal' ? styles.tabActive : ''
@@ -430,10 +321,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					>
 						Datos Personales y Contacto
 					</div>
-
 					<div
 						ref={(el) => {
-							tabsRef.current[1] = el;
+							if (el) tabsRef.current[1] = el;
 						}}
 						className={`${styles.tab} ${
 							activeTab === 'other' ? styles.tabActive : ''
@@ -442,10 +332,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					>
 						Otros Datos
 					</div>
-
 					<div
 						ref={(el) => {
-							tabsRef.current[2] = el;
+							if (el) tabsRef.current[2] = el;
 						}}
 						className={`${styles.tab} ${
 							activeTab === 'laboral' ? styles.tabActive : ''
@@ -454,7 +343,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					>
 						Datos Laborales
 					</div>
-
 					<div className={styles.indicator} style={indicatorStyle} />
 				</div>
 
@@ -462,7 +350,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					<SwitchTransition mode='out-in'>
 						<CSSTransition
 							key={activeTab}
-							nodeRef={nodeRef} // Usamos la ref para el nodo
+							nodeRef={nodeRef}
 							timeout={300}
 							classNames={{
 								enter: styles['fade-slide-enter'],
@@ -471,24 +359,17 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 								exitActive: styles['fade-slide-exit-active'],
 							}}
 							unmountOnExit
-							// --- CORRECCIÓN: Funciones sin argumentos que usan las refs ---
 							onEnter={() => {
-								// Antes de entrar, el contenedor tiene altura 0
-								if (containerRef.current) {
+								if (containerRef.current)
 									containerRef.current.style.height = '0px';
-								}
 							}}
 							onEntering={() => {
-								// Al entrar, se ajusta a la altura del nuevo contenido
-								if (containerRef.current && nodeRef.current) {
+								if (containerRef.current && nodeRef.current)
 									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
-								}
 							}}
 							onExit={() => {
-								// Al salir, se ajusta a la altura del contenido que se va
-								if (containerRef.current && nodeRef.current) {
+								if (containerRef.current && nodeRef.current)
 									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
-								}
 							}}
 						>
 							<div ref={nodeRef}>
@@ -503,7 +384,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										estadosCiviles={estadosCiviles}
 									/>
 								)}
-
 								{activeTab === 'other' && (
 									<OtherDataTab
 										formData={formData}
@@ -511,7 +391,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										errors={errors}
 									/>
 								)}
-
 								{activeTab === 'laboral' && (
 									<LaboralDataTab
 										formData={formData}
@@ -528,18 +407,25 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						type='button'
 						onClick={onClose}
 						className={styles.cancelButton}
-						disabled={isSubmitting}
+						disabled={internalSubmitting}
 					>
 						Cancelar
 					</button>
 					<button
 						type='submit'
 						className={`${styles.submitButton} ${
-							isSubmitting ? styles.loading : ''
+							internalSubmitting ? styles.loading : ''
 						}`}
-						disabled={isSubmitting || isPhotoUploading}
+						disabled={internalSubmitting || isPhotoUploading}
 					>
-						{isSubmitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
+						{internalSubmitting && (
+							<span className={styles.inlineSpinner} aria-hidden='true' />
+						)}
+						{internalSubmitting
+							? 'Guardando...'
+							: isEditing
+							? 'Actualizar'
+							: 'Guardar'}
 					</button>
 				</div>
 			</div>

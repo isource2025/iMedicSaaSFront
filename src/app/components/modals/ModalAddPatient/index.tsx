@@ -26,7 +26,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
 			isOpen={isOpen}
 			onClose={onClose}
 			title={isEditing ? 'Editar Paciente' : 'Agregar Paciente'}
-			size='large'
+			size='full'
 		>
 			<PatientFormBase
 				onSubmit={onSubmit}

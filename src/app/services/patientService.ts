@@ -11,25 +11,11 @@ export const patientService = {
 	 */
 	getAllPatients: async (): Promise<Patient[]> => {
 		try {
-			// const response = await apiService.get<ApiResponse<Patient[]>>('/patients', {
-			// 	timeout: 15000,
-			// });
-
-			// console.log('Response:', response);
-
-			// if (response.data.success && response.data.data) {
-			// 	return response.data.data;
-			// }
-
-			// throw new Error(response.data.mensaje || 'Error al obtener pacientes');
-			const response = await fetch('http://localhost:5006/api/patients');
-			const data = await response.json();
-
-			if (response.ok && data) {
-				return data.data;
+			const response = await apiService.get<ApiResponse<Patient[]>>('/patients');
+			if (response.data.success && response.data.data) {
+				return response.data.data;
 			}
-
-			throw new Error(data.mensaje || 'Error al obtener pacientes');
+			throw new Error(response.data.mensaje || 'Error al obtener pacientes');
 		} catch (error: any) {
 			console.error('Error fetching patients:', error);
 			if (error.response) {
@@ -100,19 +86,27 @@ export const patientService = {
 			if (fotoFile) {
 				const formData = new FormData();
 				Object.entries(data).forEach(([key, value]) => {
-					if (value !== undefined && value !== null) {
+					if (value !== undefined && value !== null && key !== 'Foto') {
 						formData.append(key, String(value));
 					}
 				});
 				formData.append('Foto', fotoFile);
 				payload = formData;
+				console.log('[createPatient] payload antes de enviar', payload);
 				config.headers = { 'Content-Type': 'multipart/form-data' };
+				// debug
+				if (process.env.NODE_ENV !== 'production') {
+					console.log('[createPatient] Enviando multipart con foto', fotoFile.name);
+				}
 			}
 			const response = await apiService.post<ApiResponse<Patient>>(
 				'/patients',
 				payload,
 				config,
 			);
+			if (process.env.NODE_ENV !== 'production') {
+				console.log('[createPatient] Response', response.status, response.data);
+			}
 
 			if (response.data.success && response.data.data) {
 				return response.data.data;
@@ -142,7 +136,7 @@ export const patientService = {
 			if (fotoFile) {
 				const formData = new FormData();
 				Object.entries(data).forEach(([key, value]) => {
-					if (key === '_fotoFile') return; // campo interno
+					if (key === '_fotoFile' || key === 'Foto') return; // campo interno / evitar duplicado
 					if (value !== undefined && value !== null) {
 						formData.append(key, String(value));
 					}
@@ -150,12 +144,18 @@ export const patientService = {
 				formData.append('Foto', fotoFile);
 				payload = formData;
 				config.headers = { 'Content-Type': 'multipart/form-data' };
+				if (process.env.NODE_ENV !== 'production') {
+					console.log('[updatePatient] Enviando multipart con foto', fotoFile.name);
+				}
 			}
 			const response = await apiService.put<ApiResponse<Patient>>(
 				`/patients/${id}`,
 				payload,
 				config,
 			);
+			if (process.env.NODE_ENV !== 'production') {
+				console.log('[updatePatient] Response', response.status, response.data);
+			}
 			if (response.data.success && response.data.data) {
 				return response.data.data;
 			}
