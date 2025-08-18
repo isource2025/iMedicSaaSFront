@@ -61,6 +61,7 @@ export const patientService = {
 				const p = response.data.data as any;
 				// Debug y normalización de campos para selects
 				if (p.IdiomaPrimario && !p.Idioma) p.Idioma = p.IdiomaPrimario;
+				if (p.NivelDeEstudios && !p.NivelEstudios) p.NivelEstudios = p.NivelDeEstudios;
 				// Forzar a string IDs numéricos para que los selects (que usan comparación estricta) encuentren coincidencia
 				[
 					'ValorLocalidad',
@@ -103,6 +104,9 @@ export const patientService = {
 		try {
 			// Mapear frontend -> backend (siempre sobrescribir para reflejar cambios)
 			const base = { ...data } as any;
+			// Campos laborales movidos al nivel paciente
+			if (base.NivelEstudios && !base.NivelDeEstudios)
+				base.NivelDeEstudios = base.NivelEstudios; // backend usa NivelDeEstudios
 			if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
 			if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
 			if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;
@@ -156,6 +160,8 @@ export const patientService = {
 		try {
 			// Mapear alias frontend -> backend (siempre sobrescribir)
 			const base = { ...data };
+			if (base.NivelEstudios && !base.NivelDeEstudios)
+				base.NivelDeEstudios = base.NivelEstudios;
 			if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
 			if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
 			if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;

@@ -152,6 +152,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={razaOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.Raza
+							? { value: String(formData.Raza) }
+							: undefined
+					}
 				/>
 				<LoadingSelect
 					label='Idioma:'
@@ -162,6 +169,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={idiomaOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.Idioma
+							? { value: String(formData.Idioma) }
+							: undefined
+					}
 				/>
 			</div>
 			{/* Línea 2: Religión / Grupo Étnico */}
@@ -175,6 +189,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={religionOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.Religion
+							? { value: String(formData.Religion) }
+							: undefined
+					}
 				/>
 				<LoadingSelect
 					label='Grupo Étnico:'
@@ -185,6 +206,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={etniaOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.GrupoEtnico
+							? { value: String(formData.GrupoEtnico) }
+							: undefined
+					}
 				/>
 			</div>
 			{/* Línea 3: Estado Militar / Dador Órganos */}
@@ -198,6 +226,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={militarOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.EstadoMilitar
+							? { value: String(formData.EstadoMilitar) }
+							: undefined
+					}
 				/>
 				<LoadingSelect
 					label='Dador Órganos:'
@@ -208,6 +243,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={dadorOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.DadorOrganos
+							? { value: String(formData.DadorOrganos) }
+							: undefined
+					}
 				/>
 			</div>
 			{/* Línea 4: Licencia Auto (campo completo) */}

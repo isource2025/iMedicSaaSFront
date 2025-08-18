@@ -219,14 +219,12 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		const newErrors: Record<string, string> = {};
 		if (!formData.ApellidoyNombre.trim())
 			newErrors.ApellidoyNombre = 'El nombre y apellido es obligatorio';
-		if (!formData.NumeroHC.trim())
-			newErrors.NumeroHC = 'El número de historia clínica es obligatorio';
-		else if (!/^\d+$/.test(formData.NumeroHC))
-			newErrors.NumeroHC = 'Debe contener solo números';
-		if (!formData.Domicilio.trim()) newErrors.Domicilio = 'El domicilio es obligatorio';
-		if (!formData.FechaNacimiento)
-			newErrors.FechaNacimiento = 'La fecha de nacimiento es obligatoria';
-		else {
+		if (!formData.NumeroDocumento.trim())
+			newErrors.NumeroDocumento = 'El número de documento es obligatorio';
+		{
+		}
+
+		if (formData.FechaNacimiento) {
 			const birth = new Date(formData.FechaNacimiento);
 			if (birth > new Date()) newErrors.FechaNacimiento = 'No puede ser futura';
 		}

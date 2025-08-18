@@ -14,6 +14,11 @@ interface CustomSelectProps {
 	onChange: (value: string) => void;
 	isLoading: boolean;
 	options: Option[];
+	/**
+	 * previewData permite mostrar un valor (label) existente mientras las opciones reales se cargan.
+	 * Prioriza este valor cuando isLoading = true. Si no se provee label se usa el value.
+	 */
+	previewData?: { value: string; label?: string } | null;
 }
 
 export default function CustomSelect({
@@ -23,6 +28,7 @@ export default function CustomSelect({
 	onChange,
 	isLoading,
 	options,
+	previewData,
 }: CustomSelectProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
@@ -40,6 +46,10 @@ export default function CustomSelect({
 	const filteredOptions = options.filter((opt) =>
 		opt.label.toLowerCase().includes(searchTerm.toLowerCase()),
 	);
+
+	// Si hay previewData y la opción aún no está en options (por carga diferida), la usamos virtualmente.
+	const showPreview = !!previewData && (!selectedOption || isLoading);
+	const previewLabel = previewData?.label || previewData?.value || '';
 
 	const handleSelect = (option: Option) => {
 		onChange(option.value);
@@ -126,7 +136,9 @@ export default function CustomSelect({
 					className={`${styles.select} ${isLoading ? styles.selectDisabled : ''}`}
 					onClick={() => !isLoading && setIsOpen((prev) => !prev)}
 				>
-					{isLoading
+					{showPreview
+						? previewLabel
+						: isLoading
 						? 'Cargando...'
 						: selectedOption
 						? selectedOption.label
@@ -154,6 +166,22 @@ export default function CustomSelect({
 								e.stopPropagation();
 							}}
 						>
+							{showPreview &&
+								!options.find((o) => o.value === previewData!.value) && (
+									<li
+										key={previewData!.value}
+										onClick={(e) => {
+											e.stopPropagation();
+											handleSelect({
+												value: previewData!.value,
+												label: previewLabel,
+											});
+										}}
+										className={styles.dropdownItem}
+									>
+										{previewLabel} (actual)
+									</li>
+								)}
 							{filteredOptions.length > 0 ? (
 								filteredOptions.map((opt) => (
 									<li

@@ -5,11 +5,12 @@ import { usePatients } from '../../hooks/usePatients';
 import { Patient } from '../../types/PatientInterface';
 import { PatientFormData } from '../../types/PatientFormInterface';
 import PatientList from '../../components/Patients/PatientList';
-import PatientForm from '../../components/Patients/PatientForm';
+// import PatientForm from '../../components/Patients/PatientForm';
 import DeleteConfirmation from '../../components/Patients/DeleteConfirmation';
 import PatientDetails from '../../components/Patients/PatientDetails';
 import Modal from '../../components/UI/Modal';
 import ModalAddPatient from '../../components/modals/ModalAddPatient';
+import { PatientFormBase } from '../../components/Patients/PatientFormBase';
 import { SearchInput } from '../../components/beds/SearchInput';
 import useSearchManager from '../../hooks/useSearchManager';
 import { patientService } from '../../services/patientService';
@@ -87,6 +88,29 @@ export default function PatientsPage() {
 		alert(`Nueva admisión para ${patient.ApellidoyNombre} (Funcionalidad en desarrollo)`);
 	};
 
+	// Estado para paciente completo (cuando se edita se fuerza re-fetch para tener campos relacionados a selects)
+	const [fullPatientEditing, setFullPatientEditing] = useState<Patient | null>(null);
+	const [loadingFullPatient, setLoadingFullPatient] = useState(false);
+
+	// Cuando se abre modal de edición, traer datos completos del backend (garantiza consistencia de selects)
+	useEffect(() => {
+		(async () => {
+			if (isEditModalOpen && selectedPatient) {
+				setLoadingFullPatient(true);
+				try {
+					const p = await patientService.getPatientById(selectedPatient.IDPaciente);
+					setFullPatientEditing(p);
+				} catch (e) {
+					console.error('Error refetching full patient', e);
+				} finally {
+					setLoadingFullPatient(false);
+				}
+			} else {
+				setFullPatientEditing(null);
+			}
+		})();
+	}, [isEditModalOpen, selectedPatient]);
+
 	return (
 		<div className={styles.container}>
 			<h1 className={styles.title}>Administrador de Pacientes</h1>
@@ -132,7 +156,7 @@ export default function PatientsPage() {
 				</div>
 				<PatientList
 					patients={patients}
-					loading={loading}
+					loading={hookLoading}
 					error={error}
 					currentPage={adjustedCurrentPage}
 					totalPages={calculatedTotalPages}
@@ -149,7 +173,7 @@ export default function PatientsPage() {
 					onClose={closeAddModal}
 					onSubmit={createPatient}
 					isEditing={false}
-					isSubmitting={loading}
+					isSubmitting={hookLoading}
 				/>
 
 				{selectedPatient && (
@@ -159,14 +183,20 @@ export default function PatientsPage() {
 						title='Editar Paciente'
 						size='full'
 					>
-						<PatientForm
-							patient={selectedPatient}
-							onSubmit={(data) =>
-								updatePatient(selectedPatient.IDPaciente, data)
-							}
-							onCancel={closeEditModal}
-							isSubmitting={loading}
-						/>
+						{(loadingFullPatient || !fullPatientEditing) && (
+							<div style={{ padding: '1rem' }}>Cargando paciente...</div>
+						)}
+						{fullPatientEditing && (
+							<PatientFormBase
+								initialData={fullPatientEditing as any}
+								isEditing
+								onSubmit={async (data: any) => {
+									return updatePatient(fullPatientEditing.IDPaciente, data);
+								}}
+								onClose={closeEditModal}
+								isSubmitting={hookLoading || loadingFullPatient}
+							/>
+						)}
 					</Modal>
 				)}
 

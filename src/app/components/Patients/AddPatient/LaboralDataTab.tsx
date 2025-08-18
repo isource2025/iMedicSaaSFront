@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { PatientFormData, Trabajo } from '@/src/app/types/PatientInterface';
 import LaboralDataModal from './LaboralDataModal';
 import styles from './LaboralData.module.css';
+import stylesPersonal from './Personal.module.css';
 
 interface Option {
 	value: string;
@@ -75,7 +76,7 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 	};
 
 	return (
-		<div>
+		<div className={styles.laboralDataTab}>
 			<div className={styles.toolbar}>
 				<button
 					type='button'
@@ -133,6 +134,49 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 			) : (
 				<p className={styles.noDataText}>No hay datos laborales cargados.</p>
 			)}
+			<div className={`${stylesPersonal.formRow} ${stylesPersonal.double}`}>
+				<div className={stylesPersonal.formGroup}>
+					<label className={stylesPersonal.label}>Situación laboral:</label>
+					<div className={stylesPersonal.selectWrapper}>
+						<select
+							className={stylesPersonal.select}
+							name='SituacionLaboral'
+							value={formData.SituacionLaboral || ''}
+							onChange={(e) =>
+								setFormData({ ...formData, SituacionLaboral: e.target.value })
+							}
+						>
+							<option value=''>Seleccione...</option>
+							{situacionOptions.map((opt) => (
+								<option key={opt.value} value={opt.value}>
+									{opt.label}
+								</option>
+							))}
+						</select>
+					</div>
+				</div>
+
+				<div className={stylesPersonal.formGroup}>
+					<label className={stylesPersonal.label}>Nivel de estudios:</label>
+					<div className={stylesPersonal.selectWrapper}>
+						<select
+							className={stylesPersonal.select}
+							name='NivelEstudios'
+							value={formData.NivelEstudios || ''}
+							onChange={(e) =>
+								setFormData({ ...formData, NivelEstudios: e.target.value })
+							}
+						>
+							<option value=''>Seleccione...</option>
+							{estudiosOptions.map((opt) => (
+								<option key={opt.value} value={opt.value}>
+									{opt.label}
+								</option>
+							))}
+						</select>
+					</div>
+				</div>
+			</div>
 
 			<LaboralDataModal
 				isOpen={isModalOpen}
