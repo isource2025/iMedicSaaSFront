@@ -230,21 +230,7 @@ export default function PersonalDataTab({
 				</div>
 			</div>
 
-			{/* Cuenta / SSN */}
 			<div className={`${styles.formRow} ${styles.double}`}>
-				<div className={styles.formGroup}>
-					<label className={styles.label}>Cobertura:</label>
-					<input
-						type='text'
-						name='Cobertura'
-						value={formData.Cobertura}
-						onChange={handleChange}
-						className={`${styles.input} ${errors.Cobertura ? styles.error : ''}`}
-					/>
-					{errors.Cobertura && (
-						<div className={styles.errorMessage}>{errors.Cobertura}</div>
-					)}
-				</div>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Número de Afiliado:</label>
 					<input

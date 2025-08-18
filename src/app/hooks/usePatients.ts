@@ -86,7 +86,12 @@ export const usePatients = () => {
 				const file: File | null = patientData._fotoFile || null; // mantenemos compatibilidad si viene
 				await patientService.createPatient(patientData, file);
 				setIsAddModalOpen(false);
-				await loadPatients();
+				// Si hay término de búsqueda activo, refrescar solo la búsqueda
+				if (searchTerm.trim()) {
+					await searchPatients(searchTerm.trim());
+				} else {
+					await loadPatients();
+				}
 				return true;
 			} catch (err: any) {
 				setError(err.message || 'Error al crear paciente');
@@ -96,7 +101,7 @@ export const usePatients = () => {
 				setLoading(false);
 			}
 		},
-		[loadPatients],
+		[loadPatients, searchTerm, searchPatients],
 	);
 
 	// Actualizar paciente
@@ -107,7 +112,11 @@ export const usePatients = () => {
 				setError(null);
 				await patientService.updatePatient(id, patientData);
 				setIsEditModalOpen(false);
-				await loadPatients();
+				if (searchTerm.trim()) {
+					await searchPatients(searchTerm.trim());
+				} else {
+					await loadPatients();
+				}
 				return true;
 			} catch (err: any) {
 				setError(err.message || 'Error al actualizar paciente');
@@ -117,7 +126,7 @@ export const usePatients = () => {
 				setLoading(false);
 			}
 		},
-		[loadPatients],
+		[loadPatients, searchTerm, searchPatients],
 	);
 
 	// Eliminar paciente
@@ -128,7 +137,11 @@ export const usePatients = () => {
 				setError(null);
 				await patientService.deletePatient(id);
 				setIsDeleteModalOpen(false);
-				await loadPatients();
+				if (searchTerm.trim()) {
+					await searchPatients(searchTerm.trim());
+				} else {
+					await loadPatients();
+				}
 				return true;
 			} catch (err: any) {
 				setError(err.message || 'Error al eliminar paciente');
@@ -138,7 +151,7 @@ export const usePatients = () => {
 				setLoading(false);
 			}
 		},
-		[loadPatients],
+		[loadPatients, searchTerm, searchPatients],
 	);
 
 	// Obtener pacientes paginados

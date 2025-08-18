@@ -111,6 +111,8 @@ export default function PatientsPage() {
 		})();
 	}, [isEditModalOpen, selectedPatient]);
 
+	console.log('Full patient editing:', fullPatientEditing);
+
 	return (
 		<div className={styles.container}>
 			<h1 className={styles.title}>Administrador de Pacientes</h1>

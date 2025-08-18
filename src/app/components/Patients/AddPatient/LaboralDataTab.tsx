@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PatientFormData, Trabajo } from '@/src/app/types/PatientInterface';
 import LaboralDataModal from './LaboralDataModal';
+import CustomSelect from './LoadingSelect';
 import styles from './LaboralData.module.css';
 import stylesPersonal from './Personal.module.css';
 
@@ -135,47 +136,40 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 				<p className={styles.noDataText}>No hay datos laborales cargados.</p>
 			)}
 			<div className={`${stylesPersonal.formRow} ${stylesPersonal.double}`}>
-				<div className={stylesPersonal.formGroup}>
-					<label className={stylesPersonal.label}>Situación laboral:</label>
-					<div className={stylesPersonal.selectWrapper}>
-						<select
-							className={stylesPersonal.select}
-							name='SituacionLaboral'
-							value={formData.SituacionLaboral || ''}
-							onChange={(e) =>
-								setFormData({ ...formData, SituacionLaboral: e.target.value })
-							}
-						>
-							<option value=''>Seleccione...</option>
-							{situacionOptions.map((opt) => (
-								<option key={opt.value} value={opt.value}>
-									{opt.label}
-								</option>
-							))}
-						</select>
-					</div>
-				</div>
-
-				<div className={stylesPersonal.formGroup}>
-					<label className={stylesPersonal.label}>Nivel de estudios:</label>
-					<div className={stylesPersonal.selectWrapper}>
-						<select
-							className={stylesPersonal.select}
-							name='NivelEstudios'
-							value={formData.NivelEstudios || ''}
-							onChange={(e) =>
-								setFormData({ ...formData, NivelEstudios: e.target.value })
-							}
-						>
-							<option value=''>Seleccione...</option>
-							{estudiosOptions.map((opt) => (
-								<option key={opt.value} value={opt.value}>
-									{opt.label}
-								</option>
-							))}
-						</select>
-					</div>
-				</div>
+				<CustomSelect
+					label='Situación laboral:'
+					name='SituacionLaboral'
+					isLoading={!situacionOptions.length}
+					value={formData.SituacionLaboral || ''}
+					onChange={(value: string) =>
+						setFormData({ ...formData, SituacionLaboral: value })
+					}
+					options={situacionOptions}
+					previewData={
+						situacionOptions.length
+							? undefined
+							: formData.SituacionLaboral
+							? { value: String(formData.SituacionLaboral) }
+							: undefined
+					}
+				/>
+				<CustomSelect
+					label='Nivel de estudios:'
+					isLoading={!estudiosOptions.length}
+					name='NivelEstudios'
+					value={formData.NivelEstudios || ''}
+					onChange={(value: string) =>
+						setFormData({ ...formData, NivelEstudios: value })
+					}
+					options={estudiosOptions}
+					previewData={
+						estudiosOptions.length
+							? undefined
+							: formData.NivelEstudios
+							? { value: String(formData.NivelEstudios) }
+							: undefined
+					}
+				/>
 			</div>
 
 			<LaboralDataModal
