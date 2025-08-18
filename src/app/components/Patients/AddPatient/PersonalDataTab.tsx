@@ -43,16 +43,13 @@ export default function PersonalDataTab({
 			{/* Domicilio */}
 			<div className={styles.formRow}>
 				<div className={styles.formGroup}>
-					<label className={`${styles.label} ${styles.requiredField}`}>
-						Domicilio en:
-					</label>
+					<label className={`${styles.label}`}>Domicilio en:</label>
 					<input
 						type='text'
 						name='Domicilio'
 						value={formData.Domicilio}
 						onChange={handleChange}
 						className={`${styles.input} ${errors.Domicilio ? styles.error : ''}`}
-						required
 					/>
 					{errors.Domicilio && (
 						<div className={styles.errorMessage}>{errors.Domicilio}</div>
@@ -62,23 +59,28 @@ export default function PersonalDataTab({
 
 			{/* Localidad / Provincia */}
 			<div className={`${styles.formRow} ${styles.double}`}>
-				<div className={styles.formGroup}>
-					<label className={styles.label}>Localidad:</label>
-					<div>
-						<LoadingSelect
-							label=''
-							name='ValorLocalidad'
-							value={formData.ValorLocalidad || ''}
-							onChange={(val) =>
-								handleChange({
-									target: { name: 'ValorLocalidad', value: val },
-								} as any)
-							}
-							isLoading={loading.localidad}
-							options={localidadSelectOptions}
-						/>
-					</div>
-				</div>
+				<LoadingSelect
+					label='Localidad:'
+					name='ValorLocalidad'
+					value={formData.ValorLocalidad || ''}
+					onChange={(val) =>
+						handleChange({
+							target: { name: 'ValorLocalidad', value: val },
+						} as any)
+					}
+					isLoading={loading.localidad}
+					options={localidadSelectOptions}
+					previewData={
+						!loading.localidad &&
+						localidadSelectOptions.find(
+							(o) => o.value === String(formData.ValorLocalidad || ''),
+						)
+							? undefined
+							: formData.ValorLocalidad
+							? { value: String(formData.ValorLocalidad) }
+							: undefined
+					}
+				/>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Provincia:</label>
 					<input
@@ -118,9 +120,7 @@ export default function PersonalDataTab({
 			{/* Fecha Nacimiento */}
 			<div className={styles.formRow}>
 				<div className={styles.formGroup}>
-					<label className={`${styles.label} ${styles.requiredField}`}>
-						Fecha de Nacimiento:
-					</label>
+					<label className={`${styles.label}`}>Fecha de Nacimiento:</label>
 					<input
 						type='date'
 						name='FechaNacimiento'
@@ -129,7 +129,6 @@ export default function PersonalDataTab({
 						className={`${styles.input} ${
 							errors.FechaNacimiento ? styles.error : ''
 						}`}
-						required
 					/>
 					{errors.FechaNacimiento && (
 						<div className={styles.errorMessage}>{errors.FechaNacimiento}</div>
@@ -139,38 +138,43 @@ export default function PersonalDataTab({
 
 			{/* Sexo y Estado Civil en la misma fila */}
 			<div className={`${styles.formRow} ${styles.double}`}>
-				<div className={styles.formGroup}>
-					<label className={styles.label}>Sexo:</label>
-					<div>
-						<LoadingSelect
-							label=''
-							name='Sexo'
-							value={formData.Sexo || ''}
-							onChange={(val) =>
-								handleChange({ target: { name: 'Sexo', value: val } } as any)
-							}
-							isLoading={loading.sexo}
-							options={sexoSelectOptions}
-						/>
-					</div>
+				<div>
+					<LoadingSelect
+						label='Sexo:'
+						name='Sexo'
+						value={formData.Sexo || ''}
+						onChange={(val) =>
+							handleChange({ target: { name: 'Sexo', value: val } } as any)
+						}
+						isLoading={loading.sexo}
+						options={sexoSelectOptions}
+						previewData={
+							!loading.sexo &&
+							sexoSelectOptions.find(
+								(o) => o.value === String(formData.Sexo || ''),
+							)
+								? undefined
+								: formData.Sexo
+								? { value: String(formData.Sexo) }
+								: undefined
+						}
+					/>
 					{errors.Sexo && <div className={styles.errorMessage}>{errors.Sexo}</div>}
 				</div>
-				<div className={styles.formGroup}>
-					<label className={styles.label}>Estado Civil:</label>
-					<div>
-						<LoadingSelect
-							label=''
-							name='EstadoCivil'
-							value={formData.EstadoCivil || ''}
-							onChange={(val) =>
-								handleChange({
-									target: { name: 'EstadoCivil', value: val },
-								} as any)
-							}
-							isLoading={false}
-							options={estadoCivilSelectOptions}
-						/>
-					</div>
+				<div>
+					<LoadingSelect
+						label='Estado Civil:'
+						name='EstadoCivil'
+						value={formData.EstadoCivil || ''}
+						onChange={(val) =>
+							handleChange({
+								target: { name: 'EstadoCivil', value: val },
+							} as any)
+						}
+						isLoading={false}
+						options={estadoCivilSelectOptions}
+						previewData={undefined}
+					/>
 					{errors.EstadoCivil && (
 						<div className={styles.errorMessage}>{errors.EstadoCivil}</div>
 					)}
@@ -226,21 +230,7 @@ export default function PersonalDataTab({
 				</div>
 			</div>
 
-			{/* Cuenta / SSN */}
 			<div className={`${styles.formRow} ${styles.double}`}>
-				<div className={styles.formGroup}>
-					<label className={styles.label}>Número de Cobertura:</label>
-					<input
-						type='text'
-						name='Cobertura'
-						value={formData.Cobertura}
-						onChange={handleChange}
-						className={`${styles.input} ${errors.Cobertura ? styles.error : ''}`}
-					/>
-					{errors.Cobertura && (
-						<div className={styles.errorMessage}>{errors.Cobertura}</div>
-					)}
-				</div>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Número de Afiliado:</label>
 					<input

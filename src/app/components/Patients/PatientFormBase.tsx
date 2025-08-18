@@ -36,38 +36,41 @@ const estadosCiviles = [
 	{ value: 'UNIÓN CIVIL', label: 'UNIÓN CIVIL' },
 ];
 
+const toStr = (v: any, def = '') => (v === undefined || v === null ? def : String(v));
 const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => ({
 	IDPaciente: d?.IDPaciente,
-	NumeroHC: d?.NumeroHC || '',
-	TipoDocumento: d?.TipoDocumento || 'DNI',
-	NumeroDocumento: d?.NumeroDocumento || '',
-	ApellidoyNombre: d?.ApellidoyNombre || '',
-	Domicilio: d?.Domicilio || '',
-	ValorLocalidad: d?.ValorLocalidad || '',
-	Provincia: d?.Provincia || '',
-	Nacionalidad: d?.Nacionalidad || 'Argentina',
-	FechaNacimiento: d?.FechaNacimiento || '',
-	CUIT: d?.CUIT || '',
-	Sexo: d?.Sexo || 'M',
-	EstadoCivil: d?.EstadoCivil || 'SOLTERO',
-	TelefonoParticular: d?.TelefonoParticular || '',
-	TelefonoCelular: d?.TelefonoCelular || '',
-	Mail: d?.Mail || '',
-	Cobertura: d?.Cobertura || '',
-	nAfiliado: d?.nAfiliado || '',
+	NumeroHC: toStr(d?.NumeroHC),
+	TipoDocumento: toStr(d?.TipoDocumento, 'DNI'),
+	NumeroDocumento: toStr(d?.NumeroDocumento),
+	ApellidoyNombre: toStr(d?.ApellidoyNombre),
+	Domicilio: toStr(d?.Domicilio),
+	ValorLocalidad: toStr(d?.ValorLocalidad),
+	Provincia: toStr(d?.Provincia),
+	Nacionalidad: toStr(d?.Nacionalidad, 'Argentina'),
+	FechaNacimiento: toStr(d?.FechaNacimiento),
+	CUIT: toStr(d?.CUIT),
+	Sexo: toStr(d?.Sexo, 'M'),
+	EstadoCivil: toStr(d?.EstadoCivil, 'SOLTERO'),
+	TelefonoParticular: toStr(d?.TelefonoParticular),
+	TelefonoCelular: toStr(d?.TelefonoCelular),
+	Mail: toStr(d?.Mail),
+	Cobertura: toStr(d?.Cobertura),
+	nAfiliado: toStr(d?.nAfiliado),
 	FotoURL: d?.FotoURL || null,
-	Raza: d?.Raza || '',
+	Raza: toStr(d?.Raza),
 	// Mapear posible campo backend IdiomaPrimario al alias Idioma
-	Idioma: d?.Idioma || d?.IdiomaPrimario || '',
-	Religion: d?.Religion || '',
-	GrupoEtnico: d?.GrupoEtnico || '',
-	EstadoMilitar: d?.EstadoMilitar || '',
-	LicenciaConducir: d?.LicenciaConducir || '',
-	DadorOrganos: d?.DadorOrganos || '',
-	OrdenNacimiento: d?.OrdenNacimiento || '',
-	LugarNacimiento: d?.LugarNacimiento || '',
-	FechaDefuncion: d?.FechaDefuncion || '',
-	HoraDefuncion: d?.HoraDefuncion || '',
+	Idioma: toStr(d?.Idioma || d?.IdiomaPrimario),
+	Religion: toStr(d?.Religion),
+	GrupoEtnico: toStr(d?.GrupoEtnico),
+	EstadoMilitar: toStr(d?.EstadoMilitar),
+	SituacionLaboral: toStr(d?.SituacionLaboral),
+	NivelEstudios: toStr(d?.NivelEstudios || (d as any)?.NivelDeEstudios),
+	LicenciaConducir: toStr(d?.LicenciaConducir),
+	DadorOrganos: toStr(d?.DadorOrganos),
+	OrdenNacimiento: d?.OrdenNacimiento ?? '',
+	LugarNacimiento: toStr(d?.LugarNacimiento),
+	FechaDefuncion: toStr(d?.FechaDefuncion),
+	HoraDefuncion: toStr(d?.HoraDefuncion),
 	Foto: d?.Foto || null,
 	Trabajos: d?.Trabajos || [],
 });
@@ -217,18 +220,14 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
 	const validateForm = (): boolean => {
 		const newErrors: Record<string, string> = {};
-		if (!formData.ApellidoyNombre.trim())
-			newErrors.ApellidoyNombre = 'El nombre y apellido es obligatorio';
-		if (!formData.NumeroHC.trim())
-			newErrors.NumeroHC = 'El número de historia clínica es obligatorio';
-		else if (!/^\d+$/.test(formData.NumeroHC))
-			newErrors.NumeroHC = 'Debe contener solo números';
-		if (!formData.Domicilio.trim()) newErrors.Domicilio = 'El domicilio es obligatorio';
-		if (!formData.FechaNacimiento)
-			newErrors.FechaNacimiento = 'La fecha de nacimiento es obligatoria';
-		else {
-			const birth = new Date(formData.FechaNacimiento);
-			if (birth > new Date()) newErrors.FechaNacimiento = 'No puede ser futura';
+		const nombreVal = toStr(formData.ApellidoyNombre).trim();
+		const docVal = toStr(formData.NumeroDocumento).trim();
+		if (!nombreVal) newErrors.ApellidoyNombre = 'El nombre y apellido es obligatorio';
+		if (!docVal) newErrors.NumeroDocumento = 'El número de documento es obligatorio';
+		if (formData.FechaNacimiento) {
+			const birth = new Date(toStr(formData.FechaNacimiento));
+			if (!isNaN(birth.getTime()) && birth > new Date())
+				newErrors.FechaNacimiento = 'No puede ser futura';
 		}
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
@@ -241,14 +240,37 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		try {
 			setInternalSubmitting(true);
 			const payload: any = { ...formData };
-			// Normalizar código de idioma indeterminado
+			// Normalizar idioma: si viene string vacía o 'UNDEFINED'/'undefined' => null
 			if (payload.Idioma === 'und') payload.Idioma = '';
-			// Normalizar campo Idioma -> IdiomaPrimario para backend si corresponde
-			if (payload.Idioma && !payload.IdiomaPrimario) {
-				payload.IdiomaPrimario = payload.Idioma;
+			if (
+				payload.Idioma === undefined ||
+				payload.Idioma === null ||
+				payload.Idioma === '' ||
+				/^undefined$/i.test(String(payload.Idioma))
+			) {
+				payload.Idioma = undefined;
+				payload.IdiomaPrimario = undefined; // no enviar al backend para que quede NULL
+			} else {
+				// mapear a IdiomaPrimario si no está
+				if (!payload.IdiomaPrimario) payload.IdiomaPrimario = payload.Idioma;
+			}
+			// GrupoEtnico: sólo eliminar si está vacío o 'undefined'; permitir códigos numéricos o string válidos
+			if (
+				payload.GrupoEtnico === '' ||
+				payload.GrupoEtnico === null ||
+				payload.GrupoEtnico === undefined ||
+				/^undefined$/i.test(String(payload.GrupoEtnico))
+			) {
+				delete payload.GrupoEtnico;
 			}
 			if (fotoFile) payload._fotoFile = fotoFile;
-			console.log('[PatientFormBase] Enviando payload', payload);
+			console.log('[PatientFormBase] Enviando payload', {
+				GrupoEtnico_raw: formData.GrupoEtnico,
+				GrupoEtnico_payload: payload.GrupoEtnico,
+				Idioma_raw: formData.Idioma,
+				IdiomaPrimario_payload: payload.IdiomaPrimario,
+				payload,
+			});
 			const success = await onSubmit(payload);
 			if (success) onClose();
 		} catch (err) {
@@ -278,6 +300,25 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		fetchSexos();
 		fetchLocalidades();
 	}, []);
+
+	// Al editar: si ya viene ValorLocalidad, actualizar Provincia y Nacionalidad automáticamente una vez
+	const autoProvinciaAppliedRef = useRef(false);
+	useEffect(() => {
+		if (
+			!isEditing ||
+			autoProvinciaAppliedRef.current ||
+			!formData.ValorLocalidad ||
+			!localidadOptions.length
+		)
+			return;
+		const selected = localidadOptions.find(
+			(l) => String(l.Valor).trim() === String(formData.ValorLocalidad).trim(),
+		);
+		if (selected?.ValorProvincia) {
+			autoProvinciaAppliedRef.current = true;
+			handleGetProvincia(String(selected.ValorProvincia));
+		}
+	}, [isEditing, formData.ValorLocalidad, localidadOptions]);
 
 	// Sincronizar cuando initialData (paciente a editar) llega asincrónicamente
 	useEffect(() => {

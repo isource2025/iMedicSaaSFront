@@ -41,16 +41,13 @@ export default function HeaderAddPatient({
 			<div className={styles.fieldsGrid}>
 				{/* --- Campo Número HC --- */}
 				<div className={styles.headerField}>
-					<label className={`${styles.headerLabel} ${styles.requiredField}`}>
-						Número HC
-					</label>
+					<label className={`${styles.headerLabel}`}>Número HC</label>
 					<input
 						type='text'
 						name='NumeroHC'
 						value={formData.NumeroHC}
 						onChange={handleChange}
 						className={styles.headerInput}
-						required
 					/>
 					{errors.NumeroHC && (
 						<div className={styles.headerError}>{errors.NumeroHC}</div>

@@ -59,6 +59,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 						apiService.get('/estado-militar'),
 						apiService.get('/dador-organos'),
 					]);
+
 				const toOptions = (
 					arr: any[],
 					valueKey = 'Valor',
@@ -73,11 +74,18 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 				const militarData: any = (militarRes as any).data;
 				const dadorData: any = (dadorRes as any).data;
 				const raza = toOptions(razaData.data || razaData);
-				const idioma = toOptions(
-					idiomaData.data || idiomaData,
-					'CodigoISO',
-					'Descripcion',
-				);
+				// Idiomas ISO: el backend expone CodigoISO y Descripcion (no 'Valor'), ajustar
+				const idiomaRaw = idiomaData.data || idiomaData;
+				const idioma: Option[] = (idiomaRaw || [])
+					.map((i: any) => {
+						const code = i.CodigoISO || i.Codigo || i.Valor;
+						if (!code) return null; // descartar entradas sin código
+						return {
+							value: String(code).toUpperCase(),
+							label: i.Descripcion || i.Nombre || String(code).toUpperCase(),
+						};
+					})
+					.filter(Boolean) as Option[];
 				const religion = toOptions(religionData.data || religionData);
 				const etnia = toOptions(etniaData.data || etniaData);
 				const militar = toOptions(militarData.data || militarData);
@@ -109,35 +117,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 		};
 	}, []);
 
-	// Log de depuración cuando se termina de cargar catálogos o cambia formData relevante
-	useEffect(() => {
-		if (!isLoading) {
-			console.log('[OtherDataTab][debug] formData valores actuales:', {
-				Raza: formData.Raza,
-				Idioma: formData.Idioma || (formData as any).IdiomaPrimario,
-				Religion: formData.Religion,
-				GrupoEtnico: formData.GrupoEtnico,
-				EstadoMilitar: formData.EstadoMilitar,
-				DadorOrganos: formData.DadorOrganos,
-			});
-			console.log('[OtherDataTab][debug] opciones (sizes):', {
-				ra: razaOptions.length,
-				id: idiomaOptions.length,
-				rel: religionOptions.length,
-				etn: etniaOptions.length,
-				mil: militarOptions.length,
-				dad: dadorOptions.length,
-			});
-		}
-	}, [
-		isLoading,
-		formData.Raza,
-		formData.Idioma,
-		formData.Religion,
-		formData.GrupoEtnico,
-		formData.EstadoMilitar,
-		formData.DadorOrganos,
-	]);
+	console.log('[Option Languages]: ', idiomaOptions);
 
 	return (
 		<div className={styles.formContent}>
@@ -152,6 +132,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={razaOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.Raza
+							? { value: String(formData.Raza) }
+							: undefined
+					}
 				/>
 				<LoadingSelect
 					label='Idioma:'
@@ -162,6 +149,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={idiomaOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.Idioma
+							? { value: String(formData.Idioma) }
+							: undefined
+					}
 				/>
 			</div>
 			{/* Línea 2: Religión / Grupo Étnico */}
@@ -175,6 +169,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={religionOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.Religion
+							? { value: String(formData.Religion) }
+							: undefined
+					}
 				/>
 				<LoadingSelect
 					label='Grupo Étnico:'
@@ -185,6 +186,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={etniaOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.GrupoEtnico
+							? { value: String(formData.GrupoEtnico) }
+							: undefined
+					}
 				/>
 			</div>
 			{/* Línea 3: Estado Militar / Dador Órganos */}
@@ -198,6 +206,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={militarOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.EstadoMilitar
+							? { value: String(formData.EstadoMilitar) }
+							: undefined
+					}
 				/>
 				<LoadingSelect
 					label='Dador Órganos:'
@@ -208,6 +223,13 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={dadorOptions}
+					previewData={
+						!isLoading
+							? undefined
+							: formData.DadorOrganos
+							? { value: String(formData.DadorOrganos) }
+							: undefined
+					}
 				/>
 			</div>
 			{/* Línea 4: Licencia Auto (campo completo) */}

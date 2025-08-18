@@ -25,8 +25,6 @@ const newTrabajo = (): Trabajo => ({
 	DomicilioEmpresa: '',
 	TelefonoEmpresa: '',
 	CuitEmpresa: '',
-	SituacionLaboral: '',
-	NivelEstudios: '',
 });
 
 export default function ModalTrabajo({
@@ -35,8 +33,6 @@ export default function ModalTrabajo({
 	onSave,
 	initialData,
 	ocupacionOptions,
-	situacionOptions,
-	estudiosOptions,
 }: ModalTrabajoProps) {
 	const [trabajo, setTrabajo] = useState<Trabajo>(newTrabajo());
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -229,44 +225,6 @@ export default function ModalTrabajo({
 							value={trabajo.TelefonoEmpresa || ''}
 							onChange={(e) => setField('TelefonoEmpresa', e.target.value)}
 						/>
-					</div>
-
-					<div className={styles.formGroup}>
-						<label>Situación laboral</label>
-						<div className={styles.selectWrapper}>
-							<select
-								className={styles.select}
-								name='SituacionLaboral'
-								value={trabajo.SituacionLaboral || ''}
-								onChange={(e) => setField('SituacionLaboral', e.target.value)}
-							>
-								<option value=''>Seleccione...</option>
-								{situacionOptions.map((opt) => (
-									<option key={opt.value} value={opt.value}>
-										{opt.label}
-									</option>
-								))}
-							</select>
-						</div>
-					</div>
-
-					<div className={styles.formGroup}>
-						<label>Nivel de estudios</label>
-						<div className={styles.selectWrapper}>
-							<select
-								className={styles.select}
-								name='NivelEstudios'
-								value={trabajo.NivelEstudios || ''}
-								onChange={(e) => setField('NivelEstudios', e.target.value)}
-							>
-								<option value=''>Seleccione...</option>
-								{estudiosOptions.map((opt) => (
-									<option key={opt.value} value={opt.value}>
-										{opt.label}
-									</option>
-								))}
-							</select>
-						</div>
 					</div>
 				</div>
 

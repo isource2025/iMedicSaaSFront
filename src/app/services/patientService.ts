@@ -9,9 +9,16 @@ export const patientService = {
 	 * Obtiene todos los pacientes
 	 * @returns Promise con la lista de pacientes
 	 */
-	getAllPatients: async (): Promise<Patient[]> => {
+	getAllPatients: async (options?: {
+		all?: boolean;
+		simple?: boolean;
+	}): Promise<Patient[]> => {
 		try {
-			const res = await fetch('http://localhost:5006/api/patients');
+			const params: string[] = [];
+			if (options?.all) params.push('mode=all');
+			if (options?.simple) params.push('simple=1');
+			const qs = params.length ? `?${params.join('&')}` : '';
+			const res = await fetch(`http://localhost:5006/api/patients${qs}`);
 			if (!res.ok) throw new Error('Error al obtener pacientes');
 			const { data } = await res.json();
 			return data;
@@ -61,6 +68,10 @@ export const patientService = {
 				const p = response.data.data as any;
 				// Debug y normalización de campos para selects
 				if (p.IdiomaPrimario && !p.Idioma) p.Idioma = p.IdiomaPrimario;
+				if (p.Idioma) p.Idioma = String(p.Idioma).toUpperCase();
+				if (p.IdiomaPrimario)
+					p.IdiomaPrimario = String(p.IdiomaPrimario).toUpperCase();
+				if (p.NivelDeEstudios && !p.NivelEstudios) p.NivelEstudios = p.NivelDeEstudios;
 				// Forzar a string IDs numéricos para que los selects (que usan comparación estricta) encuentren coincidencia
 				[
 					'ValorLocalidad',
@@ -103,6 +114,29 @@ export const patientService = {
 		try {
 			// Mapear frontend -> backend (siempre sobrescribir para reflejar cambios)
 			const base = { ...data } as any;
+			if (
+				base.Idioma === undefined ||
+				base.Idioma === null ||
+				base.Idioma === '' ||
+				/^undefined$/i.test(String(base.Idioma))
+			) {
+				delete base.Idioma;
+				delete base.IdiomaPrimario;
+			} else {
+				base.Idioma = String(base.Idioma).toUpperCase();
+				if (!base.IdiomaPrimario) base.IdiomaPrimario = base.Idioma;
+			}
+			if (
+				base.GrupoEtnico === '' ||
+				base.GrupoEtnico === null ||
+				base.GrupoEtnico === undefined ||
+				/^undefined$/i.test(String(base.GrupoEtnico))
+			) {
+				delete base.GrupoEtnico;
+			} // mantener como código (letra) de catálogo
+			// Campos laborales movidos al nivel paciente
+			if (base.NivelEstudios && !base.NivelDeEstudios)
+				base.NivelDeEstudios = base.NivelEstudios; // backend usa NivelDeEstudios
 			if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
 			if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
 			if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;
@@ -156,6 +190,29 @@ export const patientService = {
 		try {
 			// Mapear alias frontend -> backend (siempre sobrescribir)
 			const base = { ...data };
+			if (
+				base.Idioma === undefined ||
+				base.Idioma === null ||
+				base.Idioma === '' ||
+				/^undefined$/i.test(String(base.Idioma))
+			) {
+				delete base.Idioma;
+				delete base.IdiomaPrimario;
+			} else {
+				base.Idioma = String(base.Idioma).toUpperCase();
+				if (!base.IdiomaPrimario) base.IdiomaPrimario = base.Idioma;
+				else base.IdiomaPrimario = String(base.IdiomaPrimario).toUpperCase();
+			}
+			if (
+				base.GrupoEtnico === '' ||
+				base.GrupoEtnico === null ||
+				base.GrupoEtnico === undefined ||
+				/^undefined$/i.test(String(base.GrupoEtnico))
+			) {
+				delete base.GrupoEtnico;
+			} // mantener como código (letra)
+			if (base.NivelEstudios && !base.NivelDeEstudios)
+				base.NivelDeEstudios = base.NivelEstudios;
 			if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
 			if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
 			if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;

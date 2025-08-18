@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { PatientFormData, Trabajo } from '@/src/app/types/PatientInterface';
 import LaboralDataModal from './LaboralDataModal';
+import CustomSelect from './LoadingSelect';
 import styles from './LaboralData.module.css';
+import stylesPersonal from './Personal.module.css';
 
 interface Option {
 	value: string;
@@ -75,7 +77,7 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 	};
 
 	return (
-		<div>
+		<div className={styles.laboralDataTab}>
 			<div className={styles.toolbar}>
 				<button
 					type='button'
@@ -133,6 +135,42 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 			) : (
 				<p className={styles.noDataText}>No hay datos laborales cargados.</p>
 			)}
+			<div className={`${stylesPersonal.formRow} ${stylesPersonal.double}`}>
+				<CustomSelect
+					label='Situación laboral:'
+					name='SituacionLaboral'
+					isLoading={!situacionOptions.length}
+					value={formData.SituacionLaboral || ''}
+					onChange={(value: string) =>
+						setFormData({ ...formData, SituacionLaboral: value })
+					}
+					options={situacionOptions}
+					previewData={
+						situacionOptions.length
+							? undefined
+							: formData.SituacionLaboral
+							? { value: String(formData.SituacionLaboral) }
+							: undefined
+					}
+				/>
+				<CustomSelect
+					label='Nivel de estudios:'
+					isLoading={!estudiosOptions.length}
+					name='NivelEstudios'
+					value={formData.NivelEstudios || ''}
+					onChange={(value: string) =>
+						setFormData({ ...formData, NivelEstudios: value })
+					}
+					options={estudiosOptions}
+					previewData={
+						estudiosOptions.length
+							? undefined
+							: formData.NivelEstudios
+							? { value: String(formData.NivelEstudios) }
+							: undefined
+					}
+				/>
+			</div>
 
 			<LaboralDataModal
 				isOpen={isModalOpen}
