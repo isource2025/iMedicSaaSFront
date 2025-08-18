@@ -25,16 +25,39 @@ export const usePatients = () => {
 	// Aplicar debounce al término de búsqueda
 	const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-	// Cargar pacientes
+	// Cargar pacientes (modo full con estrategia simple->completo)
 	const loadPatients = useCallback(
-		async (page: number = 1) => {
+		async (page: number = 1, full: boolean = true) => {
 			try {
 				setLoading(true);
 				setError(null);
-				const data = await patientService.getAllPatients();
+				if (full) {
+					// carga simple rápida
+					let simpleData: Patient[] = [];
+					try {
+						simpleData = await patientService.getAllPatients({
+							all: true,
+							simple: true,
+						});
+						setPatients(simpleData);
+						setTotalPages(Math.ceil(simpleData.length / pageSize));
+						setCurrentPage(page);
+					} catch (e) {
+						console.warn('Fallo carga simple inicial', e);
+					}
+					// carga completa en background
+					patientService
+						.getAllPatients({ all: true })
+						.then((fullData) => {
+							setPatients(fullData);
+							setTotalPages(Math.ceil(fullData.length / pageSize));
+						})
+						.catch((e) => console.error('Error carga full', e))
+						.finally(() => setLoading(false));
+					return;
+				}
+				const data = await patientService.getAllPatients({ all: true });
 				setPatients(data);
-
-				// Simulación de paginación (esto debe hacerse en el backend)
 				setTotalPages(Math.ceil(data.length / pageSize));
 				setCurrentPage(page);
 			} catch (err: any) {
@@ -83,10 +106,9 @@ export const usePatients = () => {
 			try {
 				setLoading(true);
 				setError(null);
-				const file: File | null = patientData._fotoFile || null; // mantenemos compatibilidad si viene
+				const file: File | null = patientData._fotoFile || null;
 				await patientService.createPatient(patientData, file);
 				setIsAddModalOpen(false);
-				// Si hay término de búsqueda activo, refrescar solo la búsqueda
 				if (searchTerm.trim()) {
 					await searchPatients(searchTerm.trim());
 				} else {
@@ -103,6 +125,8 @@ export const usePatients = () => {
 		},
 		[loadPatients, searchTerm, searchPatients],
 	);
+
+	// Crear paciente
 
 	// Actualizar paciente
 	const updatePatient = useCallback(

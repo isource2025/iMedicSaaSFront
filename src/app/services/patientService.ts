@@ -9,9 +9,16 @@ export const patientService = {
 	 * Obtiene todos los pacientes
 	 * @returns Promise con la lista de pacientes
 	 */
-	getAllPatients: async (): Promise<Patient[]> => {
+	getAllPatients: async (options?: {
+		all?: boolean;
+		simple?: boolean;
+	}): Promise<Patient[]> => {
 		try {
-			const res = await fetch('http://localhost:5006/api/patients');
+			const params: string[] = [];
+			if (options?.all) params.push('mode=all');
+			if (options?.simple) params.push('simple=1');
+			const qs = params.length ? `?${params.join('&')}` : '';
+			const res = await fetch(`http://localhost:5006/api/patients${qs}`);
 			if (!res.ok) throw new Error('Error al obtener pacientes');
 			const { data } = await res.json();
 			return data;
