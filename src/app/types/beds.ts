@@ -11,23 +11,23 @@ export type BedEstado =
 
 export interface Bed {
   id: string;
-  sector: string;
   numeroCama: string;
-  estado: BedEstado;
-  valorEstadoOriginal: string; // Valor original del estado (A, I, C, U, O, H, R)
-  estadoDescripcion: string; // Descripción completa del estado de la cama
-  fechaIngreso: number;
-  fechaEgreso: number;
-  numeroVisita: number;
-  mostrarNumeroVisita: string;
-  observaciones: string;
-  nombrePaciente: string;
-  documentoPaciente: string;
-  diagnosticoDescripcion: string;
-  razonSocialCliente: string; // Razón social del cliente (obra social)
-  sexoPaciente: string; // Sexo del paciente (F: femenino, M: masculino, otro)
-  descripcionSexo: string; // Descripción completa del sexo desde la tabla imSexo
-  servicioMedicoDescripcion: string; // Descripción del servicio médico desde imServiciosMedicos
+  sector: string;
+  estado: string;
+  fechaIngreso?: number;
+  fechaEgreso?: number;
+  observaciones?: string;
+  numeroVisita?: number;
+  mostrarNumeroVisita?: string;
+  nombrePaciente?: string;
+  documentoPaciente?: string;
+  descripcionSexo?: string;
+  diagnosticoDescripcion?: string;
+  servicioMedicoDescripcion?: string;
+  razonSocialCliente?: string;
+  fechaAdmisionMovimiento?: number; // Fecha exacta del movimiento
+  horaAdmisionMovimiento?: number; // Hora exacta del movimiento
+  fechaIngresoFormateada?: string; // Fecha ya formateada desde el padre
 }
 
 export interface BedState {

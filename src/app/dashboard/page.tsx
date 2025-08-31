@@ -1,6 +1,40 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { bedsService } from '../services/bedsService';
 import styles from './DashboardPage.module.css';
 
+interface BedStats {
+  totalCamas: number;
+  camasDisponibles: number;
+  camasOcupadas: number;
+  camasNoDisponibles: number;
+}
+
 export default function Dashboard() {
+  const [bedStats, setBedStats] = useState<BedStats>({
+    totalCamas: 0,
+    camasDisponibles: 0,
+    camasOcupadas: 0,
+    camasNoDisponibles: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBedStats = async () => {
+      try {
+        const stats = await bedsService.getTotalBeds();
+        setBedStats(stats);
+      } catch (error) {
+        console.error('Error fetching bed statistics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBedStats();
+  }, []);
+
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Panel de Control</h2>
@@ -9,15 +43,25 @@ export default function Dashboard() {
         {/* Dashboard Cards */}
         <div className={styles.cardBedsTotal}>
           <h3 className={styles.cardLabel}>Total Camas</h3>
-          <p className={styles.cardValue}>45</p>
+          <p className={styles.cardValue}>
+            {loading ? '...' : bedStats.totalCamas}
+          </p>
           <div className={styles.cardStats}>
-            <span className={styles.statGreen}>32 Disponibles</span>
+            <span className={styles.statGreen}>
+              {loading ? '...' : bedStats.camasDisponibles} Disponibles
+            </span>
             <span className={styles.divider}>|</span>
-            <span className={styles.statRed}>13 Ocupadas</span>
+            <span className={styles.statRed}>
+              {loading ? '...' : bedStats.camasOcupadas} Ocupadas
+            </span>
           </div>
         </div>
         
-        <div className={styles.cardPatients}>
+        <div 
+          className={styles.cardPatients}
+          onClick={() => window.location.href = '/dashboard/patients/analytics'}
+          style={{ cursor: 'pointer' }}
+        >
           <h3 className={styles.cardLabel}>Pacientes</h3>
           <p className={styles.cardValue}>126</p>
           <div className={styles.cardStats}>
@@ -37,7 +81,7 @@ export default function Dashboard() {
           <h3 className={styles.cardLabel}>Personal Activo</h3>
           <p className={styles.cardValue}>18</p>
           <div className={styles.cardStats}>
-            <span className={styles.statPurple}>3 Médicos de guardia</span>
+            <span className={styles.statPurple}>Próximamente</span>
           </div>
         </div>
       </div>

@@ -1,20 +1,25 @@
 "use client"
 import { useBedsManagement } from '../../hooks/useBedsManagement';
-import { useAppContext } from '../../contexts/AppContext';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import NursingReportModal from '../nursing/NursingReportModal';
 import ModalEgresoPaciente from '../modals/ModalEgresoPaciente';
 import ModalCambiarCama from '../modals/ModalCambiarCama';
 import BedCard from './BedCard';
 import BedFilters from './BedFilters';
+import BedDetail from './BedDetail';
 import styles from "./Bedslist.module.css"
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import visitaMovimientoService from '../../services/visitaMovimientoService';
+import { Bed } from '../../types/beds';
+import { formatDate } from '../../utils/dateUtils';
 
 const BedsList = () => {
   const router = useRouter();
-  const { sectorSeleccionado } = useAppContext();
+  const searchParams = useSearchParams();
+  const selectedBedId = searchParams.get('id');
   const {
     beds,
+    allBeds,
     bedStates,
     sectors,
     serviciosMedicos,
@@ -41,12 +46,19 @@ const BedsList = () => {
   const [selectedBed, setSelectedBed] = useState<{numeroVisita: number, nombrePaciente: string, id: string, sector: string} | null>(null);
   const [selectedSector, setSelectedSector] = useState<{id: string, valor: string, descripcion: string} | null>(null); 
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
+  const prevBedsSignatureRef = useRef<string | null>(null);
 
-  // Actualizar el tiempo de última actualización cuando se refrescan las camas
+  // Actualizar el tiempo de última actualización cuando cambian las camas (evitando bucles por nuevas referencias)
   useEffect(() => {
-    setLastUpdateTime(Date.now());
-    
-  }, [bedStates]);
+    // Crear una firma estable basada en el contenido relevante de las camas
+    const signature = JSON.stringify(
+      (beds || []).map(b => ({ id: b.id, estado: b.estado, fechaIngreso: b.fechaIngreso, numeroVisita: b.numeroVisita }))
+    );
+    if (prevBedsSignatureRef.current !== signature) {
+      prevBedsSignatureRef.current = signature;
+      setLastUpdateTime(Date.now());
+    }
+  }, [beds]);
 
   // Función para actualizar manualmente las camas
   const handleRefreshBeds = () => {
@@ -54,16 +66,19 @@ const BedsList = () => {
     setLastUpdateTime(Date.now());
   };
 
-  console.log('selectedBed:', selectedBed);
-  const handleNursingReport = (bed: any) => {
+  const handleNursingReport = (bed: Bed) => {
+    // Validar que existan los datos mínimos requeridos
+    if (!bed.numeroVisita || !bed.nombrePaciente) {
+      console.warn('No hay datos suficientes para generar el parte de enfermería.');
+      return;
+    }
     setSelectedBed({
-      numeroVisita: bed.numeroVisita,
-      nombrePaciente: bed.nombrePaciente,
+      numeroVisita: bed.numeroVisita!,
+      nombrePaciente: bed.nombrePaciente!,
       id: bed.numeroCama,
       sector: bed.sector
     });
     setNursingModalOpen(true);
-    
   };
 
   const handleRecentIndications = (bedId: string) => {
@@ -82,7 +97,7 @@ const BedsList = () => {
     if (bed && bed.estado === 'ocupada' && bed.numeroVisita) {
       setSelectedBed({
         numeroVisita: bed.numeroVisita,
-        nombrePaciente: bed.nombrePaciente,
+        nombrePaciente: bed.nombrePaciente || 'Paciente',
         id: bed.numeroCama,
         sector: bed.sector
       });
@@ -103,9 +118,69 @@ const BedsList = () => {
     
     // Solo navegar si la cama está ocupada
     if (selectedBed && selectedBed.estado === 'ocupada') {
-      router.push(`/dashboard/bed-detail?id=${bedId}`);
+      router.push(`/dashboard/beds?id=${bedId}`);
     }
   };
+
+  const handleCloseBedDetail = () => {
+    router.push('/dashboard/beds');
+  };
+
+  // Estado para almacenar la cama con datos de movimiento
+  const [selectedBedForDetail, setSelectedBedForDetail] = useState<Bed | null>(null);
+  const [loadingBedDetail, setLoadingBedDetail] = useState(false);
+
+  // Cargar datos de movimiento cuando se selecciona una cama
+  useEffect(() => {
+    const cargarDatosMovimiento = async () => {
+      if (!selectedBedId) {
+        setSelectedBedForDetail(null);
+        return;
+      }
+
+      const bed = allBeds.find(bed => bed.id === selectedBedId);
+      if (!bed) {
+        setSelectedBedForDetail(null);
+        return;
+      }
+
+      setLoadingBedDetail(true);
+      try {
+        // Si la cama está ocupada, cargar datos del movimiento
+        if (bed.estado === 'ocupada' && bed.numeroVisita) {
+          const movimiento = await visitaMovimientoService.getUltimoMovimiento(bed.numeroVisita);
+          if (movimiento) {
+            const fechaFormateada = formatDate(movimiento.FechaAdmision, { isClarionDate: true });
+            setSelectedBedForDetail({
+              ...bed,
+              fechaAdmisionMovimiento: movimiento.FechaAdmision,
+              horaAdmisionMovimiento: movimiento.HoraAdmision,
+              fechaIngresoFormateada: fechaFormateada
+            });
+          } else {
+            const fechaFormateada = formatDate(bed.fechaIngreso, { isClarionDate: true });
+            setSelectedBedForDetail({
+              ...bed,
+              fechaIngresoFormateada: fechaFormateada
+            });
+          }
+        } else {
+          const fechaFormateada = formatDate(bed.fechaIngreso, { isClarionDate: true });
+          setSelectedBedForDetail({
+            ...bed,
+            fechaIngresoFormateada: fechaFormateada
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar datos de movimiento:', error);
+        setSelectedBedForDetail(bed);
+      } finally {
+        setLoadingBedDetail(false);
+      }
+    };
+
+    cargarDatosMovimiento();
+  }, [selectedBedId, allBeds]);
 
   const handleLabResults = (bedId: string) => {
     // Implementar la lógica para mostrar los resultados de laboratorio
@@ -121,7 +196,7 @@ const BedsList = () => {
     if (bed && bed.estado === 'ocupada' && bed.numeroVisita) {
       setSelectedBed({
         numeroVisita: bed.numeroVisita,
-        nombrePaciente: bed.nombrePaciente,
+        nombrePaciente: bed.nombrePaciente || 'Paciente',
         id: bed.numeroCama,
         sector: bed.sector
       });
@@ -131,6 +206,28 @@ const BedsList = () => {
       console.warn('No se puede iniciar el egreso para esta cama');
     }
   };
+
+  // Si hay una cama seleccionada, mostrar el detalle
+  if (selectedBedId) {
+    if (loadingBedDetail) {
+      return (
+        <div className={styles.container}>
+          <div className={styles.loadingState}>Cargando detalles de la cama...</div>
+        </div>
+      );
+    }
+    
+    return (
+      <BedDetail
+        selectedBed={selectedBedForDetail}
+        allBeds={allBeds}
+        bedStates={bedStates}
+        sectors={sectors}
+        serviciosMedicos={(serviciosMedicos || []).filter((s): s is string => typeof s === 'string')}
+        onClose={handleCloseBedDetail}
+      />
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -142,7 +239,7 @@ const BedsList = () => {
         setFilter={setFilter}
         sectorFilter={sectorFilter}
         setSectorFilter={setSectorFilter}
-        serviciosMedicos={serviciosMedicos}
+        serviciosMedicos={(serviciosMedicos || []).filter((s): s is string => typeof s === 'string')}
         servicioFilter={servicioFilter}
         setServicioFilter={setServicioFilter}
         searchTerm={searchTerm}

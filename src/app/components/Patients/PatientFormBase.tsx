@@ -157,12 +157,12 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		const sexoOpt = SexoVal === 'F' ? 1 : 2;
 		try {
 			const resp = await fetch(
-				`http://localhost:5006/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
+				`http://localhost:5005/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
 			);
 			const data = await resp.json();
 			if (data?.persona) {
 				const locResp = await fetch(
-					`http://localhost:5006/api/localidad/search-by-localidad/${data.persona.ciudad}`,
+					`http://localhost:5005/api/localidad/search-by-localidad/${data.persona.ciudad}`,
 				);
 				const dataLocalidad = await locResp.json();
 				await fetchLocalidades();
