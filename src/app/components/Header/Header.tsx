@@ -25,22 +25,23 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               <span className={styles.srOnly}>Open sidebar</span>
               <span className={styles.menuIcon}>☰</span>
             </button>
-            
-            {/* Mostrar la información de la empresa */}
-            {empresaInfo && (
-              <div className={styles.empresaInfo}>
-                <span className={styles.empresaLabel}></span>
-                <span className={styles.empresaDescription}>{empresaInfo.descripcion}</span>
-              </div>
-            )}
-            
-            {/* Mostrar el sector seleccionado */}
-            {sectorSeleccionado && (
-              <div className={styles.sectorInfo}>
-                <span className={styles.sectorLabel}>Sector:</span>
-                <span className={styles.sectorDescription}>{sectorSeleccionado.descripcion}</span>
-              </div>
-            )}
+            <div className={styles.infoScroller}>
+              {/* Mostrar la información de la empresa */}
+              {empresaInfo && (
+                <div className={styles.empresaInfo}>
+                  <span className={styles.empresaLabel}></span>
+                  <span className={styles.empresaDescription}>{empresaInfo.descripcion}</span>
+                </div>
+              )}
+
+              {/* Mostrar el sector seleccionado */}
+              {sectorSeleccionado && (
+                <div className={styles.sectorInfo}>
+                  <span className={styles.sectorLabel}>Sector:</span>
+                  <span className={styles.sectorDescription}>{sectorSeleccionado.descripcion}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right side - User options */}
@@ -71,3 +72,4 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
     </header>
   );
 }
+

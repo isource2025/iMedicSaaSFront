@@ -23,9 +23,17 @@ const ICONS = {
 };
 
 export default function PatientsAnalytics() {
-  const [fechaInicio, setFechaInicio] = useState('2024-06-01');
-  const [fechaFin, setFechaFin] = useState('2024-08-28');
-  const [activeTab, setActiveTab] = useState<string>('custom');
+  // Helper para formatear fechas a YYYY-MM-DD
+  const toYYYYMMDD = (d: Date) => d.toISOString().split('T')[0];
+
+  // Rango por defecto: últimos 30 días hasta hoy
+  const today = new Date();
+  const defaultStart = new Date();
+  defaultStart.setDate(today.getDate() - 30);
+
+  const [fechaInicio, setFechaInicio] = useState(toYYYYMMDD(defaultStart));
+  const [fechaFin, setFechaFin] = useState(toYYYYMMDD(today));
+  const [activeTab, setActiveTab] = useState<string>('mes');
 
   const { 
     indicadores, 
@@ -59,43 +67,49 @@ export default function PatientsAnalytics() {
   
   
   // Datos para gráfico de línea
-  const lineChartData = indicadoresPorFecha.map(item => ({
-    label: new Date(item.fecha).toLocaleDateString('es-ES', { 
-      day: '2-digit', 
-      month: '2-digit' 
-    }),
-    value: item.total,
-    date: item.fecha
-  }));
+  const lineChartData = indicadoresPorFecha.map(item => {
+    const [year, month, day] = item.fecha.split('T')[0].split('-');
+    return {
+      label: `${day}/${month}`,
+      value: item.total,
+      date: item.fecha
+    };
+  });
 
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  // Calcular el día de mayor actividad una sola vez para reutilizarlo
+  const diaMayorActividad = indicadoresPorFecha.length > 0
+    ? indicadoresPorFecha.reduce((max, current) => current.total > max.total ? current : max)
+    : null;
+
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    
-    // Usar fechas fijas basadas en los datos disponibles (2024)
-    const endDate = new Date('2024-08-28'); // Fecha fin fija de los datos
-    let startDate = new Date('2024-08-28');
+
+    const endDate = new Date(); // hoy
+    let startDate = new Date(endDate);
 
     switch (tab) {
       case 'día':
-        startDate = new Date('2024-08-27'); // Día anterior al último
+        // Solo hoy
         break;
       case 'semana':
-        startDate = new Date('2024-08-21'); // Última semana
+        // Últimos 7 días incluyendo hoy
+        startDate.setDate(endDate.getDate() - 6);
         break;
       case 'mes':
-        startDate = new Date('2024-07-28'); // Último mes
+        // Últimos 30 días incluyendo hoy
+        startDate.setDate(endDate.getDate() - 29);
         break;
       case 'año':
-        startDate = new Date('2024-06-01'); // Período completo disponible
+        // Últimos 365 días incluyendo hoy
+        startDate.setDate(endDate.getDate() - 364);
         break;
       default:
         return;
     }
 
-    setFechaInicio(formatDate(startDate));
-    setFechaFin(formatDate(endDate));
+    setFechaInicio(toYYYYMMDD(startDate));
+    setFechaFin(toYYYYMMDD(endDate));
   };
 
   const handleCustomDateChange = (value: string, setDate: (date: string) => void) => {
@@ -256,7 +270,13 @@ export default function PatientsAnalytics() {
               <div className={styles.insightCard}>
                 <Icon path={ICONS.trendingUp} className={styles.insightIcon} />
                 <h4>Día de Mayor Actividad</h4>
-                <p>El día con más ingresos fue el <strong>{indicadoresPorFecha.length > 0 ? new Date(indicadoresPorFecha.reduce((max, current) => current.total > max.total ? current : max).fecha).toLocaleDateString('es-ES') : 'N/A'}</strong>.</p>
+                <p>
+                  {diaMayorActividad
+                    ? `El día con más ingresos fue el ${diaMayorActividad.fecha.split('T')[0].split('-').reverse().join('/')} con `
+                    : 'No hay datos de actividad.'}
+                  {diaMayorActividad && <strong>{`${diaMayorActividad.total} ingresos`}</strong>}
+                  .
+                </p>
               </div>
               <div className={styles.insightCard}>
                 <Icon path={ICONS.checkCircle} className={styles.insightIcon} />
@@ -290,12 +310,9 @@ export default function PatientsAnalytics() {
                   <div className={styles.statItem}>
                     <span className={styles.statLabel}>Día con más ingresos:</span>
                     <span className={styles.statValue}>
-                      {indicadoresPorFecha.length > 0 
-                        ? indicadoresPorFecha.reduce((max, current) => 
-                            current.total > max.total ? current : max
-                          ).fecha
-                        : 'N/A'
-                      }
+                      {diaMayorActividad
+                        ? `${diaMayorActividad.fecha.split('T')[0].split('-').reverse().join('/')} (${diaMayorActividad.total} ingresos)`
+                        : 'N/A'}
                     </span>
                   </div>
                 </div>

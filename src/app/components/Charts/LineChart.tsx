@@ -35,18 +35,6 @@ export default function LineChart({
     lastMouseX: 0
   });
 
-  // Utilidad: oscurecer un color HEX
-  const darkenColor = (hex: string, amount = 25) => {
-    // Acepta formatos del tipo #RRGGBB
-    const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!match) return hex;
-    const clamp = (v: number) => Math.max(0, Math.min(255, v));
-    const r = clamp(parseInt(match[1], 16) - amount);
-    const g = clamp(parseInt(match[2], 16) - amount);
-    const b = clamp(parseInt(match[3], 16) - amount);
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  };
-
   // Análisis automático de datos para determinar el período
   const dataAnalysis = useMemo(() => {
     if (data.length === 0) return { period: 'sin datos', totalDays: 0, availableFilters: ['todo'] };
@@ -234,10 +222,9 @@ export default function LineChart({
         ctx.fillText(item.label, points[index].x, padding + chartHeight + 25);
       }); */
 
-      // Tooltip / indicador activo
+      // Tooltip
       if (activePoint) {
-        const pointerColor = darkenColor(color, 40);
-        ctx.strokeStyle = pointerColor;
+        ctx.strokeStyle = color;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(activePoint.x, padding);
@@ -246,7 +233,7 @@ export default function LineChart({
 
         ctx.beginPath();
         ctx.arc(activePoint.x, activePoint.y, 6, 0, 2 * Math.PI);
-        ctx.fillStyle = pointerColor;
+        ctx.fillStyle = color;
         ctx.fill();
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 3;

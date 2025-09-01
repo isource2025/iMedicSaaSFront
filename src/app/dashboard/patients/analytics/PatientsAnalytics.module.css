@@ -51,14 +51,19 @@
 .dateControls {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: flex-end;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-direction: row;
 }
 
 .dateGroup {
   display: flex;
   align-items: center;
   gap: 8px;
+  background-color: #e9ecef;
+  padding-left: 12px;
+  border-radius: 8px;
 }
 
 .dateGroup label {
@@ -105,6 +110,14 @@
   background-color: #e9ecef;
   padding: 4px;
   border-radius: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.filterTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tabButton {
@@ -314,7 +327,9 @@
 .insightsSection {
   max-width: 1200px;
   margin: 40px auto;
-  padding: 0 20px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
 }
 
 .sectionTitle {
@@ -533,5 +548,83 @@
 
   .summaryText {
     text-align: center;
+  }
+
+  .controls {
+    align-items: stretch;
+  }
+
+  .filterTabs {
+    justify-content: flex-start;
+  }
+
+  .tabButton {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 16px 0;
+  }
+
+  .headerContent {
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .dateGroup {
+    max-width: 100%;
+  }
+
+  .dateInput {
+    width: 100%;
+  }
+
+  .donutChartSection {
+    padding: 16px;
+  }
+
+  .lineChartSection {
+    padding: 16px;
+  }
+
+  .insightCard {
+    padding: 20px;
+  }
+
+  .detailCard {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .title {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .tabButton {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .sectionTitle {
+    font-size: 20px;
+  }
+
+  .summaryValue {
+    font-size: 22px;
   }
 }

@@ -42,6 +42,16 @@ export interface IndicadoresPorFechaResponse {
   data: IndicadorPorFecha[];
 }
 
+export interface ResumenPacientesHoy {
+  totalHoy: number;
+  porcentajeCambio: number;
+}
+
+export interface ResumenPacientesHoyResponse {
+  success: boolean;
+  data: ResumenPacientesHoy;
+}
+
 /**
  * Obtiene indicadores básicos de pacientes
  */
@@ -129,8 +139,32 @@ export const obtenerIndicadoresPorFecha = async (
   }
 };
 
+/**
+ * Obtiene un resumen de pacientes para el día actual y lo compara con el día anterior.
+ */
+export const obtenerResumenPacientesHoy = async (): Promise<ResumenPacientesHoy> => {
+  try {
+    const response = await axiosInstance.get<ResumenPacientesHoyResponse>('/indicadores/pacientes/resumen-hoy', {
+      timeout: 10000
+    });
+
+    if (response.data.success) {
+      return response.data.data;
+    } else {
+      throw new Error('Error en la respuesta del servidor al obtener resumen de pacientes de hoy');
+    }
+  } catch (error) {
+    console.error('Error al obtener resumen de pacientes de hoy:', error);
+    return {
+      totalHoy: 0,
+      porcentajeCambio: 0
+    };
+  }
+};
+
 export const indicadoresService = {
   obtenerIndicadores,
   obtenerResumenIndicadores,
-  obtenerIndicadoresPorFecha
+  obtenerIndicadoresPorFecha,
+  obtenerResumenPacientesHoy
 };

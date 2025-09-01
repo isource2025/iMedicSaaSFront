@@ -5,31 +5,33 @@ import { Patient, PatientFormData, ApiResponse } from '../types/PatientInterface
  * Servicio para gestionar los pacientes
  */
 export const patientService = {
-	/**
-	 * Obtiene todos los pacientes
-	 * @returns Promise con la lista de pacientes
-	 */
-	getAllPatients: async (options?: {
-		all?: boolean;
-		simple?: boolean;
-	}): Promise<Patient[]> => {
-		try {
-			const params: string[] = [];
-			if (options?.all) params.push('mode=all');
-			if (options?.simple) params.push('simple=1');
-			const qs = params.length ? `?${params.join('&')}` : '';
-			const res = await fetch(`http://localhost:5006/api/patients${qs}`);
-			if (!res.ok) throw new Error('Error al obtener pacientes');
-			const { data } = await res.json();
-			return data;
-		} catch (error: any) {
-			console.error('Error fetching patients:', error);
-			if (error.response) {
-				throw new Error(error.response.data?.mensaje || 'Error al obtener pacientes');
-			}
-			throw error;
-		}
-	},
+  /**
+   * Obtiene todos los pacientes
+   * @returns Promise con la lista de pacientes
+   */
+  getAllPatients: async (options?: {
+    all?: boolean;
+    simple?: boolean;
+  }): Promise<Patient[]> => {
+    try {
+      const params: any = {};
+      if (options?.all) params.mode = 'all';
+      if (options?.simple) params.simple = '1';
+
+      const { data } = await apiService.get<ApiResponse<Patient[]>>('/patients', { params });
+
+      if (data.success && data.data) {
+        return data.data;
+      }
+      throw new Error(data.mensaje || 'Error al obtener pacientes');
+    } catch (error: any) {
+      console.error('Error fetching patients:', error);
+      if (error.response) {
+        throw new Error(error.response.data?.mensaje || 'Error al obtener pacientes');
+      }
+      throw error;
+    }
+  },
 
 	/**
 	 * Busca pacientes por nombre o documento

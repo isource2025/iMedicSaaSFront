@@ -51,10 +51,18 @@
   background-color: #f8f9fa;
   padding: 4px;
   border-radius: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.timeFilters::-webkit-scrollbar {
+  display: none;
 }
 
 .filterButton {
-  padding: 6px 12px;
+  padding: 8px 14px;
   border: none;
   background-color: transparent;
   color: #495057;
@@ -63,6 +71,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 36px;
 }
 
 .filterButton:hover {
@@ -97,8 +106,8 @@
 }
 
 .controlButton {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: 1px solid #ced4da;
   background-color: white;
   color: #495057;
@@ -211,5 +220,37 @@
   
   .navigationInfo {
     text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .filterButton {
+    padding: 10px 14px;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .controlButton {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .title {
+    font-size: 15px;
+  }
+  
+  .filterButton {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 }

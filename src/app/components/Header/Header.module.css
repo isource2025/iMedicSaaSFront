@@ -39,6 +39,40 @@
   align-items: center;
 }
 
+.infoScroller {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px; /* evita que el scrollbar tape los chips en algunos navegadores */
+}
+
+.infoScroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* Unificar comportamiento visual de chips y evitar que se compriman */
+.empresaInfo,
+.sectorInfo {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  margin-right: 0.25rem;
+}
+
+/* Truncar descripciones largas para mantener orden */
+.empresaDescription,
+.sectorDescription {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .menuButton {
   color: #6b7280;
   transition: color 0.2s;
@@ -120,6 +154,28 @@
 }
 
 @media (max-width: 640px) {
+  .headerContent {
+    height: auto;
+    min-height: 4rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    row-gap: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .leftSection {
+    flex: 1 1 100%;
+    grid-row: 1;
+  }
+
+  .rightSection {
+    grid-row: 2;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   .sectorInfo {
     margin-left: 0.5rem;
     padding: 0.25rem 0.5rem;
@@ -132,7 +188,7 @@
   
   .sectorDescription {
     font-size: 0.75rem;
-    max-width: 120px;
+    max-width: 150px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -151,7 +207,7 @@
 }
 
 .notificationButton {
-  padding: 0.5rem;
+  padding: 0.6rem;
   color: #6b7280;
   transition: color 0.2s;
   position: relative;

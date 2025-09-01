@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { bedsService } from '../services/bedsService';
+import { indicadoresService, ResumenPacientesHoy } from '../services/indicadoresService';
 import styles from './DashboardPage.module.css';
 
 interface BedStats {
@@ -11,6 +12,11 @@ interface BedStats {
   camasNoDisponibles: number;
 }
 
+const initialPatientSummary: ResumenPacientesHoy = {
+  totalHoy: 0,
+  porcentajeCambio: 0,
+};
+
 export default function Dashboard() {
   const [bedStats, setBedStats] = useState<BedStats>({
     totalCamas: 0,
@@ -18,7 +24,9 @@ export default function Dashboard() {
     camasOcupadas: 0,
     camasNoDisponibles: 0
   });
+  const [patientSummary, setPatientSummary] = useState<ResumenPacientesHoy>(initialPatientSummary);
   const [loading, setLoading] = useState(true);
+  const [loadingPatients, setLoadingPatients] = useState(true);
 
   useEffect(() => {
     const fetchBedStats = async () => {
@@ -32,7 +40,19 @@ export default function Dashboard() {
       }
     };
 
+    const fetchPatientSummary = async () => {
+      try {
+        const summary = await indicadoresService.obtenerResumenPacientesHoy();
+        setPatientSummary(summary);
+      } catch (error) {
+        console.error('Error fetching patient summary:', error);
+      } finally {
+        setLoadingPatients(false);
+      }
+    };
+
     fetchBedStats();
+    fetchPatientSummary();
   }, []);
 
   return (
@@ -63,9 +83,17 @@ export default function Dashboard() {
           style={{ cursor: 'pointer' }}
         >
           <h3 className={styles.cardLabel}>Pacientes</h3>
-          <p className={styles.cardValue}>126</p>
+          <p className={styles.cardValue}>{loadingPatients ? '...' : patientSummary.totalHoy}</p>
           <div className={styles.cardStats}>
-            <span className={styles.statBlue}>8 Ingresos hoy</span>
+            {loadingPatients ? (
+              <span className={styles.statBlue}>Cargando...</span>
+            ) : (
+              <span
+                className={patientSummary.porcentajeCambio >= 0 ? styles.statGreen : styles.statRed}
+              >
+                {patientSummary.porcentajeCambio >= 0 ? '▲' : '▼'} {Math.abs(patientSummary.porcentajeCambio)}% vs ayer
+              </span>
+            )}
           </div>
         </div>
         
