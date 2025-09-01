@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import estadoAmbulatorioService from '../services/estadoAmbulatorioService';
-import { EstadoAmbulatorio } from '../types/estadoAmbulatorio';
+import { EstadoAmbulatorio } from '../types/estadoAmbulatorio.types';
 
 /**
  * Hook personalizado para manejar los estados ambulatorios
@@ -35,7 +35,7 @@ export const useEstadoAmbulatorio = () => {
    * @returns El estado ambulatorio o null si no se encuentra
    */
   const obtenerEstadoAmbulatorio = (valor: string): EstadoAmbulatorio | undefined => {
-    return estadosAmbulatorios.find(estado => estado.valor === valor);
+    return estadosAmbulatorios.find(estado => estado.Valor === valor);
   };
 
   // Cargar estados ambulatorios al montar el componente

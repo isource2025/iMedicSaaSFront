@@ -62,23 +62,23 @@ export interface PatientFormData {
 	// Otros Datos
 	Raza?: string;
 	Idioma?: string; // alias frontend
-	IdiomaPrimario?: string; // backend field
+	IdiomaPrimario?: string | null; // backend field
 	Religion?: string;
-	GrupoEtnico?: string;
-	EstadoMilitar?: string;
-	LicenciaConducir?: string;
-	DadorOrganos?: string;
-	OrdenNacimiento?: number | string; // Usamos string también por el input
-	LugarNacimiento?: string;
-	FechaDefuncion?: string;
-	HoraDefuncion?: string;
+	GrupoEtnico?: string | null;
+	EstadoMilitar?: string | null;
+	LicenciaConducir?: string | null;
+	DadorOrganos?: string | null;
+	OrdenNacimiento?: number | string | null; // Usamos string también por el input
+	LugarNacimiento?: string | null;
+	FechaDefuncion?: string | null;
+	HoraDefuncion?: string | null;
 	Foto?: string | null; // Asegúrate de que este campo exista
 
 	// --- NUEVO CAMPO PARA DATOS LABORALES ---
 	Trabajos?: Trabajo[];
 
-	SituacionLaboral?: string;
-	NivelEstudios?: string;
+	SituacionLaboral?: string | null;
+	NivelEstudios?: string | null;
 }
 
 export interface ApiResponse<T> {

@@ -25,7 +25,7 @@ export const bedsService = {
       documentoPaciente: item.DocumentoPaciente || '',
       diagnosticoDescripcion: item.DiagnosticoDescripcion || '',
       razonSocialCliente: item.RazonSocialCliente || '',
-      sexoPaciente: item.SexoPaciente || '',
+      SexoPaciente: item.SexoPaciente || '',
       descripcionSexo: item.DescripcionSexo || '',
       servicioMedicoDescripcion: item.ServicioMedicoDescripcion || ''
     }));

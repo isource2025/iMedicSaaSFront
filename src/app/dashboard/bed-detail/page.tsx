@@ -35,7 +35,7 @@ export default function BedDetailPage() {
           diagnosticoDescripcion: 'Neumonía bilateral',
           servicioMedicoDescripcion: 'Clínica Médica',
           razonSocialCliente: 'OSDE',
-          sexoPaciente: 'm',
+          SexoPaciente: 'm',
           descripcionSexo: 'Masculino',
           numeroVisita: 12345,
           valorEstadoOriginal: 'O',

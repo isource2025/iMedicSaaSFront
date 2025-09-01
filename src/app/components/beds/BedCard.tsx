@@ -59,7 +59,7 @@ const BedCard: React.FC<BedCardProps> = ({
     }
   }, [bed.numeroVisita, bed.estado]);
   const renderGenderIcon = () => {
-    const sexoValue = bed.sexoPaciente.toLowerCase();
+        const sexoValue = bed.SexoPaciente ? bed.SexoPaciente.toLowerCase() : '';
     if (sexoValue === 'm' || sexoValue === 'masculino') {
       return <IoMale className={styles.maleIcon} title={bed.descripcionSexo || 'Masculino'} />;
     } else if (sexoValue === 'f' || sexoValue === 'femenino') {

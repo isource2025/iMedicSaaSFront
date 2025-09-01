@@ -14,6 +14,7 @@ export interface Bed {
   numeroCama: string;
   sector: string;
   estado: string;
+  valorEstadoOriginal?: string;
   fechaIngreso?: number;
   fechaEgreso?: number;
   observaciones?: string;
@@ -21,7 +22,9 @@ export interface Bed {
   mostrarNumeroVisita?: string;
   nombrePaciente?: string;
   documentoPaciente?: string;
+  SexoPaciente?: string;
   descripcionSexo?: string;
+  estadoDescripcion?: string;
   diagnosticoDescripcion?: string;
   servicioMedicoDescripcion?: string;
   razonSocialCliente?: string;
