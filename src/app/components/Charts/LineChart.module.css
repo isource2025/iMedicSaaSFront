@@ -1,0 +1,256 @@
+.container {
+  padding: 24px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.analysisInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.periodInfo {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.dataCount {
+  font-size: 12px;
+  color: #888;
+}
+
+.timeFilters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  background-color: #f8f9fa;
+  padding: 4px;
+  border-radius: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.timeFilters::-webkit-scrollbar {
+  display: none;
+}
+
+.filterButton {
+  padding: 8px 14px;
+  border: none;
+  background-color: transparent;
+  color: #495057;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 36px;
+}
+
+.filterButton:hover {
+  background-color: #e9ecef;
+  color: #212529;
+}
+
+.activeFilter {
+  background-color: #007bff;
+  color: white;
+}
+
+.activeFilter:hover {
+  background-color: #0056b3;
+  color: white;
+}
+
+.chartControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controlButton {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ced4da;
+  background-color: white;
+  color: #495057;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.controlButton:hover:not(:disabled) {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.zoomLevel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  min-width: 50px;
+  text-align: center;
+}
+
+.resetButton {
+  padding: 6px 12px;
+  border: 1px solid #dc3545;
+  background-color: white;
+  color: #dc3545;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.navigationInfo {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+.canvasContainer {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  cursor: grab;
+}
+
+.canvasContainer:active {
+  cursor: grabbing;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+}
+
+.chartDescription {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  border: 1px solid #e9ecef;
+}
+
+.chartDescription span {
+  font-weight: 500;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .analysisInfo {
+    align-items: flex-start;
+  }
+  
+  .timeFilters {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .chartControls {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .zoomControls {
+    justify-content: center;
+  }
+  
+  .navigationInfo {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .filterButton {
+    padding: 10px 14px;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .controlButton {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .title {
+    font-size: 15px;
+  }
+  
+  .filterButton {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,123 @@
+.headerContainer {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem;
+	padding: 1rem;
+	background: #f9fafb;
+	border-radius: 0.75rem;
+	border: 1px solid #e5e7eb;
+	box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+.fieldsGrid {
+	flex: 1;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 1rem 1.25rem;
+	min-width: 300px;
+}
+
+.headerField {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+/* Campo que ocupa todo el ancho del grid */
+.fullWidthField {
+	grid-column: 1 / -1;
+}
+
+.headerLabel {
+	font-size: 0.725rem;
+	font-weight: 500;
+	color: #4b5563;
+}
+
+/* Estilo unificado para inputs y selects */
+.headerInput,
+.headerSelect {
+	width: 100%;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.375rem;
+	font-size: 0.675rem;
+	background-color: #ffffff;
+	height: 2.1rem;
+	box-sizing: border-box;
+	transition: all 0.2s ease-in-out;
+}
+
+.headerInput:focus,
+.headerSelect:focus {
+	outline: none;
+	border-color: #00b5e2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+}
+
+/* Contenedor específico para el campo de documento */
+.documentFieldContainer {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.documentInput {
+	padding-right: 2.5rem;
+}
+
+/* Botón de búsqueda Renaper */
+.searchButton {
+	position: absolute;
+	right: 0.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 1.75rem;
+	width: 1.75rem;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	border-radius: 50%;
+	transition: background-color 0.2s;
+}
+
+.searchButton:hover {
+	background-color: #f3f4f6;
+}
+
+.searchButton svg {
+	color: #6b7280;
+	width: 16px;
+	height: 16px;
+}
+
+.spinner svg {
+	animation: spin 1s linear infinite;
+	color: #0083a9;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+.requiredField::after {
+	content: ' *';
+	color: #ef4444;
+}
+
+.headerError {
+	color: #ef4444;
+	font-size: 0.75rem;
+	grid-column: 2;
+}
+
+.headerPhoto {
+	flex-shrink: 0;
+	display: flex;
+	align-items: flex-start;
+}

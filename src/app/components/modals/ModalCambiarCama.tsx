@@ -355,6 +355,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     if (!fechaEgreso) errores.fechaEgreso = "La fecha es obligatoria";
     if (!horaEgreso) errores.horaEgreso = "La hora es obligatoria";
     if (!camaSeleccionada) errores.camaSeleccionada = "Debe seleccionar una cama destino"
+    if (!estadoAmbulatorio) errores.estadoAmbulatorio = "El estado ambulatorio es obligatorio";
     
     // Validar formato de fecha y hora
     const fechaActual = new Date();

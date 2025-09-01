@@ -1,625 +1,497 @@
-import { useState, useEffect } from 'react';
-import { Patient, PatientFormData } from '../../types/PatientInterface';
+import { PatientFormData } from '../../types/PatientInterface';
 import { Sexo, sexoService } from '../../services/sexoService';
 import { Localidad, localidadService } from '../../services/localidadService';
 import { provinciaService } from '../../services/provinciaService';
 import { clarionDateToDate } from '../../utils/dateUtils';
+import HeaderAddPatient from './AddPatient/HeaderAddPatient';
+import PersonalDataTab from './AddPatient/PersonalDataTab';
+import OtherDataTab from './AddPatient/OtherDataTab';
+import LaboralDataTab from './AddPatient/LaboralDataTab';
+import { CSSTransition, SwitchTransition } from 'react-transition-group';
 import styles from '../../components/modals/ModalAddPatient/styles.module.css';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface PatientFormBaseProps {
-  onSubmit: (data: PatientFormData) => Promise<boolean>;
-  initialData?: Partial<PatientFormData>;
-  isEditing?: boolean;
-  onClose: () => void;
+	onSubmit: (data: any) => Promise<boolean> | boolean;
+	initialData?: Partial<PatientFormData>;
+	isEditing?: boolean;
+	isSubmitting?: boolean; // externo (lista)
+	onClose: () => void;
 }
 
+type Tab = 'personal' | 'other' | 'laboral';
+
+// Adaptamos a formato {value,label} que esperan los subcomponentes
+const tiposDocumento = [
+	{ value: 'DNI', label: 'DNI' },
+	{ value: 'LC', label: 'LC' },
+	{ value: 'LE', label: 'LE' },
+	{ value: 'PAS', label: 'PAS' },
+];
+const estadosCiviles = [
+	{ value: 'SOLTERO', label: 'SOLTERO' },
+	{ value: 'CASADO', label: 'CASADO' },
+	{ value: 'DIVORCIADO', label: 'DIVORCIADO' },
+	{ value: 'VIUDO', label: 'VIUDO' },
+	{ value: 'UNIÓN CIVIL', label: 'UNIÓN CIVIL' },
+];
+
+const toStr = (v: any, def = '') => (v === undefined || v === null ? def : String(v));
+const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => ({
+	IDPaciente: d?.IDPaciente,
+	NumeroHC: toStr(d?.NumeroHC),
+	TipoDocumento: toStr(d?.TipoDocumento, 'DNI'),
+	NumeroDocumento: toStr(d?.NumeroDocumento),
+	ApellidoyNombre: toStr(d?.ApellidoyNombre),
+	Domicilio: toStr(d?.Domicilio),
+	ValorLocalidad: toStr(d?.ValorLocalidad),
+	Provincia: toStr(d?.Provincia),
+	Nacionalidad: toStr(d?.Nacionalidad, 'Argentina'),
+	FechaNacimiento: toStr(d?.FechaNacimiento),
+	CUIT: toStr(d?.CUIT),
+	Sexo: toStr(d?.Sexo, 'M'),
+	EstadoCivil: toStr(d?.EstadoCivil, 'SOLTERO'),
+	TelefonoParticular: toStr(d?.TelefonoParticular),
+	TelefonoCelular: toStr(d?.TelefonoCelular),
+	Mail: toStr(d?.Mail),
+	Cobertura: toStr(d?.Cobertura),
+	nAfiliado: toStr(d?.nAfiliado),
+	FotoURL: d?.FotoURL || null,
+	Raza: toStr(d?.Raza),
+	// Mapear posible campo backend IdiomaPrimario al alias Idioma
+	Idioma: toStr(d?.Idioma || d?.IdiomaPrimario),
+	Religion: toStr(d?.Religion),
+	GrupoEtnico: toStr(d?.GrupoEtnico),
+	EstadoMilitar: toStr(d?.EstadoMilitar),
+	SituacionLaboral: toStr(d?.SituacionLaboral),
+	NivelEstudios: toStr(d?.NivelEstudios || (d as any)?.NivelDeEstudios),
+	LicenciaConducir: toStr(d?.LicenciaConducir),
+	DadorOrganos: toStr(d?.DadorOrganos),
+	OrdenNacimiento: d?.OrdenNacimiento ?? '',
+	LugarNacimiento: toStr(d?.LugarNacimiento),
+	FechaDefuncion: toStr(d?.FechaDefuncion),
+	HoraDefuncion: toStr(d?.HoraDefuncion),
+	Foto: d?.Foto || null,
+	Trabajos: d?.Trabajos || [],
+});
+
 export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
-  onSubmit,
-  initialData = {},
-  isEditing = false,
-  onClose
+	onSubmit,
+	initialData,
+	isEditing = false,
+	isSubmitting,
+	onClose,
 }) => {
-  const [formData, setFormData] = useState<PatientFormData>({
-    IDPaciente: initialData.IDPaciente || undefined,
-    NumeroHC: initialData.NumeroHC || '',
-    TipoDocumento: initialData.TipoDocumento || 'DNI',
-    NumeroDocumento: initialData.NumeroDocumento || '',
-    ApellidoyNombre: initialData.ApellidoyNombre || '',
-    Domicilio: initialData.Domicilio || '',
-    ValorLocalidad: initialData.ValorLocalidad || '',
-    Provincia: initialData.Provincia || '',
-    Nacionalidad: initialData.Nacionalidad || 'Argentina',
-    FechaNacimiento: initialData.FechaNacimiento || '',
-    CUIT: initialData.CUIT || '',
-    Sexo: initialData.Sexo || 'M',
-    EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-    TelefonoParticular: initialData.TelefonoParticular || '',
-    TelefonoNegocio: initialData.TelefonoNegocio || '',
-    Mail: initialData.Mail || '',
-    NumeroCuenta: initialData.NumeroCuenta || '',
-    NumeroSSN: initialData.NumeroSSN || ''
-  });
+	const [formData, setFormData] = useState<PatientFormData>(() =>
+		buildInitialFormData(initialData),
+	);
+	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [activeTab, setActiveTab] = useState<Tab>('personal');
+	const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({
+		left: 0,
+		width: 0,
+	});
+	const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
+	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
+	const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
+	const [loading, setLoading] = useState<{ localidad: boolean; sexo: boolean }>({
+		localidad: false,
+		sexo: false,
+	});
+	const [fotoFile, setFotoFile] = useState<File | null>(null);
+	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+	const [internalSubmitting, setInternalSubmitting] = useState(false);
+	const [buscandoRenaper, setBuscandoRenaper] = useState(false);
 
-  const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
-  const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
-  const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
-  const tiposDocumento = [
-    { value: 'DNI', label: 'DNI' },
-    { value: 'LC', label: 'LC' },
-    { value: 'LE', label: 'LE' },
-    { value: 'PASAPORTE', label: 'Pasaporte' },
-    { value: 'OTRO', label: 'Otro' }
-  ];
+	const tabsRef = useRef<HTMLDivElement[]>([]);
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const nodeRef = useRef<HTMLDivElement | null>(null);
 
-  // Estado civil options
-  const estadosCiviles = [
-    { value: 'S', label: 'Soltero/a' },
-    { value: 'C', label: 'Casado/a' },
-    { value: 'D', label: 'Divorciado/a' },
-    { value: 'V', label: 'Viudo/a' },
-    { value: 'O', label: 'Otro' }
-  ];
+	const fetchSexos = async () => {
+		try {
+			setLoading((p) => ({ ...p, sexo: true }));
+			const data = await sexoService.getSexos();
+			setSexoOptions(data);
+		} catch (e) {
+			console.error('Error sexos', e);
+		} finally {
+			setLoading((p) => ({ ...p, sexo: false }));
+		}
+	};
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState({
-    sexo: false,
-    localidad: false
-  });
+	const fetchLocalidades = async () => {
+		try {
+			setLoading((p) => ({ ...p, localidad: true }));
+			const data = await localidadService.getLocalidades();
+			setLocalidadOptions(data);
+		} catch (e) {
+			console.error('Error localidades', e);
+		} finally {
+			setLoading((p) => ({ ...p, localidad: false }));
+		}
+	};
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+	const handleGetProvincia = async (valorProvincia: string) => {
+		try {
+			const provincia = await provinciaService.getProvincia(valorProvincia);
+			const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
+			setFormData((prev) => ({
+				...prev,
+				Nacionalidad: provinciaData?.nacionalidad || prev.Nacionalidad || 'Argentina',
+				Provincia: provinciaData?.descripcion || prev.Provincia || '',
+			}));
+		} catch (err) {
+			console.error('Error al obtener provincia:', err);
+		}
+	};
 
-  // Funciones para cargar datos
-  const fetchSexos = async () => {
-    try {
-      setLoading(prev => ({ ...prev, sexo: true }));
-      const data = await sexoService.getSexos();
-      // Asegurar que el valor actual coincida con alguna opción
-      const validSexo = data.some(sexo => sexo.valor === formData.Sexo);
-      if (!validSexo) {
-        setFormData(prev => ({ ...prev, Sexo: data[0]?.valor || 'M' }));
-      }
-      setSexoOptions(data);
-    } catch (error) {
-      console.error('Error al cargar opciones de sexo:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, sexo: false }));
-    }
-  };
+	const getRenaperInfo = async (
+		e: React.MouseEvent | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+		NumeroDocumento: number,
+		SexoVal: string,
+	) => {
+		e.preventDefault();
+		if (!NumeroDocumento || !SexoVal) return;
+		setBuscandoRenaper(true);
+		const sexoOpt = SexoVal === 'F' ? 1 : 2;
+		try {
+			const resp = await fetch(
+				`http://localhost:5005/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
+			);
+			const data = await resp.json();
+			if (data?.persona) {
+				const locResp = await fetch(
+					`http://localhost:5005/api/localidad/search-by-localidad/${data.persona.ciudad}`,
+				);
+				const dataLocalidad = await locResp.json();
+				await fetchLocalidades();
+				setFormData((prev) => ({
+					...prev,
+					NumeroDocumento: String(data.persona.numeroDocumento || ''),
+					ApellidoyNombre:
+						`${data.persona.apellido}, ${data.persona.nombres}`.trim(),
+					Domicilio: `${data.persona.calle || ''} ${
+						data.persona.numero || ''
+					}`.trim(),
+					ValorLocalidad: dataLocalidad?.data?.Valor
+						? String(dataLocalidad.data.Valor)
+						: prev.ValorLocalidad,
+					FechaNacimiento: data.persona.fechaNacimiento || prev.FechaNacimiento,
+					Sexo: data.persona.sexo || prev.Sexo,
+				}));
+				if (dataLocalidad?.data?.ValorProvincia) {
+					await handleGetProvincia(String(dataLocalidad.data.ValorProvincia));
+				}
+			}
+		} catch (err) {
+			console.error('Error Renaper:', err);
+		} finally {
+			setBuscandoRenaper(false);
+		}
+	};
 
-  const fetchLocalidades = async () => {
-    try {
-      setLoading(prev => ({ ...prev, localidad: true }));
-      const data = await localidadService.getLocalidades();
-      setLocalidadOptions(data);
-    } catch (error) {
-      console.error('Error al cargar opciones de localidad:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, localidad: false }));
-    }
-  };
+	const handleChange = async (
+		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+	) => {
+		const { name, value } = e.target;
+		// Localidad -> provincia
+		if (name === 'ValorLocalidad') {
+			const selected = localidadOptions.find(
+				(l) => String(l.Valor).trim() === value.trim(),
+			);
+			setSelectedLocalidad(selected || null);
+			if (selected?.ValorProvincia) await handleGetProvincia(selected.ValorProvincia);
+		}
+		let nextValue: any = value;
+		if (name === 'OrdenNacimiento')
+			nextValue = value === '' ? '' : isNaN(Number(value)) ? value : Number(value);
+		if (name === 'DadorOrganos')
+			nextValue = value === 'SI' ? 'SI' : value === 'NO' ? 'NO' : value;
+		setFormData((prev) => ({ ...prev, [name]: nextValue }));
+		if (errors[name]) {
+			setErrors((prev) => {
+				const n = { ...prev };
+				delete n[name];
+				return n;
+			});
+		}
+	};
 
-  const [buscandoRenaper, setBuscandoRenaper] = useState(false);
-  const getRenaperInfo = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, NumeroDocumento: number, Sexo: string) => {
-    e.preventDefault();
-    setBuscandoRenaper(true);
-    var sexoOpt = 2;
-    if (Sexo == 'F') {
-      sexoOpt = 1;
-    }
+	const validateForm = (): boolean => {
+		const newErrors: Record<string, string> = {};
+		const nombreVal = toStr(formData.ApellidoyNombre).trim();
+		const docVal = toStr(formData.NumeroDocumento).trim();
+		if (!nombreVal) newErrors.ApellidoyNombre = 'El nombre y apellido es obligatorio';
+		if (!docVal) newErrors.NumeroDocumento = 'El número de documento es obligatorio';
+		if (formData.FechaNacimiento) {
+			const birth = new Date(toStr(formData.FechaNacimiento));
+			if (!isNaN(birth.getTime()) && birth > new Date())
+				newErrors.FechaNacimiento = 'No puede ser futura';
+		}
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
 
-    const resp = await fetch(`http://localhost:4000/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`);
-    const data = await resp.json(); 
-    console.log(data.persona);
-    if (data.persona) {
-      const localidad = await fetch(`http://localhost:4000/api/localidad/search-by-localidad/${data.persona.ciudad}`);
-      const dataLocalidad = await localidad.json();
-      
-      await fetchLocalidades();
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (internalSubmitting) return;
+		if (!validateForm()) return;
+		try {
+			setInternalSubmitting(true);
+			const payload: any = { ...formData };
+			// Normalizar idioma: si viene string vacía o 'UNDEFINED'/'undefined' => null
+			if (payload.Idioma === 'und') payload.Idioma = '';
+			if (
+				payload.Idioma === undefined ||
+				payload.Idioma === null ||
+				payload.Idioma === '' ||
+				/^undefined$/i.test(String(payload.Idioma))
+			) {
+				payload.Idioma = undefined;
+				payload.IdiomaPrimario = undefined; // no enviar al backend para que quede NULL
+			} else {
+				// mapear a IdiomaPrimario si no está
+				if (!payload.IdiomaPrimario) payload.IdiomaPrimario = payload.Idioma;
+			}
+			// GrupoEtnico: sólo eliminar si está vacío o 'undefined'; permitir códigos numéricos o string válidos
+			if (
+				payload.GrupoEtnico === '' ||
+				payload.GrupoEtnico === null ||
+				payload.GrupoEtnico === undefined ||
+				/^undefined$/i.test(String(payload.GrupoEtnico))
+			) {
+				delete payload.GrupoEtnico;
+			}
+			if (fotoFile) payload._fotoFile = fotoFile;
+			console.log('[PatientFormBase] Enviando payload', {
+				GrupoEtnico_raw: formData.GrupoEtnico,
+				GrupoEtnico_payload: payload.GrupoEtnico,
+				Idioma_raw: formData.Idioma,
+				IdiomaPrimario_payload: payload.IdiomaPrimario,
+				payload,
+			});
+			const success = await onSubmit(payload);
+			if (success) onClose();
+		} catch (err) {
+			console.error('Error submit:', err);
+		} finally {
+			setInternalSubmitting(false);
+		}
+	};
 
-      setFormData({
-        IDPaciente: initialData.IDPaciente || undefined,
-        NumeroHC: initialData.NumeroHC || '',
-        TipoDocumento: initialData.TipoDocumento || 'DNI',
-        NumeroDocumento: `${data.persona.numeroDocumento}`,
-        ApellidoyNombre: `${data.persona.apellido}, ${data.persona.nombres}`,
-        Domicilio: `${data.persona.calle} ${data.persona.numero}, ${data.persona.monoblock}`,
-        ValorLocalidad: `${dataLocalidad.data.Valor}`,
-        Provincia: initialData.Provincia || '',
-        Nacionalidad: initialData.Nacionalidad || 'Argentina',
-        FechaNacimiento: `${data.persona.fechaNacimiento}`,
-        CUIT: initialData.CUIT || '',
-        Sexo: `${data.persona.sexo}`,
-        EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-        TelefonoParticular: initialData.TelefonoParticular || '',
-        TelefonoNegocio: initialData.TelefonoNegocio || '',
-        Mail: initialData.Mail || '',
-        NumeroCuenta: initialData.NumeroCuenta || '',
-        NumeroSSN: initialData.NumeroSSN || ''
-      })
+	// Normalizar clarion date si llega numérica (una sola vez al montar)
+	useEffect(() => {
+		const val = formData.FechaNacimiento;
+		if (!val) return;
+		if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return;
+		if (!/^\d+$/.test(val)) return;
+		const date = clarionDateToDate(val);
+		if (!date) return;
+		const y = date.getFullYear();
+		const m = String(date.getMonth() + 1).padStart(2, '0');
+		const d = String(date.getDate()).padStart(2, '0');
+		setFormData((prev) => ({ ...prev, FechaNacimiento: `${y}-${m}-${d}` }));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
-      await handleGetProvincia(dataLocalidad.data.ValorProvincia);
-    }
+	// Cargar catálogos base
+	useEffect(() => {
+		fetchSexos();
+		fetchLocalidades();
+	}, []);
 
-    setBuscandoRenaper(false);
-  }
+	// Al editar: si ya viene ValorLocalidad, actualizar Provincia y Nacionalidad automáticamente una vez
+	const autoProvinciaAppliedRef = useRef(false);
+	useEffect(() => {
+		if (
+			!isEditing ||
+			autoProvinciaAppliedRef.current ||
+			!formData.ValorLocalidad ||
+			!localidadOptions.length
+		)
+			return;
+		const selected = localidadOptions.find(
+			(l) => String(l.Valor).trim() === String(formData.ValorLocalidad).trim(),
+		);
+		if (selected?.ValorProvincia) {
+			autoProvinciaAppliedRef.current = true;
+			handleGetProvincia(String(selected.ValorProvincia));
+		}
+	}, [isEditing, formData.ValorLocalidad, localidadOptions]);
 
-  // Si hay un paciente, cargamos sus datos en el formulario
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        IDPaciente: initialData.IDPaciente || undefined,
-        NumeroHC: initialData.NumeroHC || '',
-        TipoDocumento: initialData.TipoDocumento || 'DNI',
-        NumeroDocumento: initialData.NumeroDocumento || '',
-        ApellidoyNombre: initialData.ApellidoyNombre || '',
-        Domicilio: initialData.Domicilio || '',
-        ValorLocalidad: initialData.ValorLocalidad || '',
-        Provincia: initialData.Provincia || '',
-        Nacionalidad: initialData.Nacionalidad || 'Argentina',
-        FechaNacimiento: initialData.FechaNacimiento || '',
-        CUIT: initialData.CUIT || '',
-        Sexo: initialData.Sexo || 'M',
-        EstadoCivil: initialData.EstadoCivil || 'SOLTERO',
-        TelefonoParticular: initialData.TelefonoParticular || '',
-        TelefonoNegocio: initialData.TelefonoNegocio || '',
-        Mail: initialData.Mail || '',
-        NumeroCuenta: initialData.NumeroCuenta || '',
-        NumeroSSN: initialData.NumeroSSN || ''
-      });
+	// Sincronizar cuando initialData (paciente a editar) llega asincrónicamente
+	useEffect(() => {
+		if (isEditing && initialData) {
+			setFormData((prev) => {
+				// Si no hay paciente previo cargado o cambió el ID
+				if (!prev.IDPaciente || prev.IDPaciente !== initialData.IDPaciente) {
+					return buildInitialFormData(initialData);
+				}
+				return prev; // evita sobreescribir cambios del usuario
+			});
+		}
+	}, [initialData, isEditing]);
 
-      // Si hay valor de provincia, cargar la provincia
-      if (initialData.Provincia) {
-        handleGetProvincia(initialData.Provincia);
-      }
-      fetchLocalidades();
-      fetchSexos();
-    }
-  }, [initialData]);
+	// Indicador tabs
+	useEffect(() => {
+		const ids: Tab[] = ['personal', 'other', 'laboral'];
+		const idx = ids.indexOf(activeTab);
+		const node = tabsRef.current[idx];
+		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
+	}, [activeTab]);
 
-  useEffect(() => {
-    if (formData.FechaNacimiento && /^\d+$/.test(formData.FechaNacimiento)) {
-      const date = clarionDateToDate(formData.FechaNacimiento);
-      if (date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        setFormData(prev => ({
-          ...prev,
-          FechaNacimiento: `${year}-${month}-${day}`
-        }));
-      }
-    }
-  }, [formData.FechaNacimiento]);
+	return (
+		<form
+			id='patient-create-form'
+			onSubmit={handleSubmit}
+			className={styles.form}
+			style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+		>
+			<div className={'modalFullCenterWrapper ' + styles.modalContainer}>
+				<HeaderAddPatient
+					formData={formData}
+					handleChange={handleChange}
+					errors={errors}
+					tiposDocumento={tiposDocumento}
+					getRenaperInfo={getRenaperInfo}
+					buscandoRenaper={buscandoRenaper}
+					onPhotoChange={(file: File | null) => {
+						setFotoFile(file);
+						if (file) {
+							const objectUrl = URL.createObjectURL(file);
+							setPhotoPreview(objectUrl);
+							setFormData((prev) => ({ ...prev, Foto: objectUrl }));
+						} else {
+							setPhotoPreview(null);
+							setFormData((prev) => ({ ...prev, Foto: null }));
+						}
+					}}
+					setPhotoUploading={setIsPhotoUploading}
+				/>
 
-  const handleGetProvincia = async (valorProvincia: string) => {
-    const provincia = await provinciaService.getProvincia(valorProvincia);
-    const provinciaData = Array.isArray(provincia) ? provincia[0] : provincia;
-    formData.Nacionalidad = provinciaData?.nacionalidad || '';
-    setFormData(prev => ({
-      ...prev,
-      Provincia: provinciaData?.descripcion || ''
-    }));
-  }
+				<div className={styles.tabsContainer}>
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[0] = el;
+						}}
+						className={`${styles.tab} ${
+							activeTab === 'personal' ? styles.tabActive : ''
+						}`}
+						onClick={() => setActiveTab('personal')}
+					>
+						Datos Personales y Contacto
+					</div>
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[1] = el;
+						}}
+						className={`${styles.tab} ${
+							activeTab === 'other' ? styles.tabActive : ''
+						}`}
+						onClick={() => setActiveTab('other')}
+					>
+						Otros Datos
+					</div>
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[2] = el;
+						}}
+						className={`${styles.tab} ${
+							activeTab === 'laboral' ? styles.tabActive : ''
+						}`}
+						onClick={() => setActiveTab('laboral')}
+					>
+						Datos Laborales
+					</div>
+					<div className={styles.indicator} style={indicatorStyle} />
+				</div>
 
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    console.log(name);
-    if (name === 'ValorLocalidad') {
-      const selected = localidadOptions.find(
-        l => String(l.Valor).trim() === value.trim()
-      );
-      setSelectedLocalidad(selected || null);
-      if (selected?.ValorProvincia) {
-        try {
-          await handleGetProvincia(selected.ValorProvincia);
-        } catch (error) {
-          console.error('Error al obtener provincia:', error);
-        }
-      }
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Limpiar errores al editar el campo
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
+				<div ref={containerRef} className={styles.tabContentContainer}>
+					<SwitchTransition mode='out-in'>
+						<CSSTransition
+							key={activeTab}
+							nodeRef={nodeRef}
+							timeout={300}
+							classNames={{
+								enter: styles['fade-slide-enter'],
+								enterActive: styles['fade-slide-enter-active'],
+								exit: styles['fade-slide-exit'],
+								exitActive: styles['fade-slide-exit-active'],
+							}}
+							unmountOnExit
+							onEnter={() => {
+								if (containerRef.current)
+									containerRef.current.style.height = '0px';
+							}}
+							onEntering={() => {
+								if (containerRef.current && nodeRef.current)
+									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
+							}}
+							onExit={() => {
+								if (containerRef.current && nodeRef.current)
+									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
+							}}
+						>
+							<div ref={nodeRef}>
+								{activeTab === 'personal' && (
+									<PersonalDataTab
+										formData={formData}
+										errors={errors}
+										handleChange={handleChange}
+										localidadOptions={localidadOptions}
+										loading={loading}
+										sexoOptions={sexoOptions}
+										estadosCiviles={estadosCiviles}
+									/>
+								)}
+								{activeTab === 'other' && (
+									<OtherDataTab
+										formData={formData}
+										handleChange={handleChange}
+										errors={errors}
+									/>
+								)}
+								{activeTab === 'laboral' && (
+									<LaboralDataTab
+										formData={formData}
+										setFormData={setFormData}
+									/>
+								)}
+							</div>
+						</CSSTransition>
+					</SwitchTransition>
+				</div>
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.ApellidoyNombre.trim()) {
-      newErrors.ApellidoyNombre = 'El nombre y apellido es obligatorio';
-    }
-    
-    if (!formData.NumeroHC.trim()) {
-      newErrors.NumeroHC = 'El número de historia clínica es obligatorio';
-    } else if (!/^\d+$/.test(formData.NumeroHC)) {
-      newErrors.NumeroHC = 'El número de historia clínica debe contener solo números';
-    }
-    
-    if (formData.FechaNacimiento) {
-      const today = new Date();
-      const birthDate = new Date(formData.FechaNacimiento);
-      if (birthDate > today) {
-        newErrors.FechaNacimiento = 'La fecha de nacimiento no puede ser futura';
-      }
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-    
-    try {
-      setIsSubmitting(true);
-      const success = await onSubmit(formData);
-      if (success) {
-        onClose();
-      }
-    } catch (error) {
-      console.error('Error al guardar el paciente:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSexos();
-    fetchLocalidades();
-  }, []);
-
-  return (
-    <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.modalContainer}>
-            {/* Header con datos de identificación */}
-            <div className={styles.formHeader}>
-                <div className={styles.headerTitle}></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className={styles.headerRow}>
-                      <div className={styles.formGroup}>
-                        <label className={styles.label}>Número HC</label>
-                        <input
-                            type="text"
-                            name="NumeroHC"
-                            value={formData.NumeroHC}
-                            onChange={handleChange}
-                            className={`${styles.input} ${errors.NumeroHC ? styles.error : ''}`}
-                        />
-                        {errors.NumeroHC && (
-                            <div className={styles.errorMessage}>{errors.NumeroHC}</div>
-                        )}
-                      </div>
-                      
-                      <div className={styles.formGroup}>
-                        <label className={`${styles.label} ${styles.requiredField}`}>Tipo Documento</label>
-                        <select
-                            name="TipoDocumento"
-                            value={formData.TipoDocumento}
-                            onChange={handleChange}
-                            className={`${styles.select} ${errors.TipoDocumento ? styles.error : ''}`}
-                            required
-                        >
-                            {tiposDocumento.map(tipo => (
-                            <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
-                            ))}
-                        </select>
-                        {errors.TipoDocumento && (
-                            <div className={styles.errorMessage}>{errors.TipoDocumento}</div>
-                        )}
-                      </div>
-                      
-                      <div className={styles.formGroup}>
-                        <label className={`${styles.label} ${styles.requiredField}`}>Nº Documento</label>
-
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <input
-                            type="text"
-                            name="NumeroDocumento"
-                            value={formData.NumeroDocumento}
-                            onChange={handleChange}
-                            className={`${styles.input} ${errors.NumeroDocumento ? styles.error : ''}`}
-                            required
-                          />
-
-                          {!buscandoRenaper ? 
-                            <button type="button" onClick={(e: any) => getRenaperInfo(e, Number(formData.NumeroDocumento), formData.Sexo)} className={`${styles.buttonBuscar}`}>
-                              <svg viewBox="0 0 24 24" width={20} height={20} color={"currentColor"} fill={"none"}>
-                                  <path d="M17 17L21 21" stroke="#141B34" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                  <path d="M19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19C15.4183 19 19 15.4183 19 11Z" stroke="#141B34" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </button>
-                          :
-                            <svg className='animate-spin' viewBox="0 0 24 24" width={24} height={24} color={"currentColor"} fill={"none"}>
-                                <path d="M12 3V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                                <path d="M12 18V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                                <path d="M21 12L18 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                                <path d="M6 12L3 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                                <path d="M18.3635 5.63672L16.2422 7.75804" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                                <path d="M7.75804 16.2422L5.63672 18.3635" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                                <path d="M18.3635 18.3635L16.2422 16.2422" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                                <path d="M7.75804 7.75804L5.63672 5.63672" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                            </svg>
-                          }
-                        </div>
-
-                        {errors.NumeroDocumento && (
-                          <div className={styles.errorMessage}>{errors.NumeroDocumento}</div>
-                        )}
-                      </div>
-                  </div>
-                </div>
-                <div className={styles.formGroup}>
-                    <label className={`${styles.label} ${styles.requiredField}`}>Apellido y Nombre</label>
-                    <input
-                    type="text"
-                    name="ApellidoyNombre"
-                    value={formData.ApellidoyNombre}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.ApellidoyNombre ? styles.error : ''}`}
-                    required
-                    />
-                    {errors.ApellidoyNombre && (
-                    <div className={styles.errorMessage}>{errors.ApellidoyNombre}</div>
-                    )}
-                </div>
-            </div>
-            
-            {/* Título de la sección */}
-            <div className={styles.tabs}>
-                <div className={`${styles.tab} ${styles.tabActive}`}>
-                    Datos Personales y Contacto
-                </div>
-            </div>
-            
-            {/* Contenido del formulario */}
-            <div className={styles.formContent}>
-                <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                    <label className={styles.label}>Domicilio</label>
-                    <input
-                        type="text"
-                        name="Domicilio"
-                        value={formData.Domicilio}
-                        onChange={handleChange}
-                        className={`${styles.input} ${errors.Domicilio ? styles.error : ''}`}
-                    />
-                    {errors.Domicilio && (
-                        <div className={styles.errorMessage}>{errors.Domicilio}</div>
-                    )}
-                    </div>
-                </div>
-
-                <div className={`${styles.formRow} ${styles.double}`}>
-                    <div className={styles.formGroup}>
-                    <label className={styles.label}>Localidad</label>
-                    <select
-                        name="ValorLocalidad"
-                        value={formData.ValorLocalidad}
-                    onChange={handleChange}
-                    className={`${styles.select} ${errors.ValorLocalidad ? styles.error : ''}`}
-                >
-                    <option value="">Seleccione...</option>
-                    {localidadOptions.map(localidad => (
-                    <option key={localidad.Valor} value={localidad.Valor}>{localidad.NombreLocalidad}</option>
-                    ))}
-                </select>
-                {loading.localidad && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#0083A9' }}>Cargando...</span>}
-                </div>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Provincia</label>
-                    <input
-                    disabled
-                    type="text"
-                    name="Provincia"
-                    value={formData.Provincia}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.Provincia ? styles.error : ''}`}
-                />
-                {errors.Provincia && (
-                    <div className={styles.errorMessage}>{errors.Provincia}</div>
-                )}
-                </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Nacionalidad</label>
-                    <input
-                        disabled
-                        type="text"
-                        name="Nacionalidad"
-                        value={formData.Nacionalidad}
-                        onChange={handleChange}
-                        className={`${styles.input} ${errors.Nacionalidad ? styles.error : ''}`}
-                    />
-                    {errors.Nacionalidad && (
-                        <div className={styles.errorMessage}>{errors.Nacionalidad}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Fecha de Nacimiento</label>
-                    <input
-                        type="date"
-                        name="FechaNacimiento"
-                        value={formData.FechaNacimiento}
-                        onChange={handleChange}
-                        className={`${styles.input} ${errors.FechaNacimiento ? styles.error : ''}`}
-                    />
-                    {errors.FechaNacimiento && (
-                        <div className={styles.errorMessage}>{errors.FechaNacimiento}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>CUIT/CUIL</label>
-                    <input
-                        type="text"
-                        name="CUIT"
-                        value={formData.CUIT}
-                        onChange={handleChange}
-                        className={`${styles.input} ${errors.CUIT ? styles.error : ''}`}
-                        placeholder="XX-XXXXXXXX-X"
-                    />
-                    {errors.CUIT && (
-                        <div className={styles.errorMessage}>{errors.CUIT}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Sexo</label>
-                    <select
-                        name="Sexo"
-                        value={formData.Sexo}
-                        onChange={handleChange}
-                        className={`${styles.select} ${errors.Sexo ? styles.error : ''}`}
-                    >
-                        <option value="">Seleccione...</option>
-                        {sexoOptions.map(sexo => (
-                        <option key={sexo.valor} value={sexo.valor}>{sexo.descripcion}</option>
-                        ))}
-                    </select>
-                    {loading.sexo && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#0083A9' }}>Cargando...</span>}
-                    {errors.Sexo && (
-                        <div className={styles.errorMessage}>{errors.Sexo}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Estado Civil</label>
-                    <select
-                        name="EstadoCivil"
-                        value={formData.EstadoCivil}
-                        onChange={handleChange}
-                        className={`${styles.select} ${errors.EstadoCivil ? styles.error : ''}`}
-                    >
-                        {estadosCiviles.map(estado => (
-                        <option key={estado.value} value={estado.value}>{estado.label}</option>
-                        ))}
-                    </select>
-                    {errors.EstadoCivil && (
-                        <div className={styles.errorMessage}>{errors.EstadoCivil}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formContent}>
-              <div className={`${styles.formRow} ${styles.double}`}>
-                <div className={styles.formGroup}>
-                      <label className={styles.label}>Teléfono Particular</label>
-                      <input
-                          type="text"
-                          name="TelefonoParticular"
-                          value={formData.TelefonoParticular}
-                          onChange={handleChange}
-                          className={`${styles.input} ${errors.TelefonoParticular ? styles.error : ''}`}
-                      />
-                      {errors.TelefonoParticular && (
-                          <div className={styles.errorMessage}>{errors.TelefonoParticular}</div>
-                      )}
-                  </div>
-                  <div className={styles.formGroup}>
-                      <label className={styles.label}>Teléfono Negocio</label>
-                      <input
-                          type="text"
-                          name="TelefonoNegocio"
-                          value={formData.TelefonoNegocio}
-                          onChange={handleChange}
-                          className={`${styles.input} ${errors.TelefonoNegocio ? styles.error : ''}`}
-                      />
-                      {errors.TelefonoNegocio && (
-                          <div className={styles.errorMessage}>{errors.TelefonoNegocio}</div>
-                      )}
-                  </div>
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Mail</label>
-                    <input
-                        type="email"
-                        name="Mail"
-                        value={formData.Mail}
-                        onChange={handleChange}
-                        className={`${styles.input} ${errors.Mail ? styles.error : ''}`}
-                    />
-                    {errors.Mail && (
-                        <div className={styles.errorMessage}>{errors.Mail}</div>
-                    )}
-                </div>
-            </div>
-
-            <div className={styles.formContent}>
-              <div className={`${styles.formRow} ${styles.double}`}>
-                  <div className={styles.formGroup}>
-                      <label className={styles.label}>Número de Cuenta</label>
-                      <input
-                      type="text"
-                      name="NumeroCuenta"
-                      value={formData.NumeroCuenta}
-                      onChange={handleChange}
-                      className={`${styles.input} ${errors.NumeroCuenta ? styles.error : ''}`}
-                      />
-                      {errors.NumeroCuenta && (
-                      <div className={styles.errorMessage}>{errors.NumeroCuenta}</div>
-                      )}
-                  </div>
-                  <div className={styles.formGroup}>
-                      <label className={styles.label}>SSN</label>
-                      <input
-                      type="text"
-                      name="NumeroSSN"
-                      value={formData.NumeroSSN}
-                      onChange={handleChange}
-                      className={`${styles.input} ${errors.NumeroSSN ? styles.error : ''}`}
-                      />
-                      {errors.NumeroSSN && (
-                      <div className={styles.errorMessage}>{errors.NumeroSSN}</div>
-                      )}
-                  </div>
-              </div>
-            </div>
-
-            <div className={styles.buttonContainer}>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className={styles.cancelButton}
-                    disabled={isSubmitting}
-                >
-                    Cancelar
-                </button>
-                <button
-                    type="submit"
-                    className={`${styles.submitButton} ${isSubmitting ? styles.loading : ''}`}
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
-                </button>
-            </div>
-        </div>
-        </div>
-    </form>
-  );
+				<div className={styles.buttonContainer}>
+					<button
+						type='button'
+						onClick={onClose}
+						className={styles.cancelButton}
+						disabled={internalSubmitting}
+					>
+						Cancelar
+					</button>
+					<button
+						type='submit'
+						className={`${styles.submitButton} ${
+							internalSubmitting ? styles.loading : ''
+						}`}
+						disabled={internalSubmitting || isPhotoUploading}
+					>
+						{internalSubmitting && (
+							<span className={styles.inlineSpinner} aria-hidden='true' />
+						)}
+						{internalSubmitting
+							? 'Guardando...'
+							: isEditing
+							? 'Actualizar'
+							: 'Guardar'}
+					</button>
+				</div>
+			</div>
+		</form>
+	);
 };
 
 export default PatientFormBase;

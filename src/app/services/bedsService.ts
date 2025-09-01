@@ -65,6 +65,30 @@ export const bedsService = {
       console.error("Error fetching sectores:", error);
       return [];
     }
+  },
+
+  getTotalBeds: async (): Promise<{totalCamas: number, camasDisponibles: number, camasOcupadas: number, camasNoDisponibles: number}> => {
+    try {
+      const res = await fetch(`${BASE_URL}/beds/total`);
+      const json = await res.json();
+      
+      if (!json.success) throw new Error('Error al obtener total de camas');
+      
+      return {
+        totalCamas: json.data.totalCamas || 0,
+        camasDisponibles: json.data.camasDisponibles || 0,
+        camasOcupadas: json.data.camasOcupadas || 0,
+        camasNoDisponibles: json.data.camasNoDisponibles || 0
+      };
+    } catch (error) {
+      console.error("Error fetching total beds:", error);
+      return {
+        totalCamas: 0,
+        camasDisponibles: 0,
+        camasOcupadas: 0,
+        camasNoDisponibles: 0
+      };
+    }
   }
 };
 
