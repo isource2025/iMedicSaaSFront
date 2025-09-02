@@ -43,6 +43,16 @@
       "static/css/7e4c15894dd378ba.css",
       "static/chunks/app/dashboard/admission/tables/page-08f77bebb1b461c5.js"
     ],
+    "/dashboard/beds/tables/page": [
+      "static/chunks/webpack-75d67e6f15b4a602.js",
+      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
+      "static/chunks/69-7f311d4a56fa7659.js",
+      "static/chunks/main-app-8c8f95ca38308a59.js",
+      "static/chunks/8e1d74a4-dde7036572b11256.js",
+      "static/chunks/939-41b2b469e8ddcb00.js",
+      "static/css/063148c73a990fb0.css",
+      "static/chunks/app/dashboard/beds/tables/page-65f6347f5e2cb638.js"
+    ],
     "/dashboard/billing/tables/page": [
       "static/chunks/webpack-75d67e6f15b4a602.js",
       "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
@@ -53,24 +63,14 @@
       "static/css/063148c73a990fb0.css",
       "static/chunks/app/dashboard/billing/tables/page-f843d0fc3b9ade8a.js"
     ],
-    "/dashboard/bed-detail/page": [
+    "/dashboard/page": [
       "static/chunks/webpack-75d67e6f15b4a602.js",
       "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
       "static/chunks/69-7f311d4a56fa7659.js",
       "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/9c4e2130-1341baecc637edd2.js",
-      "static/css/d4bd20dc3793a697.css",
-      "static/chunks/app/dashboard/bed-detail/page-861fe2e5486c1588.js"
-    ],
-    "/dashboard/beds/tables/page": [
-      "static/chunks/webpack-75d67e6f15b4a602.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/8e1d74a4-dde7036572b11256.js",
-      "static/chunks/939-41b2b469e8ddcb00.js",
-      "static/css/063148c73a990fb0.css",
-      "static/chunks/app/dashboard/beds/tables/page-65f6347f5e2cb638.js"
+      "static/chunks/107-32b39554cfa5b3c4.js",
+      "static/css/a3d8de84ada864c9.css",
+      "static/chunks/app/dashboard/page-2585f8ccbcfc67d9.js"
     ],
     "/dashboard/beds/page": [
       "static/chunks/webpack-75d67e6f15b4a602.js",
@@ -86,14 +86,14 @@
       "static/css/ede787b7e383fa73.css",
       "static/chunks/app/dashboard/beds/page-7635bf084e3432d7.js"
     ],
-    "/dashboard/page": [
+    "/dashboard/bed-detail/page": [
       "static/chunks/webpack-75d67e6f15b4a602.js",
       "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
       "static/chunks/69-7f311d4a56fa7659.js",
       "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/107-32b39554cfa5b3c4.js",
-      "static/css/a3d8de84ada864c9.css",
-      "static/chunks/app/dashboard/page-2585f8ccbcfc67d9.js"
+      "static/chunks/9c4e2130-1341baecc637edd2.js",
+      "static/css/d4bd20dc3793a697.css",
+      "static/chunks/app/dashboard/bed-detail/page-861fe2e5486c1588.js"
     ],
     "/dashboard/patients/analytics/page": [
       "static/chunks/webpack-75d67e6f15b4a602.js",
