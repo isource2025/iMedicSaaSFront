@@ -10,6 +10,7 @@ export default function Home() {
           <LoginCarousel />
         </div>
         <div className={styles.formSection}>
+          <span className={styles.loginNote}>Software iMedic desarrollado por iSource</span>
           <LoginForm />
         </div>
       </div>
