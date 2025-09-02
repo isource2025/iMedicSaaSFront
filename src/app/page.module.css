@@ -5,7 +5,7 @@
   padding: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: stretch;
   background-color: #f9fafb;
 }
 
@@ -21,21 +21,16 @@
   flex: 1;
   position: relative;
   overflow: hidden;
-  display: none; /* Oculto en móviles por defecto */
+  display: block; /* Siempre visible para mantener 50/50 */
 }
 
-.healthImageContainer {
+.videoTag {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/images/healthcare-tech.jpg');
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: cover;
 }
 
 .overlay {
@@ -59,20 +54,5 @@
 
 /* Media query para tablets y escritorio */
 @media (min-width: 768px) {
-  .imageSection {
-    display: block;
-  }
-  
-  .loginGrid {
-    max-width: 1200px;
-    max-height: 800px;
-    height: 85vh;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    margin: 0 auto;
-  }
-  
-  .formSection {
-    border-radius: 0 1rem 1rem 0;
-  }
+  /* Mantener 50/50 sin restricciones adicionales */
 }

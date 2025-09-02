@@ -1,0 +1,143 @@
+.carouselRoot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slidesTrack {
+  display: flex;
+  height: 100%;
+  transition: transform 700ms ease;
+  will-change: transform;
+}
+
+.slide {
+  position: relative;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  /* Evitar que el slide se encoja y respete el width inline */
+  flex: 0 0 auto;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  /* Más contraste sobre las imágenes para mejorar legibilidad */
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)),
+              linear-gradient(135deg, rgba(0, 131, 169, 0.35), rgba(0, 181, 226, 0.25)); /* Pantone 314C & 313U */
+}
+
+.slideContent {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  top: 70%;
+  left: 3rem;
+  right: 3rem;
+  color: #FFFFFF;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+}
+
+.slideTitle {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+  color: white;
+}
+
+.slideDescription {
+  font-size: 1rem;
+  max-width: 48ch;
+  color: rgb(214, 177, 177);
+}
+
+.navButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  color: #FFFFFF;
+  background: radial-gradient(circle at 30% 30%, rgba(0,0,0,0.35), rgba(0,0,0,0.6));
+  border: 1px solid rgba(65, 200, 220, 0.35); /* Pantone 311C */
+  transition: background-color 0.2s ease, transform 0.08s ease;
+}
+
+.navButton:hover {
+  background: radial-gradient(circle at 30% 30%, rgba(0,0,0,0.45), rgba(0,0,0,0.75));
+}
+
+.prev { left: 0.75rem; }
+.next { right: 0.75rem; }
+
+.dots {
+  position: absolute;
+  bottom: 4.5rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  z-index: 3;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(0,0,0,0.25);
+}
+
+.active {
+  background: #00B5E2; /* Pantone 313U */
+  border-color: #0083A9; /* Pantone 314C */
+  box-shadow: 0 0 0 4px rgba(0, 181, 226, 0.25);
+}
+
+.brandsFooter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(2px);
+  color: white;
+  z-index: 2;
+}
+
+.brandsTrack {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-weight: 700;
+}
+
+.brandItem {
+  opacity: 0.95;
+}
+
+@media (max-width: 767px) {
+  .slideContent { bottom: 5rem; left: 1.25rem; right: 1.25rem; }
+  .brandsFooter { height: 2.75rem; }
+}
