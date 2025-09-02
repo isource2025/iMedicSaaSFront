@@ -66,6 +66,17 @@
   max-width: calc(100% - 2rem);
 }
 
+.brandLink {
+  font-weight: 700; /* un poco más gruesa */
+  color: #0083A9; /* Pantone 314C */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.brandLink:hover {
+  color: #00B5E2; /* Pantone 313U */
+}
+
 /* Media query para tablets y escritorio */
 @media (min-width: 768px) {
   /* Mantener 50/50 sin restricciones adicionales */

@@ -10,7 +10,17 @@ export default function Home() {
           <LoginCarousel />
         </div>
         <div className={styles.formSection}>
-          <span className={styles.loginNote}>Software iMedic desarrollado por iSource</span>
+          <span className={styles.loginNote}>
+            Software iMedic desarrollado por{' '}
+            <a
+              href="https://isource.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.brandLink}
+            >
+              iSource
+            </a>
+          </span>
           <LoginForm />
         </div>
       </div>
