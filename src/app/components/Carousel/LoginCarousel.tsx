@@ -50,8 +50,7 @@ export default function LoginCarousel() {
   }, [slides.length]);
 
   const goTo = (i: number) => setIndex(i % slides.length);
-  const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
-  const next = () => setIndex((i) => (i + 1) % slides.length);
+  
 
   // Cálculos de estilo para ancho del track y desplazamiento por slide
   const trackWidth = `${slides.length * 100}%`;
@@ -81,14 +80,7 @@ export default function LoginCarousel() {
           </section>
         ))}
       </div>
-
-      <button className={styles.navButton + " " + styles.prev} onClick={prev} aria-label="Anterior">
-        ‹
-      </button>
-      <button className={styles.navButton + " " + styles.next} onClick={next} aria-label="Siguiente">
-        ›
-      </button>
-
+      
       <div className={styles.dots} role="tablist" aria-label="Selector de diapositivas">
         {slides.map((_, i) => (
           <button
@@ -102,15 +94,15 @@ export default function LoginCarousel() {
         ))}
       </div>
 
-      <footer className={styles.brandsFooter} aria-label="Marcas aliadas">
+      {/* <footer className={styles.brandsFooter} aria-label="Marcas aliadas">
         <div className={styles.brandsTrack}>
-          {/* Placeholder de marcas/hospitales. Reemplazar por logos reales si están disponibles */}
-          <span className={styles.brandItem}>Hospital Central</span>
+           <span className={styles.brandItem}>Hospital Central</span>
           <span className={styles.brandItem}>Clínica del Sur</span>
           <span className={styles.brandItem}>Sanatorio Norte</span>
-          <span className={styles.brandItem}>Hospital Provincial</span>
+          <span className={styles.brandItem}>Hospital Provincial</span> 
         </div>
-      </footer>
+      </footer> */}
+      
     </div>
   );
 }

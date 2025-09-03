@@ -23,15 +23,46 @@ interface ApiResponse<T> {
  */
 export const localidadService = {
   /**
-   * Obtiene todos los registros de la tabla imLocalidades
-   * @returns Promise con la lista de localidades
+   * Obtiene registros de la tabla imLocalidades con paginación y búsqueda
+   * @param page Número de página (por defecto 1)
+   * @param limit Límite de registros por página (por defecto 50)
+   * @param search Término de búsqueda opcional
+   * @returns Promise con la lista paginada de localidades
    */
-  getLocalidades: async (): Promise<Localidad[]> => {
+  getLocalidades: async (page = 1, limit = 50, search = ''): Promise<{
+    data: Localidad[];
+    pagination?: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      limit: number;
+    };
+  }> => {
     try {
-      const response = await apiService.get<ApiResponse<Localidad[]>>('/localidad');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        withCount: 'true'
+      });
+      
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+      
+      const response = await apiService.get<ApiResponse<Localidad[]> & {
+        pagination?: {
+          currentPage: number;
+          totalPages: number;
+          totalCount: number;
+          limit: number;
+        };
+      }>(`/localidad?${params.toString()}`);
       
       if (response.data.success && response.data.data) {
-        return response.data.data;
+        return {
+          data: response.data.data,
+          pagination: response.data.pagination
+        };
       }
       
       throw new Error(response.data.message || 'Error al obtener localidades');
@@ -40,6 +71,21 @@ export const localidadService = {
       if (error.response) {
         throw new Error(error.response.data?.message || 'Error al obtener localidades');
       }
+      throw error;
+    }
+  },
+
+  /**
+   * Busca localidades por término de búsqueda (método de compatibilidad)
+   * @param searchTerm Término de búsqueda
+   * @returns Promise con la lista de localidades encontradas
+   */
+  searchLocalidades: async (searchTerm: string): Promise<Localidad[]> => {
+    try {
+      const result = await localidadService.getLocalidades(1, 100, searchTerm);
+      return result.data;
+    } catch (error: any) {
+      console.error('Error searching localidades:', error);
       throw error;
     }
   },
