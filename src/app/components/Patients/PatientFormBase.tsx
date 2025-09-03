@@ -11,6 +11,7 @@ import { CSSTransition, SwitchTransition } from 'react-transition-group';
 import styles from '../../components/modals/ModalAddPatient/styles.module.css';
 import React, { useState, useEffect, useRef } from 'react';
 import coberturaService from '../../services/coberturaService';
+import { apiService } from '../../services/axios';
 
 interface PatientFormBaseProps {
 	onSubmit: (data: any) => Promise<boolean> | boolean;
@@ -28,13 +29,6 @@ const tiposDocumento = [
 	{ value: 'LC', label: 'LC' },
 	{ value: 'LE', label: 'LE' },
 	{ value: 'PAS', label: 'PAS' },
-];
-const estadosCiviles = [
-	{ value: 'SOLTERO', label: 'SOLTERO' },
-	{ value: 'CASADO', label: 'CASADO' },
-	{ value: 'DIVORCIADO', label: 'DIVORCIADO' },
-	{ value: 'VIUDO', label: 'VIUDO' },
-	{ value: 'UNIÓN CIVIL', label: 'UNIÓN CIVIL' },
 ];
 
 const toStr = (v: any, def = '') => (v === undefined || v === null ? def : String(v));
@@ -98,15 +92,20 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const [coberturaOptions, setCoberturaOptions] = useState<
 		{ value: string; label: string }[]
 	>([]);
+	const [estadosCiviles, setEstadosCiviles] = useState<{ value: string; label: string }[]>(
+		[],
+	);
 	const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
 	const [loading, setLoading] = useState<{
 		localidad: boolean;
 		sexo: boolean;
 		cobertura: boolean;
+		estadoCivil: boolean;
 	}>({
 		localidad: false,
 		sexo: false,
 		cobertura: false,
+		estadoCivil: false,
 	});
 	const [fotoFile, setFotoFile] = useState<File | null>(null);
 	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -151,6 +150,22 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			console.error('Error coberturas', e);
 		} finally {
 			setLoading((p) => ({ ...p, cobertura: false }));
+		}
+	};
+
+	const fetchEstadoCivil = async () => {
+		try {
+			setLoading((p) => ({ ...p, estadoCivil: true }));
+
+			const { data } = await apiService.get<[{ valor: string; descripcion: string }]>(
+				'/estados-civiles',
+			);
+
+			setEstadosCiviles(data.map((ec) => ({ value: ec.valor, label: ec.descripcion })));
+		} catch (e) {
+			console.error('Error estados civiles', e);
+		} finally {
+			setLoading((p) => ({ ...p, estadoCivil: false }));
 		}
 	};
 
@@ -322,6 +337,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		fetchSexos();
 		fetchLocalidades();
 		fetchCoberturas();
+		fetchEstadoCivil();
 	}, []);
 
 	// Al editar: si ya viene ValorLocalidad, actualizar Provincia y Nacionalidad automáticamente una vez

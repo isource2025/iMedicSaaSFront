@@ -13,6 +13,7 @@ interface OtherDataTabProps {
 		localidad: boolean;
 		sexo: boolean;
 		cobertura: boolean;
+		estadoCivil: boolean;
 	};
 	sexoOptions: { valor: string; descripcion: string }[];
 	estadosCiviles: { value: string; label: string }[];
@@ -208,7 +209,7 @@ export default function PersonalDataTab({
 								target: { name: 'EstadoCivil', value: val },
 							} as any)
 						}
-						isLoading={false}
+						isLoading={loading.estadoCivil}
 						options={estadoCivilSelectOptions}
 					/>
 					{errors.EstadoCivil && (
