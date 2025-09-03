@@ -271,7 +271,7 @@ export default function PersonalDataTab({
 				<LoadingSelect
 					name='Cobertura'
 					label='Cobertura:'
-					value={formData.Cobertura || ''}
+					value={Number(formData.Cobertura) || ''}
 					onChange={(val) =>
 						handleChange({ target: { name: 'Cobertura', value: val } } as any)
 					}

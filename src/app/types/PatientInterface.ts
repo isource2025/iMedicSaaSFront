@@ -81,7 +81,7 @@ export interface PatientFormData {
 
 	SituacionLaboral?: string;
 	NivelEstudios?: string;
-	Ocupacion?: string;
+	Ocupacion?: number;
 }
 
 export interface ApiResponse<T> {

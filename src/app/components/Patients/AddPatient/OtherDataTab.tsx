@@ -31,8 +31,6 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 	const [militarOptions, setMilitarOptions] = useState<Option[]>([]);
 	const [dadorOptions, setDadorOptions] = useState<Option[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	console.log('[OtherDataTab] Renderizado, isLoading:', isLoading);
-	console.log('[OtherDataTab] formData actual:', formData);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -117,8 +115,14 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 		};
 	}, []);
 
-	console.log('[Option Languages]: ', idiomaOptions);
-
+	const formatHora = (hora: string) => {
+		//la hora llega por ejemplo 1533
+		if (hora.includes(':')) return hora; //ya está formateada
+		console.log('formateando hora:', hora);
+		const m = String(hora).slice(2);
+		const h = String(hora).slice(0, 2);
+		return `${h}:${m}`;
+	};
 	return (
 		<div className={styles.formContent}>
 			{/* Línea 1: Raza / Idioma */}

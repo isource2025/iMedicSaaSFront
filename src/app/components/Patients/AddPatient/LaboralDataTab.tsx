@@ -8,7 +8,7 @@ import stylesPersonal from './Personal.module.css';
 import { apiService } from '@/src/app/services/axios';
 
 interface Option {
-	value: string;
+	value: string | number;
 	label: string;
 }
 
@@ -35,11 +35,10 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 					situacionLaboral: Array<{ SituacionLaboral: string }>;
 				};
 			}>('/patients/catalogo-laboral');
-			console.log('[DatosLaboralesTab] Catálogo laboral recibido:', data);
 
 			setOcupacionOptions(
 				data.data.ocupaciones.map((o) => ({
-					value: String(o.Valor),
+					value: Number(o.Valor),
 					label: o.Descripcion,
 				})),
 			);
@@ -107,18 +106,6 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 	const setFD = (patch: Partial<PatientFormData>) =>
 		setFormData((prev) => ({ ...prev, ...patch }));
 
-	useEffect(() => {
-		// ¿el valor actual está en el catálogo?
-		const inCatalog = formData.Ocupacion
-			? ocupacionOptions.some((o) => o.value === String(formData.Ocupacion))
-			: false;
-	}, [formData.Ocupacion, ocupacionOptions]);
-
-	// helper para el valor del select (vacío si está en "Otro")
-	const ocupacionValue = useMemo(() => {
-		return String(formData.Ocupacion || '');
-	}, [formData.Ocupacion]);
-
 	return (
 		<div className={styles.laboralDataTab}>
 			{/* --- Ocupación (fuera del modal), como en la app original --- */}
@@ -127,8 +114,10 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 					name='Ocupacion'
 					label='Ocupación:'
 					isLoading={!ocupacionOptions.length}
-					value={ocupacionValue}
-					onChange={(value: string) => setFD({ Ocupacion: value })}
+					value={Number(formData.Ocupacion)}
+					onChange={(v) =>
+						setFD({ Ocupacion: typeof v === 'number' ? v : Number(v) })
+					}
 					options={ocupacionOptions}
 				/>
 
@@ -149,7 +138,6 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 					<table className={styles.table}>
 						<thead>
 							<tr>
-								<th>Documento</th>
 								<th>Razón Social</th>
 								<th>Domicilio Empresa</th>
 								<th>Teléfono Empresa</th>
@@ -160,7 +148,6 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 						<tbody>
 							{formData.Trabajos.map((t, idx) => (
 								<tr key={idx}>
-									<td>{t.DocumentoEmpresa || '-'}</td>
 									<td>{t.RazonSocial || '-'}</td>
 									<td>{t.DomicilioEmpresa || '-'}</td>
 									<td>{t.TelefonoEmpresa || '-'}</td>
@@ -201,7 +188,12 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 					name='SituacionLaboral'
 					isLoading={!situacionOptions.length}
 					value={String(formData.SituacionLaboral || '')}
-					onChange={(value: string) => setFD({ SituacionLaboral: value })}
+					onChange={(value) =>
+						setFD({
+							SituacionLaboral:
+								typeof value === 'string' ? value : String(value),
+						})
+					}
 					options={situacionOptions}
 				/>
 				<CustomSelect
@@ -209,7 +201,11 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 					isLoading={!estudiosOptions.length}
 					name='NivelEstudios'
 					value={String(formData.NivelEstudios || '')}
-					onChange={(value: string) => setFD({ NivelEstudios: value })}
+					onChange={(value) =>
+						setFD({
+							NivelEstudios: typeof value === 'string' ? value : String(value),
+						})
+					}
 					options={estudiosOptions}
 				/>
 			</div>

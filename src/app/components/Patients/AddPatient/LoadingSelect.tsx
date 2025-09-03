@@ -3,14 +3,14 @@ import { createPortal } from 'react-dom';
 import styles from './Personal.module.css';
 
 interface Option {
-	value: string;
+	value: string | number;
 	label: string;
 }
 interface CustomSelectProps {
 	label: string;
 	name: string;
-	value: string;
-	onChange: (value: string) => void;
+	value: string | number;
+	onChange: (value: string | number) => void;
 	isLoading: boolean;
 	options: Option[];
 }
@@ -48,11 +48,6 @@ export default function CustomSelect({
 	const close = () => {
 		setIsOpen(false);
 		setSearchTerm('');
-	};
-
-	const handleSelect = (opt: Option) => {
-		onChange(opt.value);
-		close();
 	};
 
 	// Cálculo de posición (y decidir arriba/abajo)
@@ -121,6 +116,7 @@ export default function CustomSelect({
 		.filter(Boolean)
 		.join(' ');
 
+	if (name == 'Ocupacion') console.log({ value, selected });
 	return (
 		<div className={styles.formGroup} ref={wrapperRef}>
 			<label className={styles.label} htmlFor={name}>

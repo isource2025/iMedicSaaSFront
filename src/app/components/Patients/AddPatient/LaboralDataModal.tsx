@@ -51,7 +51,6 @@ export default function LaboralDataModal({
 
 	const validate = (): boolean => {
 		const e: Record<string, string> = {};
-		if (!trabajo.DocumentoEmpresa?.trim()) e.DocumentoEmpresa = 'Documento es obligatorio';
 		if (!trabajo.RazonSocial?.trim()) e.RazonSocial = 'Razón social es obligatoria';
 		if (!trabajo.CuitEmpresa?.trim()) e.CuitEmpresa = 'CUIT es obligatorio';
 		setErrors(e);
@@ -70,25 +69,6 @@ export default function LaboralDataModal({
 				<h3>{initialData ? 'Editar Empleo' : 'Agregar Empleo'}</h3>
 
 				<div className={styles.formGrid}>
-					<div
-						className={`${styles.formGroup} ${
-							errors.DocumentoEmpresa ? styles.hasError : ''
-						}`}
-					>
-						<label>Documento empresa</label>
-						<input
-							className={styles.input}
-							type='text'
-							name='DocumentoEmpresa'
-							value={trabajo.DocumentoEmpresa || ''}
-							onChange={(e) => setField('DocumentoEmpresa', e.target.value)}
-							placeholder='e.g. 20111222'
-						/>
-						{errors.DocumentoEmpresa && (
-							<span className={styles.error}>{errors.DocumentoEmpresa}</span>
-						)}
-					</div>
-
 					<div
 						className={`${styles.formGroup} ${
 							errors.RazonSocial ? styles.hasError : ''

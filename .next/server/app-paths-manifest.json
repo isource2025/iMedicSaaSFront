@@ -1,3 +1,4 @@
 {
+  "/not-found": "app/not-found.js",
   "/dashboard/patients/page": "app/dashboard/patients/page.js"
 }

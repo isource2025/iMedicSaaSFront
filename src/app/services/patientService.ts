@@ -145,23 +145,25 @@ export const patientService = {
 			if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
 			if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;
 
+			// La API espera el campo Hora directamente (no HoraNacimiento)
+
 			let payload: any = base;
 			let config: any = {};
 			if (fotoFile) {
 				const formData = new FormData();
 				Object.entries(base).forEach(([key, value]) => {
-					if (value === undefined || value === null || key === 'Foto') return;
+					if (value === undefined || value === null) return;
+					if (key === '_fotoFile') return; // campo interno
+					if (key === 'Foto') return; // evitamos duplicar, ya mandamos archivo
 					if (key === 'Trabajos' && Array.isArray(value)) {
 						formData.append(key, JSON.stringify(value));
 					} else {
 						formData.append(key, String(value));
 					}
 				});
+				// Hora ya se agregó en el loop si existe
 				formData.append('Foto', fotoFile);
-				payload = {
-					...formData,
-					HoraNacimiento: base.Hora || '', // evitar null/undefined
-				};
+				payload = formData; // FormData real (no spread!)
 				config.headers = { 'Content-Type': 'multipart/form-data' };
 			}
 			const response = await apiService.post<ApiResponse<Patient>>(
@@ -233,20 +235,21 @@ export const patientService = {
 					NumeroCuenta: base.NumeroCuenta,
 				});
 			}
+			// Backend usa Hora tal cual
+
 			let payload: any = base;
 			let config: any = {};
 			const fotoFile: File | null = data._fotoFile || null;
 			if (fotoFile) {
 				const formData = new FormData();
 				Object.entries(base).forEach(([key, value]) => {
-					if (key === '_fotoFile' || key === 'Foto') return; // campo interno / evitar duplicado
+					if (key === '_fotoFile' || key === 'Foto') return;
 					if (value === undefined || value === null) return;
-					if (key === 'Trabajos' && Array.isArray(value)) {
+					if (key === 'Trabajos' && Array.isArray(value))
 						formData.append(key, JSON.stringify(value));
-					} else {
-						formData.append(key, String(value));
-					}
+					else formData.append(key, String(value));
 				});
+				// Hora ya incluida si existe
 				formData.append('Foto', fotoFile);
 				payload = formData;
 				config.headers = { 'Content-Type': 'multipart/form-data' };

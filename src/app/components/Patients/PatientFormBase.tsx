@@ -32,6 +32,33 @@ const tiposDocumento = [
 ];
 
 const toStr = (v: any, def = '') => (v === undefined || v === null ? def : String(v));
+const normalizeHora = (raw: any): string => {
+	if (raw === undefined || raw === null) return '';
+	const str = String(raw).trim();
+	if (!str) return '';
+	// Si ya viene en formato HH:MM
+	if (/^\d{2}:\d{2}$/.test(str)) return str;
+	// Si viene como HHMM (ej: 0935, 1533)
+	if (/^\d{3,4}$/.test(str)) {
+		const padded = str.padStart(4, '0');
+		const h = padded.slice(0, 2);
+		const m = padded.slice(2, 4);
+		if (Number(h) < 24 && Number(m) < 60) return `${h}:${m}`;
+	}
+	// Si viene como número clarion (centésimas de segundo) grande, intentar convertir a HH:MM
+	if (/^\d+$/.test(str) && str.length > 4) {
+		const n = Number(str);
+		if (!isNaN(n) && n > 0) {
+			const totalSeconds = Math.floor(n / 100);
+			const hours = Math.floor(totalSeconds / 3600);
+			const minutes = Math.floor((totalSeconds % 3600) / 60);
+			if (hours < 24)
+				return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+		}
+	}
+	return str; // fallback sin tocar
+};
+
 const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => ({
 	IDPaciente: d?.IDPaciente,
 	NumeroHC: toStr(d?.NumeroHC),
@@ -51,7 +78,7 @@ const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => 
 	Mail: toStr(d?.Mail),
 	Cobertura: toStr(d?.Cobertura),
 	nAfiliado: toStr(d?.nAfiliado),
-	Hora: toStr(d?.Hora),
+	Hora: normalizeHora(d?.Hora),
 	FotoURL: d?.FotoURL || null,
 	Raza: toStr(d?.Raza),
 	// Mapear posible campo backend IdiomaPrimario al alias Idioma
@@ -66,7 +93,8 @@ const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => 
 	OrdenNacimiento: d?.OrdenNacimiento ?? '',
 	LugarNacimiento: toStr(d?.LugarNacimiento),
 	FechaDefuncion: toStr(d?.FechaDefuncion),
-	HoraDefuncion: toStr(d?.HoraDefuncion),
+	HoraDefuncion: normalizeHora(d?.HoraDefuncion),
+	Ocupacion: d?.Ocupacion,
 	Foto: d?.Foto || null,
 	Trabajos: d?.Trabajos || [],
 });
