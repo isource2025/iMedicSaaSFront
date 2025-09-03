@@ -93,16 +93,6 @@ export default function PersonalDataTab({
 					}
 					isLoading={loading.localidad}
 					options={localidadSelectOptions}
-					previewData={
-						!loading.localidad &&
-						localidadSelectOptions.find(
-							(o) => o.value === String(formData.ValorLocalidad || ''),
-						)
-							? undefined
-							: formData.ValorLocalidad
-							? { value: String(formData.ValorLocalidad) }
-							: undefined
-					}
 				/>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Provincia:</label>
@@ -159,7 +149,7 @@ export default function PersonalDataTab({
 				<div className={styles.formGroup}>
 					<label className={`${styles.label}`}>Hora:</label>
 					<input
-						type='text'
+						type='time'
 						name='Hora'
 						value={formData.Hora}
 						onChange={handleChange}
@@ -205,16 +195,6 @@ export default function PersonalDataTab({
 						}
 						isLoading={loading.sexo}
 						options={sexoSelectOptions}
-						previewData={
-							!loading.sexo &&
-							sexoSelectOptions.find(
-								(o) => o.value === String(formData.Sexo || ''),
-							)
-								? undefined
-								: formData.Sexo
-								? { value: String(formData.Sexo) }
-								: undefined
-						}
 					/>
 					{errors.Sexo && <div className={styles.errorMessage}>{errors.Sexo}</div>}
 				</div>
@@ -230,7 +210,6 @@ export default function PersonalDataTab({
 						}
 						isLoading={false}
 						options={estadoCivilSelectOptions}
-						previewData={undefined}
 					/>
 					{errors.EstadoCivil && (
 						<div className={styles.errorMessage}>{errors.EstadoCivil}</div>
@@ -297,16 +276,6 @@ export default function PersonalDataTab({
 					}
 					isLoading={loading.cobertura}
 					options={coberturaOptions}
-					previewData={
-						!loading.cobertura &&
-						coberturaOptions.find(
-							(o) => o.value === String(formData.Cobertura || ''),
-						)
-							? undefined
-							: formData.Cobertura
-							? { value: String(formData.Cobertura) }
-							: undefined
-					}
 				/>
 				{errors.Cobertura && (
 					<div className={styles.errorMessage}>{errors.Cobertura}</div>

@@ -51,6 +51,7 @@
 	display: flex;
 	position: relative; /* ¡MUY IMPORTANTE! Ancla para el indicador */
 	border-bottom: 1px solid #e5e7eb; /* La línea de fondo gris */
+	margin-bottom: 1rem;
 }
 
 /* Estilo para cada pestaña individual */
