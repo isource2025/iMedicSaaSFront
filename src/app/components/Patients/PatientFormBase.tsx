@@ -1,4 +1,4 @@
-import { PatientFormData } from '../../types/PatientInterface';
+import { Patient, PatientFormData } from '../../types/PatientInterface';
 import { Sexo, sexoService } from '../../services/sexoService';
 import { Localidad, localidadService } from '../../services/localidadService';
 import { provinciaService } from '../../services/provinciaService';
@@ -10,10 +10,11 @@ import LaboralDataTab from './AddPatient/LaboralDataTab';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
 import styles from '../../components/modals/ModalAddPatient/styles.module.css';
 import React, { useState, useEffect, useRef } from 'react';
+import coberturaService from '../../services/coberturaService';
 
 interface PatientFormBaseProps {
 	onSubmit: (data: any) => Promise<boolean> | boolean;
-	initialData?: Partial<PatientFormData>;
+	initialData?: Partial<Patient>;
 	isEditing?: boolean;
 	isSubmitting?: boolean; // externo (lista)
 	onClose: () => void;
@@ -56,6 +57,7 @@ const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => 
 	Mail: toStr(d?.Mail),
 	Cobertura: toStr(d?.Cobertura),
 	nAfiliado: toStr(d?.nAfiliado),
+	Hora: toStr(d?.Hora),
 	FotoURL: d?.FotoURL || null,
 	Raza: toStr(d?.Raza),
 	// Mapear posible campo backend IdiomaPrimario al alias Idioma
@@ -83,7 +85,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	onClose,
 }) => {
 	const [formData, setFormData] = useState<PatientFormData>(() =>
-		buildInitialFormData(initialData),
+		buildInitialFormData(initialData as Partial<PatientFormData>),
 	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [activeTab, setActiveTab] = useState<Tab>('personal');
@@ -93,10 +95,18 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	});
 	const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
 	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
+	const [coberturaOptions, setCoberturaOptions] = useState<
+		{ value: string; label: string }[]
+	>([]);
 	const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
-	const [loading, setLoading] = useState<{ localidad: boolean; sexo: boolean }>({
+	const [loading, setLoading] = useState<{
+		localidad: boolean;
+		sexo: boolean;
+		cobertura: boolean;
+	}>({
 		localidad: false,
 		sexo: false,
+		cobertura: false,
 	});
 	const [fotoFile, setFotoFile] = useState<File | null>(null);
 	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -129,6 +139,18 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			console.error('Error localidades', e);
 		} finally {
 			setLoading((p) => ({ ...p, localidad: false }));
+		}
+	};
+
+	const fetchCoberturas = async () => {
+		try {
+			setLoading((p) => ({ ...p, cobertura: true }));
+			const data = await coberturaService.getCoberturas();
+			setCoberturaOptions(data);
+		} catch (e) {
+			console.error('Error coberturas', e);
+		} finally {
+			setLoading((p) => ({ ...p, cobertura: false }));
 		}
 	};
 
@@ -299,6 +321,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	useEffect(() => {
 		fetchSexos();
 		fetchLocalidades();
+		fetchCoberturas();
 	}, []);
 
 	// Al editar: si ya viene ValorLocalidad, actualizar Provincia y Nacionalidad automáticamente una vez
@@ -326,7 +349,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			setFormData((prev) => {
 				// Si no hay paciente previo cargado o cambió el ID
 				if (!prev.IDPaciente || prev.IDPaciente !== initialData.IDPaciente) {
-					return buildInitialFormData(initialData);
+					return buildInitialFormData(initialData as Partial<PatientFormData>);
 				}
 				return prev; // evita sobreescribir cambios del usuario
 			});
@@ -443,6 +466,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										loading={loading}
 										sexoOptions={sexoOptions}
 										estadosCiviles={estadosCiviles}
+										coberturaOptions={coberturaOptions}
 									/>
 								)}
 								{activeTab === 'other' && (
@@ -477,7 +501,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						className={`${styles.submitButton} ${
 							internalSubmitting ? styles.loading : ''
 						}`}
-						disabled={internalSubmitting || isPhotoUploading}
+						disabled={internalSubmitting || isPhotoUploading || isSubmitting}
 					>
 						{internalSubmitting && (
 							<span className={styles.inlineSpinner} aria-hidden='true' />

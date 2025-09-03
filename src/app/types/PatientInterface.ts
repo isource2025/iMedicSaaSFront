@@ -55,6 +55,7 @@ export interface PatientFormData {
 	TelefonoParticular: string;
 	TelefonoCelular: string;
 	Mail: string;
+	Hora: string;
 	Cobertura: string;
 	nAfiliado: string;
 	FotoURL?: string | null;

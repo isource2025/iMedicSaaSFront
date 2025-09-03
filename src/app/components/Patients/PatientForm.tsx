@@ -1,6 +1,5 @@
 import { Patient, PatientFormData } from '../../types/PatientInterface';
 import { PatientFormBase } from './PatientFormBase';
-import styles from './PatientForm.module.css';
 
 interface PatientFormProps {
 	patient?: Patient;

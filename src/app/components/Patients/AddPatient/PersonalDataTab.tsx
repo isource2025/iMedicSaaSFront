@@ -2,6 +2,7 @@ import { PatientFormData } from '@/src/app/types/PatientInterface';
 import { Localidad } from '@/src/app/services/localidadService';
 import styles from './Personal.module.css';
 import LoadingSelect from './LoadingSelect';
+import { useEffect, useState } from 'react';
 
 interface OtherDataTabProps {
 	formData: PatientFormData;
@@ -11,9 +12,11 @@ interface OtherDataTabProps {
 	loading: {
 		localidad: boolean;
 		sexo: boolean;
+		cobertura: boolean;
 	};
 	sexoOptions: { valor: string; descripcion: string }[];
 	estadosCiviles: { value: string; label: string }[];
+	coberturaOptions: { value: string; label: string }[];
 }
 
 export default function PersonalDataTab({
@@ -23,9 +26,11 @@ export default function PersonalDataTab({
 	localidadOptions,
 	loading,
 	sexoOptions,
+	coberturaOptions,
 	estadosCiviles,
 }: OtherDataTabProps) {
 	// mapear opciones al formato del LoadingSelect
+	const [edad, setEdad] = useState(0);
 	const localidadSelectOptions = localidadOptions.map((l) => ({
 		value: String(l.Valor),
 		label: l.NombreLocalidad,
@@ -37,6 +42,24 @@ export default function PersonalDataTab({
 	}));
 
 	const estadoCivilSelectOptions = estadosCiviles; // ya viene en {value,label}
+
+	useEffect(() => {
+		const calcularEdad = () => {
+			if (formData.FechaNacimiento) {
+				const [año, mes, dia] = formData.FechaNacimiento.split('-').map(Number);
+				const hoy = new Date();
+				let edad = hoy.getFullYear() - año;
+				if (
+					hoy.getMonth() + 1 < mes ||
+					(hoy.getMonth() + 1 === mes && hoy.getDate() < dia)
+				) {
+					edad--;
+				}
+				setEdad(edad);
+			}
+		};
+		calcularEdad();
+	}, [formData.FechaNacimiento]);
 
 	return (
 		<div className={styles.formContent}>
@@ -58,7 +81,7 @@ export default function PersonalDataTab({
 			</div>
 
 			{/* Localidad / Provincia */}
-			<div className={`${styles.formRow} ${styles.double}`}>
+			<div className={`${styles.formRow} ${styles.three}`}>
 				<LoadingSelect
 					label='Localidad:'
 					name='ValorLocalidad'
@@ -95,10 +118,8 @@ export default function PersonalDataTab({
 						<div className={styles.errorMessage}>{errors.Provincia}</div>
 					)}
 				</div>
-			</div>
 
-			{/* Nacionalidad */}
-			<div className={styles.formRow}>
+				{/* Nacionalidad */}
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Nacionalidad:</label>
 					<input
@@ -118,7 +139,7 @@ export default function PersonalDataTab({
 			</div>
 
 			{/* Fecha Nacimiento */}
-			<div className={styles.formRow}>
+			<div className={`${styles.formRow} ${styles.three}`}>
 				<div className={styles.formGroup}>
 					<label className={`${styles.label}`}>Fecha de Nacimiento:</label>
 					<input
@@ -134,10 +155,46 @@ export default function PersonalDataTab({
 						<div className={styles.errorMessage}>{errors.FechaNacimiento}</div>
 					)}
 				</div>
+
+				<div className={styles.formGroup}>
+					<label className={`${styles.label}`}>Hora:</label>
+					<input
+						type='text'
+						name='Hora'
+						value={formData.Hora}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.Hora ? styles.error : ''}`}
+					/>
+					{errors.Hora && <div className={styles.errorMessage}>{errors.Hora}</div>}
+				</div>
+
+				<div className={styles.formGroup}>
+					<label className={`${styles.label}`}>Edad:</label>
+					<input
+						disabled
+						type='number'
+						name='Edad'
+						value={edad}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.Edad ? styles.error : ''}`}
+					/>
+				</div>
 			</div>
 
 			{/* Sexo y Estado Civil en la misma fila */}
-			<div className={`${styles.formRow} ${styles.double}`}>
+			<div className={`${styles.formRow} ${styles.three}`}>
+				<div className={styles.formGroup}>
+					<label className={`${styles.label}`}>CUIT/CU:</label>
+					<input
+						type='text'
+						name='CUIT'
+						placeholder='00-00000000-0'
+						value={formData.CUIT}
+						onChange={handleChange}
+						className={`${styles.input} ${errors.CUIT ? styles.error : ''}`}
+					/>
+					{errors.CUIT && <div className={styles.errorMessage}>{errors.CUIT}</div>}
+				</div>
 				<div>
 					<LoadingSelect
 						label='Sexo:'
@@ -231,6 +288,29 @@ export default function PersonalDataTab({
 			</div>
 
 			<div className={`${styles.formRow} ${styles.double}`}>
+				<LoadingSelect
+					name='Cobertura'
+					label='Cobertura:'
+					value={formData.Cobertura || ''}
+					onChange={(val) =>
+						handleChange({ target: { name: 'Cobertura', value: val } } as any)
+					}
+					isLoading={loading.cobertura}
+					options={coberturaOptions}
+					previewData={
+						!loading.cobertura &&
+						coberturaOptions.find(
+							(o) => o.value === String(formData.Cobertura || ''),
+						)
+							? undefined
+							: formData.Cobertura
+							? { value: String(formData.Cobertura) }
+							: undefined
+					}
+				/>
+				{errors.Cobertura && (
+					<div className={styles.errorMessage}>{errors.Cobertura}</div>
+				)}
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Número de Afiliado:</label>
 					<input
