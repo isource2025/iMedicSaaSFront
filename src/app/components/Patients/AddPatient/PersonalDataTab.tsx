@@ -32,17 +32,17 @@ export default function PersonalDataTab({
 }: OtherDataTabProps) {
 	// mapear opciones al formato del LoadingSelect
 	const [edad, setEdad] = useState(0);
-	const localidadSelectOptions = localidadOptions.map((l) => ({
+	const localidadSelectOptions = (localidadOptions || []).map((l) => ({
 		value: String(l.Valor),
 		label: l.NombreLocalidad,
 	}));
 
-	const sexoSelectOptions = sexoOptions.map((s) => ({
+	const sexoSelectOptions = (sexoOptions || []).map((s) => ({
 		value: s.valor,
 		label: s.descripcion,
 	}));
 
-	const estadoCivilSelectOptions = estadosCiviles; // ya viene en {value,label}
+	const estadoCivilSelectOptions = estadosCiviles || []; // ya viene en {value,label}
 
 	useEffect(() => {
 		const calcularEdad = () => {

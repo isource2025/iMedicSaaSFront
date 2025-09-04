@@ -30,6 +30,12 @@
       "static/css/app/dashboard/patients/page.css",
       "static/chunks/app/dashboard/patients/page.js"
     ],
+    "/dashboard/beds/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/beds/page.css",
+      "static/chunks/app/dashboard/beds/page.js"
+    ],
     "/not-found": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
