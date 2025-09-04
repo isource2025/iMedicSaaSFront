@@ -55,7 +55,7 @@ class OpcGrdService {
       console.error('Error fetching opciones de grilla:', error);
       throw error;
     }
-  },
+  }
 
   /**
    * Obtiene todas las opciones sin paginación (método de compatibilidad)
@@ -69,7 +69,7 @@ class OpcGrdService {
       console.error('Error fetching all opciones de grilla:', error);
       throw error;
     }
-  },
+  }
   
   /**
    * Obtiene todas las opciones de grilla agrupadas por rubro
@@ -104,7 +104,7 @@ class OpcGrdService {
       console.error('Error al agrupar opciones de grilla:', error);
       return [];
     }
-  },
+  }
   
   /**
    * Obtiene opciones de grilla por rubro
@@ -120,7 +120,7 @@ class OpcGrdService {
       console.error(`Error al obtener opciones de grilla del rubro ${rubro}:`, error);
       return [];
     }
-  },
+  }
   
   /**
    * Crea una nueva opción de grilla

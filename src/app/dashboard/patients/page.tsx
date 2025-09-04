@@ -24,6 +24,7 @@ export default function PatientsPage() {
 		currentPage,
 		totalPages,
 		totalCount,
+		initialized,
 		isAddModalOpen,
 		isEditModalOpen,
 		isDeleteModalOpen,
@@ -33,6 +34,7 @@ export default function PatientsPage() {
 		createPatient,
 		updatePatient,
 		deletePatient,
+		initializePatients,
 		openAddModal,
 		closeAddModal,
 		openEditModal,
@@ -56,6 +58,13 @@ export default function PatientsPage() {
 	// Estado para paciente completo (cuando se edita se fuerza re-fetch para tener campos relacionados a selects)
 	const [fullPatientEditing, setFullPatientEditing] = useState<Patient | null>(null);
 	const [loadingFullPatient, setLoadingFullPatient] = useState(false);
+
+	// Inicializar datos al montar el componente
+	useEffect(() => {
+		if (!initialized) {
+			initializePatients();
+		}
+	}, [initialized, initializePatients]);
 
 	// Cuando se abre modal de edición, traer datos completos del backend (garantiza consistencia de selects)
 	useEffect(() => {

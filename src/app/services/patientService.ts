@@ -224,7 +224,8 @@ export const deletePatient = async (id: number): Promise<void> => {
 
 // Servicio principal con todas las funciones
 export const patientService = {
-	getAllPatients: getPatients,
+	getPatients,
+	getAllPatients: getPatients, // Alias para compatibilidad
 	searchPatients,
 	getPatientById,
 	createPatient,

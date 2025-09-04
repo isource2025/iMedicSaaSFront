@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Resolve base URL (fallback si no hay variable de entorno)
-const resolvedBaseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5006/api';
+const resolvedBaseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api';
 
 // Create an axios instance with custom configuration
 const axiosInstance = axios.create({
