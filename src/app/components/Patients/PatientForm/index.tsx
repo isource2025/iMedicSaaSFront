@@ -1,8 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Patient } from '@/app/types/patients';
+import { Patient } from '../../../types/PatientInterface';
 import styles from './styles.module.css';
+
+// Tipo local para el formulario (modelo UI)
+interface PatientUI {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  fechaNacimiento: string;
+  sexo: string;
+  telefono: string;
+  direccion: string;
+  email: string;
+  obraSocial: string;
+  numeroAfiliado: string;
+}
 
 interface PatientFormProps {
   patient?: Patient;
@@ -20,7 +34,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   onCancel,
   isSubmitting
 }) => {
-  const [formData, setFormData] = useState<Partial<Patient>>({
+  const [formData, setFormData] = useState<PatientUI>({
     nombre: '',
     apellido: '',
     dni: '',
@@ -36,17 +50,22 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   // Cargar datos del paciente si está en modo edición
   useEffect(() => {
     if (patient) {
+      const nombreCompleto = patient.ApellidoyNombre || '';
+      const [apellido, nombre] = nombreCompleto.includes(',')
+        ? nombreCompleto.split(',').map(s => s.trim())
+        : ['', nombreCompleto.trim()];
+
       setFormData({
-        nombre: patient.nombre || '',
-        apellido: patient.apellido || '',
-        dni: patient.dni || '',
-        fechaNacimiento: patient.fechaNacimiento ? new Date(patient.fechaNacimiento).toISOString().split('T')[0] : '',
-        sexo: patient.sexo || '',
-        telefono: patient.telefono || '',
-        direccion: patient.direccion || '',
-        email: patient.email || '',
-        obraSocial: patient.obraSocial || '',
-        numeroAfiliado: patient.numeroAfiliado || ''
+        nombre,
+        apellido,
+        dni: patient.NumeroDocumento || '',
+        fechaNacimiento: patient.FechaNacimiento ? new Date(patient.FechaNacimiento).toISOString().split('T')[0] : '',
+        sexo: patient.Sexo || '',
+        telefono: patient.TelefonoCelular || patient.TelefonoParticular || '',
+        direccion: patient.Domicilio || '',
+        email: patient.Mail || '',
+        obraSocial: patient.Cobertura || '',
+        numeroAfiliado: patient.nAfiliado || ''
       });
     }
   }, [patient]);
@@ -54,7 +73,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   // Actualizar campo del formulario
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: PatientUI) => ({
       ...prev,
       [name]: value
     }));
@@ -63,7 +82,22 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   // Enviar formulario
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Mapear datos del formulario (UI) al modelo Patient esperado por el resto de la app
+    const payload: Partial<Patient> = {
+      ApellidoyNombre: formData.apellido
+        ? `${formData.apellido}, ${formData.nombre}`.trim()
+        : formData.nombre,
+      NumeroDocumento: formData.dni,
+      FechaNacimiento: formData.fechaNacimiento,
+      Sexo: formData.sexo,
+      TelefonoCelular: formData.telefono,
+      Domicilio: formData.direccion,
+      Mail: formData.email,
+      Cobertura: formData.obraSocial,
+      nAfiliado: formData.numeroAfiliado
+    };
+
+    onSubmit(payload);
   };
 
   return (

@@ -7,26 +7,69 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5006/a
 
 class OpcGrdService {
   /**
-   * Obtiene todas las opciones de grilla
-   * @returns Promise con las opciones de grilla
+   * Obtiene opciones de grilla con paginación y búsqueda
+   * @param page Número de página (por defecto 1)
+   * @param limit Límite de registros por página (por defecto 50)
+   * @param search Término de búsqueda opcional
+   * @returns Promise con las opciones de grilla paginadas
    */
-  async getAllOpcGrd(): Promise<OpcGrd[]> {
+  async getAllOpcGrd(page = 1, limit = 50, search = ''): Promise<{
+    data: OpcGrd[];
+    pagination?: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      limit: number;
+    };
+  }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/opcgrd`, {
-        signal: AbortSignal.timeout(5000) // 5 segundos de timeout
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        withCount: 'true'
+      });
+      
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/admin/opcgrd?${params.toString()}`, {
+        signal: AbortSignal.timeout(10000) // 10 segundos de timeout para paginación
       });
       
       if (!response.ok) {
-        throw new Error(`Error al obtener opciones de grilla: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      return data.success ? data.data : [];
+      
+      if (data.success && Array.isArray(data.data)) {
+        return {
+          data: data.data,
+          pagination: data.pagination
+        };
+      }
+      
+      throw new Error(data.message || 'Error al obtener opciones de grilla');
     } catch (error) {
-      console.error('Error en el servicio de opciones de grilla:', error);
-      return [];
+      console.error('Error fetching opciones de grilla:', error);
+      throw error;
     }
-  }
+  },
+
+  /**
+   * Obtiene todas las opciones sin paginación (método de compatibilidad)
+   * @returns Promise con todas las opciones de grilla
+   */
+  async getAllOpcGrdLegacy(): Promise<OpcGrd[]> {
+    try {
+      const result = await this.getAllOpcGrd(1, 1000); // Obtener hasta 1000 registros
+      return result.data;
+    } catch (error) {
+      console.error('Error fetching all opciones de grilla:', error);
+      throw error;
+    }
+  },
   
   /**
    * Obtiene todas las opciones de grilla agrupadas por rubro
@@ -34,12 +77,12 @@ class OpcGrdService {
    */
   async getGroupedOpcGrd(): Promise<OpcGrdGroup[]> {
     try {
-      const opciones = await this.getAllOpcGrd();
+      const result = await this.getAllOpcGrdLegacy();
       
       // Agrupar por rubro
       const grupos: { [key: string]: OpcGrd[] } = {};
       
-      opciones.forEach(opcion => {
+      result.forEach((opcion: OpcGrd) => {
         // Eliminar espacios en blanco del rubro
         const rubroLimpio = opcion.rubro.trim();
         
@@ -51,17 +94,17 @@ class OpcGrdService {
       });
       
       // Convertir a array de grupos
-      const result: OpcGrdGroup[] = Object.keys(grupos).map(rubro => ({
+      const groupedResult: OpcGrdGroup[] = Object.keys(grupos).map(rubro => ({
         rubro,
-        opciones: grupos[rubro].sort((a, b) => a.orden - b.orden) // Ordenar por el campo orden
+        opciones: grupos[rubro].sort((a: OpcGrd, b: OpcGrd) => a.orden - b.orden) // Ordenar por el campo orden
       }));
       
-      return result;
+      return groupedResult;
     } catch (error) {
       console.error('Error al agrupar opciones de grilla:', error);
       return [];
     }
-  }
+  },
   
   /**
    * Obtiene opciones de grilla por rubro
@@ -70,14 +113,14 @@ class OpcGrdService {
    */
   async getOpcGrdByRubro(rubro: string): Promise<OpcGrd[]> {
     try {
-      const allOpciones = await this.getAllOpcGrd();
-      return allOpciones.filter(opcion => opcion.rubro.trim() === rubro.trim())
-                        .sort((a, b) => a.orden - b.orden);
+      const allOpciones = await this.getAllOpcGrdLegacy();
+      return allOpciones.filter((opcion: OpcGrd) => opcion.rubro.trim() === rubro.trim())
+                        .sort((a: OpcGrd, b: OpcGrd) => a.orden - b.orden);
     } catch (error) {
       console.error(`Error al obtener opciones de grilla del rubro ${rubro}:`, error);
       return [];
     }
-  }
+  },
   
   /**
    * Crea una nueva opción de grilla

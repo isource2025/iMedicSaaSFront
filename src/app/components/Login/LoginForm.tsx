@@ -22,13 +22,6 @@ export default function LoginForm() {
   return (
     <div className={styles.loginContainer}>
       <div className={styles.card}>
-        <div className={styles.logoContainer}>
-          <div className={styles.logo}>
-            <div className={styles.logoCircle}>
-              <h1 className={styles.logoText}>iMedicWS</h1>
-            </div>
-          </div>
-        </div>
         
         <h2 className={styles.title}>
           Iniciar Sesión

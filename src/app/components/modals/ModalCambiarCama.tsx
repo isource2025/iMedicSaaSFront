@@ -9,7 +9,7 @@ import visitaMovimientoService from '../../services/visitaMovimientoService';
 import diagnosticosService from '../../services/diagnosticosService';
 import estadoAmbulatorioService from '../../services/estadoAmbulatorioService';
 import { DiagnosticoCie10 } from '../../types/diagnosticos';
-import { EstadoAmbulatorio } from '../../types/estadoAmbulatorio';
+import { EstadoAmbulatorio } from '../../types/estadoAmbulatorio.types';
 import { useAppContext } from '../../contexts/AppContext';
 import { useBedsManagement } from '../../hooks/useBedsManagement';
 import BedFilters from '../beds/BedFilters';
@@ -207,7 +207,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     const fetchEstadosAmbulatorios = async () => {
       try {
         const data = await estadoAmbulatorioService.getEstadosAmbulatorios();
-        setEstadosAmbulatorios(data as EstadoAmbulatorio[]);
+        setEstadosAmbulatorios(data);
       } catch (err) {
         console.error('Error cargando estados ambulatorios:', err);
         setError('No se pudieron cargar los estados ambulatorios');
@@ -588,7 +588,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     setFilter={setFilter}
                     sectorFilter={sectorFilter}
                     setSectorFilter={setSectorFilter}
-                    serviciosMedicos={serviciosMedicos}
+                    serviciosMedicos={serviciosMedicos.filter(Boolean) as string[]}
                     servicioFilter={servicioFilter}
                     setServicioFilter={setServicioFilter}
                     searchTerm={searchTerm}
@@ -685,8 +685,8 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     >
                       <option value="">Seleccione un estado ambulatorio</option>
                       {estadosAmbulatorios.map((estado) => (
-                        <option key={estado.valor} value={estado.valor || ''}>
-                          {estado.descripcion}
+                        <option key={estado.Valor} value={estado.Valor || ''}>
+                          {estado.Descripcion}
                         </option>
                       ))}
                     </select>

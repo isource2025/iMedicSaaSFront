@@ -1,5 +1,11 @@
 {
+<<<<<<< HEAD
   "/not-found": "app/not-found.js",
   "/page": "app/page.js",
   "/dashboard/patients/page": "app/dashboard/patients/page.js"
+=======
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/beds/page": "app/dashboard/beds/page.js",
+  "/dashboard/patients/analytics/page": "app/dashboard/patients/analytics/page.js"
+>>>>>>> 720f9d8d64b6bcf32803e4aa73ab2aa15ce655a2
 }

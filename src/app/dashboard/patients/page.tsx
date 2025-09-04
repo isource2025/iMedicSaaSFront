@@ -5,30 +5,31 @@ import { usePatients } from '../../hooks/usePatients';
 import { Patient } from '../../types/PatientInterface';
 import { PatientFormData } from '../../types/PatientFormInterface';
 import PatientList from '../../components/Patients/PatientList';
-// import PatientForm from '../../components/Patients/PatientForm';
 import DeleteConfirmation from '../../components/Patients/DeleteConfirmation';
 import PatientDetails from '../../components/Patients/PatientDetails';
 import Modal from '../../components/UI/Modal';
 import ModalAddPatient from '../../components/modals/ModalAddPatient';
 import { PatientFormBase } from '../../components/Patients/PatientFormBase';
 import { SearchInput } from '../../components/beds/SearchInput';
-import useSearchManager from '../../hooks/useSearchManager';
 import { patientService } from '../../services/patientService';
 import styles from './patients.module.css';
 
 export default function PatientsPage() {
 	const {
-		patients: hookPatients,
-		loading: hookLoading,
-		error: hookError,
+		patients,
+		loading,
+		error,
 		selectedPatient,
+		searchTerm,
 		currentPage,
 		totalPages,
+		totalCount,
 		isAddModalOpen,
 		isEditModalOpen,
 		isDeleteModalOpen,
 		isViewModalOpen,
 		handlePageChange,
+		handleSearch,
 		createPatient,
 		updatePatient,
 		deletePatient,
@@ -41,42 +42,6 @@ export default function PatientsPage() {
 		openViewModal,
 		closeViewModal,
 	} = usePatients();
-
-	// Usar el hook useSearchManager para la búsqueda remota (Contexto 1)
-	const {
-		searchTerm,
-		setSearchTerm,
-		results: searchResults,
-		loading,
-		error,
-		isSearching,
-	} = useSearchManager<Patient>({
-		fetchRemote: (term) => patientService.searchPatients(term),
-		searchKeys: ['ApellidoyNombre', 'NumeroDocumento', 'NumeroHC', 'IDPaciente'],
-		minSearchLength: 3,
-	});
-
-	// Constante para el tamaño de página (debe coincidir con el valor en usePatients)
-	const pageSize = 30;
-
-	// Calcular el número total de páginas basado en los resultados actuales
-	const calculatedTotalPages = isSearching
-		? Math.ceil(searchResults.length / pageSize)
-		: totalPages;
-
-	// Asegurarse de que currentPage no exceda el nuevo totalPages
-	const adjustedCurrentPage = Math.min(currentPage, Math.max(1, calculatedTotalPages));
-
-	// Paginar los resultados de búsqueda si es necesario
-	const paginatedSearchResults = isSearching
-		? searchResults.slice(
-				(adjustedCurrentPage - 1) * pageSize,
-				adjustedCurrentPage * pageSize,
-		  )
-		: [];
-
-	// Determinar qué pacientes mostrar: resultados de búsqueda paginados o pacientes del hook
-	const patients = isSearching ? paginatedSearchResults : hookPatients;
 
 	const handleViewHistory = (patient: Patient) => {
 		alert(
@@ -121,11 +86,11 @@ export default function PatientsPage() {
 					<div className={styles.searchContainer}>
 						<SearchInput
 							searchTerm={searchTerm}
-							setSearchTerm={setSearchTerm}
+							setSearchTerm={handleSearch}
 							placeholder='Buscar por nombre, DNI, HC o admisión...'
 							loading={loading}
 							error={error}
-							isSearching={isSearching}
+							isSearching={!!searchTerm}
 							tooltipContent={
 								<>
 									<p>Buscar pacientes por:</p>
@@ -158,10 +123,10 @@ export default function PatientsPage() {
 				</div>
 				<PatientList
 					patients={patients}
-					loading={hookLoading}
+					loading={loading}
 					error={error}
-					currentPage={adjustedCurrentPage}
-					totalPages={calculatedTotalPages}
+					currentPage={currentPage}
+					totalPages={totalPages}
 					onPageChange={handlePageChange}
 					onEdit={openEditModal}
 					onDelete={openDeleteModal}
@@ -175,7 +140,7 @@ export default function PatientsPage() {
 					onClose={closeAddModal}
 					onSubmit={createPatient}
 					isEditing={false}
-					isSubmitting={hookLoading}
+					isSubmitting={loading}
 				/>
 
 				{selectedPatient && (
@@ -196,7 +161,7 @@ export default function PatientsPage() {
 									return updatePatient(fullPatientEditing.IDPaciente, data);
 								}}
 								onClose={closeEditModal}
-								isSubmitting={hookLoading || loadingFullPatient}
+								isSubmitting={loading || loadingFullPatient}
 							/>
 						)}
 					</Modal>

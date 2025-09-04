@@ -20,46 +20,24 @@ export const usePatients = () => {
 	// Estados para paginación
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [totalPages, setTotalPages] = useState<number>(1);
+	const [totalCount, setTotalCount] = useState<number>(0);
 	const [pageSize, setPageSize] = useState<number>(30);
 
 	// Aplicar debounce al término de búsqueda
 	const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-	// Cargar pacientes (modo full con estrategia simple->completo)
+	// Cargar pacientes con paginación del servidor
 	const loadPatients = useCallback(
-		async (page: number = 1, full: boolean = true) => {
+		async (page: number = 1, search: string = '') => {
 			try {
 				setLoading(true);
 				setError(null);
-				if (full) {
-					// carga simple rápida
-					let simpleData: Patient[] = [];
-					try {
-						simpleData = await patientService.getAllPatients({
-							all: true,
-							simple: true,
-						});
-						setPatients(simpleData);
-						setTotalPages(Math.ceil(simpleData.length / pageSize));
-						setCurrentPage(page);
-					} catch (e) {
-						console.warn('Fallo carga simple inicial', e);
-					}
-					// carga completa en background
-					patientService
-						.getAllPatients({ all: true })
-						.then((fullData) => {
-							setPatients(fullData);
-							setTotalPages(Math.ceil(fullData.length / pageSize));
-						})
-						.catch((e) => console.error('Error carga full', e))
-						.finally(() => setLoading(false));
-					return;
-				}
-				const data = await patientService.getAllPatients({ all: true });
-				setPatients(data);
-				setTotalPages(Math.ceil(data.length / pageSize));
-				setCurrentPage(page);
+				
+				const result = await patientService.getAllPatients(page, pageSize, search);
+				setPatients(result.data);
+				setCurrentPage(result.pagination.currentPage);
+				setTotalPages(result.pagination.totalPages);
+				setTotalCount(result.pagination.totalCount);
 			} catch (err: any) {
 				setError(err.message || 'Error al cargar pacientes');
 				console.error('Error loading patients:', err);
@@ -74,25 +52,14 @@ export const usePatients = () => {
 	const searchPatients = useCallback(
 		async (term: string) => {
 			if (!term.trim()) {
-				loadPatients();
+				loadPatients(1, '');
 				return;
 			}
 
-			try {
-				setLoading(true);
-				setError(null);
-				const data = await patientService.searchPatients(term);
-				setPatients(data);
-				setTotalPages(Math.ceil(data.length / pageSize));
-				setCurrentPage(1);
-			} catch (err: any) {
-				setError(err.message || 'Error al buscar pacientes');
-				console.error('Error searching patients:', err);
-			} finally {
-				setLoading(false);
-			}
+			// Usar loadPatients con el término de búsqueda
+			await loadPatients(1, term);
 		},
-		[loadPatients, pageSize],
+		[loadPatients],
 	);
 
 	// Manejar búsqueda
@@ -109,11 +76,8 @@ export const usePatients = () => {
 				const file: File | null = patientData._fotoFile || null;
 				await patientService.createPatient(patientData, file);
 				setIsAddModalOpen(false);
-				if (searchTerm.trim()) {
-					await searchPatients(searchTerm.trim());
-				} else {
-					await loadPatients();
-				}
+				// Recargar la página actual con el término de búsqueda actual
+				await loadPatients(currentPage, searchTerm);
 				return true;
 			} catch (err: any) {
 				setError(err.message || 'Error al crear paciente');
@@ -123,10 +87,8 @@ export const usePatients = () => {
 				setLoading(false);
 			}
 		},
-		[loadPatients, searchTerm, searchPatients],
+		[loadPatients, currentPage, searchTerm],
 	);
-
-	// Crear paciente
 
 	// Actualizar paciente
 	const updatePatient = useCallback(
@@ -136,11 +98,8 @@ export const usePatients = () => {
 				setError(null);
 				await patientService.updatePatient(id, patientData);
 				setIsEditModalOpen(false);
-				if (searchTerm.trim()) {
-					await searchPatients(searchTerm.trim());
-				} else {
-					await loadPatients();
-				}
+				// Recargar la página actual con el término de búsqueda actual
+				await loadPatients(currentPage, searchTerm);
 				return true;
 			} catch (err: any) {
 				setError(err.message || 'Error al actualizar paciente');
@@ -150,7 +109,7 @@ export const usePatients = () => {
 				setLoading(false);
 			}
 		},
-		[loadPatients, searchTerm, searchPatients],
+		[loadPatients, currentPage, searchTerm],
 	);
 
 	// Eliminar paciente
@@ -161,11 +120,8 @@ export const usePatients = () => {
 				setError(null);
 				await patientService.deletePatient(id);
 				setIsDeleteModalOpen(false);
-				if (searchTerm.trim()) {
-					await searchPatients(searchTerm.trim());
-				} else {
-					await loadPatients();
-				}
+				// Recargar la página actual con el término de búsqueda actual
+				await loadPatients(currentPage, searchTerm);
 				return true;
 			} catch (err: any) {
 				setError(err.message || 'Error al eliminar paciente');
@@ -175,29 +131,22 @@ export const usePatients = () => {
 				setLoading(false);
 			}
 		},
-		[loadPatients, searchTerm, searchPatients],
+		[loadPatients, currentPage, searchTerm],
 	);
-
-	// Obtener pacientes paginados
-	const paginatedPatients = useMemo(() => {
-		const startIndex = (currentPage - 1) * pageSize;
-		const endIndex = startIndex + pageSize;
-		return patients.slice(startIndex, endIndex);
-	}, [patients, currentPage, pageSize]);
 
 	// Efecto para manejar cambios en el término de búsqueda debounced
 	useEffect(() => {
 		if (debouncedSearchTerm) {
 			searchPatients(debouncedSearchTerm);
 		} else {
-			loadPatients();
+			loadPatients(1, '');
 		}
 	}, [debouncedSearchTerm, searchPatients, loadPatients]);
 
 	// Cargar pacientes al montar el componente
 	useEffect(() => {
-		loadPatients();
-	}, [loadPatients]);
+		loadPatients(1, '');
+	}, []);
 
 	// Funciones para modales
 	const openAddModal = () => setIsAddModalOpen(true);
@@ -230,14 +179,13 @@ export const usePatients = () => {
 		setSelectedPatient(null);
 	};
 
-	const handlePageChange = (page: number) => {
-		setCurrentPage(page);
-	};
+	const handlePageChange = useCallback((page: number) => {
+		loadPatients(page, searchTerm);
+	}, [loadPatients, searchTerm]);
 
 	return {
 		// Datos
-		patients: paginatedPatients,
-		allPatients: patients,
+		patients,
 		selectedPatient,
 		searchTerm,
 		loading,
@@ -246,6 +194,7 @@ export const usePatients = () => {
 		// Paginación
 		currentPage,
 		totalPages,
+		totalCount,
 		pageSize,
 		handlePageChange,
 
