@@ -1,4 +1,12 @@
 {
+  "/_not-found": "app/_not-found.js",
+  "/page": "app/page.js",
+  "/dashboard/admission/tables/page": "app/dashboard/admission/tables/page.js",
+  "/dashboard/beds/tables/page": "app/dashboard/beds/tables/page.js",
   "/dashboard/beds/page": "app/dashboard/beds/page.js",
+  "/dashboard/bed-detail/page": "app/dashboard/bed-detail/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/billing/tables/page": "app/dashboard/billing/tables/page.js",
+  "/dashboard/patients/analytics/page": "app/dashboard/patients/analytics/page.js",
   "/dashboard/patients/page": "app/dashboard/patients/page.js"
 }

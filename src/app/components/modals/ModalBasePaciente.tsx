@@ -41,7 +41,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
   children,
   footerButtons,
 }) => {
-  const { allPatients } = usePatients();
+  const { patients } = usePatients();
   const modalRef = useRef<HTMLDivElement>(null);
 
   const [pacienteData, setPacienteData] = useState<PacienteData | null>(null);
@@ -80,7 +80,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
       
       const cama = data.data.find((c: any) => String(c.NumeroVisita) === numeroVisita);
       if (cama) {
-        const pacienteInfo = allPatients.find(p => p.IDPaciente === Number(cama.IdPaciente));
+        const pacienteInfo = patients.find((p: any) => p.IDPaciente === Number(cama.IdPaciente));
 
         // Fecha y hora de admisión desde el movimiento o desde la cama
         const fechaAdmisionISO = cama.FechaIngreso 
@@ -137,7 +137,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [isOpen, numeroVisita, yaConsultado, allPatients]);
+  }, [isOpen, numeroVisita, yaConsultado, patients]);
 
   useEffect(() => {
     if (isOpen) {

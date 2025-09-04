@@ -45,10 +45,10 @@ export function useOpcGrdManager({ initialSearch = '' }: UseOpcGrdManagerProps =
   const fetchOpciones = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await opcGrdService.getAllOpcGrd();
+      const response = await opcGrdService.getAllOpcGrd();
       const groupedData = await opcGrdService.getGroupedOpcGrd();
       
-      setOpciones(data);
+      setOpciones(response.data);
       setOpcionesAgrupadas(groupedData);
       setError(null);
     } catch (err: any) {

@@ -123,8 +123,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const fetchLocalidades = async () => {
 		try {
 			setLoading((p) => ({ ...p, localidad: true }));
-			const data = await localidadService.getLocalidades();
-			setLocalidadOptions(data);
+			const response = await localidadService.getLocalidades();
+			setLocalidadOptions(response.data);
 		} catch (e) {
 			console.error('Error localidades', e);
 		} finally {
