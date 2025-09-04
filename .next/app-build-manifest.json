@@ -1,121 +1,34 @@
 {
   "pages": {
-    "/_not-found": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/app/_not-found-f32ebfc6a3468a0a.js"
-    ],
     "/layout": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/css/9401a8023719cc9b.css",
-      "static/chunks/app/layout-17beca52bf913312.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
     ],
     "/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/107-32b39554cfa5b3c4.js",
-      "static/css/703fa2c05e71aa57.css",
-      "static/chunks/app/page-e82ef51f9d6ed088.js"
-    ],
-    "/dashboard/layout": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/15-959279fc94d9dfe2.js",
-      "static/css/2dc678bb3ed65a5f.css",
-      "static/chunks/app/dashboard/layout-cdd26f5d9c5d2a6b.js"
-    ],
-    "/dashboard/admission/tables/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/9c4e2130-1341baecc637edd2.js",
-      "static/chunks/939-bdc578041ef5e31c.js",
-      "static/css/7e4c15894dd378ba.css",
-      "static/chunks/app/dashboard/admission/tables/page-b6e3a9e1e7e17c97.js"
-    ],
-    "/dashboard/beds/tables/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/8e1d74a4-dde7036572b11256.js",
-      "static/chunks/939-bdc578041ef5e31c.js",
-      "static/css/063148c73a990fb0.css",
-      "static/chunks/app/dashboard/beds/tables/page-65f6347f5e2cb638.js"
-    ],
-    "/dashboard/beds/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/9c4e2130-1341baecc637edd2.js",
-      "static/chunks/479ba886-5b0fbd60f6e3f4e7.js",
-      "static/chunks/ee560e2c-a2d01a99ff22b428.js",
-      "static/chunks/107-32b39554cfa5b3c4.js",
-      "static/chunks/923-289014846eb7f98f.js",
-      "static/chunks/981-95d31d2d05066b73.js",
-      "static/css/ede787b7e383fa73.css",
-      "static/chunks/app/dashboard/beds/page-7217bb02244165e8.js"
-    ],
-    "/dashboard/bed-detail/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/9c4e2130-1341baecc637edd2.js",
-      "static/css/d4bd20dc3793a697.css",
-      "static/chunks/app/dashboard/bed-detail/page-861fe2e5486c1588.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/page.css",
+      "static/chunks/app/page.js"
     ],
     "/dashboard/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/107-32b39554cfa5b3c4.js",
-      "static/css/a3d8de84ada864c9.css",
-      "static/chunks/app/dashboard/page-b254a3258905af22.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/page.css",
+      "static/chunks/app/dashboard/page.js"
     ],
-    "/dashboard/billing/tables/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/8e1d74a4-dde7036572b11256.js",
-      "static/chunks/939-bdc578041ef5e31c.js",
-      "static/css/063148c73a990fb0.css",
-      "static/chunks/app/dashboard/billing/tables/page-f843d0fc3b9ade8a.js"
+    "/dashboard/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/layout.css",
+      "static/chunks/app/dashboard/layout.js"
     ],
     "/dashboard/patients/analytics/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/107-32b39554cfa5b3c4.js",
-      "static/css/03af838694542181.css",
-      "static/chunks/app/dashboard/patients/analytics/page-774cfadcdc6a5432.js"
-    ],
-    "/dashboard/patients/page": [
-      "static/chunks/webpack-1c3edd4a41b502b4.js",
-      "static/chunks/fd9d1056-2c52407cfa34b8a1.js",
-      "static/chunks/69-7f311d4a56fa7659.js",
-      "static/chunks/main-app-8c8f95ca38308a59.js",
-      "static/chunks/9c4e2130-1341baecc637edd2.js",
-      "static/chunks/479ba886-5b0fbd60f6e3f4e7.js",
-      "static/chunks/107-32b39554cfa5b3c4.js",
-      "static/chunks/509-2f30421112995713.js",
-      "static/chunks/981-95d31d2d05066b73.js",
-      "static/css/dac1005f8a2f4faf.css",
-      "static/chunks/app/dashboard/patients/page-f7c8d2a4245bdc46.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/dashboard/patients/analytics/page.css",
+      "static/chunks/app/dashboard/patients/analytics/page.js"
     ]
   }
 }
