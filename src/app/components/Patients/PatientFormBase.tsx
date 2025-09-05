@@ -8,7 +8,7 @@ import PersonalDataTab from './AddPatient/PersonalDataTab';
 import OtherDataTab from './AddPatient/OtherDataTab';
 import LaboralDataTab from './AddPatient/LaboralDataTab';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
-import styles from '../../components/modals/ModalAddPatient/styles.module.css';
+import styles from './PatientFormBase.module.css';
 import React, { useState, useEffect, useRef } from 'react';
 import coberturaService from '../../services/coberturaService';
 import { apiService } from '../../services/axios';
