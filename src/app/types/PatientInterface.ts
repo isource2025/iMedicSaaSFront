@@ -78,7 +78,7 @@ export interface PatientFormData {
 
 	// --- NUEVO CAMPO PARA DATOS LABORALES ---
 	Trabajos?: Trabajo[];
-
+	Ocupacion?: number | null;
 	SituacionLaboral?: string | null;
 	NivelEstudios?: string | null;
 }

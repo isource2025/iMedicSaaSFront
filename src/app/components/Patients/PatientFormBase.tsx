@@ -12,6 +12,7 @@ import styles from '../../components/modals/ModalAddPatient/styles.module.css';
 import React, { useState, useEffect, useRef } from 'react';
 import coberturaService from '../../services/coberturaService';
 import { apiService } from '../../services/axios';
+import type { PersonaResponse, LocalidadResponse, LocalidadData } from './typesForRenaper';
 
 interface PatientFormBaseProps {
 	onSubmit: (data: any) => Promise<boolean> | boolean;
@@ -211,6 +212,37 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		}
 	};
 
+	// util para normalizar nombre de ciudad
+	const normalizeCity = (raw: string) =>
+		String(raw || '')
+			.replace(/_/g, ' ') // underscores -> espacios
+			.replace(/\s+/g, ' ') // colapsa múltiple espacios
+			.trim();
+
+	// helper para pedir la localidad de forma segura
+	async function safeFetchLocalidad(ciudad: string): Promise<LocalidadData | null> {
+		const query = encodeURIComponent(normalizeCity(ciudad));
+		try {
+			const resp = await apiService.get<LocalidadResponse>(
+				`/localidad/search-by-localidad/${query}`,
+			);
+			return resp.data?.data ?? null;
+		} catch (e: any) {
+			// si tu interceptor de axios mete el status:
+			if ((e as any)?.status === 404) {
+				console.warn('[Localidad] No encontrada:', ciudad);
+				return null;
+			}
+			// fallback si el interceptor solo manda message:
+			if (String(e?.message || '').includes('404')) {
+				console.warn('[Localidad] No encontrada:', ciudad);
+				return null;
+			}
+			console.warn('[Localidad] Error consultando:', e);
+			return null; // no bloquees el flujo
+		}
+	}
+
 	const getRenaperInfo = async (
 		e: React.MouseEvent | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 		NumeroDocumento: number,
@@ -220,33 +252,34 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		if (!NumeroDocumento || !SexoVal) return;
 		setBuscandoRenaper(true);
 		const sexoOpt = SexoVal === 'F' ? 1 : 2;
+
 		try {
-			const resp = await fetch(
-				`http://localhost:5005/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
-			);
-			const data = await resp.json();
+			const endpoint = `/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`;
+			const { data } = await apiService.get<PersonaResponse>(endpoint);
+
 			if (data?.persona) {
-				const locResp = await fetch(
-					`http://localhost:5005/api/localidad/search-by-localidad/${data.persona.ciudad}`,
-				);
-				const dataLocalidad = await locResp.json();
-				await fetchLocalidades();
+				const ciudadNorm = normalizeCity(data.persona.ciudad || '');
+				const dataLocalidad = ciudadNorm ? await safeFetchLocalidad(ciudadNorm) : null;
+
+				await fetchLocalidades?.();
 				setFormData((prev) => ({
 					...prev,
-					NumeroDocumento: String(data.persona.numeroDocumento || ''),
-					ApellidoyNombre:
-						`${data.persona.apellido}, ${data.persona.nombres}`.trim(),
-					Domicilio: `${data.persona.calle || ''} ${
-						data.persona.numero || ''
+					NumeroDocumento: String(data.persona!.numeroDocumento ?? ''),
+					ApellidoyNombre: `${data.persona!.apellido ?? ''}, ${
+						data.persona!.nombres ?? ''
 					}`.trim(),
-					ValorLocalidad: dataLocalidad?.data?.Valor
-						? String(dataLocalidad.data.Valor)
+					Domicilio: `${data.persona!.calle ?? ''} ${
+						data.persona!.numero ?? ''
+					}`.trim(),
+					ValorLocalidad: dataLocalidad?.Valor
+						? String(dataLocalidad.Valor)
 						: prev.ValorLocalidad,
-					FechaNacimiento: data.persona.fechaNacimiento || prev.FechaNacimiento,
-					Sexo: data.persona.sexo || prev.Sexo,
+					FechaNacimiento: data.persona!.fechaNacimiento ?? prev.FechaNacimiento,
+					Sexo: data.persona!.sexo ?? prev.Sexo,
 				}));
-				if (dataLocalidad?.data?.ValorProvincia) {
-					await handleGetProvincia(String(dataLocalidad.data.ValorProvincia));
+
+				if (dataLocalidad?.ValorProvincia) {
+					await handleGetProvincia(String(dataLocalidad.ValorProvincia));
 				}
 			}
 		} catch (err) {
