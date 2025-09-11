@@ -267,7 +267,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					NumeroDocumento: String(data.persona!.numeroDocumento ?? ''),
 					ApellidoyNombre: `${data.persona!.apellido ?? ''}, ${
 						data.persona!.nombres ?? ''
-					}`.trim(),
+					}`
+						.trim()
+						.replaceAll(',', ''),
 					Domicilio: `${data.persona!.calle ?? ''} ${
 						data.persona!.numero ?? ''
 					}`.trim(),
