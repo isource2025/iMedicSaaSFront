@@ -1,0 +1,87 @@
+.insightCard {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.headerContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  position: relative;
+}
+
+.insightIcon {
+  color: #00B5E2;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 10px;
+}
+
+.infoButton {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.infoButton:hover {
+  background: #00B5E2;
+  border-color: #00B5E2;
+  transform: scale(1.1);
+}
+
+.infoButton:hover .infoIcon {
+  color: white;
+}
+
+.infoIcon {
+  width: 14px;
+  height: 14px;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.insightCard h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.content {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+  text-align: center;
+}
+
+.content p {
+  margin: 0;
+}
+
+.content strong {
+  color: #333;
+  font-weight: 600;
+}
