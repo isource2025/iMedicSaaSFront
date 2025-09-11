@@ -12,16 +12,17 @@
 /* Filas con 2 o 3 columnas */
 .formRow.double {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 	gap: 1.5rem;
 	align-items: center;
 }
 
 .formRow.three {
 	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
+	/* reemplaza 1fr 1fr 1fr */
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 	gap: 1.5rem;
-	align-items: center;
+	align-items: start;
 }
 
 /* Grupo label + input */

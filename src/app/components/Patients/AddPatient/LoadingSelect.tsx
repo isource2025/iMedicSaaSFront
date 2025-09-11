@@ -13,6 +13,7 @@ interface CustomSelectProps {
 	onChange: (value: string | number) => void;
 	isLoading: boolean;
 	options: Option[];
+	tabIndex?: number; // NEW: permitir orden de tabulación
 }
 
 type Placement = 'top' | 'bottom';
@@ -24,8 +25,9 @@ export default function CustomSelect({
 	onChange,
 	isLoading,
 	options,
+	tabIndex, // NEW
 }: CustomSelectProps) {
-	const [mounted, setMounted] = useState(false); // evita SSR issues
+	const [mounted, setMounted] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [placement, setPlacement] = useState<Placement>('bottom');
@@ -35,6 +37,7 @@ export default function CustomSelect({
 	const wrapperRef = useRef<HTMLDivElement>(null);
 	const triggerRef = useRef<HTMLDivElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const searchInputRef = useRef<HTMLInputElement>(null); // NEW
 
 	useEffect(() => {
 		setMounted(true);
@@ -48,9 +51,10 @@ export default function CustomSelect({
 	const close = () => {
 		setIsOpen(false);
 		setSearchTerm('');
+		// NEW: devolver foco al trigger al cerrar
+		requestAnimationFrame(() => triggerRef.current?.focus());
 	};
 
-	// Cálculo de posición (y decidir arriba/abajo)
 	const updatePosition = () => {
 		const el = triggerRef.current;
 		if (!el) return;
@@ -58,7 +62,7 @@ export default function CustomSelect({
 		const vh = window.innerHeight;
 		const spaceBelow = vh - r.bottom;
 		const spaceAbove = r.top;
-		const estimated = 280; // px aprox. (search + lista)
+		const estimated = 280;
 
 		const openDown =
 			spaceBelow >= Math.min(estimated, vh * 0.4) || spaceBelow >= spaceAbove;
@@ -72,7 +76,11 @@ export default function CustomSelect({
 	};
 
 	useLayoutEffect(() => {
-		if (isOpen) updatePosition();
+		if (isOpen) {
+			updatePosition();
+			// NEW: enfocar el buscador al abrir
+			requestAnimationFrame(() => searchInputRef.current?.focus());
+		}
 	}, [isOpen]);
 
 	useEffect(() => {
@@ -87,7 +95,6 @@ export default function CustomSelect({
 		};
 	}, [isOpen]);
 
-	// Cerrar al hacer click afuera (incluye el portal)
 	useEffect(() => {
 		if (!isOpen) return;
 		const handleClick = (e: MouseEvent) => {
@@ -99,9 +106,9 @@ export default function CustomSelect({
 		document.addEventListener('mousedown', handleClick);
 		return () => document.removeEventListener('mousedown', handleClick);
 	}, [isOpen]);
+
 	useEffect(() => {
 		if (!wrapperRef.current) return;
-		// intenta el contenedor del modal
 		const modalRoot = wrapperRef.current.closest<HTMLElement>(
 			'[data-modal-root], [role="dialog"], .modal, .Modal, .MuiModal-root',
 		);
@@ -116,12 +123,32 @@ export default function CustomSelect({
 		.filter(Boolean)
 		.join(' ');
 
-	if (name == 'Ocupacion') console.log({ value, selected });
+	// NEW: teclado en el trigger (Enter/Space abre, Escape cierra)
+	const handleTriggerKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+		if (isLoading) return;
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			setIsOpen((v) => !v);
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			if (isOpen) close();
+		} else if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			if (!isOpen) setIsOpen(true);
+			else {
+				// enfocar buscador para empezar a filtrar
+				searchInputRef.current?.focus();
+			}
+		}
+	};
+
 	return (
-		<div className={styles.formGroup} ref={wrapperRef}>
-			<label className={styles.label} htmlFor={name}>
-				{label}
-			</label>
+		<div className={`${label ? styles.formGroup : ''}`} ref={wrapperRef}>
+			{label && (
+				<label className={styles.label} htmlFor={name}>
+					{label}
+				</label>
+			)}
 
 			<div className={styles.selectWrapper}>
 				<div
@@ -129,17 +156,20 @@ export default function CustomSelect({
 					ref={triggerRef}
 					className={selectClasses}
 					onClick={() => !isLoading && setIsOpen((v) => !v)}
-					role='button'
+					role='combobox' // NEW: ARIA adecuado
 					aria-haspopup='listbox'
 					aria-expanded={isOpen}
 					aria-disabled={isLoading}
+					aria-controls={`${name}-listbox`}
+					aria-activedescendant={isOpen ? `${name}-active` : undefined}
+					tabIndex={isLoading ? -1 : tabIndex ?? 0} // NEW: enfocable y ordenable
+					onKeyDown={handleTriggerKeyDown} // NEW
 				>
-					{isLoading ? 'Cargando...' : selected ? selected.label : 'Seleccione...'}
+					{isLoading ? 'Cargando…' : selected ? selected.label : 'Seleccione…'}
 					{isLoading && <div className={styles.spinnerIcon} aria-hidden='true' />}
 				</div>
 			</div>
 
-			{/* Dropdown en portal — solo en cliente */}
 			{mounted &&
 				isOpen &&
 				!isLoading &&
@@ -152,22 +182,32 @@ export default function CustomSelect({
 						}`}
 						style={{ left: coords.left, top: coords.top, width: coords.width }}
 						role='listbox'
+						id={`${name}-listbox`}
 						aria-labelledby={name}
-						// EVITA que el click cierre el modal por bubbling/capture
 						onMouseDownCapture={(e) => e.stopPropagation()}
 						onMouseDown={(e) => e.stopPropagation()}
 						onClick={(e) => e.stopPropagation()}
 					>
 						<div className={styles.searchBar}>
 							<input
+								ref={searchInputRef} // NEW
 								className={styles.searchInput}
 								type='text'
 								placeholder='Buscar…'
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
-								autoFocus
 								aria-label='Buscar opción'
-								onMouseDown={(e) => e.stopPropagation()} // prevenir blur/cierre
+								onKeyDown={(e) => {
+									if (e.key === 'Escape') {
+										e.preventDefault();
+										close(); // NEW: cerrar con Esc
+									}
+									if (e.key === 'Tab' && !e.shiftKey) {
+										// dejar que Tab salga del dropdown y siga al próximo control
+										setIsOpen(false);
+									}
+								}}
+								onMouseDown={(e) => e.stopPropagation()}
 							/>
 						</div>
 
@@ -180,12 +220,20 @@ export default function CustomSelect({
 											opt.value === value ? styles.active : ''
 										}`}
 										role='option'
+										id={opt.value === value ? `${name}-active` : undefined}
 										aria-selected={opt.value === value}
-										onMouseDown={(e) => e.stopPropagation()} // importante si el modal escucha mousedown
+										tabIndex={-1} // no entra el foco aquí; se selecciona con click/Enter desde el buscador
+										onMouseDown={(e) => e.stopPropagation()}
 										onClick={() => {
 											onChange(opt.value);
-											setIsOpen(false);
-											setSearchTerm('');
+											close();
+										}}
+										onKeyDown={(e) => {
+											if (e.key === 'Enter') {
+												e.preventDefault();
+												onChange(opt.value);
+												close();
+											}
 										}}
 									>
 										{opt.label}

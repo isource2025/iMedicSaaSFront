@@ -136,6 +136,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={razaOptions}
+					tabIndex={5}
 				/>
 				<LoadingSelect
 					label='Idioma:'
@@ -146,6 +147,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={idiomaOptions}
+					tabIndex={6}
 				/>
 			</div>
 			{/* Línea 2: Religión / Grupo Étnico */}
@@ -159,6 +161,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={religionOptions}
+					tabIndex={7}
 				/>
 				<LoadingSelect
 					label='Grupo Étnico:'
@@ -169,6 +172,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={etniaOptions}
+					tabIndex={8}
 				/>
 			</div>
 			{/* Línea 3: Estado Militar / Dador Órganos */}
@@ -182,6 +186,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={militarOptions}
+					tabIndex={9}
 				/>
 				<LoadingSelect
 					label='Dador Órganos:'
@@ -192,6 +197,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={dadorOptions}
+					tabIndex={10}
 				/>
 			</div>
 			{/* Línea 4: Licencia Auto (campo completo) */}
@@ -204,6 +210,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 						value={formData.LicenciaConducir || ''}
 						onChange={handleChange}
 						className={styles.input}
+						tabIndex={11}
 					/>
 				</div>
 			</div>
@@ -220,6 +227,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.OrdenNacimiento || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={12}
 							/>
 						</div>
 						<div className={styles.formGroupCompact}>
@@ -230,6 +238,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.LugarNacimiento || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={13}
 							/>
 						</div>
 					</div>
@@ -245,6 +254,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.FechaDefuncion || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={14}
 							/>
 						</div>
 						<div className={styles.formGroupCompact}>
@@ -255,6 +265,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.HoraDefuncion || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={15}
 							/>
 						</div>
 					</div>

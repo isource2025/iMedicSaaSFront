@@ -119,6 +119,7 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 						setFD({ Ocupacion: typeof v === 'number' ? v : Number(v) })
 					}
 					options={ocupacionOptions}
+					tabIndex={5}
 				/>
 
 				{/* Toolbar + tabla de empleos */}
@@ -127,6 +128,7 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 						type='button'
 						onClick={handleOpenAddModal}
 						className={styles.addButton}
+						tabIndex={6}
 					>
 						+ Agregar Trabajo
 					</button>
@@ -195,6 +197,7 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 						})
 					}
 					options={situacionOptions}
+					tabIndex={7}
 				/>
 				<CustomSelect
 					label='Nivel de estudios:'
@@ -207,6 +210,7 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 						})
 					}
 					options={estudiosOptions}
+					tabIndex={8}
 				/>
 			</div>
 

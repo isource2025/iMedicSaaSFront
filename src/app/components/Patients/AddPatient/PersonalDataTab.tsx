@@ -74,6 +74,7 @@ export default function PersonalDataTab({
 						value={formData.Domicilio}
 						onChange={handleChange}
 						className={`${styles.input} ${errors.Domicilio ? styles.error : ''}`}
+						tabIndex={5}
 					/>
 					{errors.Domicilio && (
 						<div className={styles.errorMessage}>{errors.Domicilio}</div>
@@ -94,6 +95,7 @@ export default function PersonalDataTab({
 					}
 					isLoading={loading.localidad}
 					options={localidadSelectOptions}
+					tabIndex={6}
 				/>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Provincia:</label>
@@ -141,6 +143,7 @@ export default function PersonalDataTab({
 						className={`${styles.input} ${
 							errors.FechaNacimiento ? styles.error : ''
 						}`}
+						tabIndex={7}
 					/>
 					{errors.FechaNacimiento && (
 						<div className={styles.errorMessage}>{errors.FechaNacimiento}</div>
@@ -155,6 +158,7 @@ export default function PersonalDataTab({
 						value={formData.Hora}
 						onChange={handleChange}
 						className={`${styles.input} ${errors.Hora ? styles.error : ''}`}
+						tabIndex={8}
 					/>
 					{errors.Hora && <div className={styles.errorMessage}>{errors.Hora}</div>}
 				</div>
@@ -183,6 +187,7 @@ export default function PersonalDataTab({
 						value={formData.CUIT}
 						onChange={handleChange}
 						className={`${styles.input} ${errors.CUIT ? styles.error : ''}`}
+						tabIndex={9}
 					/>
 					{errors.CUIT && <div className={styles.errorMessage}>{errors.CUIT}</div>}
 				</div>
@@ -196,6 +201,7 @@ export default function PersonalDataTab({
 						}
 						isLoading={loading.sexo}
 						options={sexoSelectOptions}
+						tabIndex={10}
 					/>
 					{errors.Sexo && <div className={styles.errorMessage}>{errors.Sexo}</div>}
 				</div>
@@ -211,6 +217,7 @@ export default function PersonalDataTab({
 						}
 						isLoading={loading.estadoCivil}
 						options={estadoCivilSelectOptions}
+						tabIndex={11}
 					/>
 					{errors.EstadoCivil && (
 						<div className={styles.errorMessage}>{errors.EstadoCivil}</div>
@@ -219,7 +226,7 @@ export default function PersonalDataTab({
 			</div>
 
 			{/* Teléfonos */}
-			<div className={`${styles.formRow} ${styles.double}`}>
+			<div className={`${styles.formRow} ${styles.three}`}>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Teléfono Particular:</label>
 					<input
@@ -230,6 +237,7 @@ export default function PersonalDataTab({
 						className={`${styles.input} ${
 							errors.TelefonoParticular ? styles.error : ''
 						}`}
+						tabIndex={12}
 					/>
 					{errors.TelefonoParticular && (
 						<div className={styles.errorMessage}>{errors.TelefonoParticular}</div>
@@ -245,15 +253,14 @@ export default function PersonalDataTab({
 						className={`${styles.input} ${
 							errors.TelefonoCelular ? styles.error : ''
 						}`}
+						tabIndex={13}
 					/>
 					{errors.TelefonoCelular && (
 						<div className={styles.errorMessage}>{errors.TelefonoCelular}</div>
 					)}
 				</div>
-			</div>
 
-			{/* Mail */}
-			<div className={styles.formRow}>
+				{/* Mail */}
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Correo Electrónico:</label>
 					<input
@@ -262,6 +269,7 @@ export default function PersonalDataTab({
 						value={formData.Mail}
 						onChange={handleChange}
 						className={`${styles.input} ${errors.Mail ? styles.error : ''}`}
+						tabIndex={14}
 					/>
 					{errors.Mail && <div className={styles.errorMessage}>{errors.Mail}</div>}
 				</div>
@@ -277,6 +285,7 @@ export default function PersonalDataTab({
 					}
 					isLoading={loading.cobertura}
 					options={coberturaOptions}
+					tabIndex={15}
 				/>
 				{errors.Cobertura && (
 					<div className={styles.errorMessage}>{errors.Cobertura}</div>
@@ -289,6 +298,7 @@ export default function PersonalDataTab({
 						value={formData.nAfiliado}
 						onChange={handleChange}
 						className={`${styles.input} ${errors.nAfiliado ? styles.error : ''}`}
+						tabIndex={16}
 					/>
 					{errors.nAfiliado && (
 						<div className={styles.errorMessage}>{errors.nAfiliado}</div>

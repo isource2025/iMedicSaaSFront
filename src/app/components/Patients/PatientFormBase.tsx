@@ -570,6 +570,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						onClick={onClose}
 						className={styles.cancelButton}
 						disabled={internalSubmitting}
+						tabIndex={20}
 					>
 						Cancelar
 					</button>
@@ -579,6 +580,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 							internalSubmitting ? styles.loading : ''
 						}`}
 						disabled={internalSubmitting || isPhotoUploading || isSubmitting}
+						tabIndex={21}
 					>
 						{internalSubmitting && (
 							<span className={styles.inlineSpinner} aria-hidden='true' />
