@@ -5,6 +5,22 @@ import { bedsService } from '../services/bedsService';
 import { indicadoresService, ResumenPacientesHoy } from '../services/indicadoresService';
 import styles from './DashboardPage.module.css';
 
+const Icon = ({ path, className }: { path: string; className?: string }) => (
+  <svg
+    className={className}
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    width="16"
+    height="16"
+  >
+    <path d={path} />
+  </svg>
+);
+
+const ICONS = {
+  arrowRight: 'M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'
+};
+
 interface BedStats {
   totalCamas: number;
   camasDisponibles: number;
@@ -61,8 +77,17 @@ export default function Dashboard() {
       
       <div className={styles.cardsGrid}>
         {/* Dashboard Cards */}
-        <div className={styles.cardBedsTotal}>
-          <h3 className={styles.cardLabel}>Total Camas</h3>
+        <div 
+          className={styles.cardBedsTotal}
+          onClick={() => window.location.href = '/dashboard/beds/analytics'}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className={styles.cardHeader}>
+            <h3 className={styles.cardLabel}>Total Camas</h3>
+            <button className={styles.arrowButton} aria-label="Ver análisis de camas">
+              <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
+            </button>
+          </div>
           <p className={styles.cardValue}>
             {loading ? '...' : bedStats.totalCamas}
           </p>
@@ -82,7 +107,12 @@ export default function Dashboard() {
           onClick={() => window.location.href = '/dashboard/patients/analytics'}
           style={{ cursor: 'pointer' }}
         >
-          <h3 className={styles.cardLabel}>Pacientes</h3>
+          <div className={styles.cardHeader}>
+            <h3 className={styles.cardLabel}>Pacientes</h3>
+            <button className={styles.arrowButton} aria-label="Ver análisis de pacientes">
+              <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
+            </button>
+          </div>
           <p className={styles.cardValue}>{loadingPatients ? '...' : patientSummary.totalHoy}</p>
           <div className={styles.cardStats}>
             {loadingPatients ? (

@@ -24,8 +24,6 @@ body {
 /* Asegurarse de que el #__next o app root tenga altura completa para posicionar correctamente los elementos */
 #__next, main, .main-content-wrapper {
   height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 /* Estilos globales para elementos de texto */

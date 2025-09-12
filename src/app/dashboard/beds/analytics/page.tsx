@@ -24,6 +24,8 @@ const ChartSkeleton = () => (
 );
 import { MetricCard } from '../../../components/MetricCard';
 import { InsightCard } from '../../../components/InsightCard';
+import { MetricTooltipModal } from '../../../components/modals/MetricTooltipModal';
+import { analyzePeakOccupancy, analyzeOperationalEfficiency, AnalysisResult } from '../../../utils/analyticsEngine';
 import styles from './BedsAnalytics.module.css';
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
@@ -49,6 +51,9 @@ export default function BedsAnalytics() {
   const [fechaInicio, setFechaInicio] = useState(toYYYYMMDD(defaultStart));
   const [fechaFin, setFechaFin] = useState(toYYYYMMDD(today));
   const [activeTab, setActiveTab] = useState<string>('mes');
+  const [isEstadoActualModalOpen, setIsEstadoActualModalOpen] = useState(false);
+  const [peakAnalysis, setPeakAnalysis] = useState<AnalysisResult | null>(null);
+  const [efficiencyAnalysis, setEfficiencyAnalysis] = useState<AnalysisResult | null>(null);
 
   const { 
     indicadores, 
@@ -189,7 +194,13 @@ export default function BedsAnalytics() {
             <div className={styles.estadoActualContainer}>
               <div className={styles.estadoActualLeft}>
                 <div className={styles.estadoActualIconContainer}>
-                  <Icon path={ICONS.info} className={styles.estadoActualIcon} />
+                  <button 
+                    className={styles.estadoActualInfoButton}
+                    onClick={() => setIsEstadoActualModalOpen(true)}
+                    aria-label="Información sobre Estado Actual"
+                  >
+                    <Icon path={ICONS.info} className={styles.estadoActualIcon} />
+                  </button>
                 </div>
                 <div>
                   <h2 className={styles.estadoActualTitle}>Estado Actual</h2>
@@ -255,17 +266,25 @@ export default function BedsAnalytics() {
               }}
             />
             <MetricCard
-              title="Capacidad Instalada"
-              value={resumen?.totalCamasPromedio || 0}
-              detail="Camas disponibles en total"
+              title="Índice de Rotación"
+              value={(() => {
+                if (!indicadoresPorFecha.length || !estadoActual) return "0.0";
+                // Calcular índice de rotación: Total movimientos / Camas disponibles promedio
+                const totalMovimientos = indicadoresPorFecha.reduce((sum, item) => sum + item.ocupadas, 0);
+                const camasDisponibles = estadoActual.totalCamas;
+                const diasPeriodo = indicadoresPorFecha.length;
+                const indiceRotacion = camasDisponibles > 0 ? (totalMovimientos / (camasDisponibles * diasPeriodo)).toFixed(1) : "0.0";
+                return indiceRotacion;
+              })()}
+              detail="Movimientos por cama por día"
               icon={ICONS.trendingUp}
               iconColor="#D81B60"
               backgroundColor="#FCE4EC"
               tooltipData={{
-                description: "Número total de camas disponibles en el hospital, sumando todos los sectores y servicios médicos. Representa la capacidad máxima de atención.",
-                formula: "Suma de todas las camas habilitadas en todos los sectores",
-                example: "Medicina Interna (30) + Cirugía (25) + Pediatría (20) = 75 camas totales",
-                importance: "Define el límite máximo de pacientes que pueden ser atendidos simultáneamente. Es clave para planificación estratégica y evaluación de necesidades de expansión."
+                description: "Mide la intensidad de uso de las camas considerando todos los movimientos hospitalarios (ingresos, egresos, traslados). Un índice alto indica alta rotación de pacientes.",
+                formula: "Índice = Total Movimientos / (Camas Totales × Días del Período)",
+                example: "Si hay 1,500 movimientos en 30 días con 100 camas: 1,500 / (100 × 30) = 0.5 movimientos por cama por día",
+                importance: "0.3-0.7 es normal. Menos de 0.3 indica baja utilización. Más de 0.7 indica alta rotación y eficiencia operativa."
               }}
             />
           </div>
@@ -319,20 +338,52 @@ export default function BedsAnalytics() {
                 icon={ICONS.trendingUp}
                 title="Pico de Ocupación"
                 content={
-                  <p>
-                    {diaMayorOcupacion
-                      ? `El período con mayor ocupación fue ${diaMayorOcupacion.fecha.split('T')[0].split('-').reverse().join('/')} con `
-                      : 'No hay datos de ocupación disponibles.'}
-                    {diaMayorOcupacion && <strong>{`${diaMayorOcupacion.porcentajeOcupacion.toFixed(1)}% de ocupación`}</strong>}
-                    {diaMayorOcupacion && `, representando ${diaMayorOcupacion.ocupadas} camas ocupadas de ${diaMayorOcupacion.totalCamas} disponibles.`}
-                  </p>
+                  <>
+                    {(() => {
+                      if (indicadoresPorFecha.length === 0) {
+                        return (
+                          <>
+                            <p><strong>N/A</strong></p>
+                            <p>0% de ocupación</p>
+                            <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>Sin datos disponibles</p>
+                          </>
+                        );
+                      }
+                      
+                      const pico = indicadoresPorFecha.reduce((max, curr) => 
+                        curr.porcentajeOcupacion > max.porcentajeOcupacion ? curr : max
+                      );
+                      
+                      // Calcular ocupación real basada en el porcentaje
+                      const ocupacionReal = Math.round((pico.porcentajeOcupacion / 100) * pico.totalCamas);
+                      
+                      return (
+                        <>
+                          <p><strong>{pico.fecha.split('T')[0]}</strong></p>
+                          <p>{pico.porcentajeOcupacion.toFixed(1)}% de ocupación</p>
+                          <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                            ~{ocupacionReal} camas ocupadas de {pico.totalCamas}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                            Flujo total: {pico.ocupadas} pacientes (ingresos + egresos + traslados)
+                          </p>
+                        </>
+                      );
+                    })()
+                    }
+                  </>
                 }
                 tooltipData={{
-                  description: "Identifica el día o período con la mayor tasa de ocupación hospitalaria registrada en el rango de fechas seleccionado.",
-                  formula: "MAX(Camas Ocupadas / Total Camas) × 100 por cada día del período",
-                  example: "Si el 15/03 hubo 68 camas ocupadas de 75 totales: (68/75) × 100 = 90.7%",
-                  importance: "Ayuda a identificar patrones de demanda máxima, planificar recursos adicionales y detectar posibles cuellos de botella en la atención hospitalaria."
+                  description: "Identifica el día con mayor porcentaje de ocupación hospitalaria en el período seleccionado. Es importante distinguir entre dos conceptos clave: la ocupación real promedio y el flujo total de pacientes del día.",
+                  formula: "Pico = MAX(Porcentaje de Ocupación) del período. Ocupación Real = (Porcentaje/100) × Total Camas. El flujo total incluye todos los movimientos: ingresos, egresos, traslados y rotación de pacientes.",
+                  example: "Con 187 camas totales y 100% de ocupación: ~187 camas ocupadas en promedio. Si el flujo total es 273 pacientes, significa alta rotación (pacientes que ingresan, egresan o se mueven durante el día). Es normal y posible que el flujo supere la capacidad física.",
+                  importance: "Esta distinción es crítica para la gestión hospitalaria: la ocupación real indica la capacidad utilizada, mientras que el flujo total refleja la actividad y rotación de pacientes. Un flujo alto con ocupación al 100% indica eficiencia en el manejo de altas y admisiones, no un error en los datos."
                 }}
+                onAnalyze={() => {
+                  const analysis = analyzePeakOccupancy(indicadoresPorFecha, resumen, estadoActual);
+                  setPeakAnalysis(analysis);
+                }}
+                analysisData={peakAnalysis || undefined}
               />
               <InsightCard
                 icon={ICONS.info}
@@ -357,22 +408,34 @@ export default function BedsAnalytics() {
                 icon={ICONS.percent}
                 title="Eficiencia Operativa"
                 content={
-                  <p>
-                    {resumen ? (
-                      <>
-                        La tasa de ocupación del <strong>{resumen.porcentajeOcupacionPromedio.toFixed(1)}%</strong> indica una 
-                        {resumen.porcentajeOcupacionPromedio > 85 ? ' alta demanda' : resumen.porcentajeOcupacionPromedio > 70 ? ' ocupación óptima' : ' capacidad disponible'} 
-                        {resumen.porcentajeOcupacionPromedio > 85 ? ' que podría requerir expansión.' : resumen.porcentajeOcupacionPromedio > 70 ? ' para atención hospitalaria.' : ' para nuevos ingresos.'}
-                      </>
-                    ) : 'Calculando métricas de eficiencia...'}
-                  </p>
+                  <>
+                    <p><strong>{resumen ? `${resumen.porcentajeOcupacionPromedio.toFixed(1)}%` : '0%'}</strong></p>
+                    <p>Ocupación promedio</p>
+                    <p style={{ 
+                      fontSize: '12px', 
+                      color: resumen && Math.abs(resumen.porcentajeOcupacionPromedio - 80) < 10 ? '#388e3c' : '#f57c00',
+                      marginTop: '8px'
+                    }}>
+                      {resumen && Math.abs(resumen.porcentajeOcupacionPromedio - 80) < 10 
+                        ? 'Rango óptimo (70-90%)' 
+                        : resumen && resumen.porcentajeOcupacionPromedio < 70 
+                        ? 'Subutilización' 
+                        : 'Sobreutilización'
+                      }
+                    </p>
+                  </>
                 }
                 tooltipData={{
-                  description: "Evalúa qué tan eficientemente se utiliza la capacidad hospitalaria instalada comparando la ocupación real con los estándares óptimos.",
-                  formula: "Eficiencia = (Ocupación Promedio / Capacidad Total) × 100. Rango óptimo: 75-85%",
-                  example: "75% = Óptima | 60% = Subutilización | 90% = Sobreocupación",
-                  importance: "Una eficiencia óptima (75-85%) maximiza el uso de recursos sin comprometer la calidad. Fuera de este rango indica necesidad de ajustes operativos."
+                  description: "Evalúa qué tan eficientemente se están utilizando las camas hospitalarias comparado con estándares óptimos.",
+                  formula: "Eficiencia = Promedio(Ocupadas/Total × 100) vs rango óptimo 70-90%",
+                  example: "85% de ocupación promedio = Eficiencia óptima. <70% = Subutilización, >90% = Saturación",
+                  importance: "Permite optimizar recursos, identificar oportunidades de mejora en flujos de pacientes y mantener un equilibrio entre disponibilidad y utilización."
                 }}
+                onAnalyze={() => {
+                  const analysis = analyzeOperationalEfficiency(indicadoresPorFecha, resumen);
+                  setEfficiencyAnalysis(analysis);
+                }}
+                analysisData={efficiencyAnalysis || undefined}
               />
             </div>
           </div>
@@ -457,6 +520,16 @@ export default function BedsAnalytics() {
           </div>
         </>
       )}
+
+      <MetricTooltipModal
+        isOpen={isEstadoActualModalOpen}
+        onClose={() => setIsEstadoActualModalOpen(false)}
+        title="Estado Actual de Ocupación"
+        description="Muestra las métricas de ocupación hospitalaria en tiempo real, proporcionando una visión instantánea del estado actual de todas las camas del sistema."
+        formula="Datos actualizados desde la base de datos en tiempo real: Ocupadas + Disponibles = Total de Camas"
+        example="Si hay 45 camas ocupadas de 60 totales: Ocupación = 75%, Disponibles = 15 camas"
+        importance="Esta información es crítica para la toma de decisiones operativas inmediatas, gestión de ingresos de emergencia, y planificación de recursos en tiempo real. Permite al personal médico y administrativo conocer instantáneamente la capacidad disponible."
+      />
     </div>
   );
 }

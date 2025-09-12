@@ -92,67 +92,6 @@ interface ApiResponse<T> {
   data: T;
 }
 
-// Datos de fallback para desarrollo y casos de error
-// PacientesDia representa el promedio diario de camas ocupadas (no el total del período)
-const FALLBACK_CAMAS_DATA: CamasRawData[] = [
-  {
-    Periodo: '2024-01',
-    ValorSector: 'MEDICINA INTERNA',
-    PacientesDia: 27, // 27 camas ocupadas en promedio por día
-    TotalCamas: 30,
-    DiasDelMes: 31,
-    OcupacionPromedioPct: 90.0
-  },
-  {
-    Periodo: '2024-01',
-    ValorSector: 'CIRUGIA',
-    PacientesDia: 23, // 23 camas ocupadas en promedio por día
-    TotalCamas: 25,
-    DiasDelMes: 31,
-    OcupacionPromedioPct: 92.0
-  },
-  {
-    Periodo: '2024-01',
-    ValorSector: 'PEDIATRIA',
-    PacientesDia: 15, // 15 camas ocupadas en promedio por día
-    TotalCamas: 20,
-    DiasDelMes: 31,
-    OcupacionPromedioPct: 75.0
-  },
-  {
-    Periodo: '2024-02',
-    ValorSector: 'MEDICINA INTERNA',
-    PacientesDia: 28, // 28 camas ocupadas en promedio por día
-    TotalCamas: 30,
-    DiasDelMes: 29,
-    OcupacionPromedioPct: 93.3
-  },
-  {
-    Periodo: '2024-02',
-    ValorSector: 'CIRUGIA',
-    PacientesDia: 24, // 24 camas ocupadas en promedio por día
-    TotalCamas: 25,
-    DiasDelMes: 29,
-    OcupacionPromedioPct: 96.0
-  },
-  {
-    Periodo: '2024-02',
-    ValorSector: 'PEDIATRIA',
-    PacientesDia: 15, // 15 camas ocupadas en promedio por día
-    TotalCamas: 20,
-    DiasDelMes: 29,
-    OcupacionPromedioPct: 75.0
-  }
-];
-
-const FALLBACK_ESTADO_ACTUAL: EstadoActualCamas = {
-  fecha: new Date().toISOString(),
-  totalCamas: 75,
-  ocupadas: 68,
-  disponibles: 7,
-  porcentajeOcupacion: 90.7
-};
-
 export const camasIndicadoresService = {
   // Obtener datos crudos de la función SQL con cache
   obtenerDatosCrudos: async (fechaInicio: string, fechaFin: string): Promise<CamasRawData[]> => {
@@ -182,15 +121,19 @@ export const camasIndicadoresService = {
       throw new Error('Error en la respuesta del servidor al obtener datos de camas');
     } catch (error: any) {
       console.error('❌ Error en obtenerDatosCrudos:', error);
-      console.warn('🔄 Usando datos de fallback para camas');
       
       if (error.code === 'ECONNABORTED') {
-        console.warn('⏰ Timeout - Usando datos de ejemplo');
+        console.error('⏰ Timeout al obtener datos de camas del servidor');
+      } else if (error.response?.status === 404) {
+        console.error('🔍 Endpoint de camas no encontrado');
+      } else if (error.response?.status >= 500) {
+        console.error('🔧 Error del servidor al obtener datos de camas');
+      } else {
+        console.error('🌐 Error de conexión al obtener datos de camas');
       }
       
-      // Guardar fallback en cache por menos tiempo (1 minuto)
-      cache.set(cacheKey, FALLBACK_CAMAS_DATA, 60000);
-      return FALLBACK_CAMAS_DATA;
+      // En lugar de usar datos de fallback, lanzar el error para que el componente lo maneje
+      throw new Error(`Error al obtener datos de camas: ${error.message || 'Error desconocido'}`);
     }
   },
 
@@ -352,15 +295,19 @@ export const camasIndicadoresService = {
       throw new Error('Error en la respuesta del servidor al obtener estado actual');
     } catch (error: any) {
       console.error('❌ Error en obtenerEstadoActual:', error);
-      console.warn('🔄 Usando datos de fallback para estado actual');
       
       if (error.code === 'ECONNABORTED') {
-        console.warn('⏰ Timeout en estado actual - Usando datos de ejemplo');
+        console.error('⏰ Timeout al obtener estado actual de camas del servidor');
+      } else if (error.response?.status === 404) {
+        console.error('🔍 Endpoint de estado actual de camas no encontrado');
+      } else if (error.response?.status >= 500) {
+        console.error('🔧 Error del servidor al obtener estado actual de camas');
+      } else {
+        console.error('🌐 Error de conexión al obtener estado actual de camas');
       }
       
-      // Guardar fallback en cache por menos tiempo
-      cache.set(cacheKey, FALLBACK_ESTADO_ACTUAL, 30000);
-      return FALLBACK_ESTADO_ACTUAL;
+      // En lugar de usar datos de fallback, lanzar el error para que el componente lo maneje
+      throw new Error(`Error al obtener estado actual de camas: ${error.message || 'Error desconocido'}`);
     }
   },
 
