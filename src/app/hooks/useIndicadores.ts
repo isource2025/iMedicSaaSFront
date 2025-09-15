@@ -78,7 +78,7 @@ export const useIndicadores = (
       setEstadoActual({
         total: resumenData?.totalGeneral || 0,
         promedio: porFechaData.length > 0 ? Math.round((resumenData?.totalGeneral || 0) / porFechaData.length) : 0,
-        clases: resumenData ? Object.keys(resumenData.resumenPorClase).length : 0,
+        clases: resumenData?.resumenPorClase ? Object.keys(resumenData.resumenPorClase).length : 0,
         dias: porFechaData.length
       });
       setLoadingSteps(prev => ({ ...prev, estadoActual: false }));
@@ -115,7 +115,7 @@ export const useIndicadores = (
       totalPeriods: indicadoresPorFecha.length,
       totalGeneral: resumen.totalGeneral,
       averageDaily: indicadoresPorFecha.length > 0 ? Math.round(resumen.totalGeneral / indicadoresPorFecha.length) : 0,
-      sectorsCount: Object.keys(resumen.resumenPorClase).length
+      sectorsCount: resumen.resumenPorClase ? Object.keys(resumen.resumenPorClase).length : 0
     };
   }, [resumen, indicadoresPorFecha]);
 

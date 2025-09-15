@@ -311,6 +311,82 @@ export const camasIndicadoresService = {
     }
   },
 
+  // Obtener indicadores por fecha para gráficos temporales
+  obtenerIndicadoresPorFecha: async (fechaInicio: string, fechaFin: string): Promise<CamasPorFecha[]> => {
+    const cacheKey = cache.generateKey('camas-por-fecha', { fechaInicio, fechaFin });
+    const cachedData = cache.get<CamasPorFecha[]>(cacheKey);
+    
+    if (cachedData) {
+      console.log('💾 Indicadores por fecha obtenidos del cache');
+      return cachedData;
+    }
+
+    try {
+      console.log('📊 Procesando indicadores de camas por fecha...');
+      const datosCrudos = await camasIndicadoresService.obtenerDatosCrudos(fechaInicio, fechaFin);
+      
+      if (datosCrudos.length === 0) {
+        return [];
+      }
+
+      // Generar datos diarios con variabilidad por sectores
+      const indicadoresPorFecha: CamasPorFecha[] = [];
+      
+      datosCrudos.forEach(item => {
+        const [year, month] = item.Periodo.split('-');
+        const diasEnMes = item.DiasDelMes;
+        const ocupadasPorDia = Math.round(item.PacientesDia / diasEnMes);
+        const camasPorDia = item.TotalCamas;
+        const porcentajeOcupacionSector = item.OcupacionPromedioPct;
+        
+        // Generar un punto por cada día del mes
+        for (let dia = 1; dia <= diasEnMes; dia++) {
+          const fecha = new Date(parseInt(year), parseInt(month) - 1, dia).toISOString();
+          
+          // Buscar si ya existe una entrada para esta fecha
+          const existingIndex = indicadoresPorFecha.findIndex(entry => 
+            entry.fecha.split('T')[0] === fecha.split('T')[0]
+          );
+          
+          if (existingIndex >= 0) {
+            // Sumar a la entrada existente
+            indicadoresPorFecha[existingIndex].totalCamas += camasPorDia;
+            indicadoresPorFecha[existingIndex].ocupadas += ocupadasPorDia;
+            indicadoresPorFecha[existingIndex].disponibles += (camasPorDia - ocupadasPorDia);
+          } else {
+            // Crear nueva entrada
+            indicadoresPorFecha.push({
+              fecha,
+              totalCamas: camasPorDia,
+              ocupadas: ocupadasPorDia,
+              disponibles: camasPorDia - ocupadasPorDia,
+              porcentajeOcupacion: porcentajeOcupacionSector
+            });
+          }
+        }
+      });
+      
+      // Recalcular porcentajes y ordenar
+      const indicadoresFinales = indicadoresPorFecha
+        .map(item => ({
+          ...item,
+          porcentajeOcupacion: item.totalCamas > 0 
+            ? Math.round((item.ocupadas / item.totalCamas) * 10000) / 100
+            : 0
+        }))
+        .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+
+      // Cache por 5 minutos
+      cache.set(cacheKey, indicadoresFinales, 300000);
+      console.log(`✅ ${indicadoresFinales.length} días procesados para gráfico temporal`);
+      
+      return indicadoresFinales;
+    } catch (error: any) {
+      console.error('❌ Error al obtener indicadores por fecha:', error);
+      throw new Error(`Error al procesar indicadores por fecha: ${error.message || 'Error desconocido'}`);
+    }
+  },
+
   // Método para limpiar cache manualmente
   clearCache: (): void => {
     cache.clear();

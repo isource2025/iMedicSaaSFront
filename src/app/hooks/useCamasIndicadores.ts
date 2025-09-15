@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { camasIndicadoresService, CamasRawData, CamasPorFecha, ResumenCamas, EstadoActualCamas } from '../services/camasIndicadoresService';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { camasIndicadoresService, CamasRawData, ResumenCamas, EstadoActualCamas, CamasPorFecha } from '../services/camasIndicadoresService';
 
 // Debounce personalizado para optimizar las consultas
 function useDebounce<T>(value: T, delay: number): T {
@@ -26,7 +26,7 @@ export const useCamasIndicadores = (
   const [resumen, setResumen] = useState<ResumenCamas | null>(null);
   const [indicadoresPorFecha, setIndicadoresPorFecha] = useState<CamasPorFecha[]>([]);
   const [estadoActual, setEstadoActual] = useState<EstadoActualCamas | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingSteps, setLoadingSteps] = useState<{
     indicadores: boolean;
@@ -59,24 +59,21 @@ export const useCamasIndicadores = (
       setIndicadores(indicadoresData);
       setLoadingSteps(prev => ({ ...prev, indicadores: false, resumen: true }));
       
-      // 2. Cargar estado actual en paralelo (independiente de fechas)
-      console.log('🏥 Cargando estado actual...');
-      const estadoActualPromise = camasIndicadoresService.obtenerEstadoActual();
-      
-      // 3. Procesar resumen (usa datos crudos ya cargados)
+      // 2. Cargar resumen
       console.log('📈 Procesando resumen...');
       const resumenData = await camasIndicadoresService.obtenerResumenCamas(debouncedFechaInicio, debouncedFechaFin);
       setResumen(resumenData);
       setLoadingSteps(prev => ({ ...prev, resumen: false, porFecha: true }));
       
-      // 4. Procesar datos por fecha (usa datos crudos ya cargados)
-      console.log('📅 Procesando datos por fecha...');
-      const porFechaData = await camasIndicadoresService.obtenerCamasPorFecha(debouncedFechaInicio, debouncedFechaFin);
-      setIndicadoresPorFecha(porFechaData);
+      // 3. Cargar indicadores por fecha
+      console.log('📊 Procesando indicadores por fecha...');
+      const indicadoresPorFechaData = await camasIndicadoresService.obtenerIndicadoresPorFecha(debouncedFechaInicio, debouncedFechaFin);
+      setIndicadoresPorFecha(indicadoresPorFechaData);
       setLoadingSteps(prev => ({ ...prev, porFecha: false, estadoActual: true }));
       
-      // 5. Esperar estado actual
-      const estadoActualData = await estadoActualPromise;
+      // 4. Cargar estado actual
+      console.log('⏰ Obteniendo estado actual...');
+      const estadoActualData = await camasIndicadoresService.obtenerEstadoActual();
       setEstadoActual(estadoActualData);
       setLoadingSteps(prev => ({ ...prev, estadoActual: false }));
       
@@ -130,10 +127,9 @@ export const useCamasIndicadores = (
     indicadoresPorFecha,
     estadoActual,
     loading,
-    loadingSteps,
     error,
+    loadingSteps,
     computedData,
-    refetch: fetchAll,
     clearCache
   };
 };

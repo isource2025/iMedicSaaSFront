@@ -396,7 +396,7 @@
 
 .donutChartContent {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 24px;
   align-items: center;
 }
@@ -418,7 +418,7 @@
 .legendInfo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
 .legendColor {
@@ -436,6 +436,7 @@
 .legendValue {
   color: #333;
   font-weight: 600;
+  margin-left: 12px;
 }
 
 .donutChartContainer {
@@ -532,13 +533,43 @@
 .statsList {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
+}
+
+.trendUp .statValue {
+  color: #d32f2f;
+}
+
+.trendDown .statValue {
+  color: #388e3c;
+}
+
+.alertCritical .statValue {
+  color: #d32f2f;
+  font-weight: 700;
+}
+
+.alertModerate .statValue {
+  color: #f57c00;
+  font-weight: 600;
+}
+
+.alertNormal .statValue {
+  color: #388e3c;
+}
+
+.efficiencyOptimal .statValue {
+  color: #388e3c;
+  font-weight: 600;
+}
+
+.efficiencySuboptimal .statValue {
+  color: #f57c00;
 }
 
 .statItem {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #f0f0f0;
 }

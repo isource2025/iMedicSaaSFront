@@ -26,6 +26,7 @@ const ChartSkeleton = () => (
 import { MetricCard } from '../../../components/MetricCard';
 import { InsightCard } from '../../../components/InsightCard';
 import { MetricTooltipModal } from '../../../components/modals/MetricTooltipModal';
+import { AnalyticsLoader } from '../../../components/AnalyticsLoader';
 import styles from './PatientsAnalytics.module.css';
 
 // Componente para iconos (ejemplo simple)
@@ -85,7 +86,8 @@ export default function PatientsAnalytics() {
   const pantoneColors = ['#00B5E2', '#61D6EB', '#0083A9', '#41C8DC'];
 
   // Preparar datos para gráficos de torta
-  const prepareChartData = (data: Record<string, number>, title: string) => {
+  const prepareChartData = (data: Record<string, number> | undefined, title: string) => {
+    if (!data) return [];
     return Object.entries(data).map(([label, value], index) => ({
       label,
       value,
@@ -196,21 +198,22 @@ export default function PatientsAnalytics() {
       </div>
 
       {loading && (
-        <div className={styles.loading}>
-          <div className={styles.spinner}></div>
-          <p>
-            {loadingSteps?.indicadores && 'Cargando Análisis...'}
-            {loadingSteps?.resumen && 'Procesando resumen...'}
-            {loadingSteps?.porFecha && 'Procesando datos por fecha...'}
-            {loadingSteps?.estadoActual && 'Obteniendo estado actual...'}
-            {!Object.values(loadingSteps || {}).some(Boolean) && 'Cargando indicadores...'}
-          </p>
-          {computedData && (
-            <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
-              {computedData.sectorsCount} sectores • {computedData.totalPeriods} períodos
-            </div>
-          )}
-        </div>
+        <AnalyticsLoader
+          message="Cargando Análisis de Pacientes"
+          subMessage={
+            loadingSteps?.indicadores ? 'Obteniendo datos de ingresos...' :
+            loadingSteps?.resumen ? 'Procesando resumen estadístico...' :
+            loadingSteps?.porFecha ? 'Calculando tendencias temporales...' :
+            loadingSteps?.estadoActual ? 'Actualizando métricas actuales...' :
+            'Inicializando análisis de pacientes...'
+          }
+          showProgress={true}
+          progress={
+            loadingSteps ? 
+              (Object.values(loadingSteps).filter(step => !step).length / 4) * 100 :
+              0
+          }
+        />
       )}
 
       {error && (
@@ -263,7 +266,7 @@ export default function PatientsAnalytics() {
                 </div>
                 <div className={styles.estadoActualMetric}>
                   <div className={styles.estadoActualMetricValue}>
-                    {resumen ? Object.keys(resumen.resumenPorClase).length : 0}
+                    {resumen && resumen.resumenPorClase ? Object.keys(resumen.resumenPorClase).length : 0}
                   </div>
                   <div className={styles.estadoActualMetricLabel}>Clases</div>
                 </div>
@@ -311,7 +314,7 @@ export default function PatientsAnalytics() {
             />
             <MetricCard
               title="Clases Activas"
-              value={resumen ? Object.keys(resumen.resumenPorClase).length : 0}
+              value={resumen && resumen.resumenPorClase ? Object.keys(resumen.resumenPorClase).length : 0}
               detail="Tipos de paciente únicos"
               icon={ICONS.category}
               iconColor="#D81B60"
@@ -402,9 +405,9 @@ export default function PatientsAnalytics() {
                 title="Clase Dominante"
                 content={
                   <p>
-                    {resumen && Object.keys(resumen.resumenPorClase).length > 0 ? (
+                    {resumen && resumen.resumenPorClase && Object.keys(resumen.resumenPorClase).length > 0 ? (
                       <>
-                        La clase <strong>{Object.entries(resumen.resumenPorClase).reduce((a, b) => a[1] > b[1] ? a : b)[0]}</strong> representa la mayor cantidad de ingresos con <strong>{Object.entries(resumen.resumenPorClase).reduce((a, b) => a[1] > b[1] ? a : b)[1]}</strong> pacientes.
+                        La clase <strong>{Object.entries(resumen.resumenPorClase || {}).reduce((a, b) => a[1] > b[1] ? a : b)[0]}</strong> representa la mayor cantidad de ingresos con <strong>{Object.entries(resumen.resumenPorClase || {}).reduce((a, b) => a[1] > b[1] ? a : b)[1]}</strong> pacientes.
                       </>
                     ) : 'No hay datos de clases disponibles.'}
                   </p>
@@ -480,7 +483,7 @@ export default function PatientsAnalytics() {
               <div className={styles.detailCard}>
                 <h4>Distribución por Clase</h4>
                                 <div className={styles.distributionList}>
-                  {resumen && Object.entries(resumen.resumenPorClase).map(([clase, total], index) => {
+                  {resumen && resumen.resumenPorClase && Object.entries(resumen.resumenPorClase).map(([clase, total], index) => {
                     const percentage = resumen.totalGeneral > 0 ? Math.round((total / resumen.totalGeneral) * 100) : 0;
                     return (
                       <div key={clase} className={styles.distributionItem}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, Suspense, useMemo, useEffect, lazy } from 'react';
 import { useCamasIndicadores } from '../../../hooks/useCamasIndicadores';
 
 // Lazy loading de componentes pesados para mejorar el rendimiento inicial
@@ -25,7 +25,9 @@ const ChartSkeleton = () => (
 import { MetricCard } from '../../../components/MetricCard';
 import { InsightCard } from '../../../components/InsightCard';
 import { MetricTooltipModal } from '../../../components/modals/MetricTooltipModal';
-import { analyzePeakOccupancy, analyzeOperationalEfficiency, AnalysisResult } from '../../../utils/analyticsEngine';
+import { MetricTooltip } from '../../../components/MetricTooltip';
+import { AnalyticsLoader } from '../../../components/AnalyticsLoader';
+import { analyzePeakOccupancy, analyzeSectorDemand, analyzeOperationalEfficiency, AnalysisResult } from '../../../utils/analyticsEngine';
 import styles from './BedsAnalytics.module.css';
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
@@ -54,23 +56,19 @@ export default function BedsAnalytics() {
   const [isEstadoActualModalOpen, setIsEstadoActualModalOpen] = useState(false);
   const [peakAnalysis, setPeakAnalysis] = useState<AnalysisResult | null>(null);
   const [efficiencyAnalysis, setEfficiencyAnalysis] = useState<AnalysisResult | null>(null);
+  const [sectorAnalysis, setSectorAnalysis] = useState<AnalysisResult | null>(null);
 
   const { 
     indicadores, 
-    resumen, 
-    indicadoresPorFecha, 
-    estadoActual, 
-    loading, 
+    resumen,
+    indicadoresPorFecha,
+    estadoActual,
+    loading,
+    error,
     loadingSteps,
-    error, 
     computedData,
-    refetch,
     clearCache
   } = useCamasIndicadores(fechaInicio, fechaFin);
-
-  useEffect(() => {
-    if (fechaInicio && fechaFin) refetch();
-  }, [fechaInicio, fechaFin]);
 
   const pantoneColors = ['#00B5E2', '#61D6EB', '#0083A9', '#41C8DC'];
 
@@ -92,8 +90,21 @@ export default function BedsAnalytics() {
     { label: 'Disponibles', value: resumen?.disponiblesPromedio || 0, color: pantoneColors[2] }
   ];
 
-  // Line: porcentaje ocupación por fecha - igual que patients analytics
-  const lineChartData = indicadoresPorFecha.map((item: any) => {
+  // Filtrar datos por fechas seleccionadas
+  const filteredData = useMemo(() => {
+    if (!indicadoresPorFecha.length) return [];
+    
+    const startDate = new Date(fechaInicio);
+    const endDate = new Date(fechaFin);
+    
+    return indicadoresPorFecha.filter(item => {
+      const itemDate = new Date(item.fecha.split('T')[0]);
+      return itemDate >= startDate && itemDate <= endDate;
+    });
+  }, [indicadoresPorFecha, fechaInicio, fechaFin]);
+
+  // Line: porcentaje de ocupación por fecha para mostrar variabilidad
+  const lineChartData = filteredData.map((item: any) => {
     const [year, month, day] = item.fecha.split('T')[0].split('-');
     return {
       label: `${day}/${month}`,
@@ -102,22 +113,91 @@ export default function BedsAnalytics() {
     };
   });
 
-  // Calcular el día de mayor ocupación (similar a patients analytics)
-  const diaMayorOcupacion = indicadoresPorFecha.length > 0
-    ? indicadoresPorFecha.reduce((max, current) => current.porcentajeOcupacion > max.porcentajeOcupacion ? current : max)
+  // Calcular el día de mayor ocupación usando datos filtrados
+  const diaMayorOcupacion = filteredData.length > 0
+    ? filteredData.reduce((max: any, current: any) => current.ocupadas > max.ocupadas ? current : max)
     : null;
+
+  // Nuevos cálculos para las cards actualizadas
+  const ocupacionPromedioGlobal = useMemo(() => {
+    if (!resumen) return 0;
+    return resumen.porcentajeOcupacionPromedio;
+  }, [resumen]);
+
+  const variabilidadOcupacion = useMemo(() => {
+    if (!resumen || !resumen.resumenPorSector || Object.keys(resumen.resumenPorSector).length === 0) {
+      return { valor: 0, rango: '', tipo: 'baja' };
+    }
+    
+    const ocupacionesSectores = Object.values(resumen.resumenPorSector);
+    const min = Math.min(...ocupacionesSectores);
+    const max = Math.max(...ocupacionesSectores);
+    const rango = max - min;
+    
+    // Calcular desviación estándar
+    const promedio = ocupacionesSectores.reduce((sum, val) => sum + val, 0) / ocupacionesSectores.length;
+    const varianza = ocupacionesSectores.reduce((sum, val) => sum + Math.pow(val - promedio, 2), 0) / ocupacionesSectores.length;
+    const desviacionEstandar = Math.sqrt(varianza);
+    
+    let tipo = 'baja';
+    if (desviacionEstandar > 20) tipo = 'alta';
+    else if (desviacionEstandar > 10) tipo = 'media';
+    
+    return {
+      valor: desviacionEstandar,
+      rango: `${min.toFixed(1)}% - ${max.toFixed(1)}%`,
+      tipo
+    };
+  }, [resumen]);
+
+  const demandaVsCapacidad = useMemo(() => {
+    if (!resumen || !estadoActual) {
+      return {
+        camasNecesariasPromedio: 0,
+        camasInstaladas: 0,
+        utilizacionGlobal: 0,
+        proyeccionCrecimiento20: 0
+      };
+    }
+    
+    const camasNecesariasPromedio = resumen.ocupadasPromedio;
+    const camasInstaladas = estadoActual.totalCamas;
+    const utilizacionGlobal = camasInstaladas > 0 ? (camasNecesariasPromedio / camasInstaladas) * 100 : 0;
+    const proyeccionCrecimiento20 = camasNecesariasPromedio * 1.2; // 20% de crecimiento
+    
+    return {
+      camasNecesariasPromedio,
+      camasInstaladas,
+      utilizacionGlobal,
+      proyeccionCrecimiento20
+    };
+  }, [resumen, estadoActual]);
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
     const endDate = new Date();
     let startDate = new Date(endDate);
+    
     switch (tab) {
-      case 'día': break;
-      case 'semana': startDate.setDate(endDate.getDate() - 6); break;
-      case 'mes': startDate.setDate(endDate.getDate() - 29); break;
-      case 'año': startDate.setDate(endDate.getDate() - 364); break;
+      case 'día': 
+        // Para "día" mostrar solo el día actual
+        startDate = new Date(endDate);
+        break;
+      case 'semana': 
+        // Para "semana" mostrar últimos 7 días
+        startDate.setDate(endDate.getDate() - 6); 
+        break;
+      case 'mes': 
+        // Para "mes" mostrar últimos 30 días
+        startDate.setDate(endDate.getDate() - 29); 
+        break;
+      case 'año': 
+        // Para "año" mostrar últimos 365 días
+        startDate.setDate(endDate.getDate() - 364); 
+        break;
       default: return;
     }
+    
     setFechaInicio(toYYYYMMDD(startDate));
     setFechaFin(toYYYYMMDD(endDate));
   };
@@ -158,28 +238,29 @@ export default function BedsAnalytics() {
       </div>
 
       {loading && (
-        <div className={styles.loading}>
-          <div className={styles.spinner}></div>
-          <p>
-            {loadingSteps?.indicadores && 'Cargando Análisis...'}
-            {loadingSteps?.resumen && 'Procesando resumen...'}
-            {loadingSteps?.porFecha && 'Procesando datos por fecha...'}
-            {loadingSteps?.estadoActual && 'Obteniendo estado actual...'}
-            {!Object.values(loadingSteps || {}).some(Boolean) && 'Cargando indicadores...'}
-          </p>
-          {computedData && (
-            <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
-              {computedData.sectorsCount} sectores • {computedData.totalPeriods} períodos
-            </div>
-          )}
-        </div>
+        <AnalyticsLoader
+          message="Cargando Análisis de Camas"
+          subMessage={
+            loadingSteps?.indicadores ? 'Obteniendo datos de ocupación...' :
+            loadingSteps?.resumen ? 'Procesando resumen hospitalario...' :
+            loadingSteps?.porFecha ? 'Calculando tendencias por fecha...' :
+            loadingSteps?.estadoActual ? 'Actualizando estado en tiempo real...' :
+            'Inicializando análisis estadístico...'
+          }
+          showProgress={true}
+          progress={
+            loadingSteps ? 
+              (Object.values(loadingSteps).filter(step => !step).length / 4) * 100 :
+              0
+          }
+        />
       )}
 
       {error && (
         <div className={styles.error}>
           <p>Error al cargar los datos: {error}</p>
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
-            <button onClick={refetch} className={styles.retryButton}>Reintentar</button>
+            <button onClick={() => window.location.reload()} className={styles.retryButton}>Reintentar</button>
             <button onClick={clearCache} className={styles.retryButton} style={{ background: '#f57c00' }}>
               Limpiar Cache
             </button>
@@ -323,7 +404,7 @@ export default function BedsAnalytics() {
             <Suspense fallback={<ChartSkeleton />}>
               <LineChartLazy 
                 data={lineChartData}
-                title={`Evolución de Ocupación por Fecha`}
+                title={`Evolución del Porcentaje de Ocupación por Fecha`}
                 color="#00B5E2"
                 height={350}
               />
@@ -335,104 +416,159 @@ export default function BedsAnalytics() {
             <h3 className={styles.sectionTitle}>Análisis Hospitalario</h3>
             <div className={styles.insightsGrid}>
               <InsightCard
-                icon={ICONS.trendingUp}
-                title="Pico de Ocupación"
-                content={
-                  <>
-                    {(() => {
-                      if (indicadoresPorFecha.length === 0) {
-                        return (
-                          <>
-                            <p><strong>N/A</strong></p>
-                            <p>0% de ocupación</p>
-                            <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>Sin datos disponibles</p>
-                          </>
-                        );
-                      }
-                      
-                      const pico = indicadoresPorFecha.reduce((max, curr) => 
-                        curr.porcentajeOcupacion > max.porcentajeOcupacion ? curr : max
-                      );
-                      
-                      // Calcular ocupación real basada en el porcentaje
-                      const ocupacionReal = Math.round((pico.porcentajeOcupacion / 100) * pico.totalCamas);
-                      
-                      return (
-                        <>
-                          <p><strong>{pico.fecha.split('T')[0]}</strong></p>
-                          <p>{pico.porcentajeOcupacion.toFixed(1)}% de ocupación</p>
-                          <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                            ~{ocupacionReal} camas ocupadas de {pico.totalCamas}
-                          </p>
-                          <p style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-                            Flujo total: {pico.ocupadas} pacientes (ingresos + egresos + traslados)
-                          </p>
-                        </>
-                      );
-                    })()
-                    }
-                  </>
-                }
-                tooltipData={{
-                  description: "Identifica el día con mayor porcentaje de ocupación hospitalaria en el período seleccionado. Es importante distinguir entre dos conceptos clave: la ocupación real promedio y el flujo total de pacientes del día.",
-                  formula: "Pico = MAX(Porcentaje de Ocupación) del período. Ocupación Real = (Porcentaje/100) × Total Camas. El flujo total incluye todos los movimientos: ingresos, egresos, traslados y rotación de pacientes.",
-                  example: "Con 187 camas totales y 100% de ocupación: ~187 camas ocupadas en promedio. Si el flujo total es 273 pacientes, significa alta rotación (pacientes que ingresan, egresan o se mueven durante el día). Es normal y posible que el flujo supere la capacidad física.",
-                  importance: "Esta distinción es crítica para la gestión hospitalaria: la ocupación real indica la capacidad utilizada, mientras que el flujo total refleja la actividad y rotación de pacientes. Un flujo alto con ocupación al 100% indica eficiencia en el manejo de altas y admisiones, no un error en los datos."
-                }}
-                onAnalyze={() => {
-                  const analysis = analyzePeakOccupancy(indicadoresPorFecha, resumen, estadoActual);
-                  setPeakAnalysis(analysis);
-                }}
-                analysisData={peakAnalysis || undefined}
-              />
-              <InsightCard
-                icon={ICONS.info}
-                title="Sector de Mayor Demanda"
-                content={
-                  <p>
-                    {resumen && Object.keys(resumen.resumenPorSector).length > 0 ? (
-                      <>
-                        El sector <strong>{Object.entries(resumen.resumenPorSector).reduce((a, b) => a[1] > b[1] ? a : b)[0]}</strong> registra la mayor tasa de ocupación con <strong>{Object.entries(resumen.resumenPorSector).reduce((a, b) => a[1] > b[1] ? a : b)[1]}%</strong> promedio.
-                      </>
-                    ) : 'No hay datos de sectores disponibles.'}
-                  </p>
-                }
-                tooltipData={{
-                  description: "Determina cuál sector o servicio médico tiene la mayor demanda promedio de camas durante el período analizado.",
-                  formula: "Promedio de ocupación por sector = Σ(Días-cama ocupados) / Σ(Días-cama disponibles) × 100",
-                  example: "Medicina Interna: 850 días-cama ocupados / 930 disponibles = 91.4% promedio",
-                  importance: "Permite identificar servicios con alta demanda para redistribuir recursos, planificar expansiones o mejorar la gestión de ingresos por especialidad."
-                }}
-              />
-              <InsightCard
                 icon={ICONS.percent}
-                title="Eficiencia Operativa"
+                title="Ocupación Promedio Global"
                 content={
                   <>
-                    <p><strong>{resumen ? `${resumen.porcentajeOcupacionPromedio.toFixed(1)}%` : '0%'}</strong></p>
-                    <p>Ocupación promedio</p>
+                    <p><strong>{ocupacionPromedioGlobal.toFixed(1)}%</strong></p>
+                    <p>Ocupación hospitalaria promedio</p>
                     <p style={{ 
                       fontSize: '12px', 
-                      color: resumen && Math.abs(resumen.porcentajeOcupacionPromedio - 80) < 10 ? '#388e3c' : '#f57c00',
+                      color: '#666',
                       marginTop: '8px'
                     }}>
-                      {resumen && Math.abs(resumen.porcentajeOcupacionPromedio - 80) < 10 
-                        ? 'Rango óptimo (70-90%)' 
-                        : resumen && resumen.porcentajeOcupacionPromedio < 70 
-                        ? 'Subutilización' 
-                        : 'Sobreutilización'
+                      {ocupacionPromedioGlobal < 45 
+                        ? 'Existe margen para absorber demanda extra' 
+                        : ocupacionPromedioGlobal > 85
+                        ? 'Hospital trabajando cerca de su capacidad máxima'
+                        : 'Nivel de ocupación equilibrado'
                       }
                     </p>
                   </>
                 }
                 tooltipData={{
-                  description: "Evalúa qué tan eficientemente se están utilizando las camas hospitalarias comparado con estándares óptimos.",
-                  formula: "Eficiencia = Promedio(Ocupadas/Total × 100) vs rango óptimo 70-90%",
-                  example: "85% de ocupación promedio = Eficiencia óptima. <70% = Subutilización, >90% = Saturación",
-                  importance: "Permite optimizar recursos, identificar oportunidades de mejora en flujos de pacientes y mantener un equilibrio entre disponibilidad y utilización."
+                  description: "Porcentaje de ocupación hospitalaria promedio en todo el período analizado. Muestra qué tan eficientemente se utiliza la capacidad instalada del hospital.",
+                  formula: "Ocupación Global = (Camas Ocupadas Promedio / Total Camas Disponibles) × 100",
+                  example: "Con 25 camas totales y promedio de 14.7 ocupadas: (14.7/25) × 100 = 58.8% de ocupación global",
+                  importance: "Permite evaluar si el hospital trabaja con margen para absorber demanda extra o si está cerca de su capacidad máxima. Valores entre 70-85% son considerados óptimos."
                 }}
                 onAnalyze={() => {
-                  const analysis = analyzeOperationalEfficiency(indicadoresPorFecha, resumen);
+                  const tendencia = indicadoresPorFecha.length > 1 
+                    ? indicadoresPorFecha[indicadoresPorFecha.length - 1].porcentajeOcupacion > indicadoresPorFecha[0].porcentajeOcupacion
+                      ? 'ascendente' : 'descendente'
+                    : 'estable';
+                  
+                  const analysis = {
+                    title: 'Análisis de Ocupación Global',
+                    insights: [
+                      `Tendencia ${tendencia}: La ocupación hospitalaria ${tendencia === 'ascendente' ? 'está subiendo' : tendencia === 'descendente' ? 'está bajando' : 'se mantiene estable'} mes a mes.`,
+                      `Capacidad disponible: El hospital trabaja al ${ocupacionPromedioGlobal.toFixed(1)}% de su capacidad, ${ocupacionPromedioGlobal < 75 ? 'existe margen significativo' : 'capacidad limitada'} para absorber demanda extra.`,
+                      ocupacionPromedioGlobal < 45 
+                        ? 'Insight utilitario: El hospital tiene amplio margen para crecer y absorber mayor demanda sin comprometer la calidad de atención.'
+                        : ocupacionPromedioGlobal > 85
+                        ? 'Insight utilitario: El hospital está operando cerca de su límite, se recomienda evaluar expansión de capacidad.'
+                        : 'Insight utilitario: El hospital mantiene un equilibrio saludable entre utilización y disponibilidad.'
+                    ],
+                    recommendations: [
+                      tendencia === 'ascendente' ? 'Monitorear de cerca la evolución para anticipar necesidades de expansión' : 'Evaluar oportunidades de optimización en sectores subutilizados',
+                      ocupacionPromedioGlobal < 60 ? 'Considerar estrategias para aumentar la utilización de camas disponibles' : 'Mantener el equilibrio actual entre demanda y capacidad'
+                    ]
+                  };
+                  setPeakAnalysis(analysis);
+                }}
+                analysisData={peakAnalysis || undefined}
+              />
+              <InsightCard
+                icon={ICONS.trendingUp}
+                title="Variabilidad de Ocupación"
+                content={
+                  <>
+                    <p><strong>Variabilidad {variabilidadOcupacion.tipo}</strong></p>
+                    <p>Rango: {variabilidadOcupacion.rango}</p>
+                    <p style={{ 
+                      fontSize: '12px', 
+                      color: variabilidadOcupacion.tipo === 'alta' ? '#f57c00' : variabilidadOcupacion.tipo === 'media' ? '#ff9800' : '#388e3c',
+                      marginTop: '8px'
+                    }}>
+                      {variabilidadOcupacion.tipo === 'alta' 
+                        ? 'Ocupación desigual entre sectores' 
+                        : variabilidadOcupacion.tipo === 'media'
+                        ? 'Ocupación moderadamente equilibrada'
+                        : 'Ocupación homogénea entre sectores'
+                      }
+                    </p>
+                  </>
+                }
+                tooltipData={{
+                  description: "Mide qué tan equilibrada está la ocupación entre diferentes sectores del hospital. Una alta variabilidad indica que algunos sectores están saturados mientras otros permanecen subutilizados.",
+                  formula: "Variabilidad = Desviación Estándar de ocupación entre sectores. Rango = Máxima ocupación - Mínima ocupación",
+                  example: "Si los sectores tienen ocupaciones entre 6% y 72%, la variabilidad es alta (rango de 66%), indicando desequilibrio operativo.",
+                  importance: "Permite identificar oportunidades de redistribución de recursos y pacientes para optimizar la utilización global del hospital."
+                }}
+                onAnalyze={() => {
+                  const sectoresData = resumen?.resumenPorSector || {};
+                  const sectoresOrdenados = Object.entries(sectoresData)
+                    .sort(([,a], [,b]) => (b as number) - (a as number));
+                  
+                  const analysis = {
+                    title: 'Análisis de Variabilidad de Ocupación',
+                    insights: [
+                      `Equilibrio operativo: ${variabilidadOcupacion.tipo === 'alta' ? 'La ocupación hospitalaria NO está homogénea' : 'La ocupación está relativamente equilibrada'}.`,
+                      variabilidadOcupacion.tipo === 'alta' 
+                        ? `Desequilibrio significativo: mientras ${sectoresOrdenados[0]?.[0]} está al ${sectoresOrdenados[0]?.[1].toFixed(1)}%, otros sectores permanecen subutilizados.`
+                        : `Distribución equilibrada: los sectores mantienen niveles similares de ocupación.`,
+                      variabilidadOcupacion.tipo === 'alta'
+                        ? 'Perspectiva útil: Esto habilita decisiones de gestión sobre redistribución de pacientes y recursos entre sectores.'
+                        : 'Perspectiva útil: El hospital mantiene una operación balanceada entre sus diferentes servicios.'
+                    ],
+                    recommendations: [
+                      variabilidadOcupacion.tipo === 'alta' ? 'Evaluar redistribución de pacientes desde sectores saturados hacia sectores con disponibilidad' : 'Mantener el equilibrio actual entre sectores',
+                      'Implementar protocolos de derivación interna para optimizar la utilización de camas disponibles'
+                    ]
+                  };
+                  setSectorAnalysis(analysis);
+                }}
+                analysisData={sectorAnalysis || undefined}
+              />
+              <InsightCard
+                icon={ICONS.bed}
+                title="Demanda Potencial vs Capacidad Instalada"
+                content={
+                  <>
+                    <p><strong>Camas necesarias: {demandaVsCapacidad.camasNecesariasPromedio.toFixed(1)}</strong></p>
+                    <p>Camas instaladas: {demandaVsCapacidad.camasInstaladas}</p>
+                    <p><strong>Utilización: {demandaVsCapacidad.utilizacionGlobal.toFixed(1)}%</strong></p>
+                    <p style={{ 
+                      fontSize: '12px', 
+                      color: demandaVsCapacidad.utilizacionGlobal > 90 ? '#f57c00' : demandaVsCapacidad.utilizacionGlobal < 50 ? '#ff9800' : '#388e3c',
+                      marginTop: '8px'
+                    }}>
+                      {demandaVsCapacidad.utilizacionGlobal > 90 
+                        ? 'Capacidad ajustada - considerar expansión' 
+                        : demandaVsCapacidad.utilizacionGlobal < 50
+                        ? 'Capacidad sobredimensionada'
+                        : 'Capacidad adecuada para la demanda'
+                      }
+                    </p>
+                  </>
+                }
+                tooltipData={{
+                  description: "Compara la demanda real de camas (promedio de camas efectivamente utilizadas) contra la capacidad total instalada del hospital.",
+                  formula: "Utilización = (Camas Necesarias Promedio / Camas Instaladas) × 100. Proyección 20% = Camas Necesarias × 1.2",
+                  example: "Con 14.7 camas necesarias promedio y 25 instaladas: Utilización = 58.8%. Si crece 20%: 17.6 camas sobre 25 (70% de capacidad).",
+                  importance: "Ayuda a planificar si se necesita ampliar o reducir capacidad. Permite simular escenarios de crecimiento de demanda y evaluar la suficiencia de la infraestructura actual."
+                }}
+                onAnalyze={() => {
+                  const margenDisponible = demandaVsCapacidad.camasInstaladas - demandaVsCapacidad.camasNecesariasPromedio;
+                  const capacidadCon20Crecimiento = (demandaVsCapacidad.proyeccionCrecimiento20 / demandaVsCapacidad.camasInstaladas) * 100;
+                  
+                  const analysis = {
+                    title: 'Análisis de Capacidad vs Demanda',
+                    insights: [
+                      `Capacidad actual: ${demandaVsCapacidad.utilizacionGlobal > 80 ? 'La capacidad instalada está ajustada' : 'Existe capacidad disponible'} para la demanda actual.`,
+                      `Margen disponible: ${margenDisponible.toFixed(1)} camas libres en promedio (${(100 - demandaVsCapacidad.utilizacionGlobal).toFixed(1)}% de margen).`,
+                      `Simulación de crecimiento: Si la demanda crece un 20%, se utilizarían ${demandaVsCapacidad.proyeccionCrecimiento20.toFixed(1)} camas sobre ${demandaVsCapacidad.camasInstaladas} (${capacidadCon20Crecimiento.toFixed(1)}% de capacidad).`,
+                      capacidadCon20Crecimiento > 95
+                        ? 'Perspectiva estratégica: Se necesitará ampliar capacidad si la demanda crece significativamente.'
+                        : capacidadCon20Crecimiento < 70
+                        ? 'Perspectiva estratégica: La capacidad actual puede absorber crecimiento sin necesidad de expansión inmediata.'
+                        : 'Perspectiva estratégica: La capacidad está bien dimensionada para absorber crecimiento moderado.'
+                    ],
+                    recommendations: [
+                      demandaVsCapacidad.utilizacionGlobal > 85 ? 'Evaluar necesidad de expansión de capacidad a mediano plazo' : 'Optimizar utilización de la capacidad existente',
+                      capacidadCon20Crecimiento > 90 ? 'Planificar expansión para escenarios de alto crecimiento' : 'Monitorear tendencias de demanda para ajustes futuros'
+                    ]
+                  };
                   setEfficiencyAnalysis(analysis);
                 }}
                 analysisData={efficiencyAnalysis || undefined}
@@ -449,25 +585,27 @@ export default function BedsAnalytics() {
                     <span className={styles.statLabel}>Período analizado:</span>
                     <span className={styles.statValue}>{new Date(fechaInicio).toLocaleDateString('es-ES')} - {new Date(fechaFin).toLocaleDateString('es-ES')}</span>
                   </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Sectores monitoreados:</span>
-                    <span className={styles.statValue}>{resumen ? Object.keys(resumen.resumenPorSector).length : 0}</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Rotación promedio:</span>
-                    <span className={styles.statValue}>
-                      {resumen && resumen.totalCamasPromedio > 0 
-                        ? `${((resumen.totalGeneral / indicadoresPorFecha.length) / resumen.totalCamasPromedio * 100).toFixed(1)}% diaria`
-                        : 'Calculando...'
-                      }
-                    </span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Días-cama disponibles:</span>
-                    <span className={styles.statValue}>
-                      {resumen ? (resumen.totalCamasPromedio * indicadoresPorFecha.length - resumen.totalGeneral).toLocaleString() : 0}
-                    </span>
-                  </div>
+                  <MetricTooltip
+                    label="Camas ocupadas actuales"
+                    value={estadoActual ? `${estadoActual.ocupadas} camas` : 'Sin datos'}
+                    description="Número actual de camas ocupadas en tiempo real."
+                    formula="Conteo directo de camas con estado 'ocupada'"
+                    interpretation="Indica la demanda actual del hospital. Comparar con capacidad total para evaluar disponibilidad."
+                  />
+                  <MetricTooltip
+                    label="Ocupación promedio"
+                    value={resumen ? `${resumen.porcentajeOcupacionPromedio.toFixed(1)}%` : 'Sin datos'}
+                    description="Porcentaje promedio de camas ocupadas durante el período analizado."
+                    formula="Promedio de (Camas ocupadas / Total camas) × 100"
+                    interpretation="Valores entre 70-85% son considerados óptimos para hospitales."
+                  />
+                  <MetricTooltip
+                    label="Tasa de rotación diaria"
+                    value={resumen && resumen.totalCamasPromedio > 0 ? `${(resumen.ocupadasPromedio / resumen.totalCamasPromedio).toFixed(2)}` : 'Sin datos'}
+                    description="Índice que mide la utilización promedio de camas por día."
+                    formula="Camas ocupadas promedio / Total camas promedio"
+                    interpretation="Valores entre 0.70-0.85 son óptimos. Mayor a 0.90 indica saturación."
+                  />
                 </div>
               </div>
               <div className={styles.detailCard}>
@@ -475,37 +613,34 @@ export default function BedsAnalytics() {
                 <div className={styles.statsList}>
                   {resumen && estadoActual && (
                     <>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Tendencia actual:</span>
-                        <span className={styles.statValue} style={{ 
-                          color: estadoActual.porcentajeOcupacion > resumen.porcentajeOcupacionPromedio ? '#d32f2f' : '#388e3c' 
-                        }}>
-                          {estadoActual.porcentajeOcupacion > resumen.porcentajeOcupacionPromedio ? '↗ Sobre el promedio' : '↘ Bajo el promedio'}
-                        </span>
-                      </div>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Variación:</span>
-                        <span className={styles.statValue}>
-                          {estadoActual.porcentajeOcupacion > resumen.porcentajeOcupacionPromedio ? '+' : ''}
-                          {(estadoActual.porcentajeOcupacion - resumen.porcentajeOcupacionPromedio).toFixed(1)} puntos porcentuales
-                        </span>
-                      </div>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Alerta de capacidad:</span>
-                        <span className={styles.statValue} style={{ 
-                          color: estadoActual.porcentajeOcupacion > 90 ? '#d32f2f' : estadoActual.porcentajeOcupacion > 80 ? '#f57c00' : '#388e3c' 
-                        }}>
-                          {estadoActual.porcentajeOcupacion > 90 ? 'Crítica' : estadoActual.porcentajeOcupacion > 80 ? 'Moderada' : 'Normal'}
-                        </span>
-                      </div>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Eficiencia vs óptimo (80%):</span>
-                        <span className={styles.statValue} style={{ 
-                          color: Math.abs(resumen.porcentajeOcupacionPromedio - 80) < 10 ? '#388e3c' : '#f57c00'
-                        }}>
-                          {Math.abs(resumen.porcentajeOcupacionPromedio - 80) < 10 ? 'Óptima' : resumen.porcentajeOcupacionPromedio > 80 ? 'Sobreocupación' : 'Subutilización'}
-                        </span>
-                      </div>
+                      <MetricTooltip
+                        label="Capacidad disponible"
+                        value={estadoActual ? `${estadoActual.totalCamas - estadoActual.ocupadas} camas` : 'Sin datos'}
+                        description="Número de camas disponibles para nuevos ingresos en este momento."
+                        formula="Total camas - Camas ocupadas"
+                        interpretation="Indica la capacidad inmediata para recibir nuevos pacientes."
+                      />
+                      <MetricTooltip
+                        label="Sectores activos"
+                        value={resumen ? `${Object.keys(resumen.resumenPorSector).length} sectores` : 'Sin datos'}
+                        description="Número de sectores hospitalarios con actividad durante el período."
+                        formula="Conteo de sectores con camas ocupadas"
+                        interpretation="Mayor número indica diversificación de servicios médicos activos."
+                      />
+                      <MetricTooltip
+                        label="Pico de ocupación"
+                        value={indicadoresPorFecha.length > 0 ? `${Math.max(...indicadoresPorFecha.map(d => d.porcentajeOcupacion)).toFixed(1)}%` : 'Sin datos'}
+                        description="Máximo porcentaje de ocupación registrado durante el período analizado."
+                        formula="Máximo valor de ocupación diaria"
+                        interpretation="Indica la máxima demanda alcanzada. Valores >95% sugieren necesidad de expansión."
+                      />
+                      <MetricTooltip
+                        label="Variabilidad ocupación"
+                        value={indicadoresPorFecha.length > 0 ? `${(Math.max(...indicadoresPorFecha.map(d => d.porcentajeOcupacion)) - Math.min(...indicadoresPorFecha.map(d => d.porcentajeOcupacion))).toFixed(1)}%` : 'Sin datos'}
+                        description="Diferencia entre el máximo y mínimo porcentaje de ocupación del período."
+                        formula="Máximo % ocupación - Mínimo % ocupación"
+                        interpretation="Menor variabilidad indica operación más estable. >30% sugiere fluctuaciones significativas."
+                      />
                     </>
                   )}
                   {(!resumen || !estadoActual) && (
