@@ -22,6 +22,36 @@
   gap: 20px;
 }
 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  transform: scale(1.2);
+}
+
+
+.backIcon {
+  color: black;
+  width: 20px;
+  height: 20px;
+}
+
 .title {
   font-size: 28px;
   font-weight: 700;

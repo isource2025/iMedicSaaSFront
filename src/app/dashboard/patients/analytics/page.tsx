@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense, lazy } from 'react';
+import { useRouter } from 'next/navigation';
 import { useIndicadores } from '../../../hooks/useIndicadores';
 import { analyzeAdmissionPatterns, AnalysisResult } from '../../../utils/analyticsEngine';
 
@@ -25,6 +26,7 @@ const ChartSkeleton = () => (
 );
 import { MetricCard } from '../../../components/MetricCard';
 import { InsightCard } from '../../../components/InsightCard';
+import { MetricTooltip } from '../../../components/MetricTooltip/MetricTooltip';
 import { MetricTooltipModal } from '../../../components/modals/MetricTooltipModal';
 import { AnalyticsLoader } from '../../../components/AnalyticsLoader';
 import styles from './PatientsAnalytics.module.css';
@@ -44,10 +46,13 @@ const ICONS = {
   checkCircle: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
   leaderboard: 'M7.5 21H2V9h5.5v12zm7.5-18h-5.5v18h5.5V3zm7.5 10h-5.5v8h5.5v-8z',
   category: 'M12 2l-5.5 9h11zM17.5 17.5c-2.49 0-4.5-2.01-4.5-4.5s2.01-4.5 4.5-4.5 4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm-11 0c-2.49 0-4.5-2.01-4.5-4.5s2.01-4.5 4.5-4.5 4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5z',
-  close: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+  close: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
+  arrowBack: 'M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'
 };
 
 export default function PatientsAnalytics() {
+  const router = useRouter();
+  
   // Helper para formatear fechas a YYYY-MM-DD
   const toYYYYMMDD = (d: Date) => d.toISOString().split('T')[0];
 
@@ -155,9 +160,18 @@ export default function PatientsAnalytics() {
       {/* Header con controles de fecha */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
-                    <div className={styles.headerInfo}>
-            <h1 className={styles.title}>Análisis Estadístico de Pacientes</h1>
-            <p className={styles.subtitle}>Un resumen interactivo de los indicadores clave de pacientes.</p>
+          <div className={styles.headerLeft}>
+            <button 
+              className={styles.backButton}
+              onClick={() => router.push('/dashboard')}
+              aria-label="Volver al dashboard"
+            >
+              <Icon path={ICONS.arrowBack} className={styles.backIcon} />
+            </button>
+            <div className={styles.headerInfo}>
+              <h1 className={styles.title}>Análisis Estadístico de Pacientes</h1>
+              <p className={styles.subtitle}>Un resumen interactivo de los indicadores clave de pacientes.</p>
+            </div>
           </div>
           <div className={styles.controls}>
             <div className={styles.filterTabs}>
@@ -453,62 +467,79 @@ export default function PatientsAnalytics() {
             </div>
           </div>
 
-          {/* Sección de detalles */}
           <div className={styles.detailsSection}>
             <div className={styles.detailsGrid}>
               <div className={styles.detailCard}>
-                <h4>Estadísticas del Período</h4>
+                <h4>Métricas Hospitalarias</h4>
                 <div className={styles.statsList}>
                   <div className={styles.statItem}>
                     <span className={styles.statLabel}>Período analizado:</span>
-                    <span className={styles.statValue}>
-                      {new Date(fechaInicio).toLocaleDateString('es-ES')} - {new Date(fechaFin).toLocaleDateString('es-ES')}
-                    </span>
+                    <span className={styles.statValue}>{new Date(fechaInicio).toLocaleDateString('es-ES')} - {new Date(fechaFin).toLocaleDateString('es-ES')}</span>
                   </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Días analizados:</span>
-                    <span className={styles.statValue}>{indicadoresPorFecha.length}</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statLabel}>Día con más ingresos:</span>
-                    <span className={styles.statValue}>
-                      {diaMayorActividad
-                        ? `${diaMayorActividad.fecha.split('T')[0].split('-').reverse().join('/')} (${diaMayorActividad.total} ingresos)`
-                        : 'N/A'}
-                    </span>
-                  </div>
+                  <MetricTooltip
+                    label="Ingresos totales del período"
+                    value={resumen ? `${resumen.totalGeneral.toLocaleString()} pacientes` : 'Sin datos'}
+                    description="Número total de pacientes ingresados durante el período analizado."
+                    formula="Suma de todos los ingresos diarios en el rango de fechas"
+                    interpretation="Indica el volumen total de actividad hospitalaria. Comparar con períodos anteriores para evaluar tendencias."
+                  />
+                  <MetricTooltip
+                    label="Promedio de ingresos diarios"
+                    value={indicadoresPorFecha.length > 0 ? `${Math.round((resumen?.totalGeneral || 0) / indicadoresPorFecha.length)} pacientes/día` : 'Sin datos'}
+                    description="Promedio de pacientes que ingresan por día durante el período."
+                    formula="Total de ingresos / Número de días con actividad"
+                    interpretation="Valores entre 15-30 son normales. Menos de 15 indica baja actividad, más de 30 alta demanda."
+                  />
+                  <MetricTooltip
+                    label="Pico de actividad"
+                    value={diaMayorActividad ? `${diaMayorActividad.total} ingresos` : 'Sin datos'}
+                    description="Máximo número de ingresos registrado en un solo día del período."
+                    formula="Máximo valor de ingresos diarios"
+                    interpretation="Indica la máxima capacidad de admisión utilizada. Útil para planificar recursos en días de alta demanda."
+                  />
                 </div>
               </div>
-
               <div className={styles.detailCard}>
-                <h4>Distribución por Clase</h4>
-                                <div className={styles.distributionList}>
-                  {resumen && resumen.resumenPorClase && Object.entries(resumen.resumenPorClase).map(([clase, total], index) => {
-                    const percentage = resumen.totalGeneral > 0 ? Math.round((total / resumen.totalGeneral) * 100) : 0;
-                    return (
-                      <div key={clase} className={styles.distributionItem}>
-                        <div className={styles.distributionHeader}>
-                          <div className={styles.distributionLabel}>
-                            <div 
-                              className={styles.distributionColor}
-                              style={{ backgroundColor: pantoneColors[index % pantoneColors.length] }}
-                            />
-                            <span>{clase}</span>
-                          </div>
-                          <span className={styles.distributionValue}>{total} ({percentage}%)</span>
-                        </div>
-                        <div className={styles.progressBarContainer}>
-                          <div 
-                            className={styles.progressBar}
-                            style={{ 
-                              width: `${percentage}%`,
-                              backgroundColor: pantoneColors[index % pantoneColors.length]
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                <h4>Indicadores de Gestión</h4>
+                <div className={styles.statsList}>
+                  {resumen && (
+                    <>
+                      <MetricTooltip
+                        label="Clases de paciente activas"
+                        value={resumen.resumenPorClase ? `${Object.keys(resumen.resumenPorClase).length} tipos` : 'Sin datos'}
+                        description="Número de diferentes tipos o clases de pacientes con ingresos durante el período."
+                        formula="Conteo único de clases con ingresos > 0"
+                        interpretation="Mayor diversidad indica servicios médicos variados. Ayuda en planificación de recursos especializados."
+                      />
+                      <MetricTooltip
+                        label="Clase dominante"
+                        value={resumen.resumenPorClase ? `${Object.entries(resumen.resumenPorClase).reduce((a, b) => a[1] > b[1] ? a : b)[0]}` : 'Sin datos'}
+                        description="Tipo de paciente con mayor número de ingresos en el período."
+                        formula="Clase con máximo número de ingresos"
+                        interpretation="Identifica el servicio con mayor demanda para optimizar asignación de recursos."
+                      />
+                      <MetricTooltip
+                        label="Distribución de carga"
+                        value={resumen.resumenPorClase ? `${Object.keys(resumen.resumenPorClase).length > 1 ? 'Diversificada' : 'Concentrada'}` : 'Sin datos'}
+                        description="Evaluación de cómo se distribuyen los ingresos entre diferentes tipos de pacientes."
+                        formula="Análisis de variabilidad entre clases de pacientes"
+                        interpretation="Distribución diversificada indica servicios equilibrados. Concentración puede indicar especialización."
+                      />
+                      <MetricTooltip
+                        label="Eficiencia de admisiones"
+                        value={indicadoresPorFecha.length > 0 ? `${((resumen.totalGeneral / indicadoresPorFecha.length) > 20 ? 'Alta' : (resumen.totalGeneral / indicadoresPorFecha.length) > 10 ? 'Media' : 'Baja')}` : 'Sin datos'}
+                        description="Evaluación de la eficiencia del sistema de admisiones basado en el volumen diario."
+                        formula="Clasificación basada en promedio diario: >20=Alta, 10-20=Media, <10=Baja"
+                        interpretation="Alta eficiencia indica buen uso de recursos. Baja eficiencia puede indicar capacidad subutilizada."
+                      />
+                    </>
+                  )}
+                  {!resumen && (
+                    <div className={styles.statItem}>
+                      <span className={styles.statLabel}>Estado:</span>
+                      <span className={styles.statValue}>Cargando análisis...</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
