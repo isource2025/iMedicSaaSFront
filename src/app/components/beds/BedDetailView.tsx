@@ -1,172 +1,107 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Bed } from '../../types/beds';
 import styles from './BedDetailView.module.css';
-import { IoMedicalOutline, IoDocumentTextOutline, IoArrowBack, IoChevronDown, IoChevronUp} from 'react-icons/io5';
-import { formatDate } from '../../utils/dateUtils';
+
+/** Si ya tienes estos componentes, usa los tuyos */
+import PatientMiniHeader from './patient/PatientMiniHeader';
+import CalendarPanel from './sidebar/CalendarPanel';
+import SidebarFilters from './sidebar/SidebarFilters';
+import IndicacionesTable from './indicaciones/IndicacionesTable';
+import IndicacionesToolbar from './indicaciones/IndicacionesToolbar';
 
 interface BedDetailViewProps {
-  bed: Bed;
+	bed: Bed;
 }
 
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
-  const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
+	// Drawer (sidebar) en mobile
+	const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleBack = () => {
-    router.back();
-  };
-  
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
+	// Filtros simples de ejemplo
+	const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+	const [activeSection, setActiveSection] = useState<
+		| 'indicaciones'
+		| 'evoluciones'
+		| 'estudios'
+		| 'protocolos'
+		| 'epicrisis'
+		| 'procedimientos'
+		| 'movimientos'
+	>('indicaciones');
 
-  // Función para manejar clicks en los items del menú
-  const handleMenuItemClick = (option: string) => {
-    console.log(`Opción seleccionada: ${option}`);
-    // Aquí se implementará la lógica para cada opción
-    setMenuOpen(false);
-  };
+	// Tabla (trae tus datos reales via hooks)
+	const rows: any[] = [];
 
-  return (
-    <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        
-        <div className={styles.headerTop}>
-          <button className={styles.backButton} onClick={handleBack}>
-            <IoArrowBack className={styles.icon}/>
-            <span>Volver</span>
-          </button>
-          
-          
-        </div>
+	return (
+		<div className={styles.root}>
+			{/* ====== LEFT (calendar + sidebar) ====== */}
+			<aside className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''}`}>
+				<div className={styles.leftInner}>
+					<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
+						✕
+					</button>
+					<CalendarPanel
+						selected={selectedDate ?? undefined}
+						onSelect={setSelectedDate}
+					/>
+					<SidebarFilters onChange={(k) => setActiveSection(k as any)} />
+				</div>
+			</aside>
 
-        <div className={styles.headerBottom}>
-          <h1 className={styles.title}>
-            Cama {bed.numeroCama} - {bed.sector}
-          </h1>
-          <span className={styles.statusBadge}>
-            {bed.estadoDescripcion || 'Sin estado'}
-          </span>
+			{/* ====== RIGHT (header + body + footer) ====== */}
+			<section className={styles.right}>
+				{/* Header con datos del paciente + botón ☰ en mobile */}
+				<header className={styles.header}>
+					<button
+						className={styles.burger}
+						onClick={() => setDrawerOpen(true)}
+						aria-label='Abrir menú'
+					>
+						☰
+					</button>
 
-          {/* MENU PACIENTE  */}
-          <div className={styles.menuContainer}>
-            <button className={styles.menuButton} onClick={toggleMenu}>
-              <span>Administrar Internación</span>
-              {menuOpen ? <IoChevronUp className={styles.icon} /> : <IoChevronDown className={styles.icon} />}
-            </button>
-            
-            {menuOpen && (
-              <div className={styles.dropdownMenu}>
-                <button 
-                  className={styles.menuItem} 
-                  onClick={() => handleMenuItemClick('indicaciones')}
-                >
-                  <IoMedicalOutline className={styles.menuIcon} />
-                  <span>Indicaciones médicas</span>
-                </button>
-                <button 
-                  className={styles.menuItem} 
-                  onClick={() => handleMenuItemClick('evolucion')}
-                >
-                  <IoDocumentTextOutline className={styles.menuIcon} />
-                  <span>Evolución</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+					<PatientMiniHeader
+						nombre={bed?.nombrePaciente ?? 'PACIENTE'}
+						nroVisita={bed?.mostrarNumeroVisita || bed?.numeroVisita}
+						ubicacion='Ubicacion del paciente'
+					/>
+				</header>
 
+				{/* Cuerpo */}
+				<div className={styles.body}>
+					{activeSection === 'indicaciones' ? (
+						<IndicacionesTable rows={rows as any} />
+					) : (
+						<div className={styles.placeholderCard}>
+							Próximamente: {activeSection}
+						</div>
+					)}
+				</div>
 
+				{/* Barra inferior (acciones) */}
+				<div className={styles.footer}>
+					{activeSection === 'indicaciones' ? (
+						<IndicacionesToolbar
+							total={rows.length}
+							onVisualizar={() => {}}
+							onAplicar={() => {}}
+							onDejarSinEfecto={() => {}}
+							onImprimir={() => {}}
+							onRecetario={() => {}}
+							disabled={rows.length === 0}
+						/>
+					) : null}
+				</div>
+			</section>
 
-      </div>
-
-      {/* Main content with sidebar */}
-      <div className={styles.contentContainer}>
-        
-
-        {/* Main content */}
-        <div className={styles.mainContent}>
-          {/* Patient info card */}
-          <div className={styles.patientCard}>
-            <div className={styles.patientHeader}>
-              <h2 className={styles.patientName}>{bed.nombrePaciente}</h2>
-              <span className={styles.patientDocument}>{bed.documentoPaciente}</span>
-            </div>
-            
-            <div className={styles.patientDetails}>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Fecha de ingreso:</span>
-                <span className={styles.detailValue}>
-                  {bed.fechaIngreso ? formatDate(bed.fechaIngreso, { isClarionDate: true }) : 'N/A'}
-                </span>
-              </div>
-              
-              {bed.diagnosticoDescripcion && (
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Diagnóstico:</span>
-                  <span className={styles.detailValue}>{bed.diagnosticoDescripcion}</span>
-                </div>
-              )}
-              
-              {bed.servicioMedicoDescripcion && (
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Servicio médico:</span>
-                  <span className={styles.detailValue}>{bed.servicioMedicoDescripcion}</span>
-                </div>
-              )}
-              
-              {bed.razonSocialCliente && (
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Cobertura social:</span>
-                  <span className={styles.detailValue}>{bed.razonSocialCliente}</span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Additional information sections */}
-          <div className={styles.sectionGrid}>
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Signos Vitales</h3>
-              <div className={styles.sectionContent}>
-                <p className={styles.emptyState}>No hay datos de signos vitales recientes</p>
-              </div>
-            </div>
-            
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Últimas Indicaciones</h3>
-              <div className={styles.sectionContent}>
-                <p className={styles.emptyState}>No hay indicaciones recientes</p>
-              </div>
-            </div>
-            
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Medicación Actual</h3>
-              <div className={styles.sectionContent}>
-                <p className={styles.emptyState}>No hay medicación registrada</p>
-              </div>
-            </div>
-            
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Estudios Pendientes</h3>
-              <div className={styles.sectionContent}>
-                <p className={styles.emptyState}>No hay estudios pendientes</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Backdrop para cerrar el menú cuando está abierto */}
-      {menuOpen && (
-        <div className={styles.backdrop} onClick={() => setMenuOpen(false)}></div>
-      )}
-    </div>
-  );
+			{/* Backdrop del drawer */}
+			{drawerOpen && (
+				<div className={styles.backdrop} onClick={() => setDrawerOpen(false)} />
+			)}
+		</div>
+	);
 };
 
 export default BedDetailView;

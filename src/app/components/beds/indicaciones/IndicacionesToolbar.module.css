@@ -1,0 +1,32 @@
+.bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+.left,
+.right {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.bar button {
+	padding: 8px 12px;
+	border-radius: 10px;
+	border: 1px solid var(--border);
+	background: #fff;
+	cursor: pointer;
+}
+.bar button:hover {
+	border-color: var(--primary);
+	background: var(--primary-50);
+}
+.bar button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.total {
+	margin-left: 8px;
+	color: var(--muted);
+}

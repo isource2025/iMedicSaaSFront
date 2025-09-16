@@ -1,0 +1,83 @@
+.wrap {
+	width: 100%;
+}
+.top {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	background: #8ad0e2; /* celeste del sistema viejo */
+	padding: 6px 10px;
+}
+.title {
+	font-size: 14px;
+	font-weight: 700;
+	color: #0f2a33;
+	letter-spacing: 0.2px;
+	text-align: center;
+}
+.time {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-weight: 700;
+	color: #0f2a33;
+	font-size: 13px;
+}
+
+.info {
+	background: #eef7fb;
+	border-bottom: 1px solid #d9e7f0;
+	padding: 8px 12px;
+	display: grid;
+	gap: 4px;
+}
+.name {
+	font-weight: 800;
+	color: #152b3a;
+	font-size: 16px;
+	line-height: 1.15;
+	text-transform: uppercase;
+}
+.row {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	flex-wrap: wrap;
+}
+.kv {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	color: #152b3a;
+}
+.kv label {
+	font-size: 12px;
+	color: #4e6a7d;
+	text-transform: none;
+}
+
+/* Responsivo */
+@media (max-width: 740px) {
+	.title {
+		font-size: 13px;
+	}
+	.time {
+		font-size: 12px;
+	}
+	.name {
+		font-size: 15px;
+	}
+}
+@media (max-width: 520px) {
+	.top {
+		padding: 6px 8px;
+	}
+	.info {
+		padding: 8px;
+	}
+	.row {
+		gap: 12px;
+	}
+}

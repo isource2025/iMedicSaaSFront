@@ -1,0 +1,48 @@
+@keyframes shimmer {
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
+}
+
+.shimmer {
+	background: linear-gradient(90deg, #eef5f9 0%, #f7fbfe 50%, #eef5f9 100%);
+	background-size: 200% 100%;
+	animation: shimmer 1.2s linear infinite;
+	border-radius: 12px;
+}
+
+.block {
+	composes: shimmer;
+	width: 100%;
+}
+
+.lineLg {
+	composes: shimmer;
+	width: 60%;
+	height: 18px;
+}
+
+.card {
+	composes: shimmer;
+	height: 90px;
+	margin-bottom: 12px;
+}
+
+.table {
+	display: grid;
+	gap: 8px;
+}
+
+.row {
+	composes: shimmer;
+	height: 42px;
+}
+
+.btns {
+	composes: shimmer;
+	width: 320px;
+	height: 36px;
+}
