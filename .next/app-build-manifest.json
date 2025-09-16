@@ -12,11 +12,11 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/dashboard/page": [
+    "/dashboard/beds/analytics/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/dashboard/page.css",
-      "static/chunks/app/dashboard/page.js"
+      "static/css/app/dashboard/beds/analytics/page.css",
+      "static/chunks/app/dashboard/beds/analytics/page.js"
     ],
     "/dashboard/layout": [
       "static/chunks/webpack.js",
@@ -24,17 +24,17 @@
       "static/css/app/dashboard/layout.css",
       "static/chunks/app/dashboard/layout.js"
     ],
-    "/dashboard/beds/page": [
+    "/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/dashboard/beds/page.css",
-      "static/chunks/app/dashboard/beds/page.js"
+      "static/css/app/dashboard/page.css",
+      "static/chunks/app/dashboard/page.js"
     ],
-    "/dashboard/patients/page": [
+    "/dashboard/patients/analytics/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/dashboard/patients/page.css",
-      "static/chunks/app/dashboard/patients/page.js"
+      "static/css/app/dashboard/patients/analytics/page.css",
+      "static/chunks/app/dashboard/patients/analytics/page.js"
     ]
   }
 }

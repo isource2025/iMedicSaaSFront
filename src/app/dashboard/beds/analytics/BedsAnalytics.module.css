@@ -28,7 +28,6 @@
   gap: 16px;
 }
 
-
 .backButton {
   display: flex;
   align-items: center;
@@ -243,6 +242,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 24px;
+  background-color: transparent;
 }
 
 .estadoActualLeft {
@@ -250,7 +250,6 @@
   align-items: center;
   gap: 16px;
 }
-
 
 .estadoActualIconContainer {
   border-radius: 12px;
@@ -261,7 +260,7 @@
 }
 
 .estadoActualInfoButton {
-  background: none;
+  background-color: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
@@ -272,7 +271,6 @@
   height: 100%;
   border-radius: 12px;
   transition: background-color 0.2s ease;
-  animation: subtlePulse 3s ease-in-out infinite;
 }
 
 .estadoActualInfoButton:hover {
@@ -286,7 +284,7 @@
     opacity: 1;
   }
   35% {
-    transform: scale(1.05);
+    transform: scale(1.1);
     opacity: 0.9;
   }
 }
@@ -407,8 +405,6 @@
   margin-top: 4px;
 }
 
-
-/* Estilos para la sección del Donut Chart */
 .donutChartSection {
   max-width: 1200px;
   margin: 40px auto;
@@ -419,6 +415,14 @@
   border: 1px solid #e0e0e0;
 }
 
+.sectionTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
 .donutChartContent {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -427,10 +431,11 @@
 }
 
 .donutLegend {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
 }
+
 
 .legendItem {
   display: flex;
@@ -442,7 +447,7 @@
 .legendInfo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
 .legendColor {
@@ -460,6 +465,7 @@
 .legendValue {
   color: #333;
   font-weight: 600;
+  margin-left: 12px;
 }
 
 .donutChartContainer {
@@ -468,20 +474,20 @@
   align-items: center;
 }
 
+.lineChartSection {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 16px;
+}
+
 .insightsSection {
   max-width: 1200px;
   margin: 40px auto;
   padding: 24px;
   background: white;
   border-radius: 12px;
-}
-
-.sectionTitle {
-  font-size: 22px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
-  text-align: center;
 }
 
 .insightsGrid {
@@ -524,14 +530,6 @@
   margin: 0;
 }
 
-.lineChartSection {
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 24px;
-  background-color: #fff;
-  border-radius: 16px;
-}
-
 .detailsSection {
   max-width: 1200px;
   margin: 40px auto 60px;
@@ -564,13 +562,43 @@
 .statsList {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
+}
+
+.trendUp .statValue {
+  color: #d32f2f;
+}
+
+.trendDown .statValue {
+  color: #388e3c;
+}
+
+.alertCritical .statValue {
+  color: #d32f2f;
+  font-weight: 700;
+}
+
+.alertModerate .statValue {
+  color: #f57c00;
+  font-weight: 600;
+}
+
+.alertNormal .statValue {
+  color: #388e3c;
+}
+
+.efficiencyOptimal .statValue {
+  color: #388e3c;
+  font-weight: 600;
+}
+
+.efficiencySuboptimal .statValue {
+  color: #f57c00;
 }
 
 .statItem {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -587,60 +615,6 @@
 .statValue {
   font-weight: 600;
   color: #333;
-}
-
-.distributionList {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.distributionItem {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.distributionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.distributionLabel {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 500;
-  color: #333;
-}
-
-.distributionColor {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.distributionValue {
-  font-weight: 600;
-  color: #555;
-  font-size: 14px;
-}
-
-.progressBarContainer {
-  width: 100%;
-  height: 8px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progressBar {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.5s ease-in-out;
 }
 
 @media (max-width: 768px) {
@@ -696,15 +670,6 @@
 
   .controls {
     align-items: stretch;
-  }
-
-  .filterTabs {
-    justify-content: flex-start;
-  }
-
-  .tabButton {
-    padding: 10px 14px;
-    font-size: 14px;
   }
 
   .estadoActualContainer {
@@ -793,24 +758,11 @@
     font-size: 13px;
   }
 
-  .tabButton {
-    padding: 8px 12px;
-    font-size: 13px;
-  }
-
   .sectionTitle {
     font-size: 20px;
   }
 
   .summaryValue {
     font-size: 22px;
-  }
-
-  .estadoActualMetricValueLarge {
-    font-size: 1.8rem;
-  }
-
-  .estadoActualMetricValue {
-    font-size: 1.3rem;
   }
 }
