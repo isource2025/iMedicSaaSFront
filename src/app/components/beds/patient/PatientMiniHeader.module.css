@@ -1,13 +1,20 @@
 .wrap {
 	width: 100%;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 .top {
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	position: relative;
-	background: #8ad0e2; /* celeste del sistema viejo */
-	padding: 6px 10px;
+	justify-content: space-between;
+	background: transparent;
+	padding: 12px 16px;
+}
+.rightSection {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 .title {
 	font-size: 14px;
@@ -17,26 +24,31 @@
 	text-align: center;
 }
 .time {
-	position: absolute;
-	right: 10px;
-	top: 50%;
-	transform: translateY(-50%);
 	font-weight: 700;
 	color: #0f2a33;
 	font-size: 13px;
+	text-transform: uppercase;
 }
 
 .info {
-	background: #eef7fb;
+	background: #fff;
 	border-bottom: 1px solid #d9e7f0;
 	padding: 8px 12px;
 	display: grid;
 	gap: 4px;
 }
+.burger {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.6rem;
+	font-weight: 800;
+	color: #152b3a;
+}
 .name {
 	font-weight: 800;
 	color: #152b3a;
-	font-size: 16px;
+	font-size: 24px;
 	line-height: 1.15;
 	text-transform: uppercase;
 }
@@ -67,17 +79,20 @@
 		font-size: 12px;
 	}
 	.name {
-		font-size: 15px;
+		font-size: 20px;
 	}
 }
 @media (max-width: 520px) {
 	.top {
-		padding: 6px 8px;
+		padding: 10px 12px;
 	}
 	.info {
 		padding: 8px;
 	}
 	.row {
 		gap: 12px;
+	}
+	.rightSection {
+		gap: 4px;
 	}
 }

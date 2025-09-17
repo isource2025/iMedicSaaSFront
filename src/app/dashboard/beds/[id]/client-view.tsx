@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BedDetailView from '@/src/app/components/beds/BedDetailView';
 import BedDetailSkeleton from '@/src/app/components/beds/BedDetailSkeleton';
+import { BedDetailProvider } from '@/src/app/components/beds/contexts/BedDetailContext';
 import type { Bed } from '@/src/app/types/beds';
 
 type Props = { id: string };
@@ -69,7 +70,12 @@ export default function ClientBedView({ id }: Props) {
 					throw err;
 				}
 
-				const data = (await res.json()) as Bed;
+				const {
+					data,
+				}: {
+					success: boolean;
+					data: Bed;
+				} = await res.json();
 				setBed(data);
 			} catch (e: any) {
 				if (e?.name === 'AbortError') return;
@@ -95,5 +101,9 @@ export default function ClientBedView({ id }: Props) {
 	}
 	if (!bed) return <BedDetailSkeleton />;
 
-	return <BedDetailView bed={bed} />;
+	return (
+		<BedDetailProvider>
+			<BedDetailView bed={bed} />
+		</BedDetailProvider>
+	);
 }

@@ -44,9 +44,6 @@
 	padding: 8px 12px;
 	background: var(--primary-50);
 	border-bottom: 1px solid var(--border);
-	display: flex;
-	align-items: flex-start;
-	gap: 10px;
 }
 .burger {
 	display: none;
@@ -132,5 +129,8 @@
 	}
 	.footer {
 		padding: 8px 12px;
+	}
+	.burger {
+		padding: 4px 8px;
 	}
 }

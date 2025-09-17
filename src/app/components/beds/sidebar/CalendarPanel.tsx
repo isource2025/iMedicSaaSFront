@@ -2,13 +2,17 @@
 import styles from './CalendarPanel.module.css';
 import { useMemo } from 'react';
 import { useCalendar } from '../hooks/useCalendar';
+import { useBedDetail } from '../contexts/BedDetailContext';
 
 type Props = {
 	selected?: Date | null;
 	onSelect?: (d: Date) => void;
 };
 export default function CalendarPanel({ selected, onSelect }: Props) {
-	const { cursor, monthStart, monthEnd, prev, next } = useCalendar(selected ?? new Date());
+	const { selectedDate, setSelectedDate } = useBedDetail();
+	const { cursor, monthStart, monthEnd, prev, next } = useCalendar(
+		selectedDate ?? new Date(),
+	);
 
 	const cells = useMemo(() => {
 		const startWeekDay = (monthStart.getDay() + 6) % 7; // lunes=0
@@ -53,9 +57,9 @@ export default function CalendarPanel({ selected, onSelect }: Props) {
 						key={i}
 						disabled={!d}
 						className={`${styles.cell} ${
-							isSame(d, selected) ? styles.active : ''
+							isSame(d, selectedDate) ? styles.active : ''
 						}`}
-						onClick={() => d && onSelect?.(d)}
+						onClick={() => d && (onSelect ? onSelect(d) : setSelectedDate(d))}
 					>
 						{d ? d.getDate() : ''}
 					</button>

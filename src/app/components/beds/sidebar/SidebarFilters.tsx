@@ -1,72 +1,86 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import styles from './SidebarFilters.module.css';
-import { useIndicacionesFilters } from '../hooks/useIndicacionesFilters';
+import { useBedDetail } from '../contexts/BedDetailContext';
 
 type Props = {
-	onChange: (section: ReturnType<typeof useIndicacionesFilters>['active']) => void;
+	bedId?: string; // Opcional ya que no se usa para navegación
 };
-export default function SidebarFilters({ onChange }: Props) {
-	const { open, setOpen, active, setActive } = useIndicacionesFilters();
+export default function SidebarFilters({ bedId }: Props = {}) {
+	const { openSections, activeSection, navigateToSection, toggleSection } = useBedDetail();
+	const router = useRouter();
 
-	const clickItem = (key: typeof active) => {
-		setActive(key);
-		onChange(key);
+	const clickItem = (section: typeof activeSection) => {
+		navigateToSection(section);
+		// Solo cambia la sección activa, sin navegación
 	};
+
+	const isActive = (section: string) => activeSection === section;
 
 	return (
 		<div className={styles.wrapper}>
-			<details
-				open={open.medica}
-				onToggle={(e) =>
-					setOpen((o) => ({ ...o, medica: (e.target as HTMLDetailsElement).open }))
-				}
-			>
-				<summary>Gestión Médica</summary>
+			<details open={openSections.medica}>
+				<summary
+					onClick={(e) => {
+						e.preventDefault();
+						toggleSection('medica', openSections.medica);
+					}}
+				>
+					Gestión Médica
+				</summary>
 				<nav>
 					<button
-						className={active === 'hcIngreso' ? styles.active : ''}
+						className={`${styles.navButton} ${
+							isActive('hcIngreso') ? styles.active : ''
+						}`}
 						onClick={() => clickItem('hcIngreso')}
 					>
 						H.C. de Ingreso
 					</button>
 					<button
-						className={active === 'indicaciones' ? styles.active : ''}
+						className={`${styles.navButton} ${
+							isActive('indicaciones') ? styles.active : ''
+						}`}
 						onClick={() => clickItem('indicaciones')}
 					>
 						Indicaciones
 					</button>
 					<button
-						className={active === 'evoluciones' ? styles.active : ''}
+						className={`${styles.navButton} ${
+							isActive('evoluciones') ? styles.active : ''
+						}`}
 						onClick={() => clickItem('evoluciones')}
 					>
 						Evoluciones
 					</button>
 					<button
-						className={active === 'solicitudEstudios' ? styles.active : ''}
+						className={`${styles.navButton} ${
+							isActive('solicitudEstudios') ? styles.active : ''
+						}`}
 						onClick={() => clickItem('solicitudEstudios')}
 					>
 						Solicitud de Estudios
 					</button>
 					<button
-						className={active === 'protocolos' ? styles.active : ''}
+						className={`${styles.navButton} ${
+							isActive('protocolos') ? styles.active : ''
+						}`}
 						onClick={() => clickItem('protocolos')}
 					>
 						Protocolos
 					</button>
 					<button
-						className={active === 'epicrisis' ? styles.active : ''}
-						onClick={() => clickItem('epicrisis')}
-					>
-						Epicrisis
-					</button>
-					<button
-						className={active === 'procedimientos' ? styles.active : ''}
+						className={`${styles.navButton} ${
+							isActive('procedimientos') ? styles.active : ''
+						}`}
 						onClick={() => clickItem('procedimientos')}
 					>
 						Procedimientos
 					</button>
 					<button
-						className={active === 'movimientos' ? styles.active : ''}
+						className={`${styles.navButton} ${
+							isActive('movimientos') ? styles.active : ''
+						}`}
 						onClick={() => clickItem('movimientos')}
 					>
 						Movimientos
@@ -74,35 +88,47 @@ export default function SidebarFilters({ onChange }: Props) {
 				</nav>
 			</details>
 
-			<details
-				open={open.enfermeria}
-				onToggle={(e) =>
-					setOpen((o) => ({
-						...o,
-						enfermeria: (e.target as HTMLDetailsElement).open,
-					}))
-				}
-			>
-				<summary>Gestión Enfermería</summary>
-				<nav>
-					<button onClick={() => clickItem('indicaciones')}>Indicaciones</button>
-				</nav>
+			<details open={openSections.enfermeria}>
+				<summary
+					onClick={(e) => {
+						e.preventDefault();
+						toggleSection('enfermeria', openSections.enfermeria);
+					}}
+				>
+					Gestión Enfermería
+				</summary>
+				<nav></nav>
 			</details>
 
-			<details
-				open={open.otras}
-				onToggle={(e) =>
-					setOpen((o) => ({ ...o, otras: (e.target as HTMLDetailsElement).open }))
-				}
-			>
-				<summary>Otras Funciones</summary>
+			<div className={styles.fixedPanel}>
+				<div className={styles.panelHeader}>
+					<span>Otras Funciones</span>
+				</div>
 				<nav>
-					<button onClick={() => clickItem('evoluciones')}>
+					<button
+						className={`${styles.navButton} ${
+							isActive('informe_evo') ? styles.active : ''
+						}`}
+						onClick={() => clickItem('informe_evo')}
+					>
 						Informe de Evolución
 					</button>
-					<button onClick={() => clickItem('movimientos')}>Archivos Adjuntos</button>
+					<button
+						className={`${styles.navButton} ${
+							isActive('adjuntos') ? styles.active : ''
+						}`}
+						onClick={() => clickItem('adjuntos')}
+					>
+						Archivos Adjuntos
+					</button>
+					<button
+						className={styles.closeButton}
+						onClick={() => router.replace('/dashboard/beds')}
+					>
+						Cerrar
+					</button>
 				</nav>
-			</details>
+			</div>
 		</div>
 	);
 }
