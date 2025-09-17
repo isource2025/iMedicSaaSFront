@@ -1,4 +1,4 @@
-import { PatientFormData } from '../../types/PatientInterface';
+import { Patient, PatientFormData } from '../../types/PatientInterface';
 import { Sexo, sexoService } from '../../services/sexoService';
 import { Localidad, localidadService } from '../../services/localidadService';
 import { provinciaService } from '../../services/provinciaService';
@@ -8,12 +8,15 @@ import PersonalDataTab from './AddPatient/PersonalDataTab';
 import OtherDataTab from './AddPatient/OtherDataTab';
 import LaboralDataTab from './AddPatient/LaboralDataTab';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
-import styles from '../../components/modals/ModalAddPatient/styles.module.css';
+import styles from './PatientFormBase.module.css';
 import React, { useState, useEffect, useRef } from 'react';
+import coberturaService from '../../services/coberturaService';
+import { apiService } from '../../services/axios';
+import type { PersonaResponse, LocalidadResponse, LocalidadData } from './typesForRenaper';
 
 interface PatientFormBaseProps {
 	onSubmit: (data: any) => Promise<boolean> | boolean;
-	initialData?: Partial<PatientFormData>;
+	initialData?: Partial<Patient>;
 	isEditing?: boolean;
 	isSubmitting?: boolean; // externo (lista)
 	onClose: () => void;
@@ -28,15 +31,35 @@ const tiposDocumento = [
 	{ value: 'LE', label: 'LE' },
 	{ value: 'PAS', label: 'PAS' },
 ];
-const estadosCiviles = [
-	{ value: 'SOLTERO', label: 'SOLTERO' },
-	{ value: 'CASADO', label: 'CASADO' },
-	{ value: 'DIVORCIADO', label: 'DIVORCIADO' },
-	{ value: 'VIUDO', label: 'VIUDO' },
-	{ value: 'UNIÓN CIVIL', label: 'UNIÓN CIVIL' },
-];
 
 const toStr = (v: any, def = '') => (v === undefined || v === null ? def : String(v));
+const normalizeHora = (raw: any): string => {
+	if (raw === undefined || raw === null) return '';
+	const str = String(raw).trim();
+	if (!str) return '';
+	// Si ya viene en formato HH:MM
+	if (/^\d{2}:\d{2}$/.test(str)) return str;
+	// Si viene como HHMM (ej: 0935, 1533)
+	if (/^\d{3,4}$/.test(str)) {
+		const padded = str.padStart(4, '0');
+		const h = padded.slice(0, 2);
+		const m = padded.slice(2, 4);
+		if (Number(h) < 24 && Number(m) < 60) return `${h}:${m}`;
+	}
+	// Si viene como número clarion (centésimas de segundo) grande, intentar convertir a HH:MM
+	if (/^\d+$/.test(str) && str.length > 4) {
+		const n = Number(str);
+		if (!isNaN(n) && n > 0) {
+			const totalSeconds = Math.floor(n / 100);
+			const hours = Math.floor(totalSeconds / 3600);
+			const minutes = Math.floor((totalSeconds % 3600) / 60);
+			if (hours < 24)
+				return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+		}
+	}
+	return str; // fallback sin tocar
+};
+
 const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => ({
 	IDPaciente: d?.IDPaciente,
 	NumeroHC: toStr(d?.NumeroHC),
@@ -56,6 +79,7 @@ const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => 
 	Mail: toStr(d?.Mail),
 	Cobertura: toStr(d?.Cobertura),
 	nAfiliado: toStr(d?.nAfiliado),
+	Hora: normalizeHora(d?.Hora),
 	FotoURL: d?.FotoURL || null,
 	Raza: toStr(d?.Raza),
 	// Mapear posible campo backend IdiomaPrimario al alias Idioma
@@ -70,7 +94,8 @@ const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => 
 	OrdenNacimiento: d?.OrdenNacimiento ?? '',
 	LugarNacimiento: toStr(d?.LugarNacimiento),
 	FechaDefuncion: toStr(d?.FechaDefuncion),
-	HoraDefuncion: toStr(d?.HoraDefuncion),
+	HoraDefuncion: normalizeHora(d?.HoraDefuncion),
+	Ocupacion: d?.Ocupacion,
 	Foto: d?.Foto || null,
 	Trabajos: d?.Trabajos || [],
 });
@@ -83,7 +108,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	onClose,
 }) => {
 	const [formData, setFormData] = useState<PatientFormData>(() =>
-		buildInitialFormData(initialData),
+		buildInitialFormData(initialData as Partial<PatientFormData>),
 	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [activeTab, setActiveTab] = useState<Tab>('personal');
@@ -93,10 +118,23 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	});
 	const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
 	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
+	const [coberturaOptions, setCoberturaOptions] = useState<
+		{ value: string; label: string }[]
+	>([]);
+	const [estadosCiviles, setEstadosCiviles] = useState<{ value: string; label: string }[]>(
+		[],
+	);
 	const [selectedLocalidad, setSelectedLocalidad] = useState<Localidad | null>(null);
-	const [loading, setLoading] = useState<{ localidad: boolean; sexo: boolean }>({
+	const [loading, setLoading] = useState<{
+		localidad: boolean;
+		sexo: boolean;
+		cobertura: boolean;
+		estadoCivil: boolean;
+	}>({
 		localidad: false,
 		sexo: false,
+		cobertura: false,
+		estadoCivil: false,
 	});
 	const [fotoFile, setFotoFile] = useState<File | null>(null);
 	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -123,12 +161,40 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const fetchLocalidades = async () => {
 		try {
 			setLoading((p) => ({ ...p, localidad: true }));
-			const response = await localidadService.getLocalidades();
-			setLocalidadOptions(response.data);
+			const result = await localidadService.getLocalidades();
+			setLocalidadOptions(result.data);
 		} catch (e) {
 			console.error('Error localidades', e);
 		} finally {
 			setLoading((p) => ({ ...p, localidad: false }));
+		}
+	};
+
+	const fetchCoberturas = async () => {
+		try {
+			setLoading((p) => ({ ...p, cobertura: true }));
+			const data = await coberturaService.getCoberturas();
+			setCoberturaOptions(data);
+		} catch (e) {
+			console.error('Error coberturas', e);
+		} finally {
+			setLoading((p) => ({ ...p, cobertura: false }));
+		}
+	};
+
+	const fetchEstadoCivil = async () => {
+		try {
+			setLoading((p) => ({ ...p, estadoCivil: true }));
+
+			const { data } = await apiService.get<[{ valor: string; descripcion: string }]>(
+				'/estados-civiles',
+			);
+
+			setEstadosCiviles(data.map((ec) => ({ value: ec.valor, label: ec.descripcion })));
+		} catch (e) {
+			console.error('Error estados civiles', e);
+		} finally {
+			setLoading((p) => ({ ...p, estadoCivil: false }));
 		}
 	};
 
@@ -146,6 +212,37 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		}
 	};
 
+	// util para normalizar nombre de ciudad
+	const normalizeCity = (raw: string) =>
+		String(raw || '')
+			.replace(/_/g, ' ') // underscores -> espacios
+			.replace(/\s+/g, ' ') // colapsa múltiple espacios
+			.trim();
+
+	// helper para pedir la localidad de forma segura
+	async function safeFetchLocalidad(ciudad: string): Promise<LocalidadData | null> {
+		const query = encodeURIComponent(normalizeCity(ciudad));
+		try {
+			const resp = await apiService.get<LocalidadResponse>(
+				`/localidad/search-by-localidad/${query}`,
+			);
+			return resp.data?.data ?? null;
+		} catch (e: any) {
+			// si tu interceptor de axios mete el status:
+			if ((e as any)?.status === 404) {
+				console.warn('[Localidad] No encontrada:', ciudad);
+				return null;
+			}
+			// fallback si el interceptor solo manda message:
+			if (String(e?.message || '').includes('404')) {
+				console.warn('[Localidad] No encontrada:', ciudad);
+				return null;
+			}
+			console.warn('[Localidad] Error consultando:', e);
+			return null; // no bloquees el flujo
+		}
+	}
+
 	const getRenaperInfo = async (
 		e: React.MouseEvent | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 		NumeroDocumento: number,
@@ -155,33 +252,36 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		if (!NumeroDocumento || !SexoVal) return;
 		setBuscandoRenaper(true);
 		const sexoOpt = SexoVal === 'F' ? 1 : 2;
+
 		try {
-			const resp = await fetch(
-				`http://localhost:5005/api/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
-			);
-			const data = await resp.json();
+			const endpoint = `/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`;
+			const { data } = await apiService.get<PersonaResponse>(endpoint);
+
 			if (data?.persona) {
-				const locResp = await fetch(
-					`http://localhost:5005/api/localidad/search-by-localidad/${data.persona.ciudad}`,
-				);
-				const dataLocalidad = await locResp.json();
-				await fetchLocalidades();
+				const ciudadNorm = normalizeCity(data.persona.ciudad || '');
+				const dataLocalidad = ciudadNorm ? await safeFetchLocalidad(ciudadNorm) : null;
+
+				await fetchLocalidades?.();
 				setFormData((prev) => ({
 					...prev,
-					NumeroDocumento: String(data.persona.numeroDocumento || ''),
-					ApellidoyNombre:
-						`${data.persona.apellido}, ${data.persona.nombres}`.trim(),
-					Domicilio: `${data.persona.calle || ''} ${
-						data.persona.numero || ''
+					NumeroDocumento: String(data.persona!.numeroDocumento ?? ''),
+					ApellidoyNombre: `${data.persona!.apellido ?? ''}, ${
+						data.persona!.nombres ?? ''
+					}`
+						.trim()
+						.replaceAll(',', ''),
+					Domicilio: `${data.persona!.calle ?? ''} ${
+						data.persona!.numero ?? ''
 					}`.trim(),
-					ValorLocalidad: dataLocalidad?.data?.Valor
-						? String(dataLocalidad.data.Valor)
+					ValorLocalidad: dataLocalidad?.Valor
+						? String(dataLocalidad.Valor)
 						: prev.ValorLocalidad,
-					FechaNacimiento: data.persona.fechaNacimiento || prev.FechaNacimiento,
-					Sexo: data.persona.sexo || prev.Sexo,
+					FechaNacimiento: data.persona!.fechaNacimiento ?? prev.FechaNacimiento,
+					Sexo: data.persona!.sexo ?? prev.Sexo,
 				}));
-				if (dataLocalidad?.data?.ValorProvincia) {
-					await handleGetProvincia(String(dataLocalidad.data.ValorProvincia));
+
+				if (dataLocalidad?.ValorProvincia) {
+					await handleGetProvincia(String(dataLocalidad.ValorProvincia));
 				}
 			}
 		} catch (err) {
@@ -299,6 +399,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	useEffect(() => {
 		fetchSexos();
 		fetchLocalidades();
+		fetchCoberturas();
+		fetchEstadoCivil();
 	}, []);
 
 	// Al editar: si ya viene ValorLocalidad, actualizar Provincia y Nacionalidad automáticamente una vez
@@ -326,7 +428,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			setFormData((prev) => {
 				// Si no hay paciente previo cargado o cambió el ID
 				if (!prev.IDPaciente || prev.IDPaciente !== initialData.IDPaciente) {
-					return buildInitialFormData(initialData);
+					return buildInitialFormData(initialData as Partial<PatientFormData>);
 				}
 				return prev; // evita sobreescribir cambios del usuario
 			});
@@ -443,6 +545,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										loading={loading}
 										sexoOptions={sexoOptions}
 										estadosCiviles={estadosCiviles}
+										coberturaOptions={coberturaOptions}
 									/>
 								)}
 								{activeTab === 'other' && (
@@ -469,6 +572,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						onClick={onClose}
 						className={styles.cancelButton}
 						disabled={internalSubmitting}
+						tabIndex={20}
 					>
 						Cancelar
 					</button>
@@ -477,7 +581,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						className={`${styles.submitButton} ${
 							internalSubmitting ? styles.loading : ''
 						}`}
-						disabled={internalSubmitting || isPhotoUploading}
+						disabled={internalSubmitting || isPhotoUploading || isSubmitting}
+						tabIndex={21}
 					>
 						{internalSubmitting && (
 							<span className={styles.inlineSpinner} aria-hidden='true' />

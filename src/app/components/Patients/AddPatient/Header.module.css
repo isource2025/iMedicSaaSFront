@@ -1,6 +1,6 @@
 .headerContainer {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: 140px 1fr; /* foto fija + campos fluidos */
 	gap: 1.5rem;
 	padding: 1rem;
 	background: #f9fafb;
@@ -10,11 +10,11 @@
 }
 
 .fieldsGrid {
-	flex: 1;
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 	gap: 1rem 1.25rem;
-	min-width: 300px;
+	align-content: start;
+	margin-bottom: 1rem;
 }
 
 .headerField {
@@ -43,7 +43,7 @@
 	border-radius: 0.375rem;
 	font-size: 0.675rem;
 	background-color: #ffffff;
-	height: 2.1rem;
+	height: 2.375rem;
 	box-sizing: border-box;
 	transition: all 0.2s ease-in-out;
 }
@@ -117,7 +117,17 @@
 }
 
 .headerPhoto {
-	flex-shrink: 0;
+	width: 140px;
+	flex-shrink: 0; /* inofensivo aquí, puedes quitarlo si quieres */
 	display: flex;
 	align-items: flex-start;
+}
+
+@media (max-width: 720px) {
+	.headerContainer {
+		grid-template-columns: 1fr;
+	}
+	.headerPhoto {
+		width: auto; /* que se adapte */
+	}
 }
