@@ -31,8 +31,6 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 	const [militarOptions, setMilitarOptions] = useState<Option[]>([]);
 	const [dadorOptions, setDadorOptions] = useState<Option[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	console.log('[OtherDataTab] Renderizado, isLoading:', isLoading);
-	console.log('[OtherDataTab] formData actual:', formData);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -117,8 +115,14 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 		};
 	}, []);
 
-	console.log('[Option Languages]: ', idiomaOptions);
-
+	const formatHora = (hora: string) => {
+		//la hora llega por ejemplo 1533
+		if (hora.includes(':')) return hora; //ya está formateada
+		console.log('formateando hora:', hora);
+		const m = String(hora).slice(2);
+		const h = String(hora).slice(0, 2);
+		return `${h}:${m}`;
+	};
 	return (
 		<div className={styles.formContent}>
 			{/* Línea 1: Raza / Idioma */}
@@ -132,13 +136,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={razaOptions}
-					previewData={
-						!isLoading
-							? undefined
-							: formData.Raza
-							? { value: String(formData.Raza) }
-							: undefined
-					}
+					tabIndex={5}
 				/>
 				<LoadingSelect
 					label='Idioma:'
@@ -149,13 +147,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={idiomaOptions}
-					previewData={
-						!isLoading
-							? undefined
-							: formData.Idioma
-							? { value: String(formData.Idioma) }
-							: undefined
-					}
+					tabIndex={6}
 				/>
 			</div>
 			{/* Línea 2: Religión / Grupo Étnico */}
@@ -169,13 +161,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={religionOptions}
-					previewData={
-						!isLoading
-							? undefined
-							: formData.Religion
-							? { value: String(formData.Religion) }
-							: undefined
-					}
+					tabIndex={7}
 				/>
 				<LoadingSelect
 					label='Grupo Étnico:'
@@ -186,13 +172,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={etniaOptions}
-					previewData={
-						!isLoading
-							? undefined
-							: formData.GrupoEtnico
-							? { value: String(formData.GrupoEtnico) }
-							: undefined
-					}
+					tabIndex={8}
 				/>
 			</div>
 			{/* Línea 3: Estado Militar / Dador Órganos */}
@@ -206,13 +186,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={militarOptions}
-					previewData={
-						!isLoading
-							? undefined
-							: formData.EstadoMilitar
-							? { value: String(formData.EstadoMilitar) }
-							: undefined
-					}
+					tabIndex={9}
 				/>
 				<LoadingSelect
 					label='Dador Órganos:'
@@ -223,13 +197,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 					}
 					isLoading={isLoading}
 					options={dadorOptions}
-					previewData={
-						!isLoading
-							? undefined
-							: formData.DadorOrganos
-							? { value: String(formData.DadorOrganos) }
-							: undefined
-					}
+					tabIndex={10}
 				/>
 			</div>
 			{/* Línea 4: Licencia Auto (campo completo) */}
@@ -242,6 +210,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 						value={formData.LicenciaConducir || ''}
 						onChange={handleChange}
 						className={styles.input}
+						tabIndex={11}
 					/>
 				</div>
 			</div>
@@ -258,6 +227,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.OrdenNacimiento || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={12}
 							/>
 						</div>
 						<div className={styles.formGroupCompact}>
@@ -268,6 +238,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.LugarNacimiento || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={13}
 							/>
 						</div>
 					</div>
@@ -283,6 +254,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.FechaDefuncion || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={14}
 							/>
 						</div>
 						<div className={styles.formGroupCompact}>
@@ -293,6 +265,7 @@ export default function OtherDataTab({ formData, handleChange, errors }: OtherDa
 								value={formData.HoraDefuncion || ''}
 								onChange={handleChange}
 								className={styles.input}
+								tabIndex={15}
 							/>
 						</div>
 					</div>

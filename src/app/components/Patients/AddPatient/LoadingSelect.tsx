@@ -1,25 +1,22 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Personal.module.css';
 
 interface Option {
-	value: string;
+	value: string | number;
 	label: string;
 }
-
 interface CustomSelectProps {
 	label: string;
 	name: string;
-	value: string;
-	onChange: (value: string) => void;
+	value: string | number;
+	onChange: (value: string | number) => void;
 	isLoading: boolean;
 	options: Option[];
-	/**
-	 * previewData permite mostrar un valor (label) existente mientras las opciones reales se cargan.
-	 * Prioriza este valor cuando isLoading = true. Si no se provee label se usa el value.
-	 */
-	previewData?: { value: string; label?: string } | null;
+	tabIndex?: number; // NEW: permitir orden de tabulación
 }
+
+type Placement = 'top' | 'bottom';
 
 export default function CustomSelect({
 	label,
@@ -28,169 +25,216 @@ export default function CustomSelect({
 	onChange,
 	isLoading,
 	options,
-	previewData,
+	tabIndex, // NEW
 }: CustomSelectProps) {
+	const [mounted, setMounted] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
+	const [placement, setPlacement] = useState<Placement>('bottom');
+	const [coords, setCoords] = useState({ left: 0, top: 0, width: 0 });
+	const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+
 	const wrapperRef = useRef<HTMLDivElement>(null);
-	const portalListRef = useRef<HTMLUListElement>(null);
-	const [dropdownRect, setDropdownRect] = useState<{
-		width: number;
-		top: number;
-		left: number;
-		openUp?: boolean;
-	} | null>(null);
+	const triggerRef = useRef<HTMLDivElement>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+	const searchInputRef = useRef<HTMLInputElement>(null); // NEW
 
-	const selectedOption = options.find((opt) => opt.value === value);
-
-	const filteredOptions = options.filter((opt) =>
-		opt.label.toLowerCase().includes(searchTerm.toLowerCase()),
-	);
-
-	// Si hay previewData y la opción aún no está en options (por carga diferida), la usamos virtualmente.
-	const showPreview = !!previewData && (!selectedOption || isLoading);
-	const previewLabel = previewData?.label || previewData?.value || '';
-
-	const handleSelect = (option: Option) => {
-		onChange(option.value);
-		setIsOpen(false);
-		setSearchTerm('');
-	};
-
-	// Resolve portal root inside modal to avoid closing it
-	const resolvePortalRoot = () => {
-		if (!wrapperRef.current) return document.body;
-		const modalAncestor =
-			wrapperRef.current.closest('[data-modal-root]') ||
-			wrapperRef.current.closest('[role="dialog"]');
-		return (modalAncestor as HTMLElement) || document.body;
-	};
-
-	// Outside click
 	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
-			const target = event.target as Node;
-			if (
-				wrapperRef.current &&
-				!wrapperRef.current.contains(target) &&
-				!(portalListRef.current && portalListRef.current.contains(target))
-			) {
-				setIsOpen(false);
-				setSearchTerm('');
-			}
-		}
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => document.removeEventListener('mousedown', handleClickOutside);
+		setMounted(true);
 	}, []);
 
-	// Positioning
+	const selected = options.find((o) => o.value === value);
+	const filtered = options.filter((o) =>
+		o.label.toLowerCase().includes(searchTerm.toLowerCase()),
+	);
+
+	const close = () => {
+		setIsOpen(false);
+		setSearchTerm('');
+		// NEW: devolver foco al trigger al cerrar
+		requestAnimationFrame(() => triggerRef.current?.focus());
+	};
+
+	const updatePosition = () => {
+		const el = triggerRef.current;
+		if (!el) return;
+		const r = el.getBoundingClientRect();
+		const vh = window.innerHeight;
+		const spaceBelow = vh - r.bottom;
+		const spaceAbove = r.top;
+		const estimated = 280;
+
+		const openDown =
+			spaceBelow >= Math.min(estimated, vh * 0.4) || spaceBelow >= spaceAbove;
+
+		setPlacement(openDown ? 'bottom' : 'top');
+		setCoords({
+			left: Math.round(r.left),
+			top: Math.round(openDown ? r.bottom + 4 : r.top - 4),
+			width: Math.round(r.width),
+		});
+	};
+
+	useLayoutEffect(() => {
+		if (isOpen) {
+			updatePosition();
+			// NEW: enfocar el buscador al abrir
+			requestAnimationFrame(() => searchInputRef.current?.focus());
+		}
+	}, [isOpen]);
+
 	useEffect(() => {
 		if (!isOpen) return;
-		const calc = () => {
-			if (!wrapperRef.current) return;
-			const rect = wrapperRef.current.getBoundingClientRect();
-			const viewportHeight = window.innerHeight;
-			const espacioAbajo = viewportHeight - rect.bottom;
-			const espacioArriba = rect.top;
-			const openUp = espacioAbajo < 160 && espacioArriba > espacioAbajo;
-			setDropdownRect({
-				width: rect.width,
-				left: rect.left,
-				top: openUp ? rect.top - 6 : rect.bottom + 6,
-				openUp,
-			});
-		};
-		calc();
-		window.addEventListener('resize', calc);
-		window.addEventListener('scroll', calc, true);
+		const onResize = () => updatePosition();
+		const onScroll = () => updatePosition();
+		window.addEventListener('resize', onResize);
+		window.addEventListener('scroll', onScroll, true);
 		return () => {
-			window.removeEventListener('resize', calc);
-			window.removeEventListener('scroll', calc, true);
+			window.removeEventListener('resize', onResize);
+			window.removeEventListener('scroll', onScroll, true);
 		};
 	}, [isOpen]);
 
-	// Keyboard incremental search
 	useEffect(() => {
-		function handleKeyDown(e: KeyboardEvent) {
-			if (isOpen && !isLoading) {
-				if (e.key.length === 1) {
-					setSearchTerm((prev) => prev + e.key);
-				} else if (e.key === 'Backspace') {
-					setSearchTerm((prev) => prev.slice(0, -1));
-				}
+		if (!isOpen) return;
+		const handleClick = (e: MouseEvent) => {
+			const t = e.target as Node;
+			if (!wrapperRef.current?.contains(t) && !dropdownRef.current?.contains(t)) {
+				close();
+			}
+		};
+		document.addEventListener('mousedown', handleClick);
+		return () => document.removeEventListener('mousedown', handleClick);
+	}, [isOpen]);
+
+	useEffect(() => {
+		if (!wrapperRef.current) return;
+		const modalRoot = wrapperRef.current.closest<HTMLElement>(
+			'[data-modal-root], [role="dialog"], .modal, .Modal, .MuiModal-root',
+		);
+		setPortalEl(modalRoot ?? document.body);
+	}, []);
+
+	const selectClasses = [
+		styles.select,
+		isLoading ? styles.selectDisabled : '',
+		isLoading ? styles.selectLoading : '',
+	]
+		.filter(Boolean)
+		.join(' ');
+
+	// NEW: teclado en el trigger (Enter/Space abre, Escape cierra)
+	const handleTriggerKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+		if (isLoading) return;
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			setIsOpen((v) => !v);
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			if (isOpen) close();
+		} else if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			if (!isOpen) setIsOpen(true);
+			else {
+				// enfocar buscador para empezar a filtrar
+				searchInputRef.current?.focus();
 			}
 		}
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [isOpen, isLoading]);
+	};
 
 	return (
-		<div className={styles.formGroup} ref={wrapperRef}>
-			<label className={styles.label}>{label}</label>
-			<div
-				className={
-					styles.selectWrapper + (isLoading ? ` ${styles.selectDisabled}` : '')
-				}
-			>
-				<div
-					className={`${styles.select} ${isLoading ? styles.selectDisabled : ''}`}
-					onClick={() => !isLoading && setIsOpen((prev) => !prev)}
-				>
-					{showPreview
-						? previewLabel
-						: isLoading
-						? 'Cargando...'
-						: selectedOption
-						? selectedOption.label
-						: 'Seleccione...'}
-				</div>
+		<div className={`${label ? styles.formGroup : ''}`} ref={wrapperRef}>
+			{label && (
+				<label className={styles.label} htmlFor={name}>
+					{label}
+				</label>
+			)}
 
-				{isOpen &&
-					!isLoading &&
-					dropdownRect &&
-					createPortal(
-						<ul
-							ref={portalListRef}
-							className={
-								styles.dropdownPortal +
-								(dropdownRect.openUp ? ' ' + styles.openUp : '')
-							}
-							style={{
-								width: dropdownRect.width,
-								left: dropdownRect.left,
-								top: dropdownRect.top,
-								position: 'fixed',
-							}}
-							onMouseDown={(e) => {
-								// prevent bubbling closing modal
-								e.stopPropagation();
-							}}
-						>
-							{showPreview &&
-								!options.find((o) => o.value === previewData!.value) && (
-									<li
-										key={previewData!.value}
-										onClick={(e) => {
-											e.stopPropagation();
-											handleSelect({
-												value: previewData!.value,
-												label: previewLabel,
-											});
-										}}
-										className={styles.dropdownItem}
-									>
-										{previewLabel} (actual)
-									</li>
-								)}
-							{filteredOptions.length > 0 ? (
-								filteredOptions.map((opt) => (
+			<div className={styles.selectWrapper}>
+				<div
+					id={name}
+					ref={triggerRef}
+					className={selectClasses}
+					onClick={() => !isLoading && setIsOpen((v) => !v)}
+					role='combobox' // NEW: ARIA adecuado
+					aria-haspopup='listbox'
+					aria-expanded={isOpen}
+					aria-disabled={isLoading}
+					aria-controls={`${name}-listbox`}
+					aria-activedescendant={isOpen ? `${name}-active` : undefined}
+					tabIndex={isLoading ? -1 : tabIndex ?? 0} // NEW: enfocable y ordenable
+					onKeyDown={handleTriggerKeyDown} // NEW
+				>
+					{isLoading ? 'Cargando…' : selected ? selected.label : 'Seleccione…'}
+					{isLoading && <div className={styles.spinnerIcon} aria-hidden='true' />}
+				</div>
+			</div>
+
+			{mounted &&
+				isOpen &&
+				!isLoading &&
+				portalEl &&
+				createPortal(
+					<div
+						ref={dropdownRef}
+						className={`${styles.dropdownPortal} ${
+							placement === 'top' ? styles.dropTop : styles.dropBottom
+						}`}
+						style={{ left: coords.left, top: coords.top, width: coords.width }}
+						role='listbox'
+						id={`${name}-listbox`}
+						aria-labelledby={name}
+						onMouseDownCapture={(e) => e.stopPropagation()}
+						onMouseDown={(e) => e.stopPropagation()}
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className={styles.searchBar}>
+							<input
+								ref={searchInputRef} // NEW
+								className={styles.searchInput}
+								type='text'
+								placeholder='Buscar…'
+								value={searchTerm}
+								onChange={(e) => setSearchTerm(e.target.value)}
+								aria-label='Buscar opción'
+								onKeyDown={(e) => {
+									if (e.key === 'Escape') {
+										e.preventDefault();
+										close(); // NEW: cerrar con Esc
+									}
+									if (e.key === 'Tab' && !e.shiftKey) {
+										// dejar que Tab salga del dropdown y siga al próximo control
+										setIsOpen(false);
+									}
+								}}
+								onMouseDown={(e) => e.stopPropagation()}
+							/>
+						</div>
+
+						<ul className={styles.optionList}>
+							{filtered.length ? (
+								filtered.map((opt) => (
 									<li
 										key={opt.value}
-										onClick={(e) => {
-											e.stopPropagation();
-											handleSelect(opt);
+										className={`${styles.dropdownItem} ${
+											opt.value === value ? styles.active : ''
+										}`}
+										role='option'
+										id={opt.value === value ? `${name}-active` : undefined}
+										aria-selected={opt.value === value}
+										tabIndex={-1} // no entra el foco aquí; se selecciona con click/Enter desde el buscador
+										onMouseDown={(e) => e.stopPropagation()}
+										onClick={() => {
+											onChange(opt.value);
+											close();
 										}}
-										className={styles.dropdownItem}
+										onKeyDown={(e) => {
+											if (e.key === 'Enter') {
+												e.preventDefault();
+												onChange(opt.value);
+												close();
+											}
+										}}
 									>
 										{opt.label}
 									</li>
@@ -200,10 +244,10 @@ export default function CustomSelect({
 									No hay resultados
 								</li>
 							)}
-						</ul>,
-						resolvePortalRoot(),
-					)}
-			</div>
+						</ul>
+					</div>,
+					portalEl,
+				)}
 		</div>
 	);
 }

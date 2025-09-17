@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+// DatosLaboralesTab.tsx
+import { useEffect, useMemo, useState } from 'react';
 import { PatientFormData, Trabajo } from '@/src/app/types/PatientInterface';
 import LaboralDataModal from './LaboralDataModal';
 import CustomSelect from './LoadingSelect';
 import styles from './LaboralData.module.css';
 import stylesPersonal from './Personal.module.css';
+import { apiService } from '@/src/app/services/axios';
 
 interface Option {
-	value: string;
+	value: string | number;
 	label: string;
 }
 
@@ -17,6 +19,7 @@ interface DatosLaboralesTabProps {
 
 export default function DatosLaboralesTab({ formData, setFormData }: DatosLaboralesTabProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const [editingTrabajo, setEditingTrabajo] = useState<Partial<Trabajo> | null>(null);
 
 	const [ocupacionOptions, setOcupacionOptions] = useState<Option[]>([]);
@@ -24,68 +27,112 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 	const [estudiosOptions, setEstudiosOptions] = useState<Option[]>([]);
 
 	useEffect(() => {
-		const t = setTimeout(() => {
-			setOcupacionOptions([
-				{ value: '1', label: 'Analista de Sistemas' },
-				{ value: '2', label: 'Contador' },
-			]);
-			setSituacionOptions([
-				{ value: 'A', label: 'Activo' },
-				{ value: 'I', label: 'Inactivo' },
-			]);
-			setEstudiosOptions([
-				{ value: 'S', label: 'Secundario' },
-				{ value: 'U', label: 'Universitario' },
-			]);
-		}, 300);
-		return () => clearTimeout(t);
+		const fetchOptions = async () => {
+			const { data } = await apiService.get<{
+				data: {
+					ocupaciones: Array<{ Valor: number; Descripcion: string }>;
+					nivelesEstudios: Array<{ NivelDeEstudios: string }>;
+					situacionLaboral: Array<{ SituacionLaboral: string }>;
+				};
+			}>('/patients/catalogo-laboral');
+
+			setOcupacionOptions(
+				data.data.ocupaciones.map((o) => ({
+					value: Number(o.Valor),
+					label: o.Descripcion,
+				})),
+			);
+
+			setEstudiosOptions(
+				data.data.nivelesEstudios.map((e) => ({
+					value: e.NivelDeEstudios,
+					label: e.NivelDeEstudios,
+				})),
+			);
+
+			setSituacionOptions(
+				data.data.situacionLaboral.map((s) => ({
+					value: s.SituacionLaboral,
+					label: s.SituacionLaboral,
+				})),
+			);
+		};
+
+		fetchOptions();
 	}, []);
 
 	const handleOpenAddModal = () => {
+		setEditingIndex(null);
 		setEditingTrabajo(null);
 		setIsModalOpen(true);
 	};
-	const handleOpenEditModal = (trabajo: Trabajo) => {
+	const handleOpenEditModal = (idx: number, trabajo: Trabajo) => {
+		setEditingIndex(idx);
 		setEditingTrabajo(trabajo);
 		setIsModalOpen(true);
 	};
 
-	const handleDelete = (trabajoId: number | string) => {
+	const handleDelete = (index: number) => {
 		if (window.confirm('¿Estás seguro de que deseas eliminar este empleo?')) {
-			setFormData((prev) => ({
-				...prev,
-				Trabajos: prev.Trabajos?.filter((t) => t.id !== trabajoId) || [],
-			}));
+			setFormData((prev) => {
+				const list = [...(prev.Trabajos || [])];
+				if (index >= 0 && index < list.length) list.splice(index, 1);
+				return { ...prev, Trabajos: list };
+			});
 		}
 	};
 
 	const handleSave = (trabajo: Trabajo) => {
-		const trabajos = formData.Trabajos || [];
-		const exists = trabajos.find((t) => t.id === trabajo.id);
-		if (exists) {
-			setFormData((prev) => ({
-				...prev,
-				Trabajos: prev.Trabajos?.map((t) => (t.id === trabajo.id ? trabajo : t)) || [],
-			}));
-		} else {
-			setFormData((prev) => ({
-				...prev,
-				Trabajos: [...(prev.Trabajos || []), trabajo],
-			}));
-		}
+		setFormData((prev) => {
+			const list = [...(prev.Trabajos || [])];
+
+			if (editingIndex !== null && editingIndex >= 0 && editingIndex < list.length) {
+				// actualizar en su posición
+				list[editingIndex] = trabajo;
+			} else {
+				// agregar al final
+				list.push(trabajo);
+			}
+
+			return { ...prev, Trabajos: list };
+		});
+
 		setIsModalOpen(false);
+		setEditingIndex(null);
+		setEditingTrabajo(null);
 	};
+
+	// helper para setear formData
+	const setFD = (patch: Partial<PatientFormData>) =>
+		setFormData((prev) => ({ ...prev, ...patch }));
 
 	return (
 		<div className={styles.laboralDataTab}>
-			<div className={styles.toolbar}>
-				<button
-					type='button'
-					onClick={handleOpenAddModal}
-					className={styles.addButton}
-				>
-					+ Agregar Trabajo
-				</button>
+			{/* --- Ocupación (fuera del modal), como en la app original --- */}
+			<div className={`${stylesPersonal.formRow} ${stylesPersonal.double}`}>
+				<CustomSelect
+					name='Ocupacion'
+					label='Ocupación:'
+					isLoading={!ocupacionOptions.length}
+					value={Number(formData.Ocupacion)}
+					onChange={(v) =>
+						setFD({ Ocupacion: typeof v === 'number' ? v : Number(v) })
+					}
+					options={ocupacionOptions}
+					tabIndex={5}
+				/>
+
+				{/* Toolbar + tabla de empleos */}
+				<div className={styles.toolbar}>
+					<button
+						type='button'
+						onClick={handleOpenAddModal}
+						className={styles.addButton}
+						tabIndex={6}
+					>
+						+ Agregar Trabajo
+					</button>
+				</div>
 			</div>
 
 			{formData.Trabajos && formData.Trabajos.length > 0 ? (
@@ -93,7 +140,6 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 					<table className={styles.table}>
 						<thead>
 							<tr>
-								<th>Documento</th>
 								<th>Razón Social</th>
 								<th>Domicilio Empresa</th>
 								<th>Teléfono Empresa</th>
@@ -102,9 +148,8 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 							</tr>
 						</thead>
 						<tbody>
-							{formData.Trabajos.map((t) => (
-								<tr key={t.id}>
-									<td>{t.DocumentoEmpresa || '-'}</td>
+							{formData.Trabajos.map((t, idx) => (
+								<tr key={idx}>
 									<td>{t.RazonSocial || '-'}</td>
 									<td>{t.DomicilioEmpresa || '-'}</td>
 									<td>{t.TelefonoEmpresa || '-'}</td>
@@ -114,7 +159,9 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 											type='button'
 											className={styles.editButton}
 											title='Editar'
-											onClick={() => handleOpenEditModal(t as Trabajo)}
+											onClick={() =>
+												handleOpenEditModal(idx, t as Trabajo)
+											}
 										>
 											✎
 										</button>
@@ -122,7 +169,7 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 											type='button'
 											className={styles.deleteButton}
 											title='Borrar'
-											onClick={() => handleDelete(t.id!)}
+											onClick={() => handleDelete(idx!)}
 										>
 											🗑
 										</button>
@@ -135,51 +182,44 @@ export default function DatosLaboralesTab({ formData, setFormData }: DatosLabora
 			) : (
 				<p className={styles.noDataText}>No hay datos laborales cargados.</p>
 			)}
+
+			{/* Situación laboral y Nivel de estudios (fuera del modal) */}
 			<div className={`${stylesPersonal.formRow} ${stylesPersonal.double}`}>
 				<CustomSelect
 					label='Situación laboral:'
 					name='SituacionLaboral'
 					isLoading={!situacionOptions.length}
-					value={formData.SituacionLaboral || ''}
-					onChange={(value: string) =>
-						setFormData({ ...formData, SituacionLaboral: value })
+					value={String(formData.SituacionLaboral || '')}
+					onChange={(value) =>
+						setFD({
+							SituacionLaboral:
+								typeof value === 'string' ? value : String(value),
+						})
 					}
 					options={situacionOptions}
-					previewData={
-						situacionOptions.length
-							? undefined
-							: formData.SituacionLaboral
-							? { value: String(formData.SituacionLaboral) }
-							: undefined
-					}
+					tabIndex={7}
 				/>
 				<CustomSelect
 					label='Nivel de estudios:'
 					isLoading={!estudiosOptions.length}
 					name='NivelEstudios'
-					value={formData.NivelEstudios || ''}
-					onChange={(value: string) =>
-						setFormData({ ...formData, NivelEstudios: value })
+					value={String(formData.NivelEstudios || '')}
+					onChange={(value) =>
+						setFD({
+							NivelEstudios: typeof value === 'string' ? value : String(value),
+						})
 					}
 					options={estudiosOptions}
-					previewData={
-						estudiosOptions.length
-							? undefined
-							: formData.NivelEstudios
-							? { value: String(formData.NivelEstudios) }
-							: undefined
-					}
+					tabIndex={8}
 				/>
 			</div>
 
+			{/* Modal sólo para los datos de la empresa */}
 			<LaboralDataModal
 				isOpen={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
 				onSave={handleSave}
 				initialData={editingTrabajo}
-				ocupacionOptions={ocupacionOptions}
-				situacionOptions={situacionOptions}
-				estudiosOptions={estudiosOptions}
 			/>
 		</div>
 	);

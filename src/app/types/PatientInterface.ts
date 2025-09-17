@@ -33,6 +33,7 @@ export interface Patient {
 	Ciudadania?: string | null;
 	SituacionLaboral?: string | null;
 	NivelEstudios?: string | null;
+	Ocupacion?: string | null;
 }
 
 export interface PatientFormData {
@@ -55,6 +56,7 @@ export interface PatientFormData {
 	TelefonoParticular: string;
 	TelefonoCelular: string;
 	Mail: string;
+	Hora: string;
 	Cobertura: string;
 	nAfiliado: string;
 	FotoURL?: string | null;
@@ -76,9 +78,10 @@ export interface PatientFormData {
 
 	// --- NUEVO CAMPO PARA DATOS LABORALES ---
 	Trabajos?: Trabajo[];
-
+	Ocupacion?: number | null;
 	SituacionLaboral?: string | null;
 	NivelEstudios?: string | null;
+	Ocupacion?: string | null;
 }
 
 export interface ApiResponse<T> {
@@ -88,8 +91,6 @@ export interface ApiResponse<T> {
 }
 
 export interface Trabajo {
-	id: number | string;
-	Ocupacion?: string;
 	DocumentoEmpresa?: string;
 	RazonSocial?: string;
 	DomicilioEmpresa?: string;
