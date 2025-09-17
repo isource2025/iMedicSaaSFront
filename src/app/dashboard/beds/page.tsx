@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import BedsList from "../../components/beds/BedsList";
+import BedsList from "@/app/components/beds/BedsList";
 import styles from "./page.module.css";
 
 export default function BedsPage() {

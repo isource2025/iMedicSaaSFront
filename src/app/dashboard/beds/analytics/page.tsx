@@ -2,11 +2,11 @@
 
 import React, { useState, Suspense, useMemo, useEffect, lazy } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCamasIndicadores } from '../../../hooks/useCamasIndicadores';
+import { useCamasIndicadores } from '@/app/hooks/useCamasIndicadores';
 
 // Lazy loading de componentes pesados para mejorar el rendimiento inicial
-const DonutChartLazy = lazy(() => import('../../../components/Charts/DonutChart'));
-const LineChartLazy = lazy(() => import('../../../components/Charts/LineChart'));
+const DonutChartLazy = lazy(() => import('@/app/components/Charts/DonutChart'));
+const LineChartLazy = lazy(() => import('@/app/components/Charts/LineChart'));
 
 // Componente de loading para Suspense
 const ChartSkeleton = () => (
@@ -23,12 +23,12 @@ const ChartSkeleton = () => (
     Cargando gráfico...
   </div>
 );
-import { MetricCard } from '../../../components/MetricCard';
-import { InsightCard } from '../../../components/InsightCard';
-import { MetricTooltipModal } from '../../../components/modals/MetricTooltipModal';
-import { MetricTooltip } from '../../../components/MetricTooltip';
-import { AnalyticsLoader } from '../../../components/AnalyticsLoader';
-import { analyzePeakOccupancy, analyzeSectorDemand, analyzeOperationalEfficiency, AnalysisResult } from '../../../utils/analyticsEngine';
+import { MetricCard } from '@/app/components/MetricCard';
+import { InsightCard } from '@/app/components/InsightCard';
+import { MetricTooltipModal } from '@/app/components/modals/MetricTooltipModal';
+import { MetricTooltip } from '@/app/components/MetricTooltip';
+import { AnalyticsLoader } from '@/app/components/AnalyticsLoader';
+import { analyzePeakOccupancy, analyzeSectorDemand, analyzeOperationalEfficiency, AnalysisResult } from '@/app/utils/analyticsEngine';
 import styles from './BedsAnalytics.module.css';
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (

@@ -17,9 +17,11 @@ export interface MovimientoInternacion {
   ApellidoyNombre: string;
   NumeroDocumento: string;
   SectorDescripcion: string;
-  TipoMovimiento: 'Ingreso' | 'Egreso';
+  TipoMovimiento: 'Ingreso' | 'Egreso' | 'Movimiento de cama';
   FechaAdmisionFormateada?: string;
   FechaEgresoFormateada?: string;
+  HoraAdmisionFormateada?: string;
+  HoraEgresoFormateada?: string;
 }
 
 // Tipos para diferentes categorías de actividad

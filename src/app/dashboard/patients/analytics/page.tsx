@@ -2,12 +2,12 @@
 
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIndicadores } from '../../../hooks/useIndicadores';
-import { analyzeAdmissionPatterns, AnalysisResult } from '../../../utils/analyticsEngine';
+import { useIndicadores } from '@/app/hooks/useIndicadores';
+import { analyzeAdmissionPatterns, AnalysisResult } from '@/app/utils/analyticsEngine';
 
 // Lazy loading de componentes pesados para mejorar el rendimiento inicial
-const DonutChartLazy = lazy(() => import('../../../components/Charts/DonutChart'));
-const LineChartLazy = lazy(() => import('../../../components/Charts/LineChart'));
+const DonutChartLazy = lazy(() => import('@/app/components/Charts/DonutChart'));
+const LineChartLazy = lazy(() => import('@/app/components/Charts/LineChart'));
 
 // Componente de loading para Suspense
 const ChartSkeleton = () => (
@@ -24,11 +24,11 @@ const ChartSkeleton = () => (
     Cargando gráfico...
   </div>
 );
-import { MetricCard } from '../../../components/MetricCard';
-import { InsightCard } from '../../../components/InsightCard';
-import { MetricTooltip } from '../../../components/MetricTooltip/MetricTooltip';
-import { MetricTooltipModal } from '../../../components/modals/MetricTooltipModal';
-import { AnalyticsLoader } from '../../../components/AnalyticsLoader';
+import { MetricCard } from '@/app/components/MetricCard';
+import { InsightCard } from '@/app/components/InsightCard';
+import { MetricTooltip } from '@/app/components/MetricTooltip/MetricTooltip';
+import { MetricTooltipModal } from '@/app/components/modals/MetricTooltipModal';
+import { AnalyticsLoader } from '@/app/components/AnalyticsLoader';
 import styles from './PatientsAnalytics.module.css';
 
 // Componente para iconos (ejemplo simple)

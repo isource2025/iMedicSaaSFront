@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
-import BedDetailView from '../../components/beds/BedDetailView';
-import { Bed } from '../../types/beds';
+import BedDetailView from '@/app/components/beds/BedDetailView';
+import { Bed } from '@/app/types/beds';
 
 export default function BedDetailClient() {
   const searchParams = useSearchParams();

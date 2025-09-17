@@ -12,6 +12,7 @@ import {
   DEFAULT_CONFIG 
 } from '../types/dashboard';
 import { FALLBACK_MOVIMIENTOS, FALLBACK_ACTIVIDADES } from '../utils/fallbackData';
+import { formatSqlDate, clarionDateToDate } from '../utils/dateUtils';
 
 /**
  * Servicio base para actividades
@@ -114,15 +115,87 @@ export class InternacionActivityService extends ActivityService {
    */
   convertirAActividades(movimientos: MovimientoInternacion[]): ActividadReciente[] {
     return movimientos.map((movimiento) => {
-      const fecha = movimiento.FechaAdmisionFormateada || movimiento.FechaEgresoFormateada;
-      const time = this.formatearTiempo(fecha);
       const isIngreso = movimiento.TipoMovimiento === 'Ingreso';
       
+      // Crear fecha y hora completa combinando fecha Clarion y hora formateada
+      let fechaHoraCompleta = '--/--/---- --:--';
+      
+      if (movimiento.TipoMovimiento === 'Movimiento de cama') {
+        // Para movimientos de cama, siempre usar FechaAdmision y HoraAdmisionFormateada
+        const fechaDate = clarionDateToDate(movimiento.FechaAdmision);
+        const hora = movimiento.HoraAdmisionFormateada || '--:--';
+        
+        if (fechaDate) {
+          const fechaStr = fechaDate.toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          // Quitar segundos de la hora (formato HH:MM en lugar de HH:MM:SS)
+          const horaSinSegundos = hora && hora.includes(':') ? hora.substring(0, 5) : hora;
+          fechaHoraCompleta = `${fechaStr} ${horaSinSegundos}`;
+        }
+      } else if (isIngreso) {
+        // Para ingresos, usar FechaAdmision y HoraAdmisionFormateada
+        const fechaDate = clarionDateToDate(movimiento.FechaAdmision);
+        const hora = movimiento.HoraAdmisionFormateada || '--:--';
+        
+        if (fechaDate) {
+          const fechaStr = fechaDate.toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          // Quitar segundos de la hora (formato HH:MM en lugar de HH:MM:SS)
+          const horaSinSegundos = hora && hora.includes(':') ? hora.substring(0, 5) : hora;
+          fechaHoraCompleta = `${fechaStr} ${horaSinSegundos}`;
+        }
+      } else {
+        // Para egresos, usar FechaEgreso y HoraEgresoFormateada
+        const fechaDate = movimiento.FechaEgresoFormateada ? new Date(movimiento.FechaEgresoFormateada) : null;
+        const hora = movimiento.HoraEgresoFormateada || '--:--';
+        
+        if (fechaDate) {
+          const fechaStr = fechaDate.toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          // Quitar segundos de la hora (formato HH:MM en lugar de HH:MM:SS)
+          const horaSinSegundos = hora && hora.includes(':') ? hora.substring(0, 5) : hora;
+          fechaHoraCompleta = `${fechaStr} ${horaSinSegundos}`;
+        } else if (movimiento.FechaEgresoFormateada) {
+          // Fallback: usar fecha ISO formateada (sin segundos)
+          const fechaFormateada = formatSqlDate(movimiento.FechaEgresoFormateada, {
+            showDate: true,
+            showTime: true,
+            showSeconds: false,
+            adjustTimezone: false
+          });
+          fechaHoraCompleta = fechaFormateada;
+        }
+      }
+      
+      // Determinar acción e icono según el tipo de movimiento
+      let action: string;
+      let iconType: string;
+      
+      if (movimiento.TipoMovimiento === 'Movimiento de cama') {
+        action = 'Movimiento de cama';
+        iconType = 'traslado';
+      } else if (isIngreso) {
+        action = 'Ingreso de paciente';
+        iconType = 'ingreso';
+      } else {
+        action = 'Alta médica';
+        iconType = 'egreso';
+      }
+      
       return {
-        time,
-        action: isIngreso ? 'Ingreso de paciente' : 'Alta médica',
-        details: `${movimiento.ApellidoyNombre} - ${movimiento.ValorHabitacionCama} (${movimiento.SectorDescripcion})`,
-        icon: this.obtenerIcono('internacion', isIngreso ? 'ingreso' : 'egreso'),
+        time: fechaHoraCompleta,
+        action,
+        details: `${movimiento.ApellidoyNombre} - CAMA ${movimiento.ValorHabitacionCama} (${movimiento.SectorDescripcion})`,
+        icon: this.obtenerIcono('internacion', iconType),
         tipo: 'internacion' as const,
         prioridad: 'alta' as const,
         sector: movimiento.SectorDescripcion
@@ -133,14 +206,50 @@ export class InternacionActivityService extends ActivityService {
   /**
    * Obtiene actividades de internación
    */
-  async obtenerActividades(limite: number = 5): Promise<ActividadReciente[]> {
+  async obtenerActividades(limite: number = 10): Promise<ActividadReciente[]> {
     try {
       const movimientos = await this.obtenerMovimientos(limite);
-      return this.convertirAActividades(movimientos);
+      const actividades = this.convertirAActividades(movimientos);
+      
+      // Ordenar por fecha y hora más reciente primero (como backup del ordenamiento del backend)
+      return actividades.sort((a, b) => {
+        // Extraer fecha y hora para comparación
+        const fechaA = this.extraerFechaParaOrdenamiento(a.time);
+        const fechaB = this.extraerFechaParaOrdenamiento(b.time);
+        
+        return fechaB.getTime() - fechaA.getTime(); // Más reciente primero
+      });
     } catch (error) {
       console.error('Error al obtener actividades de internación:', error);
-      return FALLBACK_ACTIVIDADES.internacion.slice(0, limite);
+      return this.convertirAActividades(FALLBACK_MOVIMIENTOS.slice(0, limite));
     }
+  }
+
+  /**
+   * Extrae fecha para ordenamiento desde el string de tiempo
+   */
+  private extraerFechaParaOrdenamiento(timeString: string): Date {
+    try {
+      // Formato esperado: "DD/MM/YYYY HH:MM:SS" o similar
+      if (timeString.includes('/') && timeString.includes(' ')) {
+        const [fechaPart, horaPart] = timeString.split(' ');
+        const [dia, mes, año] = fechaPart.split('/');
+        const [hora, minuto] = horaPart.split(':');
+        
+        return new Date(
+          parseInt(año, 10),
+          parseInt(mes, 10) - 1, // Los meses en JS van de 0-11
+          parseInt(dia, 10),
+          parseInt(hora, 10),
+          parseInt(minuto, 10)
+        );
+      }
+    } catch (error) {
+      console.error('Error al extraer fecha para ordenamiento:', error);
+    }
+    
+    // Fallback: fecha muy antigua para que aparezca al final
+    return new Date(1900, 0, 1);
   }
 }
 
