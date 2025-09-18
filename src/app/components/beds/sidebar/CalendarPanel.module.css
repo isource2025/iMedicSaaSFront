@@ -21,6 +21,7 @@
 	font-weight: 700;
 	color: var(--ink);
 	letter-spacing: 0.4px;
+	display: inline-block; /* ayuda a la animación */
 }
 .grid {
 	display: grid;
@@ -33,6 +34,10 @@
 	color: var(--muted);
 	padding: 6px 0;
 }
+.viewport {
+	padding: 0 8px 8px 8px;
+}
+
 .cell {
 	height: 34px;
 	margin: 2px;
@@ -40,6 +45,8 @@
 	border: 1px solid transparent;
 	background: #fff;
 	cursor: pointer;
+	color: var(--ink);
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .cell:hover {
 	border-color: var(--primary);
@@ -47,4 +54,59 @@
 .active {
 	background: var(--primary);
 	color: #fff;
+}
+
+/* Días fuera del mes: gris y opacos */
+.muted {
+	color: var(--muted);
+	background: #fafafa;
+	opacity: 0.3; /* << opacidad visible */
+}
+.muted:hover {
+	border-color: var(--border);
+	background: #f3f3f3;
+}
+/* Si el usuario selecciona un día “muted”, que se vea normal */
+.muted.active {
+	opacity: 1;
+}
+
+/* === Transición por opacidad (sin desplazamiento) === */
+.fadeOnly-enter {
+	opacity: 0;
+}
+.fadeOnly-enter-active {
+	opacity: 1;
+	transition: opacity 220ms ease;
+}
+.fadeOnly-exit {
+	opacity: 1;
+}
+.fadeOnly-exit-active {
+	opacity: 0;
+	transition: opacity 180ms ease;
+}
+/* Transición por opacidad (compatible con CSS Modules usando classNames objeto) */
+.fadeEnter {
+	opacity: 0;
+	will-change: opacity;
+}
+.fadeEnterActive {
+	opacity: 1;
+	transition: opacity 260ms ease;
+}
+.fadeExit {
+	opacity: 1;
+}
+.fadeExitActive {
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+
+/* Opcional: respetar preferencias de reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+	.fadeEnterActive,
+	.fadeExitActive {
+		transition: none;
+	}
 }
