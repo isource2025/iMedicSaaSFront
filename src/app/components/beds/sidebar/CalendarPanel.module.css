@@ -100,7 +100,7 @@
 }
 .fadeExitActive {
 	opacity: 0;
-	transition: opacity 200ms ease;
+	transition: opacity 260ms ease 40ms;
 }
 
 /* Opcional: respetar preferencias de reducción de movimiento */
