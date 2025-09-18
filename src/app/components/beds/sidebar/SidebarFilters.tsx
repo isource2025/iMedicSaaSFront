@@ -233,7 +233,70 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 					ease='cubic-bezier(0.25, 0.8, 0.25, 1)'
 					className={styles.collapseBody}
 				>
-					<nav id='panel-enfermeria' className={styles.nav}></nav>
+					<nav id='panel-enfermeria' className={styles.nav}>
+						<button
+							className={`${styles.navButton} ${
+								isActive('indicaciones') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('indicaciones')}
+						>
+							Indicaciones
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('evoluciones') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('evoluciones')}
+						>
+							Evoluciones
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('medicacion-suministrada') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('medicacion-suministrada')}
+						>
+							Medicación Suministrada
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('dieta') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('dieta')}
+						>
+							Dieta
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('balance-hidrico') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('balance-hidrico')}
+						>
+							Balance Hídrico
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('insumos') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('insumos')}
+						>
+							Insumos
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('movimientos') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('movimientos')}
+						>
+							Movimientos
+						</button>
+					</nav>
 				</Collapse>
 			</div>
 

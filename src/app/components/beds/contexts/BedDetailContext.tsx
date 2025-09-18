@@ -10,6 +10,10 @@ export type SidebarSection =
 	| 'epicrisis'
 	| 'procedimientos'
 	| 'movimientos'
+	| 'medicacion-suministrada'
+	| 'dieta'
+	| 'balance-hidrico'
+	| 'insumos'
 	| 'informe_evo'
 	| 'adjuntos';
 
