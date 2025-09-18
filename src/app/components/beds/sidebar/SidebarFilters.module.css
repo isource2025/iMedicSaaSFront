@@ -3,30 +3,65 @@
 	display: grid;
 	gap: 12px;
 }
-.wrapper summary {
-	list-style: none;
+
+.section {
+	border-radius: 10px;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	background: #fff;
+}
+
+/* Summary ahora es un <button> */
+.summary {
+	width: 100%;
 	cursor: pointer;
 	padding: 10px 12px;
 	background: var(--primary-50);
-	border: 1px solid var(--border);
-	border-radius: 10px;
 	font-weight: 700;
 	color: var(--ink);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	user-select: none;
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	text-align: left;
 }
-.wrapper details[open] summary {
-	border-bottom-left-radius: 0;
-	border-bottom-right-radius: 0;
+
+.summary:hover {
+	filter: brightness(0.98);
 }
-.wrapper nav {
-	border: 1px solid var(--border);
-	border-top: 0;
-	border-bottom-left-radius: 10px;
-	border-bottom-right-radius: 10px;
+.summaryOpen {
+	background: var(--primary-50);
+}
+
+/* Chevron animado */
+.chevron {
+	width: 10px;
+	height: 10px;
+	border-right: 2px solid var(--ink);
+	border-bottom: 2px solid var(--ink);
+	transform: rotate(-45deg);
+	transition: transform 0.25s ease;
+	margin-left: 8px;
+}
+.chevronOpen {
+	transform: rotate(135deg);
+}
+
+.collapse {
+	overflow: hidden;
+	will-change: height, opacity;
+}
+
+.nav {
 	padding: 6px;
 	display: grid;
 	gap: 6px;
 	background: #fff;
 }
+
+/* Botones */
 .navButton {
 	width: 100%;
 	text-align: left;
@@ -54,14 +89,13 @@
 	color: var(--primary);
 }
 
-/* Panel fijo para "Otras Funciones" */
+/* Panel fijo */
 .fixedPanel {
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	background: var(--primary-50);
 	margin-top: 12px;
 }
-
 .panelHeader {
 	padding: 10px 12px;
 	font-weight: 700;
@@ -70,15 +104,8 @@
 	background: var(--primary-50);
 	border-radius: 10px 10px 0 0;
 }
-
-.panelHeader span {
-	display: block;
-	font-size: 14px;
-}
-
-.fixedPanel nav {
+.fixedNav {
 	border: none;
-	border-radius: 0;
 	padding: 6px;
 	background: #fff;
 	border-radius: 0 0 10px 10px;
@@ -93,17 +120,14 @@
 	padding: 8px 16px;
 	border-radius: 8px;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	transition: all 0.3s ease;
 	text-transform: uppercase;
 	letter-spacing: 1px;
 	transition: all 0.3s ease;
 }
-
 .closeButton:focus {
 	outline: none;
 	box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.5);
 }
 .closeButton:active {
 	transform: scale(0.95);
-	transition: transform 0.2s ease;
 }
