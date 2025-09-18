@@ -176,7 +176,7 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 							}`}
 							onClick={() => clickItem('solicitudEstudios')}
 						>
-							Solicitud de Estudios
+							Estudios
 						</button>
 						<button
 							className={`${styles.navButton} ${
