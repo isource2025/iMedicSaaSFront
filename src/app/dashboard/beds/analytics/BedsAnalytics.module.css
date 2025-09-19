@@ -701,6 +701,7 @@
 
   .headerContent {
     gap: 14px;
+    flex-direction: column;
   }
 
   .title {
@@ -713,10 +714,12 @@
 
   .dateGroup {
     max-width: 100%;
+    display: flex;
+    justify-content: space-between;
   }
 
   .dateInput {
-    width: 100%;
+    width: 55%;
   }
 
   .donutChartSection {
@@ -730,7 +733,6 @@
   .insightCard {
     padding: 20px;
   }
-
   .detailCard {
     padding: 16px;
   }

@@ -61,9 +61,6 @@ a {
   transition: color 0.2s ease;
 }
 
-a:hover {
-  color: var(--pantone-313u);
-}
 
 /* Helpers y utilidades comunes */
 .page-container {

@@ -78,11 +78,13 @@ export default function BedsAnalytics() {
 
   // Preparar datos para gráficos de torta (similar a patients analytics)
   const prepareChartData = (data: Record<string, number>, title: string) => {
-    return Object.entries(data).map(([label, value], index) => ({
-      label,
-      value,
-      color: pantoneColors[index % pantoneColors.length]
-    }));
+    return Object.entries(data)
+      .sort(([,a], [,b]) => b - a) // Ordenar de mayor a menor
+      .map(([label, value], index) => ({
+        label,
+        value,
+        color: pantoneColors[index % pantoneColors.length]
+      }));
   };
 
   // Datos para gráficos de torta
@@ -94,32 +96,19 @@ export default function BedsAnalytics() {
     { label: 'Disponibles', value: resumen?.disponiblesPromedio || 0, color: pantoneColors[2] }
   ];
 
-  // Filtrar datos por fechas seleccionadas
-  const filteredData = useMemo(() => {
-    if (!indicadoresPorFecha.length) return [];
-    
-    const startDate = new Date(fechaInicio);
-    const endDate = new Date(fechaFin);
-    
-    return indicadoresPorFecha.filter(item => {
-      const itemDate = new Date(item.fecha.split('T')[0]);
-      return itemDate >= startDate && itemDate <= endDate;
-    });
-  }, [indicadoresPorFecha, fechaInicio, fechaFin]);
-
-  // Line: porcentaje de ocupación por fecha para mostrar variabilidad
-  const lineChartData = filteredData.map((item: any) => {
+  // Datos para gráfico de línea - camas ocupadas día por día
+  const lineChartData = indicadoresPorFecha.map(item => {
     const [year, month, day] = item.fecha.split('T')[0].split('-');
     return {
       label: `${day}/${month}`,
-      value: item.porcentajeOcupacion,
+      value: item.ocupadas,
       date: item.fecha
     };
   });
 
-  // Calcular el día de mayor ocupación usando datos filtrados
-  const diaMayorOcupacion = filteredData.length > 0
-    ? filteredData.reduce((max: any, current: any) => current.ocupadas > max.ocupadas ? current : max)
+  // Calcular el día de mayor ocupación una sola vez para reutilizarlo
+  const diaMayorOcupacion = indicadoresPorFecha.length > 0
+    ? indicadoresPorFecha.reduce((max: any, current: any) => current.ocupadas > max.ocupadas ? current : max)
     : null;
 
   // Nuevos cálculos para las cards actualizadas
@@ -149,7 +138,7 @@ export default function BedsAnalytics() {
     
     return {
       valor: desviacionEstandar,
-      rango: `${min.toFixed(1)}% - ${max.toFixed(1)}%`,
+      rango: `${min.toFixed(2)}% - ${max.toFixed(2)}%`,
       tipo
     };
   }, [resumen]);
@@ -304,7 +293,7 @@ export default function BedsAnalytics() {
               <div className={styles.estadoActualMetrics}>
                 <div className={styles.estadoActualMetric}>
                   <div className={styles.estadoActualMetricValueLarge}>
-                    {estadoActual ? `${estadoActual.porcentajeOcupacion.toFixed(1)}%` : '0%'}
+                    {estadoActual ? `${estadoActual.porcentajeOcupacion.toFixed(2)}%` : '0.00%'}
                   </div>
                   <div className={styles.estadoActualMetricLabel}>Ocupación</div>
                 </div>
@@ -347,7 +336,7 @@ export default function BedsAnalytics() {
             />
             <MetricCard
               title="Tasa de Ocupación"
-              value={`${resumen?.porcentajeOcupacionPromedio?.toFixed(1) || 0}%`}
+              value={`${resumen?.porcentajeOcupacionPromedio?.toFixed(2) || '0.00'}%`}
               detail="Eficiencia hospitalaria global"
               icon={ICONS.percent}
               iconColor="#00B5E2"
@@ -394,7 +383,7 @@ export default function BedsAnalytics() {
                       <div className={styles.legendColor} style={{ backgroundColor: item.color }} />
                       <span className={styles.legendLabel}>{item.label}</span>
                     </div>
-                    <span className={styles.legendValue}>{item.value}</span>
+                    <span className={styles.legendValue}>{typeof item.value === 'number' ? item.value.toFixed(2) : item.value}</span>
                   </div>
                 ))}
               </div>
@@ -417,9 +406,10 @@ export default function BedsAnalytics() {
             <Suspense fallback={<ChartSkeleton />}>
               <LineChartLazy 
                 data={lineChartData}
-                title={`Evolución del Porcentaje de Ocupación por Fecha`}
+                title={`Evolución de Camas Ocupadas por Fecha`}
                 color="#00B5E2"
                 height={350}
+                maxValue={estadoActual?.totalCamas || undefined}
               />
             </Suspense>
           </div>
@@ -433,7 +423,7 @@ export default function BedsAnalytics() {
                 title="Ocupación Promedio Global"
                 content={
                   <>
-                    <p><strong>{ocupacionPromedioGlobal.toFixed(1)}%</strong></p>
+                    <p><strong>{ocupacionPromedioGlobal.toFixed(2)}%</strong></p>
                     <p>Ocupación hospitalaria promedio</p>
                     <p style={{ 
                       fontSize: '12px', 
@@ -538,9 +528,9 @@ export default function BedsAnalytics() {
                 title="Demanda Potencial vs Capacidad Instalada"
                 content={
                   <>
-                    <p><strong>Camas necesarias: {demandaVsCapacidad.camasNecesariasPromedio.toFixed(1)}</strong></p>
+                    <p><strong>Camas necesarias: {demandaVsCapacidad.camasNecesariasPromedio.toFixed(2)}</strong></p>
                     <p>Camas instaladas: {demandaVsCapacidad.camasInstaladas}</p>
-                    <p><strong>Utilización: {demandaVsCapacidad.utilizacionGlobal.toFixed(1)}%</strong></p>
+                    <p><strong>Utilización: {demandaVsCapacidad.utilizacionGlobal.toFixed(2)}%</strong></p>
                     <p style={{ 
                       fontSize: '12px', 
                       color: demandaVsCapacidad.utilizacionGlobal > 90 ? '#f57c00' : demandaVsCapacidad.utilizacionGlobal < 50 ? '#ff9800' : '#388e3c',
@@ -599,7 +589,7 @@ export default function BedsAnalytics() {
                     <span className={styles.statValue}>{new Date(fechaInicio).toLocaleDateString('es-ES')} - {new Date(fechaFin).toLocaleDateString('es-ES')}</span>
                   </div>
                   <MetricTooltip
-                    label="Camas ocupadas actuales"
+                    label="Ocupación Actual"
                     value={estadoActual ? `${estadoActual.ocupadas} camas` : 'Sin datos'}
                     description="Número actual de camas ocupadas en tiempo real."
                     formula="Conteo directo de camas con estado 'ocupada'"
@@ -607,7 +597,7 @@ export default function BedsAnalytics() {
                   />
                   <MetricTooltip
                     label="Ocupación promedio"
-                    value={resumen ? `${resumen.porcentajeOcupacionPromedio.toFixed(1)}%` : 'Sin datos'}
+                    value={resumen ? `${resumen.porcentajeOcupacionPromedio.toFixed(2)}%` : 'Sin datos'}
                     description="Porcentaje promedio de camas ocupadas durante el período analizado."
                     formula="Promedio de (Camas ocupadas / Total camas) × 100"
                     interpretation="Valores entre 70-85% son considerados óptimos para hospitales."
@@ -642,14 +632,14 @@ export default function BedsAnalytics() {
                       />
                       <MetricTooltip
                         label="Pico de ocupación"
-                        value={indicadoresPorFecha.length > 0 ? `${Math.max(...indicadoresPorFecha.map(d => d.porcentajeOcupacion)).toFixed(1)}%` : 'Sin datos'}
+                        value={indicadoresPorFecha.length > 0 ? `${Math.max(...indicadoresPorFecha.map(d => d.porcentajeOcupacion)).toFixed(2)}%` : 'Sin datos'}
                         description="Máximo porcentaje de ocupación registrado durante el período analizado."
                         formula="Máximo valor de ocupación diaria"
                         interpretation="Indica la máxima demanda alcanzada. Valores >95% sugieren necesidad de expansión."
                       />
                       <MetricTooltip
                         label="Variabilidad ocupación"
-                        value={indicadoresPorFecha.length > 0 ? `${(Math.max(...indicadoresPorFecha.map(d => d.porcentajeOcupacion)) - Math.min(...indicadoresPorFecha.map(d => d.porcentajeOcupacion))).toFixed(1)}%` : 'Sin datos'}
+                        value={indicadoresPorFecha.length > 0 ? `${(Math.max(...indicadoresPorFecha.map(d => d.porcentajeOcupacion)) - Math.min(...indicadoresPorFecha.map(d => d.porcentajeOcupacion))).toFixed(2)}%` : 'Sin datos'}
                         description="Diferencia entre el máximo y mínimo porcentaje de ocupación del período."
                         formula="Máximo % ocupación - Mínimo % ocupación"
                         interpretation="Menor variabilidad indica operación más estable. >30% sugiere fluctuaciones significativas."

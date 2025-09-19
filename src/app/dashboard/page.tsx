@@ -171,34 +171,34 @@ export default function Dashboard() {
               <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
             </button>
           </div>
-          <div className={styles.cardStats}>
-            <div className={styles.statRow}>
-              <div className={styles.cardMainMetric}>
-                <p className={styles.cardValue} >
-                  {loadingCamas ? '...' : (estadoActualCamas ? estadoActualCamas.totalCamas : bedStats.totalCamas)}
-                </p>
-                <span className={styles.cardMainLabel}>
-                  {loadingCamas ? 'Cargando...' : 'Total Camas'}
-                </span>
-              </div>
-              <div className={styles.cardSecondaryMetric}>
-                <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
-                  {loadingCamas ? '...' : (estadoActualCamas ? estadoActualCamas.disponibles : bedStats.camasDisponibles)}
-                </p>
-                <span className={styles.cardSecondaryLabel}>
-                  {loadingCamas ? 'Cargando...' : 'Disponibles'}
-                </span>
-              </div>
-              <div className={styles.cardSecondaryMetric}>
-                <p className={styles.cardSecondaryValue} style={{ color: '#00B5E2' }}>
-                  {loadingCamas ? '...' : (estadoActualCamas ? estadoActualCamas.ocupadas : bedStats.camasOcupadas)}
-                </p>
-                <span className={styles.cardSecondaryLabel}>
-                  {loadingCamas ? 'Cargando...' : 'Ocupadas'}
-                </span>
+          {loadingCamas ? (
+            <div className={styles.cardCenterLoader}>
+              <div className={styles.cardCenterSpinner}></div>
+            </div>
+          ) : (
+            <div className={styles.cardStats}>
+              <div className={styles.statRow}>
+                <div className={styles.cardMainMetric}>
+                  <p className={styles.cardValue}>
+                    {estadoActualCamas ? estadoActualCamas.totalCamas : bedStats.totalCamas}
+                  </p>
+                  <span className={styles.cardMainLabel}>Total Camas</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
+                    {estadoActualCamas ? estadoActualCamas.disponibles : bedStats.camasDisponibles}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Disponibles</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#00B5E2' }}>
+                    {estadoActualCamas ? estadoActualCamas.ocupadas : bedStats.camasOcupadas}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Ocupadas</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         
         <div 
@@ -212,26 +212,28 @@ export default function Dashboard() {
               <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
             </button>
           </div>
-          <div className={styles.cardStats}>
-            <div className={styles.statRow}>
-              <div className={styles.cardMainMetric}>
-                <p className={styles.cardValue} >
-                  {loadingPacientesAnalytics ? '...' : patientSummary.totalHoy}
-                </p>
-                <span className={styles.cardMainLabel}>
-                  {loadingPacientesAnalytics ? 'Cargando...' : 'Ingresados Hoy'}
-                </span>
-              </div>
-              <div className={styles.cardSecondaryMetric}>
-                <p className={styles.cardSecondaryValue} style={{ color: patientSummary.porcentajeCambio >= 0 ? '#388e3c' : '#d32f2f' }}>
-                  {loadingPacientesAnalytics ? '...' : `${patientSummary.porcentajeCambio >= 0 ? '+' : ''}${patientSummary.porcentajeCambio}%`}
-                </p>
-                <span className={styles.cardSecondaryLabel}>
-                  {loadingPacientesAnalytics ? 'Cargando...' : 'vs Ayer'}
-                </span>
+          {loadingPacientesAnalytics ? (
+            <div className={styles.cardCenterLoader}>
+              <div className={styles.cardCenterSpinner}></div>
+            </div>
+          ) : (
+            <div className={styles.cardStats}>
+              <div className={styles.statRow}>
+                <div className={styles.cardMainMetric}>
+                  <p className={styles.cardValue}>
+                    {patientSummary.totalHoy}
+                  </p>
+                  <span className={styles.cardMainLabel}>Ingresados Hoy</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: patientSummary.porcentajeCambio >= 0 ? '#388e3c' : '#d32f2f' }}>
+                    {`${patientSummary.porcentajeCambio >= 0 ? '+' : ''}${patientSummary.porcentajeCambio}%`}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>vs Ayer</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         
         <div className={styles.cardAppointments}>
@@ -269,6 +271,7 @@ export default function Dashboard() {
         <div className={styles.activityList}>
           {loadingActividad ? (
             <div className={styles.loadingActivity}>
+              <div className={styles.loadingActivitySpinner}></div>
               <p>Cargando actividad reciente...</p>
             </div>
           ) : (

@@ -8,6 +8,7 @@ interface LineChartProps {
   title: string;
   color?: string;
   height?: number;
+  maxValue?: number; // Valor máximo personalizado para el eje Y
 }
 
 type TimeFilter = 'día' | 'semana' | 'mes' | 'año' | 'todo';
@@ -23,7 +24,8 @@ export default function LineChart({
   data, 
   title, 
   color = '#007bff', 
-  height = 350 
+  height = 350,
+  maxValue: customMaxValue
 }: LineChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [activePoint, setActivePoint] = useState<{ x: number; y: number; label: string; value: number } | null>(null);
@@ -147,7 +149,7 @@ export default function LineChart({
     const padding = 60;
     const chartWidth = canvas.width - padding * 2;
     const chartHeight = canvas.height - padding * 2;
-    const maxValue = displayData.length > 0 ? Math.max(...displayData.map(d => d.value)) * 1.2 : 1;
+    const maxValue = customMaxValue || (displayData.length > 0 ? Math.max(...displayData.map(d => d.value)) * 1.2 : 1);
     const points = displayData.map((item, index) => ({
       x: padding + (chartWidth / (displayData.length - 1 || 1)) * index,
       y: padding + chartHeight - (item.value / maxValue) * chartHeight,
