@@ -102,7 +102,7 @@ export default function ClientBedView({ id }: Props) {
 	if (!bed) return <BedDetailSkeleton />;
 
 	return (
-		<BedDetailProvider>
+		<BedDetailProvider initialSection='indicaciones' initialDate={new Date()}>
 			<BedDetailView bed={bed} />
 		</BedDetailProvider>
 	);

@@ -21,6 +21,7 @@ export interface Bed {
 	NumeroVisita?: number;
 	ubicacionPaciente?: string;
 	mostrarNumeroVisita?: string;
+	numeroVisita: number;
 	NombrePaciente?: string;
 	documentoPaciente?: string;
 	SexoPaciente?: string;

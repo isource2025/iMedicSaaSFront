@@ -16,7 +16,7 @@ export default function PatientMiniHeader({
 	burgerButton,
 }: Props) {
 	const [hora, setHora] = useState<string>('');
-	console.log(nombre);
+
 	useEffect(() => {
 		const tick = () =>
 			setHora(

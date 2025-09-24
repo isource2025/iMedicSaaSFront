@@ -8,11 +8,8 @@ import styles from './BedDetailView.module.css';
 import PatientMiniHeader from './patient/PatientMiniHeader';
 import CalendarPanel from './sidebar/CalendarPanel';
 import SidebarFilters from './sidebar/SidebarFilters';
-import IndicacionesTable from './indicaciones/IndicacionesTable';
-import IndicacionesToolbar from './indicaciones/IndicacionesToolbar';
-import { useIndicaciones } from './hooks/useIndicaciones';
 import { useBedDetail } from './contexts/BedDetailContext';
-import EmptyState from './shared/EmptyState';
+import IndicacionesSection from './indicaciones/IndicacionesSection';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -22,63 +19,8 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	// Drawer (sidebar) en mobile
 	const [drawerOpen, setDrawerOpen] = useState(false);
 
-	// Estado para selección de fila
-	const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
-
 	// Usar el context para filtros y navegación
 	const { activeSection, selectedDate, setSelectedDate, navigateToSection } = useBedDetail();
-
-	// Obtener indicaciones usando el hook personalizado
-	const {
-		indicaciones,
-		loading: loadingIndicaciones,
-		error: errorIndicaciones,
-	} = useIndicaciones(bed.NumeroVisita);
-
-	// Handlers para la tabla de indicaciones
-	const handleSelectRow = (id: string) => {
-		setSelectedRowId(id === selectedRowId ? null : id);
-	};
-
-	// Handlers para la toolbar de indicaciones
-	const handleVisualizar = () => {
-		if (selectedRowId) {
-			console.log('Visualizar indicación:', selectedRowId);
-			// TODO: Implementar modal de visualización
-		} else {
-			alert('Selecciona una indicación para visualizar');
-		}
-	};
-
-	const handleAplicar = () => {
-		if (selectedRowId) {
-			console.log('Aplicar indicación:', selectedRowId);
-			// TODO: Implementar lógica de aplicación
-		} else {
-			alert('Selecciona una indicación para aplicar');
-		}
-	};
-
-	const handleDejarSinEfecto = () => {
-		if (selectedRowId) {
-			console.log('Dejar sin efecto indicación:', selectedRowId);
-			// TODO: Implementar lógica de dejar sin efecto
-		} else {
-			alert('Selecciona una indicación para dejar sin efecto');
-		}
-	};
-
-	const handleImprimir = () => {
-		console.log('Imprimir indicaciones');
-		// TODO: Implementar impresión
-	};
-
-	const handleRecetario = () => {
-		console.log('Abrir recetario');
-		// TODO: Implementar recetario
-	};
-
-	console.log('Cama Encontrada', bed);
 
 	return (
 		<div className={styles.root}>
@@ -117,71 +59,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 				<div className={styles.body}>
 					{activeSection === 'indicaciones' ? (
 						<>
-							{loadingIndicaciones ? (
-								<div className={styles.placeholderCard}>
-									<div style={{ textAlign: 'center', padding: '2rem' }}>
-										<div
-											style={{
-												fontSize: '1.2rem',
-												marginBottom: '0.5rem',
-											}}
-										>
-											Cargando indicaciones...
-										</div>
-										<div style={{ color: '#666' }}>
-											Obteniendo datos del servidor
-										</div>
-									</div>
-								</div>
-							) : errorIndicaciones ? (
-								<div className={styles.placeholderCard}>
-									<div
-										style={{
-											textAlign: 'center',
-											padding: '2rem',
-											color: '#dc3545',
-										}}
-									>
-										<div
-											style={{
-												fontSize: '1.2rem',
-												marginBottom: '0.5rem',
-											}}
-										>
-											⚠️ Error al cargar indicaciones
-										</div>
-										<div
-											style={{
-												fontSize: '0.9rem',
-												marginBottom: '1rem',
-											}}
-										>
-											{errorIndicaciones}
-										</div>
-										<button
-											onClick={() => window.location.reload()}
-											style={{
-												padding: '0.5rem 1rem',
-												backgroundColor: '#007bff',
-												color: 'white',
-												border: 'none',
-												borderRadius: '4px',
-												cursor: 'pointer',
-											}}
-										>
-											Reintentar
-										</button>
-									</div>
-								</div>
-							) : indicaciones.length === 0 ? (
-								<EmptyState text='No hay indicaciones registradas para esta visita.' />
-							) : (
-								<IndicacionesTable
-									rows={indicaciones}
-									onSelectRow={handleSelectRow}
-									selectedId={selectedRowId}
-								/>
-							)}
+							<IndicacionesSection numeroVisita={bed?.NumeroVisita || null} />
 						</>
 					) : activeSection === 'hcIngreso' ? (
 						<div className={styles.placeholderCard}>
@@ -333,21 +211,6 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							</div>
 						</div>
 					)}
-				</div>
-
-				{/* Barra inferior (acciones) */}
-				<div className={styles.footer}>
-					{activeSection === 'indicaciones' ? (
-						<IndicacionesToolbar
-							total={indicaciones.length}
-							onVisualizar={handleVisualizar}
-							onAplicar={handleAplicar}
-							onDejarSinEfecto={handleDejarSinEfecto}
-							onImprimir={handleImprimir}
-							onRecetario={handleRecetario}
-							disabled={indicaciones.length === 0 || loadingIndicaciones}
-						/>
-					) : null}
 				</div>
 			</section>
 
