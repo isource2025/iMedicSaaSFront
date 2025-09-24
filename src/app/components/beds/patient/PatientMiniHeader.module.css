@@ -8,7 +8,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: transparent;
+	background: var(--pantone-313u);
 	padding: 12px 16px;
 }
 .rightSection {
@@ -48,7 +48,7 @@
 .name {
 	font-weight: 800;
 	color: #152b3a;
-	font-size: 24px;
+	font-size: 1.3rem;
 	line-height: 1.15;
 	text-transform: uppercase;
 }

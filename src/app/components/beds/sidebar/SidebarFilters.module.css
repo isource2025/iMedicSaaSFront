@@ -16,7 +16,7 @@
 	width: 100%;
 	cursor: pointer;
 	padding: 10px 12px;
-	background: var(--primary-50);
+	background: var(--pantone-313u);
 	font-weight: 700;
 	color: var(--ink);
 	display: flex;
@@ -32,7 +32,7 @@
 	filter: brightness(0.98);
 }
 .summaryOpen {
-	background: var(--primary-50);
+	background: var(--pantone-313u);
 }
 
 /* Chevron animado */
@@ -55,9 +55,9 @@
 }
 
 .nav {
-	padding: 6px;
+	padding: 0.3rem;
 	display: grid;
-	gap: 6px;
+	gap: 0.25rem;
 	background: #fff;
 }
 
@@ -69,39 +69,39 @@
 	border-radius: 8px;
 	background: #fff;
 	border: 1px solid transparent;
-	color: var(--ink);
+	color: #0f2a33;
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 .navButton:hover {
 	border-color: var(--primary);
-	background: var(--primary-50);
-	color: var(--primary);
+	background: var(--pantone-313u);
+	color: #0f2a33;
 }
 .active {
-	border-color: var(--primary);
-	background: var(--primary-50);
-	color: var(--primary);
+	border-color: var();
+	background: var(--pantone-313u);
+	color: #0f2a33;
+	font-weight: bold;
 }
 .active:hover {
 	border-color: var(--primary);
-	background: var(--primary-50);
-	color: var(--primary);
+	background: var(--pantone-313u);
+	color: #0f2a33;
 }
 
 /* Panel fijo */
 .fixedPanel {
 	border: 1px solid var(--border);
 	border-radius: 10px;
-	background: var(--primary-50);
-	margin-top: 12px;
+	background: var(--pantone-313u);
 }
 .panelHeader {
 	padding: 10px 12px;
 	font-weight: 700;
-	color: var(--ink);
+	color: #0f2a33;
 	border-bottom: 1px solid var(--border);
-	background: var(--primary-50);
+	background: var(--pantone-313u);
 	border-radius: 10px 10px 0 0;
 }
 .fixedNav {

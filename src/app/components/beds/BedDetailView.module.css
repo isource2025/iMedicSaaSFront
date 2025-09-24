@@ -2,13 +2,15 @@
 	width: 100vw;
 	height: 100vh;
 	display: grid;
-	grid-template-columns: 320px 1fr;
+	grid-template-columns: 19rem 1fr;
 	background: var(--bg);
 }
 .right,
 .left,
 .body {
 	min-height: 0;
+	font-size: 0.725rem;
+	font-family: 'Roboto';
 } /* importante para overflow dentro de grid */
 
 /* ===== Left (sidebar) ===== */
@@ -42,8 +44,6 @@
 }
 .header {
 	padding: 8px 12px;
-	background: var(--primary-50);
-	border-bottom: 1px solid var(--border);
 }
 .burger {
 	display: none;
@@ -100,7 +100,7 @@
 		z-index: 50;
 		inset: 0 auto 0 0;
 		width: 78vw;
-		max-width: 360px;
+		max-width: 18rem;
 		transform: translateX(-100%);
 		transition: transform 0.25s ease;
 		box-shadow: 8px 0 24px rgba(0, 0, 0, 0.08);
