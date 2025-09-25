@@ -28,10 +28,9 @@ function getTokenFromLocalStorage(): string | undefined {
 
 export default function ClientBedView({ id }: Props) {
 	const router = useRouter();
-	const bedId = useMemo(() => id?.split('-')?.[1] ?? id, [id]);
 	const url = useMemo(
-		() => (bedId ? `${getBaseUrl()}/beds/${encodeURIComponent(bedId)}` : null),
-		[bedId],
+		() => (id ? `${getBaseUrl()}/beds/${encodeURIComponent(id)}` : null),
+		[id],
 	);
 
 	const [bed, setBed] = useState<Bed | null>(null);

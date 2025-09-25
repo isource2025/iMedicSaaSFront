@@ -1,10 +1,10 @@
-// components/sections/IndicacionesSection.tsx
 'use client';
 
 import { useMemo, useState } from 'react';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import IndicacionesTable, { IndicacionRow } from './IndicacionesTable';
 import { useBedDetail } from '../contexts/BedDetailContext';
+import styles from './IndicacionesSection.module.css';
 
 type IndicacionDTO = {
 	id: string;
@@ -13,9 +13,9 @@ type IndicacionDTO = {
 	profesional?: string;
 	frecuencia?: string;
 	observaciones?: string;
-	proximo?: string; // ISO string o texto
-	anterior?: string; // ISO string o texto
-	vigenteDesde?: string; // ISO string o texto
+	proximo?: string;
+	anterior?: string;
+	vigenteDesde?: string;
 	nro?: number | string;
 	idSector?: string;
 	medicamento?: string;
@@ -32,26 +32,20 @@ export default function IndicacionesSection({
 }) {
 	const { activeSection, selectedDate } = useBedDetail();
 
-	// Construimos el endpoint solo si hay numeroVisita
 	const indicacionesPath = useMemo(
 		() => (numeroVisita ? `/indicaciones/${numeroVisita}/byDate` : undefined),
 		[numeroVisita],
 	);
 
-	// Llama al hook (ya escucha activeSection y selectedDate del contexto)
-	const { data, isLoading, error, refetch, url } = useBedSectionFetch<IndicacionDTO[]>({
+	const { data, isLoading, error, refetch } = useBedSectionFetch<IndicacionDTO[]>({
 		bedId,
 		patientId,
-		// Muy importante: solo habilitar si tenemos el path listo
 		enabled: !!indicacionesPath && activeSection === 'indicaciones',
 		endpointOverride: indicacionesPath ? { indicaciones: indicacionesPath } : undefined,
-		// Si tu backend necesita headers/credenciales:
-		// fetchInit: { credentials: 'include' },
 		cacheTimeMs: 15000,
 	});
 
-	// Mapea a las filas esperadas por la tabla
-	const rows: IndicacionRow[] = useMemo(() => {
+	const baseRows: IndicacionRow[] = useMemo(() => {
 		const list = Array.isArray(data) ? data : [];
 		return list.map((x) => ({
 			id: x.id,
@@ -70,42 +64,142 @@ export default function IndicacionesSection({
 	}, [data]);
 
 	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [query, setQuery] = useState('');
+	const [helpOpen, setHelpOpen] = useState(false);
 
-	if (activeSection !== 'indicaciones') {
-		return null;
-	}
+	if (activeSection !== 'indicaciones') return null;
 
-	if (isLoading) return <div>Cargando indicaciones…</div>;
-	if (error) return <div>Error cargando indicaciones: {error.message}</div>;
+	// Filtrado simple por texto
+	const rows = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		if (!q) return baseRows;
+		return baseRows.filter((r) => {
+			const hay = (v?: string | number) =>
+				v != null && String(v).toLowerCase().includes(q);
+			return (
+				hay(r.descripcion) ||
+				hay(r.profesional) ||
+				hay(r.frecuencia) ||
+				hay(r.observaciones) ||
+				hay(r.medicamento) ||
+				hay(r.idSector) ||
+				hay(r.nro)
+			);
+		});
+	}, [baseRows, query]);
+
+	const tableMaxHeight = 'calc(100vh - 15rem)';
+
+	const onAddIndicacion = () => {
+		// Aquí abriremos el flujo de "nueva indicación" (modal/form)
+		// de momento solo un alert para marcar el hook:
+		// alert('Agregar indicación');
+		console.log('Agregar indicación');
+	};
 
 	return (
-		<div>
-			<div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+		<div className={styles.root}>
+			{/* Header local */}
+			<div className={styles.header}>
 				<strong>Indicaciones</strong>
-				<small style={{ opacity: 0.6 }}>
+				<small className={styles.subtitle}>
 					{selectedDate ? selectedDate.toLocaleDateString() : '—'}
 				</small>
-				<button onClick={refetch} style={{ marginLeft: 'auto' }}>
+				<button className={styles.refreshBtn} onClick={refetch}>
 					Refrescar
 				</button>
 			</div>
 
-			<IndicacionesTable
-				rows={rows}
-				selectedId={selectedId}
-				onSelectRow={(id) => setSelectedId(id)}
-			/>
+			{/* Toolbar: búsqueda + acciones */}
+			<div className={styles.toolbar}>
+				<div className={styles.searchWrap}>
+					<span className={styles.searchIcon} aria-hidden>
+						🔎
+					</span>
+					<input
+						className={styles.searchInput}
+						type='text'
+						placeholder='Buscar por descripción, profesional, medicamento, sector, nro…'
+						value={query}
+						onChange={(e) => setQuery(e.target.value)}
+					/>
+				</div>
 
-			<div style={{ marginTop: 8, fontSize: 12, opacity: 0.6 }}>
-				<span>Fuente: {url}</span>
+				<div className={styles.actions}>
+					<button
+						className={`${styles.btn} ${styles.btnPrimary}`}
+						onClick={onAddIndicacion}
+					>
+						<span className={styles.btnIcon} aria-hidden>
+							＋
+						</span>
+						Agregar indicación
+					</button>
+
+					<button
+						className={`${styles.btn} ${styles.btnGhost}`}
+						onClick={() => setHelpOpen(true)}
+						aria-label='Ayuda'
+						title='Ayuda'
+					>
+						<span className={styles.btnIcon} aria-hidden>
+							❕
+						</span>
+					</button>
+				</div>
 			</div>
+
+			{/* Contenedor flexible para la tabla */}
+			<div className={styles.content}>
+				<div className={styles.tableHolder}>
+					{isLoading && (
+						<div className={styles.loadingOverlay}>Cargando indicaciones…</div>
+					)}
+
+					{error ? (
+						<div className={styles.errorBox}>
+							<div>Error cargando indicaciones: {error.message}</div>
+						</div>
+					) : (
+						<IndicacionesTable
+							rows={rows}
+							selectedId={selectedId}
+							onSelectRow={(id) => setSelectedId(id)}
+							maxHeight={tableMaxHeight}
+						/>
+					)}
+				</div>
+			</div>
+
+			{/* Modal de ayuda (placeholder) */}
+			{helpOpen && (
+				<div className={styles.modalBackdrop} onClick={() => setHelpOpen(false)}>
+					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+						<div className={styles.modalHeader}>
+							<strong>Ayuda de Indicaciones</strong>
+							<button
+								className={styles.closeX}
+								onClick={() => setHelpOpen(false)}
+							>
+								×
+							</button>
+						</div>
+						<div className={styles.modalBody}>
+							Aquí irá el contenido de ayuda y/o guía para esta sección.
+						</div>
+						<div className={styles.modalFooter}>
+							<button className={styles.btn} onClick={() => setHelpOpen(false)}>
+								Cerrar
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
 
-// Helpers locales
 function formatMaybeDate(s: string) {
-	// Si viene ISO -> formatear; si no, mostrar tal cual
 	const d = new Date(s);
 	return isNaN(d.getTime()) ? s : d.toLocaleString();
 }
