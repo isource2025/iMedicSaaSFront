@@ -5,6 +5,7 @@ import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import IndicacionesTable, { IndicacionRow } from './IndicacionesTable';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import styles from './IndicacionesSection.module.css';
+import IndicativoColors from './IdicativosColors';
 
 type IndicacionDTO = {
 	id: string;
@@ -91,9 +92,6 @@ export default function IndicacionesSection({
 	const tableMaxHeight = 'calc(100vh - 15rem)';
 
 	const onAddIndicacion = () => {
-		// Aquí abriremos el flujo de "nueva indicación" (modal/form)
-		// de momento solo un alert para marcar el hook:
-		// alert('Agregar indicación');
 		console.log('Agregar indicación');
 	};
 
@@ -172,29 +170,7 @@ export default function IndicacionesSection({
 			</div>
 
 			{/* Modal de ayuda (placeholder) */}
-			{helpOpen && (
-				<div className={styles.modalBackdrop} onClick={() => setHelpOpen(false)}>
-					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-						<div className={styles.modalHeader}>
-							<strong>Ayuda de Indicaciones</strong>
-							<button
-								className={styles.closeX}
-								onClick={() => setHelpOpen(false)}
-							>
-								×
-							</button>
-						</div>
-						<div className={styles.modalBody}>
-							Aquí irá el contenido de ayuda y/o guía para esta sección.
-						</div>
-						<div className={styles.modalFooter}>
-							<button className={styles.btn} onClick={() => setHelpOpen(false)}>
-								Cerrar
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+			{helpOpen && <IndicativoColors setHelpOpen={setHelpOpen} />}
 		</div>
 	);
 }
