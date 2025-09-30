@@ -275,8 +275,10 @@
 /* Estilos para la transición de los tabs*/
 .tabContentContainer {
 	position: relative;
-	overflow: hidden; /* Oculta el contenido mientras la altura cambia */
+	overflow-y: auto; /* Permite scroll si el contenido excede */
 	transition: height 300ms ease-in-out; /* ¡LA TRANSICIÓN DE ALTURA! */
+	max-height: 70vh; /* Altura máxima: 70% del viewport */
+	height: 70vh; /* Altura fija unificada */
 }
 
 /* Clases para la animación de fundido y deslizamiento suave */

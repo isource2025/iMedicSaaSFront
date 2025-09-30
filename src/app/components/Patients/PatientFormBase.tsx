@@ -522,18 +522,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 								exitActive: styles['fade-slide-exit-active'],
 							}}
 							unmountOnExit
-							onEnter={() => {
-								if (containerRef.current)
-									containerRef.current.style.height = '0px';
-							}}
-							onEntering={() => {
-								if (containerRef.current && nodeRef.current)
-									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
-							}}
-							onExit={() => {
-								if (containerRef.current && nodeRef.current)
-									containerRef.current.style.height = `${nodeRef.current.scrollHeight}px`;
-							}}
 						>
 							<div ref={nodeRef}>
 								{activeTab === 'personal' && (

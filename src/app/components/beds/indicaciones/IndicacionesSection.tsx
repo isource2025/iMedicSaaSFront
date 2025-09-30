@@ -6,6 +6,8 @@ import IndicacionesTable, { IndicacionRow } from './IndicacionesTable';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import styles from './IndicacionesSection.module.css';
 import IndicativoColors from './IdicativosColors';
+import NuevaIndicacionModal from '../../indicaciones/NuevaIndicacionModal';
+import { NuevaIndicacionPayload } from '../../../types/indicaciones';
 
 type IndicacionDTO = {
 	id: string;
@@ -26,10 +28,14 @@ export default function IndicacionesSection({
 	bedId,
 	patientId,
 	numeroVisita,
+	patientName,
+	patientLocation,
 }: {
 	bedId?: string | number;
 	patientId?: string | number;
 	numeroVisita: number | null;
+	patientName?: string;
+	patientLocation?: string;
 }) {
 	const { activeSection, selectedDate } = useBedDetail();
 
@@ -67,6 +73,7 @@ export default function IndicacionesSection({
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [query, setQuery] = useState('');
 	const [helpOpen, setHelpOpen] = useState(false);
+	const [modalOpen, setModalOpen] = useState(false);
 
 	if (activeSection !== 'indicaciones') return null;
 
@@ -92,22 +99,20 @@ export default function IndicacionesSection({
 	const tableMaxHeight = 'calc(100vh - 15rem)';
 
 	const onAddIndicacion = () => {
-		console.log('Agregar indicación');
+		setModalOpen(true);
+	};
+
+	const handleSave = async (data: NuevaIndicacionPayload) => {
+		// TODO: Implementar POST cuando el endpoint esté disponible
+		// await indicacionesService.createIndicacion(data);
+		// await refetch(); // Refrescar la lista después de guardar
+
+		console.log('Indicación a guardar:', data);
+		setModalOpen(false);
 	};
 
 	return (
 		<div className={styles.root}>
-			{/* Header local */}
-			<div className={styles.header}>
-				<strong>Indicaciones</strong>
-				<small className={styles.subtitle}>
-					{selectedDate ? selectedDate.toLocaleDateString() : '—'}
-				</small>
-				<button className={styles.refreshBtn} onClick={refetch}>
-					Refrescar
-				</button>
-			</div>
-
 			{/* Toolbar: búsqueda + acciones */}
 			<div className={styles.toolbar}>
 				<div className={styles.searchWrap}>
@@ -128,8 +133,8 @@ export default function IndicacionesSection({
 						className={`${styles.btn} ${styles.btnPrimary}`}
 						onClick={onAddIndicacion}
 					>
-						<span className={styles.btnIcon} aria-hidden>
-							＋
+						<span className={styles.addIcon} aria-hidden>
+							➕
 						</span>
 						Agregar indicación
 					</button>
@@ -171,6 +176,18 @@ export default function IndicacionesSection({
 
 			{/* Modal de ayuda (placeholder) */}
 			{helpOpen && <IndicativoColors setHelpOpen={setHelpOpen} />}
+
+			{/* Modal de nueva indicación */}
+			{modalOpen && (
+				<NuevaIndicacionModal
+					open={modalOpen}
+					onClose={() => setModalOpen(false)}
+					onSave={handleSave}
+					defaultNumeroVisita={numeroVisita}
+					patientName={patientName}
+					patientLocation={patientLocation}
+				/>
+			)}
 		</div>
 	);
 }

@@ -8,7 +8,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: var(--pantone-313u);
+	background: var(--pantone-314c);
 	padding: 12px 16px;
 }
 .rightSection {
@@ -25,7 +25,7 @@
 }
 .time {
 	font-weight: 700;
-	color: #0f2a33;
+	color: #ffffff;
 	font-size: 13px;
 	text-transform: uppercase;
 }
@@ -43,11 +43,11 @@
 	align-items: center;
 	gap: 0.6rem;
 	font-weight: 800;
-	color: #152b3a;
+	color: #ffffff;
 }
 .name {
 	font-weight: 800;
-	color: #152b3a;
+	color: #ffffff;
 	font-size: 1.3rem;
 	line-height: 1.15;
 	text-transform: uppercase;

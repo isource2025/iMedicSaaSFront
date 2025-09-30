@@ -59,7 +59,11 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 				<div className={styles.body}>
 					{activeSection === 'indicaciones' ? (
 						<>
-							<IndicacionesSection numeroVisita={bed?.NumeroVisita || null} />
+							<IndicacionesSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+							/>
 						</>
 					) : activeSection === 'hcIngreso' ? (
 						<div className={styles.placeholderCard}>

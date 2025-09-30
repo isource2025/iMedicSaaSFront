@@ -68,25 +68,25 @@
 	padding: 8px 10px;
 	border-radius: 8px;
 	background: #fff;
-	border: 1px solid transparent;
+	border: 2px solid transparent;
 	color: #0f2a33;
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 .navButton:hover {
-	border-color: var(--primary);
-	background: var(--pantone-313u);
+	border-color: var(--pantone-314c);
+	background: var(--pantone-311u);
 	color: #0f2a33;
 }
 .active {
-	border-color: var();
-	background: var(--pantone-313u);
+	border-color: var(--pantone-314c);
+	background: var(--pantone-311u);
 	color: #0f2a33;
 	font-weight: bold;
 }
 .active:hover {
-	border-color: var(--primary);
-	background: var(--pantone-313u);
+	border-color: var(--pantone-314c);
+	background: var(--pantone-311u);
 	color: #0f2a33;
 }
 
