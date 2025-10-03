@@ -83,6 +83,7 @@ export interface NuevaIndicacionPayload {
 	IdSector: string | null;
 	AliasMedicamento: string | null;
 	ExcluidoDeEntrega: boolean | null;
+	Medicaion: string | number | null;
 }
 
 // Tipos para opciones de formulario
@@ -93,11 +94,35 @@ export interface OpcionFormulario {
 
 // Respuesta del endpoint de datos del formulario
 export interface FormularioDatosResponse {
-	tiposIndicacion: OpcionFormulario[];
-	vademecum: OpcionFormulario[];
-	tiposDieta: OpcionFormulario[];
-	tiposControles: OpcionFormulario[];
-	controlesAsistenciales: OpcionFormulario[];
-	unidadesMedida: OpcionFormulario[];
-	frecuenciasAdmin: OpcionFormulario[];
+	tiposIndicacion: {
+		Valor: number;
+		Descripcion: string;
+		OrdenMedicacion: number;
+		Tipo: string;
+	}[];
+	vademecum: {
+		Valor: number;
+		Nombre: string;
+		Descripcion: string;
+	}[];
+	tiposDieta: {
+		Valor: number;
+		Descripcion: string;
+	}[];
+	tiposControles: {
+		Valor: number;
+		Descripcion: string;
+	}[];
+	controlesAsistenciales: {
+		Valor: number;
+		Descripcion: string;
+	}[];
+	unidadesMedida: {
+		Valor: number;
+		Descripcion: string;
+	}[];
+	frecuenciasAdmin: {
+		Valor: string;
+		Intervalo: number;
+	}[];
 }

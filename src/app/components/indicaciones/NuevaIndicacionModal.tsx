@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './NuevaIndicacionModal.module.css';
-import { NuevaIndicacionPayload } from '../../types/indicaciones';
+import { FormularioDatosResponse, NuevaIndicacionPayload } from '../../types/indicaciones';
+import { indicacionesService } from '../../services/indicacionesService';
+import CustomSelect from '../Patients/AddPatient/LoadingSelect';
 
 interface IndicacionFormProps {
 	onClose: () => void;
@@ -42,6 +44,7 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
 	IdSector: null,
 	AliasMedicamento: null,
 	ExcluidoDeEntrega: null,
+	Medicaion: null,
 });
 
 export default function IndicacionForm({
@@ -52,6 +55,8 @@ export default function IndicacionForm({
 	const [saving, setSaving] = useState(false);
 	const initial = useMemo(() => emptyPayload(defaultNumeroVisita), [defaultNumeroVisita]);
 	const [form, setForm] = useState<NuevaIndicacionPayload>(initial);
+	const [dataLoading, setDataLoading] = useState(false);
+	const [dataForm, setDataForm] = useState<FormularioDatosResponse | null>(null);
 
 	useEffect(() => {
 		setForm(emptyPayload(defaultNumeroVisita));
@@ -73,6 +78,90 @@ export default function IndicacionForm({
 			setSaving(false);
 		}
 	};
+
+	useEffect(() => {
+		(async () => {
+			setDataLoading(true);
+			try {
+				const data = await indicacionesService.getFormularioDatos();
+
+				if (data === null) {
+					return;
+				}
+				setDataForm(data);
+			} catch (err) {
+				console.error(err);
+			} finally {
+				setDataLoading(false);
+			}
+		})();
+	}, []);
+	const tipoIndicacion = useMemo(() => {
+		if (!dataForm || form.TipoIndicacion == null) return undefined;
+		return dataForm.tiposIndicacion.find(
+			(t) => Number(t.Valor) === Number(form.TipoIndicacion),
+		)?.Tipo as 'M' | 'D' | 'C' | 'A' | undefined;
+	}, [dataForm, form.TipoIndicacion]);
+
+	const medicaCionData = useMemo(() => {
+		if (!dataForm || !tipoIndicacion) return [];
+		switch (tipoIndicacion) {
+			case 'M':
+				return dataForm.vademecum.map((v) => ({
+					value: Number(v.Valor),
+					label: v.Nombre,
+				}));
+			case 'D':
+				return dataForm.tiposDieta.map((d) => ({
+					value: Number(d.Valor),
+					label: d.Descripcion,
+				}));
+			case 'C':
+				return dataForm.tiposControles.map((c) => ({
+					value: Number(c.Valor),
+					label: c.Descripcion,
+				}));
+			case 'A':
+				return dataForm.controlesAsistenciales.map((a) => ({
+					value: Number(a.Valor),
+					label: a.Descripcion,
+				}));
+			default:
+				return [];
+		}
+	}, [dataForm, tipoIndicacion]);
+
+	useEffect(() => {
+		set('Medicaion', null);
+		set('AliasMedicamento', null);
+	}, [tipoIndicacion]);
+
+	useEffect(() => {
+		if (!dataForm || form.Medicaion == null || !tipoIndicacion) {
+			set('AliasMedicamento', null);
+			return;
+		}
+
+		const id = Number(form.Medicaion);
+		let desc: string | null = null;
+
+		if (tipoIndicacion === 'M') {
+			const found = dataForm.vademecum.find((v) => Number(v.Valor) === id);
+			// Usa descripción si existe; si no, como fallback el nombre
+			desc = found ? found.Descripcion?.trim() || found.Nombre : null;
+		} else if (tipoIndicacion === 'D') {
+			const found = dataForm.tiposDieta.find((d) => Number(d.Valor) === id);
+			desc = found?.Descripcion ?? null;
+		} else if (tipoIndicacion === 'C') {
+			const found = dataForm.tiposControles.find((c) => Number(c.Valor) === id);
+			desc = found?.Descripcion ?? null;
+		} else if (tipoIndicacion === 'A') {
+			const found = dataForm.controlesAsistenciales.find((a) => Number(a.Valor) === id);
+			desc = found?.Descripcion ?? null;
+		}
+
+		set('AliasMedicamento', desc);
+	}, [dataForm, form.Medicaion, tipoIndicacion]);
 
 	return (
 		<form onSubmit={handleSubmit} className={styles.wrap}>
@@ -127,29 +216,33 @@ export default function IndicacionForm({
 			{/* FILA 2: Tipo de indicación / Medicación / Descripción */}
 			<div className={styles.rowTmd}>
 				<div className={styles.hField}>
-					<label className={styles.hLabel}>Tipo de indicación</label>
-					<select
-						className={styles.select}
-						value={form.TipoIndicacion ?? ''}
-						onChange={(e) => set('TipoIndicacion', n(e.target.value))}
-					>
-						<option value=''>Seleccione…</option>
-						<option value='1'>Enfermería</option>
-						<option value='2'>Medicamento</option>
-						<option value='3'>Procedimiento</option>
-					</select>
+					<label htmlFor='TipoIndicacion'>Tipo de Indicación</label>
+					<CustomSelect
+						label=''
+						name='TipoIndicacion'
+						isLoading={dataLoading}
+						onChange={(val) => set('TipoIndicacion', Number(val))}
+						value={form.TipoIndicacion || ''}
+						tabIndex={5}
+						options={
+							dataForm?.tiposIndicacion.map((item) => {
+								return { value: Number(item.Valor), label: item.Descripcion };
+							}) || []
+						}
+					/>
 				</div>
 
 				<div className={styles.hField}>
 					<label className={styles.hLabel}>Medicación</label>
-					<select
-						className={styles.select}
-						value={form.Codigo ?? ''}
-						onChange={(e) => set('Codigo', n(e.target.value))}
-					>
-						<option value=''>Seleccione…</option>
-						{/* opciones reales */}
-					</select>
+					<CustomSelect
+						label=''
+						name='Medicaion'
+						isLoading={dataLoading || !tipoIndicacion}
+						value={form.Medicaion ?? ''}
+						onChange={(val) => set('Medicaion', Number(val))}
+						options={medicaCionData}
+						tabIndex={6}
+					/>
 				</div>
 
 				<div className={styles.hField}>
@@ -176,26 +269,46 @@ export default function IndicacionForm({
 						className={styles.inputNum}
 						value={form.Cantidad ?? ''}
 						onChange={(e) => set('Cantidad', n(e.target.value))}
+						tabIndex={7}
 					/>
 				</div>
 
 				<div className={styles.qtyGroup}>
 					<label>Tipo unidad</label>
-					<input
-						type='text'
-						className={styles.inputNum}
-						value={form.TipoUnidad ?? ''}
-						onChange={(e) => set('TipoUnidad', s(e.target.value))}
+					<CustomSelect
+						label=''
+						name='TipoUnidad'
+						isLoading={dataLoading}
+						onChange={(val) => set('TipoUnidad', val)}
+						options={
+							dataForm?.unidadesMedida.map((item) => {
+								return {
+									value: item.Valor,
+									label: item.Descripcion,
+								};
+							}) || []
+						}
+						value={form.TipoUnidad || ''}
+						tabIndex={8}
 					/>
 				</div>
 
 				<div className={styles.qtyGroupWide}>
 					<label>Frecuencia</label>
-					<input
-						type='text'
-						className={styles.input}
-						value={form.Frecuencia ?? ''}
-						onChange={(e) => set('Frecuencia', s(e.target.value))}
+					<CustomSelect
+						label=''
+						name='Frecuencia'
+						isLoading={dataLoading}
+						onChange={(val) => set('Frecuencia', val)}
+						value={form.Frecuencia || ''}
+						options={
+							dataForm?.frecuenciasAdmin.map((item) => {
+								return {
+									value: item.Valor,
+									label: item.Valor,
+								};
+							}) || []
+						}
 					/>
 				</div>
 

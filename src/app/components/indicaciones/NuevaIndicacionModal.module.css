@@ -138,6 +138,17 @@
 	margin-bottom: 4px;
 }
 
+.hField :global(.select) {
+	height: 2.375rem; /* mismo alto que tus inputs */
+	border-radius: 10px;
+	border: 1px solid var(--border);
+	font-size: 14px;
+}
+.hField :global(.dropdownPortal) {
+	z-index: 9999; /* asegura que flote sobre el modal */
+	border-radius: 10px;
+}
+
 .qtyGroup,
 .qtyGroupWide {
 	display: flex;
