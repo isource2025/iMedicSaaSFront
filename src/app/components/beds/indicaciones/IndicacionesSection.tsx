@@ -8,6 +8,7 @@ import styles from './IndicacionesSection.module.css';
 import IndicativoColors from './IdicativosColors';
 import NuevaIndicacionModal from '../../indicaciones/NuevaIndicacionModal';
 import { NuevaIndicacionPayload } from '../../../types/indicaciones';
+import ModalBasePaciente from '../../modals/ModalBasePaciente';
 
 type IndicacionDTO = {
 	id: string;
@@ -178,16 +179,20 @@ export default function IndicacionesSection({
 			{helpOpen && <IndicativoColors setHelpOpen={setHelpOpen} />}
 
 			{/* Modal de nueva indicación */}
-			{modalOpen && (
+
+			<ModalBasePaciente
+				numeroVisita={numeroVisita ? String(numeroVisita) : ''}
+				onClose={() => setModalOpen(false)}
+				isOpen={modalOpen}
+				titulo='Agregando nueva Indicación'
+				footerButtons={null} // usamos el footer interno del form
+			>
 				<NuevaIndicacionModal
-					open={modalOpen}
 					onClose={() => setModalOpen(false)}
 					onSave={handleSave}
 					defaultNumeroVisita={numeroVisita}
-					patientName={patientName}
-					patientLocation={patientLocation}
 				/>
-			)}
+			</ModalBasePaciente>
 		</div>
 	);
 }

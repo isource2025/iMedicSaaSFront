@@ -1,238 +1,256 @@
-.backdrop {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 9999;
-	backdrop-filter: blur(2px);
-}
-
-.modal {
-	background: #ffffff;
-	border-radius: 12px;
-	width: 90%;
-	max-width: 900px;
-	max-height: 85vh;
-	overflow: hidden;
+.wrap {
 	display: flex;
 	flex-direction: column;
-	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-	animation: modalSlideIn 0.2s ease-out;
+	gap: 14px;
+	padding: 18px;
+	background: var(--card);
+	color: var(--ink);
+	box-shadow: var(--shadow);
 }
 
-@keyframes modalSlideIn {
-	from {
-		opacity: 0;
-		transform: translateY(-20px) scale(0.95);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0) scale(1);
-	}
-}
-
-.header {
+/* === Rows generales === */
+.row,
+.rowHeader,
+.rowTmd,
+.rowQty,
+.rowCols3 {
 	display: flex;
 	align-items: center;
+	gap: 18px;
+}
+
+.rowHeader {
 	justify-content: space-between;
-	padding: 16px 20px;
-	border-bottom: 2px solid #e0e0e0;
-	background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+	border-bottom: 1px solid var(--border);
+	padding-bottom: 8px;
+	margin-bottom: 8px;
 }
 
-.title {
-	font-size: 18px;
-	font-weight: 600;
-	color: var(--pantone-314c);
+.rowTmd {
+	justify-content: space-between;
 }
 
-.closeBtn {
-	border: none;
-	background: transparent;
-	font-size: 28px;
-	cursor: pointer;
-	color: #666;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	transition: all 0.2s ease;
+.rowQty {
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	gap: 14px;
 }
 
-.closeBtn:hover {
-	background: #f0f0f0;
-	color: #333;
-}
-
-.content {
-	padding: 20px;
-	overflow: auto;
-	flex: 1;
-}
-
-/* Información del paciente */
-.patientInfo {
-	background: var(--pantone-314c);
-	color: white;
-	padding: 14px 18px;
-	border-radius: 8px;
-	margin-bottom: 18px;
-}
-
-.patientName {
-	font-size: 16px;
-	font-weight: 600;
-	margin-bottom: 6px;
-}
-
-.patientDetails {
-	display: flex;
+.rowCols3 {
+	justify-content: space-between;
 	gap: 20px;
-	font-size: 14px;
-	opacity: 0.95;
 }
 
-.patientDetails span {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.formGrid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 16px 20px;
-}
-
-@media (max-width: 768px) {
-	.formGrid {
-		grid-template-columns: 1fr;
-		gap: 12px;
-	}
-}
-
-.field {
-	display: flex;
-	flex-direction: column;
-}
-
-.fieldSelect {
-	display: flex;
-	flex-direction: column;
-}
-
-/* Ajustes para LoadingSelect dentro del modal */
-.fieldSelect :global(.formGroup) {
-	grid-template-columns: 1fr;
-	gap: 6px;
-}
-
-.fieldSelect :global(.label) {
-	text-align: left;
-	padding-right: 0;
-	font-size: 14px;
-	color: var(--ink);
-	margin-bottom: 0;
-	font-weight: 500;
-}
-
-.label {
-	font-size: 14px;
-	color: var(--ink);
-	margin-bottom: 6px;
-	font-weight: 500;
+/* === Labels e inputs === */
+.wrap label {
+	display: block;
+	font-weight: 600;
+	color: var(--muted);
+	margin-bottom: 4px;
 }
 
 .input,
+.inputSm,
+.inputXs,
+.inputNum,
 .select,
 .textarea {
-	border: 1px solid #d0d0d0;
-	border-radius: 6px;
-	padding: 10px 12px;
-	font-size: 14px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: #fff;
+	padding: 6px 10px;
+	color: var(--ink);
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.input:focus,
-.select:focus,
-.textarea:focus {
-	outline: none;
-	border-color: #1565c0;
-	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
-	.inputReadonly {
-		background-color: #f5f5f5;
-		color: #666;
-		cursor: not-allowed;
-	}
+.inputSm {
+	width: 140px;
+}
 
-	.helpText {
-		display: block;
-		margin-top: 4px;
-		font-size: 11px;
-		color: #888;
-		font-style: italic;
-	}
+.inputXs {
+	width: 100px;
+}
+
+.inputNum {
+	width: 120px;
+}
+
+.select {
+	min-width: 160px;
+}
+
+.input {
+	width: 100%;
 }
 
 .textarea {
-	height: 100px;
-	resize: none;
-	font-family: inherit;
-	line-height: 1.5;
+	width: 100%;
+	min-height: 70px;
+	resize: vertical;
 }
 
-.footer {
+/* Estado hover y focus */
+.input:hover,
+.inputSm:hover,
+.inputXs:hover,
+.inputNum:hover,
+.select:hover,
+.textarea:hover {
+	border-color: var(--primary-600);
+}
+
+.input:focus,
+.inputSm:focus,
+.inputXs:focus,
+.inputNum:focus,
+.select:focus,
+.textarea:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px var(--primary-50);
+	outline: none;
+}
+
+.inlineField,
+.inlineFieldRight {
 	display: flex;
-	justify-content: flex-end;
-	gap: 12px;
-	padding: 16px 20px;
+	flex-direction: column;
 }
 
-.btn {
-	padding: 10px 20px;
-	border-radius: 6px;
-	border: 1px solid transparent;
-	cursor: pointer;
+.fieldFull {
+	width: 100%;
+}
+
+.inlineInputs {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.hField {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.hLabel {
 	font-weight: 600;
-	font-size: 14px;
-	transition: all 0.2s ease;
+	color: var(--muted);
+	margin-bottom: 4px;
 }
 
-.btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
+.qtyGroup,
+.qtyGroupWide {
+	display: flex;
+	flex-direction: column;
 }
 
-.btnCancel {
-	background: #ffffff;
-	color: #555;
-	border: 1px solid #d0d0d0;
+.qtyGroupWide {
+	flex: 1;
 }
 
-.btnCancel:hover:not(:disabled) {
-	background: #f5f5f5;
-	border-color: #999;
+/* === Cantidades / Unidad / Frecuencia === */
+.qtyGroup,
+.qtyGroupWide {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 
-.btnPrimary {
-	background: var(--pantone-314c);
-	color: white;
-	box-shadow: 0 2px 4px rgba(0, 131, 169, 0.2);
+/* Inputs de cantidad y unidad → mismo ancho */
+.qtyGroup .inputNum {
+	width: 120px; /* ancho fijo para que todos se alineen */
 }
 
-.btnPrimary:hover:not(:disabled) {
-	background: var(--pantone-313u);
-	box-shadow: 0 4px 8px rgba(0, 181, 226, 0.3);
-	transform: translateY(-1px);
+/* Frecuencia → más ancho */
+.qtyGroupWide .input {
+	min-width: 220px; /* más espacio para texto */
+	max-width: 300px;
 }
 
-.btnPrimary:active:not(:disabled) {
-	transform: translateY(0);
+/* Para mantener todo alineado en la fila */
+.rowQty {
+	display: flex;
+	align-items: flex-end;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+/* Badge tipo administrador */
+.badge {
+	background: var(--bg);
+	border: 1px solid var(--border);
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-weight: 600;
+	color: var(--primary-600);
+}
+
+/* === Botones === */
+.actionGroup {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+}
+
+.btnGhost {
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 6px 12px;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btnGhost:hover {
+	background: var(--primary-50);
+	border-color: var(--primary);
+}
+
+.btnGhostDanger {
+	background: #fff;
+	border: 1px solid #f3b0b0;
+	border-radius: 8px;
+	padding: 6px 12px;
+	color: #b42318;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btnGhostDanger:hover {
+	background: #fff5f5;
+	border-color: #e88;
+}
+
+/* === Tabla === */
+.tableCard {
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	overflow: hidden;
+	background: #fff;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	height: 160px;
+}
+
+.table th {
+	background: var(--bg);
+	border-bottom: 1px solid var(--border);
+	padding: 8px;
+	text-align: left;
+	font-weight: 600;
+	color: var(--muted);
+}
+
+.table td {
+	border-bottom: 1px solid var(--border);
+	padding: 8px;
+}
+
+.emptyRow td {
+	text-align: center;
+	color: var(--muted);
+	font-style: italic;
 }
