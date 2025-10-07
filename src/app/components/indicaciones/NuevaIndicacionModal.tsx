@@ -38,7 +38,7 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
 	Estado: 'A',
 	CantidadPorTurno: null,
 	CantidadEntregada: null,
-	ParaFechaEntrega: null,
+	ParaFechaEntrega: new Date().toISOString().slice(0, 10),
 	FormaAdicional: null,
 	NroIndicacionAnterior: null,
 	IdSector: null,
@@ -178,6 +178,8 @@ export default function IndicacionForm({
 								placeholder='Código'
 								value={form.ProfesionalAsiste ?? ''}
 								onChange={(e) => set('ProfesionalAsiste', n(e.target.value))}
+								tabIndex={1}
+								autoFocus={true}
 							/>
 							<div className={styles.badge}>ADMINISTRADOR</div>
 						</div>
@@ -192,12 +194,14 @@ export default function IndicacionForm({
 							className={styles.inputSm}
 							value={form.FechaCarga ?? ''}
 							onChange={(e) => set('FechaCarga', s(e.target.value))}
+							tabIndex={2}
 						/>
 						<input
 							type='time'
 							className={styles.inputSm}
 							value={form.HoraCarga ?? ''}
 							onChange={(e) => set('HoraCarga', s(e.target.value))}
+							tabIndex={3}
 						/>
 					</div>
 				</div>
@@ -209,6 +213,7 @@ export default function IndicacionForm({
 						className={styles.inputSm}
 						value={form.ParaFechaEntrega ?? ''}
 						onChange={(e) => set('ParaFechaEntrega', s(e.target.value))}
+						tabIndex={4}
 					/>
 				</div>
 			</div>
@@ -265,7 +270,7 @@ export default function IndicacionForm({
 					<label>Cantidad</label>
 					<input
 						type='number'
-						step='0.01'
+						step='1'
 						className={styles.inputNum}
 						value={form.Cantidad ?? ''}
 						onChange={(e) => set('Cantidad', n(e.target.value))}
@@ -309,6 +314,7 @@ export default function IndicacionForm({
 								};
 							}) || []
 						}
+						tabIndex={9}
 					/>
 				</div>
 
@@ -316,10 +322,10 @@ export default function IndicacionForm({
 					<label>Cantidad</label>
 					<input
 						type='number'
-						step='0.01'
 						className={styles.inputNum}
 						value={form.CantidadIndicada ?? ''}
 						onChange={(e) => set('CantidadIndicada', n(e.target.value))}
+						disabled
 					/>
 				</div>
 
@@ -366,6 +372,7 @@ export default function IndicacionForm({
 						className={styles.textarea}
 						value={form.Observaciones ?? ''}
 						onChange={(e) => set('Observaciones', s(e.target.value))}
+						tabIndex={10}
 					/>
 				</div>
 			</div>
@@ -408,20 +415,7 @@ export default function IndicacionForm({
 					</div>
 				</div>
 
-				<div className={styles.inlineField}>
-					<label>Estado</label>
-					<select
-						className={styles.select}
-						value={form.Estado ?? ''}
-						onChange={(e) => set('Estado', s(e.target.value))}
-					>
-						<option value=''>(sin estado)</option>
-						<option value='A'>Activo</option>
-						<option value='C'>Cumplido</option>
-						<option value='P'>Pendiente</option>
-						<option value='S'>Suspendido</option>
-					</select>
-				</div>
+				<div style={{ width: '210px' }}></div>
 			</div>
 		</form>
 	);
