@@ -1,11 +1,11 @@
 // DatosLaboralesTab.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { PatientFormData, Trabajo } from '@/src/app/types/PatientInterface';
+import { PatientFormData, Trabajo } from '../../../types/PatientInterface';
 import LaboralDataModal from './LaboralDataModal';
 import CustomSelect from './LoadingSelect';
 import styles from './LaboralData.module.css';
 import stylesPersonal from './Personal.module.css';
-import { apiService } from '@/src/app/services/axios';
+import { apiService } from '../../../services/axios';
 
 interface Option {
 	value: string | number;

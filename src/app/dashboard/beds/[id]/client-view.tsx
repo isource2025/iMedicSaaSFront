@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import BedDetailView from '@/src/app/components/beds/BedDetailView';
-import BedDetailSkeleton from '@/src/app/components/beds/BedDetailSkeleton';
-import { BedDetailProvider } from '@/src/app/components/beds/contexts/BedDetailContext';
-import type { Bed } from '@/src/app/types/beds';
+import BedDetailView from '../../../components/beds/BedDetailView';
+import BedDetailSkeleton from '../../../components/beds/BedDetailSkeleton';
+import { BedDetailProvider } from '../../../components/beds/contexts/BedDetailContext';
+import type { Bed } from '../../../types/beds';
 
 type Props = { id: string };
 

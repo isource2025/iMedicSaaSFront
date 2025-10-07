@@ -1,4 +1,4 @@
-import { PatientFormData } from '@/src/app/types/PatientInterface';
+import { PatientFormData } from '../../../types/PatientInterface';
 import styles from './Header.module.css';
 import { PhotoUploader } from './PhotoUploader';
 import CustomSelect from './LoadingSelect';

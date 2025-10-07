@@ -1,5 +1,5 @@
-import { PatientFormData } from '@/src/app/types/PatientInterface';
-import { Localidad } from '@/src/app/services/localidadService';
+import { PatientFormData } from '../../../types/PatientInterface';
+import { Localidad } from '../../../services/localidadService';
 import styles from './Personal.module.css';
 import LoadingSelect from './LoadingSelect';
 import { useEffect, useState } from 'react';

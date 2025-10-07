@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { apiService } from '@/src/app/services/axios';
-import { PatientFormData } from '@/src/app/types/PatientInterface';
+import { apiService } from '../../../services/axios';
+import { PatientFormData } from '../../../types/PatientInterface';
 import styles from './Personal.module.css';
 import LoadingSelect from './LoadingSelect'; // ¡Importamos nuestro nuevo componente!
 

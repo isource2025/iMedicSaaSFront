@@ -10,7 +10,8 @@ import {
   camasService,
   cirugiaService,
   citasService,
-  laboratorioService
+  laboratorioService,
+  generalService
 } from './activityService';
 
 /**
@@ -21,7 +22,8 @@ const ACTIVITY_SERVICES = {
   camas: camasService,
   cirugia: cirugiaService,
   citas: citasService,
-  laboratorio: laboratorioService
+  laboratorio: laboratorioService,
+  general: generalService
 } as const;
 
 /**

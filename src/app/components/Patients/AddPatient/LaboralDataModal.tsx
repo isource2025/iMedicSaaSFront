@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trabajo } from '@/src/app/types/PatientInterface';
+import { Trabajo } from '../../../types/PatientInterface';
 import styles from './LaboralModal.module.css';
 
 interface ModalTrabajoProps {

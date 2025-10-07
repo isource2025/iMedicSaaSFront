@@ -293,9 +293,20 @@ export class LaboratorioActivityService extends ActivityService {
   }
 }
 
+/**
+ * Servicio para actividades generales
+ */
+export class GeneralActivityService extends ActivityService {
+  async obtenerActividades(limite: number = 5): Promise<ActividadReciente[]> {
+    // Servicio para actividades generales del sistema
+    return FALLBACK_ACTIVIDADES.general?.slice(0, limite) || [];
+  }
+}
+
 // Instancias de servicios
 export const internacionService = new InternacionActivityService();
 export const camasService = new CamasActivityService();
 export const cirugiaService = new CirugiaActivityService();
 export const citasService = new CitasActivityService();
 export const laboratorioService = new LaboratorioActivityService();
+export const generalService = new GeneralActivityService();
