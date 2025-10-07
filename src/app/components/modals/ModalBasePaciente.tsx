@@ -46,13 +46,8 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 	children,
 	footerButtons,
 }) => {
-<<<<<<< HEAD
-  const { patients } = usePatients();
-  const modalRef = useRef<HTMLDivElement>(null);
-=======
-	const { allPatients } = usePatients();
+	const { patients } = usePatients();
 	const modalRef = useRef<HTMLDivElement>(null);
->>>>>>> origin/internacion-10-9-25
 
 	const [pacienteData, setPacienteData] = useState<PacienteData | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -74,28 +69,8 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 			const data = await res.json();
 			if (!data.success) throw new Error(data.message || 'Error al obtener datos');
 
-<<<<<<< HEAD
-      // Obtener datos del último movimiento de la visita
-      const movimiento = await visitaMovimientoService.getUltimoMovimiento(numeroVisita);
-      
-      // Obtener datos de la visita para tener acceso a FechaAdmisionS
-      const visitaResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/patients/visitas/${numeroVisita}`);
-      let visitaData = null;
-      if (visitaResponse.ok) {
-        const visitaResult = await visitaResponse.json();
-        if (visitaResult.success) {
-          visitaData = visitaResult.data;
-          console.log('Datos de visita obtenidos:', visitaData);
-        }
-      }
-      
-      const cama = data.data.find((c: any) => String(c.NumeroVisita) === numeroVisita);
-      if (cama) {
-        const pacienteInfo = patients.find((p: any) => p.IDPaciente === Number(cama.IdPaciente));
-=======
 			// Obtener datos del último movimiento de la visita
 			const movimiento = await visitaMovimientoService.getUltimoMovimiento(numeroVisita);
->>>>>>> origin/internacion-10-9-25
 
 			// Obtener datos de la visita para tener acceso a FechaAdmisionS
 			const visitaResponse = await fetch(
@@ -112,7 +87,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 
 			const cama = data.data.find((c: any) => String(c.NumeroVisita) === numeroVisita);
 			if (cama) {
-				const pacienteInfo = allPatients?.find(
+				const pacienteInfo = patients?.find(
 					(p) => p.IDPaciente === Number(cama.IdPaciente),
 				);
 
@@ -122,40 +97,6 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 					  new Date().toISOString()
 					: new Date().toISOString();
 
-<<<<<<< HEAD
-        if (pd.fechaNacimiento) {
-          const fn = new Date(pd.fechaNacimiento);
-          const hoy = new Date();
-          let calc = hoy.getFullYear() - fn.getFullYear();
-          const m = hoy.getMonth() - fn.getMonth();
-          if (m < 0 || (m === 0 && hoy.getDate() < fn.getDate())) calc--;
-          setEdad(calc);
-        }
-      } else {
-        setPacienteData({
-          numeroVisita,
-          idPaciente: 'N/A',
-          apellidoYNombre: 'Paciente',
-          numeroDocumento: 'N/A',
-          fechaAdmisionS: visitaData?.fechaAdmisionS || '',
-          fechaAdmision: new Date().toISOString(),
-          sexo: 'N/A',
-          fechaNacimiento: '',
-          valorSector: 'N/A',
-          valorHabitacionCama: 'N/A',
-          coberturaSocial: 'N/A',
-        });
-      }
-      setYaConsultado(true);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Error al cargar datos del paciente');
-      setPacienteData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [isOpen, numeroVisita, yaConsultado, patients]);
-=======
 				const pd: PacienteData = {
 					numeroVisita,
 					idPaciente: cama.IdPaciente || 'N/A',
@@ -173,7 +114,6 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 					valorHabitacionCama: cama.ValorHabitacionCama || 'N/A',
 					coberturaSocial: cama.RazonSocialCliente || 'N/A',
 				};
->>>>>>> origin/internacion-10-9-25
 
 				setPacienteData(pd);
 
@@ -208,7 +148,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 		} finally {
 			setLoading(false);
 		}
-	}, [isOpen, numeroVisita, yaConsultado, allPatients]);
+	}, [isOpen, numeroVisita, yaConsultado, patients]);
 
 	useEffect(() => {
 		if (isOpen) {

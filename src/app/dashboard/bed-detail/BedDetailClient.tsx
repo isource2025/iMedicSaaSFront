@@ -23,7 +23,7 @@ export default function BedDetailClient() {
           sector: 'Internación General',
           estado: 'ocupada',
           estadoDescripcion: 'Ocupada',
-          nombrePaciente: 'Juan Pérez',
+          NombrePaciente: 'Juan Pérez',
           documentoPaciente: '28456789',
           fechaIngreso: Date.now(),
           fechaEgreso: 0,

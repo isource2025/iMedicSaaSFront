@@ -38,8 +38,6 @@ body {
 }
 
 /* Asegurarse de que el #__next o app root tenga altura completa para posicionar correctamente los elementos */
-#__next, main, .main-content-wrapper {
-  height: 100%;
 #__next,
 main,
 .main-content-wrapper {

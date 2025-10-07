@@ -127,7 +127,7 @@ const BedDetail = ({
               <div className={styles.infoGrid}>
                 <div className={styles.infoItem}>
                   <label>Nombre:</label>
-                  <span className={styles.patientName}>{selectedBed.nombrePaciente}</span>
+                  <span className={styles.patientName}>{selectedBed.NombrePaciente}</span>
                 </div>
                 <div className={styles.infoItem}>
                   <label>Documento:</label>
@@ -325,13 +325,12 @@ const BedDetail = ({
           isOpen={nursingModalOpen}
           onClose={() => setNursingModalOpen(false)}
           numeroVisita={selectedBed.numeroVisita ?? 0}
-          nombrePaciente={selectedBed.nombrePaciente ?? 'Paciente'}
+          nombrePaciente={selectedBed.NombrePaciente ?? 'Paciente'}
         />
       )}
 
       {nuevaIndicacionOpen && selectedBed && (
         <NuevaIndicacionModal
-          open={nuevaIndicacionOpen}
           onClose={() => setNuevaIndicacionOpen(false)}
           onSave={async (_data) => {
             // TODO: implementar POST cuando esté disponible

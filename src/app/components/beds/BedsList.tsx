@@ -81,13 +81,13 @@ const BedsList = () => {
 
 	const handleNursingReport = (bed: Bed) => {
 		// Validar que existan los datos mínimos requeridos
-		if (!bed.numeroVisita || !bed.nombrePaciente) {
+		if (!bed.numeroVisita || !bed.NombrePaciente) {
 			console.warn('No hay datos suficientes para generar el parte de enfermería.');
 			return;
 		}
 		setSelectedBed({
 			numeroVisita: bed.numeroVisita!,
-			nombrePaciente: bed.nombrePaciente!,
+			nombrePaciente: bed.NombrePaciente!,
 			id: bed.numeroCama,
 			sector: bed.sector,
 		});
@@ -110,7 +110,7 @@ const BedsList = () => {
 		if (bed && bed.estado === 'ocupada' && bed.numeroVisita) {
 			setSelectedBed({
 				numeroVisita: bed.numeroVisita,
-				nombrePaciente: bed.nombrePaciente || 'Paciente',
+				nombrePaciente: bed.NombrePaciente || 'Paciente',
 				id: bed.numeroCama,
 				sector: bed.sector,
 			});
@@ -149,7 +149,7 @@ const BedsList = () => {
 		if (bed && bed.estado === 'ocupada' && bed.numeroVisita) {
 			setSelectedBed({
 				numeroVisita: bed.numeroVisita,
-				nombrePaciente: bed.nombrePaciente || 'Paciente',
+				nombrePaciente: bed.NombrePaciente || 'Paciente',
 				id: bed.numeroCama,
 				sector: bed.sector,
 			});
