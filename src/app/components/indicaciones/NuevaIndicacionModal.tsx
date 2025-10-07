@@ -12,11 +12,17 @@ interface IndicacionFormProps {
 	defaultNumeroVisita: number | null;
 }
 
+// ===== Clarion helpers =====
+const CLARION_TICKS_PER_SEC = 100;
+const SECS_PER_HOUR = 3600;
+const DAY_TICKS = 24 * SECS_PER_HOUR * CLARION_TICKS_PER_SEC; // 8,640,000
+
+// ===== Payload inicial =====
 const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
 	NumeroVisita: numeroVisita,
 	NroAdicional: null,
-	FechaCarga: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
-	HoraCarga: new Date().toTimeString().slice(0, 8), // HH:mm:ss
+	FechaCarga: new Date().toISOString().slice(0, 10),
+	HoraCarga: new Date().toTimeString().slice(0, 8),
 	OperadorCarga: null,
 	ProfesionalAsiste: null,
 	FechaCumplido: null,
@@ -27,24 +33,28 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
 	HoraRevision: null,
 	TipoIndicacion: null,
 	Codigo: null,
-	Cantidad: null,
+
+	// Cantidades
+	CantidadIndicada: null, // ✅ EDITABLE (por toma)
 	TipoUnidad: null,
-	Frecuencia: null,
+	Frecuencia: null, // puede ser ticks / "HH:MM" / "8" / "8h"
+	Cantidad: null, // ✅ CALCULADA = CantidadIndicada × dosisPorDia
+
 	Observaciones: null,
 	FechaExpiro: null,
 	HoraExpiro: null,
-	CantidadIndicada: null,
 	Orden: null,
-	Estado: 'A',
+	Estado: null,
 	CantidadPorTurno: null,
 	CantidadEntregada: null,
 	ParaFechaEntrega: new Date().toISOString().slice(0, 10),
 	FormaAdicional: null,
 	NroIndicacionAnterior: null,
 	IdSector: null,
-	AliasMedicamento: null,
+
+	// Medicación — ÚNICO CAMPO
+	AliasMedicamento: null, // ✅ guardamos aquí el ID seleccionado del vademécum/dieta/control
 	ExcluidoDeEntrega: null,
-	Medicaion: null,
 });
 
 export default function IndicacionForm({
@@ -79,16 +89,13 @@ export default function IndicacionForm({
 		}
 	};
 
+	// Cargar catálogos
 	useEffect(() => {
 		(async () => {
 			setDataLoading(true);
 			try {
 				const data = await indicacionesService.getFormularioDatos();
-
-				if (data === null) {
-					return;
-				}
-				setDataForm(data);
+				if (data) setDataForm(data);
 			} catch (err) {
 				console.error(err);
 			} finally {
@@ -96,6 +103,8 @@ export default function IndicacionForm({
 			}
 		})();
 	}, []);
+
+	// Tipo de indicación
 	const tipoIndicacion = useMemo(() => {
 		if (!dataForm || form.TipoIndicacion == null) return undefined;
 		return dataForm.tiposIndicacion.find(
@@ -103,6 +112,7 @@ export default function IndicacionForm({
 		)?.Tipo as 'M' | 'D' | 'C' | 'A' | undefined;
 	}, [dataForm, form.TipoIndicacion]);
 
+	// Opciones de medicación según tipo
 	const medicaCionData = useMemo(() => {
 		if (!dataForm || !tipoIndicacion) return [];
 		switch (tipoIndicacion) {
@@ -131,42 +141,69 @@ export default function IndicacionForm({
 		}
 	}, [dataForm, tipoIndicacion]);
 
+	// Al cambiar tipo, limpiamos selección (ID) para evitar incoherencias
 	useEffect(() => {
-		set('Medicaion', null);
-		set('AliasMedicamento', null);
+		set('AliasMedicamento', null); // ← solo hay un campo; aquí guardamos el ID
 	}, [tipoIndicacion]);
 
-	useEffect(() => {
-		if (!dataForm || form.Medicaion == null || !tipoIndicacion) {
-			set('AliasMedicamento', null);
-			return;
-		}
-
-		const id = Number(form.Medicaion);
-		let desc: string | null = null;
+	// === Descripción calculada (NO se guarda en payload) ===
+	const aliasDescripcion = useMemo(() => {
+		if (!dataForm || form.AliasMedicamento == null || !tipoIndicacion) return '';
+		const id = Number(form.AliasMedicamento);
 
 		if (tipoIndicacion === 'M') {
 			const found = dataForm.vademecum.find((v) => Number(v.Valor) === id);
-			// Usa descripción si existe; si no, como fallback el nombre
-			desc = found ? found.Descripcion?.trim() || found.Nombre : null;
-		} else if (tipoIndicacion === 'D') {
+			return found ? found.Descripcion?.trim() || found.Nombre : '';
+		}
+		if (tipoIndicacion === 'D') {
 			const found = dataForm.tiposDieta.find((d) => Number(d.Valor) === id);
-			desc = found?.Descripcion ?? null;
-		} else if (tipoIndicacion === 'C') {
+			return found?.Descripcion ?? '';
+		}
+		if (tipoIndicacion === 'C') {
 			const found = dataForm.tiposControles.find((c) => Number(c.Valor) === id);
-			desc = found?.Descripcion ?? null;
-		} else if (tipoIndicacion === 'A') {
+			return found?.Descripcion ?? '';
+		}
+		if (tipoIndicacion === 'A') {
 			const found = dataForm.controlesAsistenciales.find((a) => Number(a.Valor) === id);
-			desc = found?.Descripcion ?? null;
+			return found?.Descripcion ?? '';
+		}
+		return '';
+	}, [dataForm, form.AliasMedicamento, tipoIndicacion]);
+
+	// Recalcular Cantidad (total/día) a partir de CantidadIndicada (por toma) y Frecuencia
+	useEffect(() => {
+		// proteger: catálogo cargado y frecuencia elegida
+		if (!dataForm?.frecuenciasAdmin || !form.Frecuencia) {
+			set('Cantidad', null);
+			return;
+		}
+		// buscar el Intervalo (Clarion ticks) por el Valor seleccionado en el select
+		const key = String(form.Frecuencia).trim().toLowerCase();
+		const freq = dataForm.frecuenciasAdmin.find(
+			(f) => String(f.Valor).trim().toLowerCase() === key,
+		);
+
+		if (!freq || !Number.isFinite(freq.Intervalo) || freq.Intervalo <= 0) {
+			set('Cantidad', null);
+			return;
 		}
 
-		set('AliasMedicamento', desc);
-	}, [dataForm, form.Medicaion, tipoIndicacion]);
+		// dosisPorDia = entero de 24h / intervalo (en ticks Clarion)
+		const dosisPorDia = Math.max(1, Math.round(DAY_TICKS / Number(freq.Intervalo)));
+
+		// CantidadIndicada debe ser >= 1 (si algo raro llega, forzamos 1)
+		const porToma =
+			typeof form.CantidadIndicada === 'number' && form.CantidadIndicada >= 1
+				? form.CantidadIndicada
+				: 1;
+
+		// Cantidad = por_toma × dosisPorDia (entero)
+		set('Cantidad', porToma * dosisPorDia);
+	}, [dataForm, form.Frecuencia, form.CantidadIndicada]);
 
 	return (
 		<form onSubmit={handleSubmit} className={styles.wrap}>
-			{/* FILA 1: Profesional que indica + Fecha/Hora que indica + Solicitado para el día */}
-
+			{/* Fila 1 */}
 			<div className={styles.rowHeader}>
 				<div className={styles.row}>
 					<div className={styles.inlineField}>
@@ -179,7 +216,7 @@ export default function IndicacionForm({
 								value={form.ProfesionalAsiste ?? ''}
 								onChange={(e) => set('ProfesionalAsiste', n(e.target.value))}
 								tabIndex={1}
-								autoFocus={true}
+								autoFocus
 							/>
 							<div className={styles.badge}>ADMINISTRADOR</div>
 						</div>
@@ -218,7 +255,7 @@ export default function IndicacionForm({
 				</div>
 			</div>
 
-			{/* FILA 2: Tipo de indicación / Medicación / Descripción */}
+			{/* Fila 2: Tipo / Medicación / Descripción (solo visual) */}
 			<div className={styles.rowTmd}>
 				<div className={styles.hField}>
 					<label htmlFor='TipoIndicacion'>Tipo de Indicación</label>
@@ -230,9 +267,10 @@ export default function IndicacionForm({
 						value={form.TipoIndicacion || ''}
 						tabIndex={5}
 						options={
-							dataForm?.tiposIndicacion.map((item) => {
-								return { value: Number(item.Valor), label: item.Descripcion };
-							}) || []
+							dataForm?.tiposIndicacion.map((item) => ({
+								value: Number(item.Valor),
+								label: item.Descripcion,
+							})) || []
 						}
 					/>
 				</div>
@@ -241,10 +279,10 @@ export default function IndicacionForm({
 					<label className={styles.hLabel}>Medicación</label>
 					<CustomSelect
 						label=''
-						name='Medicaion'
+						name='AliasMedicamento'
 						isLoading={dataLoading || !tipoIndicacion}
-						value={form.Medicaion ?? ''}
-						onChange={(val) => set('Medicaion', Number(val))}
+						value={form.AliasMedicamento ?? ''} // ✅ guardamos ID en AliasMedicamento
+						onChange={(val) => set('AliasMedicamento', Number(val))}
 						options={medicaCionData}
 						tabIndex={6}
 					/>
@@ -255,8 +293,8 @@ export default function IndicacionForm({
 					<input
 						className={styles.input}
 						type='text'
-						value={form.AliasMedicamento ?? ''}
-						onChange={(e) => set('AliasMedicamento', s(e.target.value))}
+						value={aliasDescripcion} // ✅ calculado, NO se guarda
+						onChange={() => {}}
 						disabled
 						placeholder='Se completa al elegir medicación'
 						aria-disabled='true'
@@ -264,7 +302,7 @@ export default function IndicacionForm({
 				</div>
 			</div>
 
-			{/* FILA 3: Cantidad + Unidad + Frecuencia + Cant. x turno + Acciones */}
+			{/* Fila 3: Cantidades */}
 			<div className={styles.rowQty}>
 				<div className={styles.qtyGroup}>
 					<label>Cantidad</label>
@@ -272,8 +310,8 @@ export default function IndicacionForm({
 						type='number'
 						step='1'
 						className={styles.inputNum}
-						value={form.Cantidad ?? ''}
-						onChange={(e) => set('Cantidad', n(e.target.value))}
+						value={form.CantidadIndicada ?? ''} // ✅ editable
+						onChange={(e) => set('CantidadIndicada', n(e.target.value))}
 						tabIndex={7}
 					/>
 				</div>
@@ -286,12 +324,10 @@ export default function IndicacionForm({
 						isLoading={dataLoading}
 						onChange={(val) => set('TipoUnidad', val)}
 						options={
-							dataForm?.unidadesMedida.map((item) => {
-								return {
-									value: item.Valor,
-									label: item.Descripcion,
-								};
-							}) || []
+							dataForm?.unidadesMedida.map((item) => ({
+								value: item.Valor,
+								label: item.Descripcion,
+							})) || []
 						}
 						value={form.TipoUnidad || ''}
 						tabIndex={8}
@@ -304,15 +340,13 @@ export default function IndicacionForm({
 						label=''
 						name='Frecuencia'
 						isLoading={dataLoading}
-						onChange={(val) => set('Frecuencia', val)}
+						onChange={(val) => set('Frecuencia', val)} // no casteamos; el parser se encarga
 						value={form.Frecuencia || ''}
 						options={
-							dataForm?.frecuenciasAdmin.map((item) => {
-								return {
-									value: item.Valor,
-									label: item.Valor,
-								};
-							}) || []
+							dataForm?.frecuenciasAdmin.map((item) => ({
+								value: item.Valor,
+								label: item.Valor,
+							})) || []
 						}
 						tabIndex={9}
 					/>
@@ -323,8 +357,8 @@ export default function IndicacionForm({
 					<input
 						type='number'
 						className={styles.inputNum}
-						value={form.CantidadIndicada ?? ''}
-						onChange={(e) => set('CantidadIndicada', n(e.target.value))}
+						value={form.Cantidad ?? ''} // ✅ calculado
+						onChange={() => {}}
 						disabled
 					/>
 				</div>
@@ -342,7 +376,7 @@ export default function IndicacionForm({
 				</div>
 			</div>
 
-			{/* FILA 4: Tabla (Operación / Medicamento / …) */}
+			{/* Fila 4: Tabla */}
 			<div className={styles.tableCard}>
 				<table className={styles.table}>
 					<thead>
@@ -356,7 +390,6 @@ export default function IndicacionForm({
 						</tr>
 					</thead>
 					<tbody>
-						{/* Renderiza items agregados (si los manejas en tu estado) */}
 						<tr className={styles.emptyRow}>
 							<td colSpan={6}>Sin ítems agregados</td>
 						</tr>
@@ -364,7 +397,7 @@ export default function IndicacionForm({
 				</table>
 			</div>
 
-			{/* FILA 5: Observaciones */}
+			{/* Fila 5: Observaciones */}
 			<div className={styles.row}>
 				<div className={styles.fieldFull}>
 					<label>Observaciones</label>
@@ -377,7 +410,7 @@ export default function IndicacionForm({
 				</div>
 			</div>
 
-			{/* FILA 6: Última / Próxima administración */}
+			{/* Fila 6: Última / Próxima administración */}
 			<div className={styles.rowCols3}>
 				<div className={styles.inlineField}>
 					<label>Última administración</label>
@@ -415,7 +448,7 @@ export default function IndicacionForm({
 					</div>
 				</div>
 
-				<div style={{ width: '210px' }}></div>
+				<div style={{ width: '210px' }} />
 			</div>
 		</form>
 	);
