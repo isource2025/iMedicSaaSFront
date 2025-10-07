@@ -1,0 +1,14 @@
+.wrap {
+	display: flex;
+	align-items: baseline;
+	gap: 14px;
+}
+.wrap h1 {
+	font-size: 20px;
+	font-weight: 800;
+	color: var(--ink);
+	letter-spacing: 0.3px;
+}
+.wrap p {
+	color: var(--muted);
+}

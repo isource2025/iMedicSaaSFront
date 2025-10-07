@@ -1,0 +1,13 @@
+/* El layout tiene .page-container { padding: 1.5rem } (y 1rem <640px).
+   Cancelamos ese padding aquí para que el workspace sea full-bleed. */
+.fullBleed {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+}
+@media (max-width: 640px) {
+	.fullBleed {
+		margin: -1rem;
+	} /* = -(padding mobile del layout) */
+}

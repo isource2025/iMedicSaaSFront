@@ -1,361 +1,357 @@
 .modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-  backdrop-filter: blur(3px);
-  will-change: opacity; /* Optimización para el navegador */
-  backface-visibility: hidden; /* Reducir parpadeos en transiciones */
-  transform: translateZ(0); /* Forzar aceleración por hardware */
-  transition: opacity 0.2s ease; /* Suavizar la aparición */
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 100;
+	backdrop-filter: blur(3px);
+	will-change: opacity; /* Optimización para el navegador */
+	backface-visibility: hidden; /* Reducir parpadeos en transiciones */
+	transform: translateZ(0); /* Forzar aceleración por hardware */
+	transition: opacity 0.2s ease; /* Suavizar la aparición */
 }
 
 .modalContainer {
-  width: 1400px;
-  max-width: 98vw;
-  min-width: 720px;
-  max-height: 90vh;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 40px #0002;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  will-change: transform, opacity; /* Optimización para animaciones */
-  backface-visibility: hidden; /* Reducir parpadeos */
-  transform: translateZ(0); /* Forzar aceleración por hardware */
-  transition: transform 0.2s ease, opacity 0.2s ease; /* Transiciones suaves */
-  transform: translate3d(0, 0, 0); /* Prevenir problemas de composición */
+	width: 1400px;
+	max-width: 98vw;
+	min-width: 720px;
+	max-height: 95vh;
+	background: white;
+	border-radius: 16px;
+	box-shadow: 0 8px 40px #0002;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	will-change: transform, opacity; /* Optimización para animaciones */
+	backface-visibility: hidden; /* Reducir parpadeos */
+	transform: translateZ(0); /* Forzar aceleración por hardware */
+	transition: transform 0.2s ease, opacity 0.2s ease; /* Transiciones suaves */
+	transform: translate3d(0, 0, 0); /* Prevenir problemas de composición */
 }
 
 .modalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  border-bottom: 1px solid #e1e1e1;
-  background-color: #00B5E2; /* Pantone 313U - Color primario */
-  color: white;
-  border-radius: 10px 10px 0 0;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 15px 20px;
+	border-bottom: 1px solid #e1e1e1;
+	background-color: #00b5e2; /* Pantone 313U - Color primario */
+	color: white;
+	border-radius: 10px 10px 0 0;
 }
 
 .headerTituloInfo {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-  gap: 15px;
+	display: flex;
+	flex: 1;
+	flex-direction: row;
+	align-items: center;
+	gap: 15px;
 }
 
 .modalTitulo {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: white;
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+	white-space: nowrap;
+	color: white;
 }
-
 
 .headerField {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	font-size: 14px;
 }
 
-
 .headerLabel {
-  font-weight: 500;
-  color: #64748b; /* Pantone 314C */
+	font-weight: 500;
+	color: #64748b; /* Pantone 314C */
 }
 
 .headerValue {
-  font-weight: 800;
-  color: #0083A9;
+	font-weight: 800;
+	color: #0083a9;
 }
 
 .closeButton {
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  margin-left: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  transition: background-color 0.2s;
+	background: transparent;
+	border: none;
+	color: white;
+	font-size: 24px;
+	cursor: pointer;
+	margin-left: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	transition: background-color 0.2s;
 }
 
 .closeButton:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+	background-color: rgba(255, 255, 255, 0.2);
 }
 
 .pacienteHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: end;
-  justify-content: space-between;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e1e1e1;
+	display: flex;
+	flex-direction: column;
+	align-items: end;
+	justify-content: space-between;
+	background-color: #f8f9fa;
+	border-bottom: 1px solid #e1e1e1;
 }
 
 .headerFields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 32px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 32px;
 }
-.pacienteData{
-  width: 100%;
-  display: flex;
-  justify-content: start;
-  background-color: white;
-  padding: 0px 16px ;
-  gap: 16px;
+.pacienteData {
+	width: 100%;
+	display: flex;
+	justify-content: start;
+	background-color: white;
+	padding: 0px 16px;
+	gap: 16px;
 }
 
 .admisionInfo {
-  display: flex;
-  align-items: center;
+	display: flex;
+	align-items: center;
 }
 
 .admisionLabel {
-  font-weight: 500;
-  color: #64748b; /* Pantone 314C - Azul turquesa oscuro */
-  margin-right: 8px;
-  font-size: 0.9rem;
+	font-weight: 500;
+	color: #64748b; /* Pantone 314C - Azul turquesa oscuro */
+	margin-right: 8px;
+	font-size: 0.9rem;
 }
 
 .admisionValueContainer {
-  display: flex;
-  gap: 8px;
+	display: flex;
+	gap: 8px;
 }
 
 .admisionValueItem {
-  display: flex;
-  align-items: center;
-  gap: 2px;
+	display: flex;
+	align-items: center;
+	gap: 2px;
 }
 
 .admisionIcon {
-  color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
-  font-size: 1rem;
+	color: #00b5e2; /* Pantone 313U - Azul turquesa brillante */
+	font-size: 1rem;
 }
 
 .admisionValue {
-  font-weight: 800;
-  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
-  font-size: 0.9rem;
+	font-weight: 800;
+	color: #0083a9; /* Pantone 314C - Azul turquesa oscuro */
+	font-size: 0.9rem;
 }
 
 .nombrePaciente h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
-  color: #333;
-  display: flex;
-  align-items: self-start;
-  flex-wrap: wrap;
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin: 0;
+	color: #333;
+	display: flex;
+	align-items: self-start;
+	flex-wrap: wrap;
 }
 
 .documentoNumero {
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 500;
+	border-radius: 4px;
+	font-size: 1rem;
+	font-weight: 500;
 }
 
 .sexoIcono {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  background-color: transparent;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.1rem;
+	background-color: transparent;
 }
 
 .masculino {
-  color: black; 
-  background-color: transparent;
+	color: black;
+	background-color: transparent;
 }
 
 .femenino {
-  color: black; 
-  background-color: transparent;
+	color: black;
+	background-color: transparent;
 }
 
 .otro {
-  color: black; 
-  background-color: transparent;
+	color: black;
+	background-color: transparent;
 }
 
 .edadPaciente {
-  font-size: 0.85rem;
-  color: #64748b;
-  font-weight: normal;
-  margin-left: 0.5rem;
+	font-size: 0.85rem;
+	color: #64748b;
+	font-weight: normal;
+	margin-left: 0.5rem;
 }
 
 .separador {
-  height: 1px;
-  background-color: #e2e8f0;
-  margin: 0;
+	height: 1px;
+	background-color: #e2e8f0;
+	margin: 0;
 }
 
 .tabsContainer {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 12px;
-  margin-top: 8px;
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 12px;
+	margin-top: 8px;
 }
 
 .tabButton {
-  padding: 7px 32px;
-  border: none;
-  border-radius: 8px 8px 0 0;
-  background: #e6f7fa;
-  color: #0083A9;
-  font-weight: 600;
-  font-size: 1.05rem;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  outline: none;
-  border-bottom: 2px solid transparent;
+	padding: 7px 32px;
+	border: none;
+	border-radius: 8px 8px 0 0;
+	background: #e6f7fa;
+	color: #0083a9;
+	font-weight: 600;
+	font-size: 1.05rem;
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s;
+	outline: none;
+	border-bottom: 2px solid transparent;
 }
 
 .tabButton:hover {
-  background: #b6e6f2;
-  color: #00B5E2;
+	background: #b6e6f2;
+	color: #00b5e2;
 }
 
 .activeTab {
-  background: #00B5E2;
-  color: #fff;
-  border-bottom: 2px solid #0083A9;
-  z-index: 1;
+	background: #00b5e2;
+	color: #fff;
+	border-bottom: 2px solid #0083a9;
+	z-index: 1;
 }
 
 .modalContent {
-  overflow-y: hidden;
-  min-height: 400px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+	overflow-y: hidden;
+	min-height: 400px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
 
-.loadingContainer, .errorContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  min-height: 150px;
+.loadingContainer,
+.errorContainer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem;
+	min-height: 150px;
 }
 
 .loading {
-  display: flex;
-  justify-content: center;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #64748b;
+	display: flex;
+	justify-content: center;
+	text-align: center;
+	font-size: 0.9rem;
+	color: #64748b;
 }
 
 .error {
-  color: #ef4444;
-  font-size: 0.9rem;
-  text-align: center;
+	color: #ef4444;
+	font-size: 0.9rem;
+	text-align: center;
 }
 
 .modalFooter {
-  position: relative;
-  bottom: 0;
-  padding: 0.75rem 1.5rem;
-  margin-top: 0;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 0 0 16px 16px; /* Match the bottom radius of the modal */
+	position: relative;
+	bottom: 0;
+	padding: 0.75rem 1.5rem;
+	margin-top: 0;
+	border-top: 1px solid #e2e8f0;
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+	background-color: #f8f9fa;
+	border-radius: 0 0 16px 16px; /* Match the bottom radius of the modal */
 }
 
 .cancelButton {
-  padding: 0.5rem 1rem;
-  background-color: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
+	padding: 0.5rem 1rem;
+	background-color: #f1f5f9;
+	color: #64748b;
+	border: 1px solid #cbd5e1;
+	border-radius: 0.375rem;
+	font-size: 0.875rem;
+	cursor: pointer;
+	transition: background-color 0.2s;
 }
 
 .cancelButton:hover {
-  background-color: #e2e8f0;
+	background-color: #e2e8f0;
 }
 
 /* Responsivo */
 @media (max-width: 640px) {
-  .modalContainer {
-    width: 95%;
-    max-height: 95vh;
-  }
-  
-  .headerRow {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .modalContent {
-    max-height: calc(95vh - 250px);
-    padding: 1rem;
-  }
-  
-  .itemGrupo {
-    min-width: 100px;
-  }
+	.modalContainer {
+		width: 95%;
+		max-height: 95vh;
+	}
+
+	.headerRow {
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.modalContent {
+		max-height: calc(95vh - 250px);
+		padding: 1rem;
+	}
+
+	.itemGrupo {
+		min-width: 100px;
+	}
 }
-
-
 
 /* HEADER STYLE FROM BEDCARD  */
 
-
 .cardHeader {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  justify-content: space-between;
-  background-color: #f5f7fa;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	justify-content: space-between;
+	background-color: #f5f7fa;
 }
 .bedInfo {
-  font-size: 20px;
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  padding: 8px 16px ;
-  gap: 8px;
+	font-size: 20px;
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	padding: 8px 16px;
+	gap: 8px;
 }
 .sectorLabel {
-  background-color: #334155;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 1rem;
-  color:white;
-  margin-bottom: 1px;
-  margin-right: 8px;
+	background-color: #334155;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 1rem;
+	color: white;
+	margin-bottom: 1px;
+	margin-right: 8px;
 }
 
 .bedNumber {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+	margin: 0;
 }
