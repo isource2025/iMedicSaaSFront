@@ -2,12 +2,12 @@
 
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIndicadores } from '../../../hooks/useIndicadores';
-import { analyzeAdmissionPatterns, AnalysisResult } from '../../../utils/analyticsEngine';
+import { useIndicadores } from '@/app/hooks/useIndicadores';
+import { analyzeAdmissionPatterns, AnalysisResult } from '@/app/utils/analyticsEngine';
 
 // Lazy loading de componentes pesados para mejorar el rendimiento inicial
-const DonutChartLazy = lazy(() => import('../../../components/Charts/DonutChart'));
-const LineChartLazy = lazy(() => import('../../../components/Charts/LineChart'));
+const DonutChartLazy = lazy(() => import('@/app/components/Charts/DonutChart'));
+const LineChartLazy = lazy(() => import('@/app/components/Charts/LineChart'));
 
 // Componente de loading para Suspense
 const ChartSkeleton = () => (
@@ -24,11 +24,11 @@ const ChartSkeleton = () => (
     Cargando gráfico...
   </div>
 );
-import { MetricCard } from '../../../components/MetricCard';
-import { InsightCard } from '../../../components/InsightCard';
-import { MetricTooltip } from '../../../components/MetricTooltip/MetricTooltip';
-import { MetricTooltipModal } from '../../../components/modals/MetricTooltipModal';
-import { AnalyticsLoader } from '../../../components/AnalyticsLoader';
+import { MetricCard } from '@/app/components/MetricCard';
+import { InsightCard } from '@/app/components/InsightCard';
+import { MetricTooltip } from '@/app/components/MetricTooltip/MetricTooltip';
+import { MetricTooltipModal } from '@/app/components/modals/MetricTooltipModal';
+import { AnalyticsLoader } from '@/app/components/AnalyticsLoader';
 import styles from './PatientsAnalytics.module.css';
 
 // Componente para iconos (ejemplo simple)
@@ -93,11 +93,13 @@ export default function PatientsAnalytics() {
   // Preparar datos para gráficos de torta
   const prepareChartData = (data: Record<string, number> | undefined, title: string) => {
     if (!data) return [];
-    return Object.entries(data).map(([label, value], index) => ({
-      label,
-      value,
-      color: pantoneColors[index % pantoneColors.length]
-    }));
+    return Object.entries(data)
+      .sort(([,a], [,b]) => b - a) // Ordenar de mayor a menor
+      .map(([label, value], index) => ({
+        label,
+        value,
+        color: pantoneColors[index % pantoneColors.length]
+      }));
   };
 
   // Datos para gráficos de torta
@@ -272,8 +274,8 @@ export default function PatientsAnalytics() {
                 <div className={styles.estadoActualMetric}>
                   <div className={styles.estadoActualMetricValue}>
                     {indicadoresPorFecha.length > 0 
-                      ? Math.round((resumen?.totalGeneral || 0) / indicadoresPorFecha.length)
-                      : 0
+                      ? ((resumen?.totalGeneral || 0) / indicadoresPorFecha.length).toFixed(2)
+                      : '0.00'
                     }
                   </div>
                   <div className={styles.estadoActualMetricLabel}>Promedio</div>
@@ -312,8 +314,8 @@ export default function PatientsAnalytics() {
             <MetricCard
               title="Promedio Diario"
               value={indicadoresPorFecha.length > 0 
-                ? Math.round((resumen?.totalGeneral || 0) / indicadoresPorFecha.length)
-                : 0
+                ? ((resumen?.totalGeneral || 0) / indicadoresPorFecha.length).toFixed(2)
+                : '0.00'
               }
               detail="Calculado sobre días con actividad"
               icon={ICONS.leaderboard}
@@ -356,7 +358,7 @@ export default function PatientsAnalytics() {
                       />
                       <span className={styles.legendLabel}>{item.label}</span>
                     </div>
-                    <span className={styles.legendValue}>{item.value}</span>
+                    <span className={styles.legendValue}>{typeof item.value === 'number' ? item.value.toLocaleString() : item.value}</span>
                   </div>
                 ))}
               </div>
@@ -445,9 +447,9 @@ export default function PatientsAnalytics() {
                   <p>
                     {resumen ? (
                       <>
-                        El promedio de <strong>{Math.round((resumen.totalGeneral || 0) / indicadoresPorFecha.length)}</strong> ingresos diarios indica una 
-                        {Math.round((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 30 ? ' alta demanda' : Math.round((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 15 ? ' actividad normal' : ' baja actividad'} 
-                        {Math.round((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 30 ? ' que requiere optimización de procesos.' : Math.round((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 15 ? ' en el sistema de admisiones.' : ' con capacidad disponible.'}
+                        El promedio de <strong>{((resumen.totalGeneral || 0) / indicadoresPorFecha.length).toFixed(2)}</strong> ingresos diarios indica una 
+                        {((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 30 ? ' alta demanda' : ((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 15 ? ' actividad normal' : ' baja actividad'} 
+                        {((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 30 ? ' que requiere optimización de procesos.' : ((resumen.totalGeneral || 0) / indicadoresPorFecha.length) > 15 ? ' en el sistema de admisiones.' : ' con capacidad disponible.'}
                       </>
                     ) : 'Calculando métricas de eficiencia...'}
                   </p>
@@ -485,7 +487,7 @@ export default function PatientsAnalytics() {
                   />
                   <MetricTooltip
                     label="Promedio de ingresos diarios"
-                    value={indicadoresPorFecha.length > 0 ? `${Math.round((resumen?.totalGeneral || 0) / indicadoresPorFecha.length)} pacientes/día` : 'Sin datos'}
+                    value={indicadoresPorFecha.length > 0 ? `${((resumen?.totalGeneral || 0) / indicadoresPorFecha.length).toFixed(2)} pacientes/día` : 'Sin datos'}
                     description="Promedio de pacientes que ingresan por día durante el período."
                     formula="Total de ingresos / Número de días con actividad"
                     interpretation="Valores entre 15-30 son normales. Menos de 15 indica baja actividad, más de 30 alta demanda."

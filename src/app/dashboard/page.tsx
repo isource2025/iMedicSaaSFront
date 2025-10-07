@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { bedsService } from '../services/bedsService';
 import { indicadoresService, ResumenPacientesHoy } from '../services/indicadoresService';
+import { obtenerActividadReciente, ActividadReciente } from '../services/dashboardService';
 import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
 import { useIndicadores } from '../hooks/useIndicadores';
 import styles from './DashboardPage.module.css';
@@ -45,8 +46,10 @@ export default function Dashboard() {
     camasNoDisponibles: 0
   });
   const [patientSummary, setPatientSummary] = useState<ResumenPacientesHoy>(initialPatientSummary);
+  const [actividadReciente, setActividadReciente] = useState<ActividadReciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingPatients, setLoadingPatients] = useState(true);
+  const [loadingActividad, setLoadingActividad] = useState(true);
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Configurar fechas para los últimos 30 días
@@ -94,8 +97,20 @@ export default function Dashboard() {
       }
     };
 
+    const fetchActividadReciente = async () => {
+      try {
+        const actividades = await obtenerActividadReciente(4);
+        setActividadReciente(actividades);
+      } catch (error) {
+        console.error('Error fetching recent activity:', error);
+      } finally {
+        setLoadingActividad(false);
+      }
+    };
+
     fetchBedStats();
     fetchPatientSummary();
+    fetchActividadReciente();
   }, []);
 
   return (
@@ -156,34 +171,34 @@ export default function Dashboard() {
               <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
             </button>
           </div>
-          <div className={styles.cardStats}>
-            <div className={styles.statRow}>
-              <div className={styles.cardMainMetric}>
-                <p className={styles.cardValue} >
-                  {loadingCamas ? '...' : (estadoActualCamas ? estadoActualCamas.totalCamas : bedStats.totalCamas)}
-                </p>
-                <span className={styles.cardMainLabel}>
-                  {loadingCamas ? 'Cargando...' : 'Total Camas'}
-                </span>
-              </div>
-              <div className={styles.cardSecondaryMetric}>
-                <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
-                  {loadingCamas ? '...' : (estadoActualCamas ? estadoActualCamas.disponibles : bedStats.camasDisponibles)}
-                </p>
-                <span className={styles.cardSecondaryLabel}>
-                  {loadingCamas ? 'Cargando...' : 'Disponibles'}
-                </span>
-              </div>
-              <div className={styles.cardSecondaryMetric}>
-                <p className={styles.cardSecondaryValue} style={{ color: '#00B5E2' }}>
-                  {loadingCamas ? '...' : (estadoActualCamas ? estadoActualCamas.ocupadas : bedStats.camasOcupadas)}
-                </p>
-                <span className={styles.cardSecondaryLabel}>
-                  {loadingCamas ? 'Cargando...' : 'Ocupadas'}
-                </span>
+          {loadingCamas ? (
+            <div className={styles.cardCenterLoader}>
+              <div className={styles.cardCenterSpinner}></div>
+            </div>
+          ) : (
+            <div className={styles.cardStats}>
+              <div className={styles.statRow}>
+                <div className={styles.cardMainMetric}>
+                  <p className={styles.cardValue}>
+                    {estadoActualCamas ? estadoActualCamas.totalCamas : bedStats.totalCamas}
+                  </p>
+                  <span className={styles.cardMainLabel}>Total Camas</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
+                    {estadoActualCamas ? estadoActualCamas.disponibles : bedStats.camasDisponibles}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Disponibles</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#00B5E2' }}>
+                    {estadoActualCamas ? estadoActualCamas.ocupadas : bedStats.camasOcupadas}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Ocupadas</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         
         <div 
@@ -197,26 +212,28 @@ export default function Dashboard() {
               <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
             </button>
           </div>
-          <div className={styles.cardStats}>
-            <div className={styles.statRow}>
-              <div className={styles.cardMainMetric}>
-                <p className={styles.cardValue} >
-                  {loadingPacientesAnalytics ? '...' : patientSummary.totalHoy}
-                </p>
-                <span className={styles.cardMainLabel}>
-                  {loadingPacientesAnalytics ? 'Cargando...' : 'Ingresados Hoy'}
-                </span>
-              </div>
-              <div className={styles.cardSecondaryMetric}>
-                <p className={styles.cardSecondaryValue} style={{ color: patientSummary.porcentajeCambio >= 0 ? '#388e3c' : '#d32f2f' }}>
-                  {loadingPacientesAnalytics ? '...' : `${patientSummary.porcentajeCambio >= 0 ? '+' : ''}${patientSummary.porcentajeCambio}%`}
-                </p>
-                <span className={styles.cardSecondaryLabel}>
-                  {loadingPacientesAnalytics ? 'Cargando...' : 'vs Ayer'}
-                </span>
+          {loadingPacientesAnalytics ? (
+            <div className={styles.cardCenterLoader}>
+              <div className={styles.cardCenterSpinner}></div>
+            </div>
+          ) : (
+            <div className={styles.cardStats}>
+              <div className={styles.statRow}>
+                <div className={styles.cardMainMetric}>
+                  <p className={styles.cardValue}>
+                    {patientSummary.totalHoy}
+                  </p>
+                  <span className={styles.cardMainLabel}>Ingresados Hoy</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: patientSummary.porcentajeCambio >= 0 ? '#388e3c' : '#d32f2f' }}>
+                    {`${patientSummary.porcentajeCambio >= 0 ? '+' : ''}${patientSummary.porcentajeCambio}%`}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>vs Ayer</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         
         <div className={styles.cardAppointments}>
@@ -252,25 +269,27 @@ export default function Dashboard() {
       <div className={styles.activitySection}>
         <h3 className={styles.activityTitle}>Actividad Reciente</h3>
         <div className={styles.activityList}>
-          {[
-            { time: '09:45', action: 'Ingreso de paciente', details: 'Juan Pérez - Habitación 203', icon: '👤' },
-            { time: '11:30', action: 'Alta médica', details: 'María Rodríguez - Habitación 108', icon: '🏥' },
-            { time: '13:15', action: 'Cambio de cama', details: 'Roberto Gómez - De 305 a 310', icon: '🛏️' },
-            { time: '14:20', action: 'Programación de cirugía', details: 'Ana Torres - Quirófano 2', icon: '🔪' },
-          ].map((item, index) => (
-            <div key={index} className={styles.activityItem}>
-              <div className={styles.activityIconContainer}>
-                <div className="w-8 h-8 rounded-full bg-pantone-311u bg-opacity-20 flex items-center justify-center">
-                  <span>{item.icon}</span>
-                </div>
-              </div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityAction}>{item.action}</p>
-                <p className={styles.activityDetails}>{item.details}</p>
-              </div>
-              <div className={styles.activityTime}>{item.time}</div>
+          {loadingActividad ? (
+            <div className={styles.loadingActivity}>
+              <div className={styles.loadingActivitySpinner}></div>
+              <p>Cargando actividad reciente...</p>
             </div>
-          ))}
+          ) : (
+            actividadReciente.map((item, index) => (
+              <div key={index} className={styles.activityItem}>
+                <div className={styles.activityIconContainer}>
+                  <div className="w-8 h-8 rounded-full bg-pantone-311u bg-opacity-20 flex items-center justify-center">
+                    <span>{item.icon}</span>
+                  </div>
+                </div>
+                <div className={styles.activityContent}>
+                  <p className={styles.activityAction}>{item.action}</p>
+                  <p className={styles.activityDetails}>{item.details}</p>
+                </div>
+                <div className={styles.activityTime}>{item.time}</div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

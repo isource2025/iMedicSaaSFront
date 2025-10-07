@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { OpcGrd } from '../../../types/opcGrd.types';
-import { useOpcGrdManager } from '../../../hooks/useOpcGrdManager';
+import { OpcGrd } from '@/app/types/opcGrd.types';
+import { useOpcGrdManager } from '@/app/hooks/useOpcGrdManager';
 import styles from '../../admission/tables/tables.module.css';
 import { FaCog, FaEdit, FaTrash, FaPlus, FaSave, FaUndo } from 'react-icons/fa';
 
