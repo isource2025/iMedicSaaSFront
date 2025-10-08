@@ -144,15 +144,17 @@ export default function IndicacionForm({
 	// Al cambiar tipo, limpiamos selección (ID) para evitar incoherencias
 	useEffect(() => {
 		set('AliasMedicamento', null); // ← solo hay un campo; aquí guardamos el ID
+		set('Codigo', null);
 	}, [tipoIndicacion]);
 
 	// === Descripción calculada (NO se guarda en payload) ===
 	const aliasDescripcion = useMemo(() => {
-		if (!dataForm || form.AliasMedicamento == null || !tipoIndicacion) return '';
-		const id = Number(form.AliasMedicamento);
+		if (!dataForm || form.Codigo == null || !tipoIndicacion) return '';
+		const id = Number(form.Codigo);
 
 		if (tipoIndicacion === 'M') {
 			const found = dataForm.vademecum.find((v) => Number(v.Valor) === id);
+
 			return found ? found.Descripcion?.trim() || found.Nombre : '';
 		}
 		if (tipoIndicacion === 'D') {
@@ -168,7 +170,15 @@ export default function IndicacionForm({
 			return found?.Descripcion ?? '';
 		}
 		return '';
-	}, [dataForm, form.AliasMedicamento, tipoIndicacion]);
+	}, [dataForm, form.Codigo, tipoIndicacion]);
+
+	useEffect(() => {
+		const next = aliasDescripcion || null;
+		if (form.AliasMedicamento !== next) {
+			set('AliasMedicamento', next);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [aliasDescripcion]);
 
 	// Recalcular Cantidad (total/día) a partir de CantidadIndicada (por toma) y Frecuencia
 	useEffect(() => {
@@ -202,7 +212,7 @@ export default function IndicacionForm({
 	}, [dataForm, form.Frecuencia, form.CantidadIndicada]);
 
 	return (
-		<form onSubmit={handleSubmit} className={styles.wrap}>
+		<form id='nueva-indicacion-form' onSubmit={handleSubmit} className={styles.wrap}>
 			{/* Fila 1 */}
 			<div className={styles.rowHeader}>
 				<div className={styles.row}>
@@ -279,10 +289,10 @@ export default function IndicacionForm({
 					<label className={styles.hLabel}>Medicación</label>
 					<CustomSelect
 						label=''
-						name='AliasMedicamento'
+						name='Codigo'
 						isLoading={dataLoading || !tipoIndicacion}
-						value={form.AliasMedicamento ?? ''} // ✅ guardamos ID en AliasMedicamento
-						onChange={(val) => set('AliasMedicamento', Number(val))}
+						value={form.Codigo ?? ''} // ✅ guardamos ID en AliasMedicamento
+						onChange={(val) => set('Codigo', Number(val))}
 						options={medicaCionData}
 						tabIndex={6}
 					/>
@@ -294,7 +304,6 @@ export default function IndicacionForm({
 						className={styles.input}
 						type='text'
 						value={aliasDescripcion} // ✅ calculado, NO se guarda
-						onChange={() => {}}
 						disabled
 						placeholder='Se completa al elegir medicación'
 						aria-disabled='true'

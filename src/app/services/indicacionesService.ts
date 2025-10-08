@@ -3,6 +3,7 @@ import {
 	IndicacionResponse,
 	IndicacionesResponse,
 	FormularioDatosResponse,
+	NuevaIndicacionPayload,
 } from '../types/indicaciones';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -108,5 +109,22 @@ export const indicacionesService = {
 			console.error('Error fetching formulario datos:', error);
 			return null;
 		}
+	},
+
+	postNuevaIndicacion: async (payload: NuevaIndicacionPayload) => {
+		const resp = await fetch(`${BASE_URL}/indicaciones`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload),
+		});
+		const json = await resp.json();
+		if (!resp.ok || json?.success === false) {
+			const msg = json?.message || 'No se pudo crear la indicación';
+			const detail = json?.invalidFields
+				? `\nDetalles: ${JSON.stringify(json.invalidFields)}`
+				: '';
+			throw new Error(msg + detail);
+		}
+		return json?.data;
 	},
 };

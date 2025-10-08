@@ -9,6 +9,7 @@ import IndicativoColors from './IdicativosColors';
 import NuevaIndicacionModal from '../../indicaciones/NuevaIndicacionModal';
 import { NuevaIndicacionPayload } from '../../../types/indicaciones';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
+import { indicacionesService } from '@/src/app/services/indicacionesService';
 
 type IndicacionDTO = {
 	id: string;
@@ -75,6 +76,7 @@ export default function IndicacionesSection({
 	const [query, setQuery] = useState('');
 	const [helpOpen, setHelpOpen] = useState(false);
 	const [modalOpen, setModalOpen] = useState(false);
+	const [saving, setSaving] = useState(false);
 
 	if (activeSection !== 'indicaciones') return null;
 
@@ -104,12 +106,24 @@ export default function IndicacionesSection({
 	};
 
 	const handleSave = async (data: NuevaIndicacionPayload) => {
-		// TODO: Implementar POST cuando el endpoint esté disponible
-		// await indicacionesService.createIndicacion(data);
-		// await refetch(); // Refrescar la lista después de guardar
+		setSaving(true);
+		try {
+			// Garantiza NumeroVisita desde props si viniera null
+			const finalPayload: NuevaIndicacionPayload = {
+				...data,
+				NumeroVisita: data.NumeroVisita ?? numeroVisita,
+			};
+			await indicacionesService.postNuevaIndicacion(finalPayload);
 
-		console.log('Indicación a guardar:', data);
-		setModalOpen(false);
+			await refetch();
+		} catch (err) {
+			if (err instanceof Error) {
+				alert(err.message ?? 'Error inesperado al guardar la indicación');
+			}
+		} finally {
+			setSaving(false);
+			setModalOpen(false);
+		}
 	};
 
 	return (
@@ -185,7 +199,13 @@ export default function IndicacionesSection({
 				onClose={() => setModalOpen(false)}
 				isOpen={modalOpen}
 				titulo='Agregando nueva Indicación'
-				footerButtons={null} // usamos el footer interno del form
+				footerButtons={
+					<>
+						<button type='submit' form='nueva-indicacion-form' disabled={saving}>
+							{saving ? 'Guardando…' : 'Guardar'}
+						</button>
+					</>
+				} // usamos el footer interno del form
 			>
 				<NuevaIndicacionModal
 					onClose={() => setModalOpen(false)}
