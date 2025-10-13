@@ -156,3 +156,48 @@
         min-width: 860px;
     }
 }
+
+/* ==== Columna Acciones ==== */
+.colAccion {
+    width: 120px;
+    text-align: center;
+}
+
+/* Botones dentro de la celda */
+.cellAccion {
+    text-align: center;
+}
+
+.actionBtns {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btnAction {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Hover states */
+.btnAction:hover {
+    background: #e5e7eb; /* gris suave */
+}
+
+/* Editar (azul) */
+.btnEdit:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* Eliminar (rojo) */
+.btnDelete:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
