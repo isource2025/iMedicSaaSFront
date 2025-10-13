@@ -10,6 +10,7 @@ import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";
 import { NuevaIndicacionPayload } from "../../../types/indicaciones";
 import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { indicacionesService } from "@/src/app/services/indicacionesService";
+import { se } from "date-fns/locale";
 
 type IndicacionDTO = {
     id: string;
@@ -83,7 +84,7 @@ export default function IndicacionesSection({
         }));
     }, [data]);
 
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
     const [query, setQuery] = useState("");
     const [helpOpen, setHelpOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
@@ -136,6 +137,34 @@ export default function IndicacionesSection({
         } finally {
             setSaving(false);
             setModalOpen(false);
+        }
+    };
+
+    const handleUpdate = async (data: NuevaIndicacionPayload) => {
+        setSaving(true);
+
+        try {
+            const id = Number(selectedId);
+            if (isNaN(id) || id <= 0) {
+                throw new Error("ID de indicación inválido para actualizar");
+            }
+
+            await indicacionesService.updateIndicacion(
+                Number(selectedId),
+                data
+            );
+
+            await refetch();
+        } catch (err) {
+            if (err instanceof Error) {
+                alert(
+                    err.message ??
+                        "Error inesperado al actualizar la indicación"
+                );
+            }
+        } finally {
+            setSaving(false);
+            setSelectedId(null);
         }
     };
 
@@ -198,7 +227,6 @@ export default function IndicacionesSection({
                     ) : (
                         <IndicacionesTable
                             rows={rows}
-                            selectedId={selectedId}
                             onSelectRow={(id) => setSelectedId(id)}
                             maxHeight={tableMaxHeight}
                             refetch={refetch}
@@ -236,11 +264,32 @@ export default function IndicacionesSection({
                     defaultNumeroVisita={numeroVisita}
                 />
             </ModalBasePaciente>
+
+            <ModalBasePaciente
+                numeroVisita={numeroVisita ? String(numeroVisita) : ""}
+                onClose={() => setSelectedId(null)}
+                isOpen={selectedId !== null}
+                titulo="Actualizando una Indicación"
+                footerButtons={
+                    <>
+                        <button
+                            className={styles.btn + " " + styles.btnPrimary}
+                            type="submit"
+                            form="nueva-indicacion-form"
+                            disabled={saving}
+                        >
+                            {saving ? "Guardando…" : "Guardar"}
+                        </button>
+                    </>
+                } // usamos el footer interno del form
+            >
+                <NuevaIndicacionModal
+                    onClose={() => setSelectedId(null)}
+                    onSave={handleUpdate}
+                    defaultNumeroVisita={numeroVisita}
+                    nroIndicacion={selectedId}
+                />
+            </ModalBasePaciente>
         </div>
     );
-}
-
-function formatMaybeDate(s: string) {
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? s : d.toLocaleString();
 }

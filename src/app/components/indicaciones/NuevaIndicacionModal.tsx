@@ -14,6 +14,7 @@ interface IndicacionFormProps {
     onClose: () => void;
     onSave: (data: NuevaIndicacionPayload) => Promise<void> | void;
     defaultNumeroVisita: number | null;
+    nroIndicacion?: number | null;
 }
 
 // ===== Clarion helpers =====
@@ -65,6 +66,7 @@ export default function IndicacionForm({
     onClose,
     onSave,
     defaultNumeroVisita,
+    nroIndicacion = null,
 }: IndicacionFormProps) {
     const initial = useMemo(
         () => emptyPayload(defaultNumeroVisita),
@@ -109,6 +111,63 @@ export default function IndicacionForm({
                 set("IdSector", (params.id as string).split("-")[0]);
                 const data = await indicacionesService.getFormularioDatos();
                 if (data) setDataForm(data);
+
+                if (nroIndicacion) {
+                    const res =
+                        await indicacionesService.getIndicacionesByNroIndicacion(
+                            nroIndicacion
+                        );
+
+                    if (res) {
+                        console.log("Indicacion loaded:", res);
+                        setForm((prev) => ({
+                            ...prev,
+                            // ids / relación
+                            NumeroVisita: res.NumeroVisita,
+                            NroAdicional: res.NroAdicional,
+                            NroIndicacionAnterior: res.NroIndicacionAnterior,
+                            IdSector: res.IdSector,
+
+                            // fecha/hora carga
+                            FechaCarga: res.FechaCarga,
+                            HoraCarga: res.HoraCarga,
+                            OperadorCarga: res.OperadorCarga,
+                            ProfesionalAsiste: res.ProfesionalAsiste,
+
+                            // últimas/próximas/revisión
+                            FechaCumplido: res.FechaCumplido,
+                            HoraCumplido: res.HoraCumplido,
+                            FechaProximo: res.FechaProximo,
+                            HoraProximo: res.HoraProximo,
+                            FechaRevision: res.FechaRevision,
+                            HoraRevision: res.HoraRevision,
+
+                            // tipo / código / alias
+                            TipoIndicacion: res.TipoIndicacion,
+                            Codigo: res.Codigo,
+                            AliasMedicamento: res.AliasMedicamento,
+
+                            // cantidades/frecuencia
+                            CantidadIndicada: res.CantidadIndicada,
+                            TipoUnidad: res.TipoUnidad,
+                            Frecuencia: res.Frecuencia,
+                            Cantidad: res.Cantidad,
+
+                            // varios
+                            Observaciones: res.Observaciones,
+                            FechaExpiro: res.FechaExpiro,
+                            HoraExpiro: res.HoraExpiro,
+                            Orden: res.Orden,
+                            Estado: res.Estado,
+                            CantidadPorTurno: res.CantidadPorTurno,
+                            CantidadEntregada: res.CantidadEntregada,
+                            ParaFechaEntrega:
+                                res.ParaFechaEntrega?.split("T")[0] || null,
+                            FormaAdicional: res.FormaAdicional,
+                            ExcluidoDeEntrega: res.ExcluidoDeEntrega,
+                        }));
+                    }
+                }
             } catch (err) {
                 console.error(err);
             } finally {

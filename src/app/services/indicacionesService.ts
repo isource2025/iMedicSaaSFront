@@ -167,4 +167,51 @@ export const indicacionesService = {
         }
         return true;
     },
+
+    getIndicacionesByNroIndicacion: async (
+        nroIndicacion: number
+    ): Promise<Indicacion | null> => {
+        try {
+            const res = await fetch(
+                `${BASE_URL}/indicaciones/${nroIndicacion}`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+            if (!res.ok) {
+                if (res.status === 404) return null;
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const json: IndicacionResponse = await res.json();
+            if (!json.success)
+                throw new Error(
+                    json.mensaje || "Error al obtener indicación por nro"
+                );
+            return json.data ?? null;
+        } catch (error) {
+            console.error("Error fetching indicación por nro:", error);
+            return null;
+        }
+    },
+
+    updateIndicacion: async (
+        id: number,
+        payload: Partial<NuevaIndicacionPayload>
+    ) => {
+        const resp = await fetch(`${BASE_URL}/indicaciones/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        const json = await resp.json();
+        if (!resp.ok || json?.success === false) {
+            const msg = json?.message || "No se pudo actualizar la indicación";
+            const detail = json?.invalidFields
+                ? `\nDetalles: ${JSON.stringify(json.invalidFields)}`
+                : "";
+            throw new Error(msg + detail);
+        }
+        return json?.data;
+    },
 };

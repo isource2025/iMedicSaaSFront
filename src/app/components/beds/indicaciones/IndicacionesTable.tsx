@@ -4,6 +4,8 @@ import EmptyState from "../shared/EmptyState";
 import { IoPencil, IoTrash } from "react-icons/io5";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import { indicacionesService } from "@/src/app/services/indicacionesService";
+import { useState } from "react";
+import ModalBasePaciente from "../../modals/ModalBasePaciente";
 
 export type IndicacionRow = {
     id: string;
@@ -22,7 +24,7 @@ export type IndicacionRow = {
 
 type Props = {
     rows: IndicacionRow[];
-    onSelectRow?: (id: string) => void;
+    onSelectRow?: (id: number) => void;
     selectedId?: string | null;
     /** Alto máximo disponible del contenedor (opcional). Por defecto llena el parent. */
     maxHeight?: number | string;
@@ -90,7 +92,6 @@ export default function IndicacionesTable({
                                               ? styles.activeRow
                                               : "",
                                       ].join(" ")}
-                                      onClick={() => onSelectRow?.(r.id)}
                                   >
                                       <td className={styles.cellTight}>
                                           <div className={styles.cantidad}>
@@ -143,10 +144,10 @@ export default function IndicacionesTable({
                                                   title="Editar indicación"
                                                   onClick={(e) => {
                                                       e.stopPropagation(); // evita seleccionar la fila al hacer click
-                                                      console.log(
-                                                          "Editar",
-                                                          r.id
-                                                      );
+                                                      onSelectRow &&
+                                                          onSelectRow(
+                                                              Number(r.id)
+                                                          );
                                                   }}
                                               >
                                                   <IoPencil />
