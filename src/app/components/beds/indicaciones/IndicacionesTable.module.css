@@ -1,159 +1,164 @@
+/* Contenedor */
 .tableWrap {
-	display: flex;
-	flex-direction: column;
-	width: 100%;
-	height: 100%;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	overflow: hidden;
-	box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border: 1px solid #e5e7eb; /* gris claro */
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .scrollArea {
-	position: relative;
-	display: flex;
-	flex: 1 1 auto;
-	overflow: auto;
+    position: relative;
+    flex: 1 1 auto;
+    overflow: auto; /* scroll si hace falta */
+    max-height: 100%; /* respeta alto del padre */
 }
 
+/* Tabla */
 .table {
-	border-collapse: separate;
-	border-spacing: 0;
-	width: 100%;
-	min-width: 980px;
-	font-size: 13px;
-	line-height: 1.25;
-	color: var(--ink);
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse; /* grilla clásica */
+    table-layout: fixed; /* respeta widths y truncados */
+    font-size: 13px;
+    line-height: 1.25;
+    color: #111827; /* slate-900 */
 }
 
+/* Encabezado pegajoso + borde inferior marcado */
 .thead th {
-	position: sticky;
-	top: 0;
-	z-index: 2;
-	background: var(--thead);
-	color: var(--ink);
-	text-align: left;
-	padding: 10px 12px;
-	border-bottom: 1px solid var(--border);
-	font-weight: 700;
-	vertical-align: bottom;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #edf2f7; /* gris header */
+    color: #111827;
+    text-align: left;
+    padding: 6px 12px;
+    font-weight: 700;
+    border-bottom: 2px solid #d1d5db; /* gris más fuerte */
 }
 
+/* Subtítulo debajo del título de la columna */
 .thead th span {
-	display: inline-block;
-	font-weight: 500;
-	color: var(--muted);
-	font-size: 11px;
-	margin-top: 2px;
+    display: inline-block;
+    margin-top: 2px;
+    font-weight: 500;
+    font-size: 11px;
+    color: #6b7280; /* slate-500 */
 }
 
+/* Celdas cuerpo */
 .tbody .row td {
-	padding: 8px 12px;
-	border-bottom: 1px solid var(--border);
-	vertical-align: top;
-	background: var(--card);
+    padding: 9px 12px;
+    border-top: 1px solid #e5e7eb; /* líneas horizontales */
+    vertical-align: top;
+    background: #fff;
 }
 
-.tbody .row:nth-child(odd) td {
-	background: var(--surface);
+/* Zebra */
+.tbody .row:nth-child(even) td {
+    background: #fafafa;
 }
 
+/* Hover fila */
 .row:hover td {
-	background: var(--hover);
+    background: #eef2ff; /* azul muy suave */
+    color: #111827;
 }
 
-.activeRow td {
-	background: var(--active-bg) !important;
-	color: var(--active-fg);
-}
-.activeRow td .sub {
-	color: rgba(255, 255, 255, 0.95);
-}
+/* Fila seleccionada */
+/* .activeRow td {
+    background: #dbeafe !important; /* azul suave /
+    color: #111827;
+} */
 
-.primary {
-	font-weight: 700;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.sub {
-	margin-top: 2px;
-	font-size: 12px;
-	color: var(--muted);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.colCant {
-	width: 96px;
-}
-.cellTight {
-	width: 96px;
-}
-.cantidad {
-	font-variant-numeric: tabular-nums;
-}
-
-.colInd {
-	width: 28%;
-}
-.colFreq {
-	width: 22%;
-}
-.colProx {
-	width: 22%;
-}
-.colNro {
-	width: 120px;
-	text-align: left;
-}
-.colSector {
-	width: 120px;
-}
-.colMed {
-	width: 24%;
-}
-
-.cellNum {
-	font-variant-numeric: tabular-nums;
-}
-.cellMono {
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-		'Courier New', monospace;
-}
-
-/* Empty overlay centrado y ocupando viewport disponible */
-.emptyOverlay {
-	position: absolute;
-	inset: 42px 0 0 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 24px;
-	pointer-events: none;
-	background: linear-gradient(
-		to bottom,
-		rgba(255, 255, 255, 0.85),
-		rgba(255, 255, 255, 0.95)
-	);
-	color: var(--muted);
-}
-
-/* Column dividers sutiles */
+/* Divisores de columna (opcional, coméntalo si no los quieres) */
 .table th,
 .table td {
-	border-right: 1px solid var(--border);
+    border-right: 1px solid #e5e7eb;
 }
 .table th:last-child,
 .table td:last-child {
-	border-right: none;
+    border-right: none;
 }
 
+/* Texto principal / secundario dentro de celdas compuestas */
+.primary {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sub {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Anchos de columnas */
+.colCant,
+.cellTight {
+    width: 96px;
+}
+.colInd {
+    width: 28%;
+}
+.colFreq {
+    width: 22%;
+}
+.colProx {
+    width: 22%;
+}
+.colNro {
+    width: 120px;
+}
+.colSector {
+    width: 120px;
+}
+.colMed {
+    width: 24%;
+}
+
+/* Tipografías utilitarias */
+.cellNum {
+    font-variant-numeric: tabular-nums;
+}
+.cellMono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+/* Empty overlay (cuando no hay filas) */
+.emptyOverlay {
+    position: absolute;
+    inset: 42px 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: none;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.85),
+        rgba(255, 255, 255, 0.95)
+    );
+    color: #6b7280;
+}
+
+.table th:last-child,
+.table td:last-child {
+    border-right: none;
+}
+/* Responsive mínimo */
 @media (max-width: 1200px) {
-	.table {
-		min-width: 860px;
-	}
+    .table {
+        min-width: 860px;
+    }
 }
