@@ -201,6 +201,7 @@ export default function IndicacionesSection({
                             selectedId={selectedId}
                             onSelectRow={(id) => setSelectedId(id)}
                             maxHeight={tableMaxHeight}
+                            refetch={refetch}
                         />
                     )}
                 </div>

@@ -2,6 +2,8 @@
 import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
 import { IoPencil, IoTrash } from "react-icons/io5";
+import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
+import { indicacionesService } from "@/src/app/services/indicacionesService";
 
 export type IndicacionRow = {
     id: string;
@@ -24,14 +26,27 @@ type Props = {
     selectedId?: string | null;
     /** Alto máximo disponible del contenedor (opcional). Por defecto llena el parent. */
     maxHeight?: number | string;
+    refetch: () => Promise<void>;
 };
 
 export default function IndicacionesTable({
     rows,
     onSelectRow,
     selectedId,
+    refetch,
 }: Props) {
     const hasRows = rows && rows.length > 0;
+
+    const handleDelete = async (id: number) => {
+        try {
+            const res = await indicacionesService.deleteIndicacion(id);
+            if (res) {
+                await refetch();
+            }
+        } catch (error) {
+            console.error("Error deleting indicacion:", error);
+        }
+    };
 
     return (
         <div className={styles.tableWrap}>
@@ -141,10 +156,15 @@ export default function IndicacionesTable({
                                                   title="Eliminar indicación"
                                                   onClick={(e) => {
                                                       e.stopPropagation();
-                                                      console.log(
-                                                          "Eliminar",
-                                                          r.id
-                                                      );
+                                                      if (
+                                                          confirm(
+                                                              "¿Confirma eliminar esta indicación?"
+                                                          )
+                                                      ) {
+                                                          handleDelete(
+                                                              Number(r.id)
+                                                          );
+                                                      }
                                                   }}
                                               >
                                                   <IoTrash />
