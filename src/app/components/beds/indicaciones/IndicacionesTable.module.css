@@ -34,12 +34,12 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    background: #edf2f7; /* gris header */
+    background: #e0f2fe; /* gris header */
     color: #111827;
     text-align: left;
     padding: 6px 12px;
     font-weight: 700;
-    border-bottom: 2px solid #d1d5db; /* gris más fuerte */
+    border-bottom: 2px solid #bae6fd;
 }
 
 /* Subtítulo debajo del título de la columna */
@@ -48,7 +48,7 @@
     margin-top: 2px;
     font-weight: 500;
     font-size: 11px;
-    color: #6b7280; /* slate-500 */
+    color: #6b7280;
 }
 
 /* Celdas cuerpo */
@@ -61,20 +61,14 @@
 
 /* Zebra */
 .tbody .row:nth-child(even) td {
-    background: #fafafa;
+    background: #fafafaaa;
 }
 
 /* Hover fila */
 .row:hover td {
-    background: #eef2ff; /* azul muy suave */
+    background: #e0f2fe;
     color: #111827;
 }
-
-/* Fila seleccionada */
-/* .activeRow td {
-    background: #dbeafe !important; /* azul suave /
-    color: #111827;
-} */
 
 /* Divisores de columna (opcional, coméntalo si no los quieres) */
 .table th,

@@ -1,133 +1,133 @@
 .wrapper {
-	margin-top: 12px;
-	display: grid;
-	gap: 12px;
+    margin-top: 12px;
+    display: grid;
+    gap: 12px;
 }
 
 .section {
-	border-radius: 10px;
-	overflow: hidden;
-	border: 1px solid var(--border);
-	background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #fff;
 }
 
 /* Summary ahora es un <button> */
 .summary {
-	width: 100%;
-	cursor: pointer;
-	padding: 10px 12px;
-	background: var(--pantone-313u);
-	font-weight: 700;
-	color: var(--ink);
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	user-select: none;
-	border: 0;
-	border-bottom: 1px solid var(--border);
-	text-align: left;
+    width: 100%;
+    cursor: pointer;
+    padding: 10px 12px;
+    background: var(--pantone-313u);
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
 }
 
 .summary:hover {
-	filter: brightness(0.98);
+    filter: brightness(0.98);
 }
 .summaryOpen {
-	background: var(--pantone-313u);
+    background: var(--pantone-313u);
 }
 
 /* Chevron animado */
 .chevron {
-	width: 10px;
-	height: 10px;
-	border-right: 2px solid var(--ink);
-	border-bottom: 2px solid var(--ink);
-	transform: rotate(-45deg);
-	transition: transform 0.25s ease;
-	margin-left: 8px;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    transform: rotate(-45deg);
+    transition: transform 0.25s ease;
+    margin-left: 8px;
 }
 .chevronOpen {
-	transform: rotate(135deg);
+    transform: rotate(135deg);
 }
 
 .collapse {
-	overflow: hidden;
-	will-change: height, opacity;
+    overflow: hidden;
+    will-change: height, opacity;
 }
 
 .nav {
-	padding: 0.3rem;
-	display: grid;
-	gap: 0.25rem;
-	background: #fff;
+    padding: 0.3rem;
+    display: grid;
+    gap: 0.25rem;
+    background: #fff;
 }
 
 /* Botones */
 .navButton {
-	width: 100%;
-	text-align: left;
-	padding: 8px 10px;
-	border-radius: 8px;
-	background: #fff;
-	border: 2px solid transparent;
-	color: #0f2a33;
-	cursor: pointer;
-	transition: all 0.2s ease;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #fff;
+    border: 2px solid transparent;
+    color: #0f2a33;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 .navButton:hover {
-	border-color: var(--pantone-314c);
-	background: var(--pantone-311u);
-	color: #0f2a33;
+    border-color: var(--pantone-314c);
+    background: #e0f2fe;
+    color: #0f2a33;
 }
 .active {
-	border-color: var(--pantone-314c);
-	background: var(--pantone-311u);
-	color: #0f2a33;
-	font-weight: bold;
+    border-color: var(--pantone-314c);
+    background: #e0f2fe;
+    color: #0f2a33;
+    font-weight: bold;
 }
 .active:hover {
-	border-color: var(--pantone-314c);
-	background: var(--pantone-311u);
-	color: #0f2a33;
+    border-color: var(--pantone-314c);
+    background: #e0f2fe;
+    color: #0f2a33;
 }
 
 /* Panel fijo */
 .fixedPanel {
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	background: var(--pantone-313u);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--pantone-313u);
 }
 .panelHeader {
-	padding: 10px 12px;
-	font-weight: 700;
-	color: #0f2a33;
-	border-bottom: 1px solid var(--border);
-	background: var(--pantone-313u);
-	border-radius: 10px 10px 0 0;
+    padding: 10px 12px;
+    font-weight: 700;
+    color: #0f2a33;
+    border-bottom: 1px solid var(--border);
+    background: var(--pantone-313u);
+    border-radius: 10px 10px 0 0;
 }
 .fixedNav {
-	border: none;
-	padding: 6px;
-	background: #fff;
-	border-radius: 0 0 10px 10px;
+    border: none;
+    padding: 6px;
+    background: #fff;
+    border-radius: 0 0 10px 10px;
 }
 
 .closeButton {
-	background: linear-gradient(135deg, #ff6b6b, #dc3545);
-	color: white;
-	border: none;
-	margin-top: 8px;
-	font-weight: 600;
-	padding: 8px 16px;
-	border-radius: 8px;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	text-transform: uppercase;
-	letter-spacing: 1px;
-	transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ff6b6b, #dc3545);
+    color: white;
+    border: none;
+    margin-top: 8px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
 }
 .closeButton:focus {
-	outline: none;
-	box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.5);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.5);
 }
 .closeButton:active {
-	transform: scale(0.95);
+    transform: scale(0.95);
 }
