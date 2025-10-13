@@ -219,6 +219,7 @@ export default function IndicacionesSection({
                 footerButtons={
                     <>
                         <button
+                            className={styles.btn + " " + styles.btnPrimary}
                             type="submit"
                             form="nueva-indicacion-form"
                             disabled={saving}
