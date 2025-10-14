@@ -83,7 +83,6 @@ export interface NuevaIndicacionPayload {
 	IdSector: string | null;
 	AliasMedicamento: string | null;
 	ExcluidoDeEntrega: boolean | null;
-	Medicaion: string | number | null;
 }
 
 // Tipos para opciones de formulario
