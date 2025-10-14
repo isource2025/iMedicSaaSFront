@@ -29,12 +29,6 @@
       "static/chunks/main-app.js",
       "static/css/app/dashboard/beds/page.css",
       "static/chunks/app/dashboard/beds/page.js"
-    ],
-    "/dashboard/patients/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/dashboard/patients/page.css",
-      "static/chunks/app/dashboard/patients/page.js"
     ]
   }
 }
