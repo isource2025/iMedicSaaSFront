@@ -1,101 +1,267 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+.wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 18px;
+	background: var(--card);
+	color: var(--ink);
+	box-shadow: var(--shadow);
 }
 
-.modal {
-  background: #ffffff;
-  border-radius: 10px;
-  width: 90%;
-  max-width: 850px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+/* === Rows generales === */
+.row,
+.rowHeader,
+.rowTmd,
+.rowQty,
+.rowCols3 {
+	display: flex;
+	align-items: center;
+	gap: 18px;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #eee;
+.rowHeader {
+	justify-content: space-between;
+	border-bottom: 1px solid var(--border);
+	padding-bottom: 8px;
+	margin-bottom: 8px;
 }
 
-.title {
-  font-size: 18px;
-  font-weight: 600;
+.rowTmd {
+	justify-content: space-between;
 }
 
-.closeBtn {
-  border: none;
-  background: transparent;
-  font-size: 22px;
-  cursor: pointer;
+.rowQty {
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	gap: 14px;
 }
 
-.content {
-  padding: 16px;
-  overflow: auto;
+.rowCols3 {
+	justify-content: space-between;
+	gap: 20px;
 }
 
-.formGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px 16px;
+/* === Labels e inputs === */
+.wrap label {
+	display: block;
+	font-weight: 600;
+	color: var(--muted);
+	margin-bottom: 4px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
+.input,
+.inputSm,
+.inputXs,
+.inputNum,
+.select,
+.textarea {
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: #fff;
+	padding: 6px 10px;
+	color: var(--ink);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.label {
-  font-size: 12px;
-  color: #444;
-  margin-bottom: 4px;
+.inputSm {
+	width: 140px;
 }
 
-.input, .select, .textarea {
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 14px;
+.inputXs {
+	width: 100px;
+}
+
+.inputNum {
+	width: 120px;
+}
+
+.select {
+	min-width: 160px;
+}
+
+.input {
+	width: 100%;
 }
 
 .textarea {
-  min-height: 70px;
-  resize: vertical;
+	width: 100%;
+	min-height: 70px;
+	resize: vertical;
 }
 
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid #eee;
+/* Estado hover y focus */
+.input:hover,
+.inputSm:hover,
+.inputXs:hover,
+.inputNum:hover,
+.select:hover,
+.textarea:hover {
+	border-color: var(--primary-600);
 }
 
-.btn {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-weight: 600;
+.input:focus,
+.inputSm:focus,
+.inputXs:focus,
+.inputNum:focus,
+.select:focus,
+.textarea:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px var(--primary-50);
+	outline: none;
 }
 
-.btnCancel {
-  background: #f5f5f5;
-  color: #333;
+.inlineField,
+.inlineFieldRight {
+	display: flex;
+	flex-direction: column;
 }
 
-.btnPrimary {
-  background: #1565c0;
-  color: white;
+.fieldFull {
+	width: 100%;
+}
+
+.inlineInputs {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.hField {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.hLabel {
+	font-weight: 600;
+	color: var(--muted);
+	margin-bottom: 4px;
+}
+
+.hField :global(.select) {
+	height: 2.375rem; /* mismo alto que tus inputs */
+	border-radius: 10px;
+	border: 1px solid var(--border);
+	font-size: 14px;
+}
+.hField :global(.dropdownPortal) {
+	z-index: 9999; /* asegura que flote sobre el modal */
+	border-radius: 10px;
+}
+
+.qtyGroup,
+.qtyGroupWide {
+	display: flex;
+	flex-direction: column;
+}
+
+.qtyGroupWide {
+	flex: 1;
+}
+
+/* === Cantidades / Unidad / Frecuencia === */
+.qtyGroup,
+.qtyGroupWide {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+/* Inputs de cantidad y unidad → mismo ancho */
+.qtyGroup .inputNum {
+	width: 120px; /* ancho fijo para que todos se alineen */
+}
+
+/* Frecuencia → más ancho */
+.qtyGroupWide .input {
+	min-width: 220px; /* más espacio para texto */
+	max-width: 300px;
+}
+
+/* Para mantener todo alineado en la fila */
+.rowQty {
+	display: flex;
+	align-items: flex-end;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+/* Badge tipo administrador */
+.badge {
+	background: var(--bg);
+	border: 1px solid var(--border);
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-weight: 600;
+	color: var(--primary-600);
+}
+
+/* === Botones === */
+.actionGroup {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+}
+
+.btnGhost {
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 6px 12px;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btnGhost:hover {
+	background: var(--primary-50);
+	border-color: var(--primary);
+}
+
+.btnGhostDanger {
+	background: #fff;
+	border: 1px solid #f3b0b0;
+	border-radius: 8px;
+	padding: 6px 12px;
+	color: #b42318;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btnGhostDanger:hover {
+	background: #fff5f5;
+	border-color: #e88;
+}
+
+/* === Tabla === */
+.tableCard {
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	overflow: hidden;
+	background: #fff;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	height: 160px;
+}
+
+.table th {
+	background: var(--bg);
+	border-bottom: 1px solid var(--border);
+	padding: 8px;
+	text-align: left;
+	font-weight: 600;
+	color: var(--muted);
+}
+
+.table td {
+	border-bottom: 1px solid var(--border);
+	padding: 8px;
+}
+
+.emptyRow td {
+	text-align: center;
+	color: var(--muted);
+	font-style: italic;
 }

@@ -1,28 +1,35 @@
-/* Estilos para PersonalDataTab.module.css */
+/* ===== Base ===== */
 
 .formContent {
 	padding: 0.5rem 0.25rem;
 }
 
-/* Estructura para una fila de un solo campo */
+/* Fila de un solo campo */
 .formRow {
-	margin-bottom: 1.25rem;
+	margin-bottom: 1rem;
 }
 
-/* Variante para filas con dos campos, lado a lado */
+/* Filas con 2 o 3 columnas */
 .formRow.double {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 	gap: 1.5rem;
-	align-items: start; /* Alinea los grupos al inicio */
+	align-items: center;
 }
 
-/* Contenedor de un par label-input */
+.formRow.three {
+	display: grid;
+	/* reemplaza 1fr 1fr 1fr */
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 1.5rem;
+	align-items: start;
+}
+
+/* Grupo label + input */
 .formGroup {
 	display: grid;
-	/* Columna fija para la etiqueta, el resto para el input */
 	grid-template-columns: 120px 1fr;
-	align-items: center; /* Centra verticalmente la etiqueta con el input */
+	align-items: center;
 	gap: 1rem;
 }
 
@@ -30,32 +37,32 @@
 	font-size: 0.725rem;
 	font-weight: 500;
 	color: #4b5563;
-	text-align: right; /* Alineado a la derecha para un look clásico */
+	text-align: right;
 	padding-right: 0.5rem;
 }
 
-/* Añade el asterisco rojo a los campos requeridos */
+/* Requeridos */
 .requiredField::after {
 	content: ' *';
 	color: #ef4444;
 	font-weight: bold;
 }
 
-.input,
-.select {
+/* ===== Inputs de texto ===== */
+
+.input {
 	width: 100%;
 	padding: 0.5rem 0.75rem;
 	border: 1px solid #d1d5db;
 	border-radius: 0.375rem;
 	font-size: 0.675rem;
 	background-color: #ffffff;
-	height: 2.1rem;
+	height: 2.375rem;
 	box-sizing: border-box;
 	transition: all 0.15s ease-in-out;
 }
 
-.input:focus,
-.select:focus {
+.input:focus {
 	outline: none;
 	border-color: #00b5e2; /* Pantone 313U */
 	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
@@ -67,24 +74,26 @@
 	color: #6b7280;
 }
 
-/* Clase para marcar inputs con errores */
+/* Errores */
 .error {
 	border-color: #ef4444;
 }
 
 .errorMessage {
-	grid-column: 2; /* Se posiciona debajo del input */
+	grid-column: 2;
 	color: #ef4444;
 	font-size: 0.75rem;
 	margin-top: 0.25rem;
 }
 
-/* Estilo para el texto "Cargando..." */
+/* Loading auxiliar de texto al lado del campo */
 .loadingText {
-	grid-column: 2; /* Se posiciona al lado del select */
+	grid-column: 2;
 	font-size: 0.75rem;
 	color: #0083a9; /* Pantone 314C */
 }
+
+/* ===== Botones de acción ===== */
 
 .buttonContainer {
 	display: flex;
@@ -130,6 +139,7 @@
 	cursor: not-allowed;
 }
 
+/* Placeholders */
 .placeholderTitle {
 	font-size: 1.25rem;
 	font-weight: 600;
@@ -142,41 +152,38 @@
 	color: #6b7280;
 }
 
-/* --- Media Queries para Responsividad --- */
+/* ===== Responsive ===== */
+
 @media (max-width: 768px) {
-	/* En pantallas medianas, las filas dobles se mantienen pero con menos espacio */
 	.formRow.double {
 		gap: 1rem;
 	}
-
 	.formGroup {
-		grid-template-columns: 90px 1fr; /* Reduce el espacio de la etiqueta */
+		grid-template-columns: 90px 1fr;
 	}
 }
 
 @media (max-width: 600px) {
-	/* En pantallas pequeñas, todo se apila verticalmente */
 	.formRow.double {
 		grid-template-columns: 1fr;
 		gap: 1.25rem;
 	}
-
 	.formGroup {
-		grid-template-columns: 1fr; /* La etiqueta pasa arriba del input */
+		grid-template-columns: 1fr;
 		gap: 0.25rem;
 		align-items: start;
 	}
-
 	.label {
-		text-align: left; /* La etiqueta se alinea a la izquierda */
+		text-align: left;
 		padding-right: 0;
 	}
-
 	.errorMessage,
 	.loadingText {
-		grid-column: 1; /* Ocupa toda la columna debajo del input */
+		grid-column: 1;
 	}
 }
+
+/* ===== Select custom (tipo MUI, sin librerías) ===== */
 
 .selectWrapper {
 	position: relative;
@@ -185,146 +192,116 @@
 	width: 100%;
 }
 
-.select:disabled {
-	background-color: #f3f4f6;
-	cursor: wait;
-	color: #6b7280;
-}
-
-/* El spinner que aparecerá a la derecha */
-.spinnerIcon {
-	position: absolute;
-	right: 1rem;
-	width: 1rem;
-	height: 1rem;
-	color: #0083a9;
-	animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-	from {
-		transform: rotate(0deg);
-	}
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-/* Select que parece un botón / campo */
+/* Botón/campo del select */
 .select {
 	position: relative;
-	border: 1px solid #d1d5db; /* gris claro */
-	color: #1f2937; /* texto oscuro */
-	cursor: pointer;
-	user-select: none;
-	min-height: 38px; /* tamaño fijo */
+	width: 100%;
+	min-height: 38px;
+	height: 2.375rem; /* consistente con .input */
+	padding: 0.5rem 2.25rem 0.5rem 0.75rem; /* deja espacio para flecha/spinner */
+	box-sizing: border-box;
+
+	background-color: #ffffff;
+	color: #1f2937;
+	border: 1px solid #d1d5db;
+	border-radius: 10px;
+	font-size: 0.675rem;
+
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	width: 100%;
-	padding: 0.5rem 0.75rem;
-	border-radius: 0.375rem;
-	font-size: 0.675rem;
-	background-color: #ffffff;
-	height: 2.1rem;
-	box-sizing: border-box;
-	transition: all 0.15s ease-in-out;
+	cursor: pointer;
+	user-select: none;
+	transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-/* Cuando el select está enfocado o abierto */
-.select:focus,
-.select:hover {
+/* Hover/focus visual */
+.select:hover,
+.select:focus {
 	border-color: var(--pantone-313u);
 	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.2);
 	outline: none;
 }
 
-/* Añadimos un pequeño icono flecha abajo al final */
+/* Flecha del select */
 .select::after {
 	content: '';
-	border-style: solid;
-	border-width: 6px 5px 0 5px;
-	border-color: #999 transparent transparent transparent;
 	position: absolute;
 	right: 12px;
 	top: 50%;
 	transform: translateY(-50%);
 	pointer-events: none;
+
+	border-style: solid;
+	border-width: 6px 5px 0 5px;
+	border-color: #999 transparent transparent transparent;
 }
 
-/* Spinner durante carga */
+/* Estado deshabilitado (mientras carga o cuando quieras) */
+.selectDisabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	user-select: none;
+}
+
+/* Estado loading: oculta flecha y mantiene spacing para spinner */
+.selectLoading::after {
+	opacity: 0; /* oculta flecha */
+}
+
+/* Spinner: contenedor posicionado; animación en ::before (no pisa translateY) */
 .spinnerIcon {
 	position: absolute;
 	right: 12px;
 	top: 50%;
 	width: 16px;
 	height: 16px;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+.spinnerIcon::before {
+	content: '';
+	display: block;
+	width: 16px;
+	height: 16px;
 	border: 2px solid #ccc;
 	border-top-color: var(--pantone-313u);
 	border-radius: 50%;
 	animation: spin 0.8s linear infinite;
-	transform: translateY(-50%);
-	pointer-events: none;
 }
-.selectDisabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-	user-select: none;
-}
-/* Dropdown con sombra y borde redondeado */
+
+/* Dropdown */
 .dropdown {
 	position: absolute;
 	top: calc(100% + 6px);
 	left: 0;
 	right: 0;
-	background: white;
+	z-index: 1000;
+
+	background: #fff;
 	border: 1px solid #d1d5db;
 	border-radius: 6px;
-	font-size: 0.675rem;
+	box-shadow: 0 4px 10px rgb(0 0 0 / 0.12);
+
 	max-height: 220px;
 	overflow-y: auto;
-	box-shadow: 0 4px 10px rgb(0 0 0 / 0.12);
-	z-index: 1000;
-	width: 100%;
-}
-
-/* Portal dropdown (posición fixed para sobreponer todo) */
-.dropdownPortal {
-	background: white;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
 	font-size: 0.675rem;
-	max-height: 240px;
-	overflow-y: auto;
-	box-shadow: 0 6px 16px rgb(0 0 0 / 0.18);
-	z-index: 99999; /* por encima de modales internos */
-	margin: 0;
-	padding: 0;
-	list-style: none;
 }
 
-/* Variante cuando abre hacia arriba - solo invertimos sombra ligera si se requiere */
-.openUp {
-	/* pequeño ajuste visual cuando abre hacia arriba */
-	box-shadow: 0 -4px 12px rgb(0 0 0 / 0.14);
-}
-
-/* Cada item del dropdown */
+/* Ítems del dropdown */
 .dropdownItem {
 	padding: 10px 14px;
-	cursor: pointer;
-	transition: background-color 0.2s ease;
 	color: #1f2937;
+	cursor: pointer;
 	user-select: none;
+	transition: background-color 0.2s ease;
 }
 
-/* Hover sobre el item */
 .dropdownItem:hover {
 	background-color: var(--pantone-311c);
-	color: white;
+	color: #fff;
 }
 
-/* Opción deshabilitada */
 .dropdownItemDisabled {
 	padding: 10px 14px;
 	color: #9ca3af;
@@ -332,7 +309,15 @@
 	user-select: none;
 }
 
-/* ====== OTROS DATOS (grupo especial) ====== */
+/* Responsive: lista más corta en móvil */
+@media (max-width: 600px) {
+	.dropdown {
+		max-height: 150px;
+	}
+}
+
+/* ===== Otros bloques específicos (Otros Datos) ===== */
+
 .otherDataList {
 	display: flex;
 	flex-direction: column;
@@ -340,19 +325,17 @@
 }
 
 .otherRow {
-	/* reutilizamos diseño base de formGroup */
 	display: grid;
 	grid-template-columns: 120px 1fr;
 	align-items: center;
 	gap: 1rem;
 }
 
-/* Contenedor de los cuadros (nacimientos múltiples / defunción) */
+/* Contenedores de cajas (nacimientos múltiples / defunción) */
 .groupBoxes {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 1.25rem;
-	margin-top: 1rem;
 }
 
 .groupBox {
@@ -368,7 +351,6 @@
 	font-weight: 600;
 	color: #374151;
 	margin: 0 0 0.5rem;
-	text-transform: none;
 }
 
 .groupInner {
@@ -386,20 +368,100 @@
 
 @media (max-width: 900px) {
 	.groupBoxes {
-		grid-template-columns: 1fr; /* apilar en pantallas pequeñas */
+		grid-template-columns: 1fr;
 	}
 }
 
-/* Evitar que el dropdown se superponga en pantallas chicas */
-@media (max-width: 600px) {
-	.dropdown {
-		max-height: 150px;
-	}
-}
-
-/* Animación spin */
+/* ===== Animación única para spinner ===== */
 @keyframes spin {
 	to {
 		transform: rotate(360deg);
+	}
+}
+
+/**Estilos para el buscador de opciones */
+/* ===== Dropdown en portal (flotante por encima de todo) ===== */
+.dropdownPortal {
+	position: fixed; /* clave: ignora stacking/overflow de padres */
+	z-index: 9999; /* por encima de todo */
+	background: #fff;
+	border: 1px solid #d1d5db;
+	border-radius: 10px;
+	max-height: 320px; /* alto total aprox (input + lista) */
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	will-change: transform, top, left, width;
+}
+
+/* Apertura: abajo (por defecto) o arriba (si no hay espacio) */
+.dropBottom {
+	transform: translateY(0);
+}
+.dropTop {
+	transform: translateY(-100%);
+}
+
+/* ===== Buscador estilo MUI ===== */
+.searchBar {
+	padding: 8px;
+	border-bottom: 1px solid #eef0f5;
+	background: #fafbff;
+}
+
+.searchInput {
+	width: 100%;
+	height: 36px;
+	border: 1px solid #cfd6e4;
+	border-radius: 8px;
+	padding: 0 10px;
+	outline: none;
+	font-size: 0.8rem;
+}
+
+.searchInput:focus {
+	border-color: var(--pantone-313u, #00b5e2);
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.2);
+}
+
+/* ===== Lista de opciones del portal ===== */
+.optionList {
+	list-style: none;
+	margin: 0;
+	padding: 4px 0;
+	overflow: auto;
+	font-size: 0.75rem;
+	max-height: 260px; /* 320 - (padding + buscador) aprox */
+}
+
+.dropdownItem {
+	padding: 10px 14px;
+	color: #1f2937;
+	cursor: pointer;
+	user-select: none;
+	transition: background-color 0.2s ease;
+}
+
+.dropdownItem:hover {
+	background-color: var(--pantone-311c, #00a3bd);
+	color: #fff;
+}
+
+.active {
+	background: #eef2ff;
+	font-weight: 600;
+}
+
+.dropdownItemDisabled {
+	padding: 10px 14px;
+	color: #9ca3af;
+	cursor: default;
+	user-select: none;
+}
+
+/* Responsive (portal) */
+@media (max-width: 600px) {
+	.optionList {
+		max-height: 200px;
 	}
 }

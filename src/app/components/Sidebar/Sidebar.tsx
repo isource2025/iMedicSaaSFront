@@ -1,21 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ChevronDown, Home, Calendar, ClipboardList, Activity, CreditCard, BarChart, Settings } from 'lucide-react';
 import styles from './Sidebar.module.css';
-import {
-  Home,
-  Calendar,
-  BarChart,
-  Settings,
-  CreditCard,
-  ClipboardList,
-  Activity,
-  ChevronDown,
-  ChevronRight,
-  LogOut
-} from 'lucide-react';
+import { useAppContext } from '../../contexts/AppContext';
 
 type SidebarProps = {
   sidebarOpen: boolean;
@@ -25,24 +15,8 @@ type SidebarProps = {
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
-  const [user, setUser] = useState<{ nombre?: string }>({});
+  const { sectorSeleccionado, empresaInfo } = useAppContext();
 
-  useEffect(() => {
-    try {
-      const userJSON = localStorage.getItem("user");
-      if (userJSON) {
-        setUser(JSON.parse(userJSON));
-      }
-    } catch {
-      setUser({});
-    }
-  }, []);
-
-  const handleLogOut = () => {
-    localStorage.setItem('user', JSON.stringify({}));
-    localStorage.setItem('token', JSON.stringify(""));
-    localStorage.setItem('sectorSeleccionado', JSON.stringify({}));
-  };
 
   const toggleSubmenu = (menuName: string) => {
     setExpandedMenus(prev => ({
@@ -108,16 +82,23 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       <div className={`${styles.backdrop} ${sidebarOpen ? styles.backdropVisible : ''}`} onClick={() => setSidebarOpen(false)} />
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden}`}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.logoContainer}>
-            <span className={styles.logoIcon}>i</span>
-            MedicWS
+          <div className={styles.headerContent}>
+            <div className={styles.companyInfo}>
+              {empresaInfo && (
+                <div className={styles.empresaDetails}>
+                  <span className={styles.empresaName}>{empresaInfo.descripcion}</span>
+                  {sectorSeleccionado && (
+                    <span className={styles.sectorName}>Sector: {sectorSeleccionado.descripcion}</span>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className={styles.headerActions}>
+              <button onClick={() => setSidebarOpen(false)} className={styles.closeButton}>
+                ×
+              </button>
+            </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className={styles.closeButton}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
         </div>
 
         <nav className={styles.navigation}>
@@ -176,25 +157,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <div className={styles.userSection}>
-            <div className={styles.userAvatar}>
-              {user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'A'}
-            </div>
-            <div className={styles.userInfo}>
-              <p className={styles.userName}>{user?.nombre || 'Usuario'}</p>
-              <p className={styles.userRole}>Administrador</p>
-            </div>
-            <button className={styles.userMenu}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="12" cy="5" r="1"></circle>
-                <circle cx="12" cy="19" r="1"></circle>
-              </svg>
-            </button>
+          <div className={styles.footerInfo}>
+            <span className={styles.footerText}>iMedicWS v1.0</span>
           </div>
-          <Link onClick={handleLogOut} href="/" className={styles.logoutLink}>
-            <LogOut size={16} /> Cerrar Sesión
-          </Link>
         </div>
       </aside>
     </>

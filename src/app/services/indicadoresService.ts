@@ -90,20 +90,29 @@ export const obtenerResumenIndicadores = async (
   fechaFin: string
 ): Promise<ResumenIndicadores> => {
   try {
-    const response = await axiosInstance.get<ResumenIndicadoresResponse>('/indicadores/resumen', {
-      params: {
-        tipoIndicador,
+    // Primero obtenemos los datos raw
+    const indicadoresRaw = await obtenerIndicadores(tipoIndicador, fechaInicio, fechaFin);
+    
+    // Procesamos los datos para crear el resumen por clase
+    const resumenPorClase: Record<string, number> = {};
+    let totalGeneral = 0;
+    
+    indicadoresRaw.forEach(item => {
+      if (!resumenPorClase[item.ClasePaciente]) {
+        resumenPorClase[item.ClasePaciente] = 0;
+      }
+      resumenPorClase[item.ClasePaciente] += item.TotalIngresos;
+      totalGeneral += item.TotalIngresos;
+    });
+    
+    return {
+      resumenPorClase,
+      totalGeneral,
+      periodo: {
         fechaInicio,
         fechaFin
-      },
-      timeout: 10000
-    });
-
-    if (response.data.success) {
-      return response.data.data;
-    } else {
-      throw new Error('Error en la respuesta del servidor');
-    }
+      }
+    };
   } catch (error) {
     console.error('Error al obtener resumen de indicadores:', error);
     throw error;
@@ -119,20 +128,33 @@ export const obtenerIndicadoresPorFecha = async (
   fechaFin: string
 ): Promise<IndicadorPorFecha[]> => {
   try {
-    const response = await axiosInstance.get<IndicadoresPorFechaResponse>('/indicadores/por-fecha', {
-      params: {
-        tipoIndicador,
-        fechaInicio,
-        fechaFin
-      },
-      timeout: 10000
+    // Primero obtenemos los datos raw
+    const indicadoresRaw = await obtenerIndicadores(tipoIndicador, fechaInicio, fechaFin);
+    
+    // Agrupamos por fecha
+    const datosPorFecha: Record<string, { total: number; porClase: Record<string, number> }> = {};
+    
+    indicadoresRaw.forEach(item => {
+      if (!datosPorFecha[item.Fecha]) {
+        datosPorFecha[item.Fecha] = {
+          total: 0,
+          porClase: {}
+        };
+      }
+      
+      datosPorFecha[item.Fecha].total += item.TotalIngresos;
+      datosPorFecha[item.Fecha].porClase[item.ClasePaciente] = item.TotalIngresos;
     });
-
-    if (response.data.success) {
-      return response.data.data;
-    } else {
-      throw new Error('Error en la respuesta del servidor');
-    }
+    
+    // Convertimos a array y ordenamos por fecha
+    return Object.entries(datosPorFecha)
+      .map(([fecha, datos]) => ({
+        fecha: new Date(fecha).toISOString(),
+        total: datos.total,
+        porClase: datos.porClase
+      }))
+      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+      
   } catch (error) {
     console.error('Error al obtener indicadores por fecha:', error);
     throw error;

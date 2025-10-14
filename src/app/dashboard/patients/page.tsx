@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePatients } from '../../hooks/usePatients';
-import { Patient } from '../../types/PatientInterface';
-import { PatientFormData } from '../../types/PatientFormInterface';
-import PatientList from '../../components/Patients/PatientList';
-import DeleteConfirmation from '../../components/Patients/DeleteConfirmation';
-import PatientDetails from '../../components/Patients/PatientDetails';
-import Modal from '../../components/UI/Modal';
-import ModalAddPatient from '../../components/modals/ModalAddPatient';
-import { PatientFormBase } from '../../components/Patients/PatientFormBase';
-import { SearchInput } from '../../components/beds/SearchInput';
-import { patientService } from '../../services/patientService';
+import { usePatients } from '@/app/hooks/usePatients';
+import { Patient } from '@/app/types/PatientInterface';
+import { PatientFormData } from '@/app/types/PatientFormInterface';
+import PatientList from '@/app/components/Patients/PatientList';
+import DeleteConfirmation from '@/app/components/Patients/DeleteConfirmation';
+import PatientDetails from '@/app/components/Patients/PatientDetails';
+import Modal from '@/app/components/UI/Modal';
+import ModalAddPatient from '@/app/components/modals/ModalAddPatient';
+import { PatientFormBase } from '@/app/components/Patients/PatientFormBase';
+import { SearchInput } from '@/app/components/beds/SearchInput';
+import { patientService } from '@/app/services/patientService';
 import styles from './patients.module.css';
 
 export default function PatientsPage() {

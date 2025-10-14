@@ -132,7 +132,7 @@ export const useBedsManagement = () => {
     // Filtrar por término de búsqueda (nombre, DNI o número de visita)
     const searchMatch = !searchTerm || (
       // Nombre del paciente
-      (bed.nombrePaciente && bed.nombrePaciente.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (bed.NombrePaciente && bed.NombrePaciente.toLowerCase().includes(searchTerm.toLowerCase())) ||
       // Número de documento (DNI)
       (bed.documentoPaciente && bed.documentoPaciente.toString().includes(searchTerm)) ||
       // Número de visita (admisión)

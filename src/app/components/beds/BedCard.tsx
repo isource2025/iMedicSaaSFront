@@ -117,7 +117,7 @@ const BedCard: React.FC<BedCardProps> = ({
             <div className={styles.patientData}>
               
               <span className={styles.documentNumber}>{bed.documentoPaciente}</span>
-            <span className={styles.patientName}><strong>{bed.nombrePaciente}</strong> </span>
+            <span className={styles.patientName}><strong>{bed.NombrePaciente}</strong> </span>
               
               <div className={styles.dateTimeContainer}>
                 {/* Fecha de ingreso */}

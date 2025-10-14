@@ -53,66 +53,72 @@
   transform: translateX(-100%);
 }
 
-/* Sidebar siempre visible en desktop */
+/* Sidebar responsive en desktop y mobile */
 @media screen and (min-width: 1024px) {
   .sidebar {
-    transform: translateX(0) !important;
-    position: static;
+    position: fixed; /* Cambiado de static a fixed */
     height: 100vh;
     width: 260px;
   }
   
+  .sidebarVisible {
+    transform: translateX(0);
+  }
+  
+  .sidebarHidden {
+    transform: translateX(-100%);
+  }
+  
   .backdrop {
-    display: none !important;
+    display: none !important; /* Sin backdrop en desktop */
   }
 }
 
 /* Encabezado del sidebar */
 .sidebarHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
-  background-color: #f8fafc;
-}
-
-.logoContainer {
-  display: flex;
-  align-items: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
-  letter-spacing: -0.5px;
-}
-
-.logoIcon {
-  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
+  background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
   color: white;
-  font-weight: 700;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  margin-right: 0.75rem;
-  box-shadow: 0 2px 4px rgba(0, 181, 226, 0.2);
 }
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.companyInfo {
+  flex: 1;
+  min-width: 0;
+  order: 2;
+}
+
+.headerActions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  order: 1;
+}
+
+
 
 .closeButton {
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
+  color: white;
   font-size: 1.5rem;
-  color: #64748b;
-  cursor: pointer;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  transition: background-color 0.2s, color 0.2s;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .closeButton:hover {
@@ -120,17 +126,11 @@
   color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
 }
 
-@media screen and (min-width: 1024px) {
-  .closeButton {
-    display: none;
-  }
-}
-
 /* Navegación */
 .navigation {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem 0;
+  padding: 2rem 0;
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0 transparent;
 }
@@ -168,7 +168,6 @@
   cursor: pointer;
   width: 100%;
   text-align: left;
-  border: none;
 }
 
 .navItem:hover {
@@ -264,103 +263,107 @@
 /* Footer del sidebar */
 .sidebarFooter {
   border-top: 1px solid #e2e8f0;
-  padding: 1.25rem 1.5rem;
   background-color: #f8fafc;
+  padding: 16px 24px;
+  text-align: center;
 }
 
-/* Sección de usuario */
-.userSection {
+.footerInfo {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.userAvatar {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  background-color: #00B5E2; /* Pantone 313U - Azul turquesa brillante */
-  color: white;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 181, 226, 0.2);
-  border: 2px solid white;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.userAvatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 181, 226, 0.3);
-}
-
-.userInfo {
-  flex: 1;
-  overflow: hidden;
-}
-
-.userName {
-  font-weight: 600;
-  color: #334155;
-  margin: 0;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.userRole {
-  color: #64748b;
-  font-size: 0.75rem;
-  margin: 0.125rem 0 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.userMenu {
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  font-size: 1.25rem;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
 }
 
-.userMenu:hover {
-  background-color: #e2e8f0;
-  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
-}
-
-/* Enlace de cierre de sesión */
-.logoutLink {
+.footerText {
+  font-size: 12px;
   color: #64748b;
-  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.empresaDetails {
   display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  text-decoration: none;
-  padding: 0.5rem 0;
-  margin-top: 0.5rem;
-  transition: color 0.2s ease;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
 }
 
-.logoutLink:hover {
-  color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
+.empresaName {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
 }
 
-.logoutLink svg {
-  transition: transform 0.2s ease;
+.sectorName {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.2;
 }
 
-.logoutLink:hover svg {
-  transform: translateX(-2px);
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .headerContent {
+    gap: 8px;
+  }
+  
+  .headerActions {
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+  
+  .companyInfo {
+    width: 100%;
+  }
+  
+  .empresaName {
+    font-size: 11px;
+  }
+  
+  .sectorName {
+    font-size: 10px;
+  }
+  
+  .userDropdown {
+    right: -8px;
+    min-width: 180px;
+  }
 }
+
+@media (max-width: 480px) {
+  .sidebarHeader {
+    padding: 1rem 1.25rem;
+  }
+  
+  .headerContent {
+    gap: 6px;
+  }
+  
+  .empresaName {
+    font-size: 10px;
+    line-height: 1.3;
+  }
+  
+  .sectorName {
+    font-size: 9px;
+    line-height: 1.3;
+  }
+  
+  .userMenuButton {
+    padding: 4px 6px;
+  }
+  
+  .userAvatar {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  
+  .closeButton {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 1.25rem;
+  }
+}
+

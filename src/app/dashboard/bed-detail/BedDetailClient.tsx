@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
-import BedDetailView from '../../components/beds/BedDetailView';
-import { Bed } from '../../types/beds';
+import BedDetailView from '@/app/components/beds/BedDetailView';
+import { Bed } from '@/app/types/beds';
 
 export default function BedDetailClient() {
   const searchParams = useSearchParams();
@@ -23,7 +23,7 @@ export default function BedDetailClient() {
           sector: 'Internación General',
           estado: 'ocupada',
           estadoDescripcion: 'Ocupada',
-          nombrePaciente: 'Juan Pérez',
+          NombrePaciente: 'Juan Pérez',
           documentoPaciente: '28456789',
           fechaIngreso: Date.now(),
           fechaEgreso: 0,

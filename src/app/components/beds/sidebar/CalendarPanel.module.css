@@ -1,0 +1,113 @@
+.card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+}
+.head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--border);
+}
+.head button {
+	background: transparent;
+	border: 0;
+	font-size: 0.65rem;
+	cursor: pointer;
+	color: var(--pantone-313u);
+}
+.title {
+	font-weight: 700;
+	font-size: 0.75rem;
+	color: var(--ink);
+	letter-spacing: 0.3px;
+	display: inline-block;
+}
+.grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	padding: 0.2rem 0.6rem;
+}
+.dow {
+	text-align: center;
+	font-size: 0.65rem;
+	color: var(--muted);
+	padding: 0.4rem 0 0;
+}
+.viewport {
+	padding: 0.2rem;
+}
+
+.cell {
+	height: 1.6rem;
+	margin: 0.08rem;
+	border-radius: 0.4rem;
+	border: 1px solid transparent;
+	background: #fff;
+	cursor: pointer;
+	color: #0f2a33;
+	font-size: 0.7rem;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.cell:hover {
+	border-color: var(--pantone-313u);
+}
+.active {
+	background: var(--pantone-313u);
+}
+
+/* Días fuera del mes: gris y opacos */
+.muted {
+	color: var(--muted);
+	background: #fafafa;
+	opacity: 0.3; /* << opacidad visible */
+}
+.muted:hover {
+	border-color: var(--border);
+	background: #f3f3f3;
+}
+/* Si el usuario selecciona un día “muted”, que se vea normal */
+.muted.active {
+	opacity: 1;
+}
+
+/* === Transición por opacidad (sin desplazamiento) === */
+.fadeOnly-enter {
+	opacity: 0;
+}
+.fadeOnly-enter-active {
+	opacity: 1;
+	transition: opacity 220ms ease;
+}
+.fadeOnly-exit {
+	opacity: 1;
+}
+.fadeOnly-exit-active {
+	opacity: 0;
+	transition: opacity 180ms ease;
+}
+/* Transición por opacidad (compatible con CSS Modules usando classNames objeto) */
+.fadeEnter {
+	opacity: 0;
+	will-change: opacity;
+}
+.fadeEnterActive {
+	opacity: 1;
+	transition: opacity 260ms ease;
+}
+.fadeExit {
+	opacity: 1;
+}
+.fadeExitActive {
+	opacity: 0;
+	transition: opacity 260ms ease 40ms;
+}
+
+/* Opcional: respetar preferencias de reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+	.fadeEnterActive,
+	.fadeExitActive {
+		transition: none;
+	}
+}
