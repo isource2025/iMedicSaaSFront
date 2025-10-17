@@ -40,7 +40,7 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
     Codigo: null,
 
     // Cantidades
-    CantidadIndicada: null, // ✅ EDITABLE (por toma)
+    CantidadIndicada: 1, // ✅ EDITABLE (por toma)
     TipoUnidad: null,
     Frecuencia: null, // puede ser ticks / "HH:MM" / "8" / "8h"
     Cantidad: null, // ✅ CALCULADA = CantidadIndicada × dosisPorDia
@@ -296,277 +296,285 @@ export default function IndicacionForm({
     }, [dataForm, form.Frecuencia, form.CantidadIndicada]);
 
     return (
-        <form
-            id="nueva-indicacion-form"
-            onSubmit={handleSubmit}
-            className={styles.wrap}
-        >
-            {/* Fila 1 */}
-            <div className={styles.rowHeader}>
-                <div className={styles.row}>
-                    <div className={styles.inlineField}>
-                        <label>Profesional que indica</label>
-                        <div className={styles.inlineInputs}>
-                            <input
-                                type="number"
-                                className={styles.inputXs}
-                                placeholder="Código"
-                                value={form.ProfesionalAsiste ?? ""}
-                                onChange={(e) =>
-                                    set("ProfesionalAsiste", n(e.target.value))
-                                }
-                                tabIndex={1}
-                                autoFocus
-                            />
-                            <div className={styles.badge}>ADMINISTRADOR</div>
+        <div className={styles.formScrollContainer}>
+            <form
+                id="nueva-indicacion-form"
+                onSubmit={handleSubmit}
+                className={styles.wrap}
+            >
+                {/* Fila 1 */}
+                <div className={styles.rowHeader}>
+                    <div className={styles.row}>
+                        <div className={styles.inlineField}>
+                            <label>Profesional que indica</label>
+                            <div className={styles.inlineInputs}>
+                                <input
+                                    type="number"
+                                    className={styles.inputXs}
+                                    placeholder="Código"
+                                    value={form.ProfesionalAsiste ?? ""}
+                                    onChange={(e) =>
+                                        set(
+                                            "ProfesionalAsiste",
+                                            n(e.target.value)
+                                        )
+                                    }
+                                    required
+                                />
+                                <div className={styles.badge}>
+                                    ADMINISTRADOR
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className={styles.inlineField}>
-                    <label>Fecha / Hora que indica</label>
-                    <div className={styles.inlineInputs}>
+                    <div className={styles.inlineField}>
+                        <label>Fecha / Hora que indica</label>
+                        <div className={styles.inlineInputs}>
+                            <input
+                                type="date"
+                                className={styles.inputSm}
+                                value={form.FechaCarga ?? ""}
+                                onChange={(e) =>
+                                    set("FechaCarga", s(e.target.value))
+                                }
+                            />
+                            <input
+                                type="time"
+                                className={styles.inputSm}
+                                value={form.HoraCarga ?? ""}
+                                onChange={(e) =>
+                                    set("HoraCarga", s(e.target.value))
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className={styles.inlineFieldRight}>
+                        <label>Solicitado para el día</label>
                         <input
                             type="date"
                             className={styles.inputSm}
-                            value={form.FechaCarga ?? ""}
+                            value={form.ParaFechaEntrega ?? ""}
                             onChange={(e) =>
-                                set("FechaCarga", s(e.target.value))
+                                set("ParaFechaEntrega", s(e.target.value))
                             }
+                        />
+                    </div>
+                </div>
+
+                {/* Fila 2: Tipo / Medicación / Descripción (solo visual) */}
+                <div className={styles.rowTmd}>
+                    <div className={styles.hField}>
+                        <label htmlFor="TipoIndicacion">
+                            Tipo de Indicación
+                        </label>
+                        <CustomSelect
+                            label=""
+                            name="TipoIndicacion"
+                            isLoading={dataLoading}
+                            onChange={(val) =>
+                                set("TipoIndicacion", Number(val))
+                            }
+                            value={form.TipoIndicacion || ""}
+                            tabIndex={1}
+                            autoFocus={true}
+                            options={
+                                dataForm?.tiposIndicacion.map((item) => ({
+                                    value: Number(item.Valor),
+                                    label: item.Descripcion,
+                                })) || []
+                            }
+                        />
+                    </div>
+
+                    <div className={styles.hField}>
+                        <label className={styles.hLabel}>Medicación</label>
+                        <CustomSelect
+                            label=""
+                            name="Codigo"
+                            isLoading={dataLoading || !tipoIndicacion}
+                            value={form.Codigo ?? ""} // ✅ guardamos ID en AliasMedicamento
+                            onChange={(val) => set("Codigo", Number(val))}
+                            options={medicaCionData}
                             tabIndex={2}
                         />
+                    </div>
+
+                    <div className={styles.hField}>
+                        <label className={styles.hLabel}>Descripción</label>
                         <input
-                            type="time"
-                            className={styles.inputSm}
-                            value={form.HoraCarga ?? ""}
+                            className={styles.input}
+                            type="text"
+                            value={aliasDescripcion} // ✅ calculado, NO se guarda
+                            disabled
+                            placeholder="Se completa al elegir medicación"
+                            aria-disabled="true"
+                        />
+                    </div>
+                </div>
+
+                {/* Fila 3: Cantidades */}
+                <div className={styles.rowQty}>
+                    <div className={styles.qtyGroup}>
+                        <label>Cantidad</label>
+                        <input
+                            type="number"
+                            step="1"
+                            className={styles.inputNum}
+                            value={form.CantidadIndicada ?? ""} // ✅ editable
                             onChange={(e) =>
-                                set("HoraCarga", s(e.target.value))
+                                set("CantidadIndicada", n(e.target.value))
                             }
                             tabIndex={3}
                         />
                     </div>
-                </div>
 
-                <div className={styles.inlineFieldRight}>
-                    <label>Solicitado para el día</label>
-                    <input
-                        type="date"
-                        className={styles.inputSm}
-                        value={form.ParaFechaEntrega ?? ""}
-                        onChange={(e) =>
-                            set("ParaFechaEntrega", s(e.target.value))
-                        }
-                        tabIndex={4}
-                    />
-                </div>
-            </div>
-
-            {/* Fila 2: Tipo / Medicación / Descripción (solo visual) */}
-            <div className={styles.rowTmd}>
-                <div className={styles.hField}>
-                    <label htmlFor="TipoIndicacion">Tipo de Indicación</label>
-                    <CustomSelect
-                        label=""
-                        name="TipoIndicacion"
-                        isLoading={dataLoading}
-                        onChange={(val) => set("TipoIndicacion", Number(val))}
-                        value={form.TipoIndicacion || ""}
-                        tabIndex={5}
-                        options={
-                            dataForm?.tiposIndicacion.map((item) => ({
-                                value: Number(item.Valor),
-                                label: item.Descripcion,
-                            })) || []
-                        }
-                    />
-                </div>
-
-                <div className={styles.hField}>
-                    <label className={styles.hLabel}>Medicación</label>
-                    <CustomSelect
-                        label=""
-                        name="Codigo"
-                        isLoading={dataLoading || !tipoIndicacion}
-                        value={form.Codigo ?? ""} // ✅ guardamos ID en AliasMedicamento
-                        onChange={(val) => set("Codigo", Number(val))}
-                        options={medicaCionData}
-                        tabIndex={6}
-                    />
-                </div>
-
-                <div className={styles.hField}>
-                    <label className={styles.hLabel}>Descripción</label>
-                    <input
-                        className={styles.input}
-                        type="text"
-                        value={aliasDescripcion} // ✅ calculado, NO se guarda
-                        disabled
-                        placeholder="Se completa al elegir medicación"
-                        aria-disabled="true"
-                    />
-                </div>
-            </div>
-
-            {/* Fila 3: Cantidades */}
-            <div className={styles.rowQty}>
-                <div className={styles.qtyGroup}>
-                    <label>Cantidad</label>
-                    <input
-                        type="number"
-                        step="1"
-                        className={styles.inputNum}
-                        value={form.CantidadIndicada ?? ""} // ✅ editable
-                        onChange={(e) =>
-                            set("CantidadIndicada", n(e.target.value))
-                        }
-                        tabIndex={7}
-                    />
-                </div>
-
-                <div className={styles.qtyGroup}>
-                    <label>Tipo unidad</label>
-                    <CustomSelect
-                        label=""
-                        name="TipoUnidad"
-                        isLoading={dataLoading}
-                        onChange={(val) => set("TipoUnidad", val)}
-                        options={
-                            dataForm?.unidadesMedida.map((item) => ({
-                                value: item.Valor,
-                                label: item.Descripcion,
-                            })) || []
-                        }
-                        value={form.TipoUnidad || ""}
-                        tabIndex={8}
-                    />
-                </div>
-
-                <div className={styles.qtyGroupWide}>
-                    <label>Frecuencia</label>
-                    <CustomSelect
-                        label=""
-                        name="Frecuencia"
-                        isLoading={dataLoading}
-                        onChange={(val) => set("Frecuencia", val)} // no casteamos; el parser se encarga
-                        value={form.Frecuencia || ""}
-                        options={
-                            dataForm?.frecuenciasAdmin.map((item) => ({
-                                value: item.Valor,
-                                label: item.Valor,
-                            })) || []
-                        }
-                        tabIndex={9}
-                    />
-                </div>
-
-                <div className={styles.qtyGroup}>
-                    <label>Cantidad</label>
-                    <input
-                        type="number"
-                        className={styles.inputNum}
-                        value={form.Cantidad ?? ""} // ✅ calculado
-                        onChange={() => {}}
-                        disabled
-                    />
-                </div>
-
-                <div className={styles.actionGroup}>
-                    <button type="button" className={styles.btnGhost}>
-                        Agregar
-                    </button>
-                    <button type="button" className={styles.btnGhost}>
-                        Cambiar
-                    </button>
-                    <button type="button" className={styles.btnGhostDanger}>
-                        Borrar
-                    </button>
-                </div>
-            </div>
-
-            {/* Fila 4: Tabla */}
-            <div className={styles.tableCard}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>Operación</th>
-                            <th>Medicamento</th>
-                            <th>Observaciones</th>
-                            <th>Cantidad</th>
-                            <th>Tipo unidad</th>
-                            <th>Frecuencia</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr className={styles.emptyRow}>
-                            <td colSpan={6}>Sin ítems agregados</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Fila 5: Observaciones */}
-            <div className={styles.row}>
-                <div className={styles.fieldFull}>
-                    <label>Observaciones</label>
-                    <textarea
-                        className={styles.textarea}
-                        value={form.Observaciones ?? ""}
-                        onChange={(e) =>
-                            set("Observaciones", s(e.target.value))
-                        }
-                        tabIndex={10}
-                    />
-                </div>
-            </div>
-
-            {/* Fila 6: Última / Próxima administración */}
-            <div className={styles.rowCols3}>
-                <div className={styles.inlineField}>
-                    <label>Última administración</label>
-                    <div className={styles.inlineInputs}>
-                        <input
-                            type="date"
-                            className={styles.inputSm}
-                            value={form.FechaCumplido ?? ""}
-                            onChange={(e) =>
-                                set("FechaCumplido", s(e.target.value))
+                    <div className={styles.qtyGroup}>
+                        <label>Tipo unidad</label>
+                        <CustomSelect
+                            label=""
+                            name="TipoUnidad"
+                            isLoading={dataLoading}
+                            onChange={(val) => set("TipoUnidad", val)}
+                            options={
+                                dataForm?.unidadesMedida.map((item) => ({
+                                    value: item.Valor,
+                                    label: item.Descripcion,
+                                })) || []
                             }
+                            value={form.TipoUnidad || ""}
+                            tabIndex={4}
                         />
-                        <input
-                            type="time"
-                            className={styles.inputSm}
-                            value={form.HoraCumplido ?? ""}
-                            onChange={(e) =>
-                                set("HoraCumplido", s(e.target.value))
+                    </div>
+
+                    <div className={styles.qtyGroupWide}>
+                        <label>Frecuencia</label>
+                        <CustomSelect
+                            label=""
+                            name="Frecuencia"
+                            isLoading={dataLoading}
+                            onChange={(val) => set("Frecuencia", val)} // no casteamos; el parser se encarga
+                            value={form.Frecuencia || ""}
+                            options={
+                                dataForm?.frecuenciasAdmin.map((item) => ({
+                                    value: item.Valor,
+                                    label: item.Valor,
+                                })) || []
                             }
+                            tabIndex={5}
+                        />
+                    </div>
+
+                    <div className={styles.qtyGroup}>
+                        <label>Cantidad</label>
+                        <input
+                            type="number"
+                            className={styles.inputNum}
+                            value={form.Cantidad ?? ""} // ✅ calculado
+                            onChange={() => {}}
+                            disabled
+                        />
+                    </div>
+
+                    <div className={styles.actionGroup}>
+                        <button type="button" className={styles.btnGhost}>
+                            Agregar
+                        </button>
+                        <button type="button" className={styles.btnGhost}>
+                            Cambiar
+                        </button>
+                        <button type="button" className={styles.btnGhostDanger}>
+                            Borrar
+                        </button>
+                    </div>
+                </div>
+
+                {/* Fila 4: Tabla */}
+                <div className={styles.tableCard}>
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>Operación</th>
+                                <th>Medicamento</th>
+                                <th>Observaciones</th>
+                                <th>Cantidad</th>
+                                <th>Tipo unidad</th>
+                                <th>Frecuencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className={styles.emptyRow}>
+                                <td colSpan={6}>Sin ítems agregados</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Fila 5: Observaciones */}
+                <div className={styles.row}>
+                    <div className={styles.fieldFull}>
+                        <label>Observaciones</label>
+                        <textarea
+                            className={styles.textarea}
+                            value={form.Observaciones ?? ""}
+                            onChange={(e) =>
+                                set("Observaciones", s(e.target.value))
+                            }
+                            tabIndex={6}
                         />
                     </div>
                 </div>
 
-                <div className={styles.inlineField}>
-                    <label>Próxima administración</label>
-                    <div className={styles.inlineInputs}>
-                        <input
-                            type="date"
-                            className={styles.inputSm}
-                            value={form.FechaProximo ?? ""}
-                            onChange={(e) =>
-                                set("FechaProximo", s(e.target.value))
-                            }
-                        />
-                        <input
-                            type="time"
-                            className={styles.inputSm}
-                            value={form.HoraProximo ?? ""}
-                            onChange={(e) =>
-                                set("HoraProximo", s(e.target.value))
-                            }
-                        />
+                {/* Fila 6: Última / Próxima administración */}
+                <div className={styles.rowCols3}>
+                    <div className={styles.inlineField}>
+                        <label>Última administración</label>
+                        <div className={styles.inlineInputs}>
+                            <input
+                                type="date"
+                                className={styles.inputSm}
+                                value={form.FechaCumplido ?? ""}
+                                onChange={(e) =>
+                                    set("FechaCumplido", s(e.target.value))
+                                }
+                            />
+                            <input
+                                type="time"
+                                className={styles.inputSm}
+                                value={form.HoraCumplido ?? ""}
+                                onChange={(e) =>
+                                    set("HoraCumplido", s(e.target.value))
+                                }
+                            />
+                        </div>
                     </div>
-                </div>
 
-                <div style={{ width: "210px" }} />
-            </div>
-        </form>
+                    <div className={styles.inlineField}>
+                        <label>Próxima administración</label>
+                        <div className={styles.inlineInputs}>
+                            <input
+                                type="date"
+                                className={styles.inputSm}
+                                value={form.FechaProximo ?? ""}
+                                onChange={(e) =>
+                                    set("FechaProximo", s(e.target.value))
+                                }
+                            />
+                            <input
+                                type="time"
+                                className={styles.inputSm}
+                                value={form.HoraProximo ?? ""}
+                                onChange={(e) =>
+                                    set("HoraProximo", s(e.target.value))
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ width: "210px" }} />
+                </div>
+            </form>
+        </div>
     );
 }

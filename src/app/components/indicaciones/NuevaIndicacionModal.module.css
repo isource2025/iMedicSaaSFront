@@ -1,11 +1,24 @@
 .wrap {
-	display: flex;
-	flex-direction: column;
-	gap: 14px;
-	padding: 18px;
-	background: var(--card);
-	color: var(--ink);
-	box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+}
+
+.formScrollContainer {
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+@media (min-width: 768px) {
+    .formScrollContainer {
+        max-height: unset;
+        overflow: unset;
+    }
 }
 
 /* === Rows generales === */
@@ -14,39 +27,39 @@
 .rowTmd,
 .rowQty,
 .rowCols3 {
-	display: flex;
-	align-items: center;
-	gap: 18px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
 }
 
 .rowHeader {
-	justify-content: space-between;
-	border-bottom: 1px solid var(--border);
-	padding-bottom: 8px;
-	margin-bottom: 8px;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 .rowTmd {
-	justify-content: space-between;
+    justify-content: space-between;
 }
 
 .rowQty {
-	justify-content: flex-start;
-	flex-wrap: wrap;
-	gap: 14px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 14px;
 }
 
 .rowCols3 {
-	justify-content: space-between;
-	gap: 20px;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 /* === Labels e inputs === */
 .wrap label {
-	display: block;
-	font-weight: 600;
-	color: var(--muted);
-	margin-bottom: 4px;
+    display: block;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
 }
 
 .input,
@@ -55,38 +68,38 @@
 .inputNum,
 .select,
 .textarea {
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	background: #fff;
-	padding: 6px 10px;
-	color: var(--ink);
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    padding: 6px 10px;
+    color: var(--ink);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .inputSm {
-	width: 140px;
+    width: 140px;
 }
 
 .inputXs {
-	width: 100px;
+    width: 100px;
 }
 
 .inputNum {
-	width: 120px;
+    width: 120px;
 }
 
 .select {
-	min-width: 160px;
+    min-width: 160px;
 }
 
 .input {
-	width: 100%;
+    width: 100%;
 }
 
 .textarea {
-	width: 100%;
-	min-height: 70px;
-	resize: vertical;
+    width: 100%;
+    min-height: 70px;
+    resize: vertical;
 }
 
 /* Estado hover y focus */
@@ -96,7 +109,7 @@
 .inputNum:hover,
 .select:hover,
 .textarea:hover {
-	border-color: var(--primary-600);
+    border-color: var(--primary-600);
 }
 
 .input:focus,
@@ -105,163 +118,258 @@
 .inputNum:focus,
 .select:focus,
 .textarea:focus {
-	border-color: var(--primary);
-	box-shadow: 0 0 0 3px var(--primary-50);
-	outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-50);
+    outline: none;
 }
 
 .inlineField,
 .inlineFieldRight {
-	display: flex;
-	flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .fieldFull {
-	width: 100%;
+    width: 100%;
 }
 
 .inlineInputs {
-	display: flex;
-	gap: 8px;
-	align-items: center;
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .hField {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .hLabel {
-	font-weight: 600;
-	color: var(--muted);
-	margin-bottom: 4px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
 }
 
 .hField :global(.select) {
-	height: 2.375rem; /* mismo alto que tus inputs */
-	border-radius: 10px;
-	border: 1px solid var(--border);
-	font-size: 14px;
+    height: 2.375rem; /* mismo alto que tus inputs */
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 14px;
 }
 .hField :global(.dropdownPortal) {
-	z-index: 9999; /* asegura que flote sobre el modal */
-	border-radius: 10px;
+    z-index: 9999; /* asegura que flote sobre el modal */
+    border-radius: 10px;
 }
 
 .qtyGroup,
 .qtyGroupWide {
-	display: flex;
-	flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .qtyGroupWide {
-	flex: 1;
+    flex: 1;
 }
 
 /* === Cantidades / Unidad / Frecuencia === */
 .qtyGroup,
 .qtyGroupWide {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 /* Inputs de cantidad y unidad → mismo ancho */
 .qtyGroup .inputNum {
-	width: 120px; /* ancho fijo para que todos se alineen */
+    width: 120px; /* ancho fijo para que todos se alineen */
 }
 
 /* Frecuencia → más ancho */
 .qtyGroupWide .input {
-	min-width: 220px; /* más espacio para texto */
-	max-width: 300px;
+    min-width: 220px; /* más espacio para texto */
+    max-width: 300px;
 }
 
 /* Para mantener todo alineado en la fila */
 .rowQty {
-	display: flex;
-	align-items: flex-end;
-	gap: 16px;
-	flex-wrap: wrap;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 /* Badge tipo administrador */
 .badge {
-	background: var(--bg);
-	border: 1px solid var(--border);
-	padding: 4px 10px;
-	border-radius: 999px;
-	font-weight: 600;
-	color: var(--primary-600);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    color: var(--primary-600);
 }
 
 /* === Botones === */
 .actionGroup {
-	display: flex;
-	gap: 8px;
-	align-items: flex-end;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
 }
 
 .btnGhost {
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: 8px;
-	padding: 6px 12px;
-	cursor: pointer;
-	transition: background 0.2s ease, border-color 0.2s ease;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .btnGhost:hover {
-	background: var(--primary-50);
-	border-color: var(--primary);
+    background: var(--primary-50);
+    border-color: var(--primary);
 }
 
 .btnGhostDanger {
-	background: #fff;
-	border: 1px solid #f3b0b0;
-	border-radius: 8px;
-	padding: 6px 12px;
-	color: #b42318;
-	cursor: pointer;
-	transition: background 0.2s ease, border-color 0.2s ease;
+    background: #fff;
+    border: 1px solid #f3b0b0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: #b42318;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .btnGhostDanger:hover {
-	background: #fff5f5;
-	border-color: #e88;
+    background: #fff5f5;
+    border-color: #e88;
 }
 
 /* === Tabla === */
 .tableCard {
-	border: 1px solid var(--border);
-	border-radius: 12px;
-	overflow: hidden;
-	background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
 }
 
 .table {
-	width: 100%;
-	border-collapse: collapse;
-	height: 160px;
+    width: 100%;
+    border-collapse: collapse;
+    height: 160px;
 }
 
 .table th {
-	background: var(--bg);
-	border-bottom: 1px solid var(--border);
-	padding: 8px;
-	text-align: left;
-	font-weight: 600;
-	color: var(--muted);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--muted);
 }
 
 .table td {
-	border-bottom: 1px solid var(--border);
-	padding: 8px;
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
 }
 
 .emptyRow td {
-	text-align: center;
-	color: var(--muted);
-	font-style: italic;
+    text-align: center;
+    color: var(--muted);
+    font-style: italic;
+}
+
+@media screen and (max-width: 1366px) {
+    .wrap {
+        font-size: 0.65rem;
+    }
+
+    .input,
+    .inputSm,
+    .inputXs,
+    .inputNum,
+    .select,
+    .textarea,
+    .table th,
+    .table td,
+    .badge {
+        font-size: 0.65rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .formScrollContainer {
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 12px;
+    }
+
+    .wrap {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    /* Apilamos las filas horizontalmente */
+    .row,
+    .rowHeader,
+    .rowTmd,
+    .rowQty,
+    .rowCols3 {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    /* Campos en bloque */
+    .inlineField,
+    .inlineFieldRight,
+    .hField,
+    .qtyGroup,
+    .qtyGroupWide,
+    .fieldFull {
+        width: 100%;
+    }
+
+    .input,
+    .inputSm,
+    .inputXs,
+    .inputNum,
+    .select,
+    .textarea {
+        width: 100% !important;
+        font-size: 14px;
+    }
+
+    .badge {
+        font-size: 12px;
+        padding: 4px 8px;
+        align-self: flex-start;
+    }
+
+    .inlineInputs {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .actionGroup {
+        justify-content: flex-start;
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    .btnGhost,
+    .btnGhostDanger {
+        width: 100%;
+        text-align: center;
+    }
+
+    .tableCard {
+        font-size: 12px;
+    }
+
+    .table th,
+    .table td {
+        font-size: 12px;
+        padding: 6px;
+    }
 }
