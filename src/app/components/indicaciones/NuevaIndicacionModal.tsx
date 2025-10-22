@@ -9,6 +9,7 @@ import {
 import { indicacionesService } from "../../services/indicacionesService";
 import CustomSelect from "../Patients/AddPatient/LoadingSelect";
 import { useParams } from "next/navigation";
+import { useAppContext } from "@/app/contexts/AppContext";
 
 interface IndicacionFormProps {
     onClose: () => void;
@@ -78,9 +79,15 @@ export default function IndicacionForm({
         null
     );
     const params = useParams();
+    const { usuario } = useAppContext();
 
     useEffect(() => {
         setForm(emptyPayload(defaultNumeroVisita));
+        setForm((prev) => ({
+            ...prev,
+            ProfesionalAsiste:
+                usuario?.valorPersonal || usuario?.idValorpersonal,
+        }));
     }, [defaultNumeroVisita]);
 
     const set = (field: keyof NuevaIndicacionPayload, value: any) =>
@@ -107,6 +114,7 @@ export default function IndicacionForm({
     useEffect(() => {
         (async () => {
             setDataLoading(true);
+
             try {
                 set("IdSector", (params.id as string).split("-")[0]);
                 const data = await indicacionesService.getFormularioDatos();
@@ -294,6 +302,8 @@ export default function IndicacionForm({
         // Cantidad = por_toma × dosisPorDia (entero)
         set("Cantidad", porToma * dosisPorDia);
     }, [dataForm, form.Frecuencia, form.CantidadIndicada]);
+
+    console.log("Usuario:", usuario);
 
     return (
         <div className={styles.formScrollContainer}>
