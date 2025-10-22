@@ -2,10 +2,9 @@
 import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
 import { IoPencil, IoTrash } from "react-icons/io5";
-import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import { indicacionesService } from "../../../services/indicacionesService";
 import { useState } from "react";
-import ModalBasePaciente from "../../modals/ModalBasePaciente";
+import ConfirmationModal from "../shared/ConfirmationModal";
 
 export type IndicacionRow = {
     id: string;
@@ -38,6 +37,7 @@ export default function IndicacionesTable({
     refetch,
 }: Props) {
     const hasRows = rows && rows.length > 0;
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleDelete = async (id: number) => {
         try {
@@ -48,6 +48,17 @@ export default function IndicacionesTable({
         } catch (error) {
             console.error("Error deleting indicacion:", error);
         }
+    };
+
+    const handleConfirmDelete = () => {
+        if (!deletingId) return; // No debería pasar, pero es buena práctica
+
+        handleDelete(Number(deletingId));
+        setDeletingId(null); // Cierra el modal
+    };
+
+    const handleCloseModal = () => {
+        setDeletingId(null);
     };
 
     return (
@@ -164,15 +175,8 @@ export default function IndicacionesTable({
                                                       title="Eliminar indicación"
                                                       onClick={(e) => {
                                                           e.stopPropagation();
-                                                          if (
-                                                              confirm(
-                                                                  "¿Confirma eliminar esta indicación?"
-                                                              )
-                                                          ) {
-                                                              handleDelete(
-                                                                  Number(r.id)
-                                                              );
-                                                          }
+                                                          // Ya no llama a confirm(), solo abre el modal
+                                                          setDeletingId(r.id);
                                                       }}
                                                   >
                                                       <IoTrash />
@@ -251,13 +255,8 @@ export default function IndicacionesTable({
                                 className={`${styles.btnAction} ${styles.btnDelete}`}
                                 title="Eliminar"
                                 onClick={() => {
-                                    if (
-                                        confirm(
-                                            "¿Confirma eliminar esta indicación?"
-                                        )
-                                    ) {
-                                        handleDelete(Number(r.id));
-                                    }
+                                    // Ya no llama a confirm(), solo abre el modal
+                                    setDeletingId(r.id);
                                 }}
                             >
                                 <IoTrash />
@@ -266,6 +265,16 @@ export default function IndicacionesTable({
                     </div>
                 ))}
             </div>
+
+            <ConfirmationModal
+                isOpen={deletingId !== null}
+                onClose={handleCloseModal}
+                onConfirm={handleConfirmDelete}
+                title="Confirmar Eliminación"
+                message="¿Está seguro que desea eliminar esta indicación?"
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+            />
         </>
     );
 }
