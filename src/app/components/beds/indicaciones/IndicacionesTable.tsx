@@ -3,7 +3,7 @@ import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
 import { IoPencil, IoTrash } from "react-icons/io5";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
-import { indicacionesService } from "@/src/app/services/indicacionesService";
+import { indicacionesService } from "../../../services/indicacionesService";
 import { useState } from "react";
 import ModalBasePaciente from "../../modals/ModalBasePaciente";
 

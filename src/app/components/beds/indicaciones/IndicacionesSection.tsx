@@ -9,7 +9,7 @@ import IndicativoColors from "./IdicativosColors";
 import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";
 import { NuevaIndicacionPayload } from "../../../types/indicaciones";
 import ModalBasePaciente from "../../modals/ModalBasePaciente";
-import { indicacionesService } from "@/src/app/services/indicacionesService";
+import { indicacionesService } from "../../../services/indicacionesService";
 import { se } from "date-fns/locale";
 
 type IndicacionDTO = {
