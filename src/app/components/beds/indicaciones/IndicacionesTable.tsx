@@ -58,13 +58,7 @@ export default function IndicacionesTable({
                         <thead className={styles.thead}>
                             <tr>
                                 <th className={styles.colCant}>Cantidad</th>
-                                <th className={styles.colInd}>
-                                    Indicación
-                                    <br />
-                                    <span>
-                                        Descripción · Profesional que Indica
-                                    </span>
-                                </th>
+
                                 <th className={styles.colFreq}>
                                     Frecuencia
                                     <br />
@@ -79,7 +73,13 @@ export default function IndicacionesTable({
                                     Nro Indicación
                                 </th>
                                 <th className={styles.colSector}>Id Sector</th>
+                                <th className={styles.colInd}>
+                                    Indicación
+                                    <br />
+                                    <span>Profesional que Indica</span>
+                                </th>
                                 <th className={styles.colMed}>Medicamento</th>
+
                                 <th className={styles.colAccion}>Acciones</th>
                             </tr>
                         </thead>
@@ -99,19 +99,6 @@ export default function IndicacionesTable({
                                           <td className={styles.cellTight}>
                                               <div className={styles.cantidad}>
                                                   {r.cantidad ?? ""}
-                                              </div>
-                                          </td>
-
-                                          <td>
-                                              <div className={styles.desc}>
-                                                  <div
-                                                      className={styles.primary}
-                                                  >
-                                                      {r.descripcion ?? "-"}
-                                                  </div>
-                                                  <div className={styles.sub}>
-                                                      {r.profesional ?? ""}
-                                                  </div>
                                               </div>
                                           </td>
 
@@ -141,7 +128,20 @@ export default function IndicacionesTable({
                                           <td className={styles.cellMono}>
                                               {r.idSector ?? ""}
                                           </td>
+                                          <td>
+                                              <div className={styles.desc}>
+                                                  <div
+                                                      className={styles.primary}
+                                                  >
+                                                      {r.descripcion ?? "-"}
+                                                  </div>
+                                                  <div className={styles.sub}>
+                                                      {r.profesional ?? ""}
+                                                  </div>
+                                              </div>
+                                          </td>
                                           <td>{r.medicamento ?? ""}</td>
+
                                           <td className={styles.cellAccion}>
                                               <div
                                                   className={styles.actionBtns}
