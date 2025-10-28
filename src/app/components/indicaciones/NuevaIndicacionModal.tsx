@@ -237,7 +237,7 @@ export default function IndicacionForm({
                 (v) => Number(v.Valor) === id
             );
 
-            return found ? found.Descripcion?.trim() || found.Nombre : "";
+            return found?.Nombre ?? ""
         }
         if (tipoIndicacion === "D") {
             const found = dataForm.tiposDieta.find(
@@ -295,7 +295,7 @@ export default function IndicacionForm({
         // CantidadIndicada debe ser >= 1 (si algo raro llega, forzamos 1)
         const porToma =
             typeof form.CantidadIndicada === "number" &&
-            form.CantidadIndicada >= 1
+                form.CantidadIndicada >= 1
                 ? form.CantidadIndicada
                 : 1;
 
@@ -323,16 +323,11 @@ export default function IndicacionForm({
                                     className={styles.inputXs}
                                     placeholder="Código"
                                     value={form.ProfesionalAsiste ?? ""}
-                                    onChange={(e) =>
-                                        set(
-                                            "ProfesionalAsiste",
-                                            n(e.target.value)
-                                        )
-                                    }
+                                    disabled
                                     required
                                 />
                                 <div className={styles.badge}>
-                                    ADMINISTRADOR
+                                    {(usuario?.nombre + " " + usuario?.apellido) || "ADMINISTRADOR"}
                                 </div>
                             </div>
                         </div>
@@ -431,11 +426,28 @@ export default function IndicacionForm({
                         <input
                             type="number"
                             step="1"
+                            min={1}
                             className={styles.inputNum}
                             value={form.CantidadIndicada ?? ""} // ✅ editable
                             onChange={(e) =>
                                 set("CantidadIndicada", n(e.target.value))
                             }
+                            onInput={(e) => {
+                                const inputElement = e.target as HTMLInputElement;
+                                const rawValue = inputElement.value;
+
+                                if (rawValue === "" || rawValue === "-") {
+                                    inputElement.value = "";
+                                }
+
+                                const numericValue = parseInt(rawValue);
+
+                                if (isNaN(numericValue) || numericValue < 1) {
+                                    if (rawValue !== "") {
+                                        inputElement.value = "1";
+                                    }
+                                }
+                            }}
                             tabIndex={3}
                         />
                     </div>
@@ -482,7 +494,7 @@ export default function IndicacionForm({
                             type="number"
                             className={styles.inputNum}
                             value={form.Cantidad ?? ""} // ✅ calculado
-                            onChange={() => {}}
+                            onChange={() => { }}
                             disabled
                         />
                     </div>

@@ -17,6 +17,7 @@ type IndicacionDTO = {
     cantidad?: number | string;
     descripcion?: string;
     profesional?: string;
+    fullName?: string, 
     frecuencia?: string;
     observaciones?: string;
     proximo?: string;
@@ -60,7 +61,11 @@ export default function IndicacionesSection({
         cacheTimeMs: 15000,
     });
 
+
+
     const baseRows: IndicacionRow[] = useMemo(() => {
+
+
         // 🔓 soporta tanto array directo como wrapper {data:[]}
         const list: IndicacionDTO[] = Array.isArray(data)
             ? data
@@ -68,11 +73,13 @@ export default function IndicacionesSection({
             ? (data as any).data
             : [];
 
+            
         return list.map((x) => ({
             id: x.id,
             cantidad: x.cantidad,
             descripcion: x.descripcion,
             profesional: x.profesional,
+            fullName: x.fullName,
             frecuencia: x.frecuencia,
             observaciones: x.observaciones,
             proximo: x.proximo,
@@ -103,6 +110,7 @@ export default function IndicacionesSection({
                 hay(r.descripcion) ||
                 hay(r.profesional) ||
                 hay(r.frecuencia) ||
+                hay(r.fullName) ||
                 hay(r.observaciones) ||
                 hay(r.medicamento) ||
                 hay(r.idSector) ||

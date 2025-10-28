@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { NursingReportModalProps, ControlFrecuente } from '../../types/nursing/NursingComponents';
 import ModalBasePaciente from '../modals/ModalBasePaciente';
 import ControlesFrecuentesChart, { CHART_PARAMS } from "./ControlesFrecuentesChart";
-import NuevaIndicacionModal, { IndicacionData } from './NuevaIndicacionModal';
+// import NuevaIndicacionModal, { IndicacionData } from './NuevaIndicacionModal';
 import styles from './NursingReportModal.module.css';
+import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
+import { NuevaIndicacionPayload } from '@/app/types/indicaciones';
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
@@ -25,6 +27,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
   const [showNewIndicationForm, setShowNewIndicationForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'tabla' | 'grafico'>('tabla');
   const [parametro, setParametro] = useState('pulso');
+  const [saving, setSaving] = useState(false)
 
   const fetchControlData = useCallback(async () => {
     if (!isOpen || !numeroVisita) return;
@@ -56,7 +59,8 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
 
   const handleNewIndication = useCallback(() => setShowNewIndicationForm(true), []);
   const handleCancelNewIndication = useCallback(() => setShowNewIndicationForm(false), []);
-  const handleSaveIndication = useCallback(async (indicacionData: IndicacionData) => {
+  const handleSaveIndication = useCallback(async (indicacionData: NuevaIndicacionPayload) => {
+    setSaving(true)
     try {
       console.log('Guardando indicación:', indicacionData);
       setShowNewIndicationForm(false);
@@ -65,6 +69,8 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
     } catch (error) {
       console.error('Error al guardar la indicación:', error);
       alert('Error al guardar la indicación');
+    } finally {
+      setSaving(false)
     }
   }, [numeroVisita, fetchControlData]);
 
@@ -184,12 +190,37 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
         </div>
       </ModalBasePaciente>
 
-      <NuevaIndicacionModal
+      {/* <NuevaIndicacionModal
         isOpen={showNewIndicationForm}
         onClose={handleCancelNewIndication}
         numeroVisita={String(numeroVisita)}
         onSave={handleSaveIndication}
-      />
+      /> */}
+
+       <ModalBasePaciente
+                numeroVisita={numeroVisita ? String(numeroVisita) : ""}
+                onClose={handleCancelNewIndication}
+                isOpen={showNewIndicationForm}
+                titulo="Agregando nueva Indicación"
+                footerButtons={
+                    <>
+                        <button
+                            className={styles.btn + " " + styles.btnPrimary}
+                            type="submit"
+                            form="nueva-indicacion-form"
+                            disabled={saving}
+                        >
+                            {saving ? "Guardando…" : "Guardar"}
+                        </button>
+                    </>
+                } // usamos el footer interno del form
+            >
+                <NuevaIndicacionModal
+                    onClose={handleCancelNewIndication}
+                    onSave={handleSaveIndication}
+                    defaultNumeroVisita={numeroVisita}
+                />
+            </ModalBasePaciente>
     </>
   );
 };
