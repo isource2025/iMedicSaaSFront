@@ -11,6 +11,7 @@ export type IndicacionRow = {
     cantidad?: string | number;
     descripcion?: string;
     profesional?: string;
+    fullName?: string
     frecuencia?: string;
     observaciones?: string;
     proximo?: string;
@@ -70,121 +71,131 @@ export default function IndicacionesTable({
                             <tr>
                                 <th className={styles.colCant}>Cantidad</th>
 
-                                <th className={styles.colFreq}>
-                                    Frecuencia
-                                    <br />
-                                    <span>Observaciones</span>
-                                </th>
-                                <th className={styles.colProx}>
-                                    Próximo · Anterior
-                                    <br />
-                                    <span>Vigente desde</span>
-                                </th>
-                                <th className={styles.colNro}>
-                                    Nro Indicación
-                                </th>
-                                <th className={styles.colSector}>Id Sector</th>
                                 <th className={styles.colInd}>
                                     Indicación
                                     <br />
                                     <span>Profesional que Indica</span>
                                 </th>
-                                <th className={styles.colMed}>Medicamento</th>
+
+                                <th className={styles.colFreq}>
+                                    Frecuencia
+                                    <br />
+                                    <span>Observaciones</span>
+                                </th>
+
+                                <th className={styles.colProx}>
+                                    Próximo · Anterior
+                                    <br />
+                                    <span>Vigente desde</span>
+                                </th>
+
+                                <th className={styles.colSector}>Id Sector</th>
 
                                 <th className={styles.colAccion}>Acciones</th>
+
+                                <th className={styles.colNro}>
+                                    Nro Indicación
+                                </th>
+
+                                <th className={styles.colMed}>Medicamento</th>
                             </tr>
                         </thead>
 
                         <tbody className={styles.tbody}>
                             {hasRows
                                 ? rows.map((r) => (
-                                      <tr
-                                          key={r.id}
-                                          className={[
-                                              styles.row,
-                                              selectedId === r.id
-                                                  ? styles.activeRow
-                                                  : "",
-                                          ].join(" ")}
-                                      >
-                                          <td className={styles.cellTight}>
-                                              <div className={styles.cantidad}>
-                                                  {r.cantidad ?? ""}
-                                              </div>
-                                          </td>
+                                    <tr
+                                        key={r.id}
+                                        className={[
+                                            styles.row,
+                                            selectedId === r.id
+                                                ? styles.activeRow
+                                                : "",
+                                        ].join(" ")}
+                                    >
+                                        <td className={styles.cellTight}>
+                                            <div className={styles.cantidad}>
+                                                {r.cantidad ?? ""}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className={styles.desc}>
+                                                <div
+                                                    className={styles.primary}
+                                                >
+                                                    {r.descripcion ?? "-"}
+                                                </div>
+                                                <div className={styles.sub}>
+                                                    {(r.profesional + " - " + r.fullName) || ""}
+                                                </div>
+                                            </div>
+                                        </td>
 
-                                          <td>
-                                              <div className={styles.primary}>
-                                                  {r.frecuencia ?? "-"}
-                                              </div>
-                                              <div className={styles.sub}>
-                                                  {r.observaciones ?? ""}
-                                              </div>
-                                          </td>
+                                        <td>
+                                            <div className={styles.primary}>
+                                                {r.frecuencia ?? "-"}
+                                            </div>
+                                            <div className={styles.sub}>
+                                                {r.observaciones ?? ""}
+                                            </div>
+                                        </td>
 
-                                          <td>
-                                              <div className={styles.primary}>
-                                                  {[r.proximo, r.anterior]
-                                                      .filter(Boolean)
-                                                      .join(" · ") || "-"}
-                                              </div>
-                                              <div className={styles.sub}>
-                                                  {r.vigenteDesde ?? ""}
-                                              </div>
-                                          </td>
+                                        <td>
+                                            <div className={styles.primary}>
+                                                {[r.proximo, r.anterior]
+                                                    .filter(Boolean)
+                                                    .join(" · ") || "-"}
+                                            </div>
+                                            <div className={styles.sub}>
+                                                {r.vigenteDesde ?? ""}
+                                            </div>
+                                        </td>
 
-                                          <td className={styles.cellNum}>
-                                              {r.nro ?? ""}
-                                          </td>
-                                          <td className={styles.cellMono}>
-                                              {r.idSector ?? ""}
-                                          </td>
-                                          <td>
-                                              <div className={styles.desc}>
-                                                  <div
-                                                      className={styles.primary}
-                                                  >
-                                                      {r.descripcion ?? "-"}
-                                                  </div>
-                                                  <div className={styles.sub}>
-                                                      {r.profesional ?? ""}
-                                                  </div>
-                                              </div>
-                                          </td>
-                                          <td>{r.medicamento ?? ""}</td>
 
-                                          <td className={styles.cellAccion}>
-                                              <div
-                                                  className={styles.actionBtns}
-                                              >
-                                                  <button
-                                                      className={`${styles.btnAction} ${styles.btnEdit}`}
-                                                      title="Editar indicación"
-                                                      onClick={(e) => {
-                                                          e.stopPropagation(); // evita seleccionar la fila al hacer click
-                                                          onSelectRow &&
-                                                              onSelectRow(
-                                                                  Number(r.id)
-                                                              );
-                                                      }}
-                                                  >
-                                                      <IoPencil />
-                                                  </button>
-                                                  <button
-                                                      className={`${styles.btnAction} ${styles.btnDelete}`}
-                                                      title="Eliminar indicación"
-                                                      onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          // Ya no llama a confirm(), solo abre el modal
-                                                          setDeletingId(r.id);
-                                                      }}
-                                                  >
-                                                      <IoTrash />
-                                                  </button>
-                                              </div>
-                                          </td>
-                                      </tr>
-                                  ))
+                                        <td className={styles.cellMono}>
+                                            {r.idSector ?? ""}
+                                        </td>
+
+
+
+                                        <td className={styles.cellAccion}>
+                                            <div
+                                                className={styles.actionBtns}
+                                            >
+                                                <button
+                                                    className={`${styles.btnAction} ${styles.btnEdit}`}
+                                                    title="Editar indicación"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
+                                                        onSelectRow &&
+                                                            onSelectRow(
+                                                                Number(r.id)
+                                                            );
+                                                    }}
+                                                >
+                                                    <IoPencil />
+                                                </button>
+                                                <button
+                                                    className={`${styles.btnAction} ${styles.btnDelete}`}
+                                                    title="Eliminar indicación"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // Ya no llama a confirm(), solo abre el modal
+                                                        setDeletingId(r.id);
+                                                    }}
+                                                >
+                                                    <IoTrash />
+                                                </button>
+                                            </div>
+                                        </td>
+
+                                        <td className={styles.cellNum}>
+                                            {r.nro ?? ""}
+                                        </td>
+
+                                        <td>{r.medicamento ?? ""}</td>
+                                    </tr>
+                                ))
                                 : null}
                         </tbody>
                     </table>
