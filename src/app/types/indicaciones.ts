@@ -70,7 +70,7 @@ export interface NuevaIndicacionPayload {
 	TipoUnidad: string | null;
 	Frecuencia: string | null;
 	Observaciones: string | null;
-	FechaExpiro: string | null;
+	FechaExpiro: string | number | null;
 	HoraExpiro: string | null;
 	CantidadIndicada: number | null;
 	Orden: number | null;

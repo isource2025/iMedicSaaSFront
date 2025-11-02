@@ -17,6 +17,7 @@ export type IndicacionRow = {
     proximo?: string;
     anterior?: string;
     vigenteDesde?: string;
+    horaCarga?: string;
     nro?: string | number;
     idSector?: string;
     medicamento?: string;
@@ -147,7 +148,7 @@ export default function IndicacionesTable({
                                                     .join(" · ") || "-"}
                                             </div>
                                             <div className={styles.sub}>
-                                                {r.vigenteDesde ?? ""}
+                                                {(r.vigenteDesde + " - " + r.horaCarga) || ""}
                                             </div>
                                         </td>
 

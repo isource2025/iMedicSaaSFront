@@ -23,6 +23,7 @@ type IndicacionDTO = {
     proximo?: string;
     anterior?: string;
     vigenteDesde?: string;
+    horaCarga?: string;
     nro?: number | string;
     idSector?: string;
     medicamento?: string;
@@ -85,6 +86,7 @@ export default function IndicacionesSection({
             proximo: x.proximo,
             anterior: x.anterior,
             vigenteDesde: x.vigenteDesde,
+            horaCarga: x.horaCarga,
             nro: x.nro,
             idSector: x.idSector,
             medicamento: x.medicamento,

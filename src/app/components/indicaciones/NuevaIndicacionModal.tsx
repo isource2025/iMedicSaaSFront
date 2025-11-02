@@ -47,7 +47,7 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
     Cantidad: null, // ✅ CALCULADA = CantidadIndicada × dosisPorDia
 
     Observaciones: null,
-    FechaExpiro: null,
+    FechaExpiro: 0,
     HoraExpiro: null,
     Orden: null,
     Estado: null,
