@@ -3,7 +3,7 @@ import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
 import { IoPencil, IoTrash } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 
 export type IndicacionRow = {
@@ -18,6 +18,7 @@ export type IndicacionRow = {
     anterior?: string;
     vigenteDesde?: string;
     horaCarga?: string;
+    tipo?: string,
     nro?: string | number;
     idSector?: string;
     medicamento?: string;
@@ -63,6 +64,20 @@ export default function IndicacionesTable({
         setDeletingId(null);
     };
 
+const getTipoDescripcion = (tipoCode?: string) => {
+    switch (tipoCode) {
+        case 'C':
+            return 'Control';
+        case 'M':
+            return 'Medicamento';
+        case 'A':
+            return 'Asistencial';
+        case 'D':
+            return 'Dieta';
+        default:
+            return tipoCode || "-"; // Retorna el código si no coincide o un guion si es null/undefined
+    }
+};
     return (
         <>
             <div className={styles.tableWrap}>
@@ -72,6 +87,7 @@ export default function IndicacionesTable({
                             <tr>
                                 <th className={styles.colCant}>Cantidad</th>
 
+                                <th className={styles.colCant}>Tipo</th>
                                 <th className={styles.colInd}>
                                     Indicación
                                     <br />
@@ -117,6 +133,12 @@ export default function IndicacionesTable({
                                         <td className={styles.cellTight}>
                                             <div className={styles.cantidad}>
                                                 {r.cantidad ?? ""}
+                                            </div>
+                                        </td>
+
+                                        <td className={styles.desc}>
+                                            <div className={styles.primary}>
+                                                { getTipoDescripcion(r.tipo).toUpperCase() }
                                             </div>
                                         </td>
                                         <td>
