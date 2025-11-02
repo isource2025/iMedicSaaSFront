@@ -1,10 +1,11 @@
 "use client";
 import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
-import { IoPencil, IoTrash } from "react-icons/io5";
+import { IoPencil, IoTrash, IoDocumentText, IoCloseCircle } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
-import { useMemo, useState } from "react";
+import {  useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
+import { BiSolidInjection } from "react-icons/bi";
 
 export type IndicacionRow = {
     id: string;
@@ -186,7 +187,37 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                                 className={styles.actionBtns}
                                             >
                                                 <button
-                                                    className={`${styles.btnAction} ${styles.btnEdit}`}
+                                                    className={`${styles.btnAction}`}
+                                                    title="Aplicar Indicacion"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
+                                                    
+                                                    }}
+                                                >
+                                                    <BiSolidInjection color="#5BC0DE" size="14px" />
+                                                </button>
+                                                <button
+                                                    className={`${styles.btnAction}`}
+                                                    title="Dejar sin Efecto"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
+                                                        
+                                                    }}
+                                                >
+                                                    <IoCloseCircle color="#5BC0DE" size="14px" />
+                                                </button>
+                                                <button
+                                                    className={`${styles.btnAction}`}
+                                                    title="Volver a Indicar"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
+                                                        
+                                                    }}
+                                                >
+                                                    <IoDocumentText color="#5BC0DE" size="14px" />
+                                                </button>
+                                                <button
+                                                    className={`${styles.btnAction}`}
                                                     title="Editar indicación"
                                                     onClick={(e) => {
                                                         e.stopPropagation(); // evita seleccionar la fila al hacer click
@@ -196,10 +227,10 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                                             );
                                                     }}
                                                 >
-                                                    <IoPencil />
+                                                    <IoPencil color="#5BC0DE" size="14px" />
                                                 </button>
                                                 <button
-                                                    className={`${styles.btnAction} ${styles.btnDelete}`}
+                                                    className={`${styles.btnAction}`}
                                                     title="Eliminar indicación"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -207,7 +238,7 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                                         setDeletingId(r.id);
                                                     }}
                                                 >
-                                                    <IoTrash />
+                                                    <IoTrash color="#5BC0DE" size="14px"/>
                                                 </button>
                                             </div>
                                         </td>

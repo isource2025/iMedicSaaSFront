@@ -129,6 +129,7 @@
         "Liberation Mono", "Courier New", monospace;
 }
 
+
 /* Empty overlay (cuando no hay filas) */
 .emptyOverlay {
     position: absolute;
@@ -159,7 +160,7 @@
 
 /* ==== Columna Acciones ==== */
 .colAccion {
-    width: 120px;
+    width: 135px;
     text-align: center;
 }
 
@@ -171,36 +172,36 @@
 .actionBtns {
     display: flex;
     justify-content: center;
-    gap: 6px;
+    align-items: center;
+    gap: 8px;
 }
 
 .btnAction {
     border: none;
     background: none;
     cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 4px;
-    transition: background 0.2s;
-    font-size: 14px;
-    line-height: 1;
+    padding: 0;
+    width: 24px; 
+    height: 24px; 
+    border-radius: 50%;
+    border: 2px solid #5BC0DE; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    transition: all 0.2s ease-in-out;
 }
 
 /* Hover states */
 .btnAction:hover {
-    background: #e5e7eb; /* gris suave */
+    background-color: #5BC0DE33; 
+    transform: scale(1.05);
 }
 
-/* Editar (azul) */
-.btnEdit:hover {
-    background: #dbeafe;
-    color: #1d4ed8;
+.btnAction:active {
+    transform: scale(1);
 }
 
-/* Eliminar (rojo) */
-.btnDelete:hover {
-    background: #fee2e2;
-    color: #b91c1c;
-}
+
 
 @media (max-width: 768px) {
     .tableWrap {
