@@ -47,7 +47,7 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
     Cantidad: null, // ✅ CALCULADA = CantidadIndicada × dosisPorDia
 
     Observaciones: null,
-    FechaExpiro: null,
+    FechaExpiro: 0,
     HoraExpiro: null,
     Orden: null,
     Estado: null,
@@ -303,7 +303,6 @@ export default function IndicacionForm({
         set("Cantidad", porToma * dosisPorDia);
     }, [dataForm, form.Frecuencia, form.CantidadIndicada]);
 
-    console.log("Usuario:", usuario);
 
     return (
         <div className={styles.formScrollContainer}>
@@ -378,8 +377,11 @@ export default function IndicacionForm({
                             label=""
                             name="TipoIndicacion"
                             isLoading={dataLoading}
-                            onChange={(val) =>
-                                set("TipoIndicacion", Number(val))
+                            onChange={
+                                (val) => {
+                                    set("TipoIndicacion", Number(val))
+                                    set("Orden", dataForm?.tiposIndicacion.filter(i => i.Valor === val)[0]?.OrdenMedicacion)
+                                }
                             }
                             value={form.TipoIndicacion || ""}
                             tabIndex={1}

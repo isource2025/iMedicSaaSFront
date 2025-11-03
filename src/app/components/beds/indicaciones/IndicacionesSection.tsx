@@ -10,7 +10,7 @@ import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";
 import { NuevaIndicacionPayload } from "../../../types/indicaciones";
 import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { indicacionesService } from "../../../services/indicacionesService";
-import { se } from "date-fns/locale";
+
 
 type IndicacionDTO = {
     id: string;
@@ -23,7 +23,9 @@ type IndicacionDTO = {
     proximo?: string;
     anterior?: string;
     vigenteDesde?: string;
+    horaCarga?: string;
     nro?: number | string;
+    tipo?: string,
     idSector?: string;
     medicamento?: string;
 };
@@ -85,7 +87,9 @@ export default function IndicacionesSection({
             proximo: x.proximo,
             anterior: x.anterior,
             vigenteDesde: x.vigenteDesde,
+            horaCarga: x.horaCarga,
             nro: x.nro,
+            tipo: x.tipo,
             idSector: x.idSector,
             medicamento: x.medicamento,
         }));

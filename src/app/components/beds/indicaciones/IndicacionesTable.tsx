@@ -1,10 +1,11 @@
 "use client";
 import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
-import { IoPencil, IoTrash } from "react-icons/io5";
+import { IoPencil, IoTrash, IoDocumentText, IoCloseCircle } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
-import { useState } from "react";
+import {  useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
+import { BiSolidInjection } from "react-icons/bi";
 
 export type IndicacionRow = {
     id: string;
@@ -17,6 +18,8 @@ export type IndicacionRow = {
     proximo?: string;
     anterior?: string;
     vigenteDesde?: string;
+    horaCarga?: string;
+    tipo?: string,
     nro?: string | number;
     idSector?: string;
     medicamento?: string;
@@ -62,6 +65,20 @@ export default function IndicacionesTable({
         setDeletingId(null);
     };
 
+const getTipoDescripcion = (tipoCode?: string) => {
+    switch (tipoCode) {
+        case 'C':
+            return 'Control';
+        case 'M':
+            return 'Medicamento';
+        case 'A':
+            return 'Asistencial';
+        case 'D':
+            return 'Dieta';
+        default:
+            return tipoCode || "-"; // Retorna el código si no coincide o un guion si es null/undefined
+    }
+};
     return (
         <>
             <div className={styles.tableWrap}>
@@ -71,6 +88,7 @@ export default function IndicacionesTable({
                             <tr>
                                 <th className={styles.colCant}>Cantidad</th>
 
+                                <th className={styles.colCant}>Tipo</th>
                                 <th className={styles.colInd}>
                                     Indicación
                                     <br />
@@ -118,6 +136,12 @@ export default function IndicacionesTable({
                                                 {r.cantidad ?? ""}
                                             </div>
                                         </td>
+
+                                        <td className={styles.desc}>
+                                            <div className={styles.primary}>
+                                                { getTipoDescripcion(r.tipo).toUpperCase() }
+                                            </div>
+                                        </td>
                                         <td>
                                             <div className={styles.desc}>
                                                 <div
@@ -147,7 +171,7 @@ export default function IndicacionesTable({
                                                     .join(" · ") || "-"}
                                             </div>
                                             <div className={styles.sub}>
-                                                {r.vigenteDesde ?? ""}
+                                                {(r.vigenteDesde + " - " + r.horaCarga) || ""}
                                             </div>
                                         </td>
 
@@ -163,7 +187,37 @@ export default function IndicacionesTable({
                                                 className={styles.actionBtns}
                                             >
                                                 <button
-                                                    className={`${styles.btnAction} ${styles.btnEdit}`}
+                                                    className={`${styles.btnAction}`}
+                                                    title="Aplicar Indicacion"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
+                                                    
+                                                    }}
+                                                >
+                                                    <BiSolidInjection color="#5BC0DE" size="14px" />
+                                                </button>
+                                                <button
+                                                    className={`${styles.btnAction}`}
+                                                    title="Dejar sin Efecto"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
+                                                        
+                                                    }}
+                                                >
+                                                    <IoCloseCircle color="#5BC0DE" size="14px" />
+                                                </button>
+                                                <button
+                                                    className={`${styles.btnAction}`}
+                                                    title="Volver a Indicar"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
+                                                        
+                                                    }}
+                                                >
+                                                    <IoDocumentText color="#5BC0DE" size="14px" />
+                                                </button>
+                                                <button
+                                                    className={`${styles.btnAction}`}
                                                     title="Editar indicación"
                                                     onClick={(e) => {
                                                         e.stopPropagation(); // evita seleccionar la fila al hacer click
@@ -173,10 +227,10 @@ export default function IndicacionesTable({
                                                             );
                                                     }}
                                                 >
-                                                    <IoPencil />
+                                                    <IoPencil color="#5BC0DE" size="14px" />
                                                 </button>
                                                 <button
-                                                    className={`${styles.btnAction} ${styles.btnDelete}`}
+                                                    className={`${styles.btnAction}`}
                                                     title="Eliminar indicación"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -184,7 +238,7 @@ export default function IndicacionesTable({
                                                         setDeletingId(r.id);
                                                     }}
                                                 >
-                                                    <IoTrash />
+                                                    <IoTrash color="#5BC0DE" size="14px"/>
                                                 </button>
                                             </div>
                                         </td>
