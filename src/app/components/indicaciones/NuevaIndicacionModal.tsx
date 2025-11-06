@@ -23,11 +23,18 @@ const CLARION_TICKS_PER_SEC = 100;
 const SECS_PER_HOUR = 3600;
 const DAY_TICKS = 24 * SECS_PER_HOUR * CLARION_TICKS_PER_SEC;
 
+const getLocalDateString = (date: Date): string => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() es 0-11
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};  
+
 // ===== Payload inicial =====
 const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
     NumeroVisita: numeroVisita,
     NroAdicional: null,
-    FechaCarga: new Date().toISOString().slice(0, 10),
+    FechaCarga: getLocalDateString(new Date),
     HoraCarga: new Date().toTimeString().slice(0, 8),
     OperadorCarga: null,
     ProfesionalAsiste: null,
@@ -53,7 +60,7 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
     Estado: null,
     CantidadPorTurno: null,
     CantidadEntregada: null,
-    ParaFechaEntrega: new Date().toISOString().slice(0, 10),
+    ParaFechaEntrega: getLocalDateString(new Date),
     FormaAdicional: null,
     NroIndicacionAnterior: null,
     IdSector: null,
@@ -87,6 +94,7 @@ export default function IndicacionForm({
             ...prev,
             ProfesionalAsiste:
                 usuario?.valorPersonal || usuario?.idValorpersonal,
+            OperadorCarga: usuario?.valorPersonal || usuario?.idValorpersonal
         }));
     }, [defaultNumeroVisita]);
 

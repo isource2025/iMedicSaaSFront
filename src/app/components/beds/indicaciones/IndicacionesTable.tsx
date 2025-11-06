@@ -88,7 +88,7 @@ const getTipoDescripcion = (tipoCode?: string) => {
                             <tr>
                                 <th className={styles.colCant}>Cantidad</th>
 
-                                <th className={styles.colCant}>Tipo</th>
+                                <th className={styles.colType}>Tipo</th>
                                 <th className={styles.colInd}>
                                     Indicación
                                     <br />
