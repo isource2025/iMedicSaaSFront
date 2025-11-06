@@ -99,25 +99,29 @@
 /* Anchos de columnas */
 .colCant,
 .cellTight {
-    width: 96px;
+    width: 78px;
 }
 .colInd {
-    width: 28%;
+    width: 25%;
 }
 .colFreq {
-    width: 22%;
+    width: 20%;
 }
 .colProx {
-    width: 22%;
+    width: 15%;
 }
 .colNro {
-    width: 120px;
+    width: 110px;
 }
 .colSector {
-    width: 120px;
+    width: 78px;
 }
 .colMed {
-    width: 24%;
+    width: 160px;
+}
+
+.colType {
+    width: 10%;
 }
 
 /* Tipografías utilitarias */
@@ -160,7 +164,7 @@
 
 /* ==== Columna Acciones ==== */
 .colAccion {
-    width: 135px;
+    width: 150px;
     text-align: center;
 }
 
