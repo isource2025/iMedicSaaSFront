@@ -1,0 +1,262 @@
+.formContainer {
+    padding: 1.5rem;
+    background-color: #fff;
+}
+
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #17a2b8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.errorContainer {
+    padding: 2rem;
+    text-align: center;
+}
+
+.errorMessage {
+    color: #dc3545;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.errorButton {
+    padding: 0.5rem 1.5rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.errorButton:hover {
+    background-color: #5a6268;
+}
+
+/* Layout de campos */
+.fieldRow {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0.65rem;
+    gap: 1rem;
+}
+
+.fieldLabel {
+    flex: 0 0 180px;
+    font-weight: 600;
+    font-size: 0.65rem;
+    color: #333;
+    padding-top: 0.5rem;
+    text-align: right;
+}
+
+.fieldValue {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profesionalNombre {
+    font-size: 0.75rem;
+    color: #17a2b8;
+    font-weight: 500;
+}
+
+.iconIndicator {
+    font-size: 1.1rem;
+}
+
+.clockIcon {
+    font-size: 1.1rem;
+    margin-left: 0.25rem;
+}
+
+/* SECCIÓN EDITABLE CON RECUADRO ROJO */
+.editableSection {
+    border: 2px solid #dc3545;
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+    background-color: #fff9f9;
+}
+
+/* Grupos de inputs */
+.dateTimeGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.quantityGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.minMaxGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.pressureGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.subLabel {
+    font-size: 0.65rem;
+    color: #6c757d;
+    font-weight: 500;
+    min-width: 35px;
+}
+
+/* Inputs */
+.inputEditable,
+.inputDisabled,
+.textareaEditable,
+.selectDisabled {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-family: inherit;
+    min-height: 38px;
+}
+
+.inputEditable {
+    background-color: white;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.inputEditable:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.inputDisabled,
+.selectDisabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    color: #6c757d;
+    border: 1px solid #ced4da;
+}
+
+.textareaEditable {
+    resize: vertical;
+    min-height: 70px;
+    width: 100%;
+}
+
+/* Botón Aceptar */
+.acceptButton {
+    padding: 0.5rem 2rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.acceptButton:hover:not(:disabled) {
+    background-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.acceptButton:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.acceptButton:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.65;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .formContainer {
+        padding: 1rem;
+    }
+
+    .fieldRow {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .fieldLabel {
+        flex: none;
+        text-align: left;
+        padding-top: 0;
+        margin-bottom: 0.25rem;
+    }
+
+    .dateTimeGroup,
+    .minMaxGroup,
+    .pressureGroup,
+    .quantityGroup {
+        flex-wrap: wrap;
+    }
+
+    .editableSection {
+        padding: 1rem;
+    }
+}
+
+/* Mejoras visuales adicionales */
+.fieldRow:last-child {
+    margin-bottom: 0;
+}
+
+/* Mejorar contraste para campos disabled */
+.inputDisabled::placeholder {
+    color: #999;
+}
+
+/* Estilo para los iconos */
+.iconIndicator,
+.clockIcon {
+    user-select: none;
+}
+
+
+.col5Rows {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
