@@ -50,7 +50,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 	const modalRef = useRef<HTMLDivElement>(null);
 
 	const [pacienteData, setPacienteData] = useState<PacienteData | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(true); 
 	const [error, setError] = useState<string | null>(null);
 	const [edad, setEdad] = useState<number | null>(null);
 	const [yaConsultado, setYaConsultado] = useState(false);

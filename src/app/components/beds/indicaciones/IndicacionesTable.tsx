@@ -3,23 +3,24 @@ import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
 import { IoPencil, IoTrash, IoDocumentText, IoCloseCircle } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
-import {  useState } from "react";
+import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import { BiSolidInjection } from "react-icons/bi";
+import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
 
 export type IndicacionRow = {
     id: string;
     cantidad?: string | number;
     descripcion?: string;
     profesional?: string;
-    fullName?: string
+    fullName?: string;
     frecuencia?: string;
     observaciones?: string;
     proximo?: string;
     anterior?: string;
     vigenteDesde?: string;
     horaCarga?: string;
-    tipo?: string,
+    tipo?: string;
     nro?: string | number;
     idSector?: string;
     medicamento?: string;
@@ -29,9 +30,9 @@ type Props = {
     rows: IndicacionRow[];
     onSelectRow?: (id: number) => void;
     selectedId?: string | null;
-    /** Alto máximo disponible del contenedor (opcional). Por defecto llena el parent. */
     maxHeight?: number | string;
     refetch: () => Promise<void>;
+    numeroVisita: string; // ✅ NUEVO: recibir numeroVisita
 };
 
 export default function IndicacionesTable({
@@ -39,9 +40,21 @@ export default function IndicacionesTable({
     onSelectRow,
     selectedId,
     refetch,
+    numeroVisita, // ✅ NUEVO
 }: Props) {
     const hasRows = rows && rows.length > 0;
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    // ✅ Estado para el modal de aplicar indicación
+    const [modalAplicar, setModalAplicar] = useState<{
+        isOpen: boolean;
+        nroIndicacion: number | null;
+        tipo: 'C' | 'M' | 'A' | 'D' | null;
+    }>({
+        isOpen: false,
+        nroIndicacion: null,
+        tipo: null,
+    });
 
     const handleDelete = async (id: number) => {
         try {
@@ -55,30 +68,59 @@ export default function IndicacionesTable({
     };
 
     const handleConfirmDelete = () => {
-        if (!deletingId) return; // No debería pasar, pero es buena práctica
-
+        if (!deletingId) return;
         handleDelete(Number(deletingId));
-        setDeletingId(null); // Cierra el modal
+        setDeletingId(null);
     };
 
     const handleCloseModal = () => {
         setDeletingId(null);
     };
 
-const getTipoDescripcion = (tipoCode?: string) => {
-    switch (tipoCode) {
-        case 'C':
-            return 'Control';
-        case 'M':
-            return 'Medicamento';
-        case 'A':
-            return 'Asistencial';
-        case 'D':
-            return 'Dieta';
-        default:
-            return tipoCode || "-"; // Retorna el código si no coincide o un guion si es null/undefined
-    }
-};
+    // ✅ Handler para abrir el modal de aplicar indicación
+    const handleAplicarIndicacion = (row: IndicacionRow) => {
+        if (!row.tipo || !row.nro) {
+            alert('No se puede aplicar esta indicación: faltan datos');
+            return;
+        }
+        
+        setModalAplicar({
+            isOpen: true,
+            nroIndicacion: Number(row.nro),
+            tipo: row.tipo as 'C' | 'M' | 'A' | 'D',
+        });
+    };
+
+    // ✅ Handler para cerrar el modal de aplicar
+    const handleCloseAplicar = () => {
+        setModalAplicar({
+            isOpen: false,
+            nroIndicacion: null,
+            tipo: null,
+        });
+    };
+
+    // ✅ Handler para éxito al aplicar
+    const handleSuccessAplicar = async () => {
+        await refetch();
+        handleCloseAplicar();
+    };
+
+    const getTipoDescripcion = (tipoCode?: string) => {
+        switch (tipoCode) {
+            case 'C':
+                return 'Control';
+            case 'M':
+                return 'Medicamento';
+            case 'A':
+                return 'Asistencial';
+            case 'D':
+                return 'Dieta';
+            default:
+                return tipoCode || "-";
+        }
+    };
+
     return (
         <>
             <div className={styles.tableWrap}>
@@ -87,34 +129,25 @@ const getTipoDescripcion = (tipoCode?: string) => {
                         <thead className={styles.thead}>
                             <tr>
                                 <th className={styles.colCant}>Cantidad</th>
-
                                 <th className={styles.colType}>Tipo</th>
                                 <th className={styles.colInd}>
                                     Indicación
                                     <br />
                                     <span>Profesional que Indica</span>
                                 </th>
-
                                 <th className={styles.colFreq}>
                                     Frecuencia
                                     <br />
                                     <span>Observaciones</span>
                                 </th>
-
                                 <th className={styles.colProx}>
                                     Próximo · Anterior
                                     <br />
                                     <span>Vigente desde</span>
                                 </th>
-
                                 <th className={styles.colSector}>Id Sector</th>
-
                                 <th className={styles.colAccion}>Acciones</th>
-
-                                <th className={styles.colNro}>
-                                    Nro Indicación
-                                </th>
-
+                                <th className={styles.colNro}>Nro Indicación</th>
                                 <th className={styles.colMed}>Medicamento</th>
                             </tr>
                         </thead>
@@ -139,14 +172,13 @@ const getTipoDescripcion = (tipoCode?: string) => {
 
                                         <td className={styles.desc}>
                                             <div className={styles.primary}>
-                                                { getTipoDescripcion(r.tipo).toUpperCase() }
+                                                {getTipoDescripcion(r.tipo).toUpperCase()}
                                             </div>
                                         </td>
+
                                         <td>
                                             <div className={styles.desc}>
-                                                <div
-                                                    className={styles.primary}
-                                                >
+                                                <div className={styles.primary}>
                                                     {r.descripcion ?? "-"}
                                                 </div>
                                                 <div className={styles.sub}>
@@ -175,23 +207,18 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                             </div>
                                         </td>
 
-
                                         <td className={styles.cellMono}>
                                             {r.idSector ?? ""}
                                         </td>
 
-
-
                                         <td className={styles.cellAccion}>
-                                            <div
-                                                className={styles.actionBtns}
-                                            >
+                                            <div className={styles.actionBtns}>
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Aplicar Indicacion"
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
-                                                    
+                                                        e.stopPropagation();
+                                                        handleAplicarIndicacion(r); // ✅ NUEVO
                                                     }}
                                                 >
                                                     <BiSolidInjection color="#5BC0DE" size="14px" />
@@ -200,8 +227,7 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                                     className={`${styles.btnAction}`}
                                                     title="Dejar sin Efecto"
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
-                                                        
+                                                        e.stopPropagation();
                                                     }}
                                                 >
                                                     <IoCloseCircle color="#5BC0DE" size="14px" />
@@ -210,8 +236,7 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                                     className={`${styles.btnAction}`}
                                                     title="Volver a Indicar"
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
-                                                        
+                                                        e.stopPropagation();
                                                     }}
                                                 >
                                                     <IoDocumentText color="#5BC0DE" size="14px" />
@@ -220,11 +245,8 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                                     className={`${styles.btnAction}`}
                                                     title="Editar indicación"
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // evita seleccionar la fila al hacer click
-                                                        onSelectRow &&
-                                                            onSelectRow(
-                                                                Number(r.id)
-                                                            );
+                                                        e.stopPropagation();
+                                                        onSelectRow && onSelectRow(Number(r.id));
                                                     }}
                                                 >
                                                     <IoPencil color="#5BC0DE" size="14px" />
@@ -234,11 +256,10 @@ const getTipoDescripcion = (tipoCode?: string) => {
                                                     title="Eliminar indicación"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // Ya no llama a confirm(), solo abre el modal
                                                         setDeletingId(r.id);
                                                     }}
                                                 >
-                                                    <IoTrash color="#5BC0DE" size="14px"/>
+                                                    <IoTrash color="#5BC0DE" size="14px" />
                                                 </button>
                                             </div>
                                         </td>
@@ -261,6 +282,7 @@ const getTipoDescripcion = (tipoCode?: string) => {
                     )}
                 </div>
             </div>
+
             {/* Vista móvil: tarjetas */}
             <div className={styles.mobileCards}>
                 {rows.length === 0 && (
@@ -286,12 +308,8 @@ const getTipoDescripcion = (tipoCode?: string) => {
                             {r.observaciones ?? "-"}
                         </div>
                         <div className={styles.cardRow}>
-                            <span className={styles.label}>
-                                Próximo / Anterior:
-                            </span>{" "}
-                            {[r.proximo, r.anterior]
-                                .filter(Boolean)
-                                .join(" · ") || "-"}
+                            <span className={styles.label}>Próximo / Anterior:</span>{" "}
+                            {[r.proximo, r.anterior].filter(Boolean).join(" · ") || "-"}
                         </div>
                         <div className={styles.cardRow}>
                             <span className={styles.label}>Profesional:</span>{" "}
@@ -309,20 +327,22 @@ const getTipoDescripcion = (tipoCode?: string) => {
                         <div className={styles.cardActions}>
                             <button
                                 className={`${styles.btnAction} ${styles.btnEdit}`}
+                                title="Aplicar"
+                                onClick={() => handleAplicarIndicacion(r)}
+                            >
+                                <BiSolidInjection />
+                            </button>
+                            <button
+                                className={`${styles.btnAction} ${styles.btnEdit}`}
                                 title="Editar"
-                                onClick={() =>
-                                    onSelectRow && onSelectRow(Number(r.id))
-                                }
+                                onClick={() => onSelectRow && onSelectRow(Number(r.id))}
                             >
                                 <IoPencil />
                             </button>
                             <button
                                 className={`${styles.btnAction} ${styles.btnDelete}`}
                                 title="Eliminar"
-                                onClick={() => {
-                                    // Ya no llama a confirm(), solo abre el modal
-                                    setDeletingId(r.id);
-                                }}
+                                onClick={() => setDeletingId(r.id)}
                             >
                                 <IoTrash />
                             </button>
@@ -331,6 +351,7 @@ const getTipoDescripcion = (tipoCode?: string) => {
                 ))}
             </div>
 
+            {/* Modal de confirmación de eliminación */}
             <ConfirmationModal
                 isOpen={deletingId !== null}
                 onClose={handleCloseModal}
@@ -340,6 +361,18 @@ const getTipoDescripcion = (tipoCode?: string) => {
                 confirmText="Eliminar"
                 cancelText="Cancelar"
             />
+
+            {/* ✅ Modal de aplicar indicación */}
+            {modalAplicar.isOpen && modalAplicar.nroIndicacion && modalAplicar.tipo && (
+                <AplicarIndicacion
+                    isOpen={modalAplicar.isOpen}
+                    onClose={handleCloseAplicar}
+                    numeroVisita={numeroVisita}
+                    nroIndicacion={modalAplicar.nroIndicacion}
+                    tipoIndicacion={modalAplicar.tipo}
+                    onSuccess={handleSuccessAplicar}
+                />
+            )}
         </>
     );
 }

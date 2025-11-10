@@ -214,4 +214,44 @@ export const indicacionesService = {
         }
         return json?.data;
     },
+
+    aplicarIndicacion: async (payload: {
+        nroIndicacion: number;
+        numeroVisita: string;
+        tipoIndicacion: 'C' | 'M' | 'A' | 'D';
+        fechaCumplido: string;
+        horaCumplido: string;
+        observaciones?: string;
+        
+        // Campos específicos de Control
+        pulsoMax?: string;
+        pulsoMin?: string;
+        presionArterialMax?: string;
+        presionArterialMin?: string;
+        presionArterialMedia?: string;
+        frResp?: string;
+        temperaturaAxilar?: string;
+        temperaturaRectal?: string;
+        controlGlucemia?: string;
+        saturometria?: string;
+        
+        // Campos específicos de Medicación (si son necesarios)
+        // El backend ya tiene estos datos en la tabla de indicaciones
+        // pero podríamos enviarlos si necesita actualizar algo
+    }) => {
+        const resp = await fetch(
+            `${BASE_URL}/indicaciones/${payload.nroIndicacion}/aplicar`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            }
+        );
+        const json = await resp.json();
+        if (!resp.ok || json?.success === false) {
+            const msg = json?.message || "No se pudo aplicar la indicación";
+            throw new Error(msg);
+        }
+        return json?.data;
+    },
 };
