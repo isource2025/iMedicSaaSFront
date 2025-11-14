@@ -288,7 +288,6 @@ export default function IndicacionForm({
         const freq = dataForm.frecuenciasAdmin.find(
             (f) => String(f.Valor).trim().toLowerCase() === key
         );
-
         if (!freq || !Number.isFinite(freq.Intervalo) || freq.Intervalo <= 0) {
             set("Cantidad", null);
             return;

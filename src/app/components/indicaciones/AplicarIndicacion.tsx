@@ -9,6 +9,7 @@ import RenderDieta from './renders_Indicacion/RenderDieta';
 import RenderControl from './renders_Indicacion/RenderControl';
 import RenderMedicacion from './renders_Indicacion/RenderMedicacion';
 import RenderAsistencial from './renders_Indicacion/RenderAsistencial';
+import {useAppContext} from "@/app/contexts/AppContext";
 
 interface Props {
     isOpen: boolean;
@@ -28,12 +29,12 @@ export interface FormData {
     // Campos calculados
     fechaProximo: string;
     horaProximo: string;
-    frecuenciaHoras: number;
     
     // Campos de solo lectura (vienen de la indicación)
     profesionalAsiste?: number;
     profesionalNombre?: string;
     frecuencia?: string;
+    intervalo?: number;
     descripcion?: string;
     sector?: string;
     medicamento?: string;
@@ -41,18 +42,29 @@ export interface FormData {
     tipoUnidad?: string;
     
     // Control
-    pulsoMax?: string;
-    pulsoMin?: string;
-    presionArterialMax?: string;
-    presionArterialMin?: string;
-    presionArterialMedia?: string;
-    frResp?: string;
-    temperaturaAxilar?: string;
-    temperaturaRectal?: string;
-    controlGlucemia?: string;
-    saturometria?: string;
+    control: {
+        pulso?: string;
+        presionArterialMax?: string;
+        presionArterialMin?: string;
+        presionArterialMedia?: string;
+        frResp?: string;
+        temperaturaAxilar?: string;
+        temperaturaRectal?: string;
+        glucemia?: string;
+        saturometria?: string;
+    }
 }
 
+export interface Payload extends FormData {
+    nroIndicacion: number;
+    numeroVisita: string;
+    tipoIndicacion: 'C' | 'M' | 'A' | 'D';
+    fechaCumplido: string;
+    profesionalAsiste?: number;
+    horaCumplido: string;
+    fechaProximo: string;
+    horaProximo: string;
+}
 // ✅ Helper para obtener fecha local sin problemas de zona horaria
 const getLocalDateString = (date: Date): string => {
     const yyyy = date.getFullYear();
@@ -69,16 +81,28 @@ const getLocalTimeString = (date: Date): string => {
 };
 
 export default function AplicarIndicacion(props: Props) {
+    const date = new Date();
     const { isOpen, onClose, numeroVisita, nroIndicacion, tipoIndicacion, onSuccess } = props;
-    
+    const {usuario} = useAppContext()
+
     const [formData, setFormData] = useState<FormData>({
-        // ✅ Inicializar con la fecha/hora actual como DEFAULT para el usuario
-        fechaCumplido: getLocalDateString(new Date()),
-        horaCumplido: getLocalTimeString(new Date()),
+        fechaCumplido: getLocalDateString(date),
+        horaCumplido: getLocalTimeString(date),
         observaciones: '',
         fechaProximo: '',
         horaProximo: '',
-        frecuenciaHoras: 0,
+        profesionalAsiste: usuario?.codigoOperador || usuario?.valorPersonal || usuario?.idValorpersonal || null,
+        control: {
+            pulso: '',
+            presionArterialMax: '',
+            presionArterialMin: '',
+            presionArterialMedia: '',
+            frResp: '',
+            temperaturaAxilar: '',
+            temperaturaRectal: '',
+            glucemia: '',
+            saturometria: ''
+        }
     });
     
     const [loading, setLoading] = useState(false);
@@ -110,36 +134,34 @@ export default function AplicarIndicacion(props: Props) {
                 setFormData(prev => ({
                     ...prev,
                     // Datos de la indicación
-                    profesionalAsiste: data.ProfesionalAsiste || undefined,
-                    profesionalNombre: data.OperadorApellido && data.OperadorNombres 
+                    profesionalAsiste: usuario?.codigoOperador || usuario?.valorPersonal || usuario?.idValorpersonal || null,
+                    profesionalNombre: data.OperadorApellido && data.OperadorNombres
                         ? `${data.OperadorApellido}, ${data.OperadorNombres}`
                         : 'N/A',
                     frecuencia: data.Frecuencia || '',
-                    frecuenciaHoras: parseFrecuencia(data.Frecuencia),
+                    intervalo: data.Intervalo || undefined,
                     observaciones: data.Observaciones || '',
                     descripcion: data.AliasMedicamento || '',
                     sector: data.IdSector || '',
                     medicamento: data.AliasMedicamento || '',
                     cantidadIndicada: data.CantidadIndicada || undefined,
                     tipoUnidad: data.TipoUnidad || '',
-                    
-                    // ✅ Fecha/hora actual para nueva aplicación
+
                     fechaCumplido: fechaCumplidoInicial,
                     horaCumplido: horaCumplidoInicial,
-                    
-                    // Control - inicializar vacíos
-                    ...(tipoIndicacion === 'C' && {
-                        pulsoMax: '',
-                        pulsoMin: '',
+
+                    // ✅ Corregir estructura de control
+                    control: {
+                        pulso: "",
                         presionArterialMax: '',
                         presionArterialMin: '',
                         presionArterialMedia: '',
                         frResp: '',
                         temperaturaAxilar: '',
                         temperaturaRectal: '',
-                        controlGlucemia: '',
-                        saturometria: '',
-                    }),
+                        glucemia: '',
+                        saturometria: ''
+                    }
                 }));
             } catch (err: any) {
                 console.error('Error al cargar indicación:', err);
@@ -151,23 +173,24 @@ export default function AplicarIndicacion(props: Props) {
         
         cargarIndicacion();
     }, [isOpen, nroIndicacion, tipoIndicacion]);
+    const convertirIntervaloClarionAHoras = (intervalo?: number | null): number => {
+        if (!intervalo) return 0;
 
-    // Parsear frecuencia (ej: "CADA 6 HS" -> 6)
-    const parseFrecuencia = (frecuencia?: string | null): number => {
-        if (!frecuencia) return 0;
-        const match = frecuencia.match(/(\d+)/);
-        return match ? parseInt(match[1]) : 0;
+        // El intervalo en Clarion representa un tiempo en centésimas de segundo desde medianoche
+        // Para convertirlo a horas: dividir por 360000 (100 centésimas * 60 segundos * 60 minutos)
+        return  intervalo / 360000 ;
     };
 
     // ✅ Calcular fecha y hora próxima basándose en fechaCumplido + horaCumplido + frecuenciaHoras
     useEffect(() => {
-        if (formData.fechaCumplido && formData.horaCumplido && formData.frecuenciaHoras > 0) {
+        if (formData.fechaCumplido && formData.horaCumplido && formData.intervalo && formData.intervalo > 0) {
+            const frecuenciaHoras = convertirIntervaloClarionAHoras(formData.intervalo)
             // Crear fecha desde los valores del formulario
             const fechaHoraCumplido = new Date(`${formData.fechaCumplido}T${formData.horaCumplido}`);
             
             // Sumar las horas de frecuencia
             const fechaHoraProximo = new Date(
-                fechaHoraCumplido.getTime() + formData.frecuenciaHoras * 60 * 60 * 1000
+                fechaHoraCumplido.getTime() + frecuenciaHoras * 60 * 60 * 1000
             );
             
             // ✅ Usar helpers para evitar problemas de zona horaria
@@ -177,19 +200,29 @@ export default function AplicarIndicacion(props: Props) {
                 horaProximo: getLocalTimeString(fechaHoraProximo),
             }));
         }
-    }, [formData.fechaCumplido, formData.horaCumplido, formData.frecuenciaHoras]);
+    }, [formData.fechaCumplido, formData.horaCumplido, formData.intervalo]);
 
     const handleChange = (field: keyof FormData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    //función helper para actualizar control
+    const handleControlChange = (field: keyof FormData['control'], value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            control: {
+                ...prev.control,
+                [field]: value
+            }
+        }));
+    };
+
     const handleSubmit = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
-            // Preparar el payload con TODOS los datos necesarios
-            const payload: any = {
+            const payload: Payload = {
                 nroIndicacion,
                 numeroVisita,
                 tipoIndicacion,
@@ -198,26 +231,20 @@ export default function AplicarIndicacion(props: Props) {
                 fechaProximo: formData.fechaProximo,
                 horaProximo: formData.horaProximo,
                 observaciones: formData.observaciones || '',
+                profesionalAsiste: formData.profesionalAsiste,
+                control: {} // Inicializar vacío
             };
 
-            // Agregar campos específicos según el tipo
+            // ✅ Enviar SOLO los campos de control que tienen valor
             if (tipoIndicacion === 'C') {
-                // Solo enviar los campos de control que tienen valor
-                if (formData.pulsoMax) payload.pulsoMax = formData.pulsoMax;
-                if (formData.pulsoMin) payload.pulsoMin = formData.pulsoMin;
-                if (formData.presionArterialMax) payload.presionArterialMax = formData.presionArterialMax;
-                if (formData.presionArterialMin) payload.presionArterialMin = formData.presionArterialMin;
-                if (formData.presionArterialMedia) payload.presionArterialMedia = formData.presionArterialMedia;
-                if (formData.frResp) payload.frResp = formData.frResp;
-                if (formData.temperaturaAxilar) payload.temperaturaAxilar = formData.temperaturaAxilar;
-                if (formData.temperaturaRectal) payload.temperaturaRectal = formData.temperaturaRectal;
-                if (formData.controlGlucemia) payload.controlGlucemia = formData.controlGlucemia;
-                if (formData.saturometria) payload.saturometria = formData.saturometria;
+                Object.entries(formData.control).forEach(([key, value]) => {
+                    if (value && value.trim() !== '') {
+                        (payload.control as any)[key] = value;
+                    }
+                });
             }
 
             console.log('Enviando payload:', payload);
-
-            // Enviar todo al backend
             await indicacionesService.aplicarIndicacion(payload);
 
             onSuccess?.();
@@ -277,7 +304,8 @@ export default function AplicarIndicacion(props: Props) {
                     )}
 
                     {tipoIndicacion === 'C' && (
-                        <RenderControl formData={formData} handleChange={handleChange} />
+                        <RenderControl formData={formData} handleChange={handleChange}
+                                       />
                     )}
 
                     {tipoIndicacion === 'M' && (
