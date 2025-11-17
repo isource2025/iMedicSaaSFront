@@ -53,6 +53,10 @@ export interface FormData {
         glucemia?: string;
         saturometria?: string;
     }
+
+    dieta : {
+        tipoDieta: number | null;
+    }
 }
 
 export interface Payload extends FormData {
@@ -102,6 +106,9 @@ export default function AplicarIndicacion(props: Props) {
             temperaturaRectal: '',
             glucemia: '',
             saturometria: ''
+        },
+        dieta: {
+            tipoDieta: null
         }
     });
     
@@ -232,7 +239,10 @@ export default function AplicarIndicacion(props: Props) {
                 horaProximo: formData.horaProximo,
                 observaciones: formData.observaciones || '',
                 profesionalAsiste: formData.profesionalAsiste,
-                control: {} // Inicializar vacío
+                control: {}, // Inicializar vacío
+                dieta: {
+                    tipoDieta: null
+                }
             };
 
             // ✅ Enviar SOLO los campos de control que tienen valor
@@ -242,6 +252,10 @@ export default function AplicarIndicacion(props: Props) {
                         (payload.control as any)[key] = value;
                     }
                 });
+            }
+
+            if (tipoIndicacion === 'D') {
+                payload.dieta.tipoDieta =  Number(indicacionOriginal?.TipoIndicacion)
             }
 
             console.log('Enviando payload:', payload);
