@@ -56,6 +56,13 @@ export interface FormData {
 
     dieta : {
         tipoDieta: number | null;
+    },
+
+    medicamentoCtrl: {
+        sector?: string;
+        cantidadIndicada?: number;
+        cantidad?: number;
+        tipoUnidad?: string;
     }
 }
 
@@ -109,7 +116,8 @@ export default function AplicarIndicacion(props: Props) {
         },
         dieta: {
             tipoDieta: null
-        }
+        },
+        medicamentoCtrl: {}
     });
     
     const [loading, setLoading] = useState(false);
@@ -168,7 +176,12 @@ export default function AplicarIndicacion(props: Props) {
                         temperaturaRectal: '',
                         glucemia: '',
                         saturometria: ''
-                    }
+                    },
+
+                    dieta: {
+                        tipoDieta: null
+                    },
+                    medicamentoCtrl: {}
                 }));
             } catch (err: any) {
                 console.error('Error al cargar indicación:', err);
@@ -242,7 +255,8 @@ export default function AplicarIndicacion(props: Props) {
                 control: {}, // Inicializar vacío
                 dieta: {
                     tipoDieta: null
-                }
+                },
+                medicamentoCtrl: {}
             };
 
             // ✅ Enviar SOLO los campos de control que tienen valor
@@ -256,6 +270,15 @@ export default function AplicarIndicacion(props: Props) {
 
             if (tipoIndicacion === 'D') {
                 payload.dieta.tipoDieta =  Number(indicacionOriginal?.TipoIndicacion)
+            }
+
+            if (tipoIndicacion === 'M') {
+                payload.medicamentoCtrl = {
+                    cantidad: Number(indicacionOriginal?.Cantidad),
+                    cantidadIndicada: Number(indicacionOriginal?.CantidadIndicada),
+                    sector: indicacionOriginal?.IdSector || "",
+                    tipoUnidad: indicacionOriginal?.TipoUnidad || ""
+                }
             }
 
             console.log('Enviando payload:', payload);
