@@ -16,6 +16,7 @@ export interface Indicacion {
 	HoraRevision: string | null;
 	TipoIndicacion: number | null;
 	Codigo: number | null;
+    Intervalo: number | null;
 	Cantidad: number | null;
 	TipoUnidad: string | null;
 	Frecuencia: string | null;

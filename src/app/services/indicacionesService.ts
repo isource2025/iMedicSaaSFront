@@ -5,6 +5,7 @@ import {
     FormularioDatosResponse,
     NuevaIndicacionPayload,
 } from "../types/indicaciones";
+import {Payload} from "@/app/components/indicaciones/AplicarIndicacion";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -215,30 +216,7 @@ export const indicacionesService = {
         return json?.data;
     },
 
-    aplicarIndicacion: async (payload: {
-        nroIndicacion: number;
-        numeroVisita: string;
-        tipoIndicacion: 'C' | 'M' | 'A' | 'D';
-        fechaCumplido: string;
-        horaCumplido: string;
-        observaciones?: string;
-        
-        // Campos específicos de Control
-        pulsoMax?: string;
-        pulsoMin?: string;
-        presionArterialMax?: string;
-        presionArterialMin?: string;
-        presionArterialMedia?: string;
-        frResp?: string;
-        temperaturaAxilar?: string;
-        temperaturaRectal?: string;
-        controlGlucemia?: string;
-        saturometria?: string;
-        
-        // Campos específicos de Medicación (si son necesarios)
-        // El backend ya tiene estos datos en la tabla de indicaciones
-        // pero podríamos enviarlos si necesita actualizar algo
-    }) => {
+    aplicarIndicacion: async (payload: Payload) => {
         const resp = await fetch(
             `${BASE_URL}/indicaciones/${payload.nroIndicacion}/aplicar`,
             {

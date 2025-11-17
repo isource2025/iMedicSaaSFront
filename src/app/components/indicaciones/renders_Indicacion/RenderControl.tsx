@@ -3,16 +3,24 @@ import { useAppContext } from "@/app/contexts/AppContext";
 import { FormData } from "../AplicarIndicacion";
 import styles from '../AplicarIndicacion.module.css';
 
-
 export default function RenderControl({
-    formData,
-    handleChange
-}: {
+                                          formData,
+                                          handleChange
+                                      }: {
     formData: FormData;
     handleChange: (field: keyof FormData, value: any) => void;
 }) {
 
     const { usuario } = useAppContext()
+
+    // ✅ Helper para manejar cambios en los campos de control
+    const handleControlChange = (field: keyof FormData['control'], value: string) => {
+        handleChange('control', {
+            ...formData.control,
+            [field]: value
+        });
+    };
+
     return (
         <>
             <div className={styles.fieldRow}>
@@ -47,7 +55,7 @@ export default function RenderControl({
                         disabled
                         className={styles.inputDisabled}
                     />
-                    <span className={styles.profesionalNombre}>{formData.profesionalNombre}</span>
+                    <span className={styles.profesionalNombre}>{usuario?.nombre + " " + usuario?.apellido}</span>
                 </div>
             </div>
 
@@ -68,30 +76,18 @@ export default function RenderControl({
                             onChange={(e) => handleChange('horaCumplido', e.target.value)}
                             className={styles.inputEditable}
                         />
-                        <span className={styles.clockIcon}>🕒</span>
                     </div>
                 </div>
                 <div className={styles.col5Rows}>
                     <div className={styles.fieldRow}>
                         <label className={styles.fieldLabel}>Pulso</label>
-                        <div className={styles.minMaxGroup}>
-                            <span className={styles.subLabel}>Max</span>
                             <input
                                 type="number"
                                 placeholder="0"
-                                value={formData.pulsoMax || ''}
-                                onChange={(e) => handleChange('pulsoMax', e.target.value)}
+                                value={formData.control.pulso || ''}
+                                onChange={(e) => handleControlChange('pulso', e.target.value)}
                                 className={styles.inputEditable}
                             />
-                            <span className={styles.subLabel}>Min</span>
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={formData.pulsoMin || ''}
-                                onChange={(e) => handleChange('pulsoMin', e.target.value)}
-                                className={styles.inputEditable}
-                            />
-                        </div>
                     </div>
 
                     <div className={styles.fieldRow}>
@@ -101,16 +97,16 @@ export default function RenderControl({
                             <input
                                 type="number"
                                 placeholder="0"
-                                value={formData.presionArterialMax || ''}
-                                onChange={(e) => handleChange('presionArterialMax', e.target.value)}
+                                value={formData.control.presionArterialMax || ''}
+                                onChange={(e) => handleControlChange('presionArterialMax', e.target.value)}
                                 className={styles.inputEditable}
                             />
                             <span className={styles.subLabel}>Min</span>
                             <input
                                 type="number"
                                 placeholder="0"
-                                value={formData.presionArterialMin || ''}
-                                onChange={(e) => handleChange('presionArterialMin', e.target.value)}
+                                value={formData.control.presionArterialMin || ''}
+                                onChange={(e) => handleControlChange('presionArterialMin', e.target.value)}
                                 className={styles.inputEditable}
                             />
                             <span className={styles.subLabel}>Media</span>
@@ -118,8 +114,8 @@ export default function RenderControl({
                                 type="number"
                                 placeholder="0.00"
                                 step="0.01"
-                                value={formData.presionArterialMedia || ''}
-                                onChange={(e) => handleChange('presionArterialMedia', e.target.value)}
+                                value={formData.control.presionArterialMedia || ''}
+                                onChange={(e) => handleControlChange('presionArterialMedia', e.target.value)}
                                 className={styles.inputEditable}
                             />
                         </div>
@@ -130,8 +126,8 @@ export default function RenderControl({
                         <input
                             type="number"
                             placeholder="0"
-                            value={formData.frResp || ''}
-                            onChange={(e) => handleChange('frResp', e.target.value)}
+                            value={formData.control.frResp || ''}
+                            onChange={(e) => handleControlChange('frResp', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
                         />
@@ -143,8 +139,8 @@ export default function RenderControl({
                             type="number"
                             placeholder="0.0"
                             step="0.1"
-                            value={formData.temperaturaAxilar || ''}
-                            onChange={(e) => handleChange('temperaturaAxilar', e.target.value)}
+                            value={formData.control.temperaturaAxilar || ''}
+                            onChange={(e) => handleControlChange('temperaturaAxilar', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
                         />
@@ -156,8 +152,8 @@ export default function RenderControl({
                             type="number"
                             placeholder="0.0"
                             step="0.1"
-                            value={formData.temperaturaRectal || ''}
-                            onChange={(e) => handleChange('temperaturaRectal', e.target.value)}
+                            value={formData.control.temperaturaRectal || ''}
+                            onChange={(e) => handleControlChange('temperaturaRectal', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
                         />
@@ -168,8 +164,8 @@ export default function RenderControl({
                         <input
                             type="number"
                             placeholder="0"
-                            value={formData.controlGlucemia || ''}
-                            onChange={(e) => handleChange('controlGlucemia', e.target.value)}
+                            value={formData.control.glucemia || ''}
+                            onChange={(e) => handleControlChange('glucemia', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
                         />
@@ -180,8 +176,8 @@ export default function RenderControl({
                         <input
                             type="number"
                             placeholder="0"
-                            value={formData.saturometria || ''}
-                            onChange={(e) => handleChange('saturometria', e.target.value)}
+                            value={formData.control.saturometria || ''}
+                            onChange={(e) => handleControlChange('saturometria', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
                         />
