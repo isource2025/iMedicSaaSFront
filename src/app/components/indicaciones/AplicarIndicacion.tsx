@@ -63,6 +63,9 @@ export interface FormData {
         cantidadIndicada?: number;
         cantidad?: number;
         tipoUnidad?: string;
+    },
+    medidaAsistencial: {
+        valorSector?: string;
     }
 }
 
@@ -117,7 +120,8 @@ export default function AplicarIndicacion(props: Props) {
         dieta: {
             tipoDieta: null
         },
-        medicamentoCtrl: {}
+        medicamentoCtrl: {},
+        medidaAsistencial: {}
     });
     
     const [loading, setLoading] = useState(false);
@@ -256,7 +260,8 @@ export default function AplicarIndicacion(props: Props) {
                 dieta: {
                     tipoDieta: null
                 },
-                medicamentoCtrl: {}
+                medicamentoCtrl: {},
+                medidaAsistencial: {}
             };
 
             // ✅ Enviar SOLO los campos de control que tienen valor
@@ -279,6 +284,10 @@ export default function AplicarIndicacion(props: Props) {
                     sector: indicacionOriginal?.IdSector || "",
                     tipoUnidad: indicacionOriginal?.TipoUnidad || ""
                 }
+            }
+
+            if (tipoIndicacion === 'A') {
+                payload.medidaAsistencial.valorSector = indicacionOriginal?.IdSector || ""
             }
 
             console.log('Enviando payload:', payload);
