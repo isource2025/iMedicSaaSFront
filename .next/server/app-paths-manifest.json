@@ -1,3 +1,6 @@
 {
-  "/dashboard/beds/[id]/page": "app/dashboard/beds/[id]/page.js"
+  "/page": "app/page.js",
+  "/dashboard/beds/[id]/page": "app/dashboard/beds/[id]/page.js",
+  "/dashboard/beds/page": "app/dashboard/beds/page.js",
+  "/dashboard/page": "app/dashboard/page.js"
 }

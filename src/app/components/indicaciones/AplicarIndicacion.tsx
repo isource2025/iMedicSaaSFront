@@ -53,6 +53,20 @@ export interface FormData {
         glucemia?: string;
         saturometria?: string;
     }
+
+    dieta : {
+        tipoDieta: number | null;
+    },
+
+    medicamentoCtrl: {
+        sector?: string;
+        cantidadIndicada?: number;
+        cantidad?: number;
+        tipoUnidad?: string;
+    },
+    medidaAsistencial: {
+        valorSector?: string;
+    }
 }
 
 export interface Payload extends FormData {
@@ -102,7 +116,12 @@ export default function AplicarIndicacion(props: Props) {
             temperaturaRectal: '',
             glucemia: '',
             saturometria: ''
-        }
+        },
+        dieta: {
+            tipoDieta: null
+        },
+        medicamentoCtrl: {},
+        medidaAsistencial: {}
     });
     
     const [loading, setLoading] = useState(false);
@@ -161,7 +180,12 @@ export default function AplicarIndicacion(props: Props) {
                         temperaturaRectal: '',
                         glucemia: '',
                         saturometria: ''
-                    }
+                    },
+
+                    dieta: {
+                        tipoDieta: null
+                    },
+                    medicamentoCtrl: {}
                 }));
             } catch (err: any) {
                 console.error('Error al cargar indicación:', err);
@@ -232,7 +256,12 @@ export default function AplicarIndicacion(props: Props) {
                 horaProximo: formData.horaProximo,
                 observaciones: formData.observaciones || '',
                 profesionalAsiste: formData.profesionalAsiste,
-                control: {} // Inicializar vacío
+                control: {}, // Inicializar vacío
+                dieta: {
+                    tipoDieta: null
+                },
+                medicamentoCtrl: {},
+                medidaAsistencial: {}
             };
 
             // ✅ Enviar SOLO los campos de control que tienen valor
@@ -242,6 +271,23 @@ export default function AplicarIndicacion(props: Props) {
                         (payload.control as any)[key] = value;
                     }
                 });
+            }
+
+            if (tipoIndicacion === 'D') {
+                payload.dieta.tipoDieta =  Number(indicacionOriginal?.TipoIndicacion)
+            }
+
+            if (tipoIndicacion === 'M') {
+                payload.medicamentoCtrl = {
+                    cantidad: Number(indicacionOriginal?.Cantidad),
+                    cantidadIndicada: Number(indicacionOriginal?.CantidadIndicada),
+                    sector: indicacionOriginal?.IdSector || "",
+                    tipoUnidad: indicacionOriginal?.TipoUnidad || ""
+                }
+            }
+
+            if (tipoIndicacion === 'A') {
+                payload.medidaAsistencial.valorSector = indicacionOriginal?.IdSector || ""
             }
 
             console.log('Enviando payload:', payload);
