@@ -1,0 +1,220 @@
+.container {
+  width: 100%;
+}
+
+.errorContainer {
+  background-color: #fee2e2;
+  border: 1px solid #f87171;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.errorTitle {
+  font-weight: bold;
+}
+
+.errorMessage {
+  display: block;
+}
+
+.tableContainer {
+  overflow-x: auto;
+  position: relative;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+}
+
+.table {
+  width: 100%;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #6b7280;
+  border-collapse: collapse;
+}
+
+.tableHeader {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: white;
+  background-color: #0083A9;
+}
+
+.tableHeader th {
+  padding: 0.75rem 1rem;
+}
+
+.tableRow {
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableRow:hover {
+  background-color: #f9fafb;
+}
+
+.tableRow td {
+  padding: 0.5rem .75rem;
+  vertical-align: top;
+}
+
+.clientColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.clientName {
+  font-weight: 500;
+  color: #111827;
+}
+
+.convenioColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.convenioNumber {
+  font-size: 0.75rem;
+  color: #0083A9;
+  font-weight: 500;
+}
+
+.convenioDesc {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.moneyColumn {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  color: #111827;
+}
+
+.statusClosed {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.statusOpen {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.loadingContainer {
+  padding: 1rem 1.5rem;
+  text-align: center;
+}
+
+.loadingContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loadingSpinner {
+  animation: spin 1s linear infinite;
+  height: 2rem;
+  width: 2rem;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  border-bottom-color: #00B5E2;
+}
+
+.loadingText {
+  margin-left: 0.5rem;
+}
+
+.noResults {
+  padding: 1rem 1.5rem;
+  text-align: center;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.viewButton {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 500;
+  color: #0083A9;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.viewButton:hover {
+  color: #00B5E2;
+  text-decoration: underline;
+}
+
+.editButton {
+  color: #0083A9;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.editButton:hover {
+  color: #00B5E2;
+  background-color: #f3f4f6;
+}
+
+.closeButton {
+  color: #f59e0b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  color: #d97706;
+  background-color: #f3f4f6;
+}
+
+.deleteButton {
+  color: #dc2626;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.deleteButton:hover {
+  color: #b91c1c;
+  background-color: #f3f4f6;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
