@@ -11,6 +11,8 @@ import SidebarFilters from './sidebar/SidebarFilters';
 import { useBedDetail } from './contexts/BedDetailContext';
 import IndicacionesSection from './indicaciones/IndicacionesSection';
 import MedicacionSuministradaSection from './medicacion/MedicacionSuministradaSection';
+import ControlesFrecuentesSection from './controles/ControlesFrecuentesSection';
+import EvolucionEnfermeriaSection from './evolucion/EvolucionEnfermeriaSection';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -69,6 +71,22 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					) : activeSection === 'medicacion-suministrada' ? (
 						<>
 							<MedicacionSuministradaSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+							/>
+						</>
+					) : activeSection === 'controles-frecuentes' ? (
+						<>
+							<ControlesFrecuentesSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+							/>
+						</>
+					) : activeSection === 'evolucion-enfermeria' ? (
+						<>
+							<EvolucionEnfermeriaSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}

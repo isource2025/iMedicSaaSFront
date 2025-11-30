@@ -11,6 +11,8 @@ export type SidebarSection =
 	| 'procedimientos'
 	| 'movimientos'
 	| 'medicacion-suministrada'
+	| 'controles-frecuentes'
+	| 'evolucion-enfermeria'
 	| 'dieta'
 	| 'balance-hidrico'
 	| 'insumos'

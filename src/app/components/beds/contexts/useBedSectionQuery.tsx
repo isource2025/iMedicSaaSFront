@@ -43,6 +43,8 @@ const endpointBySection: Record<SidebarSection, string> = {
 	procedimientos: '/procedimientos',
 	movimientos: '/movimientos',
 	'medicacion-suministrada': '/medicacion',
+	'controles-frecuentes': '/controles',
+	'evolucion-enfermeria': '/evolucion',
 	dieta: '/dieta',
 	'balance-hidrico': '/balance',
 	insumos: '/insumos',
