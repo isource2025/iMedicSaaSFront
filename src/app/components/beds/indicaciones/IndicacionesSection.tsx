@@ -17,7 +17,7 @@ type IndicacionDTO = {
     cantidad?: number | string;
     descripcion?: string;
     profesional?: string;
-    fullName?: string, 
+    fullName?: string,
     frecuencia?: string;
     observaciones?: string;
     proximo?: string;
@@ -60,7 +60,7 @@ export default function IndicacionesSection({
         endpointOverride: indicacionesPath
             ? { indicaciones: indicacionesPath }
             : undefined,
-        cacheTimeMs: 15000,
+        cacheTimeMs: 0,
     });
 
 
@@ -72,10 +72,10 @@ export default function IndicacionesSection({
         const list: IndicacionDTO[] = Array.isArray(data)
             ? data
             : data && Array.isArray((data as any).data)
-            ? (data as any).data
-            : [];
+                ? (data as any).data
+                : [];
 
-            
+
         return list.map((x) => ({
             id: x.id,
             cantidad: x.cantidad,
@@ -171,7 +171,7 @@ export default function IndicacionesSection({
             if (err instanceof Error) {
                 alert(
                     err.message ??
-                        "Error inesperado al actualizar la indicación"
+                    "Error inesperado al actualizar la indicación"
                 );
             }
         } finally {

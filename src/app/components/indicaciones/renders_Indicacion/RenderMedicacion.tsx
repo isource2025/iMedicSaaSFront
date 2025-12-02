@@ -3,17 +3,17 @@ import { useAppContext } from "@/app/contexts/AppContext";
 import { FormData } from "../AplicarIndicacion";
 import styles from "../AplicarIndicacion.module.css";
 
-export default function RenderMedicacion({ 
-    formData, 
-    handleChange 
-}: { 
+export default function RenderMedicacion({
+    formData,
+    handleChange
+}: {
     formData: FormData;
     handleChange: (field: keyof FormData, value: any) => void;
 }) {
-    const {usuario} = useAppContext()
+    const { usuario } = useAppContext()
     return (
         <>
-           <div className={styles.fieldRow}>
+            <div className={styles.fieldRow}>
                 <label className={styles.fieldLabel}>Profesional que Indica</label>
                 <div className={styles.fieldValue}>
                     <input
@@ -59,12 +59,15 @@ export default function RenderMedicacion({
                             value={formData.fechaCumplido}
                             onChange={(e) => handleChange('fechaCumplido', e.target.value)}
                             className={styles.inputEditable}
+                            autoFocus
+                            tabIndex={1}
                         />
                         <input
                             type="time"
                             value={formData.horaCumplido}
                             onChange={(e) => handleChange('horaCumplido', e.target.value)}
                             className={styles.inputEditable}
+                            tabIndex={2}
                         />
                         <span className={styles.clockIcon}>🕒</span>
                     </div>
@@ -72,8 +75,8 @@ export default function RenderMedicacion({
 
                 <div className={styles.fieldRow}>
                     <label className={styles.fieldLabel}>Sector</label>
-                    <select 
-                        value={formData.sector || ''} 
+                    <select
+                        value={formData.sector || ''}
                         disabled
                         className={styles.inputDisabled}
                     >
@@ -124,6 +127,7 @@ export default function RenderMedicacion({
                         className={styles.textareaEditable}
                         rows={3}
                         placeholder="Ingrese observaciones..."
+                        tabIndex={3}
                     />
                 </div>
             </div>

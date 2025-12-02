@@ -1,5 +1,5 @@
 .formContainer {
-    padding: 1.5rem;
+    padding: 14px;
     background-color: #fff;
 }
 
@@ -22,8 +22,13 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .errorContainer {
@@ -54,81 +59,67 @@
 /* Layout de campos */
 .fieldRow {
     display: flex;
-    align-items: flex-start;
-    margin-bottom: 0.65rem;
-    gap: 1rem;
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 18px;
 }
 
 .fieldLabel {
     flex: 0 0 180px;
     font-weight: 600;
-    font-size: 0.65rem;
-    color: #333;
-    padding-top: 0.5rem;
+    font-size: 13px;
+    color: var(--muted);
     text-align: right;
+    padding-top: 0;
 }
 
 .fieldValue {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 10px;
 }
 
 .profesionalNombre {
-    font-size: 0.75rem;
-    color: #17a2b8;
+    font-size: 14px;
+    color: var(--primary-600);
     font-weight: 500;
 }
 
 .iconIndicator {
-    font-size: 1.1rem;
+    font-size: 16px;
+    color: var(--muted);
 }
 
 .clockIcon {
-    font-size: 1.1rem;
+    font-size: 16px;
     margin-left: 0.25rem;
+    color: var(--muted);
 }
 
 /* SECCIÓN EDITABLE CON RECUADRO ROJO */
 .editableSection {
-    border-radius: 6px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 1.25rem;
     margin: 1.25rem 0;
+    background: #fafafa;
 }
 
 /* Grupos de inputs */
-.dateTimeGroup {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1;
-}
-
-.quantityGroup {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1;
-}
-
-.minMaxGroup {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1;
-}
-
+.dateTimeGroup,
+.quantityGroup,
+.minMaxGroup,
 .pressureGroup {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 10px;
     flex: 1;
 }
 
 .subLabel {
-    font-size: 0.65rem;
-    color: #6c757d;
+    font-size: 12px;
+    color: var(--muted);
     font-weight: 500;
     min-width: 35px;
 }
@@ -138,69 +129,74 @@
 .inputDisabled,
 .textareaEditable,
 .selectDisabled {
-    padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.65rem;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
     font-family: inherit;
-    min-height: 38px;
+    min-height: 40px;
+    color: var(--ink);
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.inputEditable {
-    background-color: white;
-    border: 1px solid #ced4da;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.inputEditable:focus {
+.inputEditable:focus,
+.textareaEditable:focus {
     outline: none;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-50);
 }
 
 .inputDisabled,
 .selectDisabled {
-    background-color: #e9ecef;
+    background-color: #f3f4f6;
     cursor: not-allowed;
-    color: #6c757d;
-    border: 1px solid #ced4da;
+    color: var(--muted);
+    border-color: var(--border);
 }
 
 .textareaEditable {
     resize: vertical;
-    min-height: 70px;
+    min-height: 80px;
     width: 100%;
 }
 
 /* Botón Aceptar */
 .acceptButton {
-    padding: 0.5rem 2rem;
-    background-color: #28a745;
-    color: white;
+    padding: 10px 24px;
+    background: var(--pantone-314c);
+    color: #ffffff;
     border: none;
-    border-radius: 50px;
+    border-radius: 10px;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 131, 169, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .acceptButton:hover:not(:disabled) {
-    background-color: #218838;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background: var(--pantone-314c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 131, 169, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .acceptButton:active:not(:disabled) {
     transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 131, 169, 0.2);
 }
 
 .acceptButton:disabled {
-    background-color: #6c757d;
+    background: #6c757d;
     cursor: not-allowed;
     transform: none;
     opacity: 0.65;
+    box-shadow: none;
 }
 
 /* Responsive */
@@ -250,11 +246,9 @@
     user-select: none;
 }
 
-
 .col5Rows {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
 }
-
