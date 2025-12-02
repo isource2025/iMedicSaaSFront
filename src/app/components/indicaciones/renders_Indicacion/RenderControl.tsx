@@ -4,9 +4,9 @@ import { FormData } from "../AplicarIndicacion";
 import styles from '../AplicarIndicacion.module.css';
 
 export default function RenderControl({
-                                          formData,
-                                          handleChange
-                                      }: {
+    formData,
+    handleChange
+}: {
     formData: FormData;
     handleChange: (field: keyof FormData, value: any) => void;
 }) {
@@ -69,25 +69,29 @@ export default function RenderControl({
                             value={formData.fechaCumplido}
                             onChange={(e) => handleChange('fechaCumplido', e.target.value)}
                             className={styles.inputEditable}
+                            autoFocus
+                            tabIndex={1}
                         />
                         <input
                             type="time"
                             value={formData.horaCumplido}
                             onChange={(e) => handleChange('horaCumplido', e.target.value)}
                             className={styles.inputEditable}
+                            tabIndex={2}
                         />
                     </div>
                 </div>
                 <div className={styles.col5Rows}>
                     <div className={styles.fieldRow}>
                         <label className={styles.fieldLabel}>Pulso</label>
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={formData.control.pulso || ''}
-                                onChange={(e) => handleControlChange('pulso', e.target.value)}
-                                className={styles.inputEditable}
-                            />
+                        <input
+                            type="number"
+                            placeholder="0"
+                            value={formData.control.pulso || ''}
+                            onChange={(e) => handleControlChange('pulso', e.target.value)}
+                            className={styles.inputEditable}
+                            tabIndex={3}
+                        />
                     </div>
 
                     <div className={styles.fieldRow}>
@@ -100,6 +104,7 @@ export default function RenderControl({
                                 value={formData.control.presionArterialMax || ''}
                                 onChange={(e) => handleControlChange('presionArterialMax', e.target.value)}
                                 className={styles.inputEditable}
+                                tabIndex={4}
                             />
                             <span className={styles.subLabel}>Min</span>
                             <input
@@ -108,6 +113,7 @@ export default function RenderControl({
                                 value={formData.control.presionArterialMin || ''}
                                 onChange={(e) => handleControlChange('presionArterialMin', e.target.value)}
                                 className={styles.inputEditable}
+                                tabIndex={5}
                             />
                             <span className={styles.subLabel}>Media</span>
                             <input
@@ -117,6 +123,7 @@ export default function RenderControl({
                                 value={formData.control.presionArterialMedia || ''}
                                 onChange={(e) => handleControlChange('presionArterialMedia', e.target.value)}
                                 className={styles.inputEditable}
+                                tabIndex={6}
                             />
                         </div>
                     </div>
@@ -130,6 +137,7 @@ export default function RenderControl({
                             onChange={(e) => handleControlChange('frResp', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
+                            tabIndex={7}
                         />
                     </div>
 
@@ -143,6 +151,7 @@ export default function RenderControl({
                             onChange={(e) => handleControlChange('temperaturaAxilar', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
+                            tabIndex={8}
                         />
                     </div>
 
@@ -156,6 +165,7 @@ export default function RenderControl({
                             onChange={(e) => handleControlChange('temperaturaRectal', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
+                            tabIndex={9}
                         />
                     </div>
 
@@ -168,6 +178,7 @@ export default function RenderControl({
                             onChange={(e) => handleControlChange('glucemia', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
+                            tabIndex={10}
                         />
                     </div>
 
@@ -180,6 +191,7 @@ export default function RenderControl({
                             onChange={(e) => handleControlChange('saturometria', e.target.value)}
                             className={styles.inputEditable}
                             style={{ width: '100px' }}
+                            tabIndex={11}
                         />
                     </div>
 
@@ -193,6 +205,7 @@ export default function RenderControl({
                         className={styles.textareaEditable}
                         rows={3}
                         placeholder="Ingrese observaciones..."
+                        tabIndex={12}
                     />
                 </div>
             </div>

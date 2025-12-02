@@ -122,18 +122,16 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 			<div className={styles.section}>
 				<button
 					type='button'
-					className={`${styles.summary} ${
-						openSections.medica ? styles.summaryOpen : ''
-					}`}
+					className={`${styles.summary} ${openSections.medica ? styles.summaryOpen : ''
+						}`}
 					onClick={() => toggleSection('medica', openSections.medica)}
 					aria-expanded={openSections.medica}
 					aria-controls='panel-medica'
 				>
 					<span>Gestión Médica</span>
 					<span
-						className={`${styles.chevron} ${
-							openSections.medica ? styles.chevronOpen : ''
-						}`}
+						className={`${styles.chevron} ${openSections.medica ? styles.chevronOpen : ''
+							}`}
 						aria-hidden
 					/>
 				</button>
@@ -147,57 +145,50 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 				>
 					<nav id='panel-medica' className={styles.nav}>
 						<button
-							className={`${styles.navButton} ${
-								isActive('hcIngreso') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('hcIngreso') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('hcIngreso')}
 						>
 							H.C. de Ingreso
 						</button>
 						<button
-							className={`${styles.navButton} ${
-								isActive('indicaciones') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('indicaciones') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('indicaciones')}
 						>
 							Indicaciones
 						</button>
 						<button
-							className={`${styles.navButton} ${
-								isActive('evoluciones') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('evoluciones') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('evoluciones')}
 						>
 							Evoluciones
 						</button>
 						<button
-							className={`${styles.navButton} ${
-								isActive('solicitudEstudios') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('solicitudEstudios') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('solicitudEstudios')}
 						>
 							Estudios
 						</button>
 						<button
-							className={`${styles.navButton} ${
-								isActive('protocolos') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('protocolos') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('protocolos')}
 						>
 							Protocolos
 						</button>
 						<button
-							className={`${styles.navButton} ${
-								isActive('procedimientos') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('procedimientos') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('procedimientos')}
 						>
 							Procedimientos
 						</button>
 						<button
-							className={`${styles.navButton} ${
-								isActive('movimientos') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('movimientos')}
 						>
 							Movimientos
@@ -210,18 +201,16 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 			<div className={styles.section}>
 				<button
 					type='button'
-					className={`${styles.summary} ${
-						openSections.enfermeria ? styles.summaryOpen : ''
-					}`}
+					className={`${styles.summary} ${openSections.enfermeria ? styles.summaryOpen : ''
+						}`}
 					onClick={() => toggleSection('enfermeria', openSections.enfermeria)}
 					aria-expanded={openSections.enfermeria}
 					aria-controls='panel-enfermeria'
 				>
 					<span>Gestión Enfermería</span>
 					<span
-						className={`${styles.chevron} ${
-							openSections.enfermeria ? styles.chevronOpen : ''
-						}`}
+						className={`${styles.chevron} ${openSections.enfermeria ? styles.chevronOpen : ''
+							}`}
 						aria-hidden
 					/>
 				</button>
@@ -235,27 +224,32 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 				>
 					<nav id='panel-enfermeria' className={styles.nav}>
 						<button
-							className={`${styles.navButton} ${
-								isActive('indicaciones') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('indicaciones') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('indicaciones')}
 						>
 							Indicaciones
 						</button>
 
 						<button
-							className={`${styles.navButton} ${
-								isActive('evoluciones') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('control') ? styles.active : ''
+								}`}
+							onClick={() => clickItem('control')}
+						>
+							Control
+						</button>
+
+						<button
+							className={`${styles.navButton} ${isActive('evoluciones') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('evoluciones')}
 						>
 							Evoluciones
 						</button>
 
 						<button
-							className={`${styles.navButton} ${
-								isActive('medicacion-suministrada') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('medicacion-suministrada') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('medicacion-suministrada')}
 						>
 							Medicación Suministrada
@@ -289,27 +283,24 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 						</button>
 
 						<button
-							className={`${styles.navButton} ${
-								isActive('balance-hidrico') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('balance-hidrico') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('balance-hidrico')}
 						>
 							Balance Hídrico
 						</button>
 
 						<button
-							className={`${styles.navButton} ${
-								isActive('insumos') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('insumos') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('insumos')}
 						>
 							Insumos
 						</button>
 
 						<button
-							className={`${styles.navButton} ${
-								isActive('movimientos') ? styles.active : ''
-							}`}
+							className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
+								}`}
 							onClick={() => clickItem('movimientos')}
 						>
 							Movimientos
@@ -325,17 +316,15 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 				</div>
 				<nav className={styles.fixedNav}>
 					<button
-						className={`${styles.navButton} ${
-							isActive('informe_evo') ? styles.active : ''
-						}`}
+						className={`${styles.navButton} ${isActive('informe_evo') ? styles.active : ''
+							}`}
 						onClick={() => clickItem('informe_evo')}
 					>
 						Informe de Evolución
 					</button>
 					<button
-						className={`${styles.navButton} ${
-							isActive('adjuntos') ? styles.active : ''
-						}`}
+						className={`${styles.navButton} ${isActive('adjuntos') ? styles.active : ''
+							}`}
 						onClick={() => clickItem('adjuntos')}
 					>
 						Archivos Adjuntos

@@ -1,10 +1,10 @@
 import styles from "../AplicarIndicacion.module.css"
 import { FormData } from "../AplicarIndicacion";
 
-export default function RenderAsistencial({ 
-    formData, 
-    handleChange 
-}: { 
+export default function RenderAsistencial({
+    formData,
+    handleChange
+}: {
     formData: FormData;
     handleChange: (field: keyof FormData, value: any) => void;
 }) {
@@ -19,12 +19,15 @@ export default function RenderAsistencial({
                             value={formData.fechaCumplido}
                             onChange={(e) => handleChange('fechaCumplido', e.target.value)}
                             className={styles.inputEditable}
+                            autoFocus
+                            tabIndex={1}
                         />
                         <input
                             type="time"
                             value={formData.horaCumplido}
                             onChange={(e) => handleChange('horaCumplido', e.target.value)}
                             className={styles.inputEditable}
+                            tabIndex={2}
                         />
                         <span className={styles.clockIcon}>🕒</span>
                     </div>
@@ -48,6 +51,7 @@ export default function RenderAsistencial({
                         className={styles.textareaEditable}
                         rows={3}
                         placeholder="Ingrese observaciones..."
+                        tabIndex={3}
                     />
                 </div>
             </div>
