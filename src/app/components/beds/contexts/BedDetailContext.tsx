@@ -15,6 +15,7 @@ export type SidebarSection =
 	| 'balance-hidrico'
 	| 'insumos'
 	| 'informe_evo'
+	| 'control'
 	| 'adjuntos';
 
 interface BedDetailContextType {
