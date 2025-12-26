@@ -49,6 +49,7 @@ const endpointBySection: Record<SidebarSection, string> = {
 	'balance-hidrico': '/balance',
 	insumos: '/insumos',
 	informe_evo: '/informe-evo',
+	control: '/control',
 	adjuntos: '/adjuntos',
 };
 
