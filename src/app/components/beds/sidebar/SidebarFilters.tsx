@@ -256,8 +256,27 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 						</button>
 
 						<button
-							className={`${styles.navButton} ${isActive('dieta') ? styles.active : ''
-								}`}
+							className={`${styles.navButton} ${
+								isActive('controles-frecuentes') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('controles-frecuentes')}
+						>
+							Controles Frecuentes
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('evolucion-enfermeria') ? styles.active : ''
+							}`}
+							onClick={() => clickItem('evolucion-enfermeria')}
+						>
+							Evolución de Enfermería
+						</button>
+
+						<button
+							className={`${styles.navButton} ${
+								isActive('dieta') ? styles.active : ''
+							}`}
 							onClick={() => clickItem('dieta')}
 						>
 							Dieta
