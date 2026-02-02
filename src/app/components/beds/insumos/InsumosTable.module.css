@@ -42,24 +42,6 @@
     border-bottom: 2px solid #bae6fd;
 }
 
-/* Columna de checkbox */
-.colCheckbox {
-    width: 50px !important;
-    text-align: center !important;
-}
-
-.cellCheckbox {
-    text-align: center;
-    vertical-align: middle;
-}
-
-.cellCheckbox input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #00B5E2;
-}
-
 /* Subtítulo debajo del título de la columna */
 .thead th span {
     display: inline-block;

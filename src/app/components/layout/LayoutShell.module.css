@@ -7,11 +7,11 @@
 }
 
 .content {
-  flex-grow: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100%;
+  min-width: 0;
   overflow: hidden;
   position: relative;
   transition: margin-left 0.3s ease;
@@ -23,6 +23,11 @@
 
 .contentWithoutSidebar {
   margin-left: 0;
+}
+
+.contentWithSidebarDesktop {
+  margin-left: 70px; /* Espacio para sidebar collapsed en desktop */
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Botón de menú */
@@ -87,7 +92,7 @@
 .userMenuContainer {
   position: fixed;
   top: 20px;
-  right: 64px;
+  right: 32px;
   z-index: 30;
 }
 
@@ -105,7 +110,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
-
 
 .userMenuButton:hover {
   background: #0083A9;
@@ -227,12 +231,22 @@
 }
 
 .main {
-  flex-grow: 1;
+  flex: 1;
   overflow-y: auto;
-  padding: 80px 16px 16px 16px; /* Espacio superior para el botón */
+  overflow-x: hidden;
+  padding: 80px 16px 16px 16px;
   background-color: #f9fafb;
+  transition: padding 0.3s ease;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+@media (min-width: 1024px) {
+  .main {
+    padding: 32px 24px 24px 24px;
+  }
+}
 
 /* Responsive */
 @media (max-width: 1023px) {
@@ -251,19 +265,23 @@
 
 @media (min-width: 1024px) {
   .menuButton {
-    display: flex; /* También visible en desktop */
+    display: none; /* Oculto en desktop */
+  }
+  
+  .contentWithSidebarDesktop {
+    margin-left: 70px; /* Espacio para sidebar collapsed */
   }
   
   .contentWithSidebar {
-    margin-left: 260px; /* Espacio para el sidebar en desktop */
+    margin-left: 0;
   }
   
   .contentWithoutSidebar {
-    margin-left: 0; /* Sin margen cuando sidebar está cerrado */
+    margin-left: 0;
   }
   
   .main {
-    padding: 64px 16px 16px 16px;
+    padding: 32px 24px 24px 24px;
   }
 }
 

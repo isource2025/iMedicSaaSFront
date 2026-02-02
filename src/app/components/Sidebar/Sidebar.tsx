@@ -10,11 +10,13 @@ import { useAppContext } from '../../contexts/AppContext';
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  isDesktop: boolean;
 };
 
-export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
+export default function Sidebar({ sidebarOpen, setSidebarOpen, isDesktop }: SidebarProps) {
   const pathname = usePathname();
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  const [isHovered, setIsHovered] = useState(false);
   const { sectorSeleccionado, empresaInfo } = useAppContext();
 
 
@@ -80,11 +82,24 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     <>
       {/* Backdrop solo para mobile */}
       <div className={`${styles.backdrop} ${sidebarOpen ? styles.backdropVisible : ''}`} onClick={() => setSidebarOpen(false)} />
-      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden}`}>
+      <aside 
+        className={`${styles.sidebar} ${
+          isDesktop 
+            ? (isHovered ? styles.sidebarExpanded : styles.sidebarCollapsed)
+            : (sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden)
+        }`}
+        onMouseEnter={() => isDesktop && setIsHovered(true)}
+        onMouseLeave={() => isDesktop && setIsHovered(false)}
+      >
         <div className={styles.sidebarHeader}>
           <div className={styles.headerContent}>
+            {isDesktop && !isHovered && (
+              <div className={styles.logoCollapsed}>
+                <span className={styles.logoIcon}>iM</span>
+              </div>
+            )}
             <div className={styles.companyInfo}>
-              {empresaInfo && (
+              {empresaInfo && (isDesktop ? isHovered : true) && (
                 <div className={styles.empresaDetails}>
                   <span className={styles.empresaName}>{empresaInfo.descripcion}</span>
                   {sectorSeleccionado && (
@@ -93,11 +108,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                 </div>
               )}
             </div>
-            <div className={styles.headerActions}>
-              <button onClick={() => setSidebarOpen(false)} className={styles.closeButton}>
-                ×
-              </button>
-            </div>
+            {!isDesktop && (
+              <div className={styles.headerActions}>
+                <button onClick={() => setSidebarOpen(false)} className={styles.closeButton}>
+                  ×
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -118,8 +135,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                         className={`${styles.navItem} ${isActive ? styles.navItemActive : styles.navItemInactive}`}
                       >
                         <span className={styles.navIcon}><item.icon size={20} /></span>
-                        {item.name}
-                        <span className={styles.submenuArrow} style={expandedMenus[item.submenuName] ? { transform: 'rotate(180deg)' } : {}}>
+                        <span className={styles.navText}>{item.name}</span>
+                        <span className={`${styles.submenuArrow} ${styles.navText}`} style={expandedMenus[item.submenuName] ? { transform: 'rotate(180deg)' } : {}}>
                           <ChevronDown size={16} />
                         </span>
                       </button>
@@ -147,7 +164,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                       className={`${styles.navItem} ${isActive ? styles.navItemActive : styles.navItemInactive}`}
                     >
                       <span className={styles.navIcon}><item.icon size={20} /></span>
-                      {item.name}
+                      <span className={styles.navText}>{item.name}</span>
                     </Link>
                   )}
                 </li>
@@ -158,7 +175,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
 
         <div className={styles.sidebarFooter}>
           <div className={styles.footerInfo}>
-            <span className={styles.footerText}>iMedicWS v1.0</span>
+            {(isDesktop ? isHovered : true) && (
+              <span className={styles.footerText}>iMedicWS v1.0</span>
+            )}
           </div>
         </div>
       </aside>

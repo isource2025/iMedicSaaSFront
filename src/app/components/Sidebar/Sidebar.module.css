@@ -39,10 +39,11 @@
   background-color: #fff;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
   z-index: 50;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.25s ease-in-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-right: 1px solid #f0f4f8;
+  overflow: hidden;
+  will-change: width;
 }
 
 .sidebarVisible {
@@ -53,41 +54,85 @@
   transform: translateX(-100%);
 }
 
+/* Estados del sidebar en desktop */
+.sidebarCollapsed {
+  width: 70px;
+}
+
+.sidebarExpanded {
+  width: 260px;
+}
+
 /* Sidebar responsive en desktop y mobile */
 @media screen and (min-width: 1024px) {
   .sidebar {
-    position: fixed; /* Cambiado de static a fixed */
+    position: fixed;
     height: 100vh;
+    transform: translateX(0) !important;
+  }
+  
+  .sidebarCollapsed {
+    width: 70px;
+  }
+  
+  .sidebarExpanded {
     width: 260px;
   }
   
-  .sidebarVisible {
-    transform: translateX(0);
-  }
-  
-  .sidebarHidden {
-    transform: translateX(-100%);
-  }
-  
   .backdrop {
-    display: none !important; /* Sin backdrop en desktop */
+    display: none !important;
   }
 }
 
 /* Encabezado del sidebar */
 .sidebarHeader {
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 1rem;
   border-bottom: 1px solid #e2e8f0;
   background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
   color: white;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebarCollapsed .sidebarHeader {
+  padding: 1rem 0;
+}
+
+.sidebarExpanded .sidebarHeader {
+  padding: 1.25rem 1rem;
 }
 
 .headerContent {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 12px;
+  width: 100%;
+}
+
+.sidebarCollapsed .headerContent {
+  align-items: center;
+}
+
+.logoCollapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logoIcon {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.5px;
 }
 
 .companyInfo {
@@ -130,7 +175,8 @@
 .navigation {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem 0;
+  overflow-x: hidden;
+  padding: 1rem 0;
   scrollbar-width: thin;
   scrollbar-color: #e2e8f0 transparent;
 }
@@ -157,17 +203,31 @@
 .navItem {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1.5rem;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
   color: #64748b;
   background-color: transparent;
   text-decoration: none;
   border-left: 3px solid transparent;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, color 0.2s ease, border-left 0.2s ease;
   cursor: pointer;
   width: 100%;
   text-align: left;
+  position: relative;
+}
+
+.sidebarCollapsed .navItem {
+  padding: 0.875rem 0;
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebarExpanded .navItem {
+  padding: 0.875rem 1rem;
+  justify-content: flex-start;
+  gap: 0.75rem;
 }
 
 .navItem:hover {
@@ -186,20 +246,44 @@
 }
 
 .navIcon {
-  margin-right: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
+}
+
+.navText {
+  white-space: nowrap;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebarCollapsed .navText {
+  display: none;
+}
+
+.sidebarExpanded .navText {
+  display: block;
 }
 
 .submenuArrow {
-  margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
+  width: 16px;
+}
+
+.sidebarCollapsed .submenuArrow {
+  display: none;
+}
+
+.sidebarExpanded .submenuArrow {
+  display: flex;
 }
 
 .submenuList {
@@ -209,6 +293,10 @@
   border-left: 3px solid #61D6EB; /* Pantone 311U - Azul celeste claro */
   overflow: hidden;
   animation: slideDown 0.3s ease-out;
+}
+
+.sidebarCollapsed .submenuList {
+  display: none;
 }
 
 @keyframes slideDown {
@@ -264,8 +352,20 @@
 .sidebarFooter {
   border-top: 1px solid #e2e8f0;
   background-color: #f8fafc;
-  padding: 16px 24px;
+  padding: 16px;
   text-align: center;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebarCollapsed .sidebarFooter {
+  padding: 12px 0;
+}
+
+.sidebarExpanded .sidebarFooter {
+  padding: 16px;
 }
 
 .footerInfo {
@@ -280,11 +380,27 @@
   font-weight: 500;
 }
 
+.sidebarCollapsed .footerText {
+  display: none;
+}
+
+.sidebarExpanded .footerText {
+  display: block;
+}
+
 .empresaDetails {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 8px;
+  width: 100%;
+}
+
+.sidebarCollapsed .empresaDetails {
+  display: none;
+}
+
+.sidebarExpanded .empresaDetails {
+  display: flex;
 }
 
 .empresaName {

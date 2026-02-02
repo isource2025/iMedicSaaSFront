@@ -19,6 +19,7 @@ type IndicacionDTO = {
     profesional?: string;
     fullName?: string,
     frecuencia?: string;
+    intervalo?: number;
     observaciones?: string;
     proximo?: string;
     anterior?: string;
@@ -28,6 +29,11 @@ type IndicacionDTO = {
     tipo?: string,
     idSector?: string;
     medicamento?: string;
+    ultimaAplicacion?: string;
+    proximaAplicacion?: string;
+    estado?: string;
+    suspendida?: boolean;
+    unicaVez?: boolean;
 };
 
 export default function IndicacionesSection({
@@ -83,6 +89,7 @@ export default function IndicacionesSection({
             profesional: x.profesional,
             fullName: x.fullName,
             frecuencia: x.frecuencia,
+            intervalo: x.intervalo,
             observaciones: x.observaciones,
             proximo: x.proximo,
             anterior: x.anterior,
@@ -92,6 +99,11 @@ export default function IndicacionesSection({
             tipo: x.tipo,
             idSector: x.idSector,
             medicamento: x.medicamento,
+            ultimaAplicacion: x.ultimaAplicacion,
+            proximaAplicacion: x.proximaAplicacion,
+            estado: x.estado,
+            suspendida: x.suspendida,
+            unicaVez: x.unicaVez,
         }));
     }, [data]);
 
@@ -100,8 +112,122 @@ export default function IndicacionesSection({
     const [helpOpen, setHelpOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    
+    // Estado para modo "volver a indicar"
+    const [modoReindicar, setModoReindicar] = useState(false);
+    const [selectedForReindicar, setSelectedForReindicar] = useState<Set<string>>(new Set());
+    const [reindicando, setReindicando] = useState(false);
 
     if (activeSection !== "indicaciones") return null;
+    
+    // Handlers para modo reindicar
+    const handleToggleReindicar = (id: string) => {
+        setSelectedForReindicar(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+    
+    const handleConfirmarReindicar = async () => {
+        if (selectedForReindicar.size === 0) return;
+        
+        setReindicando(true);
+        try {
+            // Obtener las indicaciones seleccionadas
+            const indicacionesAReindicar = baseRows.filter(r => selectedForReindicar.has(r.id));
+            
+            // Obtener fecha y hora actual
+            const ahora = new Date();
+            const fechaActual = ahora.toISOString().split('T')[0]; // YYYY-MM-DD
+            const horaActual = ahora.toTimeString().split(' ')[0]; // HH:mm:ss
+            
+            // Reindicar cada una
+            let exitosas = 0;
+            let fallidas = 0;
+            
+            for (const indicacion of indicacionesAReindicar) {
+                try {
+                    // Obtener la indicación completa del backend para tener todos los datos
+                    const indicacionCompleta = await indicacionesService.getIndicacionesByNroIndicacion(Number(indicacion.nro));
+                    
+                    if (!indicacionCompleta) {
+                        console.error('No se pudo obtener la indicación completa:', indicacion.nro);
+                        fallidas++;
+                        continue;
+                    }
+                    
+                    // Crear payload con los datos de la indicación original pero con fecha actual
+                    const payload: NuevaIndicacionPayload = {
+                        NumeroVisita: numeroVisita,
+                        NroAdicional: indicacionCompleta.NroAdicional,
+                        FechaCarga: fechaActual,
+                        HoraCarga: horaActual,
+                        OperadorCarga: indicacionCompleta.OperadorCarga,
+                        ProfesionalAsiste: indicacionCompleta.ProfesionalAsiste,
+                        FechaCumplido: null,
+                        HoraCumplido: null,
+                        FechaProximo: null,
+                        HoraProximo: null,
+                        FechaRevision: null,
+                        HoraRevision: null,
+                        TipoIndicacion: indicacionCompleta.TipoIndicacion,
+                        Codigo: indicacionCompleta.Codigo,
+                        Cantidad: indicacionCompleta.Cantidad,
+                        TipoUnidad: indicacionCompleta.TipoUnidad,
+                        Frecuencia: indicacionCompleta.Frecuencia,
+                        Observaciones: indicacionCompleta.Observaciones,
+                        FechaExpiro: null,
+                        HoraExpiro: null,
+                        CantidadIndicada: indicacionCompleta.CantidadIndicada,
+                        Orden: null,
+                        Estado: 'A',
+                        CantidadPorTurno: indicacionCompleta.CantidadPorTurno,
+                        CantidadEntregada: null,
+                        ParaFechaEntrega: null,
+                        FormaAdicional: indicacionCompleta.FormaAdicional,
+                        NroIndicacionAnterior: indicacionCompleta.NroIndicacion,
+                        IdSector: indicacionCompleta.IdSector,
+                        AliasMedicamento: indicacionCompleta.AliasMedicamento,
+                        ExcluidoDeEntrega: indicacionCompleta.ExcluidoDeEntrega,
+                    };
+                    
+                    await indicacionesService.postNuevaIndicacion(payload);
+                    exitosas++;
+                } catch (error) {
+                    console.error('Error al reindicar indicación:', indicacion.nro, error);
+                    fallidas++;
+                }
+            }
+            
+            // Mostrar resultado
+            if (exitosas > 0) {
+                alert(`Se reindicaron exitosamente ${exitosas} indicación(es) con fecha ${fechaActual}`);
+            }
+            if (fallidas > 0) {
+                alert(`No se pudieron reindicar ${fallidas} indicación(es). Ver consola para detalles.`);
+            }
+            
+            // Refrescar y salir del modo reindicar
+            await refetch();
+            setModoReindicar(false);
+            setSelectedForReindicar(new Set());
+        } catch (err) {
+            console.error('Error al reindicar:', err);
+            alert('Error al reindicar las indicaciones');
+        } finally {
+            setReindicando(false);
+        }
+    };
+    
+    const handleCancelarReindicar = () => {
+        setModoReindicar(false);
+        setSelectedForReindicar(new Set());
+    };
 
     // Filtrado simple por texto
     const rows = useMemo(() => {
@@ -198,26 +324,50 @@ export default function IndicacionesSection({
                 </div>
 
                 <div className={styles.actions}>
-                    <button
-                        className={`${styles.btn} ${styles.btnPrimary}`}
-                        onClick={onAddIndicacion}
-                    >
-                        <span className={styles.addIcon} aria-hidden>
-                            ➕
-                        </span>
-                        Agregar indicación
-                    </button>
+                    {!modoReindicar ? (
+                        <>
+                            <button
+                                className={`${styles.btn} ${styles.btnPrimary}`}
+                                onClick={onAddIndicacion}
+                            >
+                                <span className={styles.addIcon} aria-hidden>
+                                    ➕
+                                </span>
+                                Agregar indicación
+                            </button>
 
-                    <button
-                        className={`${styles.btn} ${styles.btnGhost}`}
-                        onClick={() => setHelpOpen(true)}
-                        aria-label="Ayuda"
-                        title="Ayuda"
-                    >
-                        <span className={styles.btnIcon} aria-hidden>
-                            ❕
-                        </span>
-                    </button>
+                            <button
+                                className={`${styles.btn} ${styles.btnGhost}`}
+                                onClick={() => setHelpOpen(true)}
+                                aria-label="Ayuda"
+                                title="Ayuda"
+                            >
+                                <span className={styles.btnIcon} aria-hidden>
+                                    ❕
+                                </span>
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                className={`${styles.btn} ${styles.btnSuccess} ${reindicando ? styles.btnAnimated : ''}`}
+                                onClick={handleConfirmarReindicar}
+                                disabled={selectedForReindicar.size === 0 || reindicando}
+                            >
+                                <span className={styles.btnIcon} aria-hidden>
+                                    ✓
+                                </span>
+                                {reindicando ? 'Reindicando...' : `Reindicar ${selectedForReindicar.size} indicación${selectedForReindicar.size !== 1 ? 'es' : ''}`}
+                            </button>
+                            <button
+                                className={`${styles.btn} ${styles.btnGhost}`}
+                                onClick={handleCancelarReindicar}
+                                disabled={reindicando}
+                            >
+                                Cancelar
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -243,6 +393,10 @@ export default function IndicacionesSection({
                             maxHeight={tableMaxHeight}
                             refetch={refetch}
                             numeroVisita={numeroVisita ? String(numeroVisita) : ""}
+                            modoReindicar={modoReindicar}
+                            selectedForReindicar={selectedForReindicar}
+                            onToggleReindicar={handleToggleReindicar}
+                            onActivarModoReindicar={() => setModoReindicar(true)}
                         />
                     )}
                 </div>

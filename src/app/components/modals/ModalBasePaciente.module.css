@@ -16,6 +16,12 @@
     transition: opacity 0.2s ease; /* Suavizar la aparición */
 }
 
+@media (min-width: 1024px) {
+    .modalOverlay {
+        left: 70px;
+    }
+}
+
 .modalContainer {
     width: 1400px;
     max-width: 98vw;

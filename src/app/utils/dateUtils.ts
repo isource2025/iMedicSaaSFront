@@ -165,6 +165,7 @@ export const formatSqlDate = (
     showTime?: boolean;
     showSeconds?: boolean;
     adjustTimezone?: boolean;
+    showYear?: boolean;
   } = {}
 ): string => {
   const {
@@ -172,14 +173,23 @@ export const formatSqlDate = (
     showDate = true,
     showTime = true,
     showSeconds = false,
-    adjustTimezone = true // Por defecto, ajustar a la zona horaria local
+    adjustTimezone = true, // Por defecto, ajustar a la zona horaria local
+    showYear = true // Por defecto, mostrar el año
   } = options;
 
   if (!sqlDate) return '-';
 
   try {
     // Crear objeto Date a partir de la fecha SQL
-    const date = new Date(sqlDate);
+    let date: Date;
+    
+    // Si es formato YYYY-MM-DD (sin hora), parsear como fecha local
+    if (/^\d{4}-\d{2}-\d{2}$/.test(sqlDate)) {
+      const [year, month, day] = sqlDate.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(sqlDate);
+    }
     
     if (isNaN(date.getTime())) {
       return '-';
@@ -205,11 +215,16 @@ export const formatSqlDate = (
     let result = '';
     
     if (showDate) {
-      result += dateToFormat.toLocaleDateString(locale, {
+      const dateOptions: Intl.DateTimeFormatOptions = {
         day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
+        month: '2-digit'
+      };
+      
+      if (showYear) {
+        dateOptions.year = 'numeric';
+      }
+      
+      result += dateToFormat.toLocaleDateString(locale, dateOptions);
     }
     
     if (showTime) {

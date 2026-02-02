@@ -12,6 +12,12 @@
   padding: 20px;
 }
 
+@media (min-width: 1024px) {
+  .modalOverlay {
+    left: 70px;
+  }
+}
+
 .modalContent {
   background: white;
   border-radius: 12px;

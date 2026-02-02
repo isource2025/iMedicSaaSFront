@@ -3,6 +3,9 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+	min-width: 0;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .header {
@@ -172,6 +175,8 @@
 	background: var(--card);
 	border-radius: var(--radius);
 	box-shadow: var(--shadow);
+	min-width: 0;
+	box-sizing: border-box;
 }
 
 .header {
@@ -234,12 +239,17 @@
 	overflow-x: auto;
 	border-radius: 8px;
 	border: 1px solid var(--border);
+	min-width: 0;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .table {
 	width: 100%;
 	border-collapse: collapse;
 	font-size: 0.875rem;
+	min-width: 0;
+	box-sizing: border-box;
 }
 
 .table thead {
@@ -323,6 +333,12 @@
 	justify-content: center;
 	z-index: 1000;
 	padding: 16px;
+}
+
+@media (min-width: 1024px) {
+	.modalOverlay {
+		left: 70px;
+	}
 }
 
 .modalContent {

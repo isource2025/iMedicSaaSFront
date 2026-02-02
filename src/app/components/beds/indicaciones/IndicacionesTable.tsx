@@ -1,12 +1,12 @@
 "use client";
 import styles from "./IndicacionesTable.module.css";
 import EmptyState from "../shared/EmptyState";
-import { IoPencil, IoTrash, IoDocumentText, IoCloseCircle } from "react-icons/io5";
+import { IoMedicalOutline, IoCloseCircleOutline, IoRepeatOutline, IoPencilOutline, IoTrashOutline } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
 import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
-import { BiSolidInjection } from "react-icons/bi";
 import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
+import { formatSqlDate } from "../../../utils/dateUtils";
 
 export type IndicacionRow = {
     id: string;
@@ -24,6 +24,11 @@ export type IndicacionRow = {
     nro?: string | number;
     idSector?: string;
     medicamento?: string;
+    suspendida?: boolean;
+    unicaVez?: boolean;
+    ultimaAplicacion?: string;
+    proximaAplicacion?: string;
+    estado?: string;
 };
 
 type Props = {
@@ -32,7 +37,11 @@ type Props = {
     selectedId?: string | null;
     maxHeight?: number | string;
     refetch: () => Promise<void>;
-    numeroVisita: string; // ✅ NUEVO: recibir numeroVisita
+    numeroVisita: string;
+    modoReindicar?: boolean;
+    selectedForReindicar?: Set<string>;
+    onToggleReindicar?: (id: string) => void;
+    onActivarModoReindicar?: () => void;
 };
 
 export default function IndicacionesTable({
@@ -40,7 +49,11 @@ export default function IndicacionesTable({
     onSelectRow,
     selectedId,
     refetch,
-    numeroVisita, // ✅ NUEVO
+    numeroVisita,
+    modoReindicar = false,
+    selectedForReindicar = new Set(),
+    onToggleReindicar,
+    onActivarModoReindicar,
 }: Props) {
     const hasRows = rows && rows.length > 0;
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -121,6 +134,57 @@ export default function IndicacionesTable({
         }
     };
 
+    // ✅ Función para calcular el estado según el tiempo hasta la próxima aplicación
+    const getEstadoIndicacion = (row: IndicacionRow): { color: 'verde' | 'celeste' | 'amarillo' | 'azul' | 'rojo' | 'suspendida' | 'unica'; label: string } => {
+        // Estados especiales tienen prioridad
+        if (row.suspendida) {
+            return { color: 'suspendida', label: '✖' };
+        }
+        
+        if (row.unicaVez) {
+            return { color: 'unica', label: 'U' };
+        }
+        
+        // Si no tiene última aplicación, ROJO por defecto (debe aplicarse)
+        if (!row.ultimaAplicacion) {
+            return { color: 'rojo', label: '' };
+        }
+        
+        // Si no hay próxima aplicación calculada, ERROR
+        if (!row.proximaAplicacion) {
+            console.warn('Indicación sin próxima aplicación calculada:', row.id);
+            return { color: 'rojo', label: '!' };
+        }
+        
+        try {
+            const ahora = new Date();
+            const proxima = new Date(row.proximaAplicacion);
+            
+            if (isNaN(proxima.getTime())) {
+                console.error('Fecha de próxima aplicación inválida:', row.proximaAplicacion);
+                return { color: 'rojo', label: '!' };
+            }
+            
+            const diffMs = proxima.getTime() - ahora.getTime();
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            
+            if (diffMinutes < 0) {
+                return { color: 'rojo', label: '' }; // VENCIDA
+            } else if (diffMinutes < 10) {
+                return { color: 'azul', label: '' }; // URGENTE
+            } else if (diffMinutes < 30) {
+                return { color: 'amarillo', label: '' }; // PRONTO
+            } else if (diffMinutes < 60) {
+                return { color: 'celeste', label: '' }; // CERCANO
+            } else {
+                return { color: 'verde', label: '' }; // A TIEMPO
+            }
+        } catch (error) {
+            console.error('Error al calcular estado de indicación:', error, row);
+            return { color: 'rojo', label: '!' };
+        }
+    };
+
     return (
         <>
             <div className={styles.tableWrap}>
@@ -128,8 +192,28 @@ export default function IndicacionesTable({
                     <table className={styles.table} role="grid">
                         <thead className={styles.thead}>
                             <tr>
-                                <th className={styles.colCant}>Cantidad</th>
+                                {modoReindicar && (
+                                    <th className={styles.colCheckbox}>
+                                        <input
+                                            type="checkbox"
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    rows.forEach(r => onToggleReindicar?.(r.id));
+                                                } else {
+                                                    rows.forEach(r => {
+                                                        if (selectedForReindicar.has(r.id)) {
+                                                            onToggleReindicar?.(r.id);
+                                                        }
+                                                    });
+                                                }
+                                            }}
+                                            checked={rows.length > 0 && rows.every(r => selectedForReindicar.has(r.id))}
+                                        />
+                                    </th>
+                                )}
+                                <th className={styles.colEstado}>Estado</th>
                                 <th className={styles.colType}>Tipo</th>
+                                <th className={styles.colCant}>Cantidad</th>
                                 <th className={styles.colInd}>
                                     Indicación
                                     <br />
@@ -141,13 +225,13 @@ export default function IndicacionesTable({
                                     <span>Observaciones</span>
                                 </th>
                                 <th className={styles.colProx}>
-                                    Próximo · Anterior
+                                    Próximo
                                     <br />
-                                    <span>Vigente desde</span>
+                                    <span>Anterior · Vigente desde</span>
                                 </th>
-                                <th className={styles.colSector}>Id Sector</th>
-                                <th className={styles.colAccion}>Acciones</th>
+                                <th className={styles.colSector}>Sector</th>
                                 <th className={styles.colNro}>Nro Indicación</th>
+                                <th className={styles.colAccion}>Acciones</th>
                                 <th className={styles.colMed}>Medicamento</th>
                             </tr>
                         </thead>
@@ -164,15 +248,31 @@ export default function IndicacionesTable({
                                                 : "",
                                         ].join(" ")}
                                     >
-                                        <td className={styles.cellTight}>
-                                            <div className={styles.cantidad}>
-                                                {r.cantidad ?? ""}
+                                        {modoReindicar && (
+                                            <td className={styles.cellCheckbox}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedForReindicar.has(r.id)}
+                                                    onChange={() => onToggleReindicar?.(r.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </td>
+                                        )}
+                                        <td className={styles.cellEstado}>
+                                            <div className={`${styles.estadoIndicador} ${styles[`estado${getEstadoIndicacion(r).color.charAt(0).toUpperCase() + getEstadoIndicacion(r).color.slice(1)}`]}`}>
+                                                {getEstadoIndicacion(r).label}
                                             </div>
                                         </td>
 
-                                        <td className={styles.desc}>
+                                        <td>
                                             <div className={styles.primary}>
                                                 {getTipoDescripcion(r.tipo).toUpperCase()}
+                                            </div>
+                                        </td>
+
+                                        <td className={styles.cellTight}>
+                                            <div className={styles.cantidad}>
+                                                {r.cantidad ?? ""}
                                             </div>
                                         </td>
 
@@ -198,12 +298,13 @@ export default function IndicacionesTable({
 
                                         <td>
                                             <div className={styles.primary}>
-                                                {[r.proximo, r.anterior]
-                                                    .filter(Boolean)
-                                                    .join(" · ") || "-"}
+                                                {r.unicaVez ? "-" : (r.proximaAplicacion ? formatSqlDate(r.proximaAplicacion, { showTime: true, showDate: true, showYear: false }) : "-")}
                                             </div>
                                             <div className={styles.sub}>
-                                                {(r.vigenteDesde + " - " + r.horaCarga) || ""}
+                                                {r.ultimaAplicacion ? formatSqlDate(r.ultimaAplicacion, { showTime: true, showDate: true, showYear: false }) : ""}
+                                            </div>
+                                            <div className={styles.sub}>
+                                                {r.vigenteDesde ? formatSqlDate(r.vigenteDesde, { showTime: false, showDate: true, showYear: true }) + (r.horaCarga ? " - " + r.horaCarga : "") : ""}
                                             </div>
                                         </td>
 
@@ -211,17 +312,22 @@ export default function IndicacionesTable({
                                             {r.idSector ?? ""}
                                         </td>
 
+                                        <td className={styles.cellNum}>
+                                            {r.nro ?? ""}
+                                        </td>
+
                                         <td className={styles.cellAccion}>
                                             <div className={styles.actionBtns}>
                                                 <button
                                                     className={`${styles.btnAction}`}
-                                                    title="Aplicar Indicacion"
+                                                    title={r.unicaVez && r.ultimaAplicacion ? "Esta indicación de única vez ya fue aplicada" : "Aplicar Indicacion"}
+                                                    disabled={r.unicaVez && r.ultimaAplicacion ? true : false}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleAplicarIndicacion(r); // ✅ NUEVO
                                                     }}
                                                 >
-                                                    <BiSolidInjection color="#5BC0DE" size="14px" />
+                                                    <IoMedicalOutline color="#5BC0DE" size="18px" />
                                                 </button>
                                                 <button
                                                     className={`${styles.btnAction}`}
@@ -230,16 +336,17 @@ export default function IndicacionesTable({
                                                         e.stopPropagation();
                                                     }}
                                                 >
-                                                    <IoCloseCircle color="#5BC0DE" size="14px" />
+                                                    <IoCloseCircleOutline color="#5BC0DE" size="18px" />
                                                 </button>
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Volver a Indicar"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        onActivarModoReindicar?.();
                                                     }}
                                                 >
-                                                    <IoDocumentText color="#5BC0DE" size="14px" />
+                                                    <IoRepeatOutline color="#5BC0DE" size="18px" />
                                                 </button>
                                                 <button
                                                     className={`${styles.btnAction}`}
@@ -249,7 +356,7 @@ export default function IndicacionesTable({
                                                         onSelectRow && onSelectRow(Number(r.id));
                                                     }}
                                                 >
-                                                    <IoPencil color="#5BC0DE" size="14px" />
+                                                    <IoPencilOutline color="#5BC0DE" size="18px" />
                                                 </button>
                                                 <button
                                                     className={`${styles.btnAction}`}
@@ -259,16 +366,16 @@ export default function IndicacionesTable({
                                                         setDeletingId(r.id);
                                                     }}
                                                 >
-                                                    <IoTrash color="#5BC0DE" size="14px" />
+                                                    <IoTrashOutline color="#5BC0DE" size="18px" />
                                                 </button>
                                             </div>
                                         </td>
 
-                                        <td className={styles.cellNum}>
-                                            {r.nro ?? ""}
+                                        <td>
+                                            <div className={styles.primary}>
+                                                {r.medicamento ?? "-"}
+                                            </div>
                                         </td>
-
-                                        <td>{r.medicamento ?? ""}</td>
                                     </tr>
                                 ))
                                 : null}
@@ -330,21 +437,21 @@ export default function IndicacionesTable({
                                 title="Aplicar"
                                 onClick={() => handleAplicarIndicacion(r)}
                             >
-                                <BiSolidInjection />
+                                <IoMedicalOutline />
                             </button>
                             <button
                                 className={`${styles.btnAction} ${styles.btnEdit}`}
                                 title="Editar"
                                 onClick={() => onSelectRow && onSelectRow(Number(r.id))}
                             >
-                                <IoPencil />
+                                <IoPencilOutline />
                             </button>
                             <button
                                 className={`${styles.btnAction} ${styles.btnDelete}`}
                                 title="Eliminar"
                                 onClick={() => setDeletingId(r.id)}
                             >
-                                <IoTrash />
+                                <IoTrashOutline />
                             </button>
                         </div>
                     </div>

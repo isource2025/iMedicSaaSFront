@@ -13,6 +13,7 @@ import IndicacionesSection from './indicaciones/IndicacionesSection';
 import MedicacionSuministradaSection from './medicacion/MedicacionSuministradaSection';
 import ControlesFrecuentesSection from './controles/ControlesFrecuentesSection';
 import EvolucionEnfermeriaSection from './evolucion/EvolucionEnfermeriaSection';
+import InsumosSection from './insumos/InsumosSection';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -68,6 +69,14 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								patientLocation={bed?.ubicacionPaciente}
 							/>
 						</>
+					) : activeSection === 'control' ? (
+						<>
+							<ControlesFrecuentesSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+							/>
+						</>
 					) : activeSection === 'medicacion-suministrada' ? (
 						<>
 							<MedicacionSuministradaSection
@@ -87,6 +96,14 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					) : activeSection === 'evolucion-enfermeria' ? (
 						<>
 							<EvolucionEnfermeriaSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+							/>
+						</>
+					) : activeSection === 'insumos' ? (
+						<>
+							<InsumosSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}

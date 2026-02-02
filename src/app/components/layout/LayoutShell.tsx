@@ -10,6 +10,18 @@ import styles from './LayoutShell.module.css';
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { logout, usuario } = useAppContext();
@@ -69,21 +81,22 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
   return (
     <div className={styles.container}>
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isDesktop={isDesktop} />
 
-      <div className={`${styles.content} ${sidebarOpen ? styles.contentWithSidebar : styles.contentWithoutSidebar}`}>
-        {/* Botón de menú para mobile y desktop */}
-        {/* Botón de menú hamburguesa */}
-        <button 
-          className={`${styles.menuButton} ${sidebarOpen ? styles.menuButtonOpen : styles.menuButtonClosed}`}
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Abrir menú"
-          style={{ display: sidebarOpen ? 'none' : 'flex' }}
-        >
-          <span className={styles.menuIcon}>
-            ☰
-          </span>
-        </button>
+      <div className={`${styles.content} ${isDesktop ? styles.contentWithSidebarDesktop : (sidebarOpen ? styles.contentWithSidebar : styles.contentWithoutSidebar)}`}>
+        {/* Botón de menú hamburguesa solo para mobile */}
+        {!isDesktop && (
+          <button 
+            className={`${styles.menuButton} ${sidebarOpen ? styles.menuButtonOpen : styles.menuButtonClosed}`}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Abrir menú"
+            style={{ display: sidebarOpen ? 'none' : 'flex' }}
+          >
+            <span className={styles.menuIcon}>
+              ☰
+            </span>
+          </button>
+        )}
 
         {/* Menú de usuario */}
         <div className={styles.userMenuContainer} ref={userMenuRef}>
