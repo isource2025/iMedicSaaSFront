@@ -1,186 +1,209 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ChevronDown, Home, Calendar, ClipboardList, Activity, CreditCard, BarChart, Settings } from 'lucide-react';
-import styles from './Sidebar.module.css';
-import { useAppContext } from '../../contexts/AppContext';
+import React, { useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { 
+  Home, 
+  Calendar, 
+  ClipboardList, 
+  Bed, 
+  Receipt, 
+  BarChart3, 
+  Settings,
+  ChevronRight,
+  ChevronLeft,
+  LucideIcon
+} from 'lucide-react'
+import styles from './Sidebar.module.css'
+import { useAppContext } from '../../contexts/AppContext'
 
-type SidebarProps = {
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-  isDesktop: boolean;
-};
+interface SubItem {
+  label: string
+  path: string
+}
 
-export default function Sidebar({ sidebarOpen, setSidebarOpen, isDesktop }: SidebarProps) {
-  const pathname = usePathname();
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
-  const [isHovered, setIsHovered] = useState(false);
-  const { sectorSeleccionado, empresaInfo } = useAppContext();
+interface MenuItem {
+  id: string
+  label: string
+  icon: LucideIcon
+  path?: string
+  subItems: SubItem[]
+}
 
+const menuItems: MenuItem[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard', subItems: [] },
+  {
+    id: 'turnos', label: 'Turnos', icon: Calendar,
+    subItems: [
+      { label: 'Agenda', path: '/dashboard/turnos/agenda' },
+      { label: 'Admin de Turnos', path: '/dashboard/turnos/admin' },
+      { label: 'Excepciones', path: '/dashboard/turnos/excepciones' },
+      { label: 'Configuración', path: '/dashboard/turnos/configuracion' },
+      { label: 'Tabla de Turnos', path: '/dashboard/turnos/tabla' }
+    ]
+  },
+  {
+    id: 'admision', label: 'Admisión', icon: ClipboardList,
+    subItems: [
+      { label: 'Pacientes', path: '/dashboard/patients' },
+      { label: 'Nueva Admisión', path: '/dashboard/admission/new' },
+      { label: 'Admisiones Vigentes', path: '/dashboard/admission/current' },
+      { label: 'Tabla de Admisiones', path: '/dashboard/admission/tables' }
+    ]
+  },
+  {
+    id: 'internacion', label: 'Internación', icon: Bed,
+    subItems: [
+      { label: 'Gestión de Camas', path: '/dashboard/beds' },
+      { label: 'Ocupación de Camas', path: '/dashboard/beds/occupation' },
+      { label: 'Tabla de Internación', path: '/dashboard/beds/tables' }
+    ]
+  },
+  {
+    id: 'facturacion', label: 'Facturación', icon: Receipt,
+    subItems: [
+      { label: 'Convenios', path: '/dashboard/billing/convenios' },
+      { label: 'Rendiciones', path: '/dashboard/billing/rendiciones' },
+      { label: 'Liquidaciones', path: '/dashboard/billing/liquidaciones' },
+      { label: 'Tabla de Facturación', path: '/dashboard/billing/tables' }
+    ]
+  },
+  {
+    id: 'reportes', label: 'Reportes', icon: BarChart3,
+    subItems: [
+      { label: 'Estadísticas', path: '/dashboard/reports/estadisticas' },
+      { label: 'Facturación', path: '/dashboard/reports/facturacion' },
+      { label: 'Ocupación', path: '/dashboard/reports/ocupacion' }
+    ]
+  },
+  {
+    id: 'configuracion', label: 'Configuración', icon: Settings,
+    subItems: [
+      { label: 'General', path: '/dashboard/settings/general' },
+      { label: 'Usuarios', path: '/dashboard/settings/usuarios' },
+      { label: 'Permisos', path: '/dashboard/settings/permisos' },
+      { label: 'Sectores', path: '/dashboard/settings/sectores' }
+    ]
+  }
+]
 
-  const toggleSubmenu = (menuName: string) => {
-    setExpandedMenus(prev => ({
-      ...Object.fromEntries(Object.keys(prev).map(k => [k, false])),
-      [menuName]: !prev[menuName],
-    }));
-  };
+interface SidebarProps {
+  expanded: boolean
+  onExpandedChange: (expanded: boolean) => void
+}
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    {
-      name: 'Turnos', icon: Calendar, hasSubmenu: true, submenuName: 'appointments', submenuItems: [
-        { name: 'Agenda', href: '/dashboard/appointments/schedule' },
-        { name: 'Administrador de turnos', href: '/dashboard/appointments/manager' },
-        { name: 'Excepciones', href: '/dashboard/appointments/exceptions' },
-        { name: 'Configuración', href: '/dashboard/appointments/config' },
-        { name: 'Tablas de turnos', href: '/dashboard/appointments/tables' },
-      ]
-    },
-    {
-      name: 'Admisión', icon: ClipboardList, hasSubmenu: true, submenuName: 'admission', submenuItems: [
-        { name: 'Pacientes', href: '/dashboard/patients' },
-        { name: 'Nueva admisión', href: '/dashboard/admission/new' },
-        { name: 'Admisiones vigentes', href: '/dashboard/admission/current' },
-        { name: 'Tablas de admisión', href: '/dashboard/admission/tables' },
-      ]
-    },
-    {
-      name: 'Internación', icon: Activity, hasSubmenu: true, submenuName: 'inpatient', submenuItems: [
-        { name: 'Gestión de Camas', href: '/dashboard/beds' },
-        { name: 'Ocupación de camas', href: '/dashboard/beds/occupation' },
-        { name: 'Tablas de internación', href: '/dashboard/beds/tables' },
-      ]
-    },
-    {
-      name: 'Facturación', icon: CreditCard, hasSubmenu: true, submenuName: 'billing', submenuItems: [
-        { name: 'Convenios', href: '/dashboard/billing/convenios' },
-        { name: 'Rendiciones', href: '/dashboard/billing/rendiciones' },
-        { name: 'Liquidaciones', href: '/dashboard/billing/liquidaciones' },
-        { name: 'Tablas de facturación', href: '/dashboard/billing/tables' },
-      ]
-    },
-    {
-      name: 'Reportes', icon: BarChart, hasSubmenu: true, submenuName: 'reports', submenuItems: [
-        { name: 'Estadísticas', href: '/dashboard/reports/stats' },
-        { name: 'Facturación', href: '/dashboard/reports/billing' },
-        { name: 'Ocupación', href: '/dashboard/reports/occupation' },
-      ]
-    },
-    {
-      name: 'Configuración', icon: Settings, hasSubmenu: true, submenuName: 'settings', submenuItems: [
-        { name: 'General', href: '/dashboard/settings/general' },
-        { name: 'Usuarios', href: '/dashboard/settings/users' },
-        { name: 'Permisos', href: '/dashboard/settings/permissions' },
-        { name: 'Sectores', href: '/dashboard/settings/sectors' },
-      ]
-    },
-  ];
+export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+  const { empresaInfo, sectorSeleccionado } = useAppContext()
+
+  const getActiveModuleId = (): string | null => {
+    for (const item of menuItems) {
+      if (item.path && pathname === item.path) return item.id
+      if (item.subItems.some(sub => pathname === sub.path || pathname.startsWith(sub.path + '/'))) return item.id
+    }
+    return null
+  }
+
+  const activeModuleId = getActiveModuleId()
+
+  const handleMenuClick = (item: MenuItem) => {
+    if (item.subItems.length === 0) {
+      router.push(item.path || '/dashboard')
+      onExpandedChange(false)
+      setOpenMenuId(null)
+    } else {
+      if (expanded) {
+        if (openMenuId === item.id) {
+          setOpenMenuId(null)
+        } else {
+          setOpenMenuId(item.id)
+        }
+      } else {
+        setOpenMenuId(item.id)
+        onExpandedChange(true)
+      }
+    }
+  }
+
+  const handleSubItemClick = (path: string) => {
+    router.push(path)
+    setTimeout(() => {
+      onExpandedChange(false)
+      setOpenMenuId(null)
+    }, 200)
+  }
+
+  const isSelected = (item: MenuItem): boolean => {
+    if (expanded) {
+      return openMenuId === item.id
+    } else {
+      return activeModuleId === item.id
+    }
+  }
 
   return (
-    <>
-      {/* Backdrop solo para mobile */}
-      <div className={`${styles.backdrop} ${sidebarOpen ? styles.backdropVisible : ''}`} onClick={() => setSidebarOpen(false)} />
-      <aside 
-        className={`${styles.sidebar} ${
-          isDesktop 
-            ? (isHovered ? styles.sidebarExpanded : styles.sidebarCollapsed)
-            : (sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden)
-        }`}
-        onMouseEnter={() => isDesktop && setIsHovered(true)}
-        onMouseLeave={() => isDesktop && setIsHovered(false)}
-      >
-        <div className={styles.sidebarHeader}>
-          <div className={styles.headerContent}>
-            {isDesktop && !isHovered && (
-              <div className={styles.logoCollapsed}>
-                <span className={styles.logoIcon}>iM</span>
-              </div>
-            )}
-            <div className={styles.companyInfo}>
-              {empresaInfo && (isDesktop ? isHovered : true) && (
-                <div className={styles.empresaDetails}>
-                  <span className={styles.empresaName}>{empresaInfo.descripcion}</span>
-                  {sectorSeleccionado && (
-                    <span className={styles.sectorName}>Sector: {sectorSeleccionado.descripcion}</span>
-                  )}
+    <aside className={`${styles.sidebar} ${expanded ? styles.expanded : ''}`}>
+      {/* Logo y datos de empresa */}
+      <div className={styles.logo}>
+        <div className={styles.logoContent}>
+          <span className={styles.logoIcon}>iM</span>
+          <div className={styles.companyInfo}>
+            <span className={styles.companyName}>{empresaInfo?.descripcion || ''}</span>
+            <span className={styles.sectorName}>
+              {sectorSeleccionado ? `Sector: ${sectorSeleccionado.descripcion}` : ''}
+            </span>
+          </div>
+        </div>
+        <button 
+          className={styles.collapseBtn}
+          onClick={() => onExpandedChange(false)}
+        >
+          <ChevronLeft size={18} />
+        </button>
+      </div>
+      
+      {/* Navegación */}
+      <nav className={styles.nav}>
+        {menuItems.map((item) => (
+          <React.Fragment key={item.id}>
+            {/* Separador antes de Configuración */}
+            {item.id === 'configuracion' && <div className={styles.separator} />}
+            
+            <div className={styles.menuItem}>
+              <button
+                className={`${styles.menuButton} ${isSelected(item) ? styles.selected : ''}`}
+                onClick={() => handleMenuClick(item)}
+              >
+                <item.icon className={styles.menuIcon} size={22} strokeWidth={1.5} />
+                <span className={styles.menuLabel}>{item.label}</span>
+                {item.subItems.length > 0 && (
+                  <ChevronRight 
+                    className={`${styles.chevron} ${openMenuId === item.id ? styles.chevronOpen : ''}`} 
+                    size={16} 
+                  />
+                )}
+              </button>
+              
+              {/* Submenú */}
+              {item.subItems.length > 0 && openMenuId === item.id && expanded && (
+                <div className={styles.subMenu}>
+                  {item.subItems.map((subItem) => (
+                    <button
+                      key={subItem.path}
+                      className={`${styles.subMenuItem} ${pathname === subItem.path || pathname.startsWith(subItem.path + '/') ? styles.subActive : ''}`}
+                      onClick={() => handleSubItemClick(subItem.path)}
+                    >
+                      {subItem.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-            {!isDesktop && (
-              <div className={styles.headerActions}>
-                <button onClick={() => setSidebarOpen(false)} className={styles.closeButton}>
-                  ×
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <nav className={styles.navigation}>
-          <ul className={styles.navList}>
-            {navigation.map((item) => {
-              const cleanPath = pathname.split('?')[0].split('#')[0];
-              const isActive = item.href
-                ? cleanPath === item.href
-                : item.submenuItems?.some(sub => cleanPath.startsWith(sub.href));
-
-              return (
-                <li key={item.name}>
-                  {item.hasSubmenu ? (
-                    <>
-                      <button
-                        onClick={() => toggleSubmenu(item.submenuName)}
-                        className={`${styles.navItem} ${isActive ? styles.navItemActive : styles.navItemInactive}`}
-                      >
-                        <span className={styles.navIcon}><item.icon size={20} /></span>
-                        <span className={styles.navText}>{item.name}</span>
-                        <span className={`${styles.submenuArrow} ${styles.navText}`} style={expandedMenus[item.submenuName] ? { transform: 'rotate(180deg)' } : {}}>
-                          <ChevronDown size={16} />
-                        </span>
-                      </button>
-                      {expandedMenus[item.submenuName] && (
-                        <ul className={styles.submenuList}>
-                          {item.submenuItems.map((subitem) => {
-                            const isSubitemActive = pathname === subitem.href || pathname.startsWith(`${subitem.href}/`);
-                            return (
-                              <li key={subitem.name}>
-                                <Link
-                                  href={subitem.href}
-                                  className={`${styles.submenuItem} ${isSubitemActive ? styles.submenuItemActive : styles.submenuItemInactive}`}
-                                >
-                                  {subitem.name}
-                                </Link>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </>
-                  ) : (
-                    <Link
-                      href={item.href || '#'}
-                      className={`${styles.navItem} ${isActive ? styles.navItemActive : styles.navItemInactive}`}
-                    >
-                      <span className={styles.navIcon}><item.icon size={20} /></span>
-                      <span className={styles.navText}>{item.name}</span>
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <div className={styles.sidebarFooter}>
-          <div className={styles.footerInfo}>
-            {(isDesktop ? isHovered : true) && (
-              <span className={styles.footerText}>iMedicWS v1.0</span>
-            )}
-          </div>
-        </div>
-      </aside>
-    </>
-  );
+          </React.Fragment>
+        ))}
+      </nav>
+    </aside>
+  )
 }
