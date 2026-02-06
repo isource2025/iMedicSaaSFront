@@ -70,20 +70,28 @@
 
 .headerField {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
     font-size: 14px;
 }
 
 .headerLabel {
     font-weight: 500;
-    color: #64748b; /* Pantone 314C */
+    color: #94a3b8;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-top: 8px;
 }
 
 .headerValue {
-    font-weight: 800;
+    font-weight: 600;
     color: #0083a9;
+    font-size: 0.85rem;
+    display: block;
 }
 
 .closeButton {
@@ -106,107 +114,187 @@
     background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Migración UI v1 - Header estilo tarjeta de crédito */
 .pacienteHeader {
     display: flex;
-    flex-direction: column;
-    align-items: end;
+    flex-direction: row;
     justify-content: space-between;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e1e1e1;
-}
-
-.headerFields {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 32px;
-}
-.pacienteData {
-    width: 100%;
-    display: flex;
-    justify-content: start;
-    background-color: white;
-    padding: 0px 16px;
+    align-items: flex-start;
+    background-color: #E3F2F7;
+    border-radius: 16px;
+    margin: 12px 16px;
+    padding: 14px 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     gap: 16px;
 }
 
-.admisionInfo {
+/* Sección Izquierda */
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+/* Fila documento + género */
+.documentoRow {
     display: flex;
     align-items: center;
-}
-
-.admisionLabel {
-    font-weight: 500;
-    color: #64748b; /* Pantone 314C - Azul turquesa oscuro */
-    margin-right: 8px;
-    font-size: 0.9rem;
-}
-
-.admisionValueContainer {
-    display: flex;
     gap: 8px;
 }
 
-.admisionValueItem {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.admisionIcon {
-    color: #00b5e2; /* Pantone 313U - Azul turquesa brillante */
-    font-size: 1rem;
-}
-
-.admisionValue {
-    font-weight: 800;
-    color: #0083a9; /* Pantone 314C - Azul turquesa oscuro */
-    font-size: 0.9rem;
-}
-
-.nombrePaciente h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-    color: #333;
-    display: flex;
-    align-items: self-start;
-    flex-wrap: wrap;
-}
-
 .documentoNumero {
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-weight: 400;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0.08em;
+    color: #64748b;
 }
 
 .sexoIcono {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
-    background-color: transparent;
+    font-size: 1rem;
+    color: #0083A9;
 }
 
-.masculino {
-    color: black;
-    background-color: transparent;
+.masculino { color: #0083A9; }
+.femenino { color: #ec4899; }
+.otro { color: #64748b; }
+
+/* Nombre del paciente */
+.nombrePaciente {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 2px 0 4px 0;
+    color: #0083A9;
+    text-transform: uppercase;
+    line-height: 1.2;
 }
 
-.femenino {
-    color: black;
-    background-color: transparent;
+/* Fila de info (Admisión + Ubicación) */
+.infoRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 2px;
 }
 
-.otro {
-    color: black;
-    background-color: transparent;
+.admisionBlock,
+.ubicacionBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.edadPaciente {
+.infoLabel {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.infoValues {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.infoValueItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.85rem;
-    color: #64748b;
-    font-weight: normal;
-    margin-left: 0.5rem;
+    font-weight: 600;
+    color: #0083A9;
+}
+
+.infoIcon {
+    color: #00B5E2;
+    font-size: 0.95rem;
+}
+
+/* Badge del sector */
+.sectorBadge {
+    background-color: #0083A9;
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Info de cama */
+.camaInfo {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.camaIcon {
+    font-size: 0.9rem;
+}
+
+/* Sección Derecha */
+.headerRight {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    min-width: 100px;
+}
+
+/* Número de Visita */
+.visitaBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+}
+
+.visitaNumber {
+    font-size: 1.5rem;
+    font-weight: 300;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0.12em;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.visitaLabel {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 1px;
+}
+
+/* Cobertura */
+.coberturaBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+}
+
+.coberturaValue {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0083A9;
+}
+
+.coberturaLabel {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .separador {
@@ -308,56 +396,76 @@
 }
 
 /* Responsivo */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     .modalContainer {
         width: 95%;
         max-height: 95vh;
+        min-width: auto;
     }
 
-    .headerRow {
+    .pacienteHeader {
         flex-direction: column;
-        gap: 0.75rem;
+        padding: 20px;
+        margin: 12px;
+        gap: 16px;
+    }
+
+    .headerRight {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+        width: 100%;
+        padding-top: 12px;
+        border-top: 1px solid rgba(0, 131, 169, 0.1);
+    }
+
+    .visitaBlock {
+        align-items: flex-start;
+    }
+
+    .coberturaBlock {
+        align-items: flex-end;
+    }
+
+    .visitaNumber {
+        font-size: 1.6rem;
+    }
+
+    .nombrePaciente {
+        font-size: 1.15rem;
+    }
+
+    .infoRow {
+        flex-direction: column;
+        gap: 12px;
     }
 
     .modalContent {
-        max-height: calc(95vh - 250px);
+        max-height: calc(95vh - 280px);
         padding: 1rem;
     }
+}
 
-    .itemGrupo {
-        min-width: 100px;
+@media (max-width: 480px) {
+    .pacienteHeader {
+        padding: 16px;
+        margin: 8px;
+        border-radius: 16px;
     }
-}
 
-/* HEADER STYLE FROM BEDCARD  */
+    .documentoNumero {
+        font-size: 0.95rem;
+    }
 
-.cardHeader {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    justify-content: space-between;
-    background-color: #f5f7fa;
-}
-.bedInfo {
-    font-size: 20px;
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    padding: 8px 16px;
-    gap: 8px;
-}
-.sectorLabel {
-    background-color: #334155;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 1rem;
-    color: white;
-    margin-bottom: 1px;
-    margin-right: 8px;
-}
+    .nombrePaciente {
+        font-size: 1rem;
+    }
 
-.bedNumber {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0;
+    .visitaNumber {
+        font-size: 1.4rem;
+    }
+
+    .infoValueItem {
+        font-size: 0.8rem;
+    }
 }

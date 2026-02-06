@@ -1,98 +1,261 @@
+/* PatientMiniHeader - Migración UI v1 - Estilo tarjeta de crédito */
 .wrap {
 	width: 100%;
-	border-radius: 12px;
-	overflow: hidden;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-.top {
+	border-radius: 16px;
+	overflow: visible;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	background: #E3F2F7;
+	position: relative;
 	display: flex;
-	align-items: center;
+	flex-direction: row;
 	justify-content: space-between;
-	background: var(--pantone-314c);
-	padding: 12px 16px;
+	align-items: flex-start;
+	padding: 14px 20px;
+	gap: 16px;
 }
-.rightSection {
+
+/* Sección Izquierda */
+.headerLeft {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	flex: 1;
+}
+
+/* Fila documento + género */
+.documentoRow {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
-.title {
-	font-size: 14px;
-	font-weight: 700;
-	color: #0f2a33;
-	letter-spacing: 0.2px;
-	text-align: center;
-}
-.time {
-	font-weight: 700;
-	color: #ffffff;
-	font-size: 13px;
-	text-transform: uppercase;
+
+.documentoNumero {
+	font-size: 0.95rem;
+	font-weight: 400;
+	font-family: 'Montserrat', sans-serif;
+	letter-spacing: 0.08em;
+	color: #64748b;
 }
 
-.info {
-	background: #fff;
-	border-bottom: 1px solid #d9e7f0;
-	padding: 8px 12px;
-	display: grid;
-	gap: 4px;
-}
-.burger {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	gap: 0.6rem;
-	font-weight: 800;
-	color: #ffffff;
-}
-.name {
-	font-weight: 800;
-	color: #ffffff;
-	font-size: 1.3rem;
-	line-height: 1.15;
-	text-transform: uppercase;
-}
-.row {
-	display: flex;
-	align-items: center;
-	gap: 18px;
-	flex-wrap: wrap;
-}
-.kv {
+.sexoIcono {
 	display: inline-flex;
-	align-items: baseline;
-	gap: 6px;
-	color: #152b3a;
+	align-items: center;
+	justify-content: center;
+	font-size: 1rem;
+	color: #0083A9;
 }
-.kv label {
-	font-size: 12px;
-	color: #4e6a7d;
-	text-transform: none;
+
+.masculino { color: #0083A9; }
+.femenino { color: #ec4899; }
+.otro { color: #64748b; }
+
+/* Nombre del paciente */
+.nombrePaciente {
+	font-size: 1.15rem;
+	font-weight: 700;
+	margin: 2px 0 4px 0;
+	color: #0083A9;
+	text-transform: uppercase;
+	line-height: 1.2;
+}
+
+/* Fila de info (Admisión + Ubicación) */
+.infoRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-top: 2px;
+}
+
+.admisionBlock,
+.ubicacionBlock {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.infoLabel {
+	font-size: 0.65rem;
+	font-weight: 500;
+	color: #94a3b8;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.infoValues {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.infoValueItem {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #0083A9;
+}
+
+.infoIcon {
+	color: #00B5E2;
+	font-size: 0.95rem;
+}
+
+/* Badge del sector */
+.sectorBadge {
+	background-color: #0083A9;
+	color: #fff;
+	padding: 2px 10px;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+/* Info de cama */
+.camaInfo {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #334155;
+}
+
+.camaIcon {
+	font-size: 0.9rem;
+}
+
+/* Sección Derecha */
+.headerRight {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 6px;
+	min-width: 100px;
+}
+
+/* Número de Visita */
+.visitaBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0;
+}
+
+.visitaNumber {
+	font-size: 1.5rem;
+	font-weight: 300;
+	font-family: 'Montserrat', sans-serif;
+	letter-spacing: 0.12em;
+	color: #1e293b;
+	line-height: 1;
+}
+
+.visitaLabel {
+	font-size: 0.6rem;
+	font-weight: 500;
+	color: #94a3b8;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-top: 1px;
+}
+
+/* Cobertura */
+.coberturaBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0;
+}
+
+.coberturaValue {
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: #0083A9;
+}
+
+.coberturaLabel {
+	font-size: 0.65rem;
+	font-weight: 500;
+	color: #94a3b8;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+/* Contenedor del botón menú - esquina inferior derecha */
+.menuButtonContainer {
+	position: absolute;
+	bottom: 12px;
+	right: 12px;
+	z-index: 5;
+}
+
+/* Loading state */
+.loadingText {
+	font-size: 0.9rem;
+	color: #64748b;
+	padding: 20px 0;
 }
 
 /* Responsivo */
-@media (max-width: 740px) {
-	.title {
-		font-size: 13px;
+@media (max-width: 768px) {
+	.wrap {
+		flex-direction: column;
+		padding: 20px;
+		gap: 16px;
 	}
-	.time {
-		font-size: 12px;
+
+	.headerRight {
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: space-between;
+		width: 100%;
+		padding-top: 12px;
+		border-top: 1px solid rgba(0, 131, 169, 0.1);
 	}
-	.name {
-		font-size: 20px;
+
+	.visitaBlock {
+		align-items: flex-start;
 	}
-}
-@media (max-width: 520px) {
-	.top {
-		padding: 10px 12px;
+
+	.coberturaBlock {
+		align-items: flex-end;
 	}
-	.info {
-		padding: 8px;
+
+	.visitaNumber {
+		font-size: 1.5rem;
 	}
-	.row {
+
+	.nombrePaciente {
+		font-size: 1.15rem;
+	}
+
+	.infoRow {
+		flex-direction: column;
 		gap: 12px;
 	}
-	.rightSection {
-		gap: 4px;
+}
+
+@media (max-width: 480px) {
+	.wrap {
+		padding: 16px;
+		border-radius: 16px;
+	}
+
+	.documentoNumero {
+		font-size: 0.95rem;
+	}
+
+	.nombrePaciente {
+		font-size: 1rem;
+	}
+
+	.visitaNumber {
+		font-size: 1.3rem;
+	}
+
+	.infoValueItem {
+		font-size: 0.8rem;
 	}
 }

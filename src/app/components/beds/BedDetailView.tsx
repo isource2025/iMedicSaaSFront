@@ -28,39 +28,38 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 
 	return (
 		<div className={styles.root}>
-			{/* ====== LEFT (calendar + sidebar) ====== */}
-			<aside className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''}`}>
-				<div className={styles.leftInner}>
-					<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
-						✕
-					</button>
-					<CalendarPanel selected={selectedDate ?? undefined} />
-					<SidebarFilters />
-				</div>
-			</aside>
+			{/* ====== HEADER (arriba de todo) ====== */}
+			<header className={styles.header}>
+				<PatientMiniHeader
+					numeroVisita={bed?.NumeroVisita ?? bed?.numeroVisita ?? ''}
+					burgerButton={
+						<button
+							className={styles.burger}
+							onClick={() => setDrawerOpen(true)}
+							aria-label='Abrir menú'
+						>
+							<span className={styles.chevronIcon}>›</span>
+						</button>
+					}
+				/>
+			</header>
 
-			{/* ====== RIGHT (header + body + footer) ====== */}
-			<section className={styles.right}>
-				{/* Header con datos del paciente + botón ☰ en mobile */}
-				<header className={styles.header}>
-					<PatientMiniHeader
-						nombre={bed?.NombrePaciente ?? ''}
-						nroVisita={bed?.NumeroVisita}
-						ubicacion={bed?.ubicacionPaciente}
-						burgerButton={
-							<button
-								className={styles.burger}
-								onClick={() => setDrawerOpen(true)}
-								aria-label='Abrir menú'
-							>
-								☰
-							</button>
-						}
-					/>
-				</header>
+			{/* ====== MAIN CONTENT (sidebar + body) ====== */}
+			<div className={styles.mainContent}>
+				{/* LEFT (calendar + sidebar) */}
+				<aside className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''}`}>
+					<div className={styles.leftInner}>
+						<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
+							✕
+						</button>
+						<CalendarPanel selected={selectedDate ?? undefined} />
+						<SidebarFilters />
+					</div>
+				</aside>
 
-				{/* Cuerpo */}
-				<div className={styles.body}>
+				{/* RIGHT (body) */}
+				<section className={styles.right}>
+					<div className={styles.body}>
 					{activeSection === 'indicaciones' ? (
 						<>
 							<IndicacionesSection
@@ -259,8 +258,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							</div>
 						</div>
 					)}
-				</div>
-			</section>
+					</div>
+				</section>
+			</div>
 
 			{/* Backdrop del drawer */}
 			{drawerOpen && (

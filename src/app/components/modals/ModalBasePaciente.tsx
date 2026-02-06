@@ -193,118 +193,89 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 				) : (
 					<>
 						<div className={styles.pacienteHeader}>
-							<div className={styles.cardHeader}>
-								<div className={styles.bedInfo}>
-									<div>
-										<span className={styles.sectorLabel}>
-											{pacienteData.valorSector}
-										</span>
-										<span className={styles.bedNumber}>
-											{pacienteData.valorHabitacionCama}
-										</span>
-									</div>
-									{Number(pacienteData.numeroVisita) > 0 && (
-										<div className={styles.numeroVisita}>
-											Nº De Visita:{' '}
-											<strong>{pacienteData.numeroVisita}</strong>
-										</div>
-									)}
+							{/* Sección Izquierda */}
+							<div className={styles.headerLeft}>
+								{/* Fila 1: Documento + Icono género */}
+								<div className={styles.documentoRow}>
+									<span className={styles.documentoNumero}>
+										{pacienteData.numeroDocumento}
+									</span>
+									<span className={`${styles.sexoIcono} ${claseSexo}`}>
+										{iconoSexo}
+									</span>
 								</div>
 
-								<div className={styles.pacienteData}>
-									<div>
-										<span className={styles.documentoNumero}>
-											{pacienteData.numeroDocumento}
-										</span>
-										<span className={styles.edadPaciente}>
-											{edad !== null ? `${edad} años` : ''}
-										</span>
-										<span className={`${styles.sexoIcono} ${claseSexo}`}>
-											{iconoSexo}
-										</span>
-										<h3>{pacienteData.apellidoYNombre}</h3>
+								{/* Fila 2: Nombre del paciente */}
+								<h3 className={styles.nombrePaciente}>
+									{pacienteData.apellidoYNombre}
+								</h3>
 
-										<div className={styles.headerFields}>
-											<div className={styles.headerField}>
-												<div className={styles.admisionInfo}>
-													<span className={styles.admisionLabel}>
-														Admisión:
+								{/* Fila 3: Admisión + Ubicación */}
+								<div className={styles.infoRow}>
+									{/* Admisión */}
+									<div className={styles.admisionBlock}>
+										<span className={styles.infoLabel}>ADMISIÓN:</span>
+										<div className={styles.infoValues}>
+											{pacienteData?.fechaAdmisionS ? (
+												<>
+													<span className={styles.infoValueItem}>
+														<FiCalendar className={styles.infoIcon} />
+														{formatSqlDate(pacienteData.fechaAdmisionS, {
+															locale: 'es-AR',
+															showTime: false,
+															adjustTimezone: false,
+														})}
 													</span>
-													{pacienteData?.fechaAdmisionS ? (
-														<div
-															className={
-																styles.admisionValueContainer
-															}
-														>
-															<div
-																className={
-																	styles.admisionValueItem
-																}
-															>
-																<FiCalendar
-																	className={
-																		styles.admisionIcon
-																	}
-																/>
-																<span
-																	className={
-																		styles.admisionValue
-																	}
-																>
-																	{formatSqlDate(
-																		pacienteData.fechaAdmisionS,
-																		{
-																			locale: 'es-AR',
-																			showTime: false,
-																			adjustTimezone:
-																				false,
-																		},
-																	)}
-																</span>
-															</div>
-															<div
-																className={
-																	styles.admisionValueItem
-																}
-															>
-																<FiClock
-																	className={
-																		styles.admisionIcon
-																	}
-																/>
-																<span
-																	className={
-																		styles.admisionValue
-																	}
-																>
-																	{formatSqlDate(
-																		pacienteData.fechaAdmisionS,
-																		{
-																			locale: 'es-AR',
-																			showDate: false,
-																			showTime: true,
-																			adjustTimezone:
-																				false,
-																		},
-																	)}
-																</span>
-															</div>
-														</div>
-													) : (
-														<span className={styles.admisionValue}>
-															No disponible
-														</span>
-													)}
-												</div>
-												<span className={styles.headerLabel}>
-													Cobertura:
-												</span>
-												<span className={styles.headerValue}>
-													{pacienteData.coberturaSocial}
-												</span>
-											</div>
+													<span className={styles.infoValueItem}>
+														<FiClock className={styles.infoIcon} />
+														{formatSqlDate(pacienteData.fechaAdmisionS, {
+															locale: 'es-AR',
+															showDate: false,
+															showTime: true,
+															adjustTimezone: false,
+														})}
+													</span>
+												</>
+											) : (
+												<span className={styles.infoValueItem}>No disponible</span>
+											)}
 										</div>
 									</div>
+
+									{/* Ubicación */}
+									<div className={styles.ubicacionBlock}>
+										<span className={styles.infoLabel}>UBICACIÓN:</span>
+										<div className={styles.infoValues}>
+											<span className={styles.sectorBadge}>
+												{pacienteData.valorSector}
+											</span>
+											<span className={styles.camaInfo}>
+												<span className={styles.camaIcon}>🛏</span>
+												{pacienteData.valorHabitacionCama}
+											</span>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Sección Derecha */}
+							<div className={styles.headerRight}>
+								{/* Número de Visita */}
+								{Number(pacienteData.numeroVisita) > 0 && (
+									<div className={styles.visitaBlock}>
+										<span className={styles.visitaNumber}>
+											{String(pacienteData.numeroVisita).split('').join(' ')}
+										</span>
+										<span className={styles.visitaLabel}>N° DE VISITA</span>
+									</div>
+								)}
+
+								{/* Cobertura */}
+								<div className={styles.coberturaBlock}>
+									<span className={styles.coberturaValue}>
+										{pacienteData.coberturaSocial || 'N/A'}
+									</span>
+									<span className={styles.coberturaLabel}>COBERTURA</span>
 								</div>
 							</div>
 						</div>

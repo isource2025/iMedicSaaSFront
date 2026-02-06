@@ -43,12 +43,12 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Summary - Encabezado de sección */
+/* Summary - Encabezado de sección - Migración UI v1 */
 .summary {
     width: 100%;
     cursor: pointer;
     padding: 0.875rem 1rem;
-    background: #00B5E2;
+    background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
     font-weight: 600;
     font-size: 0.875rem;
     color: white;
@@ -62,11 +62,20 @@
 }
 
 .summary:hover {
-    background: #0083A9;
+    background: linear-gradient(135deg, #0083A9 0%, #006b8a 100%);
 }
 
 .summaryOpen {
-    background: #00B5E2;
+    background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
+}
+
+/* Variante Warning (naranja) para secciones especiales */
+.summaryWarning {
+    background: linear-gradient(135deg, #ff9961 0%, #e07a4a 100%);
+}
+
+.summaryWarning:hover {
+    background: linear-gradient(135deg, #e07a4a 0%, #c96a3a 100%);
 }
 
 /* Chevron animado */
@@ -124,17 +133,20 @@
 }
 
 .active {
-    background-color: #00B5E2;
-    color: white;
+    background-color: rgba(0, 181, 226, 0.15);
+    color: #0083A9;
     font-weight: 600;
+    border-left: 3px solid #00B5E2;
+    border-radius: 0 6px 6px 0;
+    padding-left: calc(0.875rem - 3px);
 }
 
 .active:hover {
-    background-color: #00B5E2;
-    color: white;
+    background-color: rgba(0, 181, 226, 0.2);
+    color: #0083A9;
 }
 
-/* Panel fijo */
+/* Panel fijo - Otras Funciones - Migración UI v1 */
 .fixedPanel {
     border: none;
     border-radius: 8px;
@@ -150,8 +162,14 @@
     font-size: 0.875rem;
     color: white;
     border: none;
-    background: #00B5E2;
+    background: linear-gradient(135deg, #5DADE2 0%, #8E7CC3 100%);
     border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.panelHeader:hover {
+    background: linear-gradient(135deg, #4A9ED6 0%, #7B6AB0 100%);
 }
 
 .fixedNav {
