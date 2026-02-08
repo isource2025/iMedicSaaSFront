@@ -47,7 +47,7 @@
 	box-sizing: border-box;
 	/* Scrollbar personalizado */
 	scrollbar-width: thin;
-	scrollbar-color: #00B5E2 #f1f5f9;
+	scrollbar-color: #00B5E2 #ffffff;
 }
 
 /* Estilos personalizados del scrollbar para navegadores Webkit */
@@ -56,8 +56,7 @@
 }
 
 .left::-webkit-scrollbar-track {
-	background: #f1f5f9;
-	border-radius: 4px;
+	background: #ffffff;
 }
 
 .left::-webkit-scrollbar-thumb {
@@ -68,6 +67,11 @@
 
 .left::-webkit-scrollbar-thumb:hover {
 	background: #0083A9;
+}
+
+/* Eliminar flechas del scrollbar */
+.left::-webkit-scrollbar-button {
+	display: none;
 }
 .leftInner {
 	position: relative;

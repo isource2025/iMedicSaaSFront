@@ -5,7 +5,7 @@
 /* Clase reutilizable para scrollbar personalizado */
 .customScrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #00B5E2 #f1f5f9;
+    scrollbar-color: #00B5E2 #ffffff;
 }
 
 /* Estilos personalizados del scrollbar para navegadores Webkit */
@@ -14,8 +14,7 @@
 }
 
 .customScrollbar::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
+    background: #ffffff;
 }
 
 .customScrollbar::-webkit-scrollbar-thumb {
@@ -28,10 +27,15 @@
     background: #0083A9;
 }
 
+/* Eliminar flechas del scrollbar */
+.customScrollbar::-webkit-scrollbar-button {
+    display: none;
+}
+
 /* Variante horizontal */
 .customScrollbarHorizontal {
     scrollbar-width: thin;
-    scrollbar-color: #00B5E2 #f1f5f9;
+    scrollbar-color: #00B5E2 #ffffff;
 }
 
 .customScrollbarHorizontal::-webkit-scrollbar {
@@ -39,8 +43,7 @@
 }
 
 .customScrollbarHorizontal::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
+    background: #ffffff;
 }
 
 .customScrollbarHorizontal::-webkit-scrollbar-thumb {
@@ -51,4 +54,9 @@
 
 .customScrollbarHorizontal::-webkit-scrollbar-thumb:hover {
     background: #0083A9;
+}
+
+/* Eliminar flechas del scrollbar horizontal */
+.customScrollbarHorizontal::-webkit-scrollbar-button {
+    display: none;
 }

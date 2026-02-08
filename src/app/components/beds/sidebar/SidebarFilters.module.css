@@ -12,7 +12,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
-    scrollbar-color: #00B5E2 #f1f5f9;
+    scrollbar-color: #00B5E2 #ffffff;
 }
 
 /* Estilos personalizados del scrollbar para navegadores Webkit */
@@ -21,8 +21,7 @@
 }
 
 .wrapper::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
+    background: #ffffff;
 }
 
 .wrapper::-webkit-scrollbar-thumb {
@@ -33,6 +32,11 @@
 
 .wrapper::-webkit-scrollbar-thumb:hover {
     background: #0083A9;
+}
+
+/* Eliminar flechas del scrollbar */
+.wrapper::-webkit-scrollbar-button {
+    display: none;
 }
 
 .section {
