@@ -118,12 +118,10 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
 
     return (
         <div className={styles.root}>
-            {/* Título de sección */}
-            <h2 className={styles.sectionTitle}>Insumos</h2>
-            
             {/* Fecha seleccionada + botón agregar */}
             {fechaFormateada && (
                 <div className={styles.dateHeader}>
+                    <h2 className={styles.sectionTitle}>Insumos</h2>
                     <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
                     <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
                     <div className={styles.dateActions}>

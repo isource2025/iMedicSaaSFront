@@ -11,12 +11,14 @@
 
 /* Título de sección */
 .sectionTitle {
-	font-size: 1rem;
-	color: black;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: rgba(0, 0, 0, 0.5);
 	margin: 0;
-	padding: 8px 0 0 0;
-	letter-spacing: 0.2em;
+	padding: 0;
+	letter-spacing: 0.15em;
 	text-transform: uppercase;
+	margin-right: 16px;
 }
 
 /* Fecha seleccionada - Migración UI v1 */
@@ -24,7 +26,7 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	padding: 12px 0;
+	padding: 0px;
 	margin-bottom: 0;
 }
 
