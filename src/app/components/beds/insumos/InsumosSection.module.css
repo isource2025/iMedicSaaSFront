@@ -1,72 +1,173 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background-color: #f9fafb;
+/* Layout base */
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0 16px;
 }
 
-.header {
-    background: #fff;
-    padding: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
+/* Fecha seleccionada - Migración UI v1 */
+.dateHeader {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	margin-bottom: 0;
 }
 
-.titleRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
+.dateNumber {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	background-color: #00B5E2;
+	color: white;
+	font-size: 1.25rem;
+	font-weight: 700;
+	border-radius: 8px;
 }
 
-.title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #111827;
-    margin: 0;
+.dateText {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #1e293b;
+	flex: 1;
 }
 
-.addButton {
-    background: linear-gradient(135deg, #0083a9 0%, #005f7f 100%);
-    color: #fff;
-    border: none;
-    padding: 0.625rem 1.25rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.dateActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
 }
 
-.addButton:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+.btnAddDate {
+	border-radius: 24px !important;
+	padding: 10px 20px !important;
+	font-size: 0.85rem !important;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%) !important;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.3) !important;
 }
 
-.addButton:active {
-    transform: translateY(0);
+.btnAddDate:hover {
+	background: linear-gradient(135deg, #00a5d0 0%, #007599 100%) !important;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.4) !important;
 }
 
-.patientInfo {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    font-size: 0.875rem;
+.btnAddDate .addIcon {
+	color: #fff;
+	font-weight: 300;
+	font-size: 1.1rem;
 }
 
-.patientName {
-    font-weight: 500;
-    color: #374151;
+/* === Toolbar === */
+.toolbar {
+	display: flex;
+	gap: 12px;
+	align-items: center;
 }
 
-.patientLocation {
-    color: #6b7280;
+.searchWrap {
+	position: relative;
+	flex: 1 1 auto;
+	min-width: 200px;
 }
 
+.searchIcon {
+	position: absolute;
+	left: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 0.9rem;
+	opacity: 0.55;
+	pointer-events: none;
+}
+
+.searchInput {
+	width: 100%;
+	padding: 12px 16px 12px 40px;
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	background: #fff;
+	color: #334155;
+	outline: none;
+	font-size: 0.85rem;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.searchInput::placeholder {
+	color: #94a3b8;
+}
+.searchInput:focus {
+	border-color: #00B5E2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.25);
+}
+
+/* Botones */
+.btn {
+	appearance: none;
+	border: none;
+	border-radius: 8px;
+	padding: 10px 16px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+.btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.btn:active {
+	transform: translateY(0);
+}
+
+.btnPrimary {
+	background: #0083A9;
+	color: #ffffff;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
+}
+.btnPrimary:hover:not(:disabled) {
+	background: #006b8a;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 12px rgba(0, 131, 169, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.btnPrimary:active:not(:disabled) {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(0, 131, 169, 0.2);
+}
+
+.btnIcon {
+	display: inline-block;
+	font-weight: bold;
+}
+
+.addIcon {
+	font-size: 16px;
+	line-height: 1;
+}
+
+/* Contenedor de contenido */
 .content {
-    flex: 1;
-    overflow: auto;
-    padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	min-height: 0;
+	flex: 1;
+}
+
+.tableHolder {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
 }
 
 .loadingContainer {
@@ -128,21 +229,29 @@
 }
 
 @media (max-width: 768px) {
-    .header {
-        padding: 1rem;
-    }
+	.root {
+		padding: 0 8px;
+	}
 
-    .titleRow {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
+	.dateHeader {
+		flex-wrap: wrap;
+	}
 
-    .addButton {
-        width: 100%;
-    }
+	.dateActions {
+		width: 100%;
+		margin-left: 0;
+		margin-top: 8px;
+	}
 
-    .content {
-        padding: 0;
-    }
+	.btnAddDate {
+		width: 100%;
+	}
+
+	.toolbar {
+		flex-direction: column;
+	}
+
+	.searchWrap {
+		width: 100%;
+	}
 }

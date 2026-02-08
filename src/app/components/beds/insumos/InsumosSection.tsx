@@ -57,24 +57,44 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
         setSelectedInsumoId(String(id));
     };
 
+    // Formatear fecha seleccionada para mostrar
+    const formatSelectedDate = () => {
+        if (!selectedDate) return null;
+        const date = new Date(selectedDate);
+        const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const diaSemana = dias[date.getDay()];
+        const diaMes = date.getDate();
+        const mes = meses[date.getMonth()];
+        return { diaSemana, diaMes, mes };
+    };
+
+    const fechaFormateada = formatSelectedDate();
+
+    const [query, setQuery] = useState("");
+
+    // Filtrar insumos por búsqueda
+    const insumosFiltered = useMemo(() => {
+        if (!query.trim()) return insumos;
+        const q = query.toLowerCase();
+        return insumos.filter((r: any) => {
+            const hay = (s: any) => String(s || "").toLowerCase().includes(q);
+            return (
+                hay(r.descripcion) ||
+                hay(r.medicamento) ||
+                hay(r.cantidad) ||
+                hay(r.sector)
+            );
+        });
+    }, [insumos, query]);
+
     if (activeSection !== "insumos") {
         return null;
     }
 
     if (isLoading) {
         return (
-            <div className={styles.container}>
-                <div className={styles.header}>
-                    <h2 className={styles.title}>Insumos</h2>
-                    {patientName && (
-                        <div className={styles.patientInfo}>
-                            <span className={styles.patientName}>{patientName}</span>
-                            {patientLocation && (
-                                <span className={styles.patientLocation}>{patientLocation}</span>
-                            )}
-                        </div>
-                    )}
-                </div>
+            <div className={styles.root}>
                 <div className={styles.loadingContainer}>
                     <div className={styles.spinner}></div>
                     <p>Cargando insumos...</p>
@@ -85,10 +105,7 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
 
     if (error) {
         return (
-            <div className={styles.container}>
-                <div className={styles.header}>
-                    <h2 className={styles.title}>Insumos</h2>
-                </div>
+            <div className={styles.root}>
                 <div className={styles.errorContainer}>
                     <p>Error al cargar los insumos</p>
                     <button onClick={() => refetch()} className={styles.retryButton}>
@@ -100,37 +117,55 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     }
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <div className={styles.titleRow}>
-                    <h2 className={styles.title}>Insumos</h2>
-                    <button
-                        className={styles.addButton}
-                        onClick={() => {
-                            // TODO: Implementar modal de agregar insumo
-                            alert("Funcionalidad de agregar insumo en desarrollo");
-                        }}
-                    >
-                        + Agregar Insumo
-                    </button>
-                </div>
-                {patientName && (
-                    <div className={styles.patientInfo}>
-                        <span className={styles.patientName}>{patientName}</span>
-                        {patientLocation && (
-                            <span className={styles.patientLocation}>{patientLocation}</span>
-                        )}
+        <div className={styles.root}>
+            {/* Fecha seleccionada + botón agregar */}
+            {fechaFormateada && (
+                <div className={styles.dateHeader}>
+                    <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+                    <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
+                    <div className={styles.dateActions}>
+                        <button
+                            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+                            onClick={() => {
+                                // TODO: Implementar modal de agregar insumo
+                                alert("Funcionalidad de agregar insumo en desarrollo");
+                            }}
+                        >
+                            <span className={styles.addIcon} aria-hidden>
+                                +
+                            </span>
+                            Insumo
+                        </button>
                     </div>
-                )}
+                </div>
+            )}
+
+            {/* Toolbar: búsqueda */}
+            <div className={styles.toolbar}>
+                <div className={styles.searchWrap}>
+                    <span className={styles.searchIcon} aria-hidden>
+                        🔎
+                    </span>
+                    <input
+                        className={styles.searchInput}
+                        type="text"
+                        placeholder="Buscar por descripción, medicamento, cantidad, sector…"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+                </div>
             </div>
 
+            {/* Contenedor flexible para la tabla */}
             <div className={styles.content}>
-                <InsumosTable
-                    rows={insumos}
-                    onSelectRow={handleSelectInsumo}
-                    selectedId={selectedInsumoId}
-                    refetch={refetch}
-                />
+                <div className={styles.tableHolder}>
+                    <InsumosTable
+                        rows={insumosFiltered}
+                        onSelectRow={handleSelectInsumo}
+                        selectedId={selectedInsumoId}
+                        refetch={refetch}
+                    />
+                </div>
             </div>
         </div>
     );
