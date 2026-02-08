@@ -10,6 +10,7 @@ import {
   Receipt, 
   BarChart3, 
   Settings,
+  User,
   ChevronRight,
   ChevronLeft,
   LucideIcon
@@ -83,6 +84,15 @@ const menuItems: MenuItem[] = [
       { label: 'Usuarios', path: '/dashboard/settings/usuarios' },
       { label: 'Permisos', path: '/dashboard/settings/permisos' },
       { label: 'Sectores', path: '/dashboard/settings/sectores' }
+    ]
+  },
+  {
+    id: 'usuario', label: 'Usuario', icon: User,
+    subItems: [
+      { label: 'Mi Perfil', path: '/profile' },
+      { label: 'Configuración', path: '/settings' },
+      { label: 'Ayuda', path: '/help' },
+      { label: 'Cerrar Sesión', path: '/logout' }
     ]
   }
 ]
