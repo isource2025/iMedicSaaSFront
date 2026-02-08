@@ -27,9 +27,18 @@
     background: #0083A9;
 }
 
-/* Eliminar flechas del scrollbar */
+/* Eliminar flechas del scrollbar - todas las variantes */
 .customScrollbar::-webkit-scrollbar-button {
-    display: none;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.customScrollbar::-webkit-scrollbar-button:start:decrement,
+.customScrollbar::-webkit-scrollbar-button:end:increment {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 /* Variante horizontal */
@@ -56,7 +65,16 @@
     background: #0083A9;
 }
 
-/* Eliminar flechas del scrollbar horizontal */
+/* Eliminar flechas del scrollbar horizontal - todas las variantes */
 .customScrollbarHorizontal::-webkit-scrollbar-button {
-    display: none;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.customScrollbarHorizontal::-webkit-scrollbar-button:start:decrement,
+.customScrollbarHorizontal::-webkit-scrollbar-button:end:increment {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
