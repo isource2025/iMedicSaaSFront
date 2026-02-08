@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import s from './PatientMiniHeader.module.css';
 import { FiCalendar, FiClock } from 'react-icons/fi';
+import { IoMale, IoFemale } from 'react-icons/io5';
+import { Bed } from 'lucide-react';
 import { usePatients } from '../../../hooks/usePatients';
 import visitaMovimientoService from '../../../services/visitaMovimientoService';
 import { formatSqlDate } from '../../../utils/dateUtils';
@@ -87,8 +89,15 @@ export default function PatientMiniHeader({
 		cargarDatosPaciente();
 	}, [cargarDatosPaciente]);
 
-	const iconoSexo = pacienteData?.sexo === 'M' ? '♂️' : pacienteData?.sexo === 'F' ? '♀️' : '';
-	const claseSexo = pacienteData?.sexo === 'M' ? s.masculino : pacienteData?.sexo === 'F' ? s.femenino : s.otro;
+	const renderGenderIcon = () => {
+		const sexoValue = pacienteData?.sexo ? pacienteData.sexo.toUpperCase() : '';
+		if (sexoValue === 'M' || sexoValue === 'MASCULINO') {
+			return <IoMale className={s.masculino} title="Masculino" />;
+		} else if (sexoValue === 'F' || sexoValue === 'FEMENINO') {
+			return <IoFemale className={s.femenino} title="Femenino" />;
+		}
+		return null;
+	};
 
 	if (loading) {
 		return (
@@ -109,9 +118,7 @@ export default function PatientMiniHeader({
 					{pacienteData?.numeroDocumento && pacienteData.numeroDocumento !== 'N/A' && (
 						<span className={s.documentoNumero}>{pacienteData.numeroDocumento}</span>
 					)}
-					{iconoSexo && (
-						<span className={`${s.sexoIcono} ${claseSexo}`}>{iconoSexo}</span>
-					)}
+					{renderGenderIcon()}
 				</div>
 
 				{/* Fila 2: Nombre del paciente */}
@@ -155,7 +162,7 @@ export default function PatientMiniHeader({
 								)}
 								{pacienteData?.valorHabitacionCama && pacienteData.valorHabitacionCama !== 'N/A' && (
 									<span className={s.camaInfo}>
-										<span className={s.camaIcon}>🛏</span>
+										<Bed className={s.camaIcon} size={16} />
 										{pacienteData.valorHabitacionCama}
 									</span>
 								)}
