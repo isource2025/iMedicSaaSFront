@@ -46,30 +46,6 @@
 }
 .viewport {
 	padding: 0.2rem;
-	overflow-y: auto;
-	overflow-x: hidden;
-	scrollbar-width: thin;
-	scrollbar-color: #00B5E2 #f1f5f9;
-}
-
-/* Estilos personalizados del scrollbar para navegadores Webkit */
-.viewport::-webkit-scrollbar {
-	width: 8px;
-}
-
-.viewport::-webkit-scrollbar-track {
-	background: #f1f5f9;
-	border-radius: 4px;
-}
-
-.viewport::-webkit-scrollbar-thumb {
-	background: #00B5E2;
-	border-radius: 4px;
-	transition: background 0.2s ease;
-}
-
-.viewport::-webkit-scrollbar-thumb:hover {
-	background: #0083A9;
 }
 
 .cell {
