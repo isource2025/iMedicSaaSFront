@@ -69,7 +69,7 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
             value={sectorFilter}
             onChange={(e) => setSectorFilter(e.target.value)}
           >
-            <option value="all">Todos los sectores</option>
+            <option value="all">Todos</option>
             {sectors.map((sector) => (
               <option key={sector.id} value={sector.valor}>
                 {sector.descripcion}
@@ -85,7 +85,7 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           >
-            <option value="all">Todos los estados</option>
+            <option value="all">Todos</option>
             {bedStates.map((state) => (
               <option key={state.id} value={state.valor}>
                 {state.descripcion}
@@ -101,7 +101,7 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
             value={servicioFilter}
             onChange={(e) => setServicioFilter(e.target.value)}
           >
-            <option value="all">Todos los servicios</option>
+            <option value="all">Todos</option>
             {serviciosMedicos.map((servicio) => (
               <option key={servicio} value={servicio}>
                 {servicio}

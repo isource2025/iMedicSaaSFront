@@ -9,26 +9,25 @@ import { useAppContext } from '../../contexts/AppContext';
 import styles from './LayoutShell.module.css';
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 1024);
-    };
-    
-    checkDesktop();
-    window.addEventListener('resize', checkDesktop);
-    
-    return () => window.removeEventListener('resize', checkDesktop);
-  }, []);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { logout, usuario } = useAppContext();
   const router = useRouter();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -46,33 +45,27 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   }, [userMenuOpen]);
 
   const handleLogOut = async () => {
-    if (isLoggingOut) return; // Prevenir múltiples clicks
+    if (isLoggingOut) return;
     
     try {
       setIsLoggingOut(true);
       
-      // Limpiar localStorage
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       localStorage.removeItem('sectorSeleccionado');
       localStorage.removeItem('empresaInfo');
       
-      // Cerrar el menú de usuario
       setUserMenuOpen(false);
       
-      // Llamar al logout del contexto si existe
       if (logout) {
         await logout();
       }
       
-      // Pequeña pausa para mostrar el estado de loading
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Redireccionar a la página de login
       router.push('/');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      // Aún así redirigir en caso de error
       router.push('/');
     } finally {
       setIsLoggingOut(false);
@@ -80,21 +73,33 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className={styles.container}>
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isDesktop={isDesktop} />
-
-      <div className={`${styles.content} ${isDesktop ? styles.contentWithSidebarDesktop : (sidebarOpen ? styles.contentWithSidebar : styles.contentWithoutSidebar)}`}>
-        {/* Botón de menú hamburguesa solo para mobile */}
-        {!isDesktop && (
+    <div className={styles.layout}>
+      <Sidebar 
+        expanded={sidebarExpanded} 
+        onExpandedChange={setSidebarExpanded} 
+      />
+      
+      {/* Overlay clickeable para cerrar el sidebar */}
+      <div 
+        className={`${styles.overlay} ${sidebarExpanded ? styles.overlayVisible : ''}`}
+        onClick={() => setSidebarExpanded(false)}
+      />
+      
+      {/* Contenido principal con efectos de blur y desplazamiento */}
+      <main className={`${styles.main} ${sidebarExpanded ? styles.mainShifted : ''}`}>
+        {/* Botón de menú hamburguesa/logo para mobile */}
+        {isMobile && (
           <button 
-            className={`${styles.menuButton} ${sidebarOpen ? styles.menuButtonOpen : styles.menuButtonClosed}`}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Abrir menú"
-            style={{ display: sidebarOpen ? 'none' : 'flex' }}
+            className={`${styles.menuButton} ${sidebarExpanded ? styles.menuButtonOpen : ''}`}
+            onClick={() => setSidebarExpanded(!sidebarExpanded)}
+            aria-label={sidebarExpanded ? "Cerrar menú" : "Abrir menú"}
           >
             <span className={styles.menuIcon}>
-              ☰
+              <span className={styles.menuLine}></span>
+              <span className={styles.menuLine}></span>
+              <span className={styles.menuLine}></span>
             </span>
+            <span className={styles.logoText}>iM</span>
           </button>
         )}
 
@@ -154,10 +159,10 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
           )}
         </div>
 
-        <main className={styles.main}>
+        <div className={styles.content}>
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

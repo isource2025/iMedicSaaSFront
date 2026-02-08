@@ -21,8 +21,9 @@
   font-weight: 500;
 }
 
+/* Migración UI v1 - 4 Feb 2026 */
 .bedsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
 }

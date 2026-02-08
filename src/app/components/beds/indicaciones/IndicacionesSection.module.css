@@ -2,10 +2,89 @@
 .root {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 16px;
 	min-width: 0;
 	width: 100%;
 	box-sizing: border-box;
+	padding: 0 16px;
+}
+
+/* Fecha seleccionada - Migración UI v1 */
+.dateHeader {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	margin-bottom: 0;
+}
+
+.dateNumber {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	background-color: #00B5E2;
+	color: white;
+	font-size: 1.25rem;
+	font-weight: 700;
+	border-radius: 8px;
+}
+
+.dateText {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #1e293b;
+	flex: 1;
+}
+
+.dateActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+}
+
+.btnAddDate {
+	border-radius: 24px !important;
+	padding: 10px 20px !important;
+	font-size: 0.85rem !important;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%) !important;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.3) !important;
+}
+
+.btnAddDate:hover {
+	background: linear-gradient(135deg, #00a5d0 0%, #007599 100%) !important;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.4) !important;
+}
+
+.btnAddDate .addIcon {
+	color: #fff;
+	font-weight: 300;
+	font-size: 1.1rem;
+}
+
+.btnHelp {
+	width: 36px;
+	height: 36px;
+	padding: 0 !important;
+	border-radius: 50% !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff !important;
+	border: 1px solid #e2e8f0 !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.btnHelp:hover {
+	background: #f8fafc !important;
+}
+
+.btnHelp .btnIcon {
+	color: #64748b;
+	font-size: 0.9rem;
 }
 
 .header {
@@ -47,7 +126,7 @@
 .searchWrap {
 	position: relative;
 	flex: 1 1 auto;
-	min-width: 320px;
+	min-width: 200px;
 }
 
 .searchIcon {
@@ -62,14 +141,14 @@
 
 .searchInput {
 	width: 100%;
-	padding: 10px 12px 10px 32px;
-	border: 1px solid var(--border);
-	border-radius: 9999px;
-	background: var(--card);
-	color: var(--ink);
+	padding: 12px 16px 12px 40px;
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	background: #fff;
+	color: #334155;
 	outline: none;
-	font-size: 0.725rem;
-	box-shadow: none;
+	font-size: 0.85rem;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .searchInput::placeholder {
@@ -177,7 +256,6 @@
 
 .tableHolder {
 	position: relative;
-	height: calc(100vh - 15rem); /* header local aprox */
 	border-radius: var(--radius);
 }
 
@@ -202,4 +280,75 @@
 		rgba(255, 255, 255, 0.65),
 		rgba(255, 255, 255, 0.9)
 	);
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+	.root {
+		gap: 12px;
+	}
+
+	.dateHeader {
+		padding: 12px 0;
+		margin-bottom: 8px;
+	}
+
+	.dateNumber {
+		width: 44px;
+		height: 44px;
+		font-size: 1.3rem;
+		border-radius: 12px;
+	}
+
+	.dateText {
+		font-size: 1rem;
+	}
+
+	.toolbar {
+		flex-direction: column;
+		gap: 12px;
+		align-items: stretch;
+	}
+
+	.searchWrap {
+		min-width: 100%;
+	}
+
+	.searchInput {
+		padding: 12px 14px 12px 36px;
+		font-size: 0.85rem;
+		border-radius: 14px;
+	}
+
+	.actions {
+		justify-content: flex-end;
+	}
+
+	.btn {
+		padding: 12px 16px;
+		font-size: 0.85rem;
+		border-radius: 12px;
+	}
+}
+
+@media (max-width: 480px) {
+	.dateHeader {
+		gap: 10px;
+	}
+
+	.dateNumber {
+		width: 40px;
+		height: 40px;
+		font-size: 1.1rem;
+		border-radius: 10px;
+	}
+
+	.dateText {
+		font-size: 0.9rem;
+	}
+
+	.btn {
+		padding: 10px 14px;
+		font-size: 0.8rem;
+	}
 }

@@ -1,28 +1,37 @@
+/* CalendarPanel - Migración UI v1 */
 .card {
-	background: var(--card);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
+	background: #E3F2F7;
+	border: none;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+	overflow: hidden;
 }
 .head {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 8px 10px;
-	border-bottom: 1px solid var(--border);
+	padding: 12px 14px;
+	border-bottom: none;
+	background: #E3F2F7;
 }
 .head button {
 	background: transparent;
 	border: 0;
-	font-size: 0.65rem;
+	font-size: 0.8rem;
 	cursor: pointer;
-	color: var(--pantone-313u);
+	color: #0083A9;
+	font-weight: 600;
+}
+.head button:hover {
+	color: #006b8a;
 }
 .title {
 	font-weight: 700;
-	font-size: 0.75rem;
-	color: var(--ink);
+	font-size: 0.85rem;
+	color: #1e293b;
 	letter-spacing: 0.3px;
 	display: inline-block;
+	text-transform: uppercase;
 }
 .grid {
 	display: grid;
@@ -40,21 +49,25 @@
 }
 
 .cell {
-	height: 1.6rem;
-	margin: 0.08rem;
-	border-radius: 0.4rem;
+	height: 1.8rem;
+	margin: 0.1rem;
+	border-radius: 8px;
 	border: 1px solid transparent;
-	background: #fff;
+	background: #E3F2F7;
 	cursor: pointer;
-	color: #0f2a33;
-	font-size: 0.7rem;
+	color: #1e293b;
+	font-size: 0.75rem;
+	font-weight: 500;
 	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .cell:hover {
-	border-color: var(--pantone-313u);
+	border-color: #00B5E2;
+	background: #d4e9ef;
 }
 .active {
-	background: var(--pantone-313u);
+	background: #00B5E2;
+	color: white;
+	font-weight: 700;
 }
 
 /* Días fuera del mes: gris y opacos */

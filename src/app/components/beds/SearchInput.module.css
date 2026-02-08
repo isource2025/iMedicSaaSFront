@@ -11,27 +11,36 @@
   align-items: center;
 }
 
+/* Migración UI v1 - Icono de búsqueda cyan */
 .searchIcon {
   position: absolute;
   left: 0.75rem;
-  color: #9ca3af;
-  width: 1rem;
-  height: 1rem;
+  color: #00B5E2;
+  width: 1.1rem;
+  height: 1.1rem;
+  z-index: 1;
 }
 
+/* Migración UI v1 - Barra de búsqueda con gradiente */
 .searchInput {
   width: 100%;
-  padding: 0.5rem 0.5rem 0.5rem 2.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: border-color 0.2s ease-in-out;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  background: linear-gradient(30deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #64748b;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #0083A9;
-  box-shadow: 0 0 0 2px rgba(0, 131, 169, 0.2);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Botón para limpiar la búsqueda */

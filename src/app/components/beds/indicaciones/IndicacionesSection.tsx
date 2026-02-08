@@ -306,8 +306,53 @@ export default function IndicacionesSection({
         }
     };
 
+    // Formatear fecha seleccionada para mostrar
+    const formatSelectedDate = () => {
+        if (!selectedDate) return null;
+        const date = new Date(selectedDate);
+        const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const diaSemana = dias[date.getDay()];
+        const diaMes = date.getDate();
+        const mes = meses[date.getMonth()];
+        return { diaSemana, diaMes, mes };
+    };
+
+    const fechaFormateada = formatSelectedDate();
+
     return (
         <div className={styles.root}>
+            {/* Fecha seleccionada + botón agregar */}
+            {fechaFormateada && (
+                <div className={styles.dateHeader}>
+                    <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+                    <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
+                    {!modoReindicar && (
+                        <div className={styles.dateActions}>
+                            <button
+                                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+                                onClick={onAddIndicacion}
+                            >
+                                <span className={styles.addIcon} aria-hidden>
+                                    +
+                                </span>
+                                Indicación
+                            </button>
+                            <button
+                                className={`${styles.btn} ${styles.btnGhost} ${styles.btnHelp}`}
+                                onClick={() => setHelpOpen(true)}
+                                aria-label="Ayuda"
+                                title="Ayuda"
+                            >
+                                <span className={styles.btnIcon} aria-hidden>
+                                    ?
+                                </span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Toolbar: búsqueda + acciones */}
             <div className={styles.toolbar}>
                 <div className={styles.searchWrap}>
@@ -324,30 +369,7 @@ export default function IndicacionesSection({
                 </div>
 
                 <div className={styles.actions}>
-                    {!modoReindicar ? (
-                        <>
-                            <button
-                                className={`${styles.btn} ${styles.btnPrimary}`}
-                                onClick={onAddIndicacion}
-                            >
-                                <span className={styles.addIcon} aria-hidden>
-                                    ➕
-                                </span>
-                                Agregar indicación
-                            </button>
-
-                            <button
-                                className={`${styles.btn} ${styles.btnGhost}`}
-                                onClick={() => setHelpOpen(true)}
-                                aria-label="Ayuda"
-                                title="Ayuda"
-                            >
-                                <span className={styles.btnIcon} aria-hidden>
-                                    ❕
-                                </span>
-                            </button>
-                        </>
-                    ) : (
+                    {modoReindicar && (
                         <>
                             <button
                                 className={`${styles.btn} ${styles.btnSuccess} ${reindicando ? styles.btnAnimated : ''}`}

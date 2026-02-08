@@ -1,14 +1,15 @@
 /* Contenedor */
+/* Migración UI v1 - Sin bordes de separación */
 .tableWrap {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
     background: #fff;
-    border: 1px solid #e5e7eb; /* gris claro */
+    border: none;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: none;
 }
 
 .scrollArea {
@@ -34,12 +35,13 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    background: #e0f2fe; /* gris header */
-    color: #111827;
+    background: #fff;
+    color: #64748b;
     text-align: left;
     padding: 6px 12px;
-    font-weight: 700;
-    border-bottom: 2px solid #bae6fd;
+    font-weight: 600;
+    font-size: 0.75rem;
+    border-bottom: none;
 }
 
 /* Columna de checkbox */
@@ -72,7 +74,7 @@
 /* Celdas cuerpo */
 .tbody .row td {
     padding: 9px 12px;
-    border-top: 1px solid #e5e7eb; /* líneas horizontales */
+    border-top: none;
     vertical-align: top;
     background: #fff;
 }
@@ -88,10 +90,10 @@
     color: #111827;
 }
 
-/* Divisores de columna (opcional, coméntalo si no los quieres) */
+/* Divisores de columna - Deshabilitados en Migración UI v1 */
 .table th,
 .table td {
-    border-right: 1px solid #e5e7eb;
+    border-right: none;
 }
 .table th:last-child,
 .table td:last-child {
@@ -355,72 +357,107 @@
 
 @media (max-width: 768px) {
     .emptySearch {
-        padding: 20px;
+        padding: 24px;
         text-align: center;
         font-size: 0.95rem;
-        color: var(--muted);
-        background: #f9fafb;
-        border-radius: 10px;
-        border: 1px dashed var(--border);
+        color: #64748b;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        border: 1px dashed #cbd5e1;
         margin-top: 12px;
     }
 
     .mobileCards {
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        padding: 8px;
+        gap: 16px;
+        padding: 8px 0;
     }
 
     .cardMobile {
-        background: var(--card);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: 14px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+        padding: 20px 22px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        border: 1px solid var(--border);
+        gap: 10px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+
+    .cardMobile:active {
+        transform: scale(0.99);
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
     }
 
     .cardHeader {
-        font-weight: 600;
-        color: var(--primary-600);
-        font-size: 1rem;
+        font-weight: 700;
+        color: #0083A9;
+        font-size: 0.95rem;
+        line-height: 1.3;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 4px;
     }
 
     .cardRow {
-        font-size: 0.875rem;
-        color: var(--ink);
+        font-size: 0.8rem;
+        color: #334155;
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        padding: 2px 0;
     }
 
     .cardRow .label {
         font-weight: 600;
-        color: var(--muted);
-        margin-right: 6px;
+        color: #64748b;
+        font-size: 0.75rem;
+        min-width: fit-content;
     }
 
     .cardActions {
-        margin-top: 10px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #f1f5f9;
         display: flex;
         gap: 8px;
+        justify-content: flex-start;
     }
 
     .btnAction {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-size: 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
         cursor: pointer;
-        transition: background 0.2s ease;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btnAction:hover {
+        background: #f1f5f9;
+    }
+
+    .btnAction:active {
+        transform: scale(0.95);
     }
 
     .btnEdit {
-        color: var(--primary-600);
+        color: #0083A9;
     }
 
     .btnDelete {
-        color: var(--danger);
+        color: #ef4444;
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .btnDelete:hover {
+        background: #fee2e2;
     }
 }

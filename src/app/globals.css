@@ -16,12 +16,48 @@
 	--muted: #6b7a90;
 	--primary: var(--pantone-311c);
 	--primary-600: var(--pantone-314c);
-	--primary-50: #e6fbf8; /* puedes afinar este claro si quieres */
+	--primary-50: #e6fbf8;
 	--border: #e6eef5;
 	--warning: #f59e0b;
 	--danger: #ef4444;
 	--radius: 14px;
 	--shadow: 0 6px 24px rgba(2, 23, 42, 0.06);
+
+	/* Variables para nuevo Sidebar - Migración UI v1 */
+	--color-primary: #00BCD4;
+	--color-gray-50: #F8FAFC;
+	--color-gray-100: #F1F5F9;
+	--color-gray-200: #E2E8F0;
+	--color-gray-300: #CBD5E1;
+	--color-gray-400: #94A3B8;
+	--color-gray-500: #64748B;
+	--color-gray-600: #475569;
+	--color-gray-700: #334155;
+	--color-gray-800: #1E293B;
+	--space-4: 1rem;
+	--space-6: 1.5rem;
+	--space-8: 2rem;
+	--background: #F8FAFC;
+
+	/* Variables para Beds Page - Migración UI v1 */
+	--color-primary-light: #B2EBF2;
+	--color-primary-dark: #0097A7;
+	--color-primary-hover: #00ACC1;
+	--color-secondary: #00ACC1;
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-5: 1.25rem;
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 12px;
+	--radius-xl: 16px;
+	--font-size-xs: 0.75rem;
+	--font-size-sm: 0.875rem;
+	--font-size-base: 1rem;
+	--font-size-lg: 1.125rem;
+	--font-size-xl: 1.25rem;
+	--bg-card: white;
 }
 
 html,
