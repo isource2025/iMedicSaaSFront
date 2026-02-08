@@ -34,9 +34,18 @@
     background: #0083A9;
 }
 
-/* Eliminar flechas del scrollbar */
+/* Eliminar flechas del scrollbar - todas las variantes */
 .wrapper::-webkit-scrollbar-button {
-    display: none;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.wrapper::-webkit-scrollbar-button:start:decrement,
+.wrapper::-webkit-scrollbar-button:end:increment {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .section {
