@@ -111,6 +111,27 @@ export const formatTime = (clarionTime: number | string | null | undefined): str
   }
 };
 
+/**
+ * Formatea una hora en formato HH:mm:ss a HH:mm (elimina segundos)
+ * @param hora Hora en formato HH:mm:ss o HH:mm
+ * @returns Hora formateada como HH:mm o '-' si no es válida
+ */
+export const formatHoraSimple = (hora: string | null | undefined): string => {
+  if (!hora) return '-';
+
+  try {
+    // Si viene en formato HH:mm:ss, extraer solo HH:mm
+    const parts = hora.split(':');
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return hora;
+  } catch (err) {
+    console.error('Error al formatear hora:', err);
+    return hora;
+  }
+};
+
 
 
 
