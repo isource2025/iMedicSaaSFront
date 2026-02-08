@@ -97,6 +97,7 @@ export default function IndicacionesSection({
             horaCarga: x.horaCarga,
             nro: x.nro,
             tipo: x.tipo,
+            promptCodigo: (x as any).promptCodigo,
             idSector: x.idSector,
             medicamento: x.medicamento,
             ultimaAplicacion: x.ultimaAplicacion,
