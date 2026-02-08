@@ -1,0 +1,54 @@
+/* Scrollbar personalizado con colores Pantone del sistema iMedicWs */
+/* Pantone 313U (#00B5E2) - Azul turquesa brillante */
+/* Pantone 314C (#0083A9) - Azul turquesa oscuro */
+
+/* Clase reutilizable para scrollbar personalizado */
+.customScrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #00B5E2 #f1f5f9;
+}
+
+/* Estilos personalizados del scrollbar para navegadores Webkit */
+.customScrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.customScrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb {
+    background: #00B5E2;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb:hover {
+    background: #0083A9;
+}
+
+/* Variante horizontal */
+.customScrollbarHorizontal {
+    scrollbar-width: thin;
+    scrollbar-color: #00B5E2 #f1f5f9;
+}
+
+.customScrollbarHorizontal::-webkit-scrollbar {
+    height: 8px;
+}
+
+.customScrollbarHorizontal::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.customScrollbarHorizontal::-webkit-scrollbar-thumb {
+    background: #00B5E2;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.customScrollbarHorizontal::-webkit-scrollbar-thumb:hover {
+    background: #0083A9;
+}
