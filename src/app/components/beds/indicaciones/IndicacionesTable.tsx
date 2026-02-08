@@ -6,7 +6,19 @@ import { indicacionesService } from "../../../services/indicacionesService";
 import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
-import { formatSqlDate } from "../../../utils/dateUtils";
+import { formatSqlDate, formatHoraSimple } from "../../../utils/dateUtils";
+
+export type IndicacionHijaRow = {
+    nroIndicacion: number;
+    nroAdicional: number;
+    cantidad: number | null;
+    tipoUnidad: string | null;
+    medicamento: string | null;
+    descripcion: string | null;
+    observaciones: string | null;
+    frecuencia: string | null;
+    formaAdicional: string | null;
+};
 
 export type IndicacionRow = {
     id: string;
@@ -21,6 +33,7 @@ export type IndicacionRow = {
     vigenteDesde?: string;
     horaCarga?: string;
     tipo?: string;
+    promptCodigo?: string;
     nro?: string | number;
     idSector?: string;
     medicamento?: string;
@@ -29,6 +42,7 @@ export type IndicacionRow = {
     ultimaAplicacion?: string;
     proximaAplicacion?: string;
     estado?: string;
+    indicacionesHijas?: IndicacionHijaRow[];
 };
 
 type Props = {
@@ -145,15 +159,10 @@ export default function IndicacionesTable({
             return { color: 'unica', label: 'U' };
         }
         
-        // Si no tiene última aplicación, ROJO por defecto (debe aplicarse)
-        if (!row.ultimaAplicacion) {
-            return { color: 'rojo', label: '' };
-        }
-        
-        // Si no hay próxima aplicación calculada, ERROR
+        // Si no hay próxima aplicación, no se puede calcular el estado
         if (!row.proximaAplicacion) {
-            console.warn('Indicación sin próxima aplicación calculada:', row.id);
-            return { color: 'rojo', label: '!' };
+            console.warn('Indicación sin próxima aplicación:', row.id, row);
+            return { color: 'rojo', label: '' };
         }
         
         try {
@@ -161,12 +170,20 @@ export default function IndicacionesTable({
             const proxima = new Date(row.proximaAplicacion);
             
             if (isNaN(proxima.getTime())) {
-                console.error('Fecha de próxima aplicación inválida:', row.proximaAplicacion);
-                return { color: 'rojo', label: '!' };
+                console.error('Fecha de próxima aplicación inválida:', row.proximaAplicacion, 'para indicación:', row.id);
+                return { color: 'rojo', label: '' };
             }
             
             const diffMs = proxima.getTime() - ahora.getTime();
             const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            
+            console.log(`🔍 Estado para indicación ${row.id}:`, {
+                proximaAplicacion: row.proximaAplicacion,
+                ahora: ahora.toISOString(),
+                proxima: proxima.toISOString(),
+                diffMinutes,
+                descripcion: row.descripcion
+            });
             
             if (diffMinutes < 0) {
                 return { color: 'rojo', label: '' }; // VENCIDA
@@ -181,7 +198,7 @@ export default function IndicacionesTable({
             }
         } catch (error) {
             console.error('Error al calcular estado de indicación:', error, row);
-            return { color: 'rojo', label: '!' };
+            return { color: 'rojo', label: '' };
         }
     };
 
@@ -212,12 +229,11 @@ export default function IndicacionesTable({
                                     </th>
                                 )}
                                 <th className={styles.colEstado}>Estado</th>
-                                <th className={styles.colType}>Tipo</th>
                                 <th className={styles.colCant}>Cantidad</th>
                                 <th className={styles.colInd}>
                                     Indicación
                                     <br />
-                                    <span>Profesional que Indica</span>
+                                    <span>Tipo · Descripción · Profesional</span>
                                 </th>
                                 <th className={styles.colFreq}>
                                     Frecuencia
@@ -232,7 +248,6 @@ export default function IndicacionesTable({
                                 <th className={styles.colSector}>Sector</th>
                                 <th className={styles.colNro}>Nro Indicación</th>
                                 <th className={styles.colAccion}>Acciones</th>
-                                <th className={styles.colMed}>Medicamento</th>
                             </tr>
                         </thead>
 
@@ -264,12 +279,6 @@ export default function IndicacionesTable({
                                             </div>
                                         </td>
 
-                                        <td>
-                                            <div className={styles.primary}>
-                                                {getTipoDescripcion(r.tipo).toUpperCase()}
-                                            </div>
-                                        </td>
-
                                         <td className={styles.cellTight}>
                                             <div className={styles.cantidad}>
                                                 {r.cantidad ?? ""}
@@ -279,8 +288,20 @@ export default function IndicacionesTable({
                                         <td>
                                             <div className={styles.desc}>
                                                 <div className={styles.primary}>
+                                                    {r.promptCodigo?.toUpperCase() || "-"}
+                                                </div>
+                                                <div className={styles.primary}>
                                                     {r.descripcion ?? "-"}
                                                 </div>
+                                                {r.indicacionesHijas && r.indicacionesHijas.length > 0 && (
+                                                    <div className={styles.indicacionesHijas}>
+                                                        {r.indicacionesHijas.map((hija, idx) => (
+                                                            <div key={idx} className={styles.hijaItem}>
+                                                                + {hija.formaAdicional ? `${hija.formaAdicional} - ` : ''}{hija.medicamento || hija.descripcion}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                                 <div className={styles.sub}>
                                                     {(r.profesional + " - " + r.fullName) || ""}
                                                 </div>
@@ -304,7 +325,7 @@ export default function IndicacionesTable({
                                                 {r.ultimaAplicacion ? formatSqlDate(r.ultimaAplicacion, { showTime: true, showDate: true, showYear: false }) : ""}
                                             </div>
                                             <div className={styles.sub}>
-                                                {r.vigenteDesde ? formatSqlDate(r.vigenteDesde, { showTime: false, showDate: true, showYear: true }) + (r.horaCarga ? " - " + r.horaCarga : "") : ""}
+                                                {r.vigenteDesde ? formatSqlDate(r.vigenteDesde, { showTime: false, showDate: true, showYear: true }) + (r.horaCarga ? " - " + formatHoraSimple(r.horaCarga) : "") : ""}
                                             </div>
                                         </td>
 
@@ -368,12 +389,6 @@ export default function IndicacionesTable({
                                                 >
                                                     <IoTrashOutline color="#5BC0DE" size="18px" />
                                                 </button>
-                                            </div>
-                                        </td>
-
-                                        <td>
-                                            <div className={styles.primary}>
-                                                {r.medicamento ?? "-"}
                                             </div>
                                         </td>
                                     </tr>
