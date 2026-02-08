@@ -118,6 +118,9 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
 
     return (
         <div className={styles.root}>
+            {/* Título de sección */}
+            <h2 className={styles.sectionTitle}>Insumos</h2>
+            
             {/* Fecha seleccionada + botón agregar */}
             {fechaFormateada && (
                 <div className={styles.dateHeader}>

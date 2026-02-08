@@ -9,6 +9,16 @@
 	padding: 0 16px;
 }
 
+/* Título de sección */
+.sectionTitle {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: #0083A9;
+	margin: 0;
+	padding: 8px 0 0 0;
+	letter-spacing: -0.02em;
+}
+
 /* Fecha seleccionada - Migración UI v1 */
 .dateHeader {
 	display: flex;
