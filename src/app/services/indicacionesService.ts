@@ -232,4 +232,18 @@ export const indicacionesService = {
         }
         return json?.data;
     },
+
+    crearIndicacionHija: async (payload: any) => {
+        const resp = await fetch(`${BASE_URL}/indicaciones/hija`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        const json = await resp.json();
+        if (!resp.ok || json?.success === false) {
+            const msg = json?.mensaje || json?.message || "No se pudo crear la indicación hija";
+            throw new Error(msg);
+        }
+        return json?.data;
+    },
 };

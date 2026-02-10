@@ -264,11 +264,11 @@ export default function SidebarFilters({ bedId }: Props = {}) {
 						</button>
 
 						<button
-							className={`${styles.navButton} ${isActive('evoluciones') ? styles.active : ''
+							className={`${styles.navButton} ${isActive('evolucion-enfermeria') ? styles.active : ''
 								}`}
-							onClick={() => clickItem('evoluciones')}
+							onClick={() => clickItem('evolucion-enfermeria')}
 						>
-							Evoluciones
+							Evolución de Enfermería
 						</button>
 
 						<button

@@ -11,11 +11,22 @@ import CustomSelect from "../Patients/AddPatient/LoadingSelect";
 import { useParams } from "next/navigation";
 import { useAppContext } from "@/app/contexts/AppContext";
 
+interface IndicacionHija {
+    id: string;
+    formaAdicional: string | null;
+    codigo: number | null;
+    aliasMedicamento: string | null;
+    cantidad: number | null;
+    tipoUnidad: string | null;
+    frecuencia: string | null;
+}
+
 interface IndicacionFormProps {
     onClose: () => void;
     onSave: (data: NuevaIndicacionPayload) => Promise<void> | void;
     defaultNumeroVisita: number | null;
     nroIndicacion?: number | null;
+    refetch?: () => Promise<void>;
 }
 
 // ===== Clarion helpers =====
@@ -75,6 +86,7 @@ export default function IndicacionForm({
     onSave,
     defaultNumeroVisita,
     nroIndicacion = null,
+    refetch,
 }: IndicacionFormProps) {
     const initial = useMemo(
         () => emptyPayload(defaultNumeroVisita),
@@ -87,16 +99,45 @@ export default function IndicacionForm({
     );
     const params = useParams();
     const { usuario } = useAppContext();
+    
+    const [indicacionesHijas, setIndicacionesHijas] = useState<IndicacionHija[]>([]);
+    const [mostrarAdicionales, setMostrarAdicionales] = useState(false);
+    const [hijaEnEdicion, setHijaEnEdicion] = useState<IndicacionHija>({
+        id: '',
+        formaAdicional: null,
+        codigo: null,
+        aliasMedicamento: null,
+        cantidad: null,
+        tipoUnidad: null,
+        frecuencia: null,
+    });
+    
+    // Estado separado para campos de adicional
+    const [adicionalForm, setAdicionalForm] = useState({
+        codigo: null as number | null,
+        cantidadIndicada: 1,
+        tipoUnidad: null as string | null,
+        frecuencia: null as string | null,
+        cantidad: null as number | null,
+    });
+    
+    const setAdicional = (field: keyof typeof adicionalForm, value: any) =>
+        setAdicionalForm((prev) => ({ ...prev, [field]: value }));
 
     useEffect(() => {
         setForm(emptyPayload(defaultNumeroVisita));
-        setForm((prev) => ({
-            ...prev,
-            ProfesionalAsiste:
-                usuario?.valorPersonal || usuario?.idValorpersonal,
-            OperadorCarga: usuario?.valorPersonal || usuario?.idValorpersonal
-        }));
     }, [defaultNumeroVisita]);
+
+    useEffect(() => {
+        if (usuario) {
+            setForm((prev) => ({
+                ...prev,
+                ProfesionalAsiste:
+                    usuario?.valorPersonal || usuario?.idValorpersonal,
+                OperadorCarga: usuario?.valorPersonal || usuario?.idValorpersonal
+            }));
+        }
+    }, [usuario]);
 
     const set = (field: keyof NuevaIndicacionPayload, value: any) =>
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -107,9 +148,55 @@ export default function IndicacionForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await onSave(form);
+            const resultado = await onSave(form);
+            console.log('📥 Resultado completo del backend:', resultado);
+            
+            if (indicacionesHijas.length > 0 && resultado && (resultado as any).NroIndicacion) {
+                const nroIndicacionPadre = (resultado as any).NroIndicacion;
+                
+                console.log('✅ Indicación padre guardada con NroIndicacion:', nroIndicacionPadre);
+                console.log(`📋 Guardando ${indicacionesHijas.length} indicación(es) adicional(es)...`);
+                
+                for (let i = 0; i < indicacionesHijas.length; i++) {
+                    const hija = indicacionesHijas[i];
+                    
+                    // La indicación adicional copia TODOS los datos del padre
+                    // Solo cambia: Codigo, CantidadIndicada, TipoUnidad, Frecuencia, Cantidad, AliasMedicamento
+                    // Y establece NroAdicional = NroIndicacion del padre
+                    // El backend incrementará automáticamente HoraCarga según el índice
+                    const hijaPayload: NuevaIndicacionPayload = {
+                        ...form, // Copiar TODO del padre
+                        Codigo: hija.codigo,
+                        CantidadIndicada: hija.cantidad,
+                        TipoUnidad: hija.tipoUnidad,
+                        Frecuencia: hija.frecuencia,
+                        Cantidad: hija.cantidad,
+                        AliasMedicamento: hija.aliasMedicamento,
+                        FormaAdicional: hija.formaAdicional,
+                        NroAdicional: nroIndicacionPadre, // DEBE IR AL FINAL para sobrescribir el 0 del padre
+                    };
+                    
+                    console.log(`💊 Guardando indicación adicional ${i + 1}/${indicacionesHijas.length}`);
+                    console.log('📦 Payload completo:', hijaPayload);
+                    console.log('🔗 NroAdicional debe ser:', nroIndicacionPadre);
+                    
+                    await indicacionesService.postNuevaIndicacion(hijaPayload);
+                    console.log(`✅ Indicación adicional ${i + 1} guardada exitosamente`);
+                }
+                
+                console.log('🎉 Todas las indicaciones adicionales guardadas exitosamente');
+            } else {
+                console.log('✅ Indicación guardada (sin adicionales)');
+            }
+            
+            // Recargar la tabla de indicaciones
+            if (refetch) {
+                await refetch();
+            }
+            
             onClose();
         } catch (err) {
+            console.error('❌ Error al guardar indicaciones:', err);
             if (err instanceof Error) {
                 alert(
                     err.message || "Error inesperado al guardar la indicación"
@@ -231,9 +318,34 @@ export default function IndicacionForm({
 
     // Al cambiar tipo, limpiamos selección (ID) para evitar incoherencias
     useEffect(() => {
-        set("AliasMedicamento", null); // ← solo hay un campo; aquí guardamos el ID
+        set("AliasMedicamento", null);
         set("Codigo", null);
+        set("TipoUnidad", null);
     }, [tipoIndicacion]);
+
+    // Al seleccionar medicamento PADRE, cargar automáticamente el TipoUnidad si es medicamento
+    useEffect(() => {
+        if (tipoIndicacion === 'M' && form.Codigo && dataForm?.vademecum) {
+            const medicamento = dataForm.vademecum.find(
+                (v) => Number(v.Valor) === Number(form.Codigo)
+            );
+            if (medicamento?.TipoMedicamento) {
+                set("TipoUnidad", medicamento.TipoMedicamento);
+            }
+        }
+    }, [form.Codigo, tipoIndicacion, dataForm]);
+    
+    // Al seleccionar medicamento ADICIONAL, cargar automáticamente el TipoUnidad
+    useEffect(() => {
+        if (tipoIndicacion === 'M' && adicionalForm.codigo && dataForm?.vademecum) {
+            const medicamento = dataForm.vademecum.find(
+                (v) => Number(v.Valor) === Number(adicionalForm.codigo)
+            );
+            if (medicamento?.TipoMedicamento) {
+                setAdicional("tipoUnidad", medicamento.TipoMedicamento);
+            }
+        }
+    }, [adicionalForm.codigo, tipoIndicacion, dataForm]);
 
     // === Descripción calculada (NO se guarda en payload) ===
     const aliasDescripcion = useMemo(() => {
@@ -310,6 +422,70 @@ export default function IndicacionForm({
         set("Cantidad", porToma * dosisPorDia);
     }, [dataForm, form.Frecuencia, form.CantidadIndicada]);
 
+    const handleAgregarHija = () => {
+        if (!adicionalForm.codigo || !adicionalForm.cantidadIndicada || !adicionalForm.tipoUnidad || !adicionalForm.frecuencia) {
+            alert('Complete todos los campos del adicional antes de agregar');
+            return;
+        }
+        
+        // Obtener descripción del medicamento adicional
+        const descripcionAdicional = getMedicamentoLabel(adicionalForm.codigo);
+        
+        const nuevaHija: IndicacionHija = {
+            id: Date.now().toString(),
+            formaAdicional: null,
+            codigo: adicionalForm.codigo,
+            aliasMedicamento: descripcionAdicional,
+            cantidad: adicionalForm.cantidadIndicada,
+            tipoUnidad: adicionalForm.tipoUnidad,
+            frecuencia: adicionalForm.frecuencia,
+        };
+        
+        setIndicacionesHijas([...indicacionesHijas, nuevaHija]);
+        
+        // Limpiar campos de adicional
+        setAdicionalForm({
+            codigo: null,
+            cantidadIndicada: 1,
+            tipoUnidad: null,
+            frecuencia: null,
+            cantidad: null,
+        });
+    };
+
+    const handleEliminarHija = (id: string) => {
+        setIndicacionesHijas(indicacionesHijas.filter(h => h.id !== id));
+    };
+
+    const handleCambiarOperacion = (id: string, operacion: string) => {
+        setIndicacionesHijas(indicacionesHijas.map(h => 
+            h.id === id ? { ...h, formaAdicional: operacion } : h
+        ));
+    };
+
+    const getMedicamentoLabel = (codigo: number | null) => {
+        if (!codigo || !dataForm) return '';
+        const id = Number(codigo);
+        
+        if (tipoIndicacion === 'M') {
+            const found = dataForm.vademecum.find(v => Number(v.Valor) === id);
+            return found?.Nombre ?? '';
+        }
+        if (tipoIndicacion === 'D') {
+            const found = dataForm.tiposDieta.find(d => Number(d.Valor) === id);
+            return found?.Descripcion ?? '';
+        }
+        if (tipoIndicacion === 'C') {
+            const found = dataForm.tiposControles.find(c => Number(c.Valor) === id);
+            return found?.Descripcion ?? '';
+        }
+        if (tipoIndicacion === 'A') {
+            const found = dataForm.controlesAsistenciales.find(a => Number(a.Valor) === id);
+            return found?.Descripcion ?? '';
+        }
+        return '';
+    };
+
 
     return (
         <div className={styles.formScrollContainer}>
@@ -374,7 +550,7 @@ export default function IndicacionForm({
                     </div>
                 </div>
 
-                {/* Fila 2: Tipo / Medicación / Descripción (solo visual) */}
+                {/* Fila 2: INDICACIÓN PADRE - Tipo / Medicación / Descripción */}
                 <div className={styles.rowTmd}>
                     <div className={styles.hField}>
                         <label htmlFor="TipoIndicacion">
@@ -408,7 +584,7 @@ export default function IndicacionForm({
                             label=""
                             name="Codigo"
                             isLoading={dataLoading || !tipoIndicacion}
-                            value={form.Codigo ?? ""} // ✅ guardamos ID en AliasMedicamento
+                            value={form.Codigo ?? ""}
                             onChange={(val) => set("Codigo", Number(val))}
                             options={medicaCionData}
                             tabIndex={2}
@@ -420,7 +596,7 @@ export default function IndicacionForm({
                         <input
                             className={styles.input}
                             type="text"
-                            value={aliasDescripcion} // ✅ calculado, NO se guarda
+                            value={aliasDescripcion}
                             disabled
                             placeholder="Se completa al elegir medicación"
                             aria-disabled="true"
@@ -428,8 +604,8 @@ export default function IndicacionForm({
                     </div>
                 </div>
 
-                {/* Fila 3: Cantidades */}
-                <div className={styles.rowQty}>
+                {/* Fila 3: INDICACIÓN PADRE - Cantidad / Tipo unidad / Frecuencia */}
+                <div className={styles.rowQtyPadre}>
                     <div className={styles.qtyGroup}>
                         <label>Cantidad</label>
                         <input
@@ -437,7 +613,7 @@ export default function IndicacionForm({
                             step="1"
                             min={1}
                             className={styles.inputNum}
-                            value={form.CantidadIndicada ?? ""} // ✅ editable
+                            value={form.CantidadIndicada ?? ""}
                             onChange={(e) =>
                                 set("CantidadIndicada", n(e.target.value))
                             }
@@ -485,7 +661,7 @@ export default function IndicacionForm({
                             label=""
                             name="Frecuencia"
                             isLoading={dataLoading}
-                            onChange={(val) => set("Frecuencia", val)} // no casteamos; el parser se encarga
+                            onChange={(val) => set("Frecuencia", val)}
                             value={form.Frecuencia || ""}
                             options={
                                 dataForm?.frecuenciasAdmin.map((item) => ({
@@ -496,51 +672,175 @@ export default function IndicacionForm({
                             tabIndex={5}
                         />
                     </div>
-
-                    <div className={styles.qtyGroup}>
-                        <label>Cantidad</label>
-                        <input
-                            type="number"
-                            className={styles.inputNum}
-                            value={form.Cantidad ?? ""} // ✅ calculado
-                            onChange={() => { }}
-                            disabled
-                        />
-                    </div>
-
-                    <div className={styles.actionGroup}>
-                        <button type="button" className={styles.btnGhost}>
-                            Agregar
-                        </button>
-                        <button type="button" className={styles.btnGhost}>
-                            Cambiar
-                        </button>
-                        <button type="button" className={styles.btnGhostDanger}>
-                            Borrar
-                        </button>
-                    </div>
                 </div>
 
-                {/* Fila 4: Tabla */}
-                <div className={styles.tableCard}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>Operación</th>
-                                <th>Medicamento</th>
-                                <th>Observaciones</th>
-                                <th>Cantidad</th>
-                                <th>Tipo unidad</th>
-                                <th>Frecuencia</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className={styles.emptyRow}>
-                                <td colSpan={6}>Sin ítems agregados</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                {/* Botón Agregar Adicional */}
+                <div className={styles.btnAdicionalContainer}>
+                    <button
+                        type="button"
+                        className={styles.btnAgregarAdicional}
+                        onClick={() => setMostrarAdicionales(!mostrarAdicionales)}
+                    >
+                        <span className={styles.iconPlus}>+</span>
+                        {mostrarAdicionales ? 'Ocultar Adicionales' : 'Agregar Adicional'}
+                    </button>
                 </div>
+
+                {/* Sección de Indicaciones Adicionales (solo visible si mostrarAdicionales = true) */}
+                {mostrarAdicionales && (
+                    <>
+                        {/* Fila 1: Medicamento adicional */}
+                        <div className={styles.rowTmd}>
+                            <div className={styles.hField}>
+                                <label>Medicamento Adicional</label>
+                                <CustomSelect
+                                    label=""
+                                    name="CodigoAdicional"
+                                    isLoading={dataLoading || !tipoIndicacion}
+                                    value={adicionalForm.codigo ?? ""}
+                                    onChange={(val) => setAdicional("codigo", Number(val))}
+                                    options={medicaCionData}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Fila 2: Campos para agregar adicional */}
+                        <div className={styles.rowQty}>
+                            <div className={styles.qtyGroup}>
+                                <label>Cantidad</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    min={1}
+                                    className={styles.inputNum}
+                                    value={adicionalForm.cantidadIndicada ?? ""}
+                                    onChange={(e) =>
+                                        setAdicional("cantidadIndicada", n(e.target.value))
+                                    }
+                                    onInput={(e) => {
+                                        const inputElement = e.target as HTMLInputElement;
+                                        const rawValue = inputElement.value;
+
+                                        if (rawValue === "" || rawValue === "-") {
+                                            inputElement.value = "";
+                                        }
+
+                                        const numericValue = parseInt(rawValue);
+
+                                        if (isNaN(numericValue) || numericValue < 1) {
+                                            if (rawValue !== "") {
+                                                inputElement.value = "1";
+                                            }
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            <div className={styles.qtyGroup}>
+                                <label>Tipo unidad</label>
+                                <CustomSelect
+                                    label=""
+                                    name="TipoUnidadAdicional"
+                                    isLoading={dataLoading}
+                                    onChange={(val) => setAdicional("tipoUnidad", val)}
+                                    options={
+                                        dataForm?.unidadesMedida.map((item) => ({
+                                            value: item.Valor,
+                                            label: item.Descripcion,
+                                        })) || []
+                                    }
+                                    value={adicionalForm.tipoUnidad || ""}
+                                />
+                            </div>
+
+                            <div className={styles.qtyGroupWide}>
+                                <label>Frecuencia</label>
+                                <CustomSelect
+                                    label=""
+                                    name="FrecuenciaAdicional"
+                                    isLoading={dataLoading}
+                                    onChange={(val) => setAdicional("frecuencia", val)}
+                                    value={adicionalForm.frecuencia || ""}
+                                    options={
+                                        dataForm?.frecuenciasAdmin.map((item) => ({
+                                            value: item.Valor,
+                                            label: item.Valor,
+                                        })) || []
+                                    }
+                                />
+                            </div>
+
+                            <div className={styles.actionGroup}>
+                                <button 
+                                    type="button" 
+                                    className={styles.btnGhost}
+                                    onClick={handleAgregarHija}
+                                >
+                                    Agregar
+                                </button>
+                                <button type="button" className={styles.btnGhost}>
+                                    Cambiar
+                                </button>
+                                <button type="button" className={styles.btnGhostDanger}>
+                                    Borrar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Tabla de adicionales */}
+                        <div className={styles.tableCard}>
+                            <table className={styles.table}>
+                                <thead>
+                                    <tr>
+                                        <th>Operación</th>
+                                        <th>Medicamento</th>
+                                        <th>Cantidad</th>
+                                        <th>Tipo unidad</th>
+                                        <th>Frecuencia</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {indicacionesHijas.length === 0 ? (
+                                        <tr className={styles.emptyRow}>
+                                            <td colSpan={6}>Sin ítems agregados</td>
+                                        </tr>
+                                    ) : (
+                                        indicacionesHijas.map((hija) => (
+                                            <tr key={hija.id}>
+                                                <td>
+                                                    <select
+                                                        className={styles.selectOperacion}
+                                                        value={hija.formaAdicional || ''}
+                                                        onChange={(e) => handleCambiarOperacion(hija.id, e.target.value)}
+                                                    >
+                                                        <option value="">Seleccionar</option>
+                                                        <option value="MAS">Más</option>
+                                                        <option value="ALTERNO">Alterno</option>
+                                                        <option value="PARALELO">Paralelo</option>
+                                                    </select>
+                                                </td>
+                                                <td>{hija.aliasMedicamento}</td>
+                                                <td>{hija.cantidad}</td>
+                                                <td>{hija.tipoUnidad}</td>
+                                                <td>{hija.frecuencia}</td>
+                                                <td>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.btnEliminar}
+                                                        onClick={() => handleEliminarHija(hija.id)}
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
 
                 {/* Fila 5: Observaciones */}
                 <div className={styles.row}>

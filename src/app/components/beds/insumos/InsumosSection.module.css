@@ -24,24 +24,23 @@
 
 /* Fecha seleccionada - Migración UI v1 */
 .dateHeader {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 0px;
-	margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0px;
+    margin-bottom: 0;
 }
 
 .dateNumber {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	background-color: #00B5E2;
-	color: white;
-	font-size: 1.25rem;
-	font-weight: 700;
-	border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    background-color: #00B5E2;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
 }
 
 .dateText {
@@ -49,6 +48,13 @@
 	font-weight: 600;
 	color: #1e293b;
 	flex: 1;
+}
+
+.dateActions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 12px;
 }
 
 .dateActions {
@@ -123,17 +129,20 @@
 
 /* Botones */
 .btn {
-	appearance: none;
-	border: none;
-	border-radius: 8px;
-	padding: 10px 16px;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 4px;
+    letter-spacing: 2px;
 }
 .btn:hover {
 	transform: translateY(-1px);

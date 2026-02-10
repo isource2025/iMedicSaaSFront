@@ -121,10 +121,7 @@
     justify-content: space-between;
     align-items: flex-start;
     background-color: #E3F2F7;
-    border-radius: 16px;
-    margin: 12px 16px;
     padding: 14px 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     gap: 16px;
 }
 
@@ -406,7 +403,6 @@
     .pacienteHeader {
         flex-direction: column;
         padding: 20px;
-        margin: 12px;
         gap: 16px;
     }
 
@@ -442,15 +438,12 @@
 
     .modalContent {
         max-height: calc(95vh - 280px);
-        padding: 1rem;
     }
 }
 
 @media (max-width: 480px) {
     .pacienteHeader {
         padding: 16px;
-        margin: 8px;
-        border-radius: 16px;
     }
 
     .documentoNumero {

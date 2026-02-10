@@ -12,11 +12,17 @@ import {
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './MedicacionSuministradaSection.module.css';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 interface MedicacionSuministradaSectionProps {
   numeroVisita: number | null;
   patientName?: string;
   patientLocation?: string;
+  documentoPaciente?: string;
+  fechaIngreso?: string;
+  horaIngreso?: string;
 }
 
 // Helper para convertir Date a YYYY-MM-DD
@@ -32,6 +38,9 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   numeroVisita,
   patientName,
   patientLocation,
+  documentoPaciente,
+  fechaIngreso,
+  horaIngreso
 }) => {
   const { activeSection, selectedDate } = useBedDetail();
   const [selectedMedicacion, setSelectedMedicacion] = useState<MedicacionControl | null>(null);
@@ -112,9 +121,55 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
     }
   };
 
+  const formatSelectedDate = () => {
+    if (!selectedDate) return null;
+    const diaSemana = selectedDate.toLocaleString('es-ES', { weekday: 'long' });
+    const diaMes = selectedDate.getDate();
+    const mes = selectedDate.toLocaleString('es-ES', { month: 'long' });
+    return { diaSemana, diaMes, mes };
+  };
+
+  const handleExport = async (option: ExportOption, data: any[]) => {
+    if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
+      const primeraMedicacion = medicaciones[0];
+      const profesionalInfo = primeraMedicacion ? {
+        nombre: obtenerNombreCompleto(primeraMedicacion.ProfesionalApellido, primeraMedicacion.ProfesionalNombres),
+        matricula: undefined,
+        especialidad: undefined
+      } : undefined;
+
+      const pdfData = medicaciones.map(row => [
+        formatearFecha(row.FechaControl),
+        formatearHora(row.HoraControl),
+        row.Troquel || '-',
+        row.Cantidad || '-',
+        obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres)
+      ]);
+
+      exportToPDF({
+        title: 'Medicación Suministrada',
+        subtitle: `Fecha: ${formatSelectedDate()?.diaSemana} ${formatSelectedDate()?.diaMes}, ${formatSelectedDate()?.mes}`,
+        headers: ['Fecha', 'Hora', 'Troquel', 'Cantidad', 'Profesional'],
+        data: pdfData,
+        fileName: `medicacion_${selectedDate?.toISOString().split('T')[0]}.pdf`,
+        orientation: 'landscape',
+        empresaInfo,
+        patientInfo: {
+          numeroVisita: numeroVisita || undefined,
+          nombre: patientName,
+          numeroDocumento: documentoPaciente,
+          ubicacion: patientLocation,
+          fechaIngreso: fechaIngreso,
+          horaIngreso: horaIngreso
+        },
+        profesionalInfo
+      });
+    }
+  };
+
   // No renderizar si no es la sección activa
   if (activeSection !== 'medicacion-suministrada') {
-    console.log('🔵 [MedicacionSuministrada] Not active section, returning null');
     return null;
   }
 

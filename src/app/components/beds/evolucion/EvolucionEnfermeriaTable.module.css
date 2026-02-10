@@ -1,0 +1,277 @@
+/* Contenedor */
+.tableWrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.scrollArea {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: auto;
+    max-height: 100%;
+}
+
+/* Tabla */
+.table {
+    width: 100%;
+    min-width: 1040px;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 13px;
+    line-height: 1.25;
+    color: #111827;
+}
+
+/* Encabezado */
+.thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #e0f2fe;
+    color: #111827;
+    text-align: left;
+    padding: 6px 12px;
+    font-weight: 700;
+    border-bottom: 2px solid #bae6fd;
+}
+
+/* Celdas cuerpo */
+.tbody .row td {
+    padding: 9px 12px;
+    border-top: 1px solid #e5e7eb;
+    vertical-align: top;
+    background: #fff;
+    height: auto;
+}
+
+/* Zebra */
+.tbody .row:nth-child(even) td {
+    background: #fafafaaa;
+}
+
+/* Hover fila */
+.row:hover td {
+    background: #e0f2fe;
+    color: #111827;
+}
+
+/* Divisores de columna */
+.table th,
+.table td {
+    border-right: 1px solid #e5e7eb;
+}
+.table th:last-child,
+.table td:last-child {
+    border-right: none;
+}
+
+/* Anchos de columnas */
+.colFecha {
+    min-width: 110px;
+    width: 110px;
+}
+.colHora {
+    min-width: 80px;
+    width: 80px;
+}
+.colProfesional {
+    min-width: 180px;
+}
+.colEvolucion {
+    min-width: 300px;
+}
+.colSector {
+    min-width: 80px;
+    width: 80px;
+}
+.colAccion {
+    min-width: 140px;
+    width: 140px;
+}
+
+/* Celdas específicas */
+.cellFecha,
+.cellHora,
+.cellSector {
+    font-weight: 600;
+}
+
+.cellProfesional {
+    color: #374151;
+}
+
+.cellEvolucion {
+    max-width: 400px;
+}
+
+.evolucionPreview {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+}
+
+/* Acciones */
+.cellAccion {
+    text-align: center;
+    padding: 6px 8px !important;
+}
+
+.actionBtns {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.btnAction {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
+}
+
+.btnAction:hover {
+    background-color: #f3f4f6;
+    transform: translateY(-1px);
+}
+
+.btnAction:active {
+    transform: translateY(0);
+}
+
+/* Empty state */
+.emptyOverlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #6b7280;
+}
+
+/* Modal de vista completa */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modalHeader h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.btnClose {
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #6b7280;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.btnClose:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.modalBody {
+    padding: 24px;
+}
+
+.detailGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.detailItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detailLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detailValue {
+    font-size: 14px;
+    color: #111827;
+    font-weight: 500;
+}
+
+.evolucionFull {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+@media (max-width: 768px) {
+    .tableWrap {
+        display: none;
+    }
+    
+    .detailGrid {
+        grid-template-columns: 1fr;
+    }
+}
