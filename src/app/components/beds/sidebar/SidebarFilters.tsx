@@ -7,6 +7,7 @@ import { useBedDetail } from '../contexts/BedDetailContext';
 
 type Props = {
 	bedId?: string;
+	onCloseDrawer?: () => void;
 };
 
 // --- Componente de colapso con altura automática animada (enter/exit distintos) ---
@@ -106,12 +107,13 @@ function Collapse({
 	);
 }
 
-export default function SidebarFilters({ bedId }: Props = {}) {
+export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 	const { openSections, activeSection, navigateToSection, toggleSection } = useBedDetail();
 	const router = useRouter();
 
 	const clickItem = (section: typeof activeSection) => {
 		navigateToSection(section);
+		onCloseDrawer?.();
 	};
 
 	const isActive = (section: string) => activeSection === section;

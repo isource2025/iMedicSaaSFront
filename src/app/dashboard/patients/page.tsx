@@ -89,7 +89,16 @@ export default function PatientsPage() {
 
 	return (
 		<div className={styles.container}>
-			<h1 className={styles.title}>Administrador de Pacientes</h1>
+			<div className={styles.titleRow}>
+				<h1 className={styles.title}>Administrador de Pacientes</h1>
+				<button
+					className={`${styles.addButton} ${styles.addButtonMobile}`}
+					onClick={openAddModal}
+					aria-label='Agregar nuevo paciente'
+				>
+					<span className={styles.addIcon}>+</span>
+				</button>
+			</div>
 			<div className={styles.content}>
 				<div className={styles.controls}>
 					<div className={styles.searchContainer}>
@@ -127,7 +136,7 @@ export default function PatientsPage() {
 						onClick={openAddModal}
 						aria-label='Agregar nuevo paciente'
 					>
-						<span className={styles.addIcon}>➕</span> Agregar paciente
+						<span className={styles.addIcon}>+</span> Agregar paciente
 					</button>
 				</div>
 				<PatientList

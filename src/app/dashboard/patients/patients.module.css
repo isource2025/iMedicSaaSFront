@@ -1,37 +1,54 @@
+/* =============================================
+   PATIENTS PAGE - Migración UI v1
+   ============================================= */
+
 .container {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	padding: 0.5rem;
+	padding: 1rem 1.5rem;
+	gap: 0;
 }
+
 .content {
 	display: flex;
 	flex-direction: column;
-	gap: 1.5rem;
+	gap: 0;
 }
+
 .title {
-	font-size: 1.5rem;
-	font-weight: 700;
-	color: #1f2937;
-	margin-bottom: 16px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #0083A9;
+	background: #e0f7fa;
+	padding: 8px 16px;
+	border-radius: 6px;
+	margin-bottom: 20px;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 }
+
 .controls {
 	display: flex;
 	justify-content: space-between;
-	margin-bottom: 1rem;
+	margin-bottom: 16px;
 	align-items: center;
-	gap: 1rem;
+	gap: 12px;
 }
+
 .toolbar {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 1rem;
 	align-items: center;
-	background-color: #f5f7fa;
+	background-color: #f8fafc;
 	padding: 1rem;
-	border-radius: 8px;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-	margin-bottom: 1.5rem;
+	border-radius: 12px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+	margin-bottom: 1rem;
 }
 
 .searchContainer {
@@ -64,43 +81,118 @@
 .searchInput {
 	display: block;
 	width: 100%;
-	padding: 0.7rem 1rem;
-	font-size: 0.9rem;
-	color: #111827;
-	border: 2px solid #d1d5db;
-	border-radius: 6px;
-	background-color: #f9fafb;
+	padding: 0.6rem 1rem;
+	font-size: 0.85rem;
+	color: #1e293b;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 10px;
+	background-color: #f8fafc;
+	transition: all 0.2s ease;
 }
 
 .searchInput:focus {
 	outline: none;
-	border-color: #00b5e2;
-	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.25);
+	border-color: #00B5E2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
+	background-color: #fff;
 }
 
 .addButton {
-	display: flex;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 8px;
-	text-align: center;
-	padding: 0.625rem;
-	font-size: 0.9rem;
-	color: #111827;
-	border: 2px solid #d1d5db;
-	border-radius: 6px;
-	background-color: #f9fafb;
+	gap: 6px;
+	padding: 10px 22px;
+	font-size: 0.82rem;
+	font-weight: 700;
+	letter-spacing: 2px;
+	color: #fff;
+	border: none;
+	border-radius: 24px;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
 	white-space: nowrap;
-}
-.addButton span {
-	font-size: 14px;
-}
-
-.addButton:hover,
-.addButton:focus {
-	background-color: #dde1e6;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.3);
 }
 
-.addIcon {
-	font-size: 1.2rem;
+.addButton .addIcon {
+	color: #fff;
+	font-weight: 300;
+	font-size: 1.1rem;
+}
+
+.addButton:hover {
+	background: linear-gradient(135deg, #00a5d0 0%, #007599 100%);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.4);
+}
+
+.addButton:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(0, 131, 169, 0.2);
+}
+
+/* --- Title Row (mobile FAB) --- */
+.titleRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.addButtonMobile {
+	display: none;
+}
+
+/* --- Responsive --- */
+@media (max-width: 860px) {
+	.container {
+		padding: 0.75rem 1rem;
+	}
+
+	.title {
+		font-size: 1.1rem;
+		margin-bottom: 0;
+	}
+
+	.titleRow {
+		margin-bottom: 14px;
+	}
+
+	.controls {
+		flex-direction: row;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.searchContainer {
+		min-width: unset;
+	}
+
+	/* Hide the original addButton inside controls */
+	.controls .addButton {
+		display: none;
+	}
+
+	/* Show the mobile FAB in titleRow */
+	.addButtonMobile {
+		display: inline-flex;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 50%;
+		padding: 0;
+		font-size: 0;
+		letter-spacing: 0;
+		gap: 0;
+		flex-shrink: 0;
+	}
+
+	.addButtonMobile .addIcon {
+		font-size: 1.3rem;
+		font-weight: 700;
+		line-height: 1;
+	}
 }

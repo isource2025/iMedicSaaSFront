@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Patient } from '../../types/PatientInterface';
 import styles from './PatientList.module.css';
 import Pagination from '../UI/Pagination';
-import { IoDocumentTextOutline, IoMedicalOutline, IoPencil, IoTrashOutline } from 'react-icons/io5';
+import { IoDocumentTextOutline, IoMedicalOutline, IoPencil, IoTrashOutline, IoChevronDown } from 'react-icons/io5';
 import { clarionDateToDate, calculateAge } from '../../utils/dateUtils';
 
 interface PatientListProps {
@@ -31,6 +32,12 @@ export default function PatientList({
   onAdmission,
   onViewHistory
 }: PatientListProps) {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const toggleExpand = (id: number) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
 
@@ -171,6 +178,62 @@ export default function PatientList({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile collapsible list */}
+      <div className={styles.mobileList}>
+        {loading ? (
+          <div className={styles.loadingContent}>
+            <div className={styles.loadingSpinner}></div>
+            <span className={styles.loadingText}>Cargando...</span>
+          </div>
+        ) : patients.length === 0 ? (
+          <div className={styles.noResults}>No se encontraron pacientes</div>
+        ) : (
+          patients.map((patient) => {
+            const isOpen = expandedId === patient.IDPaciente;
+            return (
+              <div key={patient.IDPaciente} className={`${styles.mobileItem} ${isOpen ? styles.mobileItemOpen : ''}`}>
+                <button
+                  className={styles.mobileItemHeader}
+                  onClick={() => toggleExpand(patient.IDPaciente)}
+                  aria-expanded={isOpen}
+                >
+                  <div className={styles.mobileItemLeft}>
+                    <div className={styles.mobileItemName}>{patient.ApellidoyNombre}</div>
+                    <div className={styles.mobileItemTags}>
+                      {String(patient.NumeroDocumento || '').trim() && String(patient.NumeroDocumento).trim() !== '0' ? <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>DNI</span> {patient.NumeroDocumento}</span> : null}
+                      {String(patient.NumeroHC || '').trim() && String(patient.NumeroHC).trim() !== '0' ? <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>HC</span> {patient.NumeroHC}</span> : null}
+                      {patient.Cobertura && <span className={styles.mobileTagAccent}>{patient.Cobertura}</span>}
+                    </div>
+                  </div>
+                  <IoChevronDown size={14} className={`${styles.mobileChevron} ${isOpen ? styles.mobileChevronOpen : ''}`} />
+                </button>
+                <div className={`${styles.mobileItemBody} ${isOpen ? styles.mobileItemBodyOpen : ''}`}>
+                  <div className={styles.mobileDetailRow}>
+                    <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>Nac.</span> {formatDate(patient.FechaNacimiento)}</span>
+                    <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>Edad</span> {getAgeText(patient.FechaNacimiento)}</span>
+                    {patient.Domicilio && <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>Dir.</span> {patient.Domicilio}</span>}
+                  </div>
+                  <div className={styles.mobileActions}>
+                    <button onClick={() => onView(patient)} className={styles.historyButton} title="Ver detalles">
+                      <IoDocumentTextOutline size={18} />
+                    </button>
+                    <button onClick={() => onViewHistory(patient)} className={styles.historyButton} title="Historia clínica">
+                      <IoMedicalOutline size={18} />
+                    </button>
+                    <button onClick={() => onEdit(patient)} className={styles.editButton} title="Editar">
+                      <IoPencil size={16} />
+                    </button>
+                    <button onClick={() => onDelete(patient)} className={styles.deleteButton} title="Eliminar">
+                      <IoTrashOutline size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {!loading && patients.length > 0 && (
