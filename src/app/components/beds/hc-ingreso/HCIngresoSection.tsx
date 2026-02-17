@@ -1,46 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import styles from "./HCIngresoSection.module.css";
 import { useBedDetail } from "../contexts/BedDetailContext";
-
-// ===== MOCK DATA =====
-interface HCIngresoRecord {
-    id: string;
-    fecha: string;
-    hora: string;
-    sector: string;
-    numeroVisita: number;
-    profesionalId: number;
-    profesionalNombre: string;
-    motivoConsulta: string;
-    enfermedadActual: string;
-}
-
-const MOCK_RECORDS: HCIngresoRecord[] = [
-    {
-        id: "1",
-        fecha: "2026-02-06",
-        hora: "18:36",
-        sector: "UTI",
-        numeroVisita: 406161,
-        profesionalId: 1287,
-        profesionalNombre: "SANCHEZ PERALTA MARIA VALENTINA",
-        motivoConsulta: "Edema agudo de pulmón",
-        enfermedadActual: "Paciente femenina de 28 años sin antecedentes patológicos conocidos, G1C1. Niega alergias, niega tabaco y alcohol. El día de la fecha se concurre a la interconsulta del servicio de maternidad donde la paciente es evaluada por el servicio de terapia intensiva constatando disnea, desaturación y a la auscultación rales crepitantes diseminados, se realiza cesárea de emergencia y se decide su pase a sala de terapia intensiva. Paciente que es derivada de hospital materno neonatal Eloísa Torrent. Ingresa la paciente bajo efectos residuales de sedación y analgesia.",
-    },
-    {
-        id: "2",
-        fecha: "2021-02-13",
-        hora: "18:24",
-        sector: "CM2",
-        numeroVisita: 406161,
-        profesionalId: 1100,
-        profesionalNombre: "RODRIGUEZ JUAN CARLOS",
-        motivoConsulta: "Control post-operatorio",
-        enfermedadActual: "Paciente en seguimiento post-quirúrgico. Evolución favorable. Sin complicaciones.",
-    },
-];
+import { HCIngresoRecord } from "@/app/types/hcIngreso";
+import { obtenerHCIngresoPorVisita } from "@/app/services/hcIngresoService";
 
 // Secciones de la HC de Ingreso para el modo edición
 const HC_SECTIONS = [
@@ -93,9 +57,12 @@ export default function HCIngresoSection({
     
     // Estado del componente
     const [mode, setMode] = useState<ViewMode>("view");
-    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(MOCK_RECORDS[0]?.id || null);
+    const [records, setRecords] = useState<HCIngresoRecord[]>([]);
+    const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
     const [activeSection, setActiveSection] = useState<string>("motivo");
     const [showOnlySelectedDay, setShowOnlySelectedDay] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     
     // Estado del formulario (para modo add/edit)
     const [formData, setFormData] = useState({
@@ -107,17 +74,44 @@ export default function HCIngresoSection({
         enfermedadActual: "",
     });
 
+    // Cargar datos desde el backend
+    useEffect(() => {
+        if (!numeroVisita) return;
+
+        const cargarDatos = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                setRecords(data);
+                if (data.length > 0 && !selectedRecordId) {
+                    setSelectedRecordId(data[0].IdHCIngreso);
+                }
+            } catch (err) {
+                console.error("Error al cargar HC de Ingreso:", err);
+                setError("Error al cargar la historia clínica de ingreso");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        cargarDatos();
+    }, [numeroVisita]);
+
     // Filtrar registros por fecha si está activo el checkbox
     const filteredRecords = useMemo(() => {
-        if (!showOnlySelectedDay || !selectedDate) return MOCK_RECORDS;
+        if (!showOnlySelectedDay || !selectedDate) return records;
         const dateStr = selectedDate.toISOString().split("T")[0];
-        return MOCK_RECORDS.filter((r) => r.fecha === dateStr);
-    }, [showOnlySelectedDay, selectedDate]);
+        return records.filter((r: HCIngresoRecord) => {
+            if (!r.FechaFormateada) return false;
+            return r.FechaFormateada === dateStr;
+        });
+    }, [showOnlySelectedDay, selectedDate, records]);
 
     // Registro seleccionado
     const selectedRecord = useMemo(() => {
-        return MOCK_RECORDS.find((r) => r.id === selectedRecordId) || null;
-    }, [selectedRecordId]);
+        return records.find((r: HCIngresoRecord) => r.IdHCIngreso === selectedRecordId) || null;
+    }, [selectedRecordId, records]);
 
     // Formatear fecha seleccionada para mostrar
     const formatSelectedDate = () => {
@@ -150,12 +144,12 @@ export default function HCIngresoSection({
     const handleEdit = () => {
         if (!selectedRecord) return;
         setFormData({
-            fecha: selectedRecord.fecha,
-            hora: selectedRecord.hora,
-            profesionalId: String(selectedRecord.profesionalId),
-            sector: selectedRecord.sector,
-            motivoConsulta: selectedRecord.motivoConsulta,
-            enfermedadActual: selectedRecord.enfermedadActual,
+            fecha: "", // Fecha no disponible en el modelo actual
+            hora: "", // Hora no disponible en el modelo actual
+            profesionalId: String(selectedRecord.IdProfecional || ""),
+            sector: selectedRecord.IdSector,
+            motivoConsulta: selectedRecord.MotivoConsulta,
+            enfermedadActual: selectedRecord.EnfermedadActual,
         });
         setActiveSection("motivo");
         setMode("edit");
@@ -193,7 +187,21 @@ export default function HCIngresoSection({
                     </div>
                 )}
 
+                {/* Mostrar estado de carga o error */}
+                {loading && (
+                    <div className={styles.loadingMessage}>
+                        Cargando historia clínica de ingreso...
+                    </div>
+                )}
+
+                {error && (
+                    <div className={styles.errorMessage}>
+                        {error}
+                    </div>
+                )}
+
                 {/* Contenido principal: Lista + Detalle */}
+                {!loading && !error && (
                 <div className={styles.viewContent}>
                     {/* Panel izquierdo: Lista de registros */}
                     <div className={styles.listPanel}>
@@ -208,13 +216,13 @@ export default function HCIngresoSection({
                             <tbody>
                                 {filteredRecords.map((record) => (
                                     <tr
-                                        key={record.id}
-                                        className={`${styles.listRow} ${selectedRecordId === record.id ? styles.listRowSelected : ""}`}
-                                        onClick={() => setSelectedRecordId(record.id)}
+                                        key={record.IdHCIngreso}
+                                        className={`${styles.listRow} ${selectedRecordId === record.IdHCIngreso ? styles.listRowSelected : ""}`}
+                                        onClick={() => setSelectedRecordId(record.IdHCIngreso)}
                                     >
-                                        <td>{new Date(record.fecha).toLocaleDateString("es-AR")}</td>
-                                        <td>{record.hora}</td>
-                                        <td>{record.sector}</td>
+                                        <td>{record.FechaFormateada || "-"}</td>
+                                        <td>{record.HoraFormateada || "-"}</td>
+                                        <td>{record.SectorDescripcion || record.IdSector}</td>
                                     </tr>
                                 ))}
                                 {filteredRecords.length === 0 && (
@@ -240,28 +248,28 @@ export default function HCIngresoSection({
                                 <div className={styles.detailSection}>
                                     <div className={styles.detailRow}>
                                         <span className={styles.detailLabel}>N. Visita:</span>
-                                        <span className={styles.detailValue}>{selectedRecord.numeroVisita}</span>
+                                        <span className={styles.detailValue}>{selectedRecord.NumeroVisita}</span>
                                     </div>
                                 </div>
 
                                 <div className={styles.detailSection}>
                                     <div className={styles.detailMeta}>
-                                        <span>Fecha: {new Date(selectedRecord.fecha).toLocaleDateString("es-AR")} {selectedRecord.hora}</span>
-                                    </div>
-                                    <div className={styles.detailMeta}>
-                                        <span>Profesional: {selectedRecord.profesionalId} {selectedRecord.profesionalNombre}</span>
-                                        <span>Sector: {selectedRecord.sector}</span>
+                                        {selectedRecord.FechaFormateada && (
+                                            <span>Fecha: {selectedRecord.FechaFormateada} {selectedRecord.HoraFormateada || ""}</span>
+                                        )}
+                                        <span>Profesional: {selectedRecord.IdProfecional} {selectedRecord.ProfesionalNombre || ""}</span>
+                                        <span>Sector: {selectedRecord.SectorDescripcion || selectedRecord.IdSector}</span>
                                     </div>
                                 </div>
 
                                 <div className={styles.detailSection}>
                                     <p className={styles.detailLabel}>Motivo Consulta:</p>
-                                    <p className={styles.detailText}>{selectedRecord.motivoConsulta}</p>
+                                    <p className={styles.detailText}>{selectedRecord.MotivoConsulta}</p>
                                 </div>
 
                                 <div className={styles.detailSection}>
                                     <p className={styles.detailLabel}>Enfermedad Actual:</p>
-                                    <p className={styles.detailText}>{selectedRecord.enfermedadActual}</p>
+                                    <p className={styles.detailText}>{selectedRecord.EnfermedadActual}</p>
                                 </div>
                             </div>
                         ) : (
@@ -271,8 +279,10 @@ export default function HCIngresoSection({
                         )}
                     </div>
                 </div>
+                )}
 
                 {/* Barra de acciones inferior */}
+                {!loading && !error && (
                 <div className={styles.actionBar}>
                     <div className={styles.actionButtons}>
                         <button className={styles.actionBtn} onClick={handleAdd}>
@@ -304,6 +314,7 @@ export default function HCIngresoSection({
                         </button>
                     </div>
                 </div>
+                )}
             </div>
         );
     }
