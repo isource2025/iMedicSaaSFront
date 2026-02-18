@@ -8,6 +8,7 @@ import { obtenerHCIngresoPorVisita } from "@/app/services/hcIngresoService";
 
 // Secciones de la HC de Ingreso para el modo edición
 const HC_SECTIONS = [
+    { id: "antecedentes", label: "Antecedentes", required: false },
     { id: "motivo", label: "Motivo y Enfermedad", required: true },
     { id: "signos-vitales", label: "Signos vitales", required: false },
     { id: "piel-faneras", label: "Piel y Faneras", required: false },
@@ -59,10 +60,11 @@ export default function HCIngresoSection({
     const [mode, setMode] = useState<ViewMode>("view");
     const [records, setRecords] = useState<HCIngresoRecord[]>([]);
     const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
-    const [activeSection, setActiveSection] = useState<string>("motivo");
+    const [activeSection, setActiveSection] = useState<string>("antecedentes");
     const [showOnlySelectedDay, setShowOnlySelectedDay] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     
     // Estado del formulario (para modo add/edit)
     const [formData, setFormData] = useState({
@@ -72,6 +74,7 @@ export default function HCIngresoSection({
         sector: "",
         motivoConsulta: "",
         enfermedadActual: "",
+        antecedentes: "",
     });
 
     // Cargar datos desde el backend
@@ -136,8 +139,9 @@ export default function HCIngresoSection({
             sector: "",
             motivoConsulta: "",
             enfermedadActual: "",
+            antecedentes: "",
         });
-        setActiveSection("motivo");
+        setActiveSection("antecedentes");
         setMode("add");
     };
 
@@ -150,8 +154,9 @@ export default function HCIngresoSection({
             sector: selectedRecord.IdSector,
             motivoConsulta: selectedRecord.MotivoConsulta,
             enfermedadActual: selectedRecord.EnfermedadActual,
+            antecedentes: (selectedRecord as any).Antecedentes || "",
         });
-        setActiveSection("motivo");
+        setActiveSection("antecedentes");
         setMode("edit");
     };
 
@@ -184,6 +189,11 @@ export default function HCIngresoSection({
                         <span className={styles.dateText}>
                             {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
                         </span>
+                        <div className={styles.dateActions}>
+                            <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`} onClick={handleAdd}>
+                                <span className={styles.addIcon}>+</span> Agregar
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -200,119 +210,132 @@ export default function HCIngresoSection({
                     </div>
                 )}
 
-                {/* Contenido principal: Lista + Detalle */}
+                {/* Toolbar con selector y botones */}
                 {!loading && !error && (
-                <div className={styles.viewContent}>
-                    {/* Panel izquierdo: Lista de registros */}
-                    <div className={styles.listPanel}>
-                        <table className={styles.listTable}>
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Hora</th>
-                                    <th>Sector</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredRecords.map((record) => (
-                                    <tr
-                                        key={record.IdHCIngreso}
-                                        className={`${styles.listRow} ${selectedRecordId === record.IdHCIngreso ? styles.listRowSelected : ""}`}
-                                        onClick={() => setSelectedRecordId(record.IdHCIngreso)}
-                                    >
-                                        <td>{record.FechaFormateada || "-"}</td>
-                                        <td>{record.HoraFormateada || "-"}</td>
-                                        <td>{record.SectorDescripcion || record.IdSector}</td>
-                                    </tr>
-                                ))}
-                                {filteredRecords.length === 0 && (
-                                    <tr>
-                                        <td colSpan={3} className={styles.emptyRow}>
-                                            No hay registros
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                <div className={styles.toolbar}>
+                    <div className={styles.toolbarLeft}>
+                        {/* Selector de registros - Custom Dropdown */}
+                        <div className={styles.customDropdown}>
+                            <div 
+                                className={styles.dropdownTrigger}
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                            >
+                                <span className={styles.dropdownValue}>
+                                    {selectedRecord 
+                                        ? `${selectedRecord.FechaFormateada || "-"} ${selectedRecord.HoraFormateada || ""} - ${selectedRecord.SectorDescripcion || selectedRecord.IdSector}`
+                                        : "Seleccionar ingreso..."}
+                                </span>
+                                <span className={styles.dropdownArrow}>{dropdownOpen ? "▲" : "▼"}</span>
+                            </div>
+                            {dropdownOpen && (
+                                <ul className={styles.dropdownMenu}>
+                                    {records.map((record) => (
+                                        <li 
+                                            key={record.IdHCIngreso}
+                                            className={`${styles.dropdownItem} ${selectedRecordId === record.IdHCIngreso ? styles.dropdownItemActive : ""}`}
+                                            onClick={() => {
+                                                setSelectedRecordId(record.IdHCIngreso);
+                                                setDropdownOpen(false);
+                                            }}
+                                        >
+                                            {record.FechaFormateada || "-"} {record.HoraFormateada || ""} - {record.SectorDescripcion || record.IdSector}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+
+                        {/* Botones Agregar (solo mobile), Modificar y Eliminar */}
+                        <div className={styles.actionButtonsRow}>
+                            <button 
+                                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddMobile}`} 
+                                onClick={handleAdd}
+                            >
+                                <span className={styles.addIcon}>+</span> Agregar
+                            </button>
+                            <button 
+                                className={styles.btnSecondary} 
+                                onClick={handleEdit} 
+                                disabled={!selectedRecord}
+                            >
+                                <span className={styles.btnIcon}>✏️</span> Modificar
+                            </button>
+                            <button 
+                                className={styles.btnDanger} 
+                                onClick={handleDelete} 
+                                disabled={!selectedRecord}
+                            >
+                                <span className={styles.btnIcon}>✕</span> Eliminar
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Panel derecho: Detalle del registro */}
-                    <div className={styles.detailPanel}>
-                        {selectedRecord ? (
-                            <div className={styles.detailContent}>
-                                <h3 className={styles.detailTitle}>HC de Ingreso</h3>
-                                <p className={styles.detailPatient}>
-                                    {patientName || "PACIENTE"} - DNI: {documentoPaciente || "N/A"}
-                                </p>
-
-                                <div className={styles.detailSection}>
-                                    <div className={styles.detailRow}>
-                                        <span className={styles.detailLabel}>N. Visita:</span>
-                                        <span className={styles.detailValue}>{selectedRecord.NumeroVisita}</span>
-                                    </div>
-                                </div>
-
-                                <div className={styles.detailSection}>
-                                    <div className={styles.detailMeta}>
-                                        {selectedRecord.FechaFormateada && (
-                                            <span>Fecha: {selectedRecord.FechaFormateada} {selectedRecord.HoraFormateada || ""}</span>
-                                        )}
-                                        <span>Profesional: {selectedRecord.IdProfecional} {selectedRecord.ProfesionalNombre || ""}</span>
-                                        <span>Sector: {selectedRecord.SectorDescripcion || selectedRecord.IdSector}</span>
-                                    </div>
-                                </div>
-
-                                <div className={styles.detailSection}>
-                                    <p className={styles.detailLabel}>Motivo Consulta:</p>
-                                    <p className={styles.detailText}>{selectedRecord.MotivoConsulta}</p>
-                                </div>
-
-                                <div className={styles.detailSection}>
-                                    <p className={styles.detailLabel}>Enfermedad Actual:</p>
-                                    <p className={styles.detailText}>{selectedRecord.EnfermedadActual}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className={styles.emptyDetail}>
-                                Seleccione un registro para ver el detalle
-                            </div>
-                        )}
+                    <div className={styles.toolbarRight}>
+                        {/* Botones PDF y Recetario */}
+                        <button className={styles.btnOutline}>
+                            <span className={styles.btnIcon}>📄</span> PDF
+                        </button>
+                        <button className={styles.btnOutline}>
+                            + Recetario
+                        </button>
                     </div>
                 </div>
                 )}
 
-                {/* Barra de acciones inferior */}
+                {/* Barra flotante inferior para mobile */}
                 {!loading && !error && (
-                <div className={styles.actionBar}>
-                    <div className={styles.actionButtons}>
-                        <button className={styles.actionBtn} onClick={handleAdd}>
-                            <span className={styles.actionIcon}>+</span> Agregar
-                        </button>
-                        <button className={styles.actionBtn} onClick={handleEdit} disabled={!selectedRecord}>
-                            <span className={styles.actionIcon}>✏️</span> Cambiar
-                        </button>
-                        <button className={styles.actionBtn} onClick={handleDelete} disabled={!selectedRecord}>
-                            <span className={styles.actionIcon}>✕</span> Borrar
-                        </button>
-                    </div>
+                <div className={styles.mobileBottomBar}>
+                    <button className={styles.btnOutline}>
+                        <span className={styles.btnIcon}>📄</span> PDF
+                    </button>
+                    <button className={styles.btnOutline}>
+                        + Recetario
+                    </button>
+                </div>
+                )}
 
-                    <label className={styles.checkboxLabel}>
-                        <input
-                            type="checkbox"
-                            checked={showOnlySelectedDay}
-                            onChange={(e) => setShowOnlySelectedDay(e.target.checked)}
-                        />
-                        Mostrar solo el día seleccionado
-                    </label>
+                {/* Panel de detalle del registro */}
+                {!loading && !error && (
+                <div className={styles.detailPanelFull}>
+                    {selectedRecord ? (
+                        <div className={styles.detailContent}>
+                            <h3 className={styles.detailTitle}>HC de Ingreso</h3>
+                            <p className={styles.detailPatient}>
+                                {patientName || "PACIENTE"} - DNI: {documentoPaciente || "N/A"}
+                            </p>
 
-                    <div className={styles.actionButtons}>
-                        <button className={styles.actionBtnSecondary}>
-                            <span className={styles.actionIcon}>📄</span> PDF
-                        </button>
-                        <button className={styles.actionBtnSecondary}>
-                            <span className={styles.actionIcon}>+</span> Recetario
-                        </button>
-                    </div>
+                            <div className={styles.detailSection}>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>N. Visita:</span>
+                                    <span className={styles.detailValue}>{selectedRecord.NumeroVisita}</span>
+                                </div>
+                            </div>
+
+                            <div className={styles.detailSection}>
+                                <div className={styles.detailMeta}>
+                                    {selectedRecord.FechaFormateada && (
+                                        <span>Fecha: {selectedRecord.FechaFormateada} {selectedRecord.HoraFormateada || ""}</span>
+                                    )}
+                                    <span>Profesional: {selectedRecord.IdProfecional} {selectedRecord.ProfesionalNombre || ""}</span>
+                                    <span>Sector: {selectedRecord.SectorDescripcion || selectedRecord.IdSector}</span>
+                                </div>
+                            </div>
+
+                            <div className={styles.detailSection}>
+                                <p className={styles.detailLabel}>Motivo Consulta:</p>
+                                <p className={styles.detailText}>{selectedRecord.MotivoConsulta}</p>
+                            </div>
+
+                            <div className={styles.detailSection}>
+                                <p className={styles.detailLabel}>Enfermedad Actual:</p>
+                                <p className={styles.detailText}>{selectedRecord.EnfermedadActual}</p>
+                            </div>
+                        </div>
+                    ) : records.length === 0 ? (
+                        <div className={styles.emptyDetail}>
+                            No hay registros de HC de Ingreso
+                        </div>
+                    ) : null}
                 </div>
                 )}
             </div>
@@ -432,7 +455,22 @@ export default function HCIngresoSection({
                         </div>
                     )}
 
-                    {activeSection !== "motivo" && (
+                    {activeSection === "antecedentes" && (
+                        <div className={styles.formFields}>
+                            <div className={styles.formGroupFull}>
+                                <label className={styles.formLabel}>Antecedentes</label>
+                                <textarea
+                                    className={styles.formTextarea}
+                                    rows={12}
+                                    placeholder="Ingrese los antecedentes del paciente..."
+                                    value={formData.antecedentes}
+                                    onChange={(e) => setFormData({ ...formData, antecedentes: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {activeSection !== "motivo" && activeSection !== "antecedentes" && (
                         <div className={styles.formPlaceholder}>
                             <p>Formulario de {HC_SECTIONS.find((s) => s.id === activeSection)?.label}</p>
                             <p className={styles.placeholderNote}>Campos pendientes de implementar</p>

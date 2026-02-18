@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 0 0 0;
+    padding: 0;
     margin-bottom: 0;
 }
 
@@ -58,15 +58,145 @@
     align-items: center;
 }
 
-/* ===== BOTONES ===== */
-.btn {
-    padding: 0.6rem 1.75rem;
-    border: none;
+/* ===== TOOLBAR ===== */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+}
+
+.toolbarLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.toolbarRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.actionButtonsRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Botón Agregar en toolbar - oculto en desktop */
+.btnAddMobile {
+    display: none !important;
     border-radius: 20px;
-    font-weight: 600;
+    padding: 8px 16px;
     font-size: 0.82rem;
+}
+
+/* Barra flotante inferior - oculta en desktop */
+.mobileBottomBar {
+    display: none;
+}
+
+/* ===== CUSTOM DROPDOWN ===== */
+.customDropdown {
+    position: relative;
+    min-width: 400px;
+    flex: 2;
+    max-width: 550px;
+}
+
+.dropdownTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border: 1px solid #00B5E2;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #334155;
+    background-color: #fff;
     cursor: pointer;
     transition: all 0.2s ease;
+    user-select: none;
+}
+
+.dropdownTrigger:hover {
+    border-color: #0083A9;
+    background-color: #f8fafc;
+}
+
+.dropdownValue {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdownArrow {
+    color: #00B5E2;
+    font-size: 0.65rem;
+    margin-left: 10px;
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    max-height: 220px;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+}
+
+.dropdownItem {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: #334155;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.dropdownItem:hover {
+    background: #f1f5f9;
+}
+
+.dropdownItemActive {
+    background: #e0f7fa;
+    color: #0083A9;
+    font-weight: 500;
+}
+
+/* ===== BOTONES ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btnIcon {
+    margin-right: 4px;
+}
+
+.addIcon {
+    margin-right: 4px;
+    font-weight: 300;
+    font-size: 1.1rem;
 }
 
 .btnPrimary {
@@ -83,15 +213,81 @@
 
 .btnAddDate {
     border-radius: 24px;
-    padding: 10px 20px;
-    font-size: 0.85rem;
+    padding: 8px 18px;
+    font-size: 0.82rem;
     box-shadow: 0 2px 8px rgba(0, 131, 169, 0.3);
 }
 
-.addIcon {
-    margin-right: 4px;
-    font-weight: 300;
-    font-size: 1.1rem;
+.btnAddDate:hover {
+    background: linear-gradient(135deg, #00a5d0 0%, #007599 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 131, 169, 0.4);
+}
+
+.btnSecondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    color: #334155;
+}
+
+.btnSecondary:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.btnSecondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnDanger {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border: 1px solid #fecaca;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    color: #dc2626;
+}
+
+.btnDanger:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: #f87171;
+}
+
+.btnDanger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnOutline {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border: 1px solid #00B5E2;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    color: #0083A9;
+}
+
+.btnOutline:hover {
+    background: #e0f7fa;
 }
 
 /* ===== VIEW MODE: CONTENIDO PRINCIPAL ===== */
@@ -212,6 +408,43 @@
     box-sizing: border-box;
     scrollbar-width: thin;
     scrollbar-color: #00B5E2 #ffffff;
+}
+
+/* Panel de detalle completo (sin tabla lateral) */
+.detailPanelFull {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #00B5E2 #ffffff;
+}
+
+.detailPanelFull::-webkit-scrollbar {
+    width: 8px;
+}
+
+.detailPanelFull::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+
+.detailPanelFull::-webkit-scrollbar-thumb {
+    background: #00B5E2;
+    border-radius: 4px;
+}
+
+.detailPanelFull::-webkit-scrollbar-thumb:hover {
+    background: #0083A9;
+}
+
+.detailPanelFull::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .detailPanel::-webkit-scrollbar {
@@ -884,6 +1117,102 @@
         width: 100%;
         justify-content: center;
     }
+
+    /* Toolbar responsive */
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .toolbarLeft {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .toolbarRight {
+        display: none;
+    }
+
+    /* Custom dropdown responsive */
+    .customDropdown {
+        min-width: 100%;
+        max-width: 100%;
+    }
+
+    .dropdownTrigger {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .dropdownMenu {
+        max-height: 180px;
+    }
+
+    .dropdownItem {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    /* Ocultar botón Agregar del header en mobile */
+    .dateActions {
+        display: none;
+    }
+
+    /* Wrapper botones Agregar/Modificar/Eliminar en fila */
+    .actionButtonsRow {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+    }
+
+    /* Mostrar botón Agregar en toolbar en mobile */
+    .btnAddMobile {
+        display: inline-flex !important;
+        flex: 1;
+        justify-content: center;
+        padding: 10px 14px;
+    }
+
+    .actionButtonsRow .btnSecondary,
+    .actionButtonsRow .btnDanger {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 14px;
+    }
+
+    .detailPanelFull {
+        padding: 14px;
+        border-radius: 8px;
+        margin-bottom: 70px;
+    }
+
+    /* Barra flotante inferior para PDF/Recetario */
+    .mobileBottomBar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 1px solid #e2e8f0;
+        padding: 12px 16px;
+        gap: 10px;
+        justify-content: center;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+        z-index: 50;
+    }
+
+    .mobileBottomBar .btnOutline {
+        flex: 1;
+        max-width: 160px;
+        justify-content: center;
+        padding: 10px 14px;
+    }
 }
 
 /* ===== RESPONSIVE: SMALL MOBILE (480px) ===== */
@@ -940,5 +1269,31 @@
     .formTextarea {
         font-size: 0.82rem;
         min-height: 100px;
+    }
+
+    /* Toolbar 480px */
+    .toolbar {
+        padding: 8px;
+    }
+
+    .dropdownTrigger {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+
+    .dropdownItem {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+
+    .btnSecondary,
+    .btnDanger,
+    .btnOutline {
+        padding: 8px 12px;
+        font-size: 0.78rem;
+    }
+
+    .detailPanelFull {
+        padding: 12px;
     }
 }
