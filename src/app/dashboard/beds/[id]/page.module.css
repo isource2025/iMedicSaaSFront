@@ -1,14 +1,18 @@
-/* El layout tiene .page-container { padding: 1.5rem } (y 1rem <640px).
-   Cancelamos ese padding aquí para que el workspace sea full-bleed. */
+/* LayoutShell .main tiene padding que necesitamos cancelar.
+   Usamos position:fixed para escapar completamente del padding.
+   En desktop dejamos espacio para el sidebar del LayoutShell (72px). */
 .fullBleed {
-	position: absolute;
-	width: 100%;
+	position: fixed;
 	top: 0;
-	left: 0;
+	left: 72px;
+	right: 0;
+	bottom: 0;
 	z-index: 1;
+	overflow: hidden;
 }
-@media (max-width: 640px) {
+
+@media (max-width: 768px) {
 	.fullBleed {
-		margin: -1rem;
-	} /* = -(padding mobile del layout) */
+		left: 0;
+	}
 }

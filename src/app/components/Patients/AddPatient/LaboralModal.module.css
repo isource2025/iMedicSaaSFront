@@ -16,11 +16,11 @@
 
 .modalContent {
 	background: #fff;
-	padding: 1.75rem;
-	border-radius: 12px;
+	padding: 1.5rem;
+	border-radius: 16px;
 	width: 90%;
 	max-width: 680px;
-	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 }
 
 .formGrid {
@@ -44,9 +44,11 @@
 }
 
 .formGroup label {
-	font-size: 0.8rem;
+	font-size: 0.72rem;
 	font-weight: 600;
-	color: #4b5563;
+	color: #64748b;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 }
 
 /* === Estilos alineados a LoadingSelect === */
@@ -60,22 +62,22 @@
 .select,
 .input {
 	width: 100%;
-	padding: 0.5rem 0.75rem;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
-	font-size: 0.875rem;
-	background-color: #ffffff;
-	min-height: 38px;
+	padding: 0.55rem 0.75rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 10px;
+	font-size: 0.82rem;
+	background-color: #fff;
+	height: 2.4rem;
 	box-sizing: border-box;
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-	color: #1f2937;
+	color: #1e293b;
 }
 
 .select:focus,
 .input:focus {
 	outline: none;
-	border-color: #00b5e2; /* Pantone 313U */
-	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.15);
+	border-color: #00b5e2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
 }
 
 .input::placeholder {
@@ -129,27 +131,35 @@
 }
 
 .saveButton {
-	background-color: #00b5e2;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
 	color: white;
-	padding: 0.6rem 1.2rem;
+	padding: 0.6rem 1.5rem;
 	border: none;
-	border-radius: 8px;
+	border-radius: 20px;
 	cursor: pointer;
 	font-weight: 600;
+	font-size: 0.82rem;
+	transition: all 0.2s ease;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
 }
 .saveButton:hover {
-	background-color: #0083a9;
+	background: linear-gradient(135deg, #00a5d0 0%, #007599 100%);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.35);
 }
 
 .cancelButton {
-	background-color: #e5e7eb;
-	color: #374151;
-	padding: 0.6rem 1.2rem;
-	border: none;
-	border-radius: 8px;
+	background-color: #f8fafc;
+	color: #64748b;
+	padding: 0.6rem 1.5rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 20px;
 	cursor: pointer;
 	font-weight: 600;
+	font-size: 0.82rem;
+	transition: all 0.2s ease;
 }
 .cancelButton:hover {
-	background-color: #d1d5db;
+	background-color: #f1f5f9;
+	border-color: #cbd5e1;
 }

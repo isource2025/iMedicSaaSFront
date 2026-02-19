@@ -10,6 +10,7 @@ import { indicacionesService } from "../../services/indicacionesService";
 import CustomSelect from "../Patients/AddPatient/LoadingSelect";
 import { useParams } from "next/navigation";
 import { useAppContext } from "@/app/contexts/AppContext";
+import SlideDrawer from "../UI/SlideDrawer";
 
 interface IndicacionHija {
     id: string;
@@ -433,7 +434,7 @@ export default function IndicacionForm({
         
         const nuevaHija: IndicacionHija = {
             id: Date.now().toString(),
-            formaAdicional: null,
+            formaAdicional: hijaEnEdicion.formaAdicional,
             codigo: adicionalForm.codigo,
             aliasMedicamento: descripcionAdicional,
             cantidad: adicionalForm.cantidadIndicada,
@@ -451,6 +452,18 @@ export default function IndicacionForm({
             frecuencia: null,
             cantidad: null,
         });
+        setHijaEnEdicion({
+            id: '',
+            formaAdicional: null,
+            codigo: null,
+            aliasMedicamento: null,
+            cantidad: null,
+            tipoUnidad: null,
+            frecuencia: null,
+        });
+        
+        // Close drawer after adding
+        setMostrarAdicionales(false);
     };
 
     const handleEliminarHija = (id: string) => {
@@ -525,6 +538,7 @@ export default function IndicacionForm({
                                 onChange={(e) =>
                                     set("FechaCarga", s(e.target.value))
                                 }
+                                autoFocus
                             />
                             <input
                                 type="time"
@@ -567,8 +581,7 @@ export default function IndicacionForm({
                                 }
                             }
                             value={form.TipoIndicacion || ""}
-                            tabIndex={1}
-                            autoFocus={true}
+                            autoFocus={false}
                             options={
                                 dataForm?.tiposIndicacion.map((item) => ({
                                     value: Number(item.Valor),
@@ -587,7 +600,6 @@ export default function IndicacionForm({
                             value={form.Codigo ?? ""}
                             onChange={(val) => set("Codigo", Number(val))}
                             options={medicaCionData}
-                            tabIndex={2}
                         />
                     </div>
 
@@ -633,7 +645,6 @@ export default function IndicacionForm({
                                     }
                                 }
                             }}
-                            tabIndex={3}
                         />
                     </div>
 
@@ -651,7 +662,6 @@ export default function IndicacionForm({
                                 })) || []
                             }
                             value={form.TipoUnidad || ""}
-                            tabIndex={4}
                         />
                     </div>
 
@@ -669,178 +679,81 @@ export default function IndicacionForm({
                                     label: item.Valor,
                                 })) || []
                             }
-                            tabIndex={5}
                         />
                     </div>
                 </div>
 
-                {/* Botón Agregar Adicional */}
-                <div className={styles.btnAdicionalContainer}>
-                    <button
-                        type="button"
-                        className={styles.btnAgregarAdicional}
-                        onClick={() => setMostrarAdicionales(!mostrarAdicionales)}
-                    >
-                        <span className={styles.iconPlus}>+</span>
-                        {mostrarAdicionales ? 'Ocultar Adicionales' : 'Agregar Adicional'}
-                    </button>
+                {/* Botón Agregar Adicional + Chips de adicionales agregados */}
+                <div className={styles.adicionalSection}>
+                    <div className={styles.adicionalHeader}>
+                        <button
+                            type="button"
+                            className={styles.btnAgregarAdicional}
+                            onClick={() => setMostrarAdicionales(true)}
+                            disabled={!form.Codigo}
+                        >
+                            <span className={styles.iconPlus}>+</span>
+                            Agregar Adicional
+                        </button>
+                        {indicacionesHijas.length > 0 && (
+                            <span className={styles.adicionalCount}>
+                                {indicacionesHijas.length} adicional{indicacionesHijas.length !== 1 ? 'es' : ''}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Tabla-pill híbrida de adicionales */}
+                    {indicacionesHijas.length > 0 && (
+                        <div className={styles.chipTable}>
+                            <div className={styles.chipTableHead}>
+                                <span className={styles.colOp}>Operación</span>
+                                <span className={styles.colMed}>Medicamento</span>
+                                <span className={styles.colCant}>Cant.</span>
+                                <span className={styles.colUni}>Unidad</span>
+                                <span className={styles.colFreq}>Frecuencia</span>
+                                <span className={styles.colAcc}></span>
+                            </div>
+                            {indicacionesHijas.map((hija) => (
+                                <div key={hija.id} className={styles.chipRow}>
+                                    <span className={styles.colOp}>
+                                        <select
+                                            className={styles.chipOperacion}
+                                            value={hija.formaAdicional || ''}
+                                            onChange={(e) => handleCambiarOperacion(hija.id, e.target.value)}
+                                        >
+                                            <option value="">—</option>
+                                            <option value="MAS">Más</option>
+                                            <option value="ALTERNO">Alterno</option>
+                                            <option value="PARALELO">Paralelo</option>
+                                        </select>
+                                    </span>
+                                    <span className={`${styles.colMed} ${styles.chipText}`}>
+                                        {hija.aliasMedicamento}
+                                    </span>
+                                    <span className={`${styles.colCant} ${styles.chipMeta}`}>
+                                        {hija.cantidad}
+                                    </span>
+                                    <span className={`${styles.colUni} ${styles.chipMeta}`}>
+                                        {hija.tipoUnidad}
+                                    </span>
+                                    <span className={`${styles.colFreq} ${styles.chipMeta}`}>
+                                        {hija.frecuencia}
+                                    </span>
+                                    <span className={styles.colAcc}>
+                                        <button
+                                            type="button"
+                                            className={styles.chipRemove}
+                                            onClick={() => handleEliminarHija(hija.id)}
+                                            aria-label="Eliminar"
+                                        >
+                                            ✕
+                                        </button>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-
-                {/* Sección de Indicaciones Adicionales (solo visible si mostrarAdicionales = true) */}
-                {mostrarAdicionales && (
-                    <>
-                        {/* Fila 1: Medicamento adicional */}
-                        <div className={styles.rowTmd}>
-                            <div className={styles.hField}>
-                                <label>Medicamento Adicional</label>
-                                <CustomSelect
-                                    label=""
-                                    name="CodigoAdicional"
-                                    isLoading={dataLoading || !tipoIndicacion}
-                                    value={adicionalForm.codigo ?? ""}
-                                    onChange={(val) => setAdicional("codigo", Number(val))}
-                                    options={medicaCionData}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Fila 2: Campos para agregar adicional */}
-                        <div className={styles.rowQty}>
-                            <div className={styles.qtyGroup}>
-                                <label>Cantidad</label>
-                                <input
-                                    type="number"
-                                    step="1"
-                                    min={1}
-                                    className={styles.inputNum}
-                                    value={adicionalForm.cantidadIndicada ?? ""}
-                                    onChange={(e) =>
-                                        setAdicional("cantidadIndicada", n(e.target.value))
-                                    }
-                                    onInput={(e) => {
-                                        const inputElement = e.target as HTMLInputElement;
-                                        const rawValue = inputElement.value;
-
-                                        if (rawValue === "" || rawValue === "-") {
-                                            inputElement.value = "";
-                                        }
-
-                                        const numericValue = parseInt(rawValue);
-
-                                        if (isNaN(numericValue) || numericValue < 1) {
-                                            if (rawValue !== "") {
-                                                inputElement.value = "1";
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
-
-                            <div className={styles.qtyGroup}>
-                                <label>Tipo unidad</label>
-                                <CustomSelect
-                                    label=""
-                                    name="TipoUnidadAdicional"
-                                    isLoading={dataLoading}
-                                    onChange={(val) => setAdicional("tipoUnidad", val)}
-                                    options={
-                                        dataForm?.unidadesMedida.map((item) => ({
-                                            value: item.Valor,
-                                            label: item.Descripcion,
-                                        })) || []
-                                    }
-                                    value={adicionalForm.tipoUnidad || ""}
-                                />
-                            </div>
-
-                            <div className={styles.qtyGroupWide}>
-                                <label>Frecuencia</label>
-                                <CustomSelect
-                                    label=""
-                                    name="FrecuenciaAdicional"
-                                    isLoading={dataLoading}
-                                    onChange={(val) => setAdicional("frecuencia", val)}
-                                    value={adicionalForm.frecuencia || ""}
-                                    options={
-                                        dataForm?.frecuenciasAdmin.map((item) => ({
-                                            value: item.Valor,
-                                            label: item.Valor,
-                                        })) || []
-                                    }
-                                />
-                            </div>
-
-                            <div className={styles.actionGroup}>
-                                <button 
-                                    type="button" 
-                                    className={styles.btnGhost}
-                                    onClick={handleAgregarHija}
-                                >
-                                    Agregar
-                                </button>
-                                <button type="button" className={styles.btnGhost}>
-                                    Cambiar
-                                </button>
-                                <button type="button" className={styles.btnGhostDanger}>
-                                    Borrar
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Tabla de adicionales */}
-                        <div className={styles.tableCard}>
-                            <table className={styles.table}>
-                                <thead>
-                                    <tr>
-                                        <th>Operación</th>
-                                        <th>Medicamento</th>
-                                        <th>Cantidad</th>
-                                        <th>Tipo unidad</th>
-                                        <th>Frecuencia</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {indicacionesHijas.length === 0 ? (
-                                        <tr className={styles.emptyRow}>
-                                            <td colSpan={6}>Sin ítems agregados</td>
-                                        </tr>
-                                    ) : (
-                                        indicacionesHijas.map((hija) => (
-                                            <tr key={hija.id}>
-                                                <td>
-                                                    <select
-                                                        className={styles.selectOperacion}
-                                                        value={hija.formaAdicional || ''}
-                                                        onChange={(e) => handleCambiarOperacion(hija.id, e.target.value)}
-                                                    >
-                                                        <option value="">Seleccionar</option>
-                                                        <option value="MAS">Más</option>
-                                                        <option value="ALTERNO">Alterno</option>
-                                                        <option value="PARALELO">Paralelo</option>
-                                                    </select>
-                                                </td>
-                                                <td>{hija.aliasMedicamento}</td>
-                                                <td>{hija.cantidad}</td>
-                                                <td>{hija.tipoUnidad}</td>
-                                                <td>{hija.frecuencia}</td>
-                                                <td>
-                                                    <button
-                                                        type="button"
-                                                        className={styles.btnEliminar}
-                                                        onClick={() => handleEliminarHija(hija.id)}
-                                                    >
-                                                        ✕
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
-                )}
 
                 {/* Fila 5: Observaciones */}
                 <div className={styles.row}>
@@ -852,7 +765,6 @@ export default function IndicacionForm({
                             onChange={(e) =>
                                 set("Observaciones", s(e.target.value))
                             }
-                            tabIndex={6}
                         />
                     </div>
                 </div>
@@ -906,6 +818,122 @@ export default function IndicacionForm({
                     <div style={{ width: "210px" }} />
                 </div>
             </form>
+
+            {/* Slide Drawer para agregar adicional — fuera del form para evitar submit */}
+            <SlideDrawer
+                isOpen={mostrarAdicionales}
+                onClose={() => setMostrarAdicionales(false)}
+                title="Agregar Medicamento Adicional"
+                footer={
+                    <>
+                        <button
+                            type="button"
+                            className={styles.drawerBtnCancel}
+                            onClick={() => setMostrarAdicionales(false)}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.drawerBtnConfirm}
+                            onClick={() => {
+                                handleAgregarHija();
+                            }}
+                        >
+                            Confirmar
+                        </button>
+                    </>
+                }
+            >
+                <div className={styles.drawerField}>
+                    <label>Operación</label>
+                    <select
+                        className={styles.input}
+                        value={hijaEnEdicion.formaAdicional || ''}
+                        onChange={(e) => setHijaEnEdicion(prev => ({ ...prev, formaAdicional: e.target.value || null }))}
+                        autoFocus
+                    >
+                        <option value="">Seleccionar operación</option>
+                        <option value="MAS">Más</option>
+                        <option value="ALTERNO">Alterno</option>
+                        <option value="PARALELO">Paralelo</option>
+                    </select>
+                </div>
+
+                <div className={styles.drawerField}>
+                    <label>Medicamento</label>
+                    <select
+                        className={styles.input}
+                        value={adicionalForm.codigo ?? ""}
+                        onChange={(e) => setAdicional("codigo", e.target.value ? Number(e.target.value) : null)}
+                        disabled={dataLoading || !tipoIndicacion}
+                    >
+                        <option value="">Seleccione...</option>
+                        {medicaCionData.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className={styles.drawerFieldRow}>
+                    <div className={styles.drawerField}>
+                        <label>Cantidad</label>
+                        <input
+                            type="number"
+                            step="1"
+                            min={1}
+                            className={styles.input}
+                            value={adicionalForm.cantidadIndicada ?? ""}
+                            onChange={(e) =>
+                                setAdicional("cantidadIndicada", n(e.target.value))
+                            }
+                            onInput={(e) => {
+                                const inputElement = e.target as HTMLInputElement;
+                                const rawValue = inputElement.value;
+                                if (rawValue === "" || rawValue === "-") {
+                                    inputElement.value = "";
+                                }
+                                const numericValue = parseInt(rawValue);
+                                if (isNaN(numericValue) || numericValue < 1) {
+                                    if (rawValue !== "") {
+                                        inputElement.value = "1";
+                                    }
+                                }
+                            }}
+                        />
+                    </div>
+
+                    <div className={styles.drawerField}>
+                        <label>Tipo unidad</label>
+                        <select
+                            className={styles.input}
+                            value={adicionalForm.tipoUnidad || ""}
+                            onChange={(e) => setAdicional("tipoUnidad", e.target.value || null)}
+                            disabled={dataLoading}
+                        >
+                            <option value="">Seleccione...</option>
+                            {dataForm?.unidadesMedida.map((item) => (
+                                <option key={item.Valor} value={item.Valor}>{item.Descripcion}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div className={styles.drawerField}>
+                    <label>Frecuencia</label>
+                    <select
+                        className={styles.input}
+                        value={adicionalForm.frecuencia || ""}
+                        onChange={(e) => setAdicional("frecuencia", e.target.value || null)}
+                        disabled={dataLoading}
+                    >
+                        <option value="">Seleccione...</option>
+                        {dataForm?.frecuenciasAdmin.map((item) => (
+                            <option key={item.Valor} value={item.Valor}>{item.Valor}</option>
+                        ))}
+                    </select>
+                </div>
+            </SlideDrawer>
         </div>
     );
 }

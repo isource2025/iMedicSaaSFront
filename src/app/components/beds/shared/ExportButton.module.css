@@ -8,16 +8,16 @@
     -moz-appearance: none;
     appearance: none;
     border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 14px;
+    border-radius: 24px;
+    padding: 10px 20px;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .btn:disabled {
@@ -27,14 +27,16 @@
 
 .btnSecondary {
     background-color: #fff;
-    color: #00B5E2;
-    border: 2px solid #00B5E2;
+    color: #7ec8db;
+    border: 1.5px solid #b0dfe9;
 }
 
 .btnSecondary:hover:not(:disabled) {
     background-color: #f0f9ff;
+    color: #00B5E2;
+    border-color: #00B5E2;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 181, 226, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 181, 226, 0.15);
 }
 
 .btnSecondary:active:not(:disabled) {
@@ -80,4 +82,18 @@
 
 .dropdownItem:active {
     background-color: #f1f5f9;
+}
+
+@media (max-width: 768px) {
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+    }
 }

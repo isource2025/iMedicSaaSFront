@@ -1,0 +1,802 @@
+﻿[
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\ActionModal.module.css",
+        "Length":  2988,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\ActionModal.tsx",
+        "Length":  4507,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AddPredefinedOption.tsx",
+        "Length":  2021,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\DataTableModal.module.css",
+        "Length":  9725,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\DataTableModal.tsx",
+        "Length":  11170,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\AdmissionTables.tsx",
+        "Length":  44322,
+        "LastWriteTime":  "\/Date(1770164247584)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\ClasesPacienteCard.tsx",
+        "Length":  2104,
+        "LastWriteTime":  "\/Date(1770164247584)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\CreateOptionForm.tsx",
+        "Length":  1532,
+        "LastWriteTime":  "\/Date(1770164247584)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\DiagnosticosCard.tsx",
+        "Length":  1890,
+        "LastWriteTime":  "\/Date(1770164247587)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\DisposicionesEgresoCard.tsx",
+        "Length":  2188,
+        "LastWriteTime":  "\/Date(1770164247587)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\EstadosAmbulatoriosCard.tsx",
+        "Length":  2135,
+        "LastWriteTime":  "\/Date(1770164247587)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\EstadosCivilesCard.tsx",
+        "Length":  2061,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\EstadosMilitaresCard.tsx",
+        "Length":  922,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\GruposEtnicosCard.tsx",
+        "Length":  906,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\IdiomasISOCard.tsx",
+        "Length":  1638,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\NacionalidadesCard.tsx",
+        "Length":  1803,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\styles.module.css",
+        "Length":  6962,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\TableHeader.tsx",
+        "Length":  791,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\admission\\AdmissionTables\\types.ts",
+        "Length":  1641,
+        "LastWriteTime":  "\/Date(1770164247588)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\AnalyticsLoader\\AnalyticsLoader.module.css",
+        "Length":  4690,
+        "LastWriteTime":  "\/Date(1770164247554)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\AnalyticsLoader\\index.tsx",
+        "Length":  2764,
+        "LastWriteTime":  "\/Date(1770164247554)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedCard.module.css",
+        "Length":  4556,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedCard.tsx",
+        "Length":  8490,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedDetail.module.css",
+        "Length":  7400,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedDetail.tsx",
+        "Length":  14240,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedDetailSkeleton.module.css",
+        "Length":  657,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedDetailSkeleton.tsx",
+        "Length":  925,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedDetailView.module.css",
+        "Length":  2459,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedDetailView.tsx",
+        "Length":  9612,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedFilters.module.css",
+        "Length":  3165,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedFilters.tsx",
+        "Length":  4589,
+        "LastWriteTime":  "\/Date(1770164247591)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\Bedslist.module.css",
+        "Length":  506,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\BedsList.tsx",
+        "Length":  7778,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\SearchInput.module.css",
+        "Length":  3484,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\SearchInput.tsx",
+        "Length":  4030,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\contexts\\BedDetailContext.tsx",
+        "Length":  3616,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\contexts\\useBedSectionQuery.tsx",
+        "Length":  6855,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\controles\\ControlesFrecuentesSection.module.css",
+        "Length":  7649,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\controles\\ControlesFrecuentesSection.tsx",
+        "Length":  14215,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\evolucion\\EvolucionEnfermeriaSection.module.css",
+        "Length":  7649,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\evolucion\\EvolucionEnfermeriaSection.tsx",
+        "Length":  11505,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\hooks\\useCalendar.ts",
+        "Length":  616,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\hooks\\useIndicaciones.ts",
+        "Length":  2970,
+        "LastWriteTime":  "\/Date(1770164898265)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IdicativosColors.tsx",
+        "Length":  1879,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IndicacionesSection.module.css",
+        "Length":  3795,
+        "LastWriteTime":  "\/Date(1770164247596)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IndicacionesSection.tsx",
+        "Length":  18058,
+        "LastWriteTime":  "\/Date(1770164898265)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IndicacionesTable.module.css",
+        "Length":  8146,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IndicacionesTable.tsx",
+        "Length":  23446,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IndicacionesToolbar.module.css",
+        "Length":  537,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IndicacionesToolbar.tsx",
+        "Length":  1149,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\indicaciones\\IndicativoColors.module.css",
+        "Length":  2042,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\insumos\\InsumosSection.module.css",
+        "Length":  2559,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\insumos\\InsumosSection.tsx",
+        "Length":  4827,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\insumos\\InsumosTable.module.css",
+        "Length":  7825,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\insumos\\InsumosTable.tsx",
+        "Length":  13108,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\medicacion\\MedicacionSuministradaSection.module.css",
+        "Length":  7649,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\medicacion\\MedicacionSuministradaSection.tsx",
+        "Length":  15618,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\patient\\PatientMiniHeader.module.css",
+        "Length":  1483,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\patient\\PatientMiniHeader.tsx",
+        "Length":  1419,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\shared\\ConfirmationModal.module.css",
+        "Length":  1732,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\shared\\ConfirmationModal.tsx",
+        "Length":  1693,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\shared\\EmptyState.module.css",
+        "Length":  0,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\shared\\EmptyState.tsx",
+        "Length":  141,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\shared\\SectionTitle.module.css",
+        "Length":  204,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\shared\\SectionTitle.tsx",
+        "Length":  285,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\sidebar\\CalendarPanel.module.css",
+        "Length":  2221,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\sidebar\\CalendarPanel.tsx",
+        "Length":  4736,
+        "LastWriteTime":  "\/Date(1770164247604)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\sidebar\\SidebarFilters.module.css",
+        "Length":  3775,
+        "LastWriteTime":  "\/Date(1770164247612)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\beds\\sidebar\\SidebarFilters.tsx",
+        "Length":  9305,
+        "LastWriteTime":  "\/Date(1770164247612)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Carousel\\LoginCarousel.module.css",
+        "Length":  2975,
+        "LastWriteTime":  "\/Date(1770164247555)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Carousel\\LoginCarousel.tsx",
+        "Length":  3612,
+        "LastWriteTime":  "\/Date(1770164247555)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\BarChart.module.css",
+        "Length":  503,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\BarChart.tsx",
+        "Length":  3300,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\DonutChart.module.css",
+        "Length":  145,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\DonutChart.tsx",
+        "Length":  5845,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\LineChart.module.css",
+        "Length":  4113,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\LineChart.tsx",
+        "Length":  14951,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\PieChart.module.css",
+        "Length":  1001,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Charts\\PieChart.tsx",
+        "Length":  2772,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Header\\Header.module.css",
+        "Length":  5089,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Header\\Header.tsx",
+        "Length":  2896,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\AplicarIndicacion.module.css",
+        "Length":  4755,
+        "LastWriteTime":  "\/Date(1770164247612)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\AplicarIndicacion.tsx",
+        "Length":  13657,
+        "LastWriteTime":  "\/Date(1770164247612)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\IndicacionesList.module.css",
+        "Length":  3025,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\IndicacionesList.tsx",
+        "Length":  4681,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\NuevaIndicacionModal.module.css",
+        "Length":  6500,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\NuevaIndicacionModal.tsx",
+        "Length":  25159,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\renders_Indicacion\\RenderAsistencial.tsx",
+        "Length":  3492,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\renders_Indicacion\\RenderControl.tsx",
+        "Length":  11041,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\renders_Indicacion\\RenderDieta.tsx",
+        "Length":  4493,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\indicaciones\\renders_Indicacion\\RenderMedicacion.tsx",
+        "Length":  6911,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\InsightCard\\index.tsx",
+        "Length":  5393,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\InsightCard\\InsightCard.module.css",
+        "Length":  5731,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\layout\\LayoutShell.module.css",
+        "Length":  5734,
+        "LastWriteTime":  "\/Date(1770164247615)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\layout\\LayoutShell.tsx",
+        "Length":  5817,
+        "LastWriteTime":  "\/Date(1770164247619)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Login\\LoginForm.module.css",
+        "Length":  3849,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Login\\LoginForm.tsx",
+        "Length":  4526,
+        "LastWriteTime":  "\/Date(1770164247556)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\MetricCard\\index.tsx",
+        "Length":  2266,
+        "LastWriteTime":  "\/Date(1770164247563)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\MetricCard\\MetricCard.module.css",
+        "Length":  1969,
+        "LastWriteTime":  "\/Date(1770164247563)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\MetricTooltip\\index.ts",
+        "Length":  50,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\MetricTooltip\\MetricTooltip.module.css",
+        "Length":  2282,
+        "LastWriteTime":  "\/Date(1770164247563)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\MetricTooltip\\MetricTooltip.tsx",
+        "Length":  1900,
+        "LastWriteTime":  "\/Date(1770164247563)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalBase.module.css",
+        "Length":  1932,
+        "LastWriteTime":  "\/Date(1770164247622)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalBase.tsx",
+        "Length":  936,
+        "LastWriteTime":  "\/Date(1770164247622)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalBasePaciente.module.css",
+        "Length":  7208,
+        "LastWriteTime":  "\/Date(1770164247622)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalBasePaciente.tsx",
+        "Length":  10077,
+        "LastWriteTime":  "\/Date(1770164247622)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalBusquedaDiagnosticos.module.css",
+        "Length":  5988,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalBusquedaDiagnosticos.tsx",
+        "Length":  8820,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalCambiarCama.module.css",
+        "Length":  9353,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalCambiarCama.tsx",
+        "Length":  36745,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalDiagnosticosCie10.module.css",
+        "Length":  6941,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalDiagnosticosCie10.tsx",
+        "Length":  9314,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalEgresoPaciente.module.css",
+        "Length":  6491,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalEgresoPaciente.tsx",
+        "Length":  18818,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\MetricTooltipModal\\index.tsx",
+        "Length":  2516,
+        "LastWriteTime":  "\/Date(1770164247620)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\MetricTooltipModal\\MetricTooltipModal.module.css",
+        "Length":  2878,
+        "LastWriteTime":  "\/Date(1770164247620)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalAddPatient\\index.tsx",
+        "Length":  980,
+        "LastWriteTime":  "\/Date(1770164247620)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalAddPatient\\ModalAddPatient.tsx",
+        "Length":  36,
+        "LastWriteTime":  "\/Date(1770164247620)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\modals\\ModalAddPatient\\styles.module.css",
+        "Length":  6062,
+        "LastWriteTime":  "\/Date(1770164247622)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\nursing\\ControlesFrecuentesChart.module.css",
+        "Length":  1074,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\nursing\\ControlesFrecuentesChart.tsx",
+        "Length":  3548,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\nursing\\NuevaIndicacionModal.module.css",
+        "Length":  2102,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\nursing\\NuevaIndicacionModal.tsx",
+        "Length":  4124,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\nursing\\NursingReportModal.module.css",
+        "Length":  2491,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\nursing\\NursingReportModal.tsx",
+        "Length":  9740,
+        "LastWriteTime":  "\/Date(1770164247624)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\DeleteConfirmation.module.css",
+        "Length":  1393,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\DeleteConfirmation.tsx",
+        "Length":  1427,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientDetails.module.css",
+        "Length":  2632,
+        "LastWriteTime":  "\/Date(1770164247572)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientDetails.tsx",
+        "Length":  3334,
+        "LastWriteTime":  "\/Date(1770164247572)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientForm.module.css",
+        "Length":  2097,
+        "LastWriteTime":  "\/Date(1770164247573)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientForm.tsx",
+        "Length":  618,
+        "LastWriteTime":  "\/Date(1770164247573)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientFormBase.module.css",
+        "Length":  6157,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientFormBase.tsx",
+        "Length":  19699,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientList.module.css",
+        "Length":  3425,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientList.tsx",
+        "Length":  6612,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\typesForRenaper.ts",
+        "Length":  559,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\Header.module.css",
+        "Length":  2453,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\HeaderAddPatient.tsx",
+        "Length":  6666,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\LaboralData.module.css",
+        "Length":  2738,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\LaboralDataModal.tsx",
+        "Length":  3905,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\LaboralDataTab.tsx",
+        "Length":  6496,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\LaboralModal.module.css",
+        "Length":  2639,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\LoadingSelect.tsx",
+        "Length":  13581,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\OtherDataTab.tsx",
+        "Length":  9146,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\Personal.module.css",
+        "Length":  9735,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\PersonalDataTab.tsx",
+        "Length":  9088,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\photo.module.css",
+        "Length":  2113,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\AddPatient\\PhotoUploader.tsx",
+        "Length":  3123,
+        "LastWriteTime":  "\/Date(1770164247565)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientForm\\index.tsx",
+        "Length":  8083,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Patients\\PatientForm\\styles.module.css",
+        "Length":  1629,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Rendiciones\\RendicionFilters.module.css",
+        "Length":  1459,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Rendiciones\\RendicionFilters.tsx",
+        "Length":  4581,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Rendiciones\\RendicionList.module.css",
+        "Length":  3558,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Rendiciones\\RendicionList.tsx",
+        "Length":  6033,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Sidebar\\Sidebar.module.css",
+        "Length":  8532,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\Sidebar\\Sidebar.tsx",
+        "Length":  8220,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\UI\\Modal.module.css",
+        "Length":  1488,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\UI\\Modal.tsx",
+        "Length":  1994,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\UI\\Pagination.module.css",
+        "Length":  987,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    },
+    {
+        "FullName":  "C:\\Users\\Usuario\\Documents\\iMedics\\proyecto actual -iMedics\\iMedicWSFront\\src\\app\\components\\UI\\Pagination.tsx",
+        "Length":  3193,
+        "LastWriteTime":  "\/Date(1770164247574)\/"
+    }
+]

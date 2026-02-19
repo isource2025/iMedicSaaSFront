@@ -253,8 +253,8 @@
 
 @media (max-width: 480px) {
 	.wrap {
-		padding: 16px;
-		border-radius: 16px;
+		padding: 12px;
+		border-radius: 14px;
 	}
 
 	.documentoNumero {

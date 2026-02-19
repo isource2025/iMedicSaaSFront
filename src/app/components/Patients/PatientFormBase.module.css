@@ -3,6 +3,8 @@
 	margin: 0 auto;
 	display: flex;
 	flex-direction: column;
+	flex: 1;
+	min-height: 0;
 }
 
 /* For full modal center content horizontally */
@@ -12,6 +14,12 @@
 	justify-content: center;
 	align-items: flex-start;
 	padding: 0 1rem;
+}
+
+.form {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
 
 .formHeader {
@@ -35,7 +43,7 @@
 .headerTitle {
 	font-size: 1rem;
 	font-weight: 600;
-	color: #0083a9; /* Pantone 314C */
+	color: #0083a9;
 	margin-bottom: 0.5rem;
 }
 
@@ -48,75 +56,73 @@
 
 .tabsContainer {
 	display: flex;
-	position: relative; /* ¡MUY IMPORTANTE! Ancla para el indicador */
-	border-bottom: 1px solid #e5e7eb; /* La línea de fondo gris */
-	margin-bottom: 1rem;
+	position: relative;
+	border-bottom: 2px solid #f0f0f0;
+	margin-bottom: 0;
+	gap: 0;
+	flex-shrink: 0;
 }
 
 /* Estilo para cada pestaña individual */
 .tab {
-	margin-top: 1rem;
-	padding: 0.75rem 1.5rem;
-	font-weight: 500;
-	color: #6b7280; /* Color para pestañas inactivas */
+	padding: 0.7rem 1.25rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #94a3b8;
 	cursor: pointer;
 	background-color: transparent;
 	border: none;
-	border-bottom: 2px solid transparent; /* Borde invisible para mantener la altura */
-	transition: color 0.2s ease;
-	white-space: nowrap; /* Evita que el texto se parta */
+	border-bottom: 2px solid transparent;
+	transition: color 0.2s ease, background-color 0.2s ease;
+	white-space: nowrap;
+	letter-spacing: 0.01em;
 }
 
 .tab:hover {
-	color: #0083a9; /* Color al pasar el mouse */
+	color: #0083a9;
+	background-color: rgba(0, 181, 226, 0.04);
 }
 
 /* Estilo para la pestaña que está activa */
 .tabActive {
-	color: #00b5e2; /* Color para la pestaña activa */
+	color: #0083a9;
+	font-weight: 700;
 }
 
 /* El indicador deslizante */
 .indicator {
 	position: absolute;
-	bottom: -1px; /* Se alinea justo sobre el borde del contenedor */
-	height: 2px;
-	background-color: #00b5e2; /* El color de la línea activa */
+	bottom: -2px;
+	height: 2.5px;
+	background-color: #00b5e2;
 	border-radius: 2px;
-	/* LA MAGIA DE LA ANIMACIÓN */
 	transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1),
 		width 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.tab:hover:not(.tabActive) {
-	color: #0083a9; /* Pantone 314C */
-	background-color: #f9fafb;
-}
-
 .formContent {
-	padding: 0.25rem 0;
+	padding: 0.75rem 0.25rem;
 }
 
 .formGroup {
-	display: grid;
-	grid-template-columns: 120px 1fr;
-	align-items: center;
-	gap: 0.75rem;
-	margin-bottom: 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	margin-bottom: 0;
 }
 
 .formRow {
 	display: grid;
-	grid-template-columns: repeat(1, 1fr);
-	gap: 0.5rem;
-	margin-bottom: 0.25rem;
+	grid-template-columns: 1fr;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
 }
 
 .formRow.double {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 1rem;
-	align-items: stretch;
+	gap: 1.25rem;
+	align-items: start;
 }
 
 .formRow.double .formGroup {
@@ -141,25 +147,27 @@
 
 .label {
 	display: block;
-	font-size: 0.725rem;
-	font-weight: 500;
-	color: #4b5563;
-	width: 100%;
-	text-align: left;
-	padding-right: 0.5rem;
-	line-height: 2.1rem;
+	font-size: 0.72rem;
+	font-weight: 600;
+	color: #64748b;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	line-height: 1;
+	margin-bottom: 0.15rem;
 }
 
 .input {
 	width: 100%;
-	padding: 0.5rem 0.75rem;
-	border: 1px solid #d1d5db;
-	border-radius: 0.375rem;
-	font-size: 0.675rem;
-	transition: border-color 0.15s ease-in-out;
-	height: 2.1rem;
+	padding: 0.55rem 0.75rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 10px;
+	font-size: 0.82rem;
+	color: #1e293b;
+	transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+	height: 2.4rem;
 	line-height: 1;
 	box-sizing: border-box;
+	background: #fff;
 }
 
 .halfWidthInput {
@@ -168,76 +176,89 @@
 
 .input:focus {
 	outline: none;
-	border-color: #00b5e2; /* Pantone 313U */
-	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+	border-color: #00b5e2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
 }
 
 .input:disabled {
-	background-color: #f3f4f6;
+	background-color: #f8fafc;
+	color: #94a3b8;
 	cursor: not-allowed;
+	border-color: #e2e8f0;
 }
 
 .select {
 	width: 100%;
-	padding: 0.5rem 0.75rem;
-	border: 1px solid #d1d5db;
-	border-radius: 0.375rem;
-	font-size: 0.675rem;
-	background-color: white;
-	transition: border-color 0.15s ease-in-out;
-	height: 2rem;
+	padding: 0.55rem 0.75rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 10px;
+	font-size: 0.82rem;
+	color: #1e293b;
+	background-color: #fff;
+	transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+	height: 2.4rem;
 	line-height: 1;
 	box-sizing: border-box;
 }
 
 .select:focus {
 	outline: none;
-	border-color: #00b5e2; /* Pantone 313U */
-	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+	border-color: #00b5e2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
 }
 
 .buttonContainer {
 	display: flex;
 	justify-content: flex-end;
-	gap: 1rem;
-	padding-top: 1rem;
-	border-top: 1px solid #e5e7eb;
+	gap: 0.75rem;
+	padding: 0.75rem 0;
+	border-top: 1px solid #f0f0f0;
+	margin-top: auto;
+	flex-shrink: 0;
 }
 
 .cancelButton {
-	padding: 0.625rem 1.25rem;
-	background-color: white;
-	color: #6b7280;
-	border: 1px solid #d1d5db;
-	border-radius: 0.375rem;
-	font-weight: 500;
+	padding: 0.6rem 1.5rem;
+	background-color: #f8fafc;
+	color: #64748b;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 20px;
+	font-weight: 600;
+	font-size: 0.82rem;
 	cursor: pointer;
-	transition: all 0.15s ease-in-out;
+	transition: all 0.2s ease;
 }
 
 .cancelButton:hover {
-	background-color: #f9fafb;
-	color: #4b5563;
+	background-color: #f1f5f9;
+	border-color: #cbd5e1;
+	color: #475569;
 }
 
 .submitButton {
-	padding: 0.625rem 1.25rem;
-	background-color: #00b5e2; /* Pantone 313U */
+	padding: 0.6rem 1.75rem;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
 	color: white;
 	border: none;
-	border-radius: 0.375rem;
-	font-weight: 500;
+	border-radius: 20px;
+	font-weight: 600;
+	font-size: 0.82rem;
 	cursor: pointer;
-	transition: all 0.15s ease-in-out;
+	transition: all 0.2s ease;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
 }
 
 .submitButton:hover:not(:disabled) {
-	background-color: #0083a9; /* Pantone 314C */
+	background: linear-gradient(135deg, #00a5d0 0%, #007599 100%);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.35);
 }
 
 .submitButton:disabled {
-	opacity: 0.7;
+	opacity: 0.6;
 	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
 }
 
 /* Inline spinner dentro del botón Guardar */
@@ -266,19 +287,68 @@
 
 .errorMessage {
 	color: #ef4444;
-	font-size: 0.75rem;
-	margin-top: 0.125rem;
-	margin-bottom: 0.125rem;
-	grid-column: 2;
+	font-size: 0.72rem;
+	margin-top: 0.15rem;
 }
 
 /* Estilos para la transición de los tabs*/
 .tabContentContainer {
 	position: relative;
-	overflow-y: auto; /* Permite scroll si el contenido excede */
-	transition: height 300ms ease-in-out; /* ¡LA TRANSICIÓN DE ALTURA! */
-	max-height: 70vh; /* Altura máxima: 70% del viewport */
-	height: 70vh; /* Altura fija unificada */
+	overflow-y: auto;
+	flex: 1;
+	min-height: 0;
+	padding: 0 0.25rem;
+}
+
+/* --- Responsive Form --- */
+@media (max-width: 860px) {
+	.modalContainer {
+		padding: 0;
+	}
+
+	.label {
+		font-size: 0.75rem;
+	}
+
+	.input,
+	.select {
+		font-size: 0.88rem;
+		height: 2.6rem;
+	}
+
+	.formRow.double {
+		grid-template-columns: 1fr;
+		gap: 0.75rem;
+	}
+
+	.tabsContainer {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+	}
+
+	.tabsContainer::-webkit-scrollbar {
+		display: none;
+	}
+
+	.tab {
+		padding: 0.6rem 1rem;
+		font-size: 0.82rem;
+		flex-shrink: 0;
+	}
+
+	.buttonContainer {
+		flex-direction: row;
+		gap: 0.75rem;
+		padding: 0.75rem 0.5rem;
+	}
+
+	.cancelButton,
+	.submitButton {
+		flex: 1;
+		padding: 0.75rem;
+		font-size: 0.88rem;
+	}
 }
 
 /* Clases para la animación de fundido y deslizamiento suave */

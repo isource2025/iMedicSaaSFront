@@ -2,9 +2,12 @@
 /* Estructura: Header arriba (full width), debajo: sidebar izq + body der */
 .root {
 	width: 100%;
+	max-width: 100vw;
 	height: 100vh;
 	display: grid;
+	grid-template-rows: auto 1fr;
 	box-sizing: border-box;
+	overflow-x: hidden;
 }
 
 /* Contenedor del header del paciente - arriba de todo */
@@ -127,11 +130,13 @@
 	line-height: 1;
 }
 .body {
-    padding: 0 12px 16px 4px;
+    padding: 12px 12px 16px 4px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	min-width: 0;
 	box-sizing: border-box;
+	flex: 1;
+	height: 0;
 }
 .footer {
 	padding: 10px 16px;
@@ -170,6 +175,31 @@
 		grid-template-columns: 1fr;
 	}
 
+	.header {
+		padding: 10px 16px;
+	}
+
+	.right {
+		width: 100%;
+		max-width: 100vw;
+		overflow-x: hidden;
+	}
+
+	.body {
+		padding: 0;
+		width: 100%;
+		max-width: 100vw;
+		overflow-x: hidden;
+		overflow-y: auto;
+		scrollbar-width: none;
+		scrollbar-gutter: auto;
+	}
+
+	.body::-webkit-scrollbar {
+		width: 0;
+		display: none;
+	}
+
 	/* sidebar -> drawer desde la IZQUIERDA */
 	.left {
 		position: fixed;
@@ -198,14 +228,14 @@
 
 @media (max-width: 560px) {
 	.header {
-		margin: 16px 12px 0 12px;
-		padding: 20px 16px;
+		margin: 4px 8px 0 8px;
+		padding: 12px 12px;
 		background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
 		border-radius: 20px;
 		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 	}
 	.body {
-		padding: 10px 12px;
+		padding: 8px 0 0 0;
 	}
 	.footer {
 		padding: 8px 12px;

@@ -369,27 +369,30 @@
     bottom: 0;
     padding: 0.75rem 1.5rem;
     margin-top: 0;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #f0f0f0;
     display: flex;
     justify-content: flex-end;
-    gap: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 0 0 16px 16px; /* Match the bottom radius of the modal */
+    gap: 0.75rem;
+    background-color: #fff;
+    border-radius: 0 0 16px 16px;
 }
 
 .cancelButton {
-    padding: 0.5rem 1rem;
-    background-color: #f1f5f9;
+    padding: 0.6rem 1.5rem;
+    background-color: #f8fafc;
     color: #64748b;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    font-family: 'Roboto', sans-serif;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
 }
 
 .cancelButton:hover {
-    background-color: #e2e8f0;
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 /* Responsivo */
@@ -398,6 +401,19 @@
         width: 95%;
         max-height: 95vh;
         min-width: auto;
+    }
+
+    .modalFooter > button,
+    .modalFooter > * > button {
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 0.88rem;
+    }
+
+    .cancelButton {
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 0.88rem;
     }
 
     .pacienteHeader {
