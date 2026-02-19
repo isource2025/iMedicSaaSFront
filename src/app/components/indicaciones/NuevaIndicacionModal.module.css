@@ -3,15 +3,13 @@
     flex-direction: column;
     gap: 14px;
     padding: 18px;
-    background: var(--card);
-    color: var(--ink);
-    box-shadow: var(--shadow);
+    background: #fff;
+    color: #1e293b;
 }
 
 .formScrollContainer {
     max-height: 100vh;
     overflow-y: auto;
-    padding: 16px;
 }
 
 @media (min-width: 768px) {
@@ -34,7 +32,7 @@
 
 .rowHeader {
     justify-content: space-between;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1.5px solid #e2e8f0;
     padding-bottom: 8px;
     margin-bottom: 8px;
 }
@@ -49,6 +47,14 @@
     gap: 14px;
 }
 
+.rowQtyPadre {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
 .rowCols3 {
     justify-content: space-between;
     gap: 20px;
@@ -57,9 +63,13 @@
 /* === Labels e inputs === */
 .wrap label {
     display: block;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 4px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin-bottom: 0.1rem;
 }
 
 .input,
@@ -68,12 +78,15 @@
 .inputNum,
 .select,
 .textarea {
-    border: 1px solid var(--border);
+    border: 1.5px solid #e2e8f0;
     border-radius: 10px;
     background: #fff;
-    padding: 6px 10px;
-    color: var(--ink);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    padding: 0.55rem 0.75rem;
+    color: #1e293b;
+    font-size: 0.82rem;
+    height: 2.4rem;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .inputSm {
@@ -100,27 +113,30 @@
     width: 100%;
     min-height: 70px;
     resize: vertical;
+    height: auto;
 }
 
-/* Estado hover y focus */
-.input:hover,
-.inputSm:hover,
-.inputXs:hover,
-.inputNum:hover,
-.select:hover,
-.textarea:hover {
-    border-color: var(--primary-600);
-}
-
+/* Estado focus */
 .input:focus,
 .inputSm:focus,
 .inputXs:focus,
 .inputNum:focus,
 .select:focus,
 .textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-50);
     outline: none;
+    border-color: #00b5e2;
+    box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
+}
+
+.input:disabled,
+.inputSm:disabled,
+.inputXs:disabled,
+.inputNum:disabled,
+.select:disabled {
+    background-color: #f8fafc;
+    cursor: not-allowed;
+    color: #94a3b8;
+    border-color: #e2e8f0;
 }
 
 .inlineField,
@@ -146,16 +162,20 @@
 }
 
 .hLabel {
+    font-size: 0.72rem;
     font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 4px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin-bottom: 0.1rem;
 }
 
 .hField :global(.select) {
-    height: 2.375rem; /* mismo alto que tus inputs */
+    height: 2.4rem;
     border-radius: 10px;
-    border: 1px solid var(--border);
-    font-size: 14px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 0.82rem;
 }
 .hField :global(.dropdownPortal) {
     z-index: 9999; /* asegura que flote sobre el modal */
@@ -201,12 +221,13 @@
 
 /* Badge tipo administrador */
 .badge {
-    background: var(--bg);
-    border: 1px solid var(--border);
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
     padding: 4px 10px;
     border-radius: 999px;
     font-weight: 600;
-    color: var(--primary-600);
+    font-size: 0.82rem;
+    color: #0083a9;
 }
 
 /* === Botones === */
@@ -217,17 +238,17 @@
 }
 
 .btnGhost {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
     padding: 6px 12px;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: all 0.15s ease-in-out;
 }
 
 .btnGhost:hover {
-    background: var(--primary-50);
-    border-color: var(--primary);
+    background: rgba(0, 181, 226, 0.06);
+    border-color: #00b5e2;
 }
 
 .btnGhostDanger {
@@ -260,28 +281,306 @@
 }
 
 .table th {
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
+    background: #f8fafc;
+    border-bottom: 1.5px solid #e2e8f0;
     padding: 8px;
     text-align: left;
     font-weight: 600;
-    color: var(--muted);
+    color: #64748b;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .table td {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid #f1f5f9;
     padding: 8px;
 }
 
 .emptyRow td {
     text-align: center;
-    color: var(--muted);
+    color: #94a3b8;
     font-style: italic;
+}
+
+.selectOperacion {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.selectOperacion:hover {
+    border-color: #00b5e2;
+}
+
+.selectOperacion:focus {
+    outline: none;
+    border-color: #00b5e2;
+    box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
+}
+
+.btnEliminar {
+    background: transparent;
+    border: none;
+    color: #b42318;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s ease, color 0.2s ease;
+    line-height: 1;
+}
+
+.btnEliminar:hover {
+    background: #fff5f5;
+    color: #d92d20;
+}
+
+/* ===== Adicional Section (button + chips) ===== */
+.adicionalSection {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin: 4px 0 16px 0;
+}
+
+.adicionalHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btnAgregarAdicional {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
+    white-space: nowrap;
+}
+
+.btnAgregarAdicional:hover {
+    background: linear-gradient(135deg, #00a5d0 0%, #007599 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 131, 169, 0.35);
+}
+
+.btnAgregarAdicional:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 131, 169, 0.2);
+}
+
+.btnAgregarAdicional:disabled {
+    background: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.6;
+}
+
+.iconPlus {
+    font-size: 1.1rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.adicionalCount {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0083a9;
+    background: rgba(0, 181, 226, 0.08);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+/* ===== Hybrid Table-Pill List ===== */
+.chipTable {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    margin-top: 12px;
+}
+
+/* Shared grid for header + rows */
+.chipTableHead,
+.chipRow {
+    display: grid;
+    grid-template-columns: 110px 1fr 50px 70px 100px 28px;
+    align-items: center;
+    gap: 0 10px;
+    padding: 0 12px;
+}
+
+/* Column header row */
+.chipTableHead {
+    background: #f1f5f9;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.chipTableHead span {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Data rows */
+.chipRow {
+    padding-top: 7px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.12s ease;
+}
+
+.chipRow:last-child {
+    border-bottom: none;
+}
+
+.chipRow:hover {
+    background: #f8fafc;
+}
+
+/* Column sizing helpers */
+.colOp { min-width: 0; text-align: center; }
+.colMed { min-width: 0; }
+.colCant { text-align: center; }
+.colUni { text-align: center; min-width: 0; }
+.colFreq { text-align: center; min-width: 0; }
+.colAcc { text-align: center; }
+
+.chipOperacion {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 3px 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    width: 100%;
+}
+
+.chipOperacion:focus {
+    outline: none;
+    border-color: #00b5e2;
+}
+
+.chipText {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1e293b;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.chipMeta {
+    font-size: 0.72rem;
+    color: #64748b;
+    word-break: break-word;
+}
+
+.chipRemove {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.chipRemove:hover {
+    color: #ef4444;
+    background: #fef2f2;
+}
+
+/* ===== Drawer internal field styles ===== */
+.drawerField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.drawerField label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.drawerFieldRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.drawerBtnCancel {
+    padding: 0.6rem 1.25rem;
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.drawerBtnCancel:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.drawerBtnConfirm {
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
+}
+
+.drawerBtnConfirm:hover {
+    background: linear-gradient(135deg, #00a5d0 0%, #007599 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 131, 169, 0.35);
 }
 
 @media screen and (max-width: 1366px) {
     .wrap {
-        font-size: 0.65rem;
+        font-size: 0.78rem;
+    }
+
+    .wrap label {
+        font-size: 0.68rem;
     }
 
     .input,
@@ -290,10 +589,34 @@
     .inputNum,
     .select,
     .textarea,
-    .table th,
-    .table td,
     .badge {
-        font-size: 0.65rem !important;
+        font-size: 0.78rem !important;
+        height: 2.2rem;
+    }
+
+    .textarea {
+        height: auto !important;
+    }
+
+    .chipTableHead span {
+        font-size: 0.58rem;
+    }
+
+    .chipText {
+        font-size: 0.65rem;
+    }
+
+    .chipMeta {
+        font-size: 0.62rem;
+    }
+
+    .chipOperacion {
+        font-size: 0.6rem;
+    }
+    
+    .btnAgregarAdicional {
+        font-size: 0.75rem;
+        padding: 8px 16px;
     }
 }
 
@@ -301,18 +624,146 @@
     .formScrollContainer {
         max-height: 80vh;
         overflow-y: auto;
-        padding: 12px;
+        overflow-x: hidden;
     }
 
     .wrap {
-        padding: 12px;
-        gap: 12px;
+        padding: 14px;
+        gap: 16px;
+        overflow-x: hidden;
+        max-width: 100%;
     }
 
-    /* Apilamos las filas horizontalmente */
+    .wrap label {
+        font-size: 0.72rem;
+        margin-bottom: 0.1rem;
+    }
+
+    /* --- Fila 1: Profesional (read-only compact) --- */
+    .rowHeader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding-bottom: 10px;
+        margin-bottom: 6px;
+    }
+
+    .rowHeader > .row {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .rowHeader > .row .inlineField {
+        width: 100%;
+    }
+
+    .rowHeader > .row .inlineField > label {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #94a3b8;
+        margin-bottom: 1px;
+    }
+
+    .rowHeader > .row .inlineInputs {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .rowHeader > .row .inputXs {
+        width: 60px !important;
+        font-size: 12px;
+        padding: 3px 6px;
+        background: #f1f5f9;
+        border-color: transparent;
+    }
+
+    .badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    /* Fecha + Hora: side by side */
+    .rowHeader > .inlineField {
+        width: 100%;
+    }
+
+    .rowHeader > .inlineField > .inlineInputs {
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    .rowHeader > .inlineField > .inlineInputs > .inputSm {
+        flex: 1;
+        width: auto !important;
+    }
+
+    /* Solicitado para el día: own row */
+    .rowHeader > .inlineFieldRight {
+        width: 100%;
+    }
+
+    .rowHeader > .inlineFieldRight > .inputSm {
+        width: 100% !important;
+    }
+
+    /* --- Fila 2: Tipo + Medicación stacked, Descripción below --- */
+    .rowTmd {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .rowTmd > .hField {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .rowTmd > .hField:nth-child(3) > label {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #94a3b8;
+        margin-bottom: 1px;
+    }
+
+    .rowTmd > .hField:nth-child(3) > .input {
+        border: none;
+        background: transparent;
+        padding: 2px 0;
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 13px;
+    }
+
+    /* --- Fila 3: Cantidad + Tipo unidad + Frecuencia: all three inline --- */
+    .rowQtyPadre {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        align-items: start;
+    }
+
+    .qtyGroup,
+    .qtyGroupWide {
+        width: 100%;
+    }
+
+    .qtyGroup .inputNum {
+        width: 100% !important;
+    }
+
+    .qtyGroupWide .input {
+        min-width: unset !important;
+        max-width: unset !important;
+        width: 100% !important;
+    }
+
+    /* --- General rows stack --- */
     .row,
-    .rowHeader,
-    .rowTmd,
     .rowQty,
     .rowCols3 {
         flex-direction: column;
@@ -320,12 +771,9 @@
         gap: 12px;
     }
 
-    /* Campos en bloque */
     .inlineField,
     .inlineFieldRight,
     .hField,
-    .qtyGroup,
-    .qtyGroupWide,
     .fieldFull {
         width: 100%;
     }
@@ -337,39 +785,99 @@
     .select,
     .textarea {
         width: 100% !important;
-        font-size: 14px;
-    }
-
-    .badge {
-        font-size: 12px;
-        padding: 4px 8px;
-        align-self: flex-start;
+        font-size: 0.82rem;
+        height: 2.4rem;
+        padding: 0.55rem 0.75rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        box-sizing: border-box;
     }
 
     .inlineInputs {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
     }
 
-    .actionGroup {
-        justify-content: flex-start;
-        align-items: stretch;
-        flex-wrap: wrap;
+    .inlineInputs > .inputSm {
+        flex: 1;
+        width: auto !important;
     }
 
-    .btnGhost,
-    .btnGhostDanger {
-        width: 100%;
+    /* --- Adicionales table-pill compact --- */
+    .adicionalSection {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .chipTable {
+        border-radius: 8px;
+        overflow-x: auto;
+    }
+
+    .chipTableHead,
+    .chipRow {
+        grid-template-columns: 60px 1fr 28px 40px 56px 20px;
+        gap: 0 3px;
+        padding: 3px 4px;
+    }
+
+    .chipTableHead {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+
+    .chipTableHead span {
+        font-size: 0.48rem;
         text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .tableCard {
-        font-size: 12px;
+    .chipRow {
+        padding-top: 4px;
+        padding-bottom: 4px;
     }
 
-    .table th,
-    .table td {
-        font-size: 12px;
-        padding: 6px;
+    .colOp { text-align: center; }
+    .colCant { text-align: center; }
+    .colUni { text-align: center; }
+    .colFreq { text-align: center; }
+
+    .chipOperacion {
+        font-size: 0.6rem;
+        padding: 1px 2px;
+    }
+
+    .chipText {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.68rem;
+    }
+
+    .chipMeta {
+        font-size: 0.6rem;
+    }
+
+    .chipRemove {
+        font-size: 0.75rem;
+        padding: 1px 3px;
+    }
+
+    .drawerFieldRow {
+        grid-template-columns: 1fr;
+    }
+
+    .btnAgregarAdicional {
+        font-size: 0.78rem;
+        padding: 8px 16px;
+    }
+
+    /* Observaciones compact */
+    .textarea {
+        min-height: 50px;
+        height: auto;
     }
 }

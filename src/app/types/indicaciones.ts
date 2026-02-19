@@ -104,6 +104,7 @@ export interface FormularioDatosResponse {
 		Valor: number;
 		Nombre: string;
 		Descripcion: string;
+		TipoMedicamento?: string;
 	}[];
 	tiposDieta: {
 		Valor: number;

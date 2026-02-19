@@ -130,6 +130,42 @@ export function convertirFechaAClarion(fecha: string): number {
  */
 export function convertirHoraAClarion(hora: string): number {
   const [hh, mm, ss] = hora.split(':').map(Number);
-  const totalMs = (hh * 3600 + mm * 60 + ss) * 1000;
+  const totalMs = (hh * 3600 + mm * 60 + (ss || 0)) * 1000;
   return Math.floor(totalMs / 10) + 1;
+}
+
+/**
+ * Crear nueva evolución de enfermería
+ */
+export async function crearEvolucion(payload: {
+  NumeroVisita: number;
+  FechaControl: string;
+  HoraControl: string;
+  Observaciones: string;
+  Profesional?: number;
+}): Promise<any> {
+  try {
+    const response = await fetch(`${API_URL}/evolucion-enfermeria/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.mensaje || 'Error al crear evolución de enfermería');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error al crear evolución de enfermería:', error);
+    throw error;
+  }
 }

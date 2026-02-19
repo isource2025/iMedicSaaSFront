@@ -1,0 +1,162 @@
+/* Contenedor principal del formulario */
+.formSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Headers de subsecciones */
+.subsectionHeader {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #0083A9;
+    margin: 20px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #00B5E2;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Fila de formulario simple (1 campo) */
+.formRow {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Fila de formulario doble (2 campos) */
+.formRowDouble {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Campo individual dentro de formRowDouble */
+.formField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Labels */
+.formLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Inputs de texto */
+.formInput {
+    padding: 0.55rem 0.75rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: #1e293b;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.formInput:focus {
+    border-color: #00B5E2;
+    box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
+    outline: none;
+}
+
+.formInput:read-only,
+.formInput:disabled {
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Textareas */
+.formTextarea {
+    padding: 0.75rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: #1e293b;
+    resize: vertical;
+    min-height: 100px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.formTextarea:focus {
+    border-color: #00B5E2;
+    box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
+    outline: none;
+}
+
+.formTextarea:read-only,
+.formTextarea:disabled {
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Grupo de checkboxes */
+.checkboxGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+}
+
+.checkboxLabel input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #00B5E2;
+}
+
+.checkboxLabel input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.checkboxLabel span {
+    user-select: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .formRowDouble {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .formRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .formLabel {
+        min-width: auto;
+        margin-bottom: 5px;
+    }
+
+    .checkboxGroup {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .formSection {
+        padding: 15px;
+    }
+}

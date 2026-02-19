@@ -1,101 +1,148 @@
+/* =============================================
+   PATIENT LIST - Migración UI v1
+   ============================================= */
+
 .container {
   width: 100%;
 }
 
+/* --- Error --- */
 .errorContainer {
-  background-color: #fee2e2;
-  border: 1px solid #f87171;
-  color: #b91c1c;
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #dc2626;
   padding: 0.75rem 1rem;
-  border-radius: 0.25rem;
+  border-radius: 10px;
   margin-bottom: 1rem;
   position: relative;
+  font-size: 0.85rem;
 }
 
 .errorTitle {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .errorMessage {
   display: block;
 }
 
+/* --- Tabla --- */
 .tableContainer {
   overflow-x: auto;
   position: relative;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  border-radius: 0.5rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .table {
   width: 100%;
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   text-align: left;
-  color: #6b7280;
-  border-collapse: collapse;
+  color: #475569;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .tableHeader {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
-  color: white;
-  background-color: #0083A9;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .tableHeader th {
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.15rem;
+  font-weight: 700;
+}
+
+.tableHeader th:first-child {
+  border-radius: 16px 0 0 0;
+}
+
+.tableHeader th:last-child {
+  border-radius: 0 16px 0 0;
 }
 
 .tableRow {
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: #fff;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:last-child td:first-child {
+  border-radius: 0 0 0 16px;
+}
+
+.tableRow:last-child td:last-child {
+  border-radius: 0 0 16px 0;
 }
 
 .tableRow:hover {
-  background-color: #f9fafb;
+  background-color: rgba(0, 181, 226, 0.07);
+  box-shadow: inset 3px 0 0 #00B5E2;
 }
 
 .tableRow td {
-  padding: 0.5rem .75rem;
-  vertical-align: top;
+  padding: 0.75rem 1.15rem;
+  vertical-align: middle;
 }
 
+/* --- Columnas --- */
 .patientName {
   font-weight: 500;
-  color: #111827;
+  color: #1e293b;
 }
 
 .documentColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  line-height: 1.4;
 }
 
 .hcNumber {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: #0083A9;
-  font-weight: 500;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.patientColumn {
+  min-width: 200px;
+}
+
+.addressText {
+  font-size: 0.68rem;
+  color: #b0bec5;
+  margin-top: 3px;
+  letter-spacing: 0.01em;
 }
 
 .birthDateColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  line-height: 1.4;
 }
 
 .ageText {
-  font-size: 0.75rem;
-  color: #0083A9;
-  font-weight: 500;
+  font-size: 0.68rem;
+  color: #00B5E2;
+  font-weight: 600;
 }
 
 .coverageColumn {
-  color: #00B5E2;
-  font-size: 0.875rem;
+  color: #0083A9;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
+/* --- Loading --- */
 .loadingContainer {
-  padding: 1rem 1.5rem;
+  padding: 2.5rem 1.5rem;
   text-align: center;
 }
 
@@ -103,113 +150,268 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .loadingSpinner {
   animation: spin 1s linear infinite;
-  height: 2rem;
-  width: 2rem;
+  height: 1.5rem;
+  width: 1.5rem;
   border-radius: 50%;
-  border: 2px solid #e5e7eb;
+  border: 2.5px solid #e2e8f0;
   border-bottom-color: #00B5E2;
 }
 
 .loadingText {
-  margin-left: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
 }
 
 .noResults {
-  padding: 1rem 1.5rem;
+  padding: 2.5rem 1.5rem;
   text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
 }
 
+/* --- Botones de Acción --- */
 .actionButtons {
   display: flex;
-  gap: 0.5rem;
+  gap: 4px;
+  align-items: center;
 }
 
-.editButton {
-  color: #0083A9;
+.editButton,
+.deleteButton,
+.historyButton,
+.admissionButton {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.editButton:hover {
-  color: #00B5E2;
-  background-color: #f3f4f6;
-}
-
-.deleteButton {
-  color: #dc2626;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.deleteButton:hover {
-  color: #b91c1c;
-  background-color: #f3f4f6;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .historyButton {
-  color: #0083A9;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
+  color: #94a3b8;
 }
 
 .historyButton:hover {
-  color: #00B5E2;
-  background-color: #f3f4f6;
+  color: #0083A9;
+  background-color: rgba(0, 131, 169, 0.1);
+  transform: scale(1.1);
 }
 
 .admissionButton {
-  color: #2DCCE5;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
+  color: #94a3b8;
 }
 
 .admissionButton:hover {
-  color: #61D6EB;
-  background-color: #f3f4f6;
+  color: #00B5E2;
+  background-color: rgba(0, 181, 226, 0.1);
+  transform: scale(1.1);
 }
 
+.editButton {
+  color: #94a3b8;
+}
+
+.editButton:hover {
+  color: #0083A9;
+  background-color: rgba(0, 131, 169, 0.1);
+  transform: scale(1.1);
+}
+
+.deleteButton {
+  color: #cbd5e1;
+}
+
+.deleteButton:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.08);
+  transform: scale(1.1);
+}
+
+/* --- Nombre clickeable --- */
 .viewButton {
   background: none;
   border: none;
   padding: 0;
-  font-size: inherit;
-  font-weight: 500;
-  color: #0083A9;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1e293b;
   cursor: pointer;
   text-align: left;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
+  letter-spacing: -0.01em;
 }
 
 .viewButton:hover {
-  color: #00B5E2;
-  text-decoration: underline;
+  color: #0083A9;
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* =============================================
+   MOBILE LIST - Collapsible Items
+   ============================================= */
+
+/* Hidden by default on desktop */
+.mobileList {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /* Hide table on mobile */
+  .tableContainer {
+    display: none;
   }
-  to {
-    transform: rotate(360deg);
+
+  /* Show mobile list */
+  .mobileList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+  }
+
+  .mobileItem {
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .mobileItem:last-child {
+    border-bottom: none;
+  }
+
+  .mobileItemOpen {
+    background: rgba(0, 181, 226, 0.03);
+    box-shadow: inset 3px 0 0 #00B5E2;
+  }
+
+  .mobileItemHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease;
+  }
+
+  .mobileItemHeader:hover {
+    background: rgba(0, 181, 226, 0.04);
+  }
+
+  .mobileItemLeft {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobileItemName {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+
+  .mobileItemTags {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .mobileTag {
+    font-size: 0.65rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 1px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .mobileTagLabel {
+    font-weight: 700;
+    color: #94a3b8;
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 3px;
+  }
+
+  .mobileTagAccent {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #0083A9;
+    background: rgba(0, 181, 226, 0.1);
+    padding: 1px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .mobileChevron {
+    color: #cbd5e1;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .mobileChevronOpen {
+    transform: rotate(180deg);
+    color: #0083A9;
+  }
+
+  /* Collapsible body */
+  .mobileItemBody {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+
+  .mobileItemBodyOpen {
+    max-height: 120px;
+  }
+
+  .mobileDetailRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 14px 6px;
+    flex-wrap: wrap;
+  }
+
+  .mobileActions {
+    display: flex;
+    gap: 2px;
+    padding: 4px 14px 10px;
+  }
+
+  .mobileActions .editButton,
+  .mobileActions .deleteButton,
+  .mobileActions .historyButton,
+  .mobileActions .admissionButton {
+    width: 30px;
+    height: 30px;
   }
 }

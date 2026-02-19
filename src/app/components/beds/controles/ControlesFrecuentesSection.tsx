@@ -11,11 +11,17 @@ import {
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './ControlesFrecuentesSection.module.css';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 interface ControlesFrecuentesSectionProps {
   numeroVisita: number | null;
   patientName?: string;
   patientLocation?: string;
+  documentoPaciente?: string;
+  fechaIngreso?: string;
+  horaIngreso?: string;
 }
 
 // Helper para convertir Date a YYYY-MM-DD
@@ -31,6 +37,9 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
   numeroVisita,
   patientName,
   patientLocation,
+  documentoPaciente,
+  fechaIngreso,
+  horaIngreso
 }) => {
   const { activeSection, selectedDate } = useBedDetail();
   const [selectedControl, setSelectedControl] = useState<ControlFrecuente | null>(null);
@@ -84,6 +93,46 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
     } catch (error) {
       console.error('Error al eliminar:', error);
       alert('Error al eliminar el control');
+    }
+  };
+
+  const handleExport = async (option: ExportOption, data: any[]) => {
+    if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
+      const primerControl = controles[0];
+      const profesionalInfo = primerControl ? {
+        nombre: obtenerNombreCompleto(primerControl.OperadorApellido, primerControl.OperadorNombres),
+        matricula: undefined,
+        especialidad: 'Enfermería'
+      } : undefined;
+
+      const pdfData = controles.map(row => [
+        formatearFecha(row.FechaControl),
+        formatearHora(row.HoraControl),
+        row.Pulso || '-',
+        `${row.Maximo || '-'}/${row.Minimo || '-'}`,
+        row.Axilar ? `${row.Axilar}°C` : '-',
+        row.FrecuenciaRespiratoria || '-'
+      ]);
+
+      exportToPDF({
+        title: 'Controles Frecuentes',
+        subtitle: `Fecha: ${fechaISO}`,
+        headers: ['Fecha', 'Hora', 'Pulso', 'Presión', 'Temperatura', 'Frec. Resp.'],
+        data: pdfData,
+        fileName: `controles_${selectedDate?.toISOString().split('T')[0]}.pdf`,
+        orientation: 'landscape',
+        empresaInfo,
+        patientInfo: {
+          numeroVisita: numeroVisita || undefined,
+          nombre: patientName,
+          numeroDocumento: documentoPaciente,
+          ubicacion: patientLocation,
+          fechaIngreso: fechaIngreso,
+          horaIngreso: horaIngreso
+        },
+        profesionalInfo
+      });
     }
   };
 

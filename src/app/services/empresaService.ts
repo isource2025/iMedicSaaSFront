@@ -10,9 +10,17 @@ export interface EmpresaInfo {
   descripcion: string;
   razonSocial?: string;
   cuit?: string;
-  direccion?: string;
+  calle?: string;
+  calle_nro?: string;
+  Depto?: string;
+  piso?: string;
+  localidad?: string;
+  provincia?: string;
   telefono?: string;
   email?: string;
+  condicionIva?: string;
+  ingresosBrutos?: string;
+  fax?: string;
   logo?: string;
 }
 

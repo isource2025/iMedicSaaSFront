@@ -2,10 +2,90 @@
 .root {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 16px;
 	min-width: 0;
 	width: 100%;
 	box-sizing: border-box;
+	padding: 0 16px;
+}
+
+/* Título de sección */
+.sectionTitle {
+	font-size: 1.2rem;
+	font-weight: 600;
+	color: rgba(0, 0, 0, 0.5);
+	margin: 0;
+	padding: 0;
+	letter-spacing: 0.15em;
+	text-transform: uppercase;
+	border-right: solid rgba(0, 0, 0, 0.486) 2px;
+	padding-right: 8px;
+}
+
+/* Fecha seleccionada - Migración UI v1 */
+.dateHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0px;
+    margin-bottom: 0;
+}
+
+.dateNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    background-color: #00B5E2;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+}
+
+.dateText {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #1e293b;
+	flex: 1;
+}
+
+.dateActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+}
+
+.btnAddDate {
+	border-radius: 24px !important;
+	padding: 10px 20px !important;
+	font-size: 0.85rem !important;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%) !important;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.3) !important;
+}
+
+.btnAddDate:hover {
+	background: linear-gradient(135deg, #00a5d0 0%, #007599 100%) !important;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.4) !important;
+}
+
+.btnAddDate .addIcon {
+	color: #fff;
+	font-weight: 300;
+	font-size: 1.1rem;
+}
+
+.btnHelp {
+	width: 36px;
+	display: flex;
+	align-items: center;
+}
+
+.btnHelp .btnIcon {
+	color: #64748b;
+	font-size: 0.9rem;
 }
 
 .header {
@@ -47,7 +127,7 @@
 .searchWrap {
 	position: relative;
 	flex: 1 1 auto;
-	min-width: 320px;
+	min-width: 200px;
 }
 
 .searchIcon {
@@ -62,14 +142,14 @@
 
 .searchInput {
 	width: 100%;
-	padding: 10px 12px 10px 32px;
-	border: 1px solid var(--border);
-	border-radius: 9999px;
-	background: var(--card);
-	color: var(--ink);
+	padding: 12px 16px 12px 40px;
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	background: #fff;
+	color: #334155;
 	outline: none;
-	font-size: 0.725rem;
-	box-shadow: none;
+	font-size: 0.85rem;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .searchInput::placeholder {
@@ -87,17 +167,20 @@
 
 /* Botones */
 .btn {
-	appearance: none;
-	border: none;
-	border-radius: 8px;
-	padding: 10px 16px;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 4px;
+    letter-spacing: 2px;
 }
 .btn:hover {
 	transform: translateY(-1px);
@@ -112,13 +195,51 @@
 	color: #ffffff;
 	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
 }
-.btnPrimary:hover {
+.btnPrimary:hover:not(:disabled) {
 	background: #006b8a;
-	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.35);
+	transform: translateY(-2px);
+	box-shadow: 0 6px 12px rgba(0, 131, 169, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.btnPrimary:active:not(:disabled) {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(0, 131, 169, 0.2);
 }
 
 .btnGhost {
 	background: var(--card);
+}
+
+.btnSuccess {
+	background: #10b981;
+	color: #ffffff;
+	box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+.btnSuccess:hover:not(:disabled) {
+	background: #059669;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.btnSuccess:active:not(:disabled) {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+.btnSuccess:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.btnAnimated {
+	animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+	0%, 100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.8;
+		transform: scale(1.02);
+	}
 }
 
 .btnIcon {
@@ -139,7 +260,6 @@
 
 .tableHolder {
 	position: relative;
-	height: calc(100vh - 15rem); /* header local aprox */
 	border-radius: var(--radius);
 }
 
@@ -166,289 +286,73 @@
 	);
 }
 
-/* === Estilos específicos para tabla === */
-.container {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	padding: 16px;
-	background: var(--card);
-	border-radius: var(--radius);
-	box-shadow: var(--shadow);
-	min-width: 0;
-	box-sizing: border-box;
-}
+/* ====== Responsive ====== */
+@media (max-width: 768px) {
+	.root {
+		gap: 12px;
+	}
 
-.header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 16px;
-}
+	.dateHeader {
+		padding: 12px 0;
+		margin-bottom: 8px;
+	}
 
-.title {
-	font-size: 1.5rem;
-	font-weight: 600;
-	color: var(--pantone-314c);
-	margin: 0;
-}
+	.dateNumber {
+		width: 44px;
+		height: 44px;
+		font-size: 1.3rem;
+		border-radius: 12px;
+	}
 
-.patientInfo {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-end;
-	gap: 4px;
-}
+	.dateText {
+		font-size: 1rem;
+	}
 
-.patientName {
-	font-weight: 600;
-	color: var(--ink);
-}
+	.toolbar {
+		flex-direction: column;
+		gap: 12px;
+		align-items: stretch;
+	}
 
-.patientLocation {
-	font-size: 0.875rem;
-	color: var(--muted);
-}
+	.searchWrap {
+		min-width: 100%;
+	}
 
-.statsBar {
-	display: flex;
-	gap: 24px;
-	padding: 12px 16px;
-	background: #f4fbff;
-	border-radius: 8px;
-	border: 1px solid var(--border);
-}
+	.searchInput {
+		padding: 12px 14px 12px 36px;
+		font-size: 0.85rem;
+		border-radius: 14px;
+	}
 
-.statItem {
-	display: flex;
-	gap: 8px;
-	align-items: center;
-}
+	.actions {
+		justify-content: flex-end;
+	}
 
-.statLabel {
-	font-size: 0.875rem;
-	color: var(--muted);
-}
-
-.statValue {
-	font-weight: 600;
-	color: var(--pantone-314c);
-}
-
-.tableContainer {
-	overflow-x: auto;
-	border-radius: 8px;
-	border: 1px solid var(--border);
-	min-width: 0;
-	width: 100%;
-	box-sizing: border-box;
-}
-
-.table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.875rem;
-	min-width: 0;
-	box-sizing: border-box;
-}
-
-.table thead {
-	background: var(--pantone-314c);
-	color: white;
-}
-
-.table th {
-	padding: 12px 16px;
-	text-align: left;
-	font-weight: 600;
-	white-space: nowrap;
-}
-
-.table tbody tr {
-	border-bottom: 1px solid var(--border);
-	transition: background 0.15s ease;
-}
-
-.table tbody tr:hover {
-	background: #f4fbff;
-}
-
-.table td {
-	padding: 12px 16px;
-	color: var(--ink);
-}
-
-.observaciones {
-	max-width: 300px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.actionButtons {
-	display: flex;
-	gap: 8px;
-}
-
-.btnDetalle,
-.btnEliminar {
-	padding: 6px 12px;
-	border: none;
-	border-radius: 6px;
-	font-size: 0.75rem;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
-
-.btnDetalle {
-	background: var(--pantone-313u);
-	color: white;
-}
-
-.btnDetalle:hover {
-	background: var(--pantone-314c);
-	transform: translateY(-1px);
-	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
-}
-
-.btnEliminar {
-	background: #ef4444;
-	color: white;
-}
-
-.btnEliminar:hover {
-	background: #dc2626;
-	transform: translateY(-1px);
-	box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
-}
-
-/* === Modal === */
-.modalOverlay {
-	position: fixed;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 1000;
-	padding: 16px;
-}
-
-@media (min-width: 1024px) {
-	.modalOverlay {
-		left: 70px;
+	.btn {
+		padding: 12px 16px;
+		font-size: 0.85rem;
+		border-radius: 12px;
 	}
 }
 
-.modalContent {
-	background: white;
-	border-radius: 12px;
-	max-width: 800px;
-	width: 100%;
-	max-height: 90vh;
-	overflow-y: auto;
-	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.modalHeader {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 20px 24px;
-	border-bottom: 1px solid var(--border);
-	background: var(--pantone-314c);
-	color: white;
-	border-radius: 12px 12px 0 0;
-}
-
-.modalHeader h3 {
-	margin: 0;
-	font-size: 1.25rem;
-	font-weight: 600;
-}
-
-.btnCerrar {
-	background: none;
-	border: none;
-	font-size: 2rem;
-	line-height: 1;
-	color: white;
-	cursor: pointer;
-	padding: 0;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 4px;
-	transition: background 0.15s ease;
-}
-
-.btnCerrar:hover {
-	background: rgba(255, 255, 255, 0.1);
-}
-
-.modalBody {
-	padding: 24px;
-}
-
-.detailGrid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-	gap: 20px;
-}
-
-.detailItem {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.detailLabel {
-	font-size: 0.75rem;
-	font-weight: 600;
-	color: var(--muted);
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
-.detailValue {
-	font-size: 0.875rem;
-	color: var(--ink);
-	font-weight: 500;
-}
-
-/* === Estados === */
-.loadingContainer,
-.errorContainer,
-.emptyContainer {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 48px 24px;
-	text-align: center;
-	color: var(--muted);
-}
-
-.spinner {
-	width: 40px;
-	height: 40px;
-	border: 4px solid var(--border);
-	border-top-color: var(--pantone-314c);
-	border-radius: 50%;
-	animation: spin 0.8s linear infinite;
-	margin-bottom: 16px;
-}
-
-@keyframes spin {
-	to {
-		transform: rotate(360deg);
+@media (max-width: 480px) {
+	.dateHeader {
+		gap: 10px;
 	}
-}
 
-.errorMessage {
-	color: #ef4444;
-	font-weight: 500;
+	.dateNumber {
+		width: 40px;
+		height: 40px;
+		font-size: 1.1rem;
+		border-radius: 10px;
+	}
+
+	.dateText {
+		font-size: 0.9rem;
+	}
+
+	.btn {
+		padding: 10px 14px;
+		font-size: 0.8rem;
+	}
 }

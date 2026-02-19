@@ -14,6 +14,8 @@ import MedicacionSuministradaSection from './medicacion/MedicacionSuministradaSe
 import ControlesFrecuentesSection from './controles/ControlesFrecuentesSection';
 import EvolucionEnfermeriaSection from './evolucion/EvolucionEnfermeriaSection';
 import InsumosSection from './insumos/InsumosSection';
+import EvolucionesSection from './evoluciones/EvolucionesSection';
+import HCIngresoSection from './hc-ingreso/HCIngresoSection';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -53,7 +55,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							✕
 						</button>
 						<CalendarPanel selected={selectedDate ?? undefined} />
-						<SidebarFilters />
+						<SidebarFilters onCloseDrawer={() => setDrawerOpen(false)} />
 					</div>
 				</aside>
 
@@ -66,6 +68,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
 					) : activeSection === 'control' ? (
@@ -74,6 +79,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
 					) : activeSection === 'medicacion-suministrada' ? (
@@ -82,6 +90,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
 					) : activeSection === 'controles-frecuentes' ? (
@@ -90,6 +101,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
 					) : activeSection === 'evolucion-enfermeria' ? (
@@ -98,6 +112,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
 					) : activeSection === 'insumos' ? (
@@ -106,47 +123,29 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
 					) : activeSection === 'hcIngreso' ? (
-						<div className={styles.placeholderCard}>
-							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-								<div style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-									📋
-								</div>
-								<h3 style={{ margin: '0 0 0.5rem 0', color: '#0083A9' }}>
-									Historia Clínica de Ingreso
-								</h3>
-								<p style={{ color: '#666', margin: '0' }}>
-									Información completa del ingreso del paciente.
-									<br />
-									<strong>Paciente:</strong> {bed.NombrePaciente}
-									<br />
-									<strong>Documento:</strong> {bed.documentoPaciente}
-									<br />
-									<strong>Servicio:</strong> {bed.servicioMedicoDescripcion}
-								</p>
-							</div>
-						</div>
+						<HCIngresoSection
+							numeroVisita={bed?.NumeroVisita || null}
+							patientName={bed?.NombrePaciente}
+							patientLocation={bed?.ubicacionPaciente}
+							documentoPaciente={bed?.documentoPaciente}
+						/>
 					) : activeSection === 'evoluciones' ? (
-						<div className={styles.placeholderCard}>
-							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-								<div style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-									📝
-								</div>
-								<h3 style={{ margin: '0 0 0.5rem 0', color: '#0083A9' }}>
-									Evoluciones Médicas
-								</h3>
-								<p style={{ color: '#666', margin: '0' }}>
-									Registro de evoluciones y notas médicas del paciente.
-									<br />
-									<strong>Paciente:</strong> {bed.NombrePaciente}
-									<br />
-									<strong>Diagnóstico:</strong>{' '}
-									{bed.diagnosticoDescripcion || 'No especificado'}
-								</p>
-							</div>
-						</div>
+						<>
+							<EvolucionesSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
+							/>
+						</>
 					) : activeSection === 'solicitudEstudios' ? (
 						<div className={styles.placeholderCard}>
 							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>

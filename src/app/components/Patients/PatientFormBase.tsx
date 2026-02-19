@@ -448,7 +448,6 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			id='patient-create-form'
 			onSubmit={handleSubmit}
 			className={styles.form}
-			style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
 		>
 			<div className={'modalFullCenterWrapper ' + styles.modalContainer}>
 				<HeaderAddPatient

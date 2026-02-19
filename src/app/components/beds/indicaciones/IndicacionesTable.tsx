@@ -27,6 +27,7 @@ export type IndicacionRow = {
     profesional?: string;
     fullName?: string;
     frecuencia?: string;
+    intervalo?: number;
     observaciones?: string;
     proximo?: string;
     anterior?: string;
@@ -146,6 +147,27 @@ export default function IndicacionesTable({
             default:
                 return tipoCode || "-";
         }
+    };
+
+    // Calcular cantidad por 24hs usando la misma fórmula del formulario
+    const calcularCantidadPor24hs = (row: IndicacionRow): string => {
+        const cantidadIndicada = typeof row.cantidad === 'number' ? row.cantidad : parseFloat(String(row.cantidad || 0));
+        const intervalo = row.intervalo;
+
+        if (!intervalo || intervalo <= 0 || !cantidadIndicada) {
+            return String(cantidadIndicada || '');
+        }
+
+        // DAY_TICKS = 24h * 3600s * 100 ticks/s = 8,640,000 ticks Clarion
+        const DAY_TICKS = 24 * 3600 * 100;
+        
+        // dosisPorDia = 24h / intervalo (en ticks Clarion)
+        const dosisPorDia = Math.max(1, Math.round(DAY_TICKS / intervalo));
+        
+        // Cantidad total = cantidadIndicada × dosisPorDia
+        const cantidadTotal = cantidadIndicada * dosisPorDia;
+
+        return `${cantidadIndicada} (${cantidadTotal}/24hs)`;
     };
 
     // ✅ Función para calcular el estado según el tiempo hasta la próxima aplicación
@@ -281,7 +303,7 @@ export default function IndicacionesTable({
 
                                         <td className={styles.cellTight}>
                                             <div className={styles.cantidad}>
-                                                {r.cantidad ?? ""}
+                                                {calcularCantidadPor24hs(r)}
                                             </div>
                                         </td>
 
@@ -334,7 +356,18 @@ export default function IndicacionesTable({
                                         </td>
 
                                         <td className={styles.cellNum}>
-                                            {r.nro ?? ""}
+                                            <div className={styles.nroContainer}>
+                                                <div className={styles.nroPrincipal}>{r.nro ?? ""}</div>
+                                                {r.indicacionesHijas && r.indicacionesHijas.length > 0 && (
+                                                    <div className={styles.nrosHijas}>
+                                                        {r.indicacionesHijas.map((hija, idx) => (
+                                                            <div key={idx} className={styles.nroHija}>
+                                                                {hija.nroIndicacion}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
 
                                         <td className={styles.cellAccion}>

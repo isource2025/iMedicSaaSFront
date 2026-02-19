@@ -33,6 +33,8 @@ export interface Bed {
 	fechaAdmisionMovimiento?: number; // Fecha exacta del movimiento
 	horaAdmisionMovimiento?: number; // Hora exacta del movimiento
 	fechaIngresoFormateada?: string; // Fecha ya formateada desde el padre
+	fechaIngresoSQL?: string; // Fecha de ingreso en formato SQL
+	horaIngresoSQL?: string; // Hora de ingreso en formato SQL
 }
 
 export interface BedState {

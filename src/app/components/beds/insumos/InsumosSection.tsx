@@ -5,11 +5,17 @@ import { useBedDetail } from "../contexts/BedDetailContext";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import InsumosTable, { InsumoRow } from "./InsumosTable";
 import styles from "./InsumosSection.module.css";
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 interface InsumosSectionProps {
     numeroVisita: number | null;
     patientName?: string;
     patientLocation?: string;
+    documentoPaciente?: string;
+    fechaIngreso?: string;
+    horaIngreso?: string;
 }
 
 function toISODate(d: Date | null | undefined): string | null {
@@ -24,6 +30,9 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     numeroVisita,
     patientName,
     patientLocation,
+    documentoPaciente,
+    fechaIngreso,
+    horaIngreso
 }) => {
     const { activeSection, selectedDate } = useBedDetail();
     const [selectedInsumoId, setSelectedInsumoId] = useState<string | null>(null);
@@ -70,6 +79,37 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     };
 
     const fechaFormateada = formatSelectedDate();
+
+    const handleExport = async (option: ExportOption, data: any[]) => {
+        if (option === 'pdf') {
+            const empresaInfo = await obtenerInfoEmpresa();
+            const pdfData = insumosFiltered.map((row: any) => [
+                row.fecha || '-',
+                row.hora || '-',
+                row.descripcion || '-',
+                row.cantidad || '-',
+                row.profesional || '-'
+            ]);
+
+            exportToPDF({
+                title: 'Insumos',
+                subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
+                headers: ['Fecha', 'Hora', 'Descripción', 'Cantidad', 'Profesional'],
+                data: pdfData,
+                fileName: `insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`,
+                orientation: 'landscape',
+                empresaInfo,
+                patientInfo: {
+                    numeroVisita: numeroVisita || undefined,
+                    nombre: patientName,
+                    numeroDocumento: documentoPaciente,
+                    ubicacion: patientLocation,
+                    fechaIngreso: fechaIngreso,
+                    horaIngreso: horaIngreso
+                }
+            });
+        }
+    };
 
     const [query, setQuery] = useState("");
 
@@ -125,6 +165,12 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
                     <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
                     <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
                     <div className={styles.dateActions}>
+                        <ExportButton
+                            data={insumosFiltered}
+                            fileName={`insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`}
+                            onExport={handleExport}
+                            options={['pdf']}
+                        />
                         <button
                             className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
                             onClick={() => {

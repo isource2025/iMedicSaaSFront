@@ -285,10 +285,10 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 						<div className={styles.modalContent}>{children}</div>
 
 						<div className={styles.modalFooter}>
-							{footerButtons}
 							<button className={styles.cancelButton} onClick={onClose}>
 								Cerrar
 							</button>
+							{footerButtons}
 						</div>
 					</>
 				)}

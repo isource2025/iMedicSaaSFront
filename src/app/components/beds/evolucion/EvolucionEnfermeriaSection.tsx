@@ -3,21 +3,25 @@
 import React, { useState, useMemo } from 'react';
 import { EvolucionEnfermeria } from '../../../types/evolucionEnfermeria';
 import {
-  formatearFecha,
-  formatearHora,
-  obtenerNombreCompleto,
-  eliminarEvolucion,
-  convertirFechaAClarion,
-  convertirHoraAClarion,
+  crearEvolucion,
 } from '../../../services/evolucionEnfermeriaService';
+import NuevaEvolucionEnfermeriaModal from './NuevaEvolucionEnfermeriaModal';
+import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './EvolucionEnfermeriaSection.module.css';
+import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 interface EvolucionEnfermeriaSectionProps {
   numeroVisita: number | null;
   patientName?: string;
   patientLocation?: string;
+  documentoPaciente?: string;
+  fechaIngreso?: string;
+  horaIngreso?: string;
 }
 
 // Helper para convertir Date a YYYY-MM-DD
@@ -33,9 +37,14 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   numeroVisita,
   patientName,
   patientLocation,
+  documentoPaciente,
+  fechaIngreso,
+  horaIngreso
 }) => {
   const { activeSection, selectedDate } = useBedDetail();
-  const [selectedEvolucion, setSelectedEvolucion] = useState<EvolucionEnfermeria | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
 
   // Convertir fecha seleccionada a formato ISO
   const fechaISO = useMemo(() => toISODate(selectedDate), [selectedDate]);
@@ -66,30 +75,92 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
     return list;
   }, [data]);
 
-  const handleVerDetalle = (evolucion: EvolucionEnfermeria) => {
-    setSelectedEvolucion(evolucion);
-  };
-
-  const handleCerrarDetalle = () => {
-    setSelectedEvolucion(null);
-  };
-
-  const handleEliminar = async (evolucion: EvolucionEnfermeria) => {
-    if (!confirm(`¿Está seguro que desea eliminar esta evolución?\n\nFecha: ${formatearFecha(evolucion.FechaControl)}\nHora: ${formatearHora(evolucion.HoraControl)}`)) {
-      return;
-    }
-
-    try {
-      // Convertir fecha y hora a formato Clarion para la eliminación
-      const fechaClarion = convertirFechaAClarion(evolucion.FechaControl);
-      const horaClarion = convertirHoraAClarion(evolucion.HoraControl);
+  // Filtrar evoluciones según query
+  const filteredEvoluciones = useMemo(() => {
+    if (!query.trim()) return evoluciones;
+    
+    const q = query.toLowerCase();
+    return evoluciones.filter((ev) => {
+      const profesional = `${ev.ProfesionalApellido || ''} ${ev.ProfesionalNombres || ''}`.toLowerCase();
+      const observaciones = (ev.Observaciones || '').toLowerCase();
+      const operador = `${ev.OperadorApellido || ''} ${ev.OperadorNombres || ''}`.toLowerCase();
       
-      await eliminarEvolucion(evolucion.NumeroVisita, fechaClarion, horaClarion);
-      alert('Evolución eliminada correctamente');
-      refetch();
-    } catch (error) {
-      console.error('Error al eliminar:', error);
-      alert('Error al eliminar la evolución');
+      return profesional.includes(q) || observaciones.includes(q) || operador.includes(q);
+    });
+  }, [evoluciones, query]);
+
+  const handleSave = async (data: any) => {
+    setSaving(true);
+    try {
+      const finalPayload = {
+        ...data,
+        NumeroVisita: data.NumeroVisita ?? numeroVisita ?? 0,
+      };
+      await crearEvolucion(finalPayload);
+      return finalPayload;
+    } catch (err) {
+      if (err instanceof Error) {
+        alert(err.message ?? "Error inesperado al guardar la evolución");
+      }
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onAddEvolucion = () => {
+    setModalOpen(true);
+  };
+
+  // Formatear fecha seleccionada para mostrar
+  const formatSelectedDate = () => {
+    if (!selectedDate) return null;
+    const date = new Date(selectedDate);
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const diaSemana = dias[date.getDay()];
+    const diaMes = date.getDate();
+    const mes = meses[date.getMonth()];
+    return { diaSemana, diaMes, mes };
+  };
+
+  const fechaFormateada = formatSelectedDate();
+
+  const handleExport = async (option: ExportOption, data: any[]) => {
+    if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
+      const primeraEvolucion = data[0];
+      const profesionalInfo = primeraEvolucion ? {
+        nombre: String(primeraEvolucion.profesional || 'PROFESIONAL'),
+        matricula: undefined,
+        especialidad: 'Enfermería'
+      } : undefined;
+
+      const pdfData = filteredEvoluciones.map((ev: any) => [
+        ev.FechaEv || '-',
+        ev.HoraEv || '-',
+        `${ev.ProfesionalApellido || ''} ${ev.ProfesionalNombres || ''}`.trim() || '-',
+        ev.Observaciones || '-'
+      ]);
+
+      exportToPDF({
+        title: 'Evolución de Enfermería',
+        subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
+        headers: ['Fecha', 'Hora', 'Profesional', 'Observaciones'],
+        data: pdfData,
+        fileName: `evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`,
+        orientation: 'landscape',
+        empresaInfo,
+        patientInfo: {
+          numeroVisita: numeroVisita || undefined,
+          nombre: patientName,
+          numeroDocumento: documentoPaciente,
+          ubicacion: patientLocation,
+          fechaIngreso: fechaIngreso,
+          horaIngreso: horaIngreso
+        },
+        profesionalInfo
+      });
     }
   };
 
@@ -98,219 +169,94 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Evolución de Enfermería</h2>
-          {patientName && (
-            <div className={styles.patientInfo}>
-              <span className={styles.patientName}>{patientName}</span>
-              {patientLocation && (
-                <span className={styles.patientLocation}>{patientLocation}</span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando evoluciones de enfermería...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Evolución de Enfermería</h2>
-        </div>
-        <div className={styles.errorContainer}>
-          <p className={styles.errorMessage}>{error.message}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!numeroVisita) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Evolución de Enfermería</h2>
-        </div>
-        <div className={styles.emptyContainer}>
-          <p>No hay número de visita disponible</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (evoluciones.length === 0) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Evolución de Enfermería</h2>
-          {patientName && (
-            <div className={styles.patientInfo}>
-              <span className={styles.patientName}>{patientName}</span>
-              {patientLocation && (
-                <span className={styles.patientLocation}>{patientLocation}</span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className={styles.emptyContainer}>
-          <p>No hay evoluciones de enfermería registradas para esta visita</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>Evolución de Enfermería</h2>
-        {patientName && (
-          <div className={styles.patientInfo}>
-            <span className={styles.patientName}>{patientName}</span>
-            {patientLocation && (
-              <span className={styles.patientLocation}>{patientLocation}</span>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className={styles.statsBar}>
-        {fechaISO && (
-          <div className={styles.statItem}>
-            <span className={styles.statLabel}>Fecha seleccionada:</span>
-            <span className={styles.statValue}>{formatearFecha(fechaISO)}</span>
-          </div>
-        )}
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>Total de registros:</span>
-          <span className={styles.statValue}>{evoluciones.length}</span>
-        </div>
-      </div>
-
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Profesional</th>
-              <th>Observaciones</th>
-              <th>Operador Carga</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {evoluciones.map((evolucion, index) => (
-              <tr key={`${evolucion.NumeroVisita}-${evolucion.FechaControl}-${evolucion.HoraControl}-${index}`}>
-                <td>{formatearFecha(evolucion.FechaControl)}</td>
-                <td>{formatearHora(evolucion.HoraControl)}</td>
-                <td>
-                  {obtenerNombreCompleto(
-                    evolucion.ProfesionalApellido,
-                    evolucion.ProfesionalNombres
-                  )}
-                </td>
-                <td className={styles.observaciones}>
-                  {evolucion.Observaciones || '-'}
-                </td>
-                <td>
-                  {obtenerNombreCompleto(
-                    evolucion.OperadorApellido,
-                    evolucion.OperadorNombres
-                  )}
-                </td>
-                <td>
-                  <div className={styles.actionButtons}>
-                    <button
-                      className={styles.btnDetalle}
-                      onClick={() => handleVerDetalle(evolucion)}
-                      title="Ver detalle"
-                    >
-                      Ver detalle
-                    </button>
-                    <button
-                      className={styles.btnEliminar}
-                      onClick={() => handleEliminar(evolucion)}
-                      title="Eliminar evolución"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal de detalle */}
-      {selectedEvolucion && (
-        <div className={styles.modalOverlay} onClick={handleCerrarDetalle}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Detalle de Evolución de Enfermería</h3>
-              <button className={styles.btnCerrar} onClick={handleCerrarDetalle}>
-                ×
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.detailGrid}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Fecha de Control:</span>
-                  <span className={styles.detailValue}>
-                    {formatearFecha(selectedEvolucion.FechaControl)}
-                  </span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Hora de Control:</span>
-                  <span className={styles.detailValue}>
-                    {formatearHora(selectedEvolucion.HoraControl)}
-                  </span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Profesional:</span>
-                  <span className={styles.detailValue}>
-                    {obtenerNombreCompleto(
-                      selectedEvolucion.ProfesionalApellido,
-                      selectedEvolucion.ProfesionalNombres
-                    )}
-                  </span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Operador de Carga:</span>
-                  <span className={styles.detailValue}>
-                    {obtenerNombreCompleto(
-                      selectedEvolucion.OperadorApellido,
-                      selectedEvolucion.OperadorNombres
-                    )}
-                  </span>
-                </div>
-                {selectedEvolucion.FechaHoraCarga && (
-                  <div className={styles.detailItem}>
-                    <span className={styles.detailLabel}>Fecha/Hora de Carga:</span>
-                    <span className={styles.detailValue}>
-                      {new Date(selectedEvolucion.FechaHoraCarga).toLocaleString('es-AR')}
-                    </span>
-                  </div>
-                )}
-                <div className={styles.detailItem} style={{ gridColumn: '1 / -1' }}>
-                  <span className={styles.detailLabel}>Observaciones:</span>
-                  <span className={styles.detailValue}>
-                    {selectedEvolucion.Observaciones || '-'}
-                  </span>
-                </div>
-              </div>
-            </div>
+    <div className={styles.root}>
+      {/* Fecha seleccionada + botón agregar */}
+      {fechaFormateada && (
+        <div className={styles.dateHeader}>
+          <h2 className={styles.sectionTitle}>Evolución de Enfermería</h2>
+          <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+          <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
+          <div className={styles.dateActions}>
+            <button
+              className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+              onClick={onAddEvolucion}
+            >
+              <span className={styles.addIcon} aria-hidden>
+                +
+              </span>
+              Evolución
+            </button>
+            <ExportButton
+              data={filteredEvoluciones}
+              fileName={`evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`}
+              onExport={handleExport}
+              options={['pdf']}
+            />
           </div>
         </div>
       )}
+
+      {/* Buscador */}
+      <div className={styles.toolbar}>
+        <div className={styles.searchWrap}>
+          <span className={styles.searchIcon}>🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar por profesional, observaciones..."
+            className={styles.searchInput}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div className={styles.content}>
+        <div className={styles.tableHolder}>
+          {isLoading && (
+            <div className={styles.loadingOverlay}>Cargando evoluciones de enfermería...</div>
+          )}
+          {error && (
+            <div className={styles.errorBox}>
+              Error al cargar evoluciones: {error.message}
+            </div>
+          )}
+          {!isLoading && !error && (
+            <EvolucionEnfermeriaTable
+              rows={filteredEvoluciones}
+              refetch={refetch}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Modal de nueva evolución */}
+      <ModalBasePaciente
+        numeroVisita={numeroVisita ? String(numeroVisita) : ""}
+        onClose={() => setModalOpen(false)}
+        isOpen={modalOpen}
+        titulo="Agregando nueva Evolución de Enfermería"
+        footerButtons={
+          <>
+            <button
+              className={styles.btn + " " + styles.btnPrimary}
+              type="submit"
+              form="nueva-evolucion-enfermeria-form"
+              disabled={saving}
+            >
+              {saving ? "Guardando…" : "Guardar"}
+            </button>
+          </>
+        }
+      >
+        <NuevaEvolucionEnfermeriaModal
+          onClose={() => setModalOpen(false)}
+          onSave={handleSave}
+          defaultNumeroVisita={numeroVisita}
+          refetch={refetch}
+        />
+      </ModalBasePaciente>
     </div>
   );
 };

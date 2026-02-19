@@ -10,6 +10,9 @@ import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";
 import { NuevaIndicacionPayload } from "../../../types/indicaciones";
 import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { indicacionesService } from "../../../services/indicacionesService";
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 
 type IndicacionDTO = {
@@ -36,19 +39,27 @@ type IndicacionDTO = {
     unicaVez?: boolean;
 };
 
+interface IndicacionesSectionProps {
+    bedId?: string | number;
+    patientId?: string | number;
+    numeroVisita: number | null;
+    patientName?: string;
+    patientLocation?: string;
+    documentoPaciente?: string;
+    fechaIngreso?: string;
+    horaIngreso?: string;
+}
+
 export default function IndicacionesSection({
     bedId,
     patientId,
     numeroVisita,
     patientName,
     patientLocation,
-}: {
-    bedId?: string | number;
-    patientId?: string | number;
-    numeroVisita: number | null;
-    patientName?: string;
-    patientLocation?: string;
-}) {
+    documentoPaciente,
+    fechaIngreso,
+    horaIngreso,
+}: IndicacionesSectionProps) {
     const { activeSection, selectedDate } = useBedDetail();
 
     const indicacionesPath = useMemo(
@@ -105,6 +116,7 @@ export default function IndicacionesSection({
             estado: x.estado,
             suspendida: x.suspendida,
             unicaVez: x.unicaVez,
+            indicacionesHijas: (x as any).indicacionesHijas || [],
         }));
     }, [data]);
 
@@ -264,18 +276,18 @@ export default function IndicacionesSection({
                 ...data,
                 NumeroVisita: data.NumeroVisita ?? numeroVisita,
             };
-            await indicacionesService.postNuevaIndicacion(finalPayload);
-
-            await refetch();
+            const resultado = await indicacionesService.postNuevaIndicacion(finalPayload);
+            
+            return resultado;
         } catch (err) {
             if (err instanceof Error) {
                 alert(
                     err.message ?? "Error inesperado al guardar la indicación"
                 );
             }
+            throw err;
         } finally {
             setSaving(false);
-            setModalOpen(false);
         }
     };
 
@@ -321,6 +333,45 @@ export default function IndicacionesSection({
 
     const fechaFormateada = formatSelectedDate();
 
+    const handleExport = async (option: ExportOption, data: any[]) => {
+        if (option === 'pdf') {
+            const empresaInfo = await obtenerInfoEmpresa();
+            const primeraIndicacion = rows[0];
+            const profesionalInfo = primeraIndicacion ? {
+                nombre: String(primeraIndicacion.fullName || 'PROFESIONAL'),
+                matricula: undefined,
+                especialidad: undefined
+            } : undefined;
+
+            const pdfData = rows.map(row => [
+                row.descripcion || '-',
+                row.cantidad || '-',
+                row.frecuencia || '-',
+                row.fullName || '-',
+                row.tipo || '-'
+            ]);
+
+            exportToPDF({
+                title: 'Indicaciones Médicas',
+                subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
+                headers: ['Descripción', 'Cantidad', 'Frecuencia', 'Profesional', 'Tipo'],
+                data: pdfData,
+                fileName: `indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
+                orientation: 'landscape',
+                empresaInfo,
+                patientInfo: {
+                    numeroVisita: numeroVisita || undefined,
+                    nombre: patientName,
+                    numeroDocumento: documentoPaciente,
+                    ubicacion: patientLocation,
+                    fechaIngreso: fechaIngreso,
+                    horaIngreso: horaIngreso
+                },
+                profesionalInfo
+            });
+        }
+    };
+
     return (
         <div className={styles.root}>
             {/* Fecha seleccionada + botón agregar */}
@@ -328,30 +379,26 @@ export default function IndicacionesSection({
                 <div className={styles.dateHeader}>
                     <h2 className={styles.sectionTitle}>Indicaciones</h2>
                     <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
-                    <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
-                    {!modoReindicar && (
-                        <div className={styles.dateActions}>
-                            <button
-                                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-                                onClick={onAddIndicacion}
-                            >
-                                <span className={styles.addIcon} aria-hidden>
-                                    +
-                                </span>
-                                Indicación
-                            </button>
-                            <button
-                                className={`${styles.btn} ${styles.btnGhost} ${styles.btnHelp}`}
-                                onClick={() => setHelpOpen(true)}
-                                aria-label="Ayuda"
-                                title="Ayuda"
-                            >
-                                <span className={styles.btnIcon} aria-hidden>
-                                    ?
-                                </span>
-                            </button>
-                        </div>
-                    )}
+                    <span className={styles.dateText}>
+                        {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+                    </span>
+                    <div className={styles.dateActions}>
+                        <button
+                            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+                            onClick={onAddIndicacion}
+                        >
+                            <span className={styles.addIcon} aria-hidden>
+                                +
+                            </span>
+                            Indicación
+                        </button>
+                        <ExportButton
+                            data={rows}
+                            fileName={`indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`}
+                            onExport={handleExport}
+                            options={['pdf']}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -453,6 +500,7 @@ export default function IndicacionesSection({
                     onClose={() => setModalOpen(false)}
                     onSave={handleSave}
                     defaultNumeroVisita={numeroVisita}
+                    refetch={refetch}
                 />
             </ModalBasePaciente>
 
