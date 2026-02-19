@@ -1,7 +1,7 @@
 # Migración UI v1 - iMedicWS Frontend
 
 **Fecha de inicio:** 4 de Febrero 2026  
-**Versión:** 1.0  
+**Versión:** 1.0   
 **Objetivo:** Implementar nuevo sistema de UI siguiendo guías de diseño establecidas
 
 ---
