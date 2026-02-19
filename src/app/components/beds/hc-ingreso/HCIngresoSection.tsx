@@ -5,6 +5,29 @@ import styles from "./HCIngresoSection.module.css";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";
 import { obtenerHCIngresoPorVisita } from "@/app/services/hcIngresoService";
+import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
+import { getEmptyExamenFisico } from "@/app/utils/examenFisicoHelpers";
+import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
+import ExamenFisicoTejidoSubcutaneo from "./examen-fisico/ExamenFisicoTejidoSubcutaneo";
+import ExamenFisicoCabezaForm from "./examen-fisico/ExamenFisicoCabeza";
+import ExamenFisicoCuelloForm from "./examen-fisico/ExamenFisicoCuello";
+import ExamenFisicoMamasForm from "./examen-fisico/ExamenFisicoMamas";
+import ExamenFisicoRespiratorioForm from "./examen-fisico/ExamenFisicoRespiratorio";
+import ExamenFisicoCardiovascularForm from "./examen-fisico/ExamenFisicoCardiovascular";
+import ExamenFisicoAbdomenForm from "./examen-fisico/ExamenFisicoAbdomen";
+import ExamenFisicoUrogenitalForm from "./examen-fisico/ExamenFisicoUrogenital";
+import ExamenFisicoGinecologicoForm from "./examen-fisico/ExamenFisicoGinecologico";
+import ExamenFisicoObstetricoForm from "./examen-fisico/ExamenFisicoObstetrico";
+import ExamenFisicoNerviosoForm from "./examen-fisico/ExamenFisicoNervioso";
+import SignosVitalesForm from "./examen-fisico/SignosVitales";
+import ExamenOftalmologicoForm from "./examen-fisico/ExamenOftalmologico";
+import ElectrocardiogramaForm from "./examen-fisico/Electrocardiograma";
+import RadiografiaToraxForm from "./examen-fisico/RadiografiaTorax";
+import ImpresionDiagnosticaForm from "./examen-fisico/ImpresionDiagnostica";
+import PlanDiagnosticoForm from "./examen-fisico/PlanDiagnostico";
+import PlanTerapeuticoForm from "./examen-fisico/PlanTerapeutico";
+import ExamenesComplementariosForm from "./examen-fisico/ExamenesComplementarios";
+import AntecedentesPersonalesForm from "./examen-fisico/AntecedentesPersonales";
 
 // Secciones de la HC de Ingreso para el modo edición
 const HC_SECTIONS = [
@@ -76,6 +99,9 @@ export default function HCIngresoSection({
         enfermedadActual: "",
         antecedentes: "",
     });
+
+    // Estado del examen físico
+    const [examenFisico, setExamenFisico] = useState<ExamenFisicoCompleto>(getEmptyExamenFisico());
 
     // Cargar datos desde el backend
     useEffect(() => {
@@ -457,20 +483,242 @@ export default function HCIngresoSection({
 
                     {activeSection === "antecedentes" && (
                         <div className={styles.formFields}>
-                            <div className={styles.formGroupFull}>
-                                <label className={styles.formLabel}>Antecedentes</label>
-                                <textarea
-                                    className={styles.formTextarea}
-                                    rows={12}
-                                    placeholder="Ingrese los antecedentes del paciente..."
-                                    value={formData.antecedentes}
-                                    onChange={(e) => setFormData({ ...formData, antecedentes: e.target.value })}
-                                />
-                            </div>
+                            <AntecedentesPersonalesForm
+                                data={examenFisico.antecedentesPersonales}
+                                onChange={(antecedentesPersonales) => setExamenFisico({ ...examenFisico, antecedentesPersonales })}
+                                readOnly={false}
+                            />
                         </div>
                     )}
 
-                    {activeSection !== "motivo" && activeSection !== "antecedentes" && (
+                    {/* Piel y Faneras */}
+                    {activeSection === "piel-faneras" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoPielForm
+                                data={examenFisico.piel}
+                                onChange={(piel) => setExamenFisico({ ...examenFisico, piel })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Tejido Subcutáneo (incluye Sistema Linfático y Sistema Osteo) */}
+                    {(activeSection === "tejido-subcutaneo" || activeSection === "sistema-linfatico" || activeSection === "sistema-osteo") && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoTejidoSubcutaneo
+                                tejidoCelular={examenFisico.tejidoCelularSubcutaneo}
+                                sistemaLinfatico={examenFisico.sistemaLinfatico}
+                                sistemaOsteo={examenFisico.sistemaOsteoArticuloMuscular}
+                                onChangeTejido={(tejidoCelularSubcutaneo) => setExamenFisico({ ...examenFisico, tejidoCelularSubcutaneo })}
+                                onChangeLinfatico={(sistemaLinfatico) => setExamenFisico({ ...examenFisico, sistemaLinfatico })}
+                                onChangeOsteo={(sistemaOsteoArticuloMuscular) => setExamenFisico({ ...examenFisico, sistemaOsteoArticuloMuscular })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Cabeza */}
+                    {activeSection === "cabeza" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoCabezaForm
+                                data={examenFisico.cabeza}
+                                onChange={(cabeza) => setExamenFisico({ ...examenFisico, cabeza })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Cuello (incluye Sistema Venoso) */}
+                    {(activeSection === "cuello" || activeSection === "sistema-venoso") && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoCuelloForm
+                                cuello={examenFisico.cuello}
+                                sistemaVenoso={examenFisico.sistemaVenoso}
+                                onChangeCuello={(cuello) => setExamenFisico({ ...examenFisico, cuello })}
+                                onChangeVenoso={(sistemaVenoso) => setExamenFisico({ ...examenFisico, sistemaVenoso })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Mamas */}
+                    {activeSection === "mamas" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoMamasForm
+                                data={examenFisico.mamas}
+                                onChange={(mamas) => setExamenFisico({ ...examenFisico, mamas })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Aparato Respiratorio */}
+                    {activeSection === "aparato-respiratorio" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoRespiratorioForm
+                                data={examenFisico.aparatoRespiratorio}
+                                onChange={(aparatoRespiratorio) => setExamenFisico({ ...examenFisico, aparatoRespiratorio })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Aparato Cardiovascular */}
+                    {activeSection === "aparato-cardiovascular" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoCardiovascularForm
+                                data={examenFisico.aparatoCardiovascular}
+                                onChange={(aparatoCardiovascular) => setExamenFisico({ ...examenFisico, aparatoCardiovascular })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Abdomen */}
+                    {activeSection === "abdomen" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoAbdomenForm
+                                data={examenFisico.abdomen}
+                                onChange={(abdomen) => setExamenFisico({ ...examenFisico, abdomen })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Aparato Urogenital */}
+                    {activeSection === "aparato-urogenital" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoUrogenitalForm
+                                data={examenFisico.aparatoUrogenital}
+                                onChange={(aparatoUrogenital) => setExamenFisico({ ...examenFisico, aparatoUrogenital })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Examen Ginecológico */}
+                    {activeSection === "examen-ginecologico" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoGinecologicoForm
+                                data={examenFisico.examenGinecologico}
+                                onChange={(examenGinecologico) => setExamenFisico({ ...examenFisico, examenGinecologico })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Examen Obstétrico */}
+                    {activeSection === "examen-obstetrico" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoObstetricoForm
+                                data={examenFisico.examenObstetrico}
+                                onChange={(examenObstetrico) => setExamenFisico({ ...examenFisico, examenObstetrico })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Sistema Nervioso */}
+                    {activeSection === "sistema-nervioso" && (
+                        <div className={styles.formFields}>
+                            <ExamenFisicoNerviosoForm
+                                data={examenFisico.sistemaNervioso}
+                                onChange={(sistemaNervioso) => setExamenFisico({ ...examenFisico, sistemaNervioso })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Signos Vitales */}
+                    {activeSection === "signos-vitales" && (
+                        <div className={styles.formFields}>
+                            <SignosVitalesForm
+                                data={examenFisico.signosVitales}
+                                onChange={(signosVitales) => setExamenFisico({ ...examenFisico, signosVitales })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Examen Oftalmológico */}
+                    {activeSection === "examen-oftalmologico" && (
+                        <div className={styles.formFields}>
+                            <ExamenOftalmologicoForm
+                                data={examenFisico.examenOftalmologico}
+                                onChange={(examenOftalmologico) => setExamenFisico({ ...examenFisico, examenOftalmologico })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Electrocardiograma */}
+                    {activeSection === "electrocardiograma" && (
+                        <div className={styles.formFields}>
+                            <ElectrocardiogramaForm
+                                data={examenFisico.electrocardiograma}
+                                onChange={(electrocardiograma) => setExamenFisico({ ...examenFisico, electrocardiograma })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Radiografía de Tórax */}
+                    {activeSection === "radiografia-torax" && (
+                        <div className={styles.formFields}>
+                            <RadiografiaToraxForm
+                                data={examenFisico.radiografiaTorax}
+                                onChange={(radiografiaTorax) => setExamenFisico({ ...examenFisico, radiografiaTorax })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Impresión Diagnóstica */}
+                    {activeSection === "impresion-diagnostica" && (
+                        <div className={styles.formFields}>
+                            <ImpresionDiagnosticaForm
+                                data={examenFisico.impresionDiagnostica}
+                                onChange={(impresionDiagnostica) => setExamenFisico({ ...examenFisico, impresionDiagnostica })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Plan Diagnóstico */}
+                    {activeSection === "plan-diagnostico" && (
+                        <div className={styles.formFields}>
+                            <PlanDiagnosticoForm
+                                data={examenFisico.planDiagnostico}
+                                onChange={(planDiagnostico) => setExamenFisico({ ...examenFisico, planDiagnostico })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Plan Terapéutico */}
+                    {activeSection === "plan-terapeutico" && (
+                        <div className={styles.formFields}>
+                            <PlanTerapeuticoForm
+                                data={examenFisico.planTerapeutico}
+                                onChange={(planTerapeutico) => setExamenFisico({ ...examenFisico, planTerapeutico })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Exámenes Complementarios */}
+                    {activeSection === "examen-complementario" && (
+                        <div className={styles.formFields}>
+                            <ExamenesComplementariosForm
+                                data={examenFisico.examenesComplementarios}
+                                onChange={(examenesComplementarios) => setExamenFisico({ ...examenFisico, examenesComplementarios })}
+                                readOnly={false}
+                            />
+                        </div>
+                    )}
+
+                    {/* Placeholder para secciones no implementadas */}
+                    {!["motivo", "antecedentes", "signos-vitales", "piel-faneras", "tejido-subcutaneo", "sistema-linfatico", "sistema-osteo", "cabeza", "cuello", "sistema-venoso", "mamas", "aparato-respiratorio", "aparato-cardiovascular", "abdomen", "aparato-urogenital", "examen-ginecologico", "examen-obstetrico", "sistema-nervioso", "examen-oftalmologico", "electrocardiograma", "radiografia-torax", "impresion-diagnostica", "plan-diagnostico", "plan-terapeutico", "examen-complementario"].includes(activeSection) && (
                         <div className={styles.formPlaceholder}>
                             <p>Formulario de {HC_SECTIONS.find((s) => s.id === activeSection)?.label}</p>
                             <p className={styles.placeholderNote}>Campos pendientes de implementar</p>
