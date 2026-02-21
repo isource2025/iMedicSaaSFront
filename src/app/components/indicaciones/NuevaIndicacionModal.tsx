@@ -48,8 +48,8 @@ const getLocalDateString = (date: Date): string => {
 const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
     NumeroVisita: numeroVisita,
     NroAdicional: null,
-    FechaCarga: getLocalDateString(new Date()),
-    HoraCarga: new Date().toTimeString().slice(0, 8),
+    FechaCarga: null, // ✅ El backend calcula automáticamente con fecha actual
+    HoraCarga: null, // ✅ El backend calcula automáticamente con hora actual
     OperadorCarga: null,
     ProfesionalAsiste: null,
     FechaCumplido: null,
@@ -537,29 +537,6 @@ export default function IndicacionForm({
                                     {(usuario?.nombre + " " + usuario?.apellido) || "ADMINISTRADOR"}
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div className={styles.inlineField}>
-                        <label>Fecha / Hora que indica</label>
-                        <div className={styles.inlineInputs}>
-                            <input
-                                type="date"
-                                className={styles.inputSm}
-                                value={form.FechaCarga ?? ""}
-                                onChange={(e) =>
-                                    set("FechaCarga", s(e.target.value))
-                                }
-                                autoFocus
-                            />
-                            <input
-                                type="time"
-                                className={styles.inputSm}
-                                value={form.HoraCarga ?? ""}
-                                onChange={(e) =>
-                                    set("HoraCarga", s(e.target.value))
-                                }
-                            />
                         </div>
                     </div>
 
