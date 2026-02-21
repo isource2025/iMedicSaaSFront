@@ -878,17 +878,14 @@ export default function IndicacionForm({
 
                 <div className={styles.drawerField}>
                     <label>Medicamento</label>
-                    <select
-                        className={styles.input}
+                    <CustomSelect
+                        label=""
+                        name="CodigoAdicional"
+                        isLoading={dataLoading || !tipoIndicacion}
                         value={adicionalForm.codigo ?? ""}
-                        onChange={(e) => setAdicional("codigo", e.target.value ? Number(e.target.value) : null)}
-                        disabled={dataLoading || !tipoIndicacion}
-                    >
-                        <option value="">Seleccione...</option>
-                        {medicaCionData.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
+                        onChange={(val) => setAdicional("codigo", Number(val))}
+                        options={medicaCionData}
+                    />
                 </div>
 
                 <div className={styles.drawerFieldRow}>
