@@ -93,8 +93,11 @@ export default function IndicacionForm({
     idSector = null,
 }: IndicacionFormProps) {
     const initial = useMemo(
-        () => emptyPayload(defaultNumeroVisita),
-        [defaultNumeroVisita]
+        () => ({
+            ...emptyPayload(defaultNumeroVisita),
+            IdSector: idSector, // ✅ Usar el idSector del prop si está disponible
+        }),
+        [defaultNumeroVisita, idSector]
     );
     const [form, setForm] = useState<NuevaIndicacionPayload>(initial);
     const [dataLoading, setDataLoading] = useState(false);
