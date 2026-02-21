@@ -223,7 +223,7 @@ export default function CustomSelect({
                                 : styles.dropBottom
                         }`}
                         style={{
-                            left: coords.left,
+                            left: portalEl === document.body ? coords.left : 0,
                             top: coords.top,
                             width: coords.width,
                         }}
