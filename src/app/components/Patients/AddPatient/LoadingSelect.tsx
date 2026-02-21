@@ -75,8 +75,8 @@ export default function CustomSelect({
 
         setPlacement(openDown ? "bottom" : "top");
         setCoords({
-            left: Math.round(r.left),
-            top: Math.round(openDown ? r.bottom + 4 : r.top - 4),
+            left: Math.round(r.left + window.scrollX),
+            top: Math.round(openDown ? r.bottom + 4 + window.scrollY : r.top - 4 + window.scrollY),
             width: Math.round(r.width),
         });
     };
