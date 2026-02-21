@@ -20,6 +20,7 @@ interface IndicacionHija {
     cantidad: number | null;
     tipoUnidad: string | null;
     frecuencia: string | null;
+    observaciones: string | null;
 }
 
 interface IndicacionFormProps {
@@ -113,6 +114,7 @@ export default function IndicacionForm({
         cantidad: null,
         tipoUnidad: null,
         frecuencia: null,
+        observaciones: null,
     });
     
     // Estado separado para campos de adicional
@@ -122,6 +124,7 @@ export default function IndicacionForm({
         tipoUnidad: null as string | null,
         frecuencia: null as string | null,
         cantidad: null as number | null,
+        observaciones: null as string | null,
     });
     
     const setAdicional = (field: keyof typeof adicionalForm, value: any) =>
@@ -430,8 +433,8 @@ export default function IndicacionForm({
     }, [dataForm, form.Frecuencia, form.CantidadIndicada]);
 
     const handleAgregarHija = () => {
-        if (!adicionalForm.codigo || !adicionalForm.cantidadIndicada || !adicionalForm.tipoUnidad || !adicionalForm.frecuencia) {
-            alert('Complete todos los campos del adicional antes de agregar');
+        if (!adicionalForm.codigo || !adicionalForm.cantidadIndicada) {
+            alert('Complete los campos obligatorios (Medicamento y Cantidad) antes de agregar');
             return;
         }
         
@@ -446,6 +449,7 @@ export default function IndicacionForm({
             cantidad: adicionalForm.cantidadIndicada,
             tipoUnidad: adicionalForm.tipoUnidad,
             frecuencia: adicionalForm.frecuencia,
+            observaciones: adicionalForm.observaciones,
         };
         
         setIndicacionesHijas([...indicacionesHijas, nuevaHija]);
@@ -457,6 +461,7 @@ export default function IndicacionForm({
             tipoUnidad: null,
             frecuencia: null,
             cantidad: null,
+            observaciones: null,
         });
         setHijaEnEdicion({
             id: '',
@@ -466,6 +471,7 @@ export default function IndicacionForm({
             cantidad: null,
             tipoUnidad: null,
             frecuencia: null,
+            observaciones: null,
         });
         
         // Close drawer after adding
@@ -713,10 +719,11 @@ export default function IndicacionForm({
                         <div className={styles.chipTable}>
                             <div className={styles.chipTableHead}>
                                 <span className={styles.colOp}>Operación</span>
-                                <span className={styles.colMed}>Medicamento</span>
                                 <span className={styles.colCant}>Cant.</span>
-                                <span className={styles.colUni}>Unidad</span>
+                                <span className={styles.colUni}>Tipo Unidad</span>
+                                <span className={styles.colMed}>Medicamento</span>
                                 <span className={styles.colFreq}>Frecuencia</span>
+                                <span className={styles.colObs}>Observación</span>
                                 <span className={styles.colAcc}></span>
                             </div>
                             {indicacionesHijas.map((hija) => (
@@ -733,17 +740,20 @@ export default function IndicacionForm({
                                             <option value="PARALELO">Paralelo</option>
                                         </select>
                                     </span>
-                                    <span className={`${styles.colMed} ${styles.chipText}`}>
-                                        {hija.aliasMedicamento}
-                                    </span>
                                     <span className={`${styles.colCant} ${styles.chipMeta}`}>
                                         {hija.cantidad}
                                     </span>
                                     <span className={`${styles.colUni} ${styles.chipMeta}`}>
-                                        {hija.tipoUnidad}
+                                        {hija.tipoUnidad || '—'}
+                                    </span>
+                                    <span className={`${styles.colMed} ${styles.chipText}`}>
+                                        {hija.aliasMedicamento}
                                     </span>
                                     <span className={`${styles.colFreq} ${styles.chipMeta}`}>
-                                        {hija.frecuencia}
+                                        {hija.frecuencia || '—'}
+                                    </span>
+                                    <span className={`${styles.colObs} ${styles.chipMeta}`}>
+                                        {hija.observaciones || '—'}
                                     </span>
                                     <span className={styles.colAcc}>
                                         <button
@@ -868,17 +878,14 @@ export default function IndicacionForm({
 
                 <div className={styles.drawerField}>
                     <label>Medicamento</label>
-                    <select
-                        className={styles.input}
+                    <CustomSelect
+                        label=""
+                        name="CodigoAdicional"
+                        isLoading={dataLoading || !tipoIndicacion}
                         value={adicionalForm.codigo ?? ""}
-                        onChange={(e) => setAdicional("codigo", e.target.value ? Number(e.target.value) : null)}
-                        disabled={dataLoading || !tipoIndicacion}
-                    >
-                        <option value="">Seleccione...</option>
-                        {medicaCionData.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
+                        onChange={(val) => setAdicional("codigo", Number(val))}
+                        options={medicaCionData}
+                    />
                 </div>
 
                 <div className={styles.drawerFieldRow}>
@@ -910,7 +917,7 @@ export default function IndicacionForm({
                     </div>
 
                     <div className={styles.drawerField}>
-                        <label>Tipo unidad</label>
+                        <label>Tipo unidad (opcional)</label>
                         <select
                             className={styles.input}
                             value={adicionalForm.tipoUnidad || ""}
@@ -926,7 +933,7 @@ export default function IndicacionForm({
                 </div>
 
                 <div className={styles.drawerField}>
-                    <label>Frecuencia</label>
+                    <label>Frecuencia (opcional)</label>
                     <select
                         className={styles.input}
                         value={adicionalForm.frecuencia || ""}
@@ -938,6 +945,16 @@ export default function IndicacionForm({
                             <option key={item.Valor} value={item.Valor}>{item.Valor}</option>
                         ))}
                     </select>
+                </div>
+
+                <div className={styles.drawerField}>
+                    <label>Observaciones (opcional)</label>
+                    <textarea
+                        className={styles.textarea}
+                        value={adicionalForm.observaciones ?? ""}
+                        onChange={(e) => setAdicional("observaciones", s(e.target.value))}
+                        rows={3}
+                    />
                 </div>
             </SlideDrawer>
         </div>
