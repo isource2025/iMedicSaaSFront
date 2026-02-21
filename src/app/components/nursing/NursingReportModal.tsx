@@ -219,6 +219,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                     onClose={handleCancelNewIndication}
                     onSave={handleSaveIndication}
                     defaultNumeroVisita={numeroVisita}
+                    refetch={fetchControlData}
                 />
             </ModalBasePaciente>
     </>
