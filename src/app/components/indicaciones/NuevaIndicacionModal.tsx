@@ -30,6 +30,7 @@ interface IndicacionFormProps {
     nroIndicacion?: number | null;
     refetch?: () => Promise<void>;
     idSector?: string | null;
+    fechaCarga?: Date | null;
 }
 
 // ===== Clarion helpers =====
@@ -45,10 +46,10 @@ const getLocalDateString = (date: Date): string => {
 };  
 
 // ===== Payload inicial =====
-const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
+const emptyPayload = (numeroVisita: number | null, fechaCarga?: Date | null): NuevaIndicacionPayload => ({
     NumeroVisita: numeroVisita,
     NroAdicional: null,
-    FechaCarga: getLocalDateString(new Date),
+    FechaCarga: getLocalDateString(fechaCarga || new Date()),
     HoraCarga: new Date().toTimeString().slice(0, 8),
     OperadorCarga: null,
     ProfesionalAsiste: null,
@@ -91,10 +92,11 @@ export default function IndicacionForm({
     nroIndicacion = null,
     refetch,
     idSector = null,
+    fechaCarga = null,
 }: IndicacionFormProps) {
     const initial = useMemo(
-        () => emptyPayload(defaultNumeroVisita),
-        [defaultNumeroVisita]
+        () => emptyPayload(defaultNumeroVisita, fechaCarga),
+        [defaultNumeroVisita, fechaCarga]
     );
     const [form, setForm] = useState<NuevaIndicacionPayload>(initial);
     const [dataLoading, setDataLoading] = useState(false);

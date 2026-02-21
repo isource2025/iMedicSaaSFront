@@ -422,11 +422,13 @@
 /* Shared grid for header + rows */
 .chipTableHead,
 .chipRow {
-    display: grid;
-    grid-template-columns: 110px 1fr 50px 70px 100px 28px;
+    display: flex;
     align-items: center;
     gap: 0 10px;
     padding: 0 12px;
+    flex-direction: row;
+    align-content: center;
+    justify-content: space-between;
 }
 
 /* Column header row */
