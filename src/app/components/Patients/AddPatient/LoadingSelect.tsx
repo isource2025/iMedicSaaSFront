@@ -222,11 +222,18 @@ export default function CustomSelect({
                                 ? styles.dropTop
                                 : styles.dropBottom
                         }`}
-                        style={{
-                            left: portalEl === document.body ? coords.left : 0,
-                            top: coords.top,
-                            width: coords.width,
-                        }}
+                        style={
+                            portalEl === document.body
+                                ? {
+                                      left: coords.left,
+                                      top: coords.top,
+                                      width: coords.width,
+                                  }
+                                : {
+                                      top: coords.top,
+                                      width: coords.width,
+                                  }
+                        }
                         role="listbox"
                         id={`${name}-listbox`}
                         aria-labelledby={name}
