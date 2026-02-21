@@ -878,14 +878,17 @@ export default function IndicacionForm({
 
                 <div className={styles.drawerField}>
                     <label>Medicamento</label>
-                    <CustomSelect
-                        label=""
-                        name="CodigoAdicional"
-                        isLoading={dataLoading || !tipoIndicacion}
+                    <select
+                        className={styles.input}
                         value={adicionalForm.codigo ?? ""}
-                        onChange={(val) => setAdicional("codigo", Number(val))}
-                        options={medicaCionData}
-                    />
+                        onChange={(e) => setAdicional("codigo", e.target.value ? Number(e.target.value) : null)}
+                        disabled={dataLoading || !tipoIndicacion}
+                    >
+                        <option value="">Seleccione...</option>
+                        {medicaCionData.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className={styles.drawerFieldRow}>
@@ -917,7 +920,7 @@ export default function IndicacionForm({
                     </div>
 
                     <div className={styles.drawerField}>
-                        <label>Tipo unidad (opcional)</label>
+                        <label>Tipo Unidad</label>
                         <select
                             className={styles.input}
                             value={adicionalForm.tipoUnidad || ""}
@@ -933,7 +936,7 @@ export default function IndicacionForm({
                 </div>
 
                 <div className={styles.drawerField}>
-                    <label>Frecuencia (opcional)</label>
+                    <label>Frecuencia</label>
                     <select
                         className={styles.input}
                         value={adicionalForm.frecuencia || ""}
@@ -948,7 +951,7 @@ export default function IndicacionForm({
                 </div>
 
                 <div className={styles.drawerField}>
-                    <label>Observaciones (opcional)</label>
+                    <label>Observaciones</label>
                     <textarea
                         className={styles.textarea}
                         value={adicionalForm.observaciones ?? ""}
