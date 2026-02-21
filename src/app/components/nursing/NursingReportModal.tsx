@@ -8,6 +8,7 @@ import ControlesFrecuentesChart, { CHART_PARAMS } from "./ControlesFrecuentesCha
 import styles from './NursingReportModal.module.css';
 import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
 import { NuevaIndicacionPayload } from '@/app/types/indicaciones';
+import { indicacionesService } from '@/app/services/indicacionesService';
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
@@ -77,12 +78,20 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
     setSaving(true)
     try {
       console.log('Guardando indicación:', indicacionData);
+      
+      // ✅ CORREGIDO: Llamar al servicio del backend para guardar la indicación
+      const resultado = await indicacionesService.postNuevaIndicacion(indicacionData);
+      console.log('📥 Resultado del backend:', resultado);
+      
       setShowNewIndicationForm(false);
       await fetchControlData();
       alert('Indicación guardada correctamente');
+      
+      return resultado;
     } catch (error) {
       console.error('Error al guardar la indicación:', error);
       alert('Error al guardar la indicación');
+      throw error;
     } finally {
       setSaving(false)
     }
