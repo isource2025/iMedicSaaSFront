@@ -501,7 +501,6 @@ export default function IndicacionesSection({
                     onSave={handleSave}
                     defaultNumeroVisita={numeroVisita}
                     refetch={refetch}
-                    fechaCarga={selectedDate}
                 />
             </ModalBasePaciente>
 
