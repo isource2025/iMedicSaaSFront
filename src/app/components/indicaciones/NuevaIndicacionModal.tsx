@@ -881,7 +881,7 @@ export default function IndicacionForm({
                     <CustomSelect
                         label=""
                         name="CodigoAdicional"
-                        isLoading={dataLoading || !tipoIndicacion}
+                        isLoading={dataLoading}
                         value={adicionalForm.codigo ?? ""}
                         onChange={(val) => setAdicional("codigo", Number(val))}
                         options={medicaCionData}
