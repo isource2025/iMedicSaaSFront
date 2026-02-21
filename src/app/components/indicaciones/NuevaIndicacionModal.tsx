@@ -28,6 +28,7 @@ interface IndicacionFormProps {
     defaultNumeroVisita: number | null;
     nroIndicacion?: number | null;
     refetch?: () => Promise<void>;
+    idSector?: string | null;
 }
 
 // ===== Clarion helpers =====
@@ -88,6 +89,7 @@ export default function IndicacionForm({
     defaultNumeroVisita,
     nroIndicacion = null,
     refetch,
+    idSector = null,
 }: IndicacionFormProps) {
     const initial = useMemo(
         () => emptyPayload(defaultNumeroVisita),
@@ -212,7 +214,11 @@ export default function IndicacionForm({
             setDataLoading(true);
 
             try {
-                set("IdSector", (params.id as string).split("-")[0]);
+                // Usar idSector prop si está disponible, sino extraer de params.id
+                const sectorId = idSector || (params.id ? (params.id as string).split("-")[0] : null);
+                if (sectorId) {
+                    set("IdSector", sectorId);
+                }
                 const data = await indicacionesService.getFormularioDatos();
                 if (data) setDataForm(data);
 

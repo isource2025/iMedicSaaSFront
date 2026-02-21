@@ -27,13 +27,27 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
   const [showNewIndicationForm, setShowNewIndicationForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'tabla' | 'grafico'>('tabla');
   const [parametro, setParametro] = useState('pulso');
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] = useState(false);
+  const [idSector, setIdSector] = useState<string | null>(null);
 
   const fetchControlData = useCallback(async () => {
     if (!isOpen || !numeroVisita) return;
     try {
       setLoading(true);
       setError(null);
+      
+      // Obtener IdSector de los datos de la cama
+      const bedsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+      if (bedsResponse.ok) {
+        const bedsData = await bedsResponse.json();
+        if (bedsData.success) {
+          const cama = bedsData.data.find((c: any) => String(c.NumeroVisita) === String(numeroVisita));
+          if (cama && cama.IdSector) {
+            setIdSector(String(cama.IdSector));
+          }
+        }
+      }
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds/controles-frecuentes/${numeroVisita}`);
       if (!response.ok) throw new Error('Error al obtener los controles frecuentes');
       const data = await response.json();
@@ -220,6 +234,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                     onSave={handleSaveIndication}
                     defaultNumeroVisita={numeroVisita}
                     refetch={fetchControlData}
+                    idSector={idSector}
                 />
             </ModalBasePaciente>
     </>
