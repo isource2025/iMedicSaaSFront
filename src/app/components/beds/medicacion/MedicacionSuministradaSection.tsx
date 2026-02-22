@@ -98,6 +98,32 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
     return list;
   }, [data]);
 
+  // Agrupar medicaciones: principales con sus adicionales
+  const medicacionesAgrupadas = useMemo(() => {
+    const principales: MedicacionControl[] = [];
+    const adicionales = new Map<number, MedicacionControl[]>();
+
+    // Separar principales y adicionales
+    medicaciones.forEach(med => {
+      if (med.NroAdicional && med.NroAdicional > 0) {
+        // Es una indicación adicional
+        if (!adicionales.has(med.NroAdicional)) {
+          adicionales.set(med.NroAdicional, []);
+        }
+        adicionales.get(med.NroAdicional)!.push(med);
+      } else {
+        // Es una indicación principal
+        principales.push(med);
+      }
+    });
+
+    // Agregar las adicionales a cada principal
+    return principales.map(principal => ({
+      ...principal,
+      adicionales: adicionales.get(principal.NroIndicacion || 0) || []
+    }));
+  }, [medicaciones]);
+
   const handleVerDetalle = (medicacion: MedicacionControl) => {
     setSelectedMedicacion(medicacion);
   };
@@ -290,12 +316,27 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
             </tr>
           </thead>
           <tbody>
-            {medicaciones.map((medicacion) => (
+            {medicacionesAgrupadas.map((medicacion: any) => (
               <tr key={medicacion.IDCtrlMedica}>
                 <td>{formatearFecha(medicacion.FechaControl)}</td>
                 <td>{formatearHora(medicacion.HoraControl)}</td>
                 <td>{medicacion.Sector || '-'}</td>
-                <td>{medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || '-'}</td>
+                <td>
+                  <div className={styles.medicamentoContainer}>
+                    <span className={styles.medicamentoPrincipal}>
+                      {medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || '-'}
+                    </span>
+                    {medicacion.adicionales && medicacion.adicionales.length > 0 && (
+                      <div className={styles.indicacionesAdicionales}>
+                        {medicacion.adicionales.map((adicional: MedicacionControl, idx: number) => (
+                          <div key={idx} className={styles.adicionalItem}>
+                            + {adicional.FormaAdicional ? `${adicional.FormaAdicional} - ` : ''}{adicional.NombreMedicamento || adicional.DescripcionMedicamento}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </td>
                 <td>{medicacion.CantidadIndicada || '-'}</td>
                 <td>{medicacion.TipoUnidad || '-'}</td>
                 <td>

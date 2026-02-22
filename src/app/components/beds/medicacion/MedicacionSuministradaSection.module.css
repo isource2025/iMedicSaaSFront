@@ -455,3 +455,33 @@
 	color: #ef4444;
 	font-weight: 500;
 }
+
+/* Indicaciones adicionales */
+.medicamentoContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.medicamentoPrincipal {
+	font-weight: 500;
+	color: var(--ink);
+}
+
+.indicacionesAdicionales {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding-left: 8px;
+	border-left: 2px solid #0083A9;
+	margin-top: 4px;
+}
+
+.adicionalItem {
+	color: #0083A9;
+	font-size: 12px;
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}

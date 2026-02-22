@@ -31,6 +31,8 @@ export interface MedicacionControl {
   IdTurno: number | null;
   NombreMedicamento: string | null;
   DescripcionMedicamento: string | null;
+  NroAdicional: number | null;
+  FormaAdicional: string | null;
 }
 
 export interface MedicacionControlResponse {
