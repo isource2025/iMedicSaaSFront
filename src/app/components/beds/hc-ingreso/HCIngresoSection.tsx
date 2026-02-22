@@ -12,6 +12,8 @@ import {
 } from "@/app/services/hcIngresoService";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
 import { getEmptyExamenFisico } from "@/app/utils/examenFisicoHelpers";
+import { exportHCIToPDF } from "@/app/utils/pdfHCI";
+import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
 import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
 import ExamenFisicoTejidoSubcutaneo from "./examen-fisico/ExamenFisicoTejidoSubcutaneo";
 import ExamenFisicoCabezaForm from "./examen-fisico/ExamenFisicoCabeza";
@@ -93,6 +95,7 @@ export default function HCIngresoSection({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [empresaInfo, setEmpresaInfo] = useState<EmpresaInfo | undefined>(undefined);
     
     // Estado del formulario (para modo add/edit)
     const [formData, setFormData] = useState({
@@ -107,6 +110,19 @@ export default function HCIngresoSection({
 
     // Estado del examen físico
     const [examenFisico, setExamenFisico] = useState<ExamenFisicoCompleto>(getEmptyExamenFisico());
+
+    // Cargar información de empresa al montar
+    useEffect(() => {
+        const cargarEmpresa = async () => {
+            try {
+                const info = await obtenerInfoEmpresa();
+                setEmpresaInfo(info);
+            } catch (err) {
+                console.error("Error al cargar info de empresa:", err);
+            }
+        };
+        cargarEmpresa();
+    }, []);
 
     // Cargar datos desde el backend
     useEffect(() => {
@@ -281,6 +297,32 @@ export default function HCIngresoSection({
         }
     };
 
+    const handleExportPDF = () => {
+        if (!selectedRecord) {
+            alert("Error: No hay registro seleccionado para exportar");
+            return;
+        }
+
+        try {
+            exportHCIToPDF({
+                hcData: selectedRecord,
+                empresaInfo: empresaInfo,
+                patientInfo: {
+                    numeroVisita: numeroVisita || undefined,
+                    nombre: patientName,
+                    numeroDocumento: documentoPaciente,
+                    ubicacion: patientLocation,
+                },
+                profesionalInfo: selectedRecord.ProfesionalNombre ? {
+                    nombre: selectedRecord.ProfesionalNombre,
+                } : undefined
+            });
+        } catch (error) {
+            console.error("Error al exportar PDF:", error);
+            alert("Error al generar el PDF");
+        }
+    };
+
     // ===== RENDER: MODO VIEW =====
     if (mode === "view") {
         return (
@@ -376,7 +418,11 @@ export default function HCIngresoSection({
 
                     <div className={styles.toolbarRight}>
                         {/* Botones PDF y Recetario */}
-                        <button className={styles.btnOutline}>
+                        <button 
+                            className={styles.btnOutline}
+                            onClick={handleExportPDF}
+                            disabled={!selectedRecord}
+                        >
                             <span className={styles.btnIcon}>📄</span> PDF
                         </button>
                         <button className={styles.btnOutline}>
@@ -389,7 +435,11 @@ export default function HCIngresoSection({
                 {/* Barra flotante inferior para mobile */}
                 {!loading && !error && (
                 <div className={styles.mobileBottomBar}>
-                    <button className={styles.btnOutline}>
+                    <button 
+                        className={styles.btnOutline}
+                        onClick={handleExportPDF}
+                        disabled={!selectedRecord}
+                    >
                         <span className={styles.btnIcon}>📄</span> PDF
                     </button>
                     <button className={styles.btnOutline}>
