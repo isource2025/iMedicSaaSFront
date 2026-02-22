@@ -142,15 +142,18 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
       const pdfData = medicaciones.map(row => [
         formatearFecha(row.FechaControl),
         formatearHora(row.HoraControl),
+        row.Sector || '-',
         row.NombreMedicamento || row.DescripcionMedicamento || '-',
-        row.Cantidad || '-',
-        obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres)
+        row.CantidadIndicada || '-',
+        row.TipoUnidad || '-',
+        obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres) || obtenerNombreCompleto(row.OperadorApellido, row.OperadorNombres) || '-',
+        row.Cantidad || '-'
       ]);
 
       exportToPDF({
         title: 'Medicación Suministrada',
         subtitle: `Fecha: ${formatSelectedDate()?.diaSemana} ${formatSelectedDate()?.diaMes}, ${formatSelectedDate()?.mes}`,
-        headers: ['Fecha', 'Hora', 'Medicamento', 'Cantidad', 'Profesional'],
+        headers: ['Fecha', 'Hora', 'Sector', 'Medicamento', 'Aplicado', 'Unidad', 'Profesional', 'Cantidad Total'],
         data: pdfData,
         fileName: `medicacion_${selectedDate?.toISOString().split('T')[0]}.pdf`,
         orientation: 'landscape',
@@ -277,12 +280,12 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
             <tr>
               <th>Fecha</th>
               <th>Hora</th>
+              <th>Sector</th>
               <th>Nombre</th>
-              <th>Cantidad</th>
-              <th>Unidad</th>
-              <th>Operador</th>
+              <th>Aplicado</th>
+              <th>Tipo Unidad</th>
               <th>Profesional</th>
-              <th>Observaciones</th>
+              <th>Cantidad Total</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -291,24 +294,20 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
               <tr key={medicacion.IDCtrlMedica}>
                 <td>{formatearFecha(medicacion.FechaControl)}</td>
                 <td>{formatearHora(medicacion.HoraControl)}</td>
+                <td>{medicacion.Sector || '-'}</td>
                 <td>{medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || '-'}</td>
-                <td>{medicacion.Cantidad || '-'}</td>
+                <td>{medicacion.CantidadIndicada || '-'}</td>
                 <td>{medicacion.TipoUnidad || '-'}</td>
-                <td>
-                  {obtenerNombreCompleto(
-                    medicacion.OperadorApellido,
-                    medicacion.OperadorNombres
-                  )}
-                </td>
                 <td>
                   {obtenerNombreCompleto(
                     medicacion.ProfesionalApellido,
                     medicacion.ProfesionalNombres
-                  )}
+                  ) || obtenerNombreCompleto(
+                    medicacion.OperadorApellido,
+                    medicacion.OperadorNombres
+                  ) || '-'}
                 </td>
-                <td className={styles.observaciones}>
-                  {medicacion.Observaciones || '-'}
-                </td>
+                <td>{medicacion.Cantidad || '-'}</td>
                 <td>
                   <div className={styles.actionButtons}>
                     <button
