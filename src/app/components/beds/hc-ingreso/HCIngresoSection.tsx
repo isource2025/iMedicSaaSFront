@@ -102,7 +102,9 @@ export default function HCIngresoSection({
         fecha: "",
         hora: "",
         profesionalId: "",
+        profesionalNombre: "",
         sector: "",
+        sectorDescripcion: "",
         motivoConsulta: "",
         enfermedadActual: "",
         antecedentes: "",
@@ -177,33 +179,78 @@ export default function HCIngresoSection({
 
     const fechaFormateada = formatSelectedDate();
 
+    // Generar título descriptivo para HC
+    const generarTituloHC = (record: HCIngresoRecord) => {
+        const nombre = patientName || "Paciente";
+        const fecha = record.FechaFormateada || "Sin fecha";
+        const hora = record.HoraFormateada || "";
+        return `HC ${nombre} ${fecha} ${hora}`.trim();
+    };
+
     // Handlers
     const handleAdd = () => {
+        // Obtener datos del localStorage
+        const userDataStr = localStorage.getItem('userData');
+        const sectorSeleccionado = localStorage.getItem('sectorSeleccionado');
+        
+        let profesionalId = "";
+        let profesionalNombre = "";
+        let sector = sectorSeleccionado || "";
+        
+        if (userDataStr) {
+            try {
+                const userData = JSON.parse(userDataStr);
+                profesionalId = String(userData.CodOperador || "");
+                profesionalNombre = `${userData.Apellido || ""} ${userData.Nombres || ""}`.trim();
+            } catch (e) {
+                console.error("Error al parsear userData:", e);
+            }
+        }
+        
+        // Fecha y hora actual
+        const now = new Date();
+        const fecha = now.toISOString().split("T")[0];
+        const hora = now.toTimeString().slice(0, 5);
+        
         setFormData({
-            fecha: new Date().toISOString().split("T")[0],
-            hora: new Date().toTimeString().slice(0, 5),
-            profesionalId: "",
-            sector: "",
+            fecha,
+            hora,
+            profesionalId,
+            profesionalNombre,
+            sector,
+            sectorDescripcion: sector, // Por ahora usamos el mismo valor
             motivoConsulta: "",
             enfermedadActual: "",
             antecedentes: "",
         });
-        setActiveSection("antecedentes");
+        setActiveSection("motivo");
         setMode("add");
     };
 
     const handleEdit = () => {
         if (!selectedRecord) return;
+        
+        // Extraer fecha y hora del campo Fecha si existe
+        let fecha = "";
+        let hora = "";
+        if (selectedRecord.Fecha) {
+            const fechaObj = new Date(selectedRecord.Fecha);
+            fecha = fechaObj.toISOString().split("T")[0];
+            hora = fechaObj.toTimeString().slice(0, 5);
+        }
+        
         setFormData({
-            fecha: "", // Fecha no disponible en el modelo actual
-            hora: "", // Hora no disponible en el modelo actual
+            fecha: fecha || new Date().toISOString().split("T")[0],
+            hora: hora || new Date().toTimeString().slice(0, 5),
             profesionalId: String(selectedRecord.IdProfecional || ""),
+            profesionalNombre: selectedRecord.ProfesionalNombre || "",
             sector: selectedRecord.IdSector,
-            motivoConsulta: selectedRecord.MotivoConsulta,
-            enfermedadActual: selectedRecord.EnfermedadActual,
+            sectorDescripcion: selectedRecord.SectorDescripcion || selectedRecord.IdSector,
+            motivoConsulta: selectedRecord.MotivoConsulta || "",
+            enfermedadActual: selectedRecord.EnfermedadActual || "",
             antecedentes: (selectedRecord as any).Antecedentes || "",
         });
-        setActiveSection("antecedentes");
+        setActiveSection("motivo");
         setMode("edit");
     };
 
@@ -368,7 +415,7 @@ export default function HCIngresoSection({
                             >
                                 <span className={styles.dropdownValue}>
                                     {selectedRecord 
-                                        ? `${selectedRecord.FechaFormateada || "-"} ${selectedRecord.HoraFormateada || ""} - ${selectedRecord.SectorDescripcion || selectedRecord.IdSector}`
+                                        ? generarTituloHC(selectedRecord)
                                         : "Seleccionar ingreso..."}
                                 </span>
                                 <span className={styles.dropdownArrow}>{dropdownOpen ? "▲" : "▼"}</span>
@@ -384,7 +431,7 @@ export default function HCIngresoSection({
                                                 setDropdownOpen(false);
                                             }}
                                         >
-                                            {record.FechaFormateada || "-"} {record.HoraFormateada || ""} - {record.SectorDescripcion || record.IdSector}
+                                            {generarTituloHC(record)}
                                         </li>
                                     ))}
                                 </ul>
@@ -568,12 +615,13 @@ export default function HCIngresoSection({
 
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>ID Profesional</label>
+                                    <label className={styles.formLabel}>Profesional</label>
                                     <input
                                         type="text"
                                         className={styles.formInput}
-                                        value={formData.profesionalId}
-                                        onChange={(e) => setFormData({ ...formData, profesionalId: e.target.value })}
+                                        value={formData.profesionalNombre || "No especificado"}
+                                        disabled
+                                        title={`ID: ${formData.profesionalId}`}
                                     />
                                 </div>
                                 <div className={styles.formGroup}>
@@ -581,8 +629,8 @@ export default function HCIngresoSection({
                                     <input
                                         type="text"
                                         className={styles.formInput}
-                                        value={formData.sector}
-                                        onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
+                                        value={formData.sectorDescripcion || formData.sector || "No especificado"}
+                                        disabled
                                     />
                                 </div>
                             </div>
