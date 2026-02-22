@@ -15,6 +15,7 @@ import styles from './MedicacionSuministradaSection.module.css';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { IoEyeOutline, IoTrashOutline } from 'react-icons/io5';
 
 interface MedicacionSuministradaSectionProps {
   numeroVisita: number | null;
@@ -327,21 +328,21 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                   </div>
                 </td>
                 <td>{medicacion.Cantidad || '-'}</td>
-                <td>
-                  <div className={styles.actionButtons}>
+                <td className={styles.cellAccion}>
+                  <div className={styles.actionBtns}>
                     <button
-                      className={styles.btnDetalle}
+                      className={styles.btnAction}
                       onClick={() => handleVerDetalle(medicacion)}
                       title="Ver detalle"
                     >
-                      Ver detalle
+                      <IoEyeOutline color="#5BC0DE" size="18px" />
                     </button>
                     <button
-                      className={styles.btnEliminar}
+                      className={styles.btnAction}
                       onClick={() => handleEliminar(medicacion)}
                       title="Eliminar registro"
                     >
-                      Eliminar
+                      <IoTrashOutline color="#5BC0DE" size="18px" />
                     </button>
                   </div>
                 </td>
