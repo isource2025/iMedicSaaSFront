@@ -12,7 +12,8 @@ import {
 } from "@/app/services/hcIngresoService";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
 import { getEmptyExamenFisico } from "@/app/utils/examenFisicoHelpers";
-import { exportHCIToPDF } from "@/app/utils/pdfHCI";
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
 import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
 import ExamenFisicoTejidoSubcutaneo from "./examen-fisico/ExamenFisicoTejidoSubcutaneo";
@@ -181,10 +182,10 @@ export default function HCIngresoSection({
 
     // Generar título descriptivo para HC
     const generarTituloHC = (record: HCIngresoRecord) => {
-        const nombre = patientName || "Paciente";
         const fecha = record.FechaFormateada || "Sin fecha";
         const hora = record.HoraFormateada || "";
-        return `HC ${nombre} ${fecha} ${hora}`.trim();
+        const sector = record.SectorDescripcion || record.IdSector || "";
+        return `${fecha} ${hora} - ${sector}`.trim();
     };
 
     // Handlers
@@ -344,29 +345,26 @@ export default function HCIngresoSection({
         }
     };
 
-    const handleExportPDF = () => {
-        if (!selectedRecord) {
-            alert("Error: No hay registro seleccionado para exportar");
-            return;
-        }
+    const handleExport = async (option: ExportOption, data: any[]) => {
+        if (option === 'pdf' && selectedRecord) {
+            const empresaInfo = await obtenerInfoEmpresa();
+            const pdfData = [
+                ['Fecha', selectedRecord.FechaFormateada || '-'],
+                ['Hora', selectedRecord.HoraFormateada || '-'],
+                ['Profesional', selectedRecord.ProfesionalNombre || '-'],
+                ['Sector', selectedRecord.SectorDescripcion || selectedRecord.IdSector || '-'],
+                ['Motivo de Consulta', selectedRecord.MotivoConsulta || '-'],
+                ['Enfermedad Actual', selectedRecord.EnfermedadActual || '-'],
+            ];
 
-        try {
-            exportHCIToPDF({
-                hcData: selectedRecord,
-                empresaInfo: empresaInfo,
-                patientInfo: {
-                    numeroVisita: numeroVisita || undefined,
-                    nombre: patientName,
-                    numeroDocumento: documentoPaciente,
-                    ubicacion: patientLocation,
-                },
-                profesionalInfo: selectedRecord.ProfesionalNombre ? {
-                    nombre: selectedRecord.ProfesionalNombre,
-                } : undefined
+            exportToPDF({
+                title: 'Historia Clínica de Ingreso',
+                subtitle: `Paciente: ${patientName || 'N/A'} - DNI: ${documentoPaciente || 'N/A'}`,
+                headers: ['Campo', 'Valor'],
+                data: pdfData,
+                empresaInfo,
+                orientation: 'portrait'
             });
-        } catch (error) {
-            console.error("Error al exportar PDF:", error);
-            alert("Error al generar el PDF");
         }
     };
 
@@ -464,17 +462,13 @@ export default function HCIngresoSection({
                     </div>
 
                     <div className={styles.toolbarRight}>
-                        {/* Botones PDF y Recetario */}
-                        <button 
-                            className={styles.btnOutline}
-                            onClick={handleExportPDF}
+                        <ExportButton
+                            data={selectedRecord ? [selectedRecord] : []}
+                            fileName={`hc_ingreso_${numeroVisita}.pdf`}
+                            onExport={handleExport}
+                            options={['pdf']}
                             disabled={!selectedRecord}
-                        >
-                            <span className={styles.btnIcon}>📄</span> PDF
-                        </button>
-                        <button className={styles.btnOutline}>
-                            + Recetario
-                        </button>
+                        />
                     </div>
                 </div>
                 )}
@@ -482,16 +476,13 @@ export default function HCIngresoSection({
                 {/* Barra flotante inferior para mobile */}
                 {!loading && !error && (
                 <div className={styles.mobileBottomBar}>
-                    <button 
-                        className={styles.btnOutline}
-                        onClick={handleExportPDF}
+                    <ExportButton
+                        data={selectedRecord ? [selectedRecord] : []}
+                        fileName={`hc_ingreso_${numeroVisita}.pdf`}
+                        onExport={handleExport}
+                        options={['pdf']}
                         disabled={!selectedRecord}
-                    >
-                        <span className={styles.btnIcon}>📄</span> PDF
-                    </button>
-                    <button className={styles.btnOutline}>
-                        + Recetario
-                    </button>
+                    />
                 </div>
                 )}
 
