@@ -399,11 +399,24 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                     {formatearHora(selectedMedicacion.HoraControl)}
                   </span>
                 </div>
-                <div className={styles.detailItem}>
+                <div className={styles.detailItemFull}>
                   <span className={styles.detailLabel}>Medicamento:</span>
-                  <span className={styles.detailValue}>
-                    {selectedMedicacion.NombreMedicamento || selectedMedicacion.DescripcionMedicamento || '-'}
-                  </span>
+                  <div className={styles.detailValue}>
+                    <div className={styles.medicamentoContainer}>
+                      <span className={styles.medicamentoPrincipal}>
+                        {selectedMedicacion.NombreMedicamento || selectedMedicacion.DescripcionMedicamento || '-'}
+                      </span>
+                      {selectedMedicacion.adicionales && selectedMedicacion.adicionales.length > 0 && (
+                        <div className={styles.indicacionesAdicionales}>
+                          {selectedMedicacion.adicionales.map((adicional: MedicacionControl, idx: number) => (
+                            <div key={idx} className={styles.adicionalItem}>
+                              + {adicional.FormaAdicional ? `${adicional.FormaAdicional} - ` : ''}{adicional.NombreMedicamento || adicional.DescripcionMedicamento}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Troquel:</span>
@@ -418,7 +431,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                   </span>
                 </div>
                 <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Cantidad:</span>
+                  <span className={styles.detailLabel}>Cantidad Aplicada:</span>
                   <span className={styles.detailValue}>
                     {selectedMedicacion.Cantidad || '-'}
                   </span>
@@ -442,22 +455,30 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                   </span>
                 </div>
                 <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Operador:</span>
-                  <span className={styles.detailValue}>
-                    {obtenerNombreCompleto(
-                      selectedMedicacion.OperadorApellido,
-                      selectedMedicacion.OperadorNombres
-                    )}
-                  </span>
+                  <span className={styles.detailLabel}>Operador Carga:</span>
+                  <div className={styles.detailValue}>
+                    <div className={styles.profesionalContainer}>
+                      <div className={styles.profesionalPrimary}>
+                        {selectedMedicacion.OperadorCarga || '-'}
+                      </div>
+                      <div className={styles.profesionalSub}>
+                        {selectedMedicacion.OperadorFullName || ''}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Profesional:</span>
-                  <span className={styles.detailValue}>
-                    {obtenerNombreCompleto(
-                      selectedMedicacion.ProfesionalApellido,
-                      selectedMedicacion.ProfesionalNombres
-                    )}
-                  </span>
+                  <span className={styles.detailLabel}>Profesional Asiste:</span>
+                  <div className={styles.detailValue}>
+                    <div className={styles.profesionalContainer}>
+                      <div className={styles.profesionalPrimary}>
+                        {selectedMedicacion.Profesional || '-'}
+                      </div>
+                      <div className={styles.profesionalSub}>
+                        {selectedMedicacion.ProfesionalFullName || ''}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Módulo Origen:</span>

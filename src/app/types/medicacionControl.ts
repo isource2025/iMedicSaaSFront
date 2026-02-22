@@ -35,6 +35,7 @@ export interface MedicacionControl {
   DescripcionMedicamento: string | null;
   NroAdicional: number | null;
   FormaAdicional: string | null;
+  adicionales?: MedicacionControl[]; // Indicaciones adicionales agrupadas (viene del backend)
 }
 
 export interface MedicacionControlResponse {
