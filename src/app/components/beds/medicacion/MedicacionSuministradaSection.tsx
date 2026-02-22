@@ -340,13 +340,14 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                 <td>{medicacion.CantidadIndicada || '-'}</td>
                 <td>{medicacion.TipoUnidad || '-'}</td>
                 <td>
-                  {obtenerNombreCompleto(
-                    medicacion.ProfesionalApellido,
-                    medicacion.ProfesionalNombres
-                  ) || obtenerNombreCompleto(
-                    medicacion.OperadorApellido,
-                    medicacion.OperadorNombres
-                  ) || '-'}
+                  <div className={styles.profesionalContainer}>
+                    <div className={styles.profesionalPrimary}>
+                      {medicacion.Profesional || medicacion.OperadorCarga || '-'}
+                    </div>
+                    <div className={styles.profesionalSub}>
+                      {medicacion.ProfesionalFullName || medicacion.OperadorFullName || ''}
+                    </div>
+                  </div>
                 </td>
                 <td>{medicacion.Cantidad || '-'}</td>
                 <td>

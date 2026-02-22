@@ -16,9 +16,11 @@ export interface MedicacionControl {
   OperadorCarga: number | null;
   OperadorApellido: string | null;
   OperadorNombres: string | null;
+  OperadorFullName: string | null;
   Profesional: number | null;
   ProfesionalApellido: string | null;
   ProfesionalNombres: string | null;
+  ProfesionalFullName: string | null;
   FechaControl: string | null; // DateTime convertido a string
   HoraControl: string | null; // Formato HH:mm:ss
   Troquel: number | null;
