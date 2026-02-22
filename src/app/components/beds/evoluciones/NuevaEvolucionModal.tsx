@@ -89,13 +89,28 @@ export default function NuevaEvolucionModal({
     const [form, setForm] = useState<NuevaEvolucionPayload>(initial);
     const [loading, setLoading] = useState(false);
 
+    // Inicializar form con valores por defecto cuando se abre en modo creación
+    useEffect(() => {
+        if (!idEvolucion) {
+            setForm(emptyPayload(
+                defaultIdVisita, 
+                documentoReal || documentoPaciente || '',
+                idsector || '',
+                idPersonal
+            ));
+        }
+    }, [defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]);
+
     // Cargar datos de evolución cuando idEvolucion está presente (modo edición)
     useEffect(() => {
         const loadEvolucion = async () => {
             if (idEvolucion) {
                 setLoading(true);
                 try {
+                    console.log('🔍 Cargando evolución con ID:', idEvolucion);
                     const evolucion = await evolucionesService.getEvolucionById(idEvolucion);
+                    console.log('✅ Evolución cargada:', evolucion);
+                    
                     if (evolucion) {
                         setForm({
                             IdVisita: evolucion.idVisita,
@@ -108,24 +123,16 @@ export default function NuevaEvolucionModal({
                         });
                     }
                 } catch (error) {
-                    console.error('Error al cargar evolución:', error);
+                    console.error('❌ Error al cargar evolución:', error);
                     alert('Error al cargar los datos de la evolución');
                 } finally {
                     setLoading(false);
                 }
-            } else {
-                // Modo creación - usar valores por defecto
-                setForm(emptyPayload(
-                    defaultIdVisita, 
-                    documentoReal || documentoPaciente || '',
-                    idsector || '',
-                    idPersonal
-                ));
             }
         };
 
         loadEvolucion();
-    }, [idEvolucion, defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]);
+    }, [idEvolucion]);
 
     const set = (field: keyof NuevaEvolucionPayload, value: any) =>
         setForm((prev) => ({ ...prev, [field]: value }));
