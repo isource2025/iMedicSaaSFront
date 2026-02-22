@@ -4,7 +4,12 @@ import { useState, useMemo, useEffect } from "react";
 import styles from "./HCIngresoSection.module.css";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";
-import { obtenerHCIngresoPorVisita } from "@/app/services/hcIngresoService";
+import { 
+    obtenerHCIngresoPorVisita, 
+    crearHCIngreso, 
+    actualizarHCIngreso, 
+    eliminarHCIngreso 
+} from "@/app/services/hcIngresoService";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
 import { getEmptyExamenFisico } from "@/app/utils/examenFisicoHelpers";
 import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
@@ -190,16 +195,89 @@ export default function HCIngresoSection({
         setMode("view");
     };
 
-    const handleSave = () => {
-        // TODO: Implementar guardado real
-        console.log("Guardando:", formData);
-        setMode("view");
+    const handleSave = async () => {
+        if (!numeroVisita) {
+            alert("Error: No hay número de visita");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Preparar datos para guardar
+            const dataToSave: Partial<HCIngresoRecord> = {
+                NumeroVisita: numeroVisita,
+                IdSector: formData.sector,
+                MotivoConsulta: formData.motivoConsulta,
+                EnfermedadActual: formData.enfermedadActual,
+                IdProfecional: formData.profesionalId ? parseInt(formData.profesionalId) : undefined,
+            };
+
+            if (mode === "add") {
+                // Crear nueva HC
+                const result = await crearHCIngreso(dataToSave);
+                console.log("HC creada exitosamente:", result);
+                
+                // Recargar datos
+                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                setRecords(data);
+                
+                // Seleccionar el nuevo registro
+                if (result.IdHCIngreso) {
+                    setSelectedRecordId(result.IdHCIngreso);
+                }
+            } else if (mode === "edit" && selectedRecordId) {
+                // Actualizar HC existente
+                await actualizarHCIngreso(selectedRecordId, dataToSave);
+                console.log("HC actualizada exitosamente");
+                
+                // Recargar datos
+                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                setRecords(data);
+            }
+
+            setMode("view");
+        } catch (error) {
+            console.error("Error al guardar HC:", error);
+            setError(error instanceof Error ? error.message : "Error al guardar la historia clínica");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleDelete = () => {
-        // TODO: Implementar borrado real
-        if (confirm("¿Está seguro de que desea borrar este registro?")) {
-            console.log("Borrando:", selectedRecordId);
+    const handleDelete = async () => {
+        if (!selectedRecordId || !numeroVisita) {
+            alert("Error: No hay registro seleccionado");
+            return;
+        }
+
+        if (!confirm("¿Está seguro de que desea eliminar este registro de Historia Clínica?")) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            await eliminarHCIngreso(selectedRecordId);
+            console.log("HC eliminada exitosamente");
+
+            // Recargar datos
+            const data = await obtenerHCIngresoPorVisita(numeroVisita);
+            setRecords(data);
+
+            // Seleccionar el primer registro si existe
+            if (data.length > 0) {
+                setSelectedRecordId(data[0].IdHCIngreso);
+            } else {
+                setSelectedRecordId(null);
+            }
+        } catch (error) {
+            console.error("Error al eliminar HC:", error);
+            setError(error instanceof Error ? error.message : "Error al eliminar la historia clínica");
+        } finally {
+            setLoading(false);
         }
     };
 
