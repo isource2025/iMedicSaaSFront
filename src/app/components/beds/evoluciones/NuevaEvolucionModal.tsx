@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import styles from "./NuevaEvolucionModal.module.css";
 import { NuevaEvolucionPayload } from "../../../types/evoluciones";
 import { useAppContext } from "@/app/contexts/AppContext";
+import { evolucionesService } from "../../../services/evolucionesService";
 
 interface NuevaEvolucionModalProps {
     onClose: () => void;
@@ -86,15 +87,45 @@ export default function NuevaEvolucionModal({
         [defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]
     );
     const [form, setForm] = useState<NuevaEvolucionPayload>(initial);
+    const [loading, setLoading] = useState(false);
 
+    // Cargar datos de evolución cuando idEvolucion está presente (modo edición)
     useEffect(() => {
-        setForm(emptyPayload(
-            defaultIdVisita, 
-            documentoReal || documentoPaciente || '',
-            idsector || '',
-            idPersonal
-        ));
-    }, [defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]);
+        const loadEvolucion = async () => {
+            if (idEvolucion) {
+                setLoading(true);
+                try {
+                    const evolucion = await evolucionesService.getEvolucionById(idEvolucion);
+                    if (evolucion) {
+                        setForm({
+                            IdVisita: evolucion.idVisita,
+                            FechaEv: evolucion.fechaEv,
+                            HoraEv: evolucion.horaEv,
+                            IdSector: evolucion.idSector || '',
+                            Evolucion: evolucion.evolucion,
+                            NumeroDocumento: evolucion.numeroDocumento || '',
+                            Profecional: evolucion.profesional,
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al cargar evolución:', error);
+                    alert('Error al cargar los datos de la evolución');
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+                // Modo creación - usar valores por defecto
+                setForm(emptyPayload(
+                    defaultIdVisita, 
+                    documentoReal || documentoPaciente || '',
+                    idsector || '',
+                    idPersonal
+                ));
+            }
+        };
+
+        loadEvolucion();
+    }, [idEvolucion, defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]);
 
     const set = (field: keyof NuevaEvolucionPayload, value: any) =>
         setForm((prev) => ({ ...prev, [field]: value }));
