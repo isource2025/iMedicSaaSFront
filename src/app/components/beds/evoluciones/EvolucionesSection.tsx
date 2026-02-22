@@ -124,7 +124,15 @@ export default function EvolucionesSection({
                 ...data,
                 IdVisita: data.IdVisita ?? numeroVisita ?? 0,
             };
-            await evolucionesService.postNuevaEvolucion(finalPayload);
+            
+            if (selectedId) {
+                // Modo edición - actualizar evolución existente
+                await evolucionesService.updateEvolucion(selectedId, finalPayload);
+            } else {
+                // Modo creación - crear nueva evolución
+                await evolucionesService.postNuevaEvolucion(finalPayload);
+            }
+            
             return finalPayload;
         } catch (err) {
             if (err instanceof Error) {
