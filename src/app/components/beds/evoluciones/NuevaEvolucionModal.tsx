@@ -89,50 +89,37 @@ export default function NuevaEvolucionModal({
     const [form, setForm] = useState<NuevaEvolucionPayload>(initial);
     const [loading, setLoading] = useState(false);
 
-    // Inicializar form con valores por defecto cuando se abre en modo creación
+    // Cargar datos - exactamente igual que en NuevaIndicacionModal
     useEffect(() => {
-        if (!idEvolucion) {
-            setForm(emptyPayload(
-                defaultIdVisita, 
-                documentoReal || documentoPaciente || '',
-                idsector || '',
-                idPersonal
-            ));
-        }
-    }, [defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]);
+        (async () => {
+            setLoading(true);
 
-    // Cargar datos de evolución cuando idEvolucion está presente (modo edición)
-    useEffect(() => {
-        const loadEvolucion = async () => {
-            if (idEvolucion) {
-                setLoading(true);
-                try {
+            try {
+                if (idEvolucion) {
                     console.log('🔍 Cargando evolución con ID:', idEvolucion);
-                    const evolucion = await evolucionesService.getEvolucionById(idEvolucion);
-                    console.log('✅ Evolución cargada:', evolucion);
-                    
-                    if (evolucion) {
-                        setForm({
-                            IdVisita: evolucion.idVisita,
-                            FechaEv: evolucion.fechaEv,
-                            HoraEv: evolucion.horaEv,
-                            IdSector: evolucion.idSector || '',
-                            Evolucion: evolucion.evolucion,
-                            NumeroDocumento: evolucion.numeroDocumento || '',
-                            Profecional: evolucion.profesional,
-                        });
-                    }
-                } catch (error) {
-                    console.error('❌ Error al cargar evolución:', error);
-                    alert('Error al cargar los datos de la evolución');
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
+                    const res = await evolucionesService.getEvolucionById(idEvolucion);
 
-        loadEvolucion();
-    }, [idEvolucion]);
+                    if (res) {
+                        console.log('✅ Evolución cargada:', res);
+                        setForm((prev) => ({
+                            ...prev,
+                            IdVisita: res.idVisita,
+                            FechaEv: res.fechaEv,
+                            HoraEv: res.horaEv,
+                            IdSector: res.idSector || '',
+                            Evolucion: res.evolucion,
+                            NumeroDocumento: res.numeroDocumento || '',
+                            Profecional: res.profesional,
+                        }));
+                    }
+                }
+            } catch (err) {
+                console.error('❌ Error al cargar evolución:', err);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
 
     const set = (field: keyof NuevaEvolucionPayload, value: any) =>
         setForm((prev) => ({ ...prev, [field]: value }));
