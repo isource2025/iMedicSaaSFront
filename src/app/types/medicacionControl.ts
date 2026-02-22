@@ -9,7 +9,7 @@ export interface MedicacionControl {
   NroIndicacion: number | null;
   ModuloOrigen: string | null;
   TipoMedicamento: string | null;
-  NumeroVisita: number | null;
+  NumeroVisita: number;
   Sector: string | null;
   FechaCarga: string | null; // DateTime convertido a string
   HoraCarga: string | null; // Formato HH:mm:ss
@@ -26,9 +26,11 @@ export interface MedicacionControl {
   TipoUnidad: string | null;
   Observaciones: string | null;
   IDCliente: number | null;
-  Status: number | null;
+  Status: string | null;
   CantidadIndicada: number | null;
   IdTurno: number | null;
+  NombreMedicamento: string | null;
+  DescripcionMedicamento: string | null;
 }
 
 export interface MedicacionControlResponse {

@@ -107,7 +107,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   };
 
   const handleEliminar = async (medicacion: MedicacionControl) => {
-    if (!confirm(`¿Está seguro que desea eliminar este registro de medicación?\n\nTroquel: ${medicacion.Troquel}\nFecha: ${formatearFecha(medicacion.FechaControl)}\nHora: ${formatearHora(medicacion.HoraControl)}`)) {
+    if (!confirm(`¿Está seguro que desea eliminar este registro de medicación?\n\nMedicamento: ${medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || medicacion.Troquel}\nFecha: ${formatearFecha(medicacion.FechaControl)}\nHora: ${formatearHora(medicacion.HoraControl)}`)) {
       return;
     }
 
@@ -142,7 +142,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
       const pdfData = medicaciones.map(row => [
         formatearFecha(row.FechaControl),
         formatearHora(row.HoraControl),
-        row.Troquel || '-',
+        row.NombreMedicamento || row.DescripcionMedicamento || '-',
         row.Cantidad || '-',
         obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres)
       ]);
@@ -150,7 +150,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
       exportToPDF({
         title: 'Medicación Suministrada',
         subtitle: `Fecha: ${formatSelectedDate()?.diaSemana} ${formatSelectedDate()?.diaMes}, ${formatSelectedDate()?.mes}`,
-        headers: ['Fecha', 'Hora', 'Troquel', 'Cantidad', 'Profesional'],
+        headers: ['Fecha', 'Hora', 'Medicamento', 'Cantidad', 'Profesional'],
         data: pdfData,
         fileName: `medicacion_${selectedDate?.toISOString().split('T')[0]}.pdf`,
         orientation: 'landscape',
@@ -277,7 +277,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
             <tr>
               <th>Fecha</th>
               <th>Hora</th>
-              <th>Troquel</th>
+              <th>Nombre</th>
               <th>Cantidad</th>
               <th>Unidad</th>
               <th>Operador</th>
@@ -291,7 +291,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
               <tr key={medicacion.IDCtrlMedica}>
                 <td>{formatearFecha(medicacion.FechaControl)}</td>
                 <td>{formatearHora(medicacion.HoraControl)}</td>
-                <td>{medicacion.Troquel || '-'}</td>
+                <td>{medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || '-'}</td>
                 <td>{medicacion.Cantidad || '-'}</td>
                 <td>{medicacion.TipoUnidad || '-'}</td>
                 <td>
@@ -379,6 +379,12 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                   <span className={styles.detailLabel}>Hora de Control:</span>
                   <span className={styles.detailValue}>
                     {formatearHora(selectedMedicacion.HoraControl)}
+                  </span>
+                </div>
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Medicamento:</span>
+                  <span className={styles.detailValue}>
+                    {selectedMedicacion.NombreMedicamento || selectedMedicacion.DescripcionMedicamento || '-'}
                   </span>
                 </div>
                 <div className={styles.detailItem}>
