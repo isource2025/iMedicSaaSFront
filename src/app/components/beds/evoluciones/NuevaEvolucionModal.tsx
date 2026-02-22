@@ -101,15 +101,16 @@ export default function NuevaEvolucionModal({
 
                     if (res) {
                         console.log('✅ Evolución cargada:', res);
+                        const resAny = res as any;
                         setForm((prev) => ({
                             ...prev,
-                            IdVisita: res.idVisita,
-                            FechaEv: res.fechaEv,
-                            HoraEv: res.horaEv,
-                            IdSector: res.idSector || '',
-                            Evolucion: res.evolucion,
-                            NumeroDocumento: res.numeroDocumento || '',
-                            Profecional: res.profesional,
+                            IdVisita: resAny.IdVisita || res.idVisita,
+                            FechaEv: resAny.FechaEv || res.fechaEv,
+                            HoraEv: resAny.HoraEv || res.horaEv,
+                            IdSector: resAny.IdSector || res.idSector || '',
+                            Evolucion: resAny.Evolucion || res.evolucion,
+                            NumeroDocumento: resAny.NumeroDocumento || res.numeroDocumento || '',
+                            Profecional: resAny.Profecional || res.profesional,
                         }));
                     }
                 }
