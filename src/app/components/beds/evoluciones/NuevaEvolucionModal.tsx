@@ -222,14 +222,14 @@ export default function NuevaEvolucionModal({
                     </label>
                     <textarea
                         className={styles.textarea}
-                        value={form.Evolucion}
+                        value={form.Evolucion || ''}
                         onChange={(e) => set("Evolucion", e.target.value)}
                         placeholder="Ingrese la evolución médica del paciente..."
                         rows={10}
                         required
                     />
                     <div className={styles.charCount}>
-                        {form.Evolucion.length} caracteres
+                        {(form.Evolucion || '').length} caracteres
                     </div>
                 </div>
             </div>

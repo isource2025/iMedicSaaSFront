@@ -236,6 +236,8 @@ export default function IndicacionForm({
 
                     if (res) {
                         console.log("Indicacion loaded:", res);
+                        console.log("Indicaciones hijas:", (res as any).indicacionesHijas);
+                        
                         setForm((prev) => ({
                             ...prev,
                             // ids / relación
@@ -282,6 +284,22 @@ export default function IndicacionForm({
                             FormaAdicional: res.FormaAdicional,
                             ExcluidoDeEntrega: res.ExcluidoDeEntrega,
                         }));
+                        
+                        // Cargar indicaciones hijas si existen
+                        if ((res as any).indicacionesHijas && Array.isArray((res as any).indicacionesHijas)) {
+                            const hijas = (res as any).indicacionesHijas.map((h: any) => ({
+                                id: String(h.nroIndicacion || ''),
+                                formaAdicional: h.formaAdicional || null,
+                                codigo: h.codigo || null,
+                                aliasMedicamento: h.medicamento || h.descripcion || null,
+                                cantidad: h.cantidad || null,
+                                tipoUnidad: h.tipoUnidad || null,
+                                frecuencia: h.frecuencia || null,
+                                observaciones: h.observaciones || null,
+                            }));
+                            setIndicacionesHijas(hijas);
+                            console.log("✅ Indicaciones hijas cargadas:", hijas);
+                        }
                     }
                 }
             } catch (err) {
