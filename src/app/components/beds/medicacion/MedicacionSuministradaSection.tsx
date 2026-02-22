@@ -84,45 +84,22 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
     isArray: Array.isArray(data)
   });
 
-  // Extraer medicaciones del data (soporta tanto array directo como wrapper {data:[]})
-  const medicaciones: MedicacionControl[] = useMemo(() => {
+  // Extraer medicaciones del data (ya vienen agrupadas desde el backend)
+  const medicacionesAgrupadas = useMemo(() => {
     console.log('🔵 [MedicacionSuministrada] Processing data:', data);
     
-    const list: MedicacionControl[] = Array.isArray(data)
+    const list = Array.isArray(data)
       ? data
       : data && Array.isArray((data as any).data)
       ? (data as any).data
       : [];
     
-    console.log('🔵 [MedicacionSuministrada] Extracted list:', list);
+    console.log('🔵 [MedicacionSuministrada] Medicaciones agrupadas:', list.length);
+    console.log('🔵 [MedicacionSuministrada] Con adicionales:', 
+      list.filter((m: any) => m.adicionales && m.adicionales.length > 0).length);
+    
     return list;
   }, [data]);
-
-  // Agrupar medicaciones: principales con sus adicionales
-  const medicacionesAgrupadas = useMemo(() => {
-    const principales: MedicacionControl[] = [];
-    const adicionales = new Map<number, MedicacionControl[]>();
-
-    // Separar principales y adicionales
-    medicaciones.forEach(med => {
-      if (med.NroAdicional && med.NroAdicional > 0) {
-        // Es una indicación adicional
-        if (!adicionales.has(med.NroAdicional)) {
-          adicionales.set(med.NroAdicional, []);
-        }
-        adicionales.get(med.NroAdicional)!.push(med);
-      } else {
-        // Es una indicación principal
-        principales.push(med);
-      }
-    });
-
-    // Agregar las adicionales a cada principal
-    return principales.map(principal => ({
-      ...principal,
-      adicionales: adicionales.get(principal.NroIndicacion || 0) || []
-    }));
-  }, [medicaciones]);
 
   const handleVerDetalle = (medicacion: MedicacionControl) => {
     setSelectedMedicacion(medicacion);
@@ -158,14 +135,14 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   const handleExport = async (option: ExportOption, data: any[]) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const primeraMedicacion = medicaciones[0];
+      const primeraMedicacion = medicacionesAgrupadas[0];
       const profesionalInfo = primeraMedicacion ? {
         nombre: obtenerNombreCompleto(primeraMedicacion.ProfesionalApellido, primeraMedicacion.ProfesionalNombres),
         matricula: undefined,
         especialidad: undefined
       } : undefined;
 
-      const pdfData = medicaciones.map(row => [
+      const pdfData = medicacionesAgrupadas.map((row: any) => [
         formatearFecha(row.FechaControl),
         formatearHora(row.HoraControl),
         row.Sector || '-',
