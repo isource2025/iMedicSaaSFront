@@ -229,7 +229,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
     );
   }
 
-  if (medicaciones.length === 0) {
+  if (medicacionesAgrupadas.length === 0) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -273,7 +273,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
         )}
         <div className={styles.statItem}>
           <span className={styles.statLabel}>Total de registros:</span>
-          <span className={styles.statValue}>{medicaciones.length}</span>
+          <span className={styles.statValue}>{medicacionesAgrupadas.length}</span>
         </div>
       </div>
 
