@@ -550,36 +550,40 @@ export default function HCIngresoSection({
                 <div className={styles.detailPanelFull}>
                     {selectedRecord ? (
                         <div className={styles.detailWrapper}>
-                            {/* Índice de navegación rápida */}
-                            <aside className={styles.detailIndex}>
-                                <div className={styles.indexSticky}>
-                                    <h4 className={styles.indexTitle}>Contenido</h4>
-                                    <nav className={styles.indexNav}>
-                                        {selectedRecord.MotivoConsulta && (
-                                            <a href="#motivo-consulta" className={styles.indexLink}>
-                                                Motivo Consulta
-                                            </a>
-                                        )}
-                                        {selectedRecord.EnfermedadActual && (
-                                            <a href="#enfermedad-actual" className={styles.indexLink}>
-                                                Enfermedad Actual
-                                            </a>
-                                        )}
-                                        {(() => {
-                                            const secciones = getSecciones(selectedRecord);
-                                            return Object.keys(secciones).map(nombreSeccion => (
-                                                <a 
-                                                    key={nombreSeccion}
-                                                    href={`#${nombreSeccion.toLowerCase().replace(/\s+/g, '-')}`}
-                                                    className={styles.indexLink}
-                                                >
-                                                    {nombreSeccion}
-                                                </a>
-                                            ));
-                                        })()}
-                                    </nav>
-                                </div>
-                            </aside>
+                            {/* Índice de navegación con líneas verticales */}
+                            <div className={styles.scrollIndex}>
+                                {selectedRecord.MotivoConsulta && (
+                                    <a 
+                                        href="#motivo-consulta" 
+                                        className={styles.scrollIndexLine}
+                                        title="Motivo Consulta"
+                                    >
+                                        <span className={styles.scrollIndexTooltip}>Motivo Consulta</span>
+                                    </a>
+                                )}
+                                {selectedRecord.EnfermedadActual && (
+                                    <a 
+                                        href="#enfermedad-actual" 
+                                        className={styles.scrollIndexLine}
+                                        title="Enfermedad Actual"
+                                    >
+                                        <span className={styles.scrollIndexTooltip}>Enfermedad Actual</span>
+                                    </a>
+                                )}
+                                {(() => {
+                                    const secciones = getSecciones(selectedRecord);
+                                    return Object.keys(secciones).map(nombreSeccion => (
+                                        <a 
+                                            key={nombreSeccion}
+                                            href={`#${nombreSeccion.toLowerCase().replace(/\s+/g, '-')}`}
+                                            className={styles.scrollIndexLine}
+                                            title={nombreSeccion}
+                                        >
+                                            <span className={styles.scrollIndexTooltip}>{nombreSeccion}</span>
+                                        </a>
+                                    ));
+                                })()}
+                            </div>
 
                             {/* Contenido principal */}
                             <div className={styles.detailContent}>
@@ -641,7 +645,7 @@ export default function HCIngresoSection({
                                     </div>
                                 ));
                             })()}
-                            </div>
+                        </div>
                         </div>
                     ) : records.length === 0 ? (
                         <div className={styles.emptyDetail}>
