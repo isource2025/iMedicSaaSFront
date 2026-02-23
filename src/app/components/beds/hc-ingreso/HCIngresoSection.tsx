@@ -39,22 +39,20 @@ import AntecedentesPersonalesForm from "./examen-fisico/AntecedentesPersonales";
 
 // Secciones de la HC de Ingreso para el modo edición
 const HC_SECTIONS = [
-    { id: "antecedentes", label: "Antecedentes", required: false },
-    { id: "motivo", label: "Motivo y Enfermedad", required: true },
-    { id: "signos-vitales", label: "Signos vitales", required: false },
-    { id: "piel-faneras", label: "Piel y Faneras", required: false },
-    { id: "tejido-subcutaneo", label: "Tejido Subcutáneo", required: false },
-    { id: "sistema-linfatico", label: "Sistema Linfático", required: false },
-    { id: "sistema-osteo", label: "Sistema Osteo-Artículo-Muscular", required: false },
-    { id: "cabeza", label: "Cabeza", required: false },
-    { id: "cuello", label: "Cuello", required: false },
-    { id: "mamas", label: "Mamas", required: false },
-    { id: "sistema-venoso", label: "Sistema Venoso", required: false },
-    { id: "aparato-respiratorio", label: "Aparato Respiratorio", required: false },
-    { id: "aparato-cardiovascular", label: "Aparato Cardiovascular", required: false },
-    { id: "abdomen", label: "Abdomen", required: false },
-    { id: "aparato-urogenital", label: "Aparato Urogenital", required: false },
-    { id: "examen-ginecologico", label: "Examen Ginecológico", required: false },
+    { id: "motivo", label: "Motivo de Consulta" },
+    { id: "signosVitales", label: "Signos Vitales" },
+    { id: "piel", label: "Piel y Faneras" },
+    { id: "tejidoSubcutaneo", label: "Tejido Celular Subcutáneo" },
+    { id: "cabeza", label: "Cabeza" },
+    { id: "cuello", label: "Cuello" },
+    { id: "mamas", label: "Mamas" },
+    { id: "respiratorio", label: "Aparato Respiratorio" },
+    { id: "cardiovascular", label: "Aparato Cardiovascular" },
+    { id: "abdomen", label: "Abdomen" },
+    { id: "urogenital", label: "Aparato Urogenital" },
+    { id: "neurologico", label: "Sistema Nervioso" },
+    { id: "linfatico", label: "Sistema Linfático" },
+    { id: "osteoarticular", label: "Sistema Osteoarticulomuscular" },
     { id: "examen-obstetrico", label: "Examen Obstétrico", required: false },
     { id: "sistema-nervioso", label: "Sistema Nervioso", required: false },
     { id: "examen-oftalmologico", label: "Examen Oftalmológico", required: false },
@@ -65,6 +63,67 @@ const HC_SECTIONS = [
     { id: "plan-terapeutico", label: "Plan Terapéutico", required: false },
     { id: "examen-complementario", label: "Examen Complementario", required: false },
 ];
+
+// Configuración de secciones para vista de detalle
+const SECCIONES_CONFIG: Record<string, string> = {
+    'SV': 'Signos Vitales',
+    'PF': 'Piel y Faneras',
+    'TCS': 'Tejido Celular Subcutáneo',
+    'SL': 'Sistema Linfático',
+    'SOAM': 'Sistema Osteoarticulomuscular',
+    'C': 'Cabeza',
+    'CU': 'Cuello',
+    'M': 'Mamas',
+    'AR': 'Aparato Respiratorio',
+    'ACV': 'Aparato Cardiovascular',
+    'A': 'Abdomen',
+    'AUG': 'Aparato Urogenital',
+    'SN': 'Sistema Nervioso',
+};
+
+// Función para obtener el nombre legible de un campo
+const getNombreCampo = (key: string): string => {
+    const sinPrefijo = key.replace(/^[A-Z]+_/, '');
+    return sinPrefijo
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase())
+        .trim();
+};
+
+// Función para agrupar campos por sección
+const getSecciones = (record: any): Record<string, Array<{campo: string, valor: any}>> => {
+    const secciones: Record<string, Array<{campo: string, valor: any}>> = {};
+    
+    Object.keys(record).forEach(key => {
+        const valor = record[key];
+        
+        // Ignorar campos vacíos, null, undefined o de sistema
+        if (!valor || valor === '' || 
+            ['IdHCIngreso', 'NumeroVisita', 'IdSector', 'IdProfecional', 'Fecha', 
+             'FechaFormateada', 'HoraFormateada', 'ProfesionalNombre', 'SectorDescripcion',
+             'MotivoConsulta', 'EnfermedadActual'].includes(key)) {
+            return;
+        }
+        
+        // Buscar el prefijo de la sección
+        const match = key.match(/^([A-Z]+)_/);
+        if (match) {
+            const prefijo = match[1];
+            const nombreSeccion = SECCIONES_CONFIG[prefijo] || prefijo;
+            
+            if (!secciones[nombreSeccion]) {
+                secciones[nombreSeccion] = [];
+            }
+            
+            secciones[nombreSeccion].push({
+                campo: getNombreCampo(key),
+                valor: valor
+            });
+        }
+    });
+    
+    return secciones;
+};
 
 interface HCIngresoSectionProps {
     bedId?: string | number;
@@ -508,20 +567,43 @@ export default function HCIngresoSection({
                                     {selectedRecord.FechaFormateada && (
                                         <span>Fecha: {selectedRecord.FechaFormateada} {selectedRecord.HoraFormateada || ""}</span>
                                     )}
-                                    <span>Profesional: {selectedRecord.IdProfecional} {selectedRecord.ProfesionalNombre || ""}</span>
+                                    <span>Profesional: {selectedRecord.ProfesionalNombre || selectedRecord.IdProfecional}</span>
                                     <span>Sector: {selectedRecord.SectorDescripcion || selectedRecord.IdSector}</span>
                                 </div>
                             </div>
 
-                            <div className={styles.detailSection}>
-                                <p className={styles.detailLabel}>Motivo Consulta:</p>
-                                <p className={styles.detailText}>{selectedRecord.MotivoConsulta}</p>
-                            </div>
+                            {/* Motivo y Enfermedad Actual */}
+                            {selectedRecord.MotivoConsulta && (
+                                <div className={styles.detailSection}>
+                                    <p className={styles.detailLabel}>Motivo Consulta:</p>
+                                    <p className={styles.detailText}>{selectedRecord.MotivoConsulta}</p>
+                                </div>
+                            )}
 
-                            <div className={styles.detailSection}>
-                                <p className={styles.detailLabel}>Enfermedad Actual:</p>
-                                <p className={styles.detailText}>{selectedRecord.EnfermedadActual}</p>
-                            </div>
+                            {selectedRecord.EnfermedadActual && (
+                                <div className={styles.detailSection}>
+                                    <p className={styles.detailLabel}>Enfermedad Actual:</p>
+                                    <p className={styles.detailText}>{selectedRecord.EnfermedadActual}</p>
+                                </div>
+                            )}
+
+                            {/* Secciones organizadas por prefijo */}
+                            {(() => {
+                                const secciones = getSecciones(selectedRecord);
+                                return Object.keys(secciones).map(nombreSeccion => (
+                                    <div key={nombreSeccion} className={styles.detailSectionGroup}>
+                                        <h4 className={styles.detailSectionTitle}>{nombreSeccion}</h4>
+                                        <div className={styles.detailFieldsGrid}>
+                                            {secciones[nombreSeccion].map(({campo, valor}, idx) => (
+                                                <div key={idx} className={styles.detailField}>
+                                                    <span className={styles.detailFieldLabel}>{campo}:</span>
+                                                    <span className={styles.detailFieldValue}>{valor}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     ) : records.length === 0 ? (
                         <div className={styles.emptyDetail}>

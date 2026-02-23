@@ -540,6 +540,56 @@
     font-size: 0.9rem;
 }
 
+/* ===== VISTA DE DETALLE ESTRUCTURADA ===== */
+.detailSectionGroup {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.detailSectionTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0083A9;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #00B5E2;
+}
+
+.detailFieldsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+}
+
+.detailField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detailFieldLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detailFieldValue {
+    font-size: 0.9rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .detailFieldsGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ===== BARRA DE ACCIONES INFERIOR ===== */
 .actionBar {
     display: flex;
