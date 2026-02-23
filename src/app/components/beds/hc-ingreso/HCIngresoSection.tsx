@@ -549,7 +549,40 @@ export default function HCIngresoSection({
                 {!loading && !error && (
                 <div className={styles.detailPanelFull}>
                     {selectedRecord ? (
-                        <div className={styles.detailContent}>
+                        <div className={styles.detailWrapper}>
+                            {/* Índice de navegación rápida */}
+                            <aside className={styles.detailIndex}>
+                                <div className={styles.indexSticky}>
+                                    <h4 className={styles.indexTitle}>Contenido</h4>
+                                    <nav className={styles.indexNav}>
+                                        {selectedRecord.MotivoConsulta && (
+                                            <a href="#motivo-consulta" className={styles.indexLink}>
+                                                Motivo Consulta
+                                            </a>
+                                        )}
+                                        {selectedRecord.EnfermedadActual && (
+                                            <a href="#enfermedad-actual" className={styles.indexLink}>
+                                                Enfermedad Actual
+                                            </a>
+                                        )}
+                                        {(() => {
+                                            const secciones = getSecciones(selectedRecord);
+                                            return Object.keys(secciones).map(nombreSeccion => (
+                                                <a 
+                                                    key={nombreSeccion}
+                                                    href={`#${nombreSeccion.toLowerCase().replace(/\s+/g, '-')}`}
+                                                    className={styles.indexLink}
+                                                >
+                                                    {nombreSeccion}
+                                                </a>
+                                            ));
+                                        })()}
+                                    </nav>
+                                </div>
+                            </aside>
+
+                            {/* Contenido principal */}
+                            <div className={styles.detailContent}>
                             <h3 className={styles.detailTitle}>HC de Ingreso</h3>
                             <p className={styles.detailPatient}>
                                 {patientName || "PACIENTE"} - DNI: {documentoPaciente || "N/A"}
@@ -574,14 +607,14 @@ export default function HCIngresoSection({
 
                             {/* Motivo y Enfermedad Actual */}
                             {selectedRecord.MotivoConsulta && (
-                                <div className={styles.detailSection}>
+                                <div id="motivo-consulta" className={styles.detailSection}>
                                     <p className={styles.detailLabel}>Motivo Consulta:</p>
                                     <p className={styles.detailText}>{selectedRecord.MotivoConsulta}</p>
                                 </div>
                             )}
 
                             {selectedRecord.EnfermedadActual && (
-                                <div className={styles.detailSection}>
+                                <div id="enfermedad-actual" className={styles.detailSection}>
                                     <p className={styles.detailLabel}>Enfermedad Actual:</p>
                                     <p className={styles.detailText}>{selectedRecord.EnfermedadActual}</p>
                                 </div>
@@ -591,7 +624,11 @@ export default function HCIngresoSection({
                             {(() => {
                                 const secciones = getSecciones(selectedRecord);
                                 return Object.keys(secciones).map(nombreSeccion => (
-                                    <div key={nombreSeccion} className={styles.detailSectionGroup}>
+                                    <div 
+                                        key={nombreSeccion} 
+                                        id={nombreSeccion.toLowerCase().replace(/\s+/g, '-')}
+                                        className={styles.detailSectionGroup}
+                                    >
                                         <h4 className={styles.detailSectionTitle}>{nombreSeccion}</h4>
                                         <div className={styles.detailFieldsGrid}>
                                             {secciones[nombreSeccion].map(({campo, valor}, idx) => (
@@ -604,6 +641,7 @@ export default function HCIngresoSection({
                                     </div>
                                 ));
                             })()}
+                            </div>
                         </div>
                     ) : records.length === 0 ? (
                         <div className={styles.emptyDetail}>
