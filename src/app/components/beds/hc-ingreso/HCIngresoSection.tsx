@@ -407,14 +407,41 @@ export default function HCIngresoSection({
     const handleExport = async (option: ExportOption, data: any[]) => {
         if (option === 'pdf' && selectedRecord) {
             const empresaInfo = await obtenerInfoEmpresa();
-            const pdfData = [
+            
+            // Datos básicos
+            const pdfData: any[] = [
+                ['N. Visita', selectedRecord.NumeroVisita || '-'],
                 ['Fecha', selectedRecord.FechaFormateada || '-'],
                 ['Hora', selectedRecord.HoraFormateada || '-'],
-                ['Profesional', selectedRecord.ProfesionalNombre || '-'],
+                ['Profesional', selectedRecord.ProfesionalNombre || selectedRecord.IdProfecional || '-'],
                 ['Sector', selectedRecord.SectorDescripcion || selectedRecord.IdSector || '-'],
-                ['Motivo de Consulta', selectedRecord.MotivoConsulta || '-'],
-                ['Enfermedad Actual', selectedRecord.EnfermedadActual || '-'],
             ];
+
+            // Agregar Motivo y Enfermedad Actual si existen
+            if (selectedRecord.MotivoConsulta) {
+                pdfData.push(['', '']); // Espacio
+                pdfData.push(['MOTIVO DE CONSULTA', '']);
+                pdfData.push(['', selectedRecord.MotivoConsulta]);
+            }
+
+            if (selectedRecord.EnfermedadActual) {
+                pdfData.push(['', '']); // Espacio
+                pdfData.push(['ENFERMEDAD ACTUAL', '']);
+                pdfData.push(['', selectedRecord.EnfermedadActual]);
+            }
+
+            // Obtener secciones organizadas
+            const secciones = getSecciones(selectedRecord);
+            
+            // Agregar cada sección al PDF
+            Object.keys(secciones).forEach(nombreSeccion => {
+                pdfData.push(['', '']); // Espacio
+                pdfData.push([nombreSeccion.toUpperCase(), '']); // Título de sección
+                
+                secciones[nombreSeccion].forEach(({campo, valor}) => {
+                    pdfData.push([campo, valor]);
+                });
+            });
 
             exportToPDF({
                 title: 'Historia Clínica de Ingreso',
@@ -549,44 +576,7 @@ export default function HCIngresoSection({
                 {!loading && !error && (
                 <div className={styles.detailPanelFull}>
                     {selectedRecord ? (
-                        <div className={styles.detailWrapper}>
-                            {/* Índice de navegación con líneas verticales */}
-                            <div className={styles.scrollIndex}>
-                                {selectedRecord.MotivoConsulta && (
-                                    <a 
-                                        href="#motivo-consulta" 
-                                        className={styles.scrollIndexLine}
-                                        title="Motivo Consulta"
-                                    >
-                                        <span className={styles.scrollIndexTooltip}>Motivo Consulta</span>
-                                    </a>
-                                )}
-                                {selectedRecord.EnfermedadActual && (
-                                    <a 
-                                        href="#enfermedad-actual" 
-                                        className={styles.scrollIndexLine}
-                                        title="Enfermedad Actual"
-                                    >
-                                        <span className={styles.scrollIndexTooltip}>Enfermedad Actual</span>
-                                    </a>
-                                )}
-                                {(() => {
-                                    const secciones = getSecciones(selectedRecord);
-                                    return Object.keys(secciones).map(nombreSeccion => (
-                                        <a 
-                                            key={nombreSeccion}
-                                            href={`#${nombreSeccion.toLowerCase().replace(/\s+/g, '-')}`}
-                                            className={styles.scrollIndexLine}
-                                            title={nombreSeccion}
-                                        >
-                                            <span className={styles.scrollIndexTooltip}>{nombreSeccion}</span>
-                                        </a>
-                                    ));
-                                })()}
-                            </div>
-
-                            {/* Contenido principal */}
-                            <div className={styles.detailContent}>
+                        <div className={styles.detailContent}>
                             <h3 className={styles.detailTitle}>HC de Ingreso</h3>
                             <p className={styles.detailPatient}>
                                 {patientName || "PACIENTE"} - DNI: {documentoPaciente || "N/A"}
@@ -611,14 +601,14 @@ export default function HCIngresoSection({
 
                             {/* Motivo y Enfermedad Actual */}
                             {selectedRecord.MotivoConsulta && (
-                                <div id="motivo-consulta" className={styles.detailSection}>
+                                <div className={styles.detailSection}>
                                     <p className={styles.detailLabel}>Motivo Consulta:</p>
                                     <p className={styles.detailText}>{selectedRecord.MotivoConsulta}</p>
                                 </div>
                             )}
 
                             {selectedRecord.EnfermedadActual && (
-                                <div id="enfermedad-actual" className={styles.detailSection}>
+                                <div className={styles.detailSection}>
                                     <p className={styles.detailLabel}>Enfermedad Actual:</p>
                                     <p className={styles.detailText}>{selectedRecord.EnfermedadActual}</p>
                                 </div>
@@ -628,11 +618,7 @@ export default function HCIngresoSection({
                             {(() => {
                                 const secciones = getSecciones(selectedRecord);
                                 return Object.keys(secciones).map(nombreSeccion => (
-                                    <div 
-                                        key={nombreSeccion} 
-                                        id={nombreSeccion.toLowerCase().replace(/\s+/g, '-')}
-                                        className={styles.detailSectionGroup}
-                                    >
+                                    <div key={nombreSeccion} className={styles.detailSectionGroup}>
                                         <h4 className={styles.detailSectionTitle}>{nombreSeccion}</h4>
                                         <div className={styles.detailFieldsGrid}>
                                             {secciones[nombreSeccion].map(({campo, valor}, idx) => (
@@ -645,7 +631,6 @@ export default function HCIngresoSection({
                                     </div>
                                 ));
                             })()}
-                        </div>
                         </div>
                     ) : records.length === 0 ? (
                         <div className={styles.emptyDetail}>
