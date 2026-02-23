@@ -15,6 +15,7 @@ import styles from './MedicacionSuministradaSection.module.css';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { IoEyeOutline, IoTrashOutline } from 'react-icons/io5';
 
 interface MedicacionSuministradaSectionProps {
   numeroVisita: number | null;
@@ -84,17 +85,20 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
     isArray: Array.isArray(data)
   });
 
-  // Extraer medicaciones del data (soporta tanto array directo como wrapper {data:[]})
-  const medicaciones: MedicacionControl[] = useMemo(() => {
+  // Extraer medicaciones del data (ya vienen agrupadas desde el backend)
+  const medicacionesAgrupadas = useMemo(() => {
     console.log('🔵 [MedicacionSuministrada] Processing data:', data);
     
-    const list: MedicacionControl[] = Array.isArray(data)
+    const list = Array.isArray(data)
       ? data
       : data && Array.isArray((data as any).data)
       ? (data as any).data
       : [];
     
-    console.log('🔵 [MedicacionSuministrada] Extracted list:', list);
+    console.log('🔵 [MedicacionSuministrada] Medicaciones agrupadas:', list.length);
+    console.log('🔵 [MedicacionSuministrada] Con adicionales:', 
+      list.filter((m: any) => m.adicionales && m.adicionales.length > 0).length);
+    
     return list;
   }, [data]);
 
@@ -107,7 +111,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   };
 
   const handleEliminar = async (medicacion: MedicacionControl) => {
-    if (!confirm(`¿Está seguro que desea eliminar este registro de medicación?\n\nTroquel: ${medicacion.Troquel}\nFecha: ${formatearFecha(medicacion.FechaControl)}\nHora: ${formatearHora(medicacion.HoraControl)}`)) {
+    if (!confirm(`¿Está seguro que desea eliminar este registro de medicación?\n\nMedicamento: ${medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || medicacion.Troquel}\nFecha: ${formatearFecha(medicacion.FechaControl)}\nHora: ${formatearHora(medicacion.HoraControl)}`)) {
       return;
     }
 
@@ -132,25 +136,28 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   const handleExport = async (option: ExportOption, data: any[]) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const primeraMedicacion = medicaciones[0];
+      const primeraMedicacion = medicacionesAgrupadas[0];
       const profesionalInfo = primeraMedicacion ? {
         nombre: obtenerNombreCompleto(primeraMedicacion.ProfesionalApellido, primeraMedicacion.ProfesionalNombres),
         matricula: undefined,
         especialidad: undefined
       } : undefined;
 
-      const pdfData = medicaciones.map(row => [
+      const pdfData = medicacionesAgrupadas.map((row: any) => [
         formatearFecha(row.FechaControl),
         formatearHora(row.HoraControl),
-        row.Troquel || '-',
-        row.Cantidad || '-',
-        obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres)
+        row.Sector || '-',
+        row.NombreMedicamento || row.DescripcionMedicamento || '-',
+        row.CantidadIndicada || '-',
+        row.TipoUnidad || '-',
+        obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres) || obtenerNombreCompleto(row.OperadorApellido, row.OperadorNombres) || '-',
+        row.Cantidad || '-'
       ]);
 
       exportToPDF({
         title: 'Medicación Suministrada',
         subtitle: `Fecha: ${formatSelectedDate()?.diaSemana} ${formatSelectedDate()?.diaMes}, ${formatSelectedDate()?.mes}`,
-        headers: ['Fecha', 'Hora', 'Troquel', 'Cantidad', 'Profesional'],
+        headers: ['Fecha', 'Hora', 'Sector', 'Medicamento', 'Aplicado', 'Unidad', 'Profesional', 'Cantidad Total'],
         data: pdfData,
         fileName: `medicacion_${selectedDate?.toISOString().split('T')[0]}.pdf`,
         orientation: 'landscape',
@@ -223,7 +230,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
     );
   }
 
-  if (medicaciones.length === 0) {
+  if (medicacionesAgrupadas.length === 0) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -267,7 +274,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
         )}
         <div className={styles.statItem}>
           <span className={styles.statLabel}>Total de registros:</span>
-          <span className={styles.statValue}>{medicaciones.length}</span>
+          <span className={styles.statValue}>{medicacionesAgrupadas.length}</span>
         </div>
       </div>
 
@@ -277,53 +284,65 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
             <tr>
               <th>Fecha</th>
               <th>Hora</th>
-              <th>Troquel</th>
-              <th>Cantidad</th>
-              <th>Unidad</th>
-              <th>Operador</th>
+              <th>Sector</th>
+              <th>Nombre</th>
+              <th>Aplicado</th>
+              <th>Tipo Unidad</th>
               <th>Profesional</th>
-              <th>Observaciones</th>
+              <th>Cantidad Total</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {medicaciones.map((medicacion) => (
+            {medicacionesAgrupadas.map((medicacion: any) => (
               <tr key={medicacion.IDCtrlMedica}>
                 <td>{formatearFecha(medicacion.FechaControl)}</td>
                 <td>{formatearHora(medicacion.HoraControl)}</td>
-                <td>{medicacion.Troquel || '-'}</td>
-                <td>{medicacion.Cantidad || '-'}</td>
+                <td>{medicacion.Sector || '-'}</td>
+                <td>
+                  <div className={styles.medicamentoContainer}>
+                    <span className={styles.medicamentoPrincipal}>
+                      {medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || '-'}
+                    </span>
+                    {medicacion.adicionales && medicacion.adicionales.length > 0 && (
+                      <div className={styles.indicacionesAdicionales}>
+                        {medicacion.adicionales.map((adicional: MedicacionControl, idx: number) => (
+                          <div key={idx} className={styles.adicionalItem}>
+                            + {adicional.FormaAdicional ? `${adicional.FormaAdicional} - ` : ''}{adicional.NombreMedicamento || adicional.DescripcionMedicamento}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td>{medicacion.CantidadIndicada || '-'}</td>
                 <td>{medicacion.TipoUnidad || '-'}</td>
                 <td>
-                  {obtenerNombreCompleto(
-                    medicacion.OperadorApellido,
-                    medicacion.OperadorNombres
-                  )}
+                  <div className={styles.profesionalContainer}>
+                    <div className={styles.profesionalPrimary}>
+                      {medicacion.Profesional || medicacion.OperadorCarga || '-'}
+                    </div>
+                    <div className={styles.profesionalSub}>
+                      {medicacion.ProfesionalFullName || medicacion.OperadorFullName || ''}
+                    </div>
+                  </div>
                 </td>
-                <td>
-                  {obtenerNombreCompleto(
-                    medicacion.ProfesionalApellido,
-                    medicacion.ProfesionalNombres
-                  )}
-                </td>
-                <td className={styles.observaciones}>
-                  {medicacion.Observaciones || '-'}
-                </td>
-                <td>
-                  <div className={styles.actionButtons}>
+                <td>{medicacion.Cantidad || '-'}</td>
+                <td className={styles.cellAccion}>
+                  <div className={styles.actionBtns}>
                     <button
-                      className={styles.btnDetalle}
+                      className={styles.btnAction}
                       onClick={() => handleVerDetalle(medicacion)}
                       title="Ver detalle"
                     >
-                      Ver detalle
+                      <IoEyeOutline color="#5BC0DE" size="18px" />
                     </button>
                     <button
-                      className={styles.btnEliminar}
+                      className={styles.btnAction}
                       onClick={() => handleEliminar(medicacion)}
                       title="Eliminar registro"
                     >
-                      Eliminar
+                      <IoTrashOutline color="#5BC0DE" size="18px" />
                     </button>
                   </div>
                 </td>
@@ -381,6 +400,25 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                     {formatearHora(selectedMedicacion.HoraControl)}
                   </span>
                 </div>
+                <div className={styles.detailItemFull}>
+                  <span className={styles.detailLabel}>Medicamento:</span>
+                  <div className={styles.detailValue}>
+                    <div className={styles.medicamentoContainer}>
+                      <span className={styles.medicamentoPrincipal}>
+                        {selectedMedicacion.NombreMedicamento || selectedMedicacion.DescripcionMedicamento || '-'}
+                      </span>
+                      {selectedMedicacion.adicionales && selectedMedicacion.adicionales.length > 0 && (
+                        <div className={styles.indicacionesAdicionales}>
+                          {selectedMedicacion.adicionales.map((adicional: MedicacionControl, idx: number) => (
+                            <div key={idx} className={styles.adicionalItem}>
+                              + {adicional.FormaAdicional ? `${adicional.FormaAdicional} - ` : ''}{adicional.NombreMedicamento || adicional.DescripcionMedicamento}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Troquel:</span>
                   <span className={styles.detailValue}>
@@ -394,7 +432,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                   </span>
                 </div>
                 <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Cantidad:</span>
+                  <span className={styles.detailLabel}>Cantidad Aplicada:</span>
                   <span className={styles.detailValue}>
                     {selectedMedicacion.Cantidad || '-'}
                   </span>
@@ -418,22 +456,30 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                   </span>
                 </div>
                 <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Operador:</span>
-                  <span className={styles.detailValue}>
-                    {obtenerNombreCompleto(
-                      selectedMedicacion.OperadorApellido,
-                      selectedMedicacion.OperadorNombres
-                    )}
-                  </span>
+                  <span className={styles.detailLabel}>Operador Carga:</span>
+                  <div className={styles.detailValue}>
+                    <div className={styles.profesionalContainer}>
+                      <div className={styles.profesionalPrimary}>
+                        {selectedMedicacion.OperadorCarga || '-'}
+                      </div>
+                      <div className={styles.profesionalSub}>
+                        {selectedMedicacion.OperadorFullName || ''}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Profesional:</span>
-                  <span className={styles.detailValue}>
-                    {obtenerNombreCompleto(
-                      selectedMedicacion.ProfesionalApellido,
-                      selectedMedicacion.ProfesionalNombres
-                    )}
-                  </span>
+                  <span className={styles.detailLabel}>Profesional Asiste:</span>
+                  <div className={styles.detailValue}>
+                    <div className={styles.profesionalContainer}>
+                      <div className={styles.profesionalPrimary}>
+                        {selectedMedicacion.Profesional || '-'}
+                      </div>
+                      <div className={styles.profesionalSub}>
+                        {selectedMedicacion.ProfesionalFullName || ''}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Módulo Origen:</span>

@@ -423,7 +423,7 @@
 .chipTableHead,
 .chipRow {
     display: grid;
-    grid-template-columns: 110px 1fr 50px 70px 100px 28px;
+    grid-template-columns: 90px 60px 90px 1fr 120px 120px 32px;
     align-items: center;
     gap: 0 10px;
     padding: 0 12px;
@@ -462,11 +462,15 @@
 }
 
 /* Column sizing helpers */
-.colOp { min-width: 0; text-align: center; }
-.colMed { min-width: 0; }
+.colOp { text-align: center; }
 .colCant { text-align: center; }
-.colUni { text-align: center; min-width: 0; }
-.colFreq { text-align: center; min-width: 0; }
+.colUni { text-align: center; }
+.colMed { 
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.colFreq { text-align: center; }
+.colObs { text-align: center; }
 .colAcc { text-align: center; }
 
 .chipOperacion {

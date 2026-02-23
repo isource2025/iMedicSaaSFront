@@ -75,8 +75,8 @@ export default function CustomSelect({
 
         setPlacement(openDown ? "bottom" : "top");
         setCoords({
-            left: Math.round(r.left),
-            top: Math.round(openDown ? r.bottom + 4 : r.top - 4),
+            left: Math.round(r.left + window.scrollX),
+            top: Math.round(openDown ? r.bottom + 4 + window.scrollY : r.top - 4 + window.scrollY),
             width: Math.round(r.width),
         });
     };
@@ -222,11 +222,18 @@ export default function CustomSelect({
                                 ? styles.dropTop
                                 : styles.dropBottom
                         }`}
-                        style={{
-                            left: coords.left,
-                            top: coords.top,
-                            width: coords.width,
-                        }}
+                        style={
+                            portalEl === document.body
+                                ? {
+                                      left: coords.left,
+                                      top: coords.top,
+                                      width: coords.width,
+                                  }
+                                : {
+                                      top: coords.top,
+                                      width: coords.width,
+                                  }
+                        }
                         role="listbox"
                         id={`${name}-listbox`}
                         aria-labelledby={name}

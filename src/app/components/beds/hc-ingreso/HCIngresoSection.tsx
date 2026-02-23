@@ -4,9 +4,17 @@ import { useState, useMemo, useEffect } from "react";
 import styles from "./HCIngresoSection.module.css";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";
-import { obtenerHCIngresoPorVisita } from "@/app/services/hcIngresoService";
+import { 
+    obtenerHCIngresoPorVisita, 
+    crearHCIngreso, 
+    actualizarHCIngreso, 
+    eliminarHCIngreso 
+} from "@/app/services/hcIngresoService";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
 import { getEmptyExamenFisico } from "@/app/utils/examenFisicoHelpers";
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
 import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
 import ExamenFisicoTejidoSubcutaneo from "./examen-fisico/ExamenFisicoTejidoSubcutaneo";
 import ExamenFisicoCabezaForm from "./examen-fisico/ExamenFisicoCabeza";
@@ -88,13 +96,16 @@ export default function HCIngresoSection({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [empresaInfo, setEmpresaInfo] = useState<EmpresaInfo | undefined>(undefined);
     
     // Estado del formulario (para modo add/edit)
     const [formData, setFormData] = useState({
         fecha: "",
         hora: "",
         profesionalId: "",
+        profesionalNombre: "",
         sector: "",
+        sectorDescripcion: "",
         motivoConsulta: "",
         enfermedadActual: "",
         antecedentes: "",
@@ -102,6 +113,19 @@ export default function HCIngresoSection({
 
     // Estado del examen físico
     const [examenFisico, setExamenFisico] = useState<ExamenFisicoCompleto>(getEmptyExamenFisico());
+
+    // Cargar información de empresa al montar
+    useEffect(() => {
+        const cargarEmpresa = async () => {
+            try {
+                const info = await obtenerInfoEmpresa();
+                setEmpresaInfo(info);
+            } catch (err) {
+                console.error("Error al cargar info de empresa:", err);
+            }
+        };
+        cargarEmpresa();
+    }, []);
 
     // Cargar datos desde el backend
     useEffect(() => {
@@ -156,33 +180,78 @@ export default function HCIngresoSection({
 
     const fechaFormateada = formatSelectedDate();
 
+    // Generar título descriptivo para HC
+    const generarTituloHC = (record: HCIngresoRecord) => {
+        const fecha = record.FechaFormateada || "Sin fecha";
+        const hora = record.HoraFormateada || "";
+        const sector = record.SectorDescripcion || record.IdSector || "";
+        return `${fecha} ${hora} - ${sector}`.trim();
+    };
+
     // Handlers
     const handleAdd = () => {
+        // Obtener datos del localStorage
+        const userDataStr = localStorage.getItem('userData');
+        const sectorSeleccionado = localStorage.getItem('sectorSeleccionado');
+        
+        let profesionalId = "";
+        let profesionalNombre = "";
+        let sector = sectorSeleccionado || "";
+        
+        if (userDataStr) {
+            try {
+                const userData = JSON.parse(userDataStr);
+                profesionalId = String(userData.CodOperador || "");
+                profesionalNombre = `${userData.Apellido || ""} ${userData.Nombres || ""}`.trim();
+            } catch (e) {
+                console.error("Error al parsear userData:", e);
+            }
+        }
+        
+        // Fecha y hora actual
+        const now = new Date();
+        const fecha = now.toISOString().split("T")[0];
+        const hora = now.toTimeString().slice(0, 5);
+        
         setFormData({
-            fecha: new Date().toISOString().split("T")[0],
-            hora: new Date().toTimeString().slice(0, 5),
-            profesionalId: "",
-            sector: "",
+            fecha,
+            hora,
+            profesionalId,
+            profesionalNombre,
+            sector,
+            sectorDescripcion: sector, // Por ahora usamos el mismo valor
             motivoConsulta: "",
             enfermedadActual: "",
             antecedentes: "",
         });
-        setActiveSection("antecedentes");
+        setActiveSection("motivo");
         setMode("add");
     };
 
     const handleEdit = () => {
         if (!selectedRecord) return;
+        
+        // Extraer fecha y hora del campo Fecha si existe
+        let fecha = "";
+        let hora = "";
+        if (selectedRecord.Fecha) {
+            const fechaObj = new Date(selectedRecord.Fecha);
+            fecha = fechaObj.toISOString().split("T")[0];
+            hora = fechaObj.toTimeString().slice(0, 5);
+        }
+        
         setFormData({
-            fecha: "", // Fecha no disponible en el modelo actual
-            hora: "", // Hora no disponible en el modelo actual
+            fecha: fecha || new Date().toISOString().split("T")[0],
+            hora: hora || new Date().toTimeString().slice(0, 5),
             profesionalId: String(selectedRecord.IdProfecional || ""),
+            profesionalNombre: selectedRecord.ProfesionalNombre || "",
             sector: selectedRecord.IdSector,
-            motivoConsulta: selectedRecord.MotivoConsulta,
-            enfermedadActual: selectedRecord.EnfermedadActual,
+            sectorDescripcion: selectedRecord.SectorDescripcion || selectedRecord.IdSector,
+            motivoConsulta: selectedRecord.MotivoConsulta || "",
+            enfermedadActual: selectedRecord.EnfermedadActual || "",
             antecedentes: (selectedRecord as any).Antecedentes || "",
         });
-        setActiveSection("antecedentes");
+        setActiveSection("motivo");
         setMode("edit");
     };
 
@@ -190,16 +259,112 @@ export default function HCIngresoSection({
         setMode("view");
     };
 
-    const handleSave = () => {
-        // TODO: Implementar guardado real
-        console.log("Guardando:", formData);
-        setMode("view");
+    const handleSave = async () => {
+        if (!numeroVisita) {
+            alert("Error: No hay número de visita");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Preparar datos para guardar
+            const dataToSave: Partial<HCIngresoRecord> = {
+                NumeroVisita: numeroVisita,
+                IdSector: formData.sector,
+                MotivoConsulta: formData.motivoConsulta,
+                EnfermedadActual: formData.enfermedadActual,
+                IdProfecional: formData.profesionalId ? parseInt(formData.profesionalId) : undefined,
+            };
+
+            if (mode === "add") {
+                // Crear nueva HC
+                const result = await crearHCIngreso(dataToSave);
+                console.log("HC creada exitosamente:", result);
+                
+                // Recargar datos
+                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                setRecords(data);
+                
+                // Seleccionar el nuevo registro
+                if (result.IdHCIngreso) {
+                    setSelectedRecordId(result.IdHCIngreso);
+                }
+            } else if (mode === "edit" && selectedRecordId) {
+                // Actualizar HC existente
+                await actualizarHCIngreso(selectedRecordId, dataToSave);
+                console.log("HC actualizada exitosamente");
+                
+                // Recargar datos
+                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                setRecords(data);
+            }
+
+            setMode("view");
+        } catch (error) {
+            console.error("Error al guardar HC:", error);
+            setError(error instanceof Error ? error.message : "Error al guardar la historia clínica");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleDelete = () => {
-        // TODO: Implementar borrado real
-        if (confirm("¿Está seguro de que desea borrar este registro?")) {
-            console.log("Borrando:", selectedRecordId);
+    const handleDelete = async () => {
+        if (!selectedRecordId || !numeroVisita) {
+            alert("Error: No hay registro seleccionado");
+            return;
+        }
+
+        if (!confirm("¿Está seguro de que desea eliminar este registro de Historia Clínica?")) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            await eliminarHCIngreso(selectedRecordId);
+            console.log("HC eliminada exitosamente");
+
+            // Recargar datos
+            const data = await obtenerHCIngresoPorVisita(numeroVisita);
+            setRecords(data);
+
+            // Seleccionar el primer registro si existe
+            if (data.length > 0) {
+                setSelectedRecordId(data[0].IdHCIngreso);
+            } else {
+                setSelectedRecordId(null);
+            }
+        } catch (error) {
+            console.error("Error al eliminar HC:", error);
+            setError(error instanceof Error ? error.message : "Error al eliminar la historia clínica");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleExport = async (option: ExportOption, data: any[]) => {
+        if (option === 'pdf' && selectedRecord) {
+            const empresaInfo = await obtenerInfoEmpresa();
+            const pdfData = [
+                ['Fecha', selectedRecord.FechaFormateada || '-'],
+                ['Hora', selectedRecord.HoraFormateada || '-'],
+                ['Profesional', selectedRecord.ProfesionalNombre || '-'],
+                ['Sector', selectedRecord.SectorDescripcion || selectedRecord.IdSector || '-'],
+                ['Motivo de Consulta', selectedRecord.MotivoConsulta || '-'],
+                ['Enfermedad Actual', selectedRecord.EnfermedadActual || '-'],
+            ];
+
+            exportToPDF({
+                title: 'Historia Clínica de Ingreso',
+                subtitle: `Paciente: ${patientName || 'N/A'} - DNI: ${documentoPaciente || 'N/A'}`,
+                headers: ['Campo', 'Valor'],
+                data: pdfData,
+                empresaInfo,
+                orientation: 'portrait'
+            });
         }
     };
 
@@ -248,7 +413,7 @@ export default function HCIngresoSection({
                             >
                                 <span className={styles.dropdownValue}>
                                     {selectedRecord 
-                                        ? `${selectedRecord.FechaFormateada || "-"} ${selectedRecord.HoraFormateada || ""} - ${selectedRecord.SectorDescripcion || selectedRecord.IdSector}`
+                                        ? generarTituloHC(selectedRecord)
                                         : "Seleccionar ingreso..."}
                                 </span>
                                 <span className={styles.dropdownArrow}>{dropdownOpen ? "▲" : "▼"}</span>
@@ -264,7 +429,7 @@ export default function HCIngresoSection({
                                                 setDropdownOpen(false);
                                             }}
                                         >
-                                            {record.FechaFormateada || "-"} {record.HoraFormateada || ""} - {record.SectorDescripcion || record.IdSector}
+                                            {generarTituloHC(record)}
                                         </li>
                                     ))}
                                 </ul>
@@ -297,13 +462,13 @@ export default function HCIngresoSection({
                     </div>
 
                     <div className={styles.toolbarRight}>
-                        {/* Botones PDF y Recetario */}
-                        <button className={styles.btnOutline}>
-                            <span className={styles.btnIcon}>📄</span> PDF
-                        </button>
-                        <button className={styles.btnOutline}>
-                            + Recetario
-                        </button>
+                        <ExportButton
+                            data={selectedRecord ? [selectedRecord] : []}
+                            fileName={`hc_ingreso_${numeroVisita}.pdf`}
+                            onExport={handleExport}
+                            options={['pdf']}
+                            disabled={!selectedRecord}
+                        />
                     </div>
                 </div>
                 )}
@@ -311,12 +476,13 @@ export default function HCIngresoSection({
                 {/* Barra flotante inferior para mobile */}
                 {!loading && !error && (
                 <div className={styles.mobileBottomBar}>
-                    <button className={styles.btnOutline}>
-                        <span className={styles.btnIcon}>📄</span> PDF
-                    </button>
-                    <button className={styles.btnOutline}>
-                        + Recetario
-                    </button>
+                    <ExportButton
+                        data={selectedRecord ? [selectedRecord] : []}
+                        fileName={`hc_ingreso_${numeroVisita}.pdf`}
+                        onExport={handleExport}
+                        options={['pdf']}
+                        disabled={!selectedRecord}
+                    />
                 </div>
                 )}
 
@@ -440,12 +606,13 @@ export default function HCIngresoSection({
 
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>ID Profesional</label>
+                                    <label className={styles.formLabel}>Profesional</label>
                                     <input
                                         type="text"
                                         className={styles.formInput}
-                                        value={formData.profesionalId}
-                                        onChange={(e) => setFormData({ ...formData, profesionalId: e.target.value })}
+                                        value={formData.profesionalNombre || "No especificado"}
+                                        disabled
+                                        title={`ID: ${formData.profesionalId}`}
                                     />
                                 </div>
                                 <div className={styles.formGroup}>
@@ -453,8 +620,8 @@ export default function HCIngresoSection({
                                     <input
                                         type="text"
                                         className={styles.formInput}
-                                        value={formData.sector}
-                                        onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
+                                        value={formData.sectorDescripcion || formData.sector || "No especificado"}
+                                        disabled
                                     />
                                 </div>
                             </div>

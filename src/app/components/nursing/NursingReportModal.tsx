@@ -8,6 +8,7 @@ import ControlesFrecuentesChart, { CHART_PARAMS } from "./ControlesFrecuentesCha
 import styles from './NursingReportModal.module.css';
 import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
 import { NuevaIndicacionPayload } from '@/app/types/indicaciones';
+import { indicacionesService } from '@/app/services/indicacionesService';
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
@@ -27,13 +28,27 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
   const [showNewIndicationForm, setShowNewIndicationForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'tabla' | 'grafico'>('tabla');
   const [parametro, setParametro] = useState('pulso');
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] = useState(false);
+  const [idSector, setIdSector] = useState<string | null>(null);
 
   const fetchControlData = useCallback(async () => {
     if (!isOpen || !numeroVisita) return;
     try {
       setLoading(true);
       setError(null);
+      
+      // Obtener IdSector de los datos de la cama
+      const bedsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+      if (bedsResponse.ok) {
+        const bedsData = await bedsResponse.json();
+        if (bedsData.success) {
+          const cama = bedsData.data.find((c: any) => String(c.NumeroVisita) === String(numeroVisita));
+          if (cama && cama.IdSector) {
+            setIdSector(String(cama.IdSector));
+          }
+        }
+      }
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds/controles-frecuentes/${numeroVisita}`);
       if (!response.ok) throw new Error('Error al obtener los controles frecuentes');
       const data = await response.json();
@@ -63,12 +78,20 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
     setSaving(true)
     try {
       console.log('Guardando indicación:', indicacionData);
+      
+      // ✅ CORREGIDO: Llamar al servicio del backend para guardar la indicación
+      const resultado = await indicacionesService.postNuevaIndicacion(indicacionData);
+      console.log('📥 Resultado del backend:', resultado);
+      
       setShowNewIndicationForm(false);
       await fetchControlData();
       alert('Indicación guardada correctamente');
+      
+      return resultado;
     } catch (error) {
       console.error('Error al guardar la indicación:', error);
       alert('Error al guardar la indicación');
+      throw error;
     } finally {
       setSaving(false)
     }
@@ -219,6 +242,8 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                     onClose={handleCancelNewIndication}
                     onSave={handleSaveIndication}
                     defaultNumeroVisita={numeroVisita}
+                    refetch={fetchControlData}
+                    idSector={idSector}
                 />
             </ModalBasePaciente>
     </>

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import styles from "./NuevaEvolucionModal.module.css";
 import { NuevaEvolucionPayload } from "../../../types/evoluciones";
 import { useAppContext } from "@/app/contexts/AppContext";
+import { evolucionesService } from "../../../services/evolucionesService";
 
 interface NuevaEvolucionModalProps {
     onClose: () => void;
@@ -86,15 +87,40 @@ export default function NuevaEvolucionModal({
         [defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]
     );
     const [form, setForm] = useState<NuevaEvolucionPayload>(initial);
+    const [loading, setLoading] = useState(false);
 
+    // Cargar datos - exactamente igual que en NuevaIndicacionModal
     useEffect(() => {
-        setForm(emptyPayload(
-            defaultIdVisita, 
-            documentoReal || documentoPaciente || '',
-            idsector || '',
-            idPersonal
-        ));
-    }, [defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]);
+        (async () => {
+            setLoading(true);
+
+            try {
+                if (idEvolucion) {
+                    console.log('🔍 Cargando evolución con ID:', idEvolucion);
+                    const res = await evolucionesService.getEvolucionById(idEvolucion);
+
+                    if (res) {
+                        console.log('✅ Evolución cargada:', res);
+                        const resAny = res as any;
+                        setForm((prev) => ({
+                            ...prev,
+                            IdVisita: resAny.IdVisita || res.idVisita,
+                            FechaEv: resAny.FechaEv || res.fechaEv,
+                            HoraEv: resAny.HoraEv || res.horaEv,
+                            IdSector: resAny.IdSector || res.idSector || '',
+                            Evolucion: resAny.Evolucion || res.evolucion,
+                            NumeroDocumento: resAny.NumeroDocumento || res.numeroDocumento || '',
+                            Profecional: resAny.Profecional || res.profesional,
+                        }));
+                    }
+                }
+            } catch (err) {
+                console.error('❌ Error al cargar evolución:', err);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
 
     const set = (field: keyof NuevaEvolucionPayload, value: any) =>
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -191,14 +217,14 @@ export default function NuevaEvolucionModal({
                     </label>
                     <textarea
                         className={styles.textarea}
-                        value={form.Evolucion}
+                        value={form.Evolucion || ''}
                         onChange={(e) => set("Evolucion", e.target.value)}
                         placeholder="Ingrese la evolución médica del paciente..."
                         rows={10}
                         required
                     />
                     <div className={styles.charCount}>
-                        {form.Evolucion.length} caracteres
+                        {(form.Evolucion || '').length} caracteres
                     </div>
                 </div>
             </div>

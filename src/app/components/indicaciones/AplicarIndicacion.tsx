@@ -75,6 +75,7 @@ export interface Payload extends FormData {
     tipoIndicacion: 'C' | 'M' | 'A' | 'D';
     fechaCumplido: string;
     profesionalAsiste?: number;
+    operadorCarga?: number;
     horaCumplido: string;
     fechaProximo: string;
     horaProximo: string;
@@ -256,6 +257,7 @@ export default function AplicarIndicacion(props: Props) {
                 horaProximo: formData.horaProximo,
                 observaciones: formData.observaciones || '',
                 profesionalAsiste: formData.profesionalAsiste,
+                operadorCarga: usuario?.codigoOperador || usuario?.valorPersonal || usuario?.idValorpersonal || null,
                 control: {}, // Inicializar vacío
                 dieta: {
                     tipoDieta: null

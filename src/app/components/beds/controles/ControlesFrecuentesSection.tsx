@@ -14,6 +14,7 @@ import styles from './ControlesFrecuentesSection.module.css';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { IoEyeOutline, IoTrashOutline } from 'react-icons/io5';
 
 interface ControlesFrecuentesSectionProps {
   numeroVisita: number | null;
@@ -274,21 +275,21 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
                 <td className={styles.observaciones}>
                   {control.Observaciones || '-'}
                 </td>
-                <td>
-                  <div className={styles.actionButtons}>
+                <td className={styles.cellAccion}>
+                  <div className={styles.actionBtns}>
                     <button
-                      className={styles.btnDetalle}
+                      className={styles.btnAction}
                       onClick={() => handleVerDetalle(control)}
                       title="Ver detalle"
                     >
-                      Ver detalle
+                      <IoEyeOutline color="#5BC0DE" size="18px" />
                     </button>
                     <button
-                      className={styles.btnEliminar}
+                      className={styles.btnAction}
                       onClick={() => handleEliminar(control)}
                       title="Eliminar control"
                     >
-                      Eliminar
+                      <IoTrashOutline color="#5BC0DE" size="18px" />
                     </button>
                   </div>
                 </td>

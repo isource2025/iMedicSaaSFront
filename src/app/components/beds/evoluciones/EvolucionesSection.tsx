@@ -124,7 +124,15 @@ export default function EvolucionesSection({
                 ...data,
                 IdVisita: data.IdVisita ?? numeroVisita ?? 0,
             };
-            await evolucionesService.postNuevaEvolucion(finalPayload);
+            
+            if (selectedId) {
+                // Modo edición - actualizar evolución existente
+                await evolucionesService.updateEvolucion(selectedId, finalPayload);
+            } else {
+                // Modo creación - crear nueva evolución
+                await evolucionesService.postNuevaEvolucion(finalPayload);
+            }
+            
             return finalPayload;
         } catch (err) {
             if (err instanceof Error) {
@@ -258,12 +266,15 @@ export default function EvolucionesSection({
                 </div>
             </div>
 
-            {/* Modal de nueva evolución */}
+            {/* Modal de nueva/editar evolución */}
             <ModalBasePaciente
                 numeroVisita={numeroVisita ? String(numeroVisita) : ""}
-                onClose={() => setModalOpen(false)}
-                isOpen={modalOpen}
-                titulo="Agregando nueva Evolución"
+                onClose={() => {
+                    setModalOpen(false);
+                    setSelectedId(null);
+                }}
+                isOpen={modalOpen || selectedId !== null}
+                titulo={selectedId !== null ? "Editando Evolución" : "Agregando nueva Evolución"}
                 footerButtons={
                     <>
                         <button
@@ -272,16 +283,20 @@ export default function EvolucionesSection({
                             form="nueva-evolucion-form"
                             disabled={saving}
                         >
-                            {saving ? "Guardando…" : "Guardar"}
+                            {saving ? "Guardando…" : (selectedId !== null ? "Actualizar" : "Guardar")}
                         </button>
                     </>
                 }
             >
                 <NuevaEvolucionModal
-                    onClose={() => setModalOpen(false)}
+                    onClose={() => {
+                        setModalOpen(false);
+                        setSelectedId(null);
+                    }}
                     onSave={handleSave}
                     defaultIdVisita={numeroVisita}
                     documentoPaciente={documentoPaciente}
+                    idEvolucion={selectedId}
                     refetch={refetch}
                 />
             </ModalBasePaciente>

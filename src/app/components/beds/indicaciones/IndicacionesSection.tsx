@@ -278,6 +278,9 @@ export default function IndicacionesSection({
             };
             const resultado = await indicacionesService.postNuevaIndicacion(finalPayload);
             
+            // Refetch para actualizar la lista de indicaciones
+            await refetch();
+            
             return resultado;
         } catch (err) {
             if (err instanceof Error) {

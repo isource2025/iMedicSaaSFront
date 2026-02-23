@@ -9,16 +9,18 @@ export interface MedicacionControl {
   NroIndicacion: number | null;
   ModuloOrigen: string | null;
   TipoMedicamento: string | null;
-  NumeroVisita: number | null;
+  NumeroVisita: number;
   Sector: string | null;
   FechaCarga: string | null; // DateTime convertido a string
   HoraCarga: string | null; // Formato HH:mm:ss
   OperadorCarga: number | null;
   OperadorApellido: string | null;
   OperadorNombres: string | null;
+  OperadorFullName: string | null;
   Profesional: number | null;
   ProfesionalApellido: string | null;
   ProfesionalNombres: string | null;
+  ProfesionalFullName: string | null;
   FechaControl: string | null; // DateTime convertido a string
   HoraControl: string | null; // Formato HH:mm:ss
   Troquel: number | null;
@@ -26,9 +28,14 @@ export interface MedicacionControl {
   TipoUnidad: string | null;
   Observaciones: string | null;
   IDCliente: number | null;
-  Status: number | null;
+  Status: string | null;
   CantidadIndicada: number | null;
   IdTurno: number | null;
+  NombreMedicamento: string | null;
+  DescripcionMedicamento: string | null;
+  NroAdicional: number | null;
+  FormaAdicional: string | null;
+  adicionales?: MedicacionControl[]; // Indicaciones adicionales agrupadas (viene del backend)
 }
 
 export interface MedicacionControlResponse {
