@@ -105,36 +105,113 @@ export const generarPDFHistoriaClinica = (
     const colorTexto: [number, number, number] = [51, 65, 85]; // #334155
     const colorGris: [number, number, number] = [100, 116, 139]; // #64748b
     
-    // ===== ENCABEZADO =====
-    doc.setFillColor(...colorPrimario);
-    doc.rect(10, yPosition, 190, 12, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('HISTORIA CLÍNICA DE INGRESO', 105, yPosition + 8, { align: 'center' });
-    yPosition += 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
     
-    // ===== INFORMACIÓN DE LA EMPRESA =====
-    if (empresaInfo) {
-        doc.setFontSize(9);
-        doc.setTextColor(...colorGris);
-        doc.setFont('helvetica', 'normal');
-        
-        const direccion = [empresaInfo.calle, empresaInfo.calle_nro].filter(Boolean).join(' ');
-        
-        const infoEmpresa = [
-            empresaInfo.razonSocial || '',
-            direccion || '',
-            empresaInfo.localidad || '',
-            `CUIT: ${empresaInfo.cuit || '-'}`,
-        ].filter(Boolean);
-        
-        infoEmpresa.forEach(linea => {
-            doc.text(linea, 105, yPosition, { align: 'center' });
-            yPosition += 4;
-        });
-        yPosition += 3;
-    }
+    // ===== HEADER ESTÁNDAR DEL SISTEMA =====
+    // Borde superior del header
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+    doc.rect(10, yPosition, pageWidth - 20, 35);
+    
+    // Logo placeholder (izquierda) - 30x30mm
+    doc.setFillColor(240, 240, 240);
+    doc.rect(12, yPosition + 2, 30, 30, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('LOGO', 27, yPosition + 18, { align: 'center' });
+    
+    // Información de la empresa (centro-derecha)
+    const empresaX = 45;
+    const empresaStartY = yPosition + 5;
+    
+    // Título del documento en negro sobre fondo
+    doc.setFillColor(0, 0, 0);
+    doc.rect(empresaX, empresaStartY - 3, pageWidth - empresaX - 12, 6, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('HISTORIA CLÍNICA DE INGRESO', empresaX + 2, empresaStartY + 1);
+    
+    // Datos de la empresa en dos columnas
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    
+    const col1X = empresaX + 2;
+    const col2X = pageWidth - 70;
+    let infoY = empresaStartY + 8;
+    
+    // Construir dirección completa
+    const direccionCompleta = [
+        empresaInfo?.calle,
+        empresaInfo?.calle_nro,
+        empresaInfo?.Depto,
+        empresaInfo?.piso
+    ].filter(Boolean).join(' ') || '-';
+    
+    // Columna 1
+    doc.setFont('helvetica', 'bold');
+    doc.text('RAZÓN SOCIAL:', col1X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.razonSocial || empresaInfo?.descripcion || 'HOSPITAL', col1X + 28, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('DIRECCIÓN:', col1X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(direccionCompleta, col1X + 28, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('LOCALIDAD:', col1X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.localidad || '-', col1X + 28, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('TELÉFONO:', col1X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.telefono || '-', col1X + 28, infoY);
+    
+    // Columna 2
+    infoY = empresaStartY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('C.U.I.T.:', col2X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.cuit || '-', col2X + 15, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONDICIÓN:', col2X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.condicionIva || '-', col2X + 22, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('ING. BRUTOS:', col2X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.ingresosBrutos || '0', col2X + 22, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('PROVINCIA:', col2X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.provincia || '-', col2X + 22, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('EMAIL:', col2X, infoY);
+    doc.setFont('helvetica', 'normal');
+    const emailText = empresaInfo?.email || '-';
+    doc.text(emailText.length > 25 ? emailText.substring(0, 25) + '...' : emailText, col2X + 15, infoY);
+    
+    infoY += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text('FAX:', col2X, infoY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(empresaInfo?.fax || '-', col2X + 15, infoY);
+    
+    yPosition += 38;
     
     // ===== INFORMACIÓN DEL PACIENTE =====
     doc.setFillColor(248, 250, 252); // #f8fafc
@@ -184,13 +261,16 @@ export const generarPDFHistoriaClinica = (
         doc.text('MOTIVO DE CONSULTA', 15, yPosition + 5);
         yPosition += 10;
         
-        // Contenido
+        // Contenido con espaciado mejorado
         doc.setTextColor(...colorTexto);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         const motivoLines = doc.splitTextToSize(data.MotivoConsulta, 180);
-        doc.text(motivoLines, 15, yPosition);
-        yPosition += motivoLines.length * 5 + 5;
+        const lineHeight = 4.5; // Espaciado entre líneas
+        motivoLines.forEach((line: string, index: number) => {
+            doc.text(line, 15, yPosition + (index * lineHeight));
+        });
+        yPosition += motivoLines.length * lineHeight + 5;
     }
     
     // ===== ENFERMEDAD ACTUAL =====
@@ -210,13 +290,16 @@ export const generarPDFHistoriaClinica = (
         doc.text('ENFERMEDAD ACTUAL', 15, yPosition + 5);
         yPosition += 10;
         
-        // Contenido
+        // Contenido con espaciado mejorado
         doc.setTextColor(...colorTexto);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         const enfermedadLines = doc.splitTextToSize(data.EnfermedadActual, 180);
-        doc.text(enfermedadLines, 15, yPosition);
-        yPosition += enfermedadLines.length * 5 + 5;
+        const lineHeight = 4.5; // Espaciado entre líneas
+        enfermedadLines.forEach((line: string, index: number) => {
+            doc.text(line, 15, yPosition + (index * lineHeight));
+        });
+        yPosition += enfermedadLines.length * lineHeight + 5;
     }
     
     // ===== SECCIONES DE EXAMEN FÍSICO =====
