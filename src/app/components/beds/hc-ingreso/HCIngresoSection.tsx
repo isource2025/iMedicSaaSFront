@@ -13,8 +13,8 @@ import {
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
 import { getEmptyExamenFisico } from "@/app/utils/examenFisicoHelpers";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
-import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
+import { generarPDFHistoriaClinica } from '@/app/utils/pdfHCIngreso';
 import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
 import ExamenFisicoTejidoSubcutaneo from "./examen-fisico/ExamenFisicoTejidoSubcutaneo";
 import ExamenFisicoCabezaForm from "./examen-fisico/ExamenFisicoCabeza";
@@ -408,49 +408,12 @@ export default function HCIngresoSection({
         if (option === 'pdf' && selectedRecord) {
             const empresaInfo = await obtenerInfoEmpresa();
             
-            // Datos básicos
-            const pdfData: any[] = [
-                ['N. Visita', selectedRecord.NumeroVisita || '-'],
-                ['Fecha', selectedRecord.FechaFormateada || '-'],
-                ['Hora', selectedRecord.HoraFormateada || '-'],
-                ['Profesional', selectedRecord.ProfesionalNombre || selectedRecord.IdProfecional || '-'],
-                ['Sector', selectedRecord.SectorDescripcion || selectedRecord.IdSector || '-'],
-            ];
-
-            // Agregar Motivo y Enfermedad Actual si existen
-            if (selectedRecord.MotivoConsulta) {
-                pdfData.push(['', '']); // Espacio
-                pdfData.push(['MOTIVO DE CONSULTA', '']);
-                pdfData.push(['', selectedRecord.MotivoConsulta]);
-            }
-
-            if (selectedRecord.EnfermedadActual) {
-                pdfData.push(['', '']); // Espacio
-                pdfData.push(['ENFERMEDAD ACTUAL', '']);
-                pdfData.push(['', selectedRecord.EnfermedadActual]);
-            }
-
-            // Obtener secciones organizadas
-            const secciones = getSecciones(selectedRecord);
-            
-            // Agregar cada sección al PDF
-            Object.keys(secciones).forEach(nombreSeccion => {
-                pdfData.push(['', '']); // Espacio
-                pdfData.push([nombreSeccion.toUpperCase(), '']); // Título de sección
-                
-                secciones[nombreSeccion].forEach(({campo, valor}) => {
-                    pdfData.push([campo, valor]);
-                });
-            });
-
-            exportToPDF({
-                title: 'Historia Clínica de Ingreso',
-                subtitle: `Paciente: ${patientName || 'N/A'} - DNI: ${documentoPaciente || 'N/A'}`,
-                headers: ['Campo', 'Valor'],
-                data: pdfData,
-                empresaInfo,
-                orientation: 'portrait'
-            });
+            generarPDFHistoriaClinica(
+                selectedRecord,
+                patientName || 'N/A',
+                documentoPaciente || 'N/A',
+                empresaInfo
+            );
         }
     };
 
