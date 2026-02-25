@@ -4,8 +4,8 @@
 **Propósito:** Guía de mapeo de nombres actuales para proceso de migración/upgrade de UI
 
 ---
-
-## Tabla de Contenidos
+ 
+## Tabla de Contenidos 
 
 1. [Componentes de Layout](#componentes-de-layout)
 2. [Componentes de Autenticación](#componentes-de-autenticación)
