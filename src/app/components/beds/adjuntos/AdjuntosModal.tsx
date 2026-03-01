@@ -33,6 +33,8 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       const response = await adjuntosService.getAdjuntosPorVisita(numeroVisita);
       setAdjuntos(response.data);
     } catch (err) {
+      // Solo mostrar error si es un error real, no cuando simplemente no hay adjuntos
+      console.error('Error al cargar adjuntos:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar adjuntos');
     } finally {
       setLoading(false);

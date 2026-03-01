@@ -16,7 +16,7 @@ export const adjuntosService = {
     formData.append('numeroVisita', numeroVisita.toString());
     formData.append('archivo', archivo);
 
-    const response = await fetch(`${API_URL}/api/adjuntos/upload`, {
+    const response = await fetch(`${API_URL}/adjuntos/upload`, {
       method: 'POST',
       body: formData,
     });
@@ -40,7 +40,7 @@ export const adjuntosService = {
       formData.append('archivos', archivo);
     });
 
-    const response = await fetch(`${API_URL}/api/adjuntos/upload-multiple`, {
+    const response = await fetch(`${API_URL}/adjuntos/upload-multiple`, {
       method: 'POST',
       body: formData,
     });
@@ -57,10 +57,14 @@ export const adjuntosService = {
    * Obtener adjuntos de una visita
    */
   async getAdjuntosPorVisita(numeroVisita: number): Promise<ListarAdjuntosResponse> {
-    const response = await fetch(`${API_URL}/api/adjuntos/visita/${numeroVisita}`);
+    const response = await fetch(`${API_URL}/adjuntos/visita/${numeroVisita}`);
 
     if (!response.ok) {
-      const error = await response.json();
+      // Si es 404 y no hay adjuntos, devolver array vacío en lugar de error
+      if (response.status === 404) {
+        return { success: true, data: [], total: 0 };
+      }
+      const error = await response.json().catch(() => ({ error: 'Error al obtener adjuntos' }));
       throw new Error(error.error || 'Error al obtener adjuntos');
     }
 
@@ -71,7 +75,7 @@ export const adjuntosService = {
    * Obtener información de un adjunto
    */
   async getAdjunto(idAdjunto: number): Promise<{ success: boolean; data: Adjunto }> {
-    const response = await fetch(`${API_URL}/api/adjuntos/${idAdjunto}`);
+    const response = await fetch(`${API_URL}/adjuntos/${idAdjunto}`);
 
     if (!response.ok) {
       const error = await response.json();
@@ -85,7 +89,7 @@ export const adjuntosService = {
    * Descargar archivo adjunto
    */
   descargarArchivo(idAdjunto: number, nombreArchivo: string): void {
-    const url = `${API_URL}/api/adjuntos/${idAdjunto}/download`;
+    const url = `${API_URL}/adjuntos/${idAdjunto}/download`;
     const link = document.createElement('a');
     link.href = url;
     link.download = nombreArchivo;
@@ -99,7 +103,7 @@ export const adjuntosService = {
    * Eliminar adjunto
    */
   async eliminarAdjunto(idAdjunto: number): Promise<{ success: boolean; message: string }> {
-    const response = await fetch(`${API_URL}/api/adjuntos/${idAdjunto}`, {
+    const response = await fetch(`${API_URL}/adjuntos/${idAdjunto}`, {
       method: 'DELETE',
     });
 
