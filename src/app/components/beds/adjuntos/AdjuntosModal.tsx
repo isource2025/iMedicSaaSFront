@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import { Adjunto } from '@/app/types/adjuntos';
-import FileUpload from './FileUpload';
+import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import styles from './AdjuntosModal.module.css';
 
@@ -19,6 +19,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileUploadRef = useRef<FileUploadRef>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -61,7 +62,10 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
         await adjuntosService.subirArchivos(numeroVisita, selectedFiles);
       }
 
+      // Limpiar archivos seleccionados
       setSelectedFiles([]);
+      fileUploadRef.current?.clearFiles();
+      
       await loadAdjuntos();
       alert(`${selectedFiles.length} archivo(s) subido(s) correctamente`);
     } catch (err) {
@@ -104,6 +108,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
           <div className={styles.uploadSection}>
             <h3 className={styles.sectionTitle}>Subir archivos</h3>
             <FileUpload
+              ref={fileUploadRef}
               onFilesSelected={handleFilesSelected}
               disabled={uploading}
               maxFiles={5}

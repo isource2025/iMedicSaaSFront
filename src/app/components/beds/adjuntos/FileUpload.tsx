@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import styles from './FileUpload.module.css';
 
 interface FileUploadProps {
@@ -9,7 +9,11 @@ interface FileUploadProps {
   maxFiles?: number;
 }
 
-export default function FileUpload({ onFilesSelected, disabled = false, maxFiles = 5 }: FileUploadProps) {
+export interface FileUploadRef {
+  clearFiles: () => void;
+}
+
+const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected, disabled = false, maxFiles = 5 }, ref) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -88,6 +92,18 @@ export default function FileUpload({ onFilesSelected, disabled = false, maxFiles
     onFilesSelected(newFiles);
   };
 
+  const clearFiles = () => {
+    setSelectedFiles([]);
+    onFilesSelected([]);
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    clearFiles
+  }));
+
   return (
     <div className={styles.container}>
       <div
@@ -146,4 +162,8 @@ export default function FileUpload({ onFilesSelected, disabled = false, maxFiles
       )}
     </div>
   );
-}
+});
+
+FileUpload.displayName = 'FileUpload';
+
+export default FileUpload;

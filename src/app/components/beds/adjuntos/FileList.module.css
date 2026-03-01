@@ -47,11 +47,18 @@
 .fileName {
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: #0083A9;
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fileName:hover {
+  color: #00B5E2;
+  text-decoration: underline;
 }
 
 .fileMetadata {

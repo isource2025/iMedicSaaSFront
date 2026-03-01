@@ -11,6 +11,14 @@ interface FileListProps {
 }
 
 export default function FileList({ adjuntos, onDelete, readOnly = false }: FileListProps) {
+  const handleView = (adjunto: Adjunto) => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const url = `${API_URL}/adjuntos/${adjunto.IdAdjunto}/download`;
+    
+    // Abrir en nueva ventana para visualizar
+    window.open(url, '_blank');
+  };
+
   const handleDownload = (adjunto: Adjunto) => {
     adjuntosService.descargarArchivo(adjunto.IdAdjunto, adjunto.NombreArchivo);
   };
@@ -52,7 +60,14 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
               {adjuntosService.getIconoTipo(adjunto.TipoArchivo)}
             </div>
             <div className={styles.fileInfo}>
-              <div className={styles.fileName}>{adjunto.NombreArchivo}</div>
+              <div 
+                className={styles.fileName}
+                onClick={() => handleView(adjunto)}
+                style={{ cursor: 'pointer' }}
+                title="Click para visualizar"
+              >
+                {adjunto.NombreArchivo}
+              </div>
               <div className={styles.fileMetadata}>
                 <span>{adjuntosService.formatearTamanio(adjunto.TamanioBytes)}</span>
                 <span className={styles.separator}>•</span>
