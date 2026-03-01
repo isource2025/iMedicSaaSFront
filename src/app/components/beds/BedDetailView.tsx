@@ -16,6 +16,7 @@ import EvolucionEnfermeriaSection from './evolucion/EvolucionEnfermeriaSection';
 import InsumosSection from './insumos/InsumosSection';
 import EvolucionesSection from './evoluciones/EvolucionesSection';
 import HCIngresoSection from './hc-ingreso/HCIngresoSection';
+import AdjuntosModal from './adjuntos/AdjuntosModal';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -24,6 +25,8 @@ interface BedDetailViewProps {
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	// Drawer (sidebar) en mobile
 	const [drawerOpen, setDrawerOpen] = useState(false);
+	// Modal de archivos adjuntos
+	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
 
 	// Usar el context para filtros y navegación
 	const { activeSection, selectedDate, setSelectedDate, navigateToSection } = useBedDetail();
@@ -260,6 +263,26 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					</div>
 				</section>
 			</div>
+
+			{/* Botón flotante de archivos adjuntos */}
+			{bed?.NumeroVisita && (
+				<button
+					className={styles.adjuntosButton}
+					onClick={() => setShowAdjuntosModal(true)}
+					title="Archivos Adjuntos"
+				>
+					📎
+				</button>
+			)}
+
+			{/* Modal de archivos adjuntos */}
+			{bed?.NumeroVisita && (
+				<AdjuntosModal
+					numeroVisita={bed.NumeroVisita}
+					isOpen={showAdjuntosModal}
+					onClose={() => setShowAdjuntosModal(false)}
+				/>
+			)}
 
 			{/* Backdrop del drawer */}
 			{drawerOpen && (
