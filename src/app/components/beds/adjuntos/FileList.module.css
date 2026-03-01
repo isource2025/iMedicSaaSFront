@@ -35,8 +35,17 @@
 }
 
 .fileIcon {
-  font-size: 32px;
+  margin-right: 12px;
   flex-shrink: 0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fileIcon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .fileInfo {
