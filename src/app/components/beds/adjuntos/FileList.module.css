@@ -91,29 +91,41 @@
 
 .downloadButton,
 .deleteButton {
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  width: 36px;
-  height: 36px;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-  transition: all 0.2s;
+}
+
+.downloadButton svg,
+.deleteButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.downloadButton {
+  background: #00B5E2;
+  color: white;
 }
 
 .downloadButton:hover {
-  background: #00B5E2;
-  border-color: #00B5E2;
-  transform: translateY(-2px);
+  background: #0083A9;
+  transform: translateY(-1px);
+}
+
+.deleteButton {
+  background: #ef4444;
+  color: white;
+  margin-left: 8px;
 }
 
 .deleteButton:hover {
-  background: #ef4444;
-  border-color: #ef4444;
-  transform: translateY(-2px);
+  background: #dc2626;
+  transform: translateY(-1px);
 }
 
 .emptyState {
