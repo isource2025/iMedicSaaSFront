@@ -142,8 +142,8 @@ export default function IndicacionForm({
             setForm((prev) => ({
                 ...prev,
                 ProfesionalAsiste:
-                    usuario?.valorPersonal || usuario?.idValorpersonal,
-                OperadorCarga: usuario?.valorPersonal || usuario?.idValorpersonal
+                    usuario?.idValorpersonal || usuario?.valorPersonal,
+                OperadorCarga: usuario?.idValorpersonal || usuario?.valorPersonal || usuario?.idCodOperador
             }));
         }
     }, [usuario]);
