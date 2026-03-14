@@ -138,12 +138,23 @@ export default function IndicacionForm({
     }, [defaultNumeroVisita]);
 
     useEffect(() => {
+        console.log('🔍 Usuario desde contexto:', usuario);
+        console.log('📋 Campos disponibles:', usuario ? Object.keys(usuario) : 'No hay usuario');
+        console.log('🆔 idValorpersonal:', usuario?.idValorpersonal);
+        console.log('🆔 valorPersonal:', usuario?.valorPersonal);
+        console.log('🆔 idCodOperador:', usuario?.idCodOperador);
+        
         if (usuario) {
+            const profesional = usuario?.idValorpersonal || usuario?.valorPersonal;
+            const operador = usuario?.idValorpersonal || usuario?.valorPersonal || usuario?.idCodOperador;
+            
+            console.log('✅ ProfesionalAsiste será:', profesional);
+            console.log('✅ OperadorCarga será:', operador);
+            
             setForm((prev) => ({
                 ...prev,
-                ProfesionalAsiste:
-                    usuario?.idValorpersonal || usuario?.valorPersonal,
-                OperadorCarga: usuario?.idValorpersonal || usuario?.valorPersonal || usuario?.idCodOperador
+                ProfesionalAsiste: profesional,
+                OperadorCarga: operador
             }));
         }
     }, [usuario]);

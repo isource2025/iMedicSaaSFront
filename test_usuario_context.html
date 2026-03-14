@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Usuario Context</title>
+</head>
+<body>
+    <h1>Test Usuario desde localStorage</h1>
+    <pre id="output"></pre>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        // Simular lo que hace el AppContext
+        const storedUser = localStorage.getItem('user');
+        
+        output.textContent = `
+=== DATOS EN LOCALSTORAGE ===
+Raw: ${storedUser}
+
+=== PARSEADO ===
+${storedUser ? JSON.stringify(JSON.parse(storedUser), null, 2) : 'No hay usuario'}
+
+=== CAMPOS DISPONIBLES ===
+${storedUser ? Object.keys(JSON.parse(storedUser)).join('\n') : 'N/A'}
+
+=== VALORES QUE BUSCA EL CÓDIGO ===
+idValorpersonal: ${storedUser ? JSON.parse(storedUser).idValorpersonal : 'N/A'}
+valorPersonal: ${storedUser ? JSON.parse(storedUser).valorPersonal : 'N/A'}
+idCodOperador: ${storedUser ? JSON.parse(storedUser).idCodOperador : 'N/A'}
+        `;
+    </script>
+</body>
+</html>
