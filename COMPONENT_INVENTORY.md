@@ -10,7 +10,7 @@
 ### 📁 components/AnalyticsLoader/
 ```
 ├── index.tsx                    # Loader para analytics
-```
+``` 
 
 ### 📁 components/Carousel/
 ```
