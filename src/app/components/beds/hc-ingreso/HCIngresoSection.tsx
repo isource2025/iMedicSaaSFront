@@ -98,10 +98,14 @@ const getSecciones = (record: any): Record<string, Array<{campo: string, valor: 
         const valor = record[key];
         
         // Ignorar campos vacíos, null, undefined o de sistema
+        // IMPORTANTE: Excluir campos viejos de signos vitales que ahora se manejan desde Controles de Enfermería
         if (!valor || valor === '' || 
             ['IdHCIngreso', 'NumeroVisita', 'IdSector', 'IdProfecional', 'Fecha', 
              'FechaFormateada', 'HoraFormateada', 'ProfesionalNombre', 'SectorDescripcion',
-             'MotivoConsulta', 'EnfermedadActual'].includes(key)) {
+             'MotivoConsulta', 'EnfermedadActual',
+             // Campos viejos de signos vitales (ahora en Controles de Enfermería)
+             'FC', 'FR', 'Pulso', 'Presion', 'Temperatura', 'Saturacion', 'Glucemia',
+             'FrecuenciaCardiaca', 'FrecuenciaRespiratoria', 'PresionArterial'].includes(key)) {
             return;
         }
         
@@ -888,7 +892,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Signos Vitales */}
-                    {activeSection === "signos-vitales" && (
+                    {activeSection === "signosVitales" && (
                         <div className={styles.formFields}>
                             <SignosVitalesForm
                                 data={examenFisico.signosVitales}

@@ -9,10 +9,13 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
     return {
         ...empty,
         signosVitales: {
-            pa: record.Presion || record.SV_PA || "",
-            fc: record.SV_FC || record.AC_FRECUENCIACARDIACA || record.FC || "",
-            fr: record.SV_FR || record.FR || "",
-            tax: record.PF_TEMPERATURA || record.Temperatura || "",
+            // IMPORTANTE: Solo usar campos con prefijo SV_ (nuevos)
+            // NO usar campos viejos sin prefijo (FC, FR, Presion, Temperatura, etc.)
+            // Esos datos ahora vienen desde Controles de Enfermería
+            pa: record.SV_PA || "",
+            fc: record.SV_FC || "",
+            fr: record.SV_FR || "",
+            tax: record.SV_TAX || "",
             glucemia: record.SV_GLUCEMIA || "",
             impresionGeneral: record.SV_IMPRESIONGENERAL || "",
             facie: record.SV_FACIE || "",
@@ -121,12 +124,12 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
 export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Record<string, any> => {
     const datos: Record<string, any> = {};
     
-    // Signos Vitales
+    // Signos Vitales - SOLO campos con prefijo SV_
+    // NO guardar en campos viejos (FC, FR, Presion, Temperatura) - esos son de Controles de Enfermería
     if (examenFisico.signosVitales.fc) datos.SV_FC = examenFisico.signosVitales.fc;
-    if (examenFisico.signosVitales.fc) datos.AC_FRECUENCIACARDIACA = examenFisico.signosVitales.fc;
     if (examenFisico.signosVitales.fr) datos.SV_FR = examenFisico.signosVitales.fr;
-    if (examenFisico.signosVitales.tax) datos.PF_TEMPERATURA = examenFisico.signosVitales.tax;
-    if (examenFisico.signosVitales.pa) datos.Presion = examenFisico.signosVitales.pa;
+    if (examenFisico.signosVitales.tax) datos.SV_TAX = examenFisico.signosVitales.tax;
+    if (examenFisico.signosVitales.pa) datos.SV_PA = examenFisico.signosVitales.pa;
     if (examenFisico.signosVitales.glucemia) datos.SV_GLUCEMIA = examenFisico.signosVitales.glucemia;
     if (examenFisico.signosVitales.talla) datos.SV_TALLA = examenFisico.signosVitales.talla;
     if (examenFisico.signosVitales.pesoActual) datos.SV_PESOACTUAL = examenFisico.signosVitales.pesoActual;
