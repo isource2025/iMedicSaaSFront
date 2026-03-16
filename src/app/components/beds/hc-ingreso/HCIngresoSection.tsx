@@ -791,7 +791,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Cuello (incluye Sistema Venoso) */}
-                    {(activeSection === "cuello" || activeSection === "sistema-venoso") && (
+                    {activeSection === "cuello" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoCuelloForm
                                 cuello={examenFisico.cuello}
@@ -815,7 +815,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Aparato Respiratorio */}
-                    {activeSection === "aparato-respiratorio" && (
+                    {activeSection === "respiratorio" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoRespiratorioForm
                                 data={examenFisico.aparatoRespiratorio}
@@ -826,7 +826,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Aparato Cardiovascular */}
-                    {activeSection === "aparato-cardiovascular" && (
+                    {activeSection === "cardiovascular" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoCardiovascularForm
                                 data={examenFisico.aparatoCardiovascular}
@@ -848,7 +848,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Aparato Urogenital */}
-                    {activeSection === "aparato-urogenital" && (
+                    {activeSection === "urogenital" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoUrogenitalForm
                                 data={examenFisico.aparatoUrogenital}
@@ -859,7 +859,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Examen Ginecológico */}
-                    {activeSection === "examen-ginecologico" && (
+                    {activeSection === "ginecologico" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoGinecologicoForm
                                 data={examenFisico.examenGinecologico}
@@ -870,7 +870,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Examen Obstétrico */}
-                    {activeSection === "examen-obstetrico" && (
+                    {activeSection === "obstetrico" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoObstetricoForm
                                 data={examenFisico.examenObstetrico}
