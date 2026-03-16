@@ -134,52 +134,39 @@ export default function ModalCargarControl({
         }
     };
 
+    const footerButtons = (
+        <button 
+            className={styles.acceptButton} 
+            onClick={handleGuardar}
+            disabled={loading}
+        >
+            {loading ? 'Guardando...' : 'APLICAR'}
+        </button>
+    );
+
     return (
         <ModalBasePaciente
             isOpen={isOpen}
             onClose={onClose}
             titulo="Cargar Control"
             numeroVisita={String(numeroVisita)}
+            footerButtons={footerButtons}
         >
-            <div className={styles.modalContent}>
-                {error && (
-                    <div style={{
-                        padding: '10px',
-                        backgroundColor: '#fee',
-                        border: '1px solid #fcc',
-                        borderRadius: '4px',
-                        marginBottom: '15px',
-                        color: '#c33'
-                    }}>
-                        {error}
-                    </div>
-                )}
-
-                <RenderControlSimplificado
-                    formData={formData}
-                    handleChange={handleChange}
-                />
-
-                <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                    <button
-                        onClick={handleGuardar}
-                        disabled={loading}
-                        style={{
-                            padding: '10px 20px',
-                            backgroundColor: '#00B5E2',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            opacity: loading ? 0.6 : 1
-                        }}
-                    >
-                        {loading ? 'Guardando...' : 'APLICAR'}
+            {error ? (
+                <div className={styles.errorContainer}>
+                    <p className={styles.errorMessage}>{error}</p>
+                    <button onClick={onClose} className={styles.errorButton}>
+                        Cerrar
                     </button>
                 </div>
-            </div>
+            ) : (
+                <div className={styles.formContainer}>
+                    <RenderControlSimplificado
+                        formData={formData}
+                        handleChange={handleChange}
+                    />
+                </div>
+            )}
         </ModalBasePaciente>
     );
 }
