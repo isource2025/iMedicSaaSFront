@@ -898,6 +898,8 @@ export default function HCIngresoSection({
                                 data={examenFisico.signosVitales}
                                 onChange={(signosVitales) => setExamenFisico({ ...examenFisico, signosVitales })}
                                 readOnly={false}
+                                numeroVisita={numeroVisita || undefined}
+                                idHCIngreso={selectedRecordId || undefined}
                             />
                         </div>
                     )}
