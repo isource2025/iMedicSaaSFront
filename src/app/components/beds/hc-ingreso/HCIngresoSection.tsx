@@ -50,18 +50,16 @@ const HC_SECTIONS = [
     { id: "cardiovascular", label: "Aparato Cardiovascular" },
     { id: "abdomen", label: "Abdomen" },
     { id: "urogenital", label: "Aparato Urogenital" },
+    { id: "ginecologico", label: "Examen Ginecológico" },
+    { id: "obstetrico", label: "Examen Obstétrico" },
     { id: "neurologico", label: "Sistema Nervioso" },
-    { id: "linfatico", label: "Sistema Linfático" },
-    { id: "osteoarticular", label: "Sistema Osteoarticulomuscular" },
-    { id: "examen-obstetrico", label: "Examen Obstétrico", required: false },
-    { id: "sistema-nervioso", label: "Sistema Nervioso", required: false },
-    { id: "examen-oftalmologico", label: "Examen Oftalmológico", required: false },
-    { id: "electrocardiograma", label: "Electrocardiograma", required: false },
-    { id: "radiografia-torax", label: "Radiografía de Tórax", required: false },
-    { id: "impresion-diagnostica", label: "Impresión Diagnóstica", required: false },
-    { id: "plan-diagnostico", label: "Plan Diagnóstico", required: false },
-    { id: "plan-terapeutico", label: "Plan Terapéutico", required: false },
-    { id: "examen-complementario", label: "Examen Complementario", required: false },
+    { id: "oftalmologico", label: "Examen Oftalmológico" },
+    { id: "electrocardiograma", label: "Electrocardiograma" },
+    { id: "radiografiaTorax", label: "Radiografía de Tórax" },
+    { id: "impresionDiagnostica", label: "Impresión Diagnóstica" },
+    { id: "planDiagnostico", label: "Plan Diagnóstico" },
+    { id: "planTerapeutico", label: "Plan Terapéutico" },
+    { id: "examenesComplementarios", label: "Exámenes Complementarios" },
 ];
 
 // Configuración de secciones para vista de detalle
@@ -881,7 +879,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Sistema Nervioso */}
-                    {activeSection === "sistema-nervioso" && (
+                    {activeSection === "neurologico" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoNerviosoForm
                                 data={examenFisico.sistemaNervioso}
@@ -905,7 +903,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Examen Oftalmológico */}
-                    {activeSection === "examen-oftalmologico" && (
+                    {activeSection === "oftalmologico" && (
                         <div className={styles.formFields}>
                             <ExamenOftalmologicoForm
                                 data={examenFisico.examenOftalmologico}
@@ -927,7 +925,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Radiografía de Tórax */}
-                    {activeSection === "radiografia-torax" && (
+                    {activeSection === "radiografiaTorax" && (
                         <div className={styles.formFields}>
                             <RadiografiaToraxForm
                                 data={examenFisico.radiografiaTorax}
@@ -938,7 +936,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Impresión Diagnóstica */}
-                    {activeSection === "impresion-diagnostica" && (
+                    {activeSection === "impresionDiagnostica" && (
                         <div className={styles.formFields}>
                             <ImpresionDiagnosticaForm
                                 data={examenFisico.impresionDiagnostica}
@@ -949,7 +947,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Plan Diagnóstico */}
-                    {activeSection === "plan-diagnostico" && (
+                    {activeSection === "planDiagnostico" && (
                         <div className={styles.formFields}>
                             <PlanDiagnosticoForm
                                 data={examenFisico.planDiagnostico}
@@ -960,7 +958,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Plan Terapéutico */}
-                    {activeSection === "plan-terapeutico" && (
+                    {activeSection === "planTerapeutico" && (
                         <div className={styles.formFields}>
                             <PlanTerapeuticoForm
                                 data={examenFisico.planTerapeutico}
@@ -971,7 +969,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Exámenes Complementarios */}
-                    {activeSection === "examen-complementario" && (
+                    {activeSection === "examenesComplementarios" && (
                         <div className={styles.formFields}>
                             <ExamenesComplementariosForm
                                 data={examenFisico.examenesComplementarios}
