@@ -11,7 +11,7 @@ import {
     eliminarHCIngreso 
 } from "@/app/services/hcIngresoService";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
-import { getEmptyExamenFisico } from "@/app/utils/examenFisicoHelpers";
+import { getEmptyExamenFisico, mapearHCIaExamenFisico, mapearExamenFisicoAHCI } from "@/app/utils/examenFisicoHelpers";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
 import { generarPDFHistoriaClinica } from '@/app/utils/pdfHCIngreso';
@@ -310,6 +310,16 @@ export default function HCIngresoSection({
             enfermedadActual: selectedRecord.EnfermedadActual || "",
             antecedentes: (selectedRecord as any).Antecedentes || "",
         });
+        
+        // Mapear datos del registro al estado del examen físico
+        const examenFisicoMapeado = mapearHCIaExamenFisico(selectedRecord);
+        setExamenFisico(examenFisicoMapeado);
+        
+        console.log('[HC Ingreso] Datos mapeados para edición:', {
+            signosVitales: examenFisicoMapeado.signosVitales,
+            selectedRecord: selectedRecord
+        });
+        
         setActiveSection("motivo");
         setMode("edit");
     };
@@ -329,13 +339,22 @@ export default function HCIngresoSection({
             setError(null);
 
             // Preparar datos para guardar
+            const datosExamenFisico = mapearExamenFisicoAHCI(examenFisico);
+            
             const dataToSave: Partial<HCIngresoRecord> = {
                 NumeroVisita: numeroVisita,
                 IdSector: formData.sector,
                 MotivoConsulta: formData.motivoConsulta,
                 EnfermedadActual: formData.enfermedadActual,
                 IdProfecional: formData.profesionalId ? parseInt(formData.profesionalId) : undefined,
+                ...datosExamenFisico,
             };
+            
+            console.log('[HC Ingreso] Guardando con datos completos:', {
+                basicos: { MotivoConsulta: formData.motivoConsulta },
+                signosVitales: examenFisico.signosVitales,
+                datosExamenFisico: Object.keys(datosExamenFisico).length + ' campos'
+            });
 
             if (mode === "add") {
                 // Crear nueva HC
