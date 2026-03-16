@@ -754,7 +754,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Piel y Faneras */}
-                    {activeSection === "piel-faneras" && (
+                    {activeSection === "piel" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoPielForm
                                 data={examenFisico.piel}
@@ -765,7 +765,7 @@ export default function HCIngresoSection({
                     )}
 
                     {/* Tejido Subcutáneo (incluye Sistema Linfático y Sistema Osteo) */}
-                    {(activeSection === "tejido-subcutaneo" || activeSection === "sistema-linfatico" || activeSection === "sistema-osteo") && (
+                    {activeSection === "tejidoSubcutaneo" && (
                         <div className={styles.formFields}>
                             <ExamenFisicoTejidoSubcutaneo
                                 tejidoCelular={examenFisico.tejidoCelularSubcutaneo}
@@ -981,13 +981,7 @@ export default function HCIngresoSection({
                         </div>
                     )}
 
-                    {/* Placeholder para secciones no implementadas */}
-                    {!["motivo", "antecedentes", "signos-vitales", "piel-faneras", "tejido-subcutaneo", "sistema-linfatico", "sistema-osteo", "cabeza", "cuello", "sistema-venoso", "mamas", "aparato-respiratorio", "aparato-cardiovascular", "abdomen", "aparato-urogenital", "examen-ginecologico", "examen-obstetrico", "sistema-nervioso", "examen-oftalmologico", "electrocardiograma", "radiografia-torax", "impresion-diagnostica", "plan-diagnostico", "plan-terapeutico", "examen-complementario"].includes(activeSection) && (
-                        <div className={styles.formPlaceholder}>
-                            <p>Formulario de {HC_SECTIONS.find((s) => s.id === activeSection)?.label}</p>
-                            <p className={styles.placeholderNote}>Campos pendientes de implementar</p>
-                        </div>
-                    )}
+                    
                 </div>
             </div>
 
