@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import ModalBasePaciente from '../../../modals/ModalBasePaciente';
-import RenderControl from '../../../indicaciones/renders_Indicacion/RenderControl';
+import RenderControlSimplificado from './RenderControlSimplificado';
 import { FormData } from '../../../indicaciones/AplicarIndicacion';
 import { useAppContext } from '@/app/contexts/AppContext';
 import styles from '../../../indicaciones/AplicarIndicacion.module.css';
@@ -155,29 +155,12 @@ export default function ModalCargarControl({
                     </div>
                 )}
 
-                <RenderControl
+                <RenderControlSimplificado
                     formData={formData}
                     handleChange={handleChange}
                 />
 
-                <div className={styles.modalActions} style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                    <button
-                        onClick={onClose}
-                        disabled={loading}
-                        style={{
-                            padding: '10px 20px',
-                            backgroundColor: '#6c757d',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            opacity: loading ? 0.6 : 1
-                        }}
-                    >
-                        Cerrar
-                    </button>
+                <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                     <button
                         onClick={handleGuardar}
                         disabled={loading}
