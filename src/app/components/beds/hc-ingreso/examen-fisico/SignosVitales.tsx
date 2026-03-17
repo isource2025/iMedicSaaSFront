@@ -3,7 +3,7 @@
 import { SignosVitales } from "@/app/types/examenFisico";
 import styles from "./ExamenFisicoForm.module.css";
 import { useState } from "react";
-import ModalCargarControl from "./ModalCargarControl";
+import ModalCargarControl, { ControlDatosCargados } from "./ModalCargarControl";
 
 interface SignosVitalesProps {
     data: SignosVitales;
@@ -15,6 +15,7 @@ interface SignosVitalesProps {
 
 export default function SignosVitalesForm({ data, onChange, readOnly = false, numeroVisita, idHCIngreso }: SignosVitalesProps) {
     const [showControlesModal, setShowControlesModal] = useState(false);
+    const [controlCargado, setControlCargado] = useState<ControlDatosCargados | null>(null);
     
     const handleChange = (field: keyof SignosVitales, value: string) => {
         onChange({ ...data, [field]: value });
@@ -28,9 +29,20 @@ export default function SignosVitalesForm({ data, onChange, readOnly = false, nu
         setShowControlesModal(false);
     };
     
-    const handleControlGuardado = () => {
+    const handleControlGuardado = (datos?: ControlDatosCargados) => {
         setShowControlesModal(false);
-        // Opcional: recargar datos o mostrar mensaje de éxito
+        if (datos) {
+            setControlCargado(datos);
+            // Actualizar campos de signos vitales en el formulario padre
+            onChange({
+                ...data,
+                pa: datos.pa || data.pa,
+                fc: datos.fc || data.fc,
+                fr: datos.fr || data.fr,
+                tax: datos.tax || data.tax,
+                glucemia: datos.glucemia || data.glucemia,
+            });
+        }
     };
 
     return (
@@ -61,6 +73,41 @@ export default function SignosVitalesForm({ data, onChange, readOnly = false, nu
                         + Cargar Control
                     </button>
                 </div>
+                {/* Resumen de datos medibles cargados */}
+                {(controlCargado || data.pa || data.fc || data.fr || data.tax || data.glucemia) && (
+                    <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                        {(controlCargado?.pa || data.pa) && (
+                            <div style={{ padding: '6px 10px', backgroundColor: '#e0f7fa', borderRadius: '4px', fontSize: '12px' }}>
+                                <strong>P A:</strong> {controlCargado?.pa || data.pa} mmHg
+                            </div>
+                        )}
+                        {(controlCargado?.fc || data.fc) && (
+                            <div style={{ padding: '6px 10px', backgroundColor: '#e0f7fa', borderRadius: '4px', fontSize: '12px' }}>
+                                <strong>F C:</strong> {controlCargado?.fc || data.fc} lpm
+                            </div>
+                        )}
+                        {(controlCargado?.fr || data.fr) && (
+                            <div style={{ padding: '6px 10px', backgroundColor: '#e0f7fa', borderRadius: '4px', fontSize: '12px' }}>
+                                <strong>F R:</strong> {controlCargado?.fr || data.fr} rpm
+                            </div>
+                        )}
+                        {(controlCargado?.tax || data.tax) && (
+                            <div style={{ padding: '6px 10px', backgroundColor: '#e0f7fa', borderRadius: '4px', fontSize: '12px' }}>
+                                <strong>T A X:</strong> {controlCargado?.tax || data.tax}°C
+                            </div>
+                        )}
+                        {(controlCargado?.glucemia || data.glucemia) && (
+                            <div style={{ padding: '6px 10px', backgroundColor: '#e0f7fa', borderRadius: '4px', fontSize: '12px' }}>
+                                <strong>Glucemia:</strong> {controlCargado?.glucemia || data.glucemia} mg/dL
+                            </div>
+                        )}
+                        {controlCargado?.saturacion && (
+                            <div style={{ padding: '6px 10px', backgroundColor: '#e0f7fa', borderRadius: '4px', fontSize: '12px' }}>
+                                <strong>Saturación:</strong> {controlCargado.saturacion}%
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             
             {/* SECCIÓN 2: ANTROPOMETRÍA */}

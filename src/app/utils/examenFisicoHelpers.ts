@@ -31,7 +31,7 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             humedad: record.PF_HUMEDAD || "",
             temperatura: record.PF_TEMPERATURA || "",
             elasticidad: record.PF_ELASTICIDAD || "",
-            unas: record.PF_UNAS || "",
+            unas: record.PF_UNIAS || "",
             distribucionPilosa: record.PF_DISTRIBUCIONPILOSA || "",
             cicatrices: record.PF_CICATRICES || "",
         },
@@ -107,36 +107,36 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             circulacionColateral: record.SV_CIRCULACIONCOLATERAL || "",
         },
         sistemaOsteoArticuloMuscular: {
-            musculo: record.SOAM_MUSCULO || "",
+            musculo: record.SOAM_MUSCULOTROFISMOSENSIBILIDAD || "",
             huesos: record.SOAM_HUESOS || "",
             columnaVertebral: record.SOAM_COLUMNAVERTEBRAL || "",
             indiceTobilloBrazoDerecha: record.SOAM_INDICETOBILLOBRAZODERECHA || "",
-            indiceTobilloBrazoIzquierda: record.SOAM_INDICETOBILLOBRAZOIZQUIERDA || "",
-            perimetroDistalProximalMD: record.SOAM_PERIMETRODISTALPROXIMALMD || "",
-            perimetroDistalProximalMI: record.SOAM_PERIMETRODISTALPROXIMALMI || "",
+            indiceTobilloBrazoIzquierda: record.SOAM_INDICETOBILLOBRAZOIZQUIERA || "",
+            perimetroDistalProximalMD: record.SOAM_PERIMETROMID || "",
+            perimetroDistalProximalMI: record.SOAM_PERIMETROMII || "",
             articulaciones: record.SOAM_ARTICULACIONES || "",
         },
         mamas: {
             inspeccion: {
-                tamano: record.M_INSP_TAMANO || "",
-                superficie: record.M_INSP_SUPERFICIE || "",
-                areolas: record.M_INSP_AREOLAS || "",
-                pezones: record.M_INSP_PEZONES || "",
-                maniobrapectorales: record.M_INSP_MANIOBRAPECTORALES || "",
-                pielRetraccion: record.M_INSP_PIELRETRACCION === 1,
-                elevacion: record.M_INSP_ELEVACION === 1,
-                deNaranja: record.M_INSP_DENARANJA === 1,
-                ulceras: record.M_INSP_ULCERAS === 1,
-                observaciones: record.M_INSP_OBSERVACIONES || "",
+                tamano: record.MI_TAMANO || "",
+                superficie: record.MI_SUPERFICIE || "",
+                areolas: record.MI_AREOLAS || "",
+                pezones: record.MI_PEZONES || "",
+                maniobrapectorales: record.MI_MANIOBRAPECTORALES || "",
+                pielRetraccion: record.MI_PIELRETRACCION === 1,
+                elevacion: record.MI_ELEVACION === 1,
+                deNaranja: record.MI_DENARANJA === 1,
+                ulceras: record.MI_ULCERAS === 1,
+                observaciones: record.MI_TEXTO || "",
             },
             palpacion: {
-                limites: record.M_PALP_LIMITES || "",
-                dolorosa: record.M_PALP_DOLOROSA || "",
-                superficie: record.M_PALP_SUPERFICIE || "",
-                consistencia: record.M_PALP_CONSISTENCIA || "",
-                tumor: record.M_PALP_TUMOR || "",
-                fluacionPiel: record.M_PALP_FLUACIONPIEL || "",
-                derramePorPezon: record.M_PALP_DERRAMEPORPEZON || "",
+                limites: record.MP_LIMITES || "",
+                dolorosa: record.MP_DOLOROSA || "",
+                superficie: record.MP_SUPERFICIE || "",
+                consistencia: record.MP_CONSISTENCIA || "",
+                tumor: record.MP_TUMOR || "",
+                fluacionPiel: record.MP_FIJACIONPIEL || "",
+                derramePorPezon: record.MP_DERRAMEPORPEZON || "",
             },
         },
         abdomen: {
@@ -146,8 +146,8 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             profunda: record.A_PROFUNDA || "",
             percusion: record.A_PERCUSION || "",
             higado: record.A_HIGADO || "",
-            limiteSup: record.A_LIMITESUP || "",
-            limiteInf: record.A_LIMITEINF || "",
+            limiteSup: record.A_LIMTESUP || "",
+            limiteInf: record.A_LIMTEINF || "",
             altura: record.A_ALTURA || "",
             caracteristicas: record.A_CARACTERISTICAS || "",
             auscultacion: record.A_AUSCULTACION || "",
@@ -323,7 +323,7 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.piel.humedad) datos.PF_HUMEDAD = examenFisico.piel.humedad;
     if (examenFisico.piel.temperatura) datos.PF_TEMPERATURA = examenFisico.piel.temperatura;
     if (examenFisico.piel.elasticidad) datos.PF_ELASTICIDAD = examenFisico.piel.elasticidad;
-    if (examenFisico.piel.unas) datos.PF_UNAS = examenFisico.piel.unas;
+    if (examenFisico.piel.unas) datos.PF_UNIAS = examenFisico.piel.unas;
     if (examenFisico.piel.distribucionPilosa) datos.PF_DISTRIBUCIONPILOSA = examenFisico.piel.distribucionPilosa;
     if (examenFisico.piel.cicatrices) datos.PF_CICATRICES = examenFisico.piel.cicatrices;
     
@@ -399,33 +399,33 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.sistemaVenoso.circulacionColateral) datos.SV_CIRCULACIONCOLATERAL = examenFisico.sistemaVenoso.circulacionColateral;
     
     // Sistema Osteo-Artículo-Muscular
-    if (examenFisico.sistemaOsteoArticuloMuscular.musculo) datos.SOAM_MUSCULO = examenFisico.sistemaOsteoArticuloMuscular.musculo;
+    if (examenFisico.sistemaOsteoArticuloMuscular.musculo) datos.SOAM_MUSCULOTROFISMOSENSIBILIDAD = examenFisico.sistemaOsteoArticuloMuscular.musculo;
     if (examenFisico.sistemaOsteoArticuloMuscular.huesos) datos.SOAM_HUESOS = examenFisico.sistemaOsteoArticuloMuscular.huesos;
     if (examenFisico.sistemaOsteoArticuloMuscular.columnaVertebral) datos.SOAM_COLUMNAVERTEBRAL = examenFisico.sistemaOsteoArticuloMuscular.columnaVertebral;
     if (examenFisico.sistemaOsteoArticuloMuscular.indiceTobilloBrazoDerecha) datos.SOAM_INDICETOBILLOBRAZODERECHA = examenFisico.sistemaOsteoArticuloMuscular.indiceTobilloBrazoDerecha;
-    if (examenFisico.sistemaOsteoArticuloMuscular.indiceTobilloBrazoIzquierda) datos.SOAM_INDICETOBILLOBRAZOIZQUIERDA = examenFisico.sistemaOsteoArticuloMuscular.indiceTobilloBrazoIzquierda;
-    if (examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMD) datos.SOAM_PERIMETRODISTALPROXIMALMD = examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMD;
-    if (examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMI) datos.SOAM_PERIMETRODISTALPROXIMALMI = examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMI;
+    if (examenFisico.sistemaOsteoArticuloMuscular.indiceTobilloBrazoIzquierda) datos.SOAM_INDICETOBILLOBRAZOIZQUIERA = examenFisico.sistemaOsteoArticuloMuscular.indiceTobilloBrazoIzquierda;
+    if (examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMD) datos.SOAM_PERIMETROMID = examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMD;
+    if (examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMI) datos.SOAM_PERIMETROMII = examenFisico.sistemaOsteoArticuloMuscular.perimetroDistalProximalMI;
     if (examenFisico.sistemaOsteoArticuloMuscular.articulaciones) datos.SOAM_ARTICULACIONES = examenFisico.sistemaOsteoArticuloMuscular.articulaciones;
     
     // Mamas
-    if (examenFisico.mamas.inspeccion.tamano) datos.M_INSP_TAMANO = examenFisico.mamas.inspeccion.tamano;
-    if (examenFisico.mamas.inspeccion.superficie) datos.M_INSP_SUPERFICIE = examenFisico.mamas.inspeccion.superficie;
-    if (examenFisico.mamas.inspeccion.areolas) datos.M_INSP_AREOLAS = examenFisico.mamas.inspeccion.areolas;
-    if (examenFisico.mamas.inspeccion.pezones) datos.M_INSP_PEZONES = examenFisico.mamas.inspeccion.pezones;
-    if (examenFisico.mamas.inspeccion.maniobrapectorales) datos.M_INSP_MANIOBRAPECTORALES = examenFisico.mamas.inspeccion.maniobrapectorales;
-    datos.M_INSP_PIELRETRACCION = examenFisico.mamas.inspeccion.pielRetraccion ? 1 : 0;
-    datos.M_INSP_ELEVACION = examenFisico.mamas.inspeccion.elevacion ? 1 : 0;
-    datos.M_INSP_DENARANJA = examenFisico.mamas.inspeccion.deNaranja ? 1 : 0;
-    datos.M_INSP_ULCERAS = examenFisico.mamas.inspeccion.ulceras ? 1 : 0;
-    if (examenFisico.mamas.inspeccion.observaciones) datos.M_INSP_OBSERVACIONES = examenFisico.mamas.inspeccion.observaciones;
-    if (examenFisico.mamas.palpacion.limites) datos.M_PALP_LIMITES = examenFisico.mamas.palpacion.limites;
-    if (examenFisico.mamas.palpacion.dolorosa) datos.M_PALP_DOLOROSA = examenFisico.mamas.palpacion.dolorosa;
-    if (examenFisico.mamas.palpacion.superficie) datos.M_PALP_SUPERFICIE = examenFisico.mamas.palpacion.superficie;
-    if (examenFisico.mamas.palpacion.consistencia) datos.M_PALP_CONSISTENCIA = examenFisico.mamas.palpacion.consistencia;
-    if (examenFisico.mamas.palpacion.tumor) datos.M_PALP_TUMOR = examenFisico.mamas.palpacion.tumor;
-    if (examenFisico.mamas.palpacion.fluacionPiel) datos.M_PALP_FLUACIONPIEL = examenFisico.mamas.palpacion.fluacionPiel;
-    if (examenFisico.mamas.palpacion.derramePorPezon) datos.M_PALP_DERRAMEPORPEZON = examenFisico.mamas.palpacion.derramePorPezon;
+    if (examenFisico.mamas.inspeccion.tamano) datos.MI_TAMANO = examenFisico.mamas.inspeccion.tamano;
+    if (examenFisico.mamas.inspeccion.superficie) datos.MI_SUPERFICIE = examenFisico.mamas.inspeccion.superficie;
+    if (examenFisico.mamas.inspeccion.areolas) datos.MI_AREOLAS = examenFisico.mamas.inspeccion.areolas;
+    if (examenFisico.mamas.inspeccion.pezones) datos.MI_PEZONES = examenFisico.mamas.inspeccion.pezones;
+    if (examenFisico.mamas.inspeccion.maniobrapectorales) datos.MI_MANIOBRAPECTORALES = examenFisico.mamas.inspeccion.maniobrapectorales;
+    datos.MI_PIELRETRACCION = examenFisico.mamas.inspeccion.pielRetraccion ? 1 : 0;
+    datos.MI_ELEVACION = examenFisico.mamas.inspeccion.elevacion ? 1 : 0;
+    datos.MI_DENARANJA = examenFisico.mamas.inspeccion.deNaranja ? 1 : 0;
+    datos.MI_ULCERAS = examenFisico.mamas.inspeccion.ulceras ? 1 : 0;
+    if (examenFisico.mamas.inspeccion.observaciones) datos.MI_TEXTO = examenFisico.mamas.inspeccion.observaciones;
+    if (examenFisico.mamas.palpacion.limites) datos.MP_LIMITES = examenFisico.mamas.palpacion.limites;
+    if (examenFisico.mamas.palpacion.dolorosa) datos.MP_DOLOROSA = examenFisico.mamas.palpacion.dolorosa;
+    if (examenFisico.mamas.palpacion.superficie) datos.MP_SUPERFICIE = examenFisico.mamas.palpacion.superficie;
+    if (examenFisico.mamas.palpacion.consistencia) datos.MP_CONSISTENCIA = examenFisico.mamas.palpacion.consistencia;
+    if (examenFisico.mamas.palpacion.tumor) datos.MP_TUMOR = examenFisico.mamas.palpacion.tumor;
+    if (examenFisico.mamas.palpacion.fluacionPiel) datos.MP_FIJACIONPIEL = examenFisico.mamas.palpacion.fluacionPiel;
+    if (examenFisico.mamas.palpacion.derramePorPezon) datos.MP_DERRAMEPORPEZON = examenFisico.mamas.palpacion.derramePorPezon;
     
     // Abdomen
     if (examenFisico.abdomen.inspeccion) datos.A_INSPECCION = examenFisico.abdomen.inspeccion;
@@ -434,8 +434,8 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.abdomen.profunda) datos.A_PROFUNDA = examenFisico.abdomen.profunda;
     if (examenFisico.abdomen.percusion) datos.A_PERCUSION = examenFisico.abdomen.percusion;
     if (examenFisico.abdomen.higado) datos.A_HIGADO = examenFisico.abdomen.higado;
-    if (examenFisico.abdomen.limiteSup) datos.A_LIMITESUP = examenFisico.abdomen.limiteSup;
-    if (examenFisico.abdomen.limiteInf) datos.A_LIMITEINF = examenFisico.abdomen.limiteInf;
+    if (examenFisico.abdomen.limiteSup) datos.A_LIMTESUP = examenFisico.abdomen.limiteSup;
+    if (examenFisico.abdomen.limiteInf) datos.A_LIMTEINF = examenFisico.abdomen.limiteInf;
     if (examenFisico.abdomen.altura) datos.A_ALTURA = examenFisico.abdomen.altura;
     if (examenFisico.abdomen.caracteristicas) datos.A_CARACTERISTICAS = examenFisico.abdomen.caracteristicas;
     if (examenFisico.abdomen.auscultacion) datos.A_AUSCULTACION = examenFisico.abdomen.auscultacion;

@@ -8,12 +8,21 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { crearControl } from '@/app/services/controlesFrecuentesService';
 import styles from '../../../indicaciones/AplicarIndicacion.module.css';
 
+export interface ControlDatosCargados {
+    pa: string;
+    fc: string;
+    fr: string;
+    tax: string;
+    glucemia: string;
+    saturacion: string;
+}
+
 interface ModalCargarControlProps {
     isOpen: boolean;
     onClose: () => void;
     numeroVisita: number;
     idHCIngreso?: number;
-    onSuccess?: () => void;
+    onSuccess?: (datos?: ControlDatosCargados) => void;
 }
 
 // Helper para obtener fecha local sin problemas de zona horaria
@@ -107,8 +116,20 @@ export default function ModalCargarControl({
                 observaciones: formData.observaciones || '',
             });
 
+            // Pasar datos cargados al formulario padre
+            const datosCargados: ControlDatosCargados = {
+                pa: formData.control.presionArterialMax && formData.control.presionArterialMin
+                    ? `${formData.control.presionArterialMax}/${formData.control.presionArterialMin}`
+                    : '',
+                fc: formData.control.pulso || '',
+                fr: formData.control.frResp || '',
+                tax: formData.control.temperaturaAxilar || '',
+                glucemia: formData.control.glucemia || '',
+                saturacion: formData.control.saturometria || '',
+            };
+
             if (onSuccess) {
-                onSuccess();
+                onSuccess(datosCargados);
             }
             onClose();
         } catch (err) {
