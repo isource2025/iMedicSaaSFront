@@ -250,6 +250,7 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
               <th>FR</th>
               <th>T° Axilar</th>
               <th>Saturación</th>
+              <th>Origen</th>
               <th>Operador</th>
               <th>Observaciones</th>
               <th>Acciones</th>
@@ -266,6 +267,29 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
                 <td>{control.FrecuenciaRespiratoria || '-'}</td>
                 <td>{control.Axilar ? `${control.Axilar}°C` : '-'}</td>
                 <td>{control.Saturometria ? `${control.Saturometria}%` : '-'}</td>
+                <td>
+                  {control.IdHci && control.IdHci > 0 ? (
+                    <span style={{ 
+                      display: 'inline-block',
+                      padding: '2px 8px', 
+                      backgroundColor: '#00B5E2', 
+                      color: 'white', 
+                      borderRadius: '4px', 
+                      fontSize: '11px', 
+                      fontWeight: '600' 
+                    }}>HC</span>
+                  ) : (
+                    <span style={{ 
+                      display: 'inline-block',
+                      padding: '2px 8px', 
+                      backgroundColor: '#6c757d', 
+                      color: 'white', 
+                      borderRadius: '4px', 
+                      fontSize: '11px', 
+                      fontWeight: '600' 
+                    }}>ENF</span>
+                  )}
+                </td>
                 <td>
                   {obtenerNombreCompleto(
                     control.OperadorApellido,
@@ -404,6 +428,32 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
                     {obtenerNombreCompleto(
                       selectedControl.ProfesionalApellido,
                       selectedControl.ProfesionalNombres
+                    )}
+                  </span>
+                </div>
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>Origen:</span>
+                  <span className={styles.detailValue}>
+                    {selectedControl.IdHci && selectedControl.IdHci > 0 ? (
+                      <span style={{ 
+                        display: 'inline-block',
+                        padding: '2px 10px', 
+                        backgroundColor: '#00B5E2', 
+                        color: 'white', 
+                        borderRadius: '4px', 
+                        fontSize: '12px', 
+                        fontWeight: '600' 
+                      }}>Historia Clínica (HC #{selectedControl.IdHci})</span>
+                    ) : (
+                      <span style={{ 
+                        display: 'inline-block',
+                        padding: '2px 10px', 
+                        backgroundColor: '#6c757d', 
+                        color: 'white', 
+                        borderRadius: '4px', 
+                        fontSize: '12px', 
+                        fontWeight: '600' 
+                      }}>Gestión de Enfermería</span>
                     )}
                   </span>
                 </div>

@@ -104,6 +104,59 @@ export const obtenerNombreCompleto = (
 };
 
 /**
+ * Datos para crear un control frecuente
+ */
+export interface CrearControlData {
+  numeroVisita: number;
+  fechaControl: string;   // YYYY-MM-DD
+  horaControl: string;    // HH:mm
+  operadorCarga: number;
+  idHci?: number;         // ID de HC de Ingreso (si fue cargado desde HC)
+  pulso?: number;
+  presionMax?: number;
+  presionMin?: number;
+  presionMedia?: number;
+  frecuenciaRespiratoria?: number;
+  temperaturaAxilar?: number;
+  temperaturaRectal?: number;
+  glucemia?: number;
+  saturacion?: number;
+  observaciones?: string;
+  idSector?: string;
+}
+
+/**
+ * Crear un nuevo control frecuente (desde HC o Gestión de Enfermería)
+ */
+export const crearControl = async (data: CrearControlData): Promise<{ Valor: number }> => {
+  try {
+    const response = await fetchWithTimeout(
+      `${BASE_URL}/controles-frecuentes`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.mensaje || `Error HTTP: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.mensaje || 'Error al crear el control');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error al crear control frecuente:', error);
+    throw error;
+  }
+};
+
+/**
  * Eliminar un control frecuente
  */
 export const eliminarControl = async (

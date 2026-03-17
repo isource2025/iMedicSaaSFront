@@ -5,6 +5,7 @@ import ModalBasePaciente from '../../../modals/ModalBasePaciente';
 import RenderControlSimplificado from './RenderControlSimplificado';
 import { FormData } from '../../../indicaciones/AplicarIndicacion';
 import { useAppContext } from '@/app/contexts/AppContext';
+import { crearControl } from '@/app/services/controlesFrecuentesService';
 import styles from '../../../indicaciones/AplicarIndicacion.module.css';
 
 interface ModalCargarControlProps {
@@ -88,40 +89,24 @@ export default function ModalCargarControl({
                 return;
             }
 
-            // Preparar datos para enviar al backend
-            const payload = {
-                numeroVisita: String(numeroVisita),
-                idHCIngreso: idHCIngreso,
+            await crearControl({
+                numeroVisita,
                 fechaControl: formData.fechaCumplido,
                 horaControl: formData.horaCumplido,
-                operadorCarga: usuario?.valorPersonal || usuario?.idValorpersonal,
-                pulso: formData.control.pulso ? parseFloat(formData.control.pulso) : null,
-                presionMax: formData.control.presionArterialMax ? parseFloat(formData.control.presionArterialMax) : null,
-                presionMin: formData.control.presionArterialMin ? parseFloat(formData.control.presionArterialMin) : null,
-                presionMedia: formData.control.presionArterialMedia ? parseFloat(formData.control.presionArterialMedia) : null,
-                frecuenciaRespiratoria: formData.control.frResp ? parseFloat(formData.control.frResp) : null,
-                temperaturaAxilar: formData.control.temperaturaAxilar ? parseFloat(formData.control.temperaturaAxilar) : null,
-                temperaturaRectal: formData.control.temperaturaRectal ? parseFloat(formData.control.temperaturaRectal) : null,
-                glucemia: formData.control.glucemia ? parseFloat(formData.control.glucemia) : null,
-                saturacion: formData.control.saturometria ? parseFloat(formData.control.saturometria) : null,
-                observaciones: formData.observaciones || null,
-            };
-
-            // Llamar al servicio backend de signos vitales
-            const response = await fetch('/api/signos-vitales', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
+                operadorCarga: parseInt(usuario?.valorPersonal || usuario?.idValorpersonal || '0'),
+                idHci: idHCIngreso || 0,
+                pulso: formData.control.pulso ? parseInt(formData.control.pulso) : 0,
+                presionMax: formData.control.presionArterialMax ? parseInt(formData.control.presionArterialMax) : 0,
+                presionMin: formData.control.presionArterialMin ? parseInt(formData.control.presionArterialMin) : 0,
+                presionMedia: formData.control.presionArterialMedia ? parseInt(formData.control.presionArterialMedia) : 0,
+                frecuenciaRespiratoria: formData.control.frResp ? parseInt(formData.control.frResp) : 0,
+                temperaturaAxilar: formData.control.temperaturaAxilar ? parseFloat(formData.control.temperaturaAxilar) : 0,
+                temperaturaRectal: formData.control.temperaturaRectal ? parseFloat(formData.control.temperaturaRectal) : 0,
+                glucemia: formData.control.glucemia ? parseInt(formData.control.glucemia) : 0,
+                saturacion: formData.control.saturometria ? parseInt(formData.control.saturometria) : 0,
+                observaciones: formData.observaciones || '',
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Error al guardar el control');
-            }
-
-            // Éxito
             if (onSuccess) {
                 onSuccess();
             }

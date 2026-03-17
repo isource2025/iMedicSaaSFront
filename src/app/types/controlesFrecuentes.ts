@@ -26,6 +26,7 @@ export interface ControlFrecuente {
   Peso: number | null;
   Talla: number | null;
   IdTurno: number | null;
+  IdHci: number | null;
 }
 
 export interface ControlesFrecuentesResponse {
