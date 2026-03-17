@@ -14,6 +14,7 @@ import SlideDrawer from "../UI/SlideDrawer";
 
 interface IndicacionHija {
     id: string;
+    nroIndicacion?: number | null;
     formaAdicional: string | null;
     codigo: number | null;
     aliasMedicamento: string | null;
@@ -308,6 +309,7 @@ export default function IndicacionForm({
                         if ((res as any).indicacionesHijas && Array.isArray((res as any).indicacionesHijas)) {
                             const hijas = (res as any).indicacionesHijas.map((h: any) => ({
                                 id: String(h.nroIndicacion || ''),
+                                nroIndicacion: h.nroIndicacion || null,
                                 formaAdicional: h.formaAdicional || null,
                                 codigo: h.codigo || null,
                                 aliasMedicamento: h.medicamento || h.descripcion || null,
@@ -529,8 +531,29 @@ export default function IndicacionForm({
         setMostrarAdicionales(false);
     };
 
-    const handleEliminarHija = (id: string) => {
-        setIndicacionesHijas(indicacionesHijas.filter(h => h.id !== id));
+    const handleEliminarHija = async (id: string) => {
+        const hija = indicacionesHijas.find(h => h.id === id);
+        if (!hija) return;
+
+        // Si la hija tiene nroIndicacion, existe en BD y debe eliminarse del servidor
+        if (hija.nroIndicacion) {
+            const confirmar = window.confirm(
+                '¿Está seguro que desea eliminar esta indicación adicional? Esta acción no se puede deshacer.'
+            );
+            if (!confirmar) return;
+
+            try {
+                await indicacionesService.deleteIndicacionHija(hija.nroIndicacion);
+                setIndicacionesHijas(indicacionesHijas.filter(h => h.id !== id));
+                alert('Indicación adicional eliminada correctamente');
+            } catch (error: any) {
+                console.error('Error al eliminar indicación hija:', error);
+                alert(error.message || 'Error al eliminar la indicación adicional');
+            }
+        } else {
+            // Si no tiene nroIndicacion, es nueva (solo en memoria) y se elimina directamente del estado
+            setIndicacionesHijas(indicacionesHijas.filter(h => h.id !== id));
+        }
     };
 
     const handleCambiarOperacion = (id: string, operacion: string) => {

@@ -163,7 +163,20 @@ export const indicacionesService = {
         });
         const json = await resp.json();
         if (!resp.ok || json?.success === false) {
-            const msg = json?.message || "No se pudo eliminar la indicación";
+            const msg = json?.mensaje || json?.message || "No se pudo eliminar la indicación";
+            throw new Error(msg);
+        }
+        return true;
+    },
+
+    deleteIndicacionHija: async (id: number) => {
+        const resp = await fetch(`${BASE_URL}/indicaciones/hija/${id}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+        });
+        const json = await resp.json();
+        if (!resp.ok || json?.success === false) {
+            const msg = json?.mensaje || json?.message || "No se pudo eliminar la indicación adicional";
             throw new Error(msg);
         }
         return true;
