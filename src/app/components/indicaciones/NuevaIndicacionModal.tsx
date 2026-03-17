@@ -387,7 +387,11 @@ export default function IndicacionForm({
                 (v) => Number(v.Valor) === Number(form.Codigo)
             );
             if (medicamento?.TipoMedicamento) {
-                set("TipoUnidad", medicamento.TipoMedicamento);
+                // Solo actualizar si TipoUnidad está vacío o es null
+                // (para no sobrescribir un valor que vino de la BD al editar)
+                if (!form.TipoUnidad || form.TipoUnidad.trim() === '') {
+                    set("TipoUnidad", medicamento.TipoMedicamento);
+                }
             }
         }
     }, [form.Codigo, tipoIndicacion, dataForm]);
