@@ -92,18 +92,52 @@ const getNombreCampo = (key: string): string => {
 const getSecciones = (record: any): Record<string, Array<{campo: string, valor: any}>> => {
     const secciones: Record<string, Array<{campo: string, valor: any}>> = {};
     
+    // Campos de sistema a ignorar
+    const camposIgnorar = [
+        'IdHCIngreso', 'NumeroVisita', 'IdSector', 'IdProfecional', 'Fecha', 
+        'FechaFormateada', 'HoraFormateada', 'ProfesionalNombre', 'SectorDescripcion',
+        'MotivoConsulta', 'EnfermedadActual',
+        // Campos viejos de signos vitales
+        'FC', 'FR', 'Pulso', 'Presion', 'Temperatura', 'Saturacion', 'Glucemia',
+        'FrecuenciaCardiaca', 'FrecuenciaRespiratoria', 'PresionArterial'
+    ];
+    
+    // Inyectar datos medibles del control vinculado en sección Signos Vitales
+    const seccionSV = 'Signos Vitales';
+    const ctrlItems: Array<{campo: string, valor: any}> = [];
+    
+    // PA: Maximo/Minimo combinados
+    if (record.CTRL_Maximo && record.CTRL_Maximo > 0) {
+        const minimo = record.CTRL_Minimo || 0;
+        ctrlItems.push({ campo: 'P A', valor: `${record.CTRL_Maximo}/${minimo} mmHg` });
+    }
+    if (record.CTRL_Pulso && record.CTRL_Pulso > 0) {
+        ctrlItems.push({ campo: 'F C', valor: `${record.CTRL_Pulso} lpm` });
+    }
+    if (record.CTRL_FrecuenciaRespiratoria && record.CTRL_FrecuenciaRespiratoria > 0) {
+        ctrlItems.push({ campo: 'F R', valor: `${record.CTRL_FrecuenciaRespiratoria} rpm` });
+    }
+    if (record.CTRL_Axilar && record.CTRL_Axilar > 0) {
+        ctrlItems.push({ campo: 'T A X', valor: `${record.CTRL_Axilar}°C` });
+    }
+    if (record.CTRL_Glucemia && record.CTRL_Glucemia > 0) {
+        ctrlItems.push({ campo: 'Glucemia', valor: `${record.CTRL_Glucemia} mg/dL` });
+    }
+    if (record.CTRL_Saturometria && record.CTRL_Saturometria > 0) {
+        ctrlItems.push({ campo: 'Saturación', valor: `${record.CTRL_Saturometria}%` });
+    }
+    
+    if (ctrlItems.length > 0) {
+        secciones[seccionSV] = ctrlItems;
+    }
+    
     Object.keys(record).forEach(key => {
         const valor = record[key];
         
-        // Ignorar campos vacíos, null, undefined o de sistema
-        // IMPORTANTE: Excluir campos viejos de signos vitales que ahora se manejan desde Controles de Enfermería
-        if (!valor || valor === '' || 
-            ['IdHCIngreso', 'NumeroVisita', 'IdSector', 'IdProfecional', 'Fecha', 
-             'FechaFormateada', 'HoraFormateada', 'ProfesionalNombre', 'SectorDescripcion',
-             'MotivoConsulta', 'EnfermedadActual',
-             // Campos viejos de signos vitales (ahora en Controles de Enfermería)
-             'FC', 'FR', 'Pulso', 'Presion', 'Temperatura', 'Saturacion', 'Glucemia',
-             'FrecuenciaCardiaca', 'FrecuenciaRespiratoria', 'PresionArterial'].includes(key)) {
+        // Ignorar campos vacíos, null, undefined, de sistema o CTRL_*
+        if (!valor || valor === '' || valor === 0 ||
+            camposIgnorar.includes(key) ||
+            key.startsWith('CTRL_')) {
             return;
         }
         
