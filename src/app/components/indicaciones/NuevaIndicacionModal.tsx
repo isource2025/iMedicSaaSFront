@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./NuevaIndicacionModal.module.css";
 import {
     FormularioDatosResponse,
@@ -109,6 +109,8 @@ export default function IndicacionForm({
     
     const [indicacionesHijas, setIndicacionesHijas] = useState<IndicacionHija[]>([]);
     const [mostrarAdicionales, setMostrarAdicionales] = useState(false);
+    const isLoadingEdit = useRef(false);
+    const [profesionalNombreDB, setProfesionalNombreDB] = useState<string | null>(null);
     const [hijaEnEdicion, setHijaEnEdicion] = useState<IndicacionHija>({
         id: '',
         formaAdicional: null,
@@ -240,6 +242,7 @@ export default function IndicacionForm({
                 if (data) setDataForm(data);
 
                 if (nroIndicacion) {
+                    isLoadingEdit.current = true;
                     const res =
                         await indicacionesService.getIndicacionesByNroIndicacion(
                             nroIndicacion
@@ -248,6 +251,11 @@ export default function IndicacionForm({
                     if (res) {
                         console.log("Indicacion loaded:", res);
                         console.log("Indicaciones hijas:", (res as any).indicacionesHijas);
+                        
+                        // Guardar nombre del profesional desde la BD
+                        if (res.ProfesionalNombre) {
+                            setProfesionalNombreDB(res.ProfesionalNombre);
+                        }
                         
                         setForm((prev) => ({
                             ...prev,
@@ -278,7 +286,7 @@ export default function IndicacionForm({
 
                             // cantidades/frecuencia
                             CantidadIndicada: res.CantidadIndicada,
-                            TipoUnidad: res.TipoUnidad,
+                            TipoUnidad: res.TipoUnidad?.trim() || null,
                             Frecuencia: res.Frecuencia,
                             Cantidad: res.Cantidad,
 
@@ -311,6 +319,11 @@ export default function IndicacionForm({
                             setIndicacionesHijas(hijas);
                             console.log("✅ Indicaciones hijas cargadas:", hijas);
                         }
+                        
+                        // Desactivar el flag después de un tick para que los useEffect de limpieza no se disparen
+                        setTimeout(() => { isLoadingEdit.current = false; }, 100);
+                    } else {
+                        isLoadingEdit.current = false;
                     }
                 }
             } catch (err) {
@@ -359,7 +372,9 @@ export default function IndicacionForm({
     }, [dataForm, tipoIndicacion]);
 
     // Al cambiar tipo, limpiamos selección (ID) para evitar incoherencias
+    // PERO NO durante la carga inicial de datos de edición
     useEffect(() => {
+        if (isLoadingEdit.current) return;
         set("AliasMedicamento", null);
         set("Codigo", null);
         set("TipoUnidad", null);
@@ -566,7 +581,7 @@ export default function IndicacionForm({
                                     required
                                 />
                                 <div className={styles.badge}>
-                                    {(usuario?.nombre + " " + usuario?.apellido) || "ADMINISTRADOR"}
+                                    {profesionalNombreDB || ((usuario?.nombre || '') + " " + (usuario?.apellido || '')).trim() || "ADMINISTRADOR"}
                                 </div>
                             </div>
                         </div>

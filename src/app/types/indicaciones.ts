@@ -8,6 +8,7 @@ export interface Indicacion {
 	OperadorApellido?: string | null;
 	OperadorNombres?: string | null;
 	ProfesionalAsiste: number | null;
+	ProfesionalNombre?: string | null;
 	FechaCumplido: string | null;
 	HoraCumplido: string | null;
 	FechaProximo: string | null;
@@ -15,6 +16,8 @@ export interface Indicacion {
 	FechaRevision: string | null;
 	HoraRevision: string | null;
 	TipoIndicacion: number | null;
+	TipoIndicacionCodigo?: string | null;
+	TipoIndicacionDescripcion?: string | null;
 	Codigo: number | null;
     Intervalo: number | null;
 	Cantidad: number | null;
@@ -34,6 +37,8 @@ export interface Indicacion {
 	IdSector: string | null;
 	AliasMedicamento: string | null;
 	ExcluidoDeEntrega: boolean | null;
+	DescripcionIndicacion?: string | null;
+	VademecumTipoMedicamento?: string | null;
 }
 
 export interface IndicacionesResponse {
