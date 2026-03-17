@@ -460,6 +460,24 @@ export default function IndicacionesSection({
                                 Error cargando indicaciones: {error.message}
                             </div>
                         </div>
+                    ) : rows.length === 0 && !isLoading ? (
+                        <div className={styles.emptyState}>
+                            <div className={styles.emptyIcon}>💊</div>
+                            <h3 className={styles.emptyTitle}>No hay indicaciones registradas</h3>
+                            <p className={styles.emptyDescription}>
+                                Aún no se han cargado indicaciones médicas para esta fecha. 
+                                Podés agregar una nueva indicación haciendo clic en el botón de arriba.
+                            </p>
+                            <div className={styles.emptyAction}>
+                                <button
+                                    className={`${styles.btn} ${styles.btnPrimary}`}
+                                    onClick={onAddIndicacion}
+                                >
+                                    <span className={styles.addIcon} aria-hidden>+</span>
+                                    Nueva Indicación
+                                </button>
+                            </div>
+                        </div>
                     ) : (
                         <IndicacionesTable
                             rows={rows}

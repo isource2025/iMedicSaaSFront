@@ -283,6 +283,52 @@
 	);
 }
 
+/* Estado vacío */
+.emptyState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	text-align: center;
+	min-height: 400px;
+}
+
+.emptyIcon {
+	font-size: 4rem;
+	margin-bottom: 20px;
+	opacity: 0.3;
+	animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+	0%, 100% {
+		transform: translateY(0px);
+	}
+	50% {
+		transform: translateY(-10px);
+	}
+}
+
+.emptyTitle {
+	font-size: 1.5rem;
+	font-weight: 600;
+	color: #334155;
+	margin: 0 0 12px 0;
+}
+
+.emptyDescription {
+	font-size: 0.95rem;
+	color: #64748b;
+	max-width: 400px;
+	line-height: 1.6;
+	margin: 0 0 24px 0;
+}
+
+.emptyAction {
+	margin-top: 8px;
+}
+
 /* ====== Responsive ====== */
 @media (max-width: 768px) {
 	.root {
