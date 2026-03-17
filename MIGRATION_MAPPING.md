@@ -5,7 +5,7 @@
 
 ---
  
-## Tabla de Contenidos 
+## Tabla de Contenidos  
 
 1. [Componentes de Layout](#componentes-de-layout)
 2. [Componentes de Autenticación](#componentes-de-autenticación)
