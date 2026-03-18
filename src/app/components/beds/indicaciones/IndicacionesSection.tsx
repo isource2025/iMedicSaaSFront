@@ -93,7 +93,7 @@ export default function IndicacionesSection({
                 : [];
 
 
-        return list.map((x) => ({
+        const rows = list.map((x) => ({
             id: x.id,
             cantidad: x.cantidad,
             descripcion: x.descripcion,
@@ -109,6 +109,7 @@ export default function IndicacionesSection({
             nro: x.nro,
             tipo: x.tipo,
             promptCodigo: (x as any).promptCodigo,
+            ordenTipo: (x as any).ordenTipo,
             idSector: x.idSector,
             medicamento: x.medicamento,
             ultimaAplicacion: x.ultimaAplicacion,
@@ -118,6 +119,21 @@ export default function IndicacionesSection({
             unicaVez: x.unicaVez,
             indicacionesHijas: (x as any).indicacionesHijas || [],
         }));
+
+        // Ordenar por ordenTipo (campo Orden de imInterTipoIndicacion) y luego por nro
+        return rows.sort((a, b) => {
+            const ordenA = a.ordenTipo ?? 999;
+            const ordenB = b.ordenTipo ?? 999;
+            
+            if (ordenA !== ordenB) {
+                return ordenA - ordenB;
+            }
+            
+            // Si tienen el mismo ordenTipo, ordenar por número de indicación
+            const nroA = typeof a.nro === 'number' ? a.nro : parseInt(String(a.nro || '0'));
+            const nroB = typeof b.nro === 'number' ? b.nro : parseInt(String(b.nro || '0'));
+            return nroA - nroB;
+        });
     }, [data]);
 
     const [selectedId, setSelectedId] = useState<number | null>(null);

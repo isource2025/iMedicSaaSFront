@@ -35,6 +35,7 @@ export type IndicacionRow = {
     horaCarga?: string;
     tipo?: string;
     promptCodigo?: string;
+    ordenTipo?: number;
     nro?: string | number;
     idSector?: string;
     medicamento?: string;
