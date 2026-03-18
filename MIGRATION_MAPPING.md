@@ -7,7 +7,7 @@
  
 ## Tabla de Contenidos  
 
-1. [Componentes de Layout](#componentes-de-layout)
+1. [Componentes de Layout](#componentes-de-layout) 
 2. [Componentes de Autenticación](#componentes-de-autenticación)
 3. [Componentes de Pacientes](#componentes-de-pacientes) 
 4. [Componentes de Camas](#componentes-de-camas)
