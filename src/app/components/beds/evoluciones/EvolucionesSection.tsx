@@ -53,8 +53,8 @@ export default function EvolucionesSection({
 
     const evolucionesPath = useMemo(
         () =>
-            numeroVisita ? `/evoluciones/${numeroVisita}/byDate?days=${periodFilter}` : undefined,
-        [numeroVisita, periodFilter]
+            numeroVisita ? `/evoluciones/${numeroVisita}/byDate` : undefined,
+        [numeroVisita]
     );
 
     const { data, isLoading, error, refetch } = useBedSectionFetch<
@@ -66,6 +66,9 @@ export default function EvolucionesSection({
         endpointOverride: evolucionesPath
             ? { evoluciones: evolucionesPath }
             : undefined,
+        params: {
+            days: periodFilter
+        },
         cacheTimeMs: 0,
     });
 
