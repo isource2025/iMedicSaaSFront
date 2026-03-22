@@ -7,7 +7,7 @@
  
 ## Estructura Completa de Componentes
  
-### 📁 components/AnalyticsLoader/ 
+### 📁 components/AnalyticsLoader/  
 ```
 ├── index.tsx                    # Loader para analytics
 ```  
