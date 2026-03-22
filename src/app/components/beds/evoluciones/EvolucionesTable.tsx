@@ -83,8 +83,8 @@ export default function EvolucionesTable({
                             <tr>
                                 <th className={styles.colFecha}>Fecha</th>
                                 <th className={styles.colHora}>Hora</th>
-                                <th className={styles.colProfesional}>Profesional</th>
                                 <th className={styles.colEvolucion}>Evolución</th>
+                                <th className={styles.colProfesional}>Profesional</th>
                                 <th className={styles.colSector}>Sector</th>
                                 <th className={styles.colAccion}>Acciones</th>
                             </tr>
@@ -110,14 +110,14 @@ export default function EvolucionesTable({
                                             {r.horaEv || "-"}
                                         </td>
 
-                                        <td className={styles.cellProfesional}>
-                                            {getNombreCompleto(r)}
-                                        </td>
-
                                         <td className={styles.cellEvolucion}>
                                             <div className={styles.evolucionPreview}>
                                                 {r.evolucion ? r.evolucion.substring(0, 100) + (r.evolucion.length > 100 ? "..." : "") : "-"}
                                             </div>
+                                        </td>
+
+                                        <td className={styles.cellProfesional}>
+                                            {getNombreCompleto(r)}
                                         </td>
 
                                         <td className={styles.cellSector}>

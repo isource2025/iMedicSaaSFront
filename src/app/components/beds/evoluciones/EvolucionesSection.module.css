@@ -133,12 +133,50 @@
 	display: flex;
 	gap: 12px;
 	align-items: center;
+	flex-wrap: wrap;
 }
 
 .searchWrap {
 	position: relative;
 	flex: 1 1 auto;
 	min-width: 200px;
+}
+
+.periodFilters {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.periodTag {
+	padding: 8px 16px;
+	border: 1px solid #e2e8f0;
+	border-radius: 20px;
+	background: #fff;
+	color: #64748b;
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.periodTag:hover {
+	border-color: #00B5E2;
+	color: #00B5E2;
+	background: #f0f9ff;
+}
+
+.periodTagActive {
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
+	color: white;
+	border-color: #0083A9;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
+}
+
+.periodTagActive:hover {
+	background: linear-gradient(135deg, #00a5d0 0%, #007599 100%);
+	border-color: #007599;
 }
 
 .searchIcon {

@@ -27,6 +27,8 @@ type EvolucionDTO = {
     profesionalApellido?: string;
 };
 
+type PeriodFilter = '0' | '7' | '30' | 'all';
+
 export default function EvolucionesSection({
     bedId,
     patientId,
@@ -47,11 +49,12 @@ export default function EvolucionesSection({
     horaIngreso?: string;
 }) {
     const { activeSection, selectedDate } = useBedDetail();
+    const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('0');
 
     const evolucionesPath = useMemo(
         () =>
-            numeroVisita ? `/evoluciones/${numeroVisita}/byDate` : undefined,
-        [numeroVisita]
+            numeroVisita ? `/evoluciones/${numeroVisita}/byDate?days=${periodFilter}` : undefined,
+        [numeroVisita, periodFilter]
     );
 
     const { data, isLoading, error, refetch } = useBedSectionFetch<
@@ -230,7 +233,7 @@ export default function EvolucionesSection({
                 </div>
             )}
 
-            {/* Buscador */}
+            {/* Buscador y filtros */}
             <div className={styles.toolbar}>
                 <div className={styles.searchWrap}>
                     <span className={styles.searchIcon}>🔍</span>
@@ -241,6 +244,32 @@ export default function EvolucionesSection({
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
+                </div>
+                <div className={styles.periodFilters}>
+                    <button
+                        className={`${styles.periodTag} ${periodFilter === '0' ? styles.periodTagActive : ''}`}
+                        onClick={() => setPeriodFilter('0')}
+                    >
+                        Hoy
+                    </button>
+                    <button
+                        className={`${styles.periodTag} ${periodFilter === '7' ? styles.periodTagActive : ''}`}
+                        onClick={() => setPeriodFilter('7')}
+                    >
+                        7 días
+                    </button>
+                    <button
+                        className={`${styles.periodTag} ${periodFilter === '30' ? styles.periodTagActive : ''}`}
+                        onClick={() => setPeriodFilter('30')}
+                    >
+                        1 mes
+                    </button>
+                    <button
+                        className={`${styles.periodTag} ${periodFilter === 'all' ? styles.periodTagActive : ''}`}
+                        onClick={() => setPeriodFilter('all')}
+                    >
+                        Todas
+                    </button>
                 </div>
             </div>
 
