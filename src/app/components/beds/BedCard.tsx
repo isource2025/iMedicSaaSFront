@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { BedCardProps } from '../../types/beds/BedComponents';
 import styles from './BedCard.module.css';
 import {
@@ -11,8 +10,6 @@ import {
   IoExitOutline,
   IoTimeOutline
 } from 'react-icons/io5';
-import { formatDate, formatTime } from '../../utils/dateUtils';
-import visitaMovimientoService from '../../services/visitaMovimientoService';
 
 /**
  * Componente que muestra la información de una cama en formato de tarjeta
@@ -26,38 +23,8 @@ const BedCard: React.FC<BedCardProps> = ({
   onLabResults,
   onDischarge
 }) => {
-  // Estado para almacenar la información del movimiento
-  const [movimientoData, setMovimientoData] = useState<{
-    FechaAdmision?: number;
-    HoraAdmision?: number;
-  } | null>(null);
-  const [loadingMovimiento, setLoadingMovimiento] = useState(false);
-
-  // Cargar datos del último movimiento de la visita
-  useEffect(() => {
-    const cargarMovimiento = async () => {
-      if (!bed.numeroVisita) return;
-      
-      setLoadingMovimiento(true);
-      try {
-        const movimiento = await visitaMovimientoService.getUltimoMovimiento(bed.numeroVisita);
-        if (movimiento) {
-          setMovimientoData({
-            FechaAdmision: movimiento.FechaAdmision,
-            HoraAdmision: movimiento.HoraAdmision
-          });
-        }
-      } catch (error) {
-        console.error('Error al cargar movimiento:', error);
-      } finally {
-        setLoadingMovimiento(false);
-      }
-    };
-
-    if (bed.estado === 'ocupada' && bed.numeroVisita) {
-      cargarMovimiento();
-    }
-  }, [bed.numeroVisita, bed.estado]);
+  // Ya no necesitamos cargar el movimiento por separado
+  // porque fechaIngresoSQL y horaIngresoSQL vienen directamente del backend
   const renderGenderIcon = () => {
         const sexoValue = bed.SexoPaciente ? bed.SexoPaciente.toLowerCase() : '';
     if (sexoValue === 'm' || sexoValue === 'masculino') {
@@ -121,24 +88,18 @@ const BedCard: React.FC<BedCardProps> = ({
               
               <div className={styles.dateTimeContainer}>
                 {/* Fecha de ingreso */}
-                {(bed.fechaIngreso || movimientoData?.FechaAdmision) && (
+                {(bed as any).fechaIngresoSQL && (
                   <span className={styles.date}>
                     <p className={styles.dateLabel}>Fecha de ingreso</p>
-                    {movimientoData?.FechaAdmision 
-                      ? formatDate(movimientoData.FechaAdmision, { isClarionDate: true })
-                      : formatDate(bed.fechaIngreso, { isClarionDate: true })}
-                      {movimientoData?.HoraAdmision && (
-
-                    <span className={styles.timeValue}>
-                      <IoTimeOutline className={styles.timeIcon} />
-                      {formatTime(movimientoData.HoraAdmision.toString())}
-                    </span>
-                  )}
+                    {(bed as any).fechaIngresoSQL}
+                    {(bed as any).horaIngresoSQL && (
+                      <span className={styles.timeValue}>
+                        <IoTimeOutline className={styles.timeIcon} />
+                        {(bed as any).horaIngresoSQL}
+                      </span>
+                    )}
                   </span>
                 )}
-                
-                {/* Hora de ingreso */}
-                
               </div>
               {bed.servicioMedicoDescripcion && (
                 <span className={styles.date}>
