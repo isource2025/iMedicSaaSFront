@@ -73,15 +73,55 @@ const SECCIONES_CONFIG: Record<string, string> = {
     'CU': 'Cuello',
     'M': 'Mamas',
     'AR': 'Aparato Respiratorio',
+    'AC': 'Aparato Cardiovascular',
     'ACV': 'Aparato Cardiovascular',
     'A': 'Abdomen',
     'AUG': 'Aparato Urogenital',
     'SN': 'Sistema Nervioso',
+    'EO': 'Examen Oftalmológico',
+    'EC': 'Electrocardiograma',
+    'RDT': 'Radiografía de Tórax',
+    'PD': 'Plan Diagnóstico',
+    'PT': 'Plan Terapéutico',
+    'ID': 'Impresión Diagnóstica',
 };
 
 // Función para obtener el nombre legible de un campo
 const getNombreCampo = (key: string): string => {
     const sinPrefijo = key.replace(/^[A-Z]+_/, '');
+    
+    // Diccionario de abreviaturas a expandir
+    const abreviaturas: Record<string, string> = {
+        'PR': 'Pulso Radial',
+        'QT': 'QT',
+        'QRS': 'QRS',
+        'OndaP': 'Onda P',
+        'OndaT': 'Onda T',
+        'ST': 'ST',
+        'ICT': 'Índice Cardiotorácico',
+        'Duracion': 'Duración',
+        'Amplitud': 'Amplitud',
+        'Conformacion': 'Conformación',
+        'Ritmo': 'Ritmo',
+        'Frecuencia': 'Frecuencia',
+        'Conclusiones': 'Conclusiones',
+        'Tecnica': 'Técnica',
+        'PartesBlandas': 'Partes Blandas',
+        'PartesOseas': 'Partes Óseas',
+        'Hemidiafragmas': 'Hemidiafragmas',
+        'SenosCostoFrenicos': 'Senos Costofrenicos',
+        'Mediastino': 'Mediastino',
+        'SiluetaCardiovascular': 'Silueta Cardiovascular',
+        'CamposPulmonares': 'Campos Pulmonares',
+        'Hilios': 'Hilios',
+    };
+    
+    // Verificar si el campo sin prefijo está en el diccionario
+    if (abreviaturas[sinPrefijo]) {
+        return abreviaturas[sinPrefijo];
+    }
+    
+    // Si no está en el diccionario, aplicar formato estándar
     return sinPrefijo
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, str => str.toUpperCase())
@@ -109,16 +149,16 @@ const getSecciones = (record: any): Record<string, Array<{campo: string, valor: 
     // PA: Maximo/Minimo combinados
     if (record.CTRL_Maximo && record.CTRL_Maximo > 0) {
         const minimo = record.CTRL_Minimo || 0;
-        ctrlItems.push({ campo: 'P A', valor: `${record.CTRL_Maximo}/${minimo} mmHg` });
+        ctrlItems.push({ campo: 'Presión Arterial', valor: `${record.CTRL_Maximo}/${minimo} mmHg` });
     }
     if (record.CTRL_Pulso && record.CTRL_Pulso > 0) {
-        ctrlItems.push({ campo: 'F C', valor: `${record.CTRL_Pulso} lpm` });
+        ctrlItems.push({ campo: 'Frecuencia Cardíaca', valor: `${record.CTRL_Pulso} lpm` });
     }
     if (record.CTRL_FrecuenciaRespiratoria && record.CTRL_FrecuenciaRespiratoria > 0) {
-        ctrlItems.push({ campo: 'F R', valor: `${record.CTRL_FrecuenciaRespiratoria} rpm` });
+        ctrlItems.push({ campo: 'Frecuencia Respiratoria', valor: `${record.CTRL_FrecuenciaRespiratoria} rpm` });
     }
     if (record.CTRL_Axilar && record.CTRL_Axilar > 0) {
-        ctrlItems.push({ campo: 'T A X', valor: `${record.CTRL_Axilar}°C` });
+        ctrlItems.push({ campo: 'Temperatura Axilar', valor: `${record.CTRL_Axilar}°C` });
     }
     if (record.CTRL_Glucemia && record.CTRL_Glucemia > 0) {
         ctrlItems.push({ campo: 'Glucemia', valor: `${record.CTRL_Glucemia} mg/dL` });
