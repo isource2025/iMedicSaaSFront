@@ -127,7 +127,16 @@ export default function EvolucionesTable({
                                         </td>
 
                                         <td className={styles.cellProfesional}>
-                                            {getNombreCompleto(r)}
+                                            {r.profesionalNombreCompleto || 
+                                             (r.profesionalApellido && r.profesionalNombre ? 
+                                              `${r.profesionalApellido}, ${r.profesionalNombre}` : 
+                                              (r.profesional ? `Profesional ${r.profesional}` : "-"))}
+                                            {r.especialidadDescripcion && (
+                                                <>
+                                                    <br />
+                                                    <strong>{r.especialidadDescripcion}</strong>
+                                                </>
+                                            )}
                                         </td>
 
                                         <td className={styles.cellSector}>

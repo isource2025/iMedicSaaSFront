@@ -82,11 +82,6 @@ export default function EvolucionesSection({
                 ? (data as any).data
                 : [];
 
-        // Debug: verificar si llegan los campos de especialidad
-        if (list.length > 0) {
-            console.log('[Evoluciones] Primer registro recibido:', list[0]);
-        }
-
         return list.map((x) => ({
             id: x.IdHCEvolucion || x.idHCEvolucion,
             idVisita: x.IdVisita || x.idVisita,
