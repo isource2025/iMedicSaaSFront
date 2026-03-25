@@ -179,6 +179,21 @@
 	border-color: #007599;
 }
 
+.especialidadFilters {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+	padding: 0 0 8px 0;
+}
+
+.filterLabel {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #64748b;
+	white-space: nowrap;
+}
+
 .searchIcon {
 	position: absolute;
 	left: 10px;

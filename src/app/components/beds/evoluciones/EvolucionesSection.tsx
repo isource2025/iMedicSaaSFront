@@ -25,6 +25,8 @@ type EvolucionDTO = {
     numeroDocumento?: string;
     profesionalNombre?: string;
     profesionalApellido?: string;
+    valorEspecialidad?: number;
+    especialidadDescripcion?: string;
 };
 
 type PeriodFilter = '0' | '7' | '30' | 'all';
@@ -50,6 +52,7 @@ export default function EvolucionesSection({
 }) {
     const { activeSection, selectedDate } = useBedDetail();
     const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('0');
+    const [especialidadFilter, setEspecialidadFilter] = useState<string>('todas');
 
     const evolucionesPath = useMemo(
         () =>
@@ -92,8 +95,21 @@ export default function EvolucionesSection({
             profesionalNombre: x.ProfesionalNombre || x.profesionalNombre,
             profesionalApellido: x.ProfesionalApellido || x.profesionalApellido,
             profesionalNombreCompleto: x.ProfesionalNombreCompleto || x.profesionalNombreCompleto,
+            valorEspecialidad: x.ValorEspecialidad || x.valorEspecialidad,
+            especialidadDescripcion: x.EspecialidadDescripcion || x.especialidadDescripcion,
         }));
     }, [data]);
+
+    // Extraer especialidades únicas para el filtro
+    const especialidadesDisponibles = useMemo(() => {
+        const especialidades = new Set<string>();
+        baseRows.forEach(row => {
+            if (row.especialidadDescripcion) {
+                especialidades.add(row.especialidadDescripcion);
+            }
+        });
+        return Array.from(especialidades).sort();
+    }, [baseRows]);
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [query, setQuery] = useState("");
@@ -102,22 +118,34 @@ export default function EvolucionesSection({
 
     if (activeSection !== "evoluciones") return null;
 
-    // Filtrado simple por texto
+    // Filtrado por especialidad y texto
     const rows = useMemo(() => {
+        let filtered = baseRows;
+        
+        // Filtrar por especialidad
+        if (especialidadFilter !== 'todas') {
+            filtered = filtered.filter(r => r.especialidadDescripcion === especialidadFilter);
+        }
+        
+        // Filtrar por texto
         const q = query.trim().toLowerCase();
-        if (!q) return baseRows;
-        return baseRows.filter((r) => {
-            const hay = (v?: string | number) =>
-                v != null && String(v).toLowerCase().includes(q);
-            return (
-                hay(r.evolucion) ||
-                hay(r.profesionalNombre) ||
-                hay(r.profesionalApellido) ||
-                hay(r.idSector) ||
-                hay(r.nroHC)
-            );
-        });
-    }, [baseRows, query]);
+        if (q) {
+            filtered = filtered.filter((r) => {
+                const hay = (v?: string | number) =>
+                    v != null && String(v).toLowerCase().includes(q);
+                return (
+                    hay(r.evolucion) ||
+                    hay(r.profesionalNombre) ||
+                    hay(r.profesionalApellido) ||
+                    hay(r.especialidadDescripcion) ||
+                    hay(r.idSector) ||
+                    hay(r.nroHC)
+                );
+            });
+        }
+        
+        return filtered;
+    }, [baseRows, query, especialidadFilter]);
 
     const onAddEvolucion = () => {
         setModalOpen(true);
@@ -275,6 +303,30 @@ export default function EvolucionesSection({
                     </button>
                 </div>
             </div>
+
+            {/* Filtros por especialidad */}
+            {especialidadesDisponibles.length > 0 && (
+                <div className={styles.especialidadFilters}>
+                    <span className={styles.filterLabel}>Especialidad:</span>
+                    <div className={styles.periodFilters}>
+                        <button
+                            className={`${styles.periodTag} ${especialidadFilter === 'todas' ? styles.periodTagActive : ''}`}
+                            onClick={() => setEspecialidadFilter('todas')}
+                        >
+                            Todas
+                        </button>
+                        {especialidadesDisponibles.map((esp) => (
+                            <button
+                                key={esp}
+                                className={`${styles.periodTag} ${especialidadFilter === esp ? styles.periodTagActive : ''}`}
+                                onClick={() => setEspecialidadFilter(esp)}
+                            >
+                                {esp}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Tabla */}
             <div className={styles.content}>

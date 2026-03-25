@@ -20,6 +20,8 @@ export type EvolucionRow = {
     profesionalNombre?: string;
     profesionalApellido?: string;
     profesionalNombreCompleto?: string;
+    valorEspecialidad?: number;
+    especialidadDescripcion?: string;
 };
 
 type Props = {
@@ -65,13 +67,21 @@ export default function EvolucionesTable({
     };
 
     const getNombreCompleto = (row: EvolucionRow) => {
+        let nombre = "";
         if (row.profesionalNombreCompleto) {
-            return row.profesionalNombreCompleto;
+            nombre = row.profesionalNombreCompleto;
+        } else if (row.profesionalApellido && row.profesionalNombre) {
+            nombre = `${row.profesionalApellido}, ${row.profesionalNombre}`;
+        } else {
+            nombre = row.profesional ? `Profesional ${row.profesional}` : "-";
         }
-        if (row.profesionalApellido && row.profesionalNombre) {
-            return `${row.profesionalApellido}, ${row.profesionalNombre}`;
+        
+        // Agregar especialidad si existe
+        if (row.especialidadDescripcion) {
+            return `${nombre} - ${row.especialidadDescripcion}`;
         }
-        return row.profesional ? `Profesional ${row.profesional}` : "-";
+        
+        return nombre;
     };
 
     return (
