@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { Adjunto } from '@/app/types/adjuntos';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import styles from './FileList.module.css';
@@ -81,6 +82,43 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
     });
   };
 
+  // Agrupar adjuntos por TipoImagenNombre
+  const adjuntosAgrupados = useMemo(() => {
+    const grupos: { [key: string]: Adjunto[] } = {};
+    
+    adjuntos.forEach(adjunto => {
+      const tipo = adjunto.TipoImagenNombre || 'Sin categoría';
+      if (!grupos[tipo]) {
+        grupos[tipo] = [];
+      }
+      grupos[tipo].push(adjunto);
+    });
+    
+    // Convertir a array y ordenar por cantidad descendente
+    return Object.entries(grupos)
+      .map(([nombre, items]) => ({ nombre, adjuntos: items, cantidad: items.length }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+  }, [adjuntos]);
+
+  // Estado para controlar qué grupos están expandidos
+  const [gruposExpandidos, setGruposExpandidos] = useState<{ [key: string]: boolean }>(
+    () => {
+      // Por defecto, expandir todos los grupos
+      const inicial: { [key: string]: boolean } = {};
+      adjuntosAgrupados.forEach(grupo => {
+        inicial[grupo.nombre] = true;
+      });
+      return inicial;
+    }
+  );
+
+  const toggleGrupo = (nombre: string) => {
+    setGruposExpandidos(prev => ({
+      ...prev,
+      [nombre]: !prev[nombre]
+    }));
+  };
+
   if (adjuntos.length === 0) {
     return (
       <div className={styles.emptyState}>
@@ -92,8 +130,35 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
   return (
     <div className={styles.container}>
       <h4 className={styles.title}>Archivos adjuntos ({adjuntos.length})</h4>
-      <ul className={styles.fileList}>
-        {adjuntos.map((adjunto) => (
+      
+      {adjuntosAgrupados.map((grupo) => (
+        <div key={grupo.nombre} className={styles.grupoContainer}>
+          <div 
+            className={styles.grupoHeader}
+            onClick={() => toggleGrupo(grupo.nombre)}
+          >
+            <div className={styles.grupoTitulo}>
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className={gruposExpandidos[grupo.nombre] ? styles.iconoExpandido : styles.iconoColapsado}
+              >
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+              <span className={styles.nombreGrupo}>{grupo.nombre}</span>
+              <span className={styles.cantidadGrupo}>({grupo.cantidad})</span>
+            </div>
+          </div>
+          
+          {gruposExpandidos[grupo.nombre] && (
+            <ul className={styles.fileList}>
+              {grupo.adjuntos.map((adjunto) => (
           <li key={adjunto.IdAdjunto} className={styles.fileItem}>
             <div className={styles.fileIcon}>
               {getFileIcon(adjunto.TipoArchivo)}
@@ -155,6 +220,9 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
           </li>
         ))}
       </ul>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
