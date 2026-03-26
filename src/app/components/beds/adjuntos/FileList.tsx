@@ -152,7 +152,7 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
               <span className={styles.nombreGrupo}>{grupo.nombre}</span>
-              <span className={styles.cantidadGrupo}>({grupo.cantidad})</span>
+              <span className={styles.cantidadGrupo}>{grupo.cantidad}</span>
             </div>
           </div>
           
