@@ -17,7 +17,47 @@
 
 .tabsContainer {
   display: flex;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.periodFilters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filterLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.periodTag {
+  padding: 6px 14px;
+  border: 1px solid #00B5E2;
+  background-color: #f7fcfd;
+  color: #0083A9;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.periodTag:hover {
+  background-color: #e6f7fa;
+  border-color: #0083A9;
+}
+
+.periodTagActive {
+  background-color: #0083A9;
+  color: #fff;
+  border-color: #0083A9;
 }
 
 .tabButton {

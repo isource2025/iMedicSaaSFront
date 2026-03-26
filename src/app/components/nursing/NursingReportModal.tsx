@@ -30,6 +30,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
   const [parametro, setParametro] = useState('pulso');
   const [saving, setSaving] = useState(false);
   const [idSector, setIdSector] = useState<string | null>(null);
+  const [periodFilter, setPeriodFilter] = useState<'0' | '7' | '30' | 'all'>('all');
 
   const fetchControlData = useCallback(async () => {
     if (!isOpen || !numeroVisita) return;
@@ -49,7 +50,8 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
         }
       }
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds/controles-frecuentes/${numeroVisita}`);
+      const daysParam = periodFilter === 'all' ? '' : `?days=${periodFilter}`;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds/controles-frecuentes/${numeroVisita}${daysParam}`);
       if (!response.ok) throw new Error('Error al obtener los controles frecuentes');
       const data = await response.json();
       if (data.success) {
@@ -70,7 +72,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
 
   useEffect(() => {
     fetchControlData();
-  }, [fetchControlData]);
+  }, [fetchControlData, periodFilter]);
 
   const handleNewIndication = useCallback(() => setShowNewIndicationForm(true), []);
   const handleCancelNewIndication = useCallback(() => setShowNewIndicationForm(false), []);
@@ -133,6 +135,33 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                     onClick={() => handleTabChange('grafico')}
                   >
                     Gráfico
+                  </button>
+                </div>
+                <div className={styles.periodFilters}>
+                  <span className={styles.filterLabel}>Período:</span>
+                  <button
+                    className={`${styles.periodTag} ${periodFilter === '0' ? styles.periodTagActive : ''}`}
+                    onClick={() => setPeriodFilter('0')}
+                  >
+                    Hoy
+                  </button>
+                  <button
+                    className={`${styles.periodTag} ${periodFilter === '7' ? styles.periodTagActive : ''}`}
+                    onClick={() => setPeriodFilter('7')}
+                  >
+                    7 días
+                  </button>
+                  <button
+                    className={`${styles.periodTag} ${periodFilter === '30' ? styles.periodTagActive : ''}`}
+                    onClick={() => setPeriodFilter('30')}
+                  >
+                    1 mes
+                  </button>
+                  <button
+                    className={`${styles.periodTag} ${periodFilter === 'all' ? styles.periodTagActive : ''}`}
+                    onClick={() => setPeriodFilter('all')}
+                  >
+                    Todas
                   </button>
                 </div>
               </div>
