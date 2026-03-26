@@ -8,6 +8,8 @@ export interface Adjunto {
   CargadoPor: number;
   NombreUsuario: string;
   FechaCarga: string;
+  TipoImagen?: string;
+  TipoImagenNombre?: string;
 }
 
 export interface SubirAdjuntoResponse {
@@ -37,4 +39,18 @@ export interface ListarAdjuntosResponse {
   success: boolean;
   data: Adjunto[];
   total: number;
+}
+
+export interface GrupoAdjuntos {
+  tipo: string;
+  nombre: string;
+  adjuntos: Adjunto[];
+  cantidad: number;
+}
+
+export interface AdjuntosAgrupadosResponse {
+  success: boolean;
+  data: GrupoAdjuntos[];
+  totalGrupos: number;
+  totalAdjuntos: number;
 }

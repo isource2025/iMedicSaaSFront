@@ -2,7 +2,8 @@ import {
   Adjunto, 
   SubirAdjuntoResponse, 
   SubirMultiplesAdjuntosResponse, 
-  ListarAdjuntosResponse 
+  ListarAdjuntosResponse,
+  AdjuntosAgrupadosResponse
 } from '../types/adjuntos';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -72,6 +73,23 @@ export const adjuntosService = {
   },
 
   /**
+   * Obtener adjuntos de una visita agrupados por tipo de imagen
+   */
+  async getAdjuntosAgrupados(numeroVisita: number): Promise<AdjuntosAgrupadosResponse> {
+    const response = await fetch(`${API_URL}/adjuntos/visita/${numeroVisita}/agrupados`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { success: true, data: [], totalGrupos: 0, totalAdjuntos: 0 };
+      }
+      const error = await response.json().catch(() => ({ error: 'Error al obtener adjuntos agrupados' }));
+      throw new Error(error.error || 'Error al obtener adjuntos agrupados');
+    }
+
+    return response.json();
+  },
+
+  /**
    * Obtener información de un adjunto
    */
   async getAdjunto(idAdjunto: number): Promise<{ success: boolean; data: Adjunto }> {
@@ -88,15 +106,36 @@ export const adjuntosService = {
   /**
    * Descargar archivo adjunto
    */
-  descargarArchivo(idAdjunto: number, nombreArchivo: string): void {
-    const url = `${API_URL}/adjuntos/${idAdjunto}/download`;
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = nombreArchivo;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  async descargarArchivo(idAdjunto: number, nombreArchivo: string): Promise<void> {
+    try {
+      const url = `${API_URL}/adjuntos/${idAdjunto}/download`;
+      
+      // Fetch el archivo como blob
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Error al descargar archivo');
+      }
+      
+      // Obtener el blob
+      const blob = await response.blob();
+      
+      // Crear URL del blob
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Crear link temporal y descargar
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = nombreArchivo;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Limpiar
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error al descargar archivo:', error);
+      throw error;
+    }
   },
 
   /**
