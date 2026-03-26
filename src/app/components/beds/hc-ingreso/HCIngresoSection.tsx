@@ -158,7 +158,7 @@ const getSecciones = (record: any): Record<string, Array<{campo: string, valor: 
         ctrlItems.push({ campo: 'Frecuencia Respiratoria', valor: `${record.CTRL_FrecuenciaRespiratoria} rpm` });
     }
     if (record.CTRL_Axilar && record.CTRL_Axilar > 0) {
-        ctrlItems.push({ campo: 'Temperatura Axilar', valor: `${record.CTRL_Axilar}°C` });
+        ctrlItems.push({ campo: 'Temperatura Axilar', valor: `${Number(record.CTRL_Axilar).toFixed(1)}°C` });
     }
     if (record.CTRL_Glucemia && record.CTRL_Glucemia > 0) {
         ctrlItems.push({ campo: 'Glucemia', valor: `${record.CTRL_Glucemia} mg/dL` });

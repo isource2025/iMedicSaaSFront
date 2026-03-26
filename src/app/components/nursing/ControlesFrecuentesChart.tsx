@@ -92,7 +92,15 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
               tick={{ fontSize: 10 }}
             />
             <YAxis domain={[yMin, yMax]} />
-            <Tooltip />
+            <Tooltip 
+              formatter={(value: any) => {
+                // Formatear temperatura axilar con 1 decimal
+                if (parametro === 'axilar' && typeof value === 'number') {
+                  return value.toFixed(1);
+                }
+                return value;
+              }}
+            />
             <Line 
               type="monotone" 
               dataKey="valor" 

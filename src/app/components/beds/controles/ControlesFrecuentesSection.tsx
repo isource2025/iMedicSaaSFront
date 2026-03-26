@@ -112,7 +112,7 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
         formatearHora(row.HoraControl),
         row.Pulso || '-',
         `${row.Maximo || '-'}/${row.Minimo || '-'}`,
-        row.Axilar ? `${row.Axilar}°C` : '-',
+        row.Axilar ? `${Number(row.Axilar).toFixed(1)}°C` : '-',
         row.FrecuenciaRespiratoria || '-'
       ]);
 
@@ -265,7 +265,7 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
                 <td>{control.Maximo || '-'}</td>
                 <td>{control.Minimo || '-'}</td>
                 <td>{control.FrecuenciaRespiratoria || '-'}</td>
-                <td>{control.Axilar ? `${control.Axilar}°C` : '-'}</td>
+                <td>{control.Axilar ? `${Number(control.Axilar).toFixed(1)}°C` : '-'}</td>
                 <td>{control.Saturometria ? `${control.Saturometria}%` : '-'}</td>
                 <td>
                   {control.IdHci && control.IdHci > 0 ? (
@@ -380,7 +380,7 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Temperatura Axilar:</span>
                   <span className={styles.detailValue}>
-                    {selectedControl.Axilar ? `${selectedControl.Axilar}°C` : '-'}
+                    {selectedControl.Axilar ? `${Number(selectedControl.Axilar).toFixed(1)}°C` : '-'}
                   </span>
                 </div>
                 <div className={styles.detailItem}>
