@@ -10,7 +10,6 @@ import {
   CartesianGrid
 } from "recharts";
 import styles from './ControlesFrecuentesChart.module.css';
-import { formatTime } from '../../utils/dateUtils';
 import { ControlFrecuente, ControlesFrecuentesChartProps, ParametroControl } from '../../types/nursing/ChartComponents';
 
 // Constantes para colores y etiquetas
@@ -49,7 +48,8 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
   const chartData = data.map(ctrl => {
     // Formatear la fecha y hora para mejor visualización
     const fecha = new Date(ctrl.FechaControl).toLocaleDateString('es-AR');
-    const hora = formatTime(ctrl.HoraControl);
+    // HoraControl ya viene en formato HH:MM:SS del backend, solo extraer HH:MM
+    const hora = ctrl.HoraControl ? ctrl.HoraControl.substring(0, 5) : '-';
     
     // Obtener el valor del parámetro seleccionado
     const valor = ctrl[PARAM_MAP[parametro]];
@@ -88,8 +88,8 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
               angle={-45} 
               textAnchor="end" 
               height={80}
-              interval={0}
-              tick={{ fontSize: 11 }}
+              interval="preserveStartEnd"
+              tick={{ fontSize: 10 }}
             />
             <YAxis domain={[yMin, yMax]} />
             <Tooltip />
