@@ -7,7 +7,7 @@
 ---
 
 ## Índice de Cambios
-
+ 
 1. [Resumen de Migración](#resumen-de-migración) 
 2. [Cambio #1: Nuevo Sidebar](#cambio-1-nuevo-sidebar)
 3. [Archivos Modificados](#archivos-modificados)
