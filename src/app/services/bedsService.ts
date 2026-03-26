@@ -29,6 +29,8 @@ export const bedsService = {
 				SexoPaciente: item.SexoPaciente || '',
 				descripcionSexo: item.DescripcionSexo || '',
 				servicioMedicoDescripcion: item.ServicioMedicoDescripcion || '',
+				fechaIngresoSQL: item.fechaIngresoSQL || '',
+				horaIngresoSQL: item.horaIngresoSQL || '',
 			}),
 		);
 	},
