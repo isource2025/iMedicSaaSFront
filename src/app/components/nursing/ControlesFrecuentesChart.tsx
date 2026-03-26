@@ -61,6 +61,16 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
     };
   }).filter(item => item.valor !== null); // Filtrar puntos sin valor
 
+  // Calcular el dominio del eje Y dinámicamente
+  const valores = chartData.map(d => d.valor).filter(v => v !== null) as number[];
+  const minValor = valores.length > 0 ? Math.min(...valores) : 0;
+  const maxValor = valores.length > 0 ? Math.max(...valores) : 100;
+  
+  // Agregar un margen del 10% arriba y abajo para mejor visualización
+  const margen = (maxValor - minValor) * 0.1;
+  const yMin = Math.max(0, Math.floor(minValor - margen));
+  const yMax = Math.ceil(maxValor + margen);
+
   // Determinar la clase CSS para el título según el parámetro
   const titleClassName = styles[`chartTitle${parametro.charAt(0).toUpperCase() + parametro.slice(1)}`] || '';
 
@@ -71,10 +81,17 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
       </h4>
       <div className={styles.chartContent}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 0, right: 0, left: 30, bottom: 0 }}>
+          <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 80 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="fechaHora" angle={-45} textAnchor="end" minTickGap={20} height={100} />
-            <YAxis />
+            <XAxis 
+              dataKey="fechaHora" 
+              angle={-45} 
+              textAnchor="end" 
+              height={80}
+              interval={0}
+              tick={{ fontSize: 11 }}
+            />
+            <YAxis domain={[yMin, yMax]} />
             <Tooltip />
             <Line 
               type="monotone" 
