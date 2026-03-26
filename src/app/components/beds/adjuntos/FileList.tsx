@@ -103,10 +103,10 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
   // Estado para controlar qué grupos están expandidos
   const [gruposExpandidos, setGruposExpandidos] = useState<{ [key: string]: boolean }>(
     () => {
-      // Por defecto, expandir todos los grupos
+      // Por defecto, todos los grupos cerrados
       const inicial: { [key: string]: boolean } = {};
       adjuntosAgrupados.forEach(grupo => {
-        inicial[grupo.nombre] = true;
+        inicial[grupo.nombre] = false;
       });
       return inicial;
     }
