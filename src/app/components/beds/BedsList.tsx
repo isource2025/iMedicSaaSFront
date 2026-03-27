@@ -7,6 +7,7 @@ import ModalCambiarCama from '../modals/ModalCambiarCama';
 import BedCard from './BedCard';
 import BedFilters from './BedFilters';
 import styles from './Bedslist.module.css';
+import Loader from '../Loader/Loader';
 import { useRouter, useSearchParams } from 'next/navigation';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
 import { Bed } from '../../types/beds';
@@ -185,7 +186,9 @@ const BedsList = () => {
 				lastUpdateTime={lastUpdateTime}
 			/>
 			{loading ? (
-				<div className={styles.loadingState}>Cargando camas...</div>
+				<div style={{ position: 'relative', minHeight: '300px' }}>
+					<Loader />
+				</div>
 			) : error ? (
 				<div className={styles.errorState}>{error}</div>
 			) : beds.length === 0 ? (

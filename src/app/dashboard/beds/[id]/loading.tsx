@@ -1,3 +1,5 @@
+import Loader from '@/app/components/Loader/Loader';
+
 export default function Loading() {
-	return <div style={{ padding: 16 }}>Cargando cama…</div>;
+	return <div style={{ position: 'relative', minHeight: '300px' }}><Loader /></div>;
 }

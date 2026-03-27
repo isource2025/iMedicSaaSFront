@@ -15,6 +15,7 @@ import DataTableModal from '../../admission/DataTableModal';
 import TableHeader from './TableHeader';
 import CreateOptionForm from './CreateOptionForm';
 import styles from './styles.module.css';
+import Loader from '../../Loader/Loader';
 import { getAdmissionTablesOptions, TableOption } from '../../../services/admissionService';
 import { getEstadosMilitares, createEstadoMilitar, updateEstadoMilitar, deleteEstadoMilitar } from '../../../services/estadoMilitar.service';
 import { getGruposEtnicos, createGrupoEtnico, updateGrupoEtnico, deleteGrupoEtnico } from '../../../services/grupoEtnico.service';
@@ -1156,7 +1157,9 @@ const AdmissionTables: React.FC = () => {
       )}
 
       {loadingOptions ? (
-        <div className={styles.loading}>Cargando opciones...</div>
+        <div style={{ position: 'relative', minHeight: '200px' }}>
+          <Loader />
+        </div>
       ) : apiError ? (
         <div className={styles.error}>
           Error al cargar las opciones: {apiError}

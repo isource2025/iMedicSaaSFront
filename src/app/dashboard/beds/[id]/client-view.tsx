@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BedDetailView from '../../../components/beds/BedDetailView';
-import BedDetailSkeleton from '../../../components/beds/BedDetailSkeleton';
+import Loader from '../../../components/Loader/Loader';
 import { BedDetailProvider } from '../../../components/beds/contexts/BedDetailContext';
 import type { Bed } from '../../../types/beds';
 
@@ -88,7 +88,7 @@ export default function ClientBedView({ id }: Props) {
 		return () => ctrl.abort();
 	}, [url, id, router]);
 
-	if (loading) return <BedDetailSkeleton />;
+	if (loading) return <div style={{ position: 'relative', minHeight: '300px' }}><Loader /></div>;
 	if (error) {
 		// Si prefieres también mandar errores desconocidos al notFound, descomenta:
 		// router.replace(`/dashboard/beds/${id}?nf=1`);
@@ -98,7 +98,7 @@ export default function ClientBedView({ id }: Props) {
 			</div>
 		);
 	}
-	if (!bed) return <BedDetailSkeleton />;
+	if (!bed) return <div style={{ position: 'relative', minHeight: '300px' }}><Loader /></div>;
 
 	return (
 		<BedDetailProvider initialSection='indicaciones' initialDate={new Date()}>

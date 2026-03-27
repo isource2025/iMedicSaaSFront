@@ -1,6 +1,7 @@
 import { Rendicion } from '../../types/RendicionInterface';
 import styles from './RendicionList.module.css';
 import Pagination from '../UI/Pagination';
+import Loader from '../Loader/Loader';
 import { IoPencil, IoTrashOutline, IoEyeOutline, IoLockClosedOutline } from 'react-icons/io5';
 import { formatDate as formatClarionDate } from '../../utils/dateUtils';
 
@@ -81,10 +82,7 @@ export default function RendicionList({
 						{loading ? (
 							<tr>
 								<td colSpan={10} className={styles.loadingContainer}>
-									<div className={styles.loadingContent}>
-										<div className={styles.loadingSpinner}></div>
-										<span className={styles.loadingText}>Cargando...</span>
-									</div>
+									<Loader />
 								</td>
 							</tr>
 						) : rendiciones.length === 0 ? (

@@ -12,6 +12,7 @@ import ModalAddPatient from '@/app/components/modals/ModalAddPatient';
 import { PatientFormBase } from '@/app/components/Patients/PatientFormBase';
 import { SearchInput } from '@/app/components/beds/SearchInput';
 import { patientService } from '@/app/services/patientService';
+import Loader from '@/app/components/Loader/Loader';
 import styles from './patients.module.css';
 
 export default function PatientsPage() {
@@ -169,7 +170,9 @@ export default function PatientsPage() {
 						size='full'
 					>
 						{(loadingFullPatient || !fullPatientEditing) && (
-							<div style={{ padding: '1rem' }}>Cargando paciente...</div>
+							<div style={{ position: 'relative', minHeight: '200px' }}>
+								<Loader />
+							</div>
 						)}
 						{fullPatientEditing && (
 							<PatientFormBase

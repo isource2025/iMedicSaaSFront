@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 import BedDetailView from '@/app/components/beds/BedDetailView';
+import Loader from '@/app/components/Loader/Loader';
 import { Bed } from '@/app/types/beds';
 
 export default function BedDetailClient() {
@@ -58,7 +59,9 @@ export default function BedDetailClient() {
   return (
     <main className={styles.container}>
       {loading ? (
-        <div className={styles.loadingState}>Cargando información de la cama...</div>
+        <div style={{ position: 'relative', minHeight: '300px' }}>
+          <Loader />
+        </div>
       ) : bedData ? (
         <BedDetailView bed={bedData} />
       ) : (

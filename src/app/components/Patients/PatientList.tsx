@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Patient } from '../../types/PatientInterface';
 import styles from './PatientList.module.css';
 import Pagination from '../UI/Pagination';
+import Loader from '../Loader/Loader';
 import { IoDocumentTextOutline, IoMedicalOutline, IoPencil, IoTrashOutline, IoChevronDown } from 'react-icons/io5';
 import { clarionDateToDate, calculateAge } from '../../utils/dateUtils';
 
@@ -99,10 +100,7 @@ export default function PatientList({
             {loading ? (
               <tr>
                 <td colSpan={6} className={styles.loadingContainer}>
-                  <div className={styles.loadingContent}>
-                    <div className={styles.loadingSpinner}></div>
-                    <span className={styles.loadingText}>Cargando...</span>
-                  </div>
+                  <Loader />
                 </td>
               </tr>
             ) : patients.length === 0 ? (
@@ -183,9 +181,8 @@ export default function PatientList({
       {/* Mobile collapsible list */}
       <div className={styles.mobileList}>
         {loading ? (
-          <div className={styles.loadingContent}>
-            <div className={styles.loadingSpinner}></div>
-            <span className={styles.loadingText}>Cargando...</span>
+          <div style={{ position: 'relative', minHeight: '200px' }}>
+            <Loader />
           </div>
         ) : patients.length === 0 ? (
           <div className={styles.noResults}>No se encontraron pacientes</div>

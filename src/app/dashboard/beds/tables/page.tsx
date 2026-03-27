@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { OpcGrd } from '@/app/types/opcGrd.types';
 import { useOpcGrdManager } from '@/app/hooks/useOpcGrdManager';
 import styles from '../../admission/tables/tables.module.css';
+import Loader from '@/app/components/Loader/Loader';
 import { FaCog, FaEdit, FaTrash, FaPlus, FaSave, FaUndo } from 'react-icons/fa';
 
 export default function BedsTablesPage() {
@@ -188,7 +189,9 @@ export default function BedsTablesPage() {
       )}
       
       {loading ? (
-        <div className={styles.loading}>Cargando opciones...</div>
+        <div style={{ position: 'relative', minHeight: '200px' }}>
+          <Loader />
+        </div>
       ) : error ? (
         <div className={styles.error}>{error}</div>
       ) : (
