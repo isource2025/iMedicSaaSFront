@@ -47,7 +47,7 @@ export default function UsersAdminPage() {
     u.Nombres.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.Apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.NombreRed.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.NumeroDocumento.includes(searchTerm)
+    String(u.NumeroDocumento || '').includes(searchTerm)
   );
 
   const handleOpenPasswordModal = (user: Usuario) => {
