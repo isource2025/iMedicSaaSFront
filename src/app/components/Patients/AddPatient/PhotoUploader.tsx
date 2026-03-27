@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import styles from './photo.module.css';
+import styles from './PhotoUploader.module.css';
+import Loader from '../../Loader/Loader';
 
 interface FotoUploaderProps {
 	onPhotoChange: (file: File | null) => void;
@@ -66,9 +67,8 @@ export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 		>
 			<input {...getInputProps()} />
 			{loading ? (
-				<div className={styles.loadingContainer}>
-					<div className={styles.spinner}></div>
-					<p>Cargando foto...</p>
+				<div style={{ position: 'relative', minHeight: '150px' }}>
+					<Loader />
 				</div>
 			) : preview ? (
 				<>

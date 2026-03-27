@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { DiagnosticoCie10 } from '../../types/diagnosticos';
 import styles from './ModalDiagnosticosCie10.module.css';
+import Loader from '../Loader/Loader';
 import { IoClose, IoSearch, IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
 interface ModalDiagnosticosCie10Props {
@@ -159,8 +160,8 @@ const ModalDiagnosticosCie10: React.FC<ModalDiagnosticosCie10Props> = ({
 
         <div className={styles.modalContent}>
           {loading ? (
-            <div className={styles.loadingContainer}>
-              <p>Cargando diagnósticos...</p>
+            <div style={{ position: 'relative', minHeight: '200px' }}>
+              <Loader />
             </div>
           ) : error ? (
             <div className={styles.errorMessage}>

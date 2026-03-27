@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './ModalBasePaciente.module.css';
+import Loader from '../Loader/Loader';
 import {
 	formatDate,
 	formatTime,
@@ -171,10 +172,8 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 				</div>
 
 				{loading ? (
-					<div className={styles.loadingContainer}>
-						<div className={styles.loading}>
-							Cargando información del paciente...
-						</div>
+					<div style={{ position: 'relative', minHeight: '200px' }}>
+						<Loader />
 					</div>
 				) : error || !pacienteData ? (
 					<div className={styles.errorContainer}>

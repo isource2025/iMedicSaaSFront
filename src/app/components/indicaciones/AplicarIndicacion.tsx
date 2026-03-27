@@ -5,6 +5,7 @@ import ModalBasePaciente from '../modals/ModalBasePaciente';
 import { indicacionesService } from '../../services/indicacionesService';
 import type { Indicacion } from '../../types/indicaciones';
 import styles from './AplicarIndicacion.module.css';
+import Loader from '../Loader/Loader';
 import RenderDieta from './renders_Indicacion/RenderDieta';
 import RenderControl from './renders_Indicacion/RenderControl';
 import RenderMedicacion from './renders_Indicacion/RenderMedicacion';
@@ -334,9 +335,8 @@ export default function AplicarIndicacion(props: Props) {
             footerButtons={footerButtons}
         >
             {loadingData ? (
-                <div className={styles.loadingContainer}>
-                    <div className={styles.spinner}></div>
-                    <p>Cargando datos de la indicación...</p>
+                <div style={{ position: 'relative', minHeight: '200px' }}>
+                    <Loader />
                 </div>
             ) : error ? (
                 <div className={styles.errorContainer}>

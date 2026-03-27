@@ -7,6 +7,7 @@ import ModalCambiarCama from '../modals/ModalCambiarCama';
 import IndicacionesList from '../indicaciones/IndicacionesList';
 import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
 import styles from './BedDetail.module.css';
+import Loader from '../Loader/Loader';
 import { useBedRelatedData } from '../../hooks/useBedRelatedData';
 
 interface BedDetailProps {
@@ -233,7 +234,9 @@ const BedDetail = ({
                 </div>
                 <div className={styles.cardBody}>
                   {loadingRelated ? (
-                    <p>Cargando medicación...</p>
+                    <div style={{ position: 'relative', minHeight: '100px' }}>
+                      <Loader />
+                    </div>
                   ) : errorRelated ? (
                     <p>Error: {errorRelated}</p>
                   ) : meds.length === 0 ? (
@@ -260,7 +263,9 @@ const BedDetail = ({
                 </div>
                 <div className={styles.cardBody}>
                   {loadingRelated ? (
-                    <p>Cargando estudios...</p>
+                    <div style={{ position: 'relative', minHeight: '100px' }}>
+                      <Loader />
+                    </div>
                   ) : errorRelated ? (
                     <p>Error: {errorRelated}</p>
                   ) : studies.length === 0 ? (

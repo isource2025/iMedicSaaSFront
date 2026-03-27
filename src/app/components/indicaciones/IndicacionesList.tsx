@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Indicacion } from '../../types/indicaciones';
 import { indicacionesService } from '../../services/indicacionesService';
 import styles from './IndicacionesList.module.css';
+import Loader from '../Loader/Loader';
 
 interface IndicacionesListProps {
   numeroVisita: number | null;
@@ -93,8 +94,8 @@ const IndicacionesList: React.FC<IndicacionesListProps> = ({
 
   if (loading) {
     return (
-      <div className={styles.loading}>
-        <p>Cargando indicaciones...</p>
+      <div style={{ position: 'relative', minHeight: '200px' }}>
+        <Loader />
       </div>
     );
   }

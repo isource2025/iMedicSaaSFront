@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, memo } from 'react';
 import styles from './ModalBusquedaDiagnosticos.module.css';
+import Loader from '../Loader/Loader';
 import diagnosticosService from '../../services/diagnosticosService';
 import { DiagnosticoCie10 } from '../../types/diagnosticos';
 
@@ -27,9 +28,8 @@ const DiagnosticosTable = memo(({
 }) => {
   if (loading) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingSpinner}></div>
-        <p>Cargando diagnósticos...</p>
+      <div style={{ position: 'relative', minHeight: '200px' }}>
+        <Loader />
       </div>
     );
   }
@@ -209,9 +209,8 @@ const ModalBusquedaDiagnosticos: React.FC<ModalBusquedaDiagnosticosProps> = ({
           {error && <div className={styles.errorMessage}>{error}</div>}
           
           {loading && !diagnosticos.length ? (
-            <div className={styles.loadingContainer}>
-              <div className={styles.loadingSpinner}></div>
-              <p>Cargando diagnósticos...</p>
+            <div style={{ position: 'relative', minHeight: '200px' }}>
+              <Loader />
             </div>
           ) : (
             <>
