@@ -1,0 +1,414 @@
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0083A9;
+  margin: 0;
+}
+
+.createButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #0083A9;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.createButton:hover {
+  background-color: #00B5E2;
+}
+
+.searchBar {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 1.25rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #0083A9;
+}
+
+.tableContainer {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background-color: #f9fafb;
+}
+
+.table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.sectoresList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sectorBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: #0083A9;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.noSectors {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #0083A9;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionButton:hover {
+  background-color: #0083A9;
+  color: white;
+}
+
+/* Modales */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalLarge {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0083A9;
+  margin: 0 0 0.5rem 0;
+}
+
+.modalSubtitle {
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #0083A9;
+}
+
+.input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #0083A9;
+}
+
+.select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.error {
+  padding: 0.75rem;
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  color: #991b1b;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.cancelButton {
+  padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelButton:hover {
+  background-color: #e5e7eb;
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submitButton {
+  padding: 0.75rem 1.5rem;
+  background-color: #0083A9;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submitButton:hover {
+  background-color: #00B5E2;
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sectores */
+.sectorsSection {
+  margin-bottom: 2rem;
+}
+
+.sectorsSection h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1rem 0;
+}
+
+.assignedSectors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectorItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.removeButton {
+  width: 28px;
+  height: 28px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.removeButton:hover {
+  background-color: #fca5a5;
+}
+
+.removeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.noSectorsText {
+  color: #9ca3af;
+  font-style: italic;
+  margin: 0;
+}
+
+.assignSectorForm {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.assignButton {
+  padding: 0.75rem 1.5rem;
+  background-color: #0083A9;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.assignButton:hover {
+  background-color: #00B5E2;
+}
+
+.assignButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
