@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import s from './PatientMiniHeader.module.css';
+import Loader from '../../Loader/Loader';
 import { FiCalendar, FiClock } from 'react-icons/fi';
 import { IoMale, IoFemale } from 'react-icons/io5';
 import { Bed } from 'lucide-react';
@@ -101,10 +102,8 @@ export default function PatientMiniHeader({
 
 	if (loading) {
 		return (
-			<div className={s.wrap}>
-				<div className={s.headerLeft}>
-					<div className={s.loadingText}>Cargando información del paciente...</div>
-				</div>
+			<div style={{ position: 'relative', minHeight: '80px' }}>
+				<Loader />
 			</div>
 		);
 	}

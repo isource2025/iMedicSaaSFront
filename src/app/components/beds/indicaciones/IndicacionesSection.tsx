@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
-import styles from "./IndicacionesSection.module.css";
+import styles from './IndicacionesSection.module.css';
+import Loader from '../../Loader/Loader';
 import IndicativoColors from "./IdicativosColors";
 import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";
 import { NuevaIndicacionPayload } from "../../../types/indicaciones";
@@ -465,8 +466,8 @@ export default function IndicacionesSection({
             <div className={styles.content}>
                 <div className={styles.tableHolder}>
                     {isLoading && (
-                        <div className={styles.loadingOverlay}>
-                            Cargando indicaciones…
+                        <div style={{ position: 'relative', minHeight: '200px' }}>
+                            <Loader />
                         </div>
                     )}
 

@@ -9,6 +9,7 @@ import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { evolucionesService } from "../../../services/evolucionesService";
 import EvolucionesTable, { EvolucionRow } from "./EvolucionesTable";
 import styles from './EvolucionesSection.module.css';
+import Loader from '../../Loader/Loader';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -332,7 +333,9 @@ export default function EvolucionesSection({
             <div className={styles.content}>
                 <div className={styles.tableHolder}>
                     {isLoading && (
-                        <div className={styles.loadingOverlay}>Cargando evoluciones...</div>
+                        <div style={{ position: 'relative', minHeight: '200px' }}>
+                            <Loader />
+                        </div>
                     )}
                     {error && (
                         <div className={styles.errorBox}>

@@ -6,6 +6,7 @@ import { Adjunto } from '@/app/types/adjuntos';
 import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import styles from './AdjuntosSection.module.css';
+import Loader from '../../Loader/Loader';
 
 interface AdjuntosSectionProps {
   numeroVisita: number | null;
@@ -165,7 +166,9 @@ export default function AdjuntosSection({
       <div className={styles.listSection}>
         <h3 className={styles.sectionTitle}>Archivos de la visita</h3>
         {loading ? (
-          <div className={styles.loading}>Cargando archivos...</div>
+          <div style={{ position: 'relative', minHeight: '150px' }}>
+            <Loader />
+          </div>
         ) : (
           <FileList
             adjuntos={adjuntos}

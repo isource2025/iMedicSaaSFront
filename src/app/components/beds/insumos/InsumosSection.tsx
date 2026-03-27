@@ -4,7 +4,8 @@ import React, { useState, useMemo } from "react";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import InsumosTable, { InsumoRow } from "./InsumosTable";
-import styles from "./InsumosSection.module.css";
+import styles from './InsumosSection.module.css';
+import Loader from '../../Loader/Loader';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -135,9 +136,8 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     if (isLoading) {
         return (
             <div className={styles.root}>
-                <div className={styles.loadingContainer}>
-                    <div className={styles.spinner}></div>
-                    <p>Cargando insumos...</p>
+                <div style={{ position: 'relative', minHeight: '200px' }}>
+                    <Loader />
                 </div>
             </div>
         );

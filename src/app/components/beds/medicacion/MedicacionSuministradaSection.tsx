@@ -12,6 +12,7 @@ import {
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './MedicacionSuministradaSection.module.css';
+import Loader from '../../Loader/Loader';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -194,10 +195,8 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
             </div>
           )}
         </div>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando medicación suministrada...</p>
-          <p style={{ fontSize: '0.75rem', color: '#666' }}>URL: {url}</p>
+        <div style={{ position: 'relative', minHeight: '200px' }}>
+          <Loader />
         </div>
       </div>
     );

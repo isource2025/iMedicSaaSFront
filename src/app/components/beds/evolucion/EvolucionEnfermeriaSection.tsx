@@ -10,6 +10,7 @@ import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './EvolucionEnfermeriaSection.module.css';
+import Loader from '../../Loader/Loader';
 import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
@@ -215,7 +216,9 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
       <div className={styles.content}>
         <div className={styles.tableHolder}>
           {isLoading && (
-            <div className={styles.loadingOverlay}>Cargando evoluciones de enfermería...</div>
+            <div style={{ position: 'relative', minHeight: '200px' }}>
+              <Loader />
+            </div>
           )}
           {error && (
             <div className={styles.errorBox}>

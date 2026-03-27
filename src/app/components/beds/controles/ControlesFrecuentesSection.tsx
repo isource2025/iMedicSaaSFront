@@ -11,6 +11,7 @@ import {
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './ControlesFrecuentesSection.module.css';
+import Loader from '../../Loader/Loader';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -156,9 +157,8 @@ const ControlesFrecuentesSection: React.FC<ControlesFrecuentesSectionProps> = ({
             </div>
           )}
         </div>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando controles frecuentes...</p>
+        <div style={{ position: 'relative', minHeight: '200px' }}>
+          <Loader />
         </div>
       </div>
     );

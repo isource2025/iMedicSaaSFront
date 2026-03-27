@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import styles from "./HCIngresoSection.module.css";
+import styles from './HCIngresoSection.module.css';
+import Loader from '../../Loader/Loader';
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";
 import { 
@@ -534,8 +535,8 @@ export default function HCIngresoSection({
 
                 {/* Mostrar estado de carga o error */}
                 {loading && (
-                    <div className={styles.loadingMessage}>
-                        Cargando historia clínica de ingreso...
+                    <div style={{ position: 'relative', minHeight: '200px' }}>
+                        <Loader />
                     </div>
                 )}
 
