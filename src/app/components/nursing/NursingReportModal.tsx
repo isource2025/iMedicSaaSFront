@@ -6,6 +6,7 @@ import ModalBasePaciente from '../modals/ModalBasePaciente';
 import ControlesFrecuentesChart, { CHART_PARAMS } from "./ControlesFrecuentesChart";
 // import NuevaIndicacionModal, { IndicacionData } from './NuevaIndicacionModal';
 import styles from './NursingReportModal.module.css';
+import Loader from '../Loader/Loader';
 import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
 import { NuevaIndicacionPayload } from '@/app/types/indicaciones';
 import { indicacionesService } from '@/app/services/indicacionesService';
@@ -117,7 +118,9 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
       >
         <div className={styles.nursingReportContainer}>
           {loading ? (
-            <div className={styles.loading}>Cargando datos de controles...</div>
+            <div style={{ position: 'relative', minHeight: '200px' }}>
+              <Loader />
+            </div>
           ) : error ? (
             <div className={styles.error}>{error}</div>
           ) : (

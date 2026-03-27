@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ModalBasePaciente from './ModalBasePaciente';
 import ModalBusquedaDiagnosticos from './ModalBusquedaDiagnosticos';
 import styles from './ModalEgresoPaciente.module.css';
+import Loader from '../Loader/Loader';
 import visitaService from '../../services/visitaService';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
 import { getDisposicionesEgreso } from '../../services/disposicionEgresoService';
@@ -298,8 +299,8 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
           )}
           
           {loading && !success && (
-            <div className={styles.loadingMessage}>
-              Procesando egreso...
+            <div style={{ position: 'relative', minHeight: '150px' }}>
+              <Loader />
             </div>
           )}
           

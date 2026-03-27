@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ModalBasePaciente from './ModalBasePaciente';
 import ModalBusquedaDiagnosticos from './ModalBusquedaDiagnosticos';
 import styles from './ModalCambiarCama.module.css';
+import Loader from '../Loader/Loader';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
 import diagnosticosService from '../../services/diagnosticosService';
 import estadoAmbulatorioService from '../../services/estadoAmbulatorioService';
@@ -560,8 +561,8 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
           )}
           
           {loading && (
-            <div className={styles.loadingMessage}>
-              Procesando cambio de cama...
+            <div style={{ position: 'relative', minHeight: '150px' }}>
+              <Loader />
             </div>
           )}
           
@@ -606,7 +607,9 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                   <h5 className={styles.camasDisponiblesTitle}>Camas Disponibles ({camasDisponibles.length})</h5>
                   
                   {loadingBeds ? (
-                    <div className={styles.loadingMessage}>Cargando camas disponibles...</div>
+                    <div style={{ position: 'relative', minHeight: '100px' }}>
+                      <Loader />
+                    </div>
                   ) : errorBeds ? (
                     <div className={styles.errorMessage}>{errorBeds}</div>
                   ) : camasDisponibles.length === 0 ? (
@@ -778,8 +781,8 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
 
             <div className={styles.egresoSection}>
             {loadingUbicacion ? (
-              <div className={styles.loadingMessage}>
-                <span>Cargando datos de ubicación...</span>
+              <div style={{ position: 'relative', minHeight: '100px' }}>
+                <Loader />
               </div>
             ) : ubicacionActual ? (
               <div className={styles.formGridEgreso}>
