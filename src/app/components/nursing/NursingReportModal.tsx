@@ -55,11 +55,9 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
       if (!response.ok) throw new Error('Error al obtener los controles frecuentes');
       const data = await response.json();
       if (data.success) {
-        // Ordenar de más antiguo a más reciente (ascendente) para que el gráfico se vea correctamente
         const sortedData = [...data.data].sort((a, b) =>
-          new Date(a.FechaControl + 'T' + a.HoraControl).getTime() - new Date(b.FechaControl + 'T' + b.HoraControl).getTime()
+          new Date(b.FechaControl + 'T' + b.HoraControl).getTime() - new Date(a.FechaControl + 'T' + a.HoraControl).getTime()
         );
-        console.log('📊 Datos ordenados (primero debe ser el más antiguo):', sortedData.map(d => `${d.FechaControl} ${d.HoraControl}`));
         setControls(sortedData);
       } else {
         throw new Error(data.message || 'Error al obtener los datos');
@@ -199,7 +197,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                         </tr>
                       </thead>
                       <tbody>
-                        {[...controls].reverse().map((control, index) => (
+                        {controls.map((control, index) => (
                           <tr key={index}>
                             <td>{formatDate(control.FechaControl)}</td>
                             <td>{formatTime(control.HoraControl)}</td>

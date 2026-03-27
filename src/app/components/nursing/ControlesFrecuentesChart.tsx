@@ -45,7 +45,7 @@ const PARAM_MAP: Record<string, keyof ControlFrecuente> = {
 
 const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartProps) => {
   // Parseamos la hora y formateamos los datos para el gráfico
-  const chartData = data.map(ctrl => {
+  const chartData = [...data].reverse().map(ctrl => {
     // Formatear la fecha y hora para mejor visualización
     const fecha = new Date(ctrl.FechaControl).toLocaleDateString('es-AR');
     // HoraControl ya viene en formato HH:MM:SS del backend, solo extraer HH:MM
