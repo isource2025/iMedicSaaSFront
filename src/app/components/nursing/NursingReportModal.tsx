@@ -68,11 +68,11 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
     } finally {
       setLoading(false);
     }
-  }, [isOpen, numeroVisita]);
+  }, [isOpen, numeroVisita, periodFilter]);
 
   useEffect(() => {
     fetchControlData();
-  }, [fetchControlData, periodFilter]);
+  }, [fetchControlData]);
 
   const handleNewIndication = useCallback(() => setShowNewIndicationForm(true), []);
   const handleCancelNewIndication = useCallback(() => setShowNewIndicationForm(false), []);
