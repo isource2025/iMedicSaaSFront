@@ -92,7 +92,7 @@ const menuItems: MenuItem[] = [
       { label: 'Mi Perfil', path: '/profile' },
       { label: 'Configuración', path: '/settings' },
       { label: 'Ayuda', path: '/help' },
-      { label: 'Cerrar Sesión', path: '/logout' }
+      { label: 'Cerrar Sesión', path: '/' }
     ]
   }
 ]
