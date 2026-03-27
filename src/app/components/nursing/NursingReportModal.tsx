@@ -59,6 +59,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
         const sortedData = [...data.data].sort((a, b) =>
           new Date(a.FechaControl + 'T' + a.HoraControl).getTime() - new Date(b.FechaControl + 'T' + b.HoraControl).getTime()
         );
+        console.log('📊 Datos ordenados (primero debe ser el más antiguo):', sortedData.map(d => `${d.FechaControl} ${d.HoraControl}`));
         setControls(sortedData);
       } else {
         throw new Error(data.message || 'Error al obtener los datos');
