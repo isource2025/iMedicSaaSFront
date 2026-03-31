@@ -306,6 +306,13 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 						Informe de Evolución
 					</button>
 					<button
+						className={`${styles.navButton} ${isActive('laboratorios') ? styles.active : ''
+							}`}
+						onClick={() => clickItem('laboratorios')}
+					>
+						Laboratorios
+					</button>
+					<button
 						className={`${styles.navButton} ${isActive('adjuntos') ? styles.active : ''
 							}`}
 						onClick={() => clickItem('adjuntos')}
