@@ -17,9 +17,26 @@ export default function LabFormModal({ numeroVisita, ocrResult, onClose, onSucce
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Convertir fecha del OCR de DD/MM/YYYY a YYYY-MM-DD
+  const convertirFecha = (fecha: string | null | undefined): string => {
+    if (!fecha) return new Date().toISOString().split('T')[0];
+    
+    // Si ya está en formato YYYY-MM-DD, retornar
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
+    
+    // Convertir DD/MM/YYYY o DD-MM-YYYY a YYYY-MM-DD
+    const match = fecha.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (match) {
+      const [, dia, mes, anio] = match;
+      return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    }
+    
+    return new Date().toISOString().split('T')[0];
+  };
+
   // Estado del formulario
   const [fechaExamen, setFechaExamen] = useState(
-    ocrResult.cabecera.fecha || new Date().toISOString().split('T')[0]
+    convertirFecha(ocrResult.cabecera.fecha || null)
   );
   const [horaExamen, setHoraExamen] = useState('00:00');
   const [laboratorio, setLaboratorio] = useState(ocrResult.cabecera.laboratorio || '');
