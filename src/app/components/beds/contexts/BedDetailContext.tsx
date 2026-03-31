@@ -18,7 +18,8 @@ export type SidebarSection =
 	| 'insumos'
 	| 'informe_evo'
 	| 'control'
-	| 'adjuntos';
+	| 'adjuntos'
+	| 'laboratorios';
 
 interface BedDetailContextType {
 	// Estado de los desplegables

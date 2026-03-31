@@ -18,6 +18,7 @@ import EvolucionesSection from './evoluciones/EvolucionesSection';
 import HCIngresoSection from './hc-ingreso/HCIngresoSection';
 import AdjuntosModal from './adjuntos/AdjuntosModal';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
+import LabResultsSection from './laboratorios/LabResultsSection';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -246,6 +247,17 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					) : activeSection === 'adjuntos' ? (
 						<>
 							<AdjuntosSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
+							/>
+						</>
+					) : activeSection === 'laboratorios' ? (
+						<>
+							<LabResultsSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
