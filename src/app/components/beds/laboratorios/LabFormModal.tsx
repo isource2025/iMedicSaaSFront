@@ -1,21 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { laboratoriosService } from '@/app/services/laboratoriosService';
-import { OCRResult, ExamenLabDetalle } from '@/app/types/laboratorios';
+import { sectoresService, Sector } from '@/app/services/sectoresService';
+import { OCRResult, ExamenLabDetalle, ExamenLabCompleto } from '@/app/types/laboratorios';
 import Loader from '../../Loader/Loader';
 import styles from './LabFormModal.module.css';
 
 interface LabFormModalProps {
   numeroVisita: number;
-  ocrResult: OCRResult;
+  ocrResult?: OCRResult;
+  examenExistente?: ExamenLabCompleto;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function LabFormModal({ numeroVisita, ocrResult, onClose, onSuccess }: LabFormModalProps) {
+export default function LabFormModal({ numeroVisita, ocrResult, examenExistente, onClose, onSuccess }: LabFormModalProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [loadingSectores, setLoadingSectores] = useState(true);
+  
+  const isEdit = !!examenExistente;
   
   // Convertir fecha del OCR de DD/MM/YYYY a YYYY-MM-DD
   const convertirFecha = (fecha: string | null | undefined): string => {
@@ -36,26 +42,73 @@ export default function LabFormModal({ numeroVisita, ocrResult, onClose, onSucce
 
   // Estado del formulario
   const [fechaExamen, setFechaExamen] = useState(
-    convertirFecha(ocrResult.cabecera.fecha || null)
+    isEdit 
+      ? examenExistente.FechaExamen?.split('T')[0] || new Date().toISOString().split('T')[0]
+      : convertirFecha(ocrResult?.cabecera.fecha || null)
   );
-  const [horaExamen, setHoraExamen] = useState('00:00');
-  const [laboratorio, setLaboratorio] = useState(ocrResult.cabecera.laboratorio || '');
-  const [protocolo, setProtocolo] = useState(ocrResult.cabecera.protocolo || '');
-  const [observaciones, setObservaciones] = useState('');
+  const [horaExamen, setHoraExamen] = useState(
+    isEdit ? (examenExistente.HoraExamen || '00:00') : '00:00'
+  );
+  const [laboratorio, setLaboratorio] = useState(
+    isEdit ? (examenExistente.Laboratorio || '') : (ocrResult?.cabecera.laboratorio || '')
+  );
+  const [protocolo, setProtocolo] = useState(
+    isEdit ? (examenExistente.Protocolo || '') : (ocrResult?.cabecera.protocolo || '')
+  );
+  const [observaciones, setObservaciones] = useState(
+    isEdit ? (examenExistente.Observaciones || '') : ''
+  );
+  const [sectorSeleccionado, setSectorSeleccionado] = useState<string>('');
   
   // Parámetros editables
   const [parametros, setParametros] = useState<ExamenLabDetalle[]>(
-    ocrResult.parametros.map((p, index) => ({
-      NombreParametro: p.nombreParametro,
-      Resultado: p.resultado,
-      UnidadMedida: p.unidadMedida || '',
-      ValorReferencia: p.valorReferencia || '',
-      Metodo: p.metodo || '',
-      MarcaReactivo: p.marcaReactivo || '',
-      FueraDeRango: false,
-      Orden: index + 1
-    }))
+    isEdit
+      ? examenExistente.detalles.map((d, index) => ({
+          NombreParametro: d.NombreParametro,
+          Resultado: d.Resultado,
+          UnidadMedida: d.UnidadMedida || '',
+          ValorReferencia: d.ValorReferencia || '',
+          FueraDeRango: d.FueraDeRango || false,
+          Orden: d.Orden || index + 1
+        }))
+      : ocrResult?.parametros.map((p, index) => ({
+          NombreParametro: p.nombreParametro,
+          Resultado: p.resultado,
+          UnidadMedida: p.unidadMedida || '',
+          ValorReferencia: p.valorReferencia || '',
+          Metodo: p.metodo || '',
+          MarcaReactivo: p.marcaReactivo || '',
+          FueraDeRango: false,
+          Orden: index + 1
+        })) || []
   );
+
+  // Cargar sectores y sector desde localStorage
+  useEffect(() => {
+    const cargarSectores = async () => {
+      try {
+        const sectoresData = await sectoresService.getSectores();
+        setSectores(sectoresData);
+        
+        // Cargar sector desde localStorage
+        const sectorStorage = localStorage.getItem('sectorSeleccionado');
+        if (sectorStorage) {
+          try {
+            const sector = JSON.parse(sectorStorage);
+            setSectorSeleccionado(sector.idSector || '');
+          } catch (e) {
+            console.error('Error al parsear sectorSeleccionado:', e);
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar sectores:', error);
+      } finally {
+        setLoadingSectores(false);
+      }
+    };
+    
+    cargarSectores();
+  }, []);
 
   const handleParametroChange = (index: number, field: keyof ExamenLabDetalle, value: string) => {
     const newParametros = [...parametros];
@@ -103,13 +156,19 @@ export default function LabFormModal({ numeroVisita, ocrResult, onClose, onSucce
         NumeroVisita: numeroVisita,
         FechaExamen: fechaExamen,
         HoraExamen: horaExamen,
-        TipoEstudio: ocrResult.tipoEstudio,
+        TipoEstudio: isEdit ? examenExistente.TipoEstudio : (ocrResult?.tipoEstudio || 'GENERAL'),
         Laboratorio: laboratorio,
         Protocolo: protocolo,
-        Observaciones: observaciones
+        Observaciones: observaciones,
+        IdSector: sectorSeleccionado
       };
 
-      await laboratoriosService.saveExamen(cabecera, parametros);
+      if (isEdit) {
+        await laboratoriosService.updateExamen(examenExistente.IdExamen!, cabecera, parametros);
+      } else {
+        await laboratoriosService.saveExamen(cabecera, parametros);
+      }
+      
       onSuccess();
     } catch (err) {
       console.error('Error al guardar examen:', err);
@@ -124,8 +183,8 @@ export default function LabFormModal({ numeroVisita, ocrResult, onClose, onSucce
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>
-            {laboratoriosService.getTipoEstudioIcon(ocrResult.tipoEstudio)}{' '}
-            {laboratoriosService.getTipoEstudioNombre(ocrResult.tipoEstudio)}
+            {isEdit ? '✏️' : laboratoriosService.getTipoEstudioIcon(ocrResult?.tipoEstudio || 'GENERAL')}{' '}
+            {isEdit ? 'Editar Examen' : laboratoriosService.getTipoEstudioNombre(ocrResult?.tipoEstudio || 'GENERAL')}
           </h2>
           <button className={styles.closeButton} onClick={onClose} disabled={saving}>
             ✕
@@ -185,6 +244,23 @@ export default function LabFormModal({ numeroVisita, ocrResult, onClose, onSucce
                   disabled={saving}
                   placeholder="Número de protocolo"
                 />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Sector *</label>
+                <select
+                  value={sectorSeleccionado}
+                  onChange={(e) => setSectorSeleccionado(e.target.value)}
+                  className={styles.input}
+                  disabled={saving || loadingSectores}
+                  required
+                >
+                  <option value="">Seleccione un sector</option>
+                  {sectores.map((sector) => (
+                    <option key={sector.IdSector} value={sector.IdSector}>
+                      {sector.Descripcion}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className={styles.formGroup}>
@@ -301,7 +377,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, onClose, onSucce
             onClick={handleSave}
             disabled={saving || parametros.length === 0}
           >
-            {saving ? 'Guardando...' : 'Guardar Examen'}
+            {saving ? 'Guardando...' : (isEdit ? 'Actualizar Examen' : 'Guardar Examen')}
           </button>
         </div>
       </div>

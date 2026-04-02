@@ -91,11 +91,15 @@ export const laboratoriosService = {
   /**
    * Actualiza un examen
    */
-  async updateExamen(idExamen: number, datos: Partial<ExamenLabCabecera>): Promise<ExamenLabCompleto> {
+  async updateExamen(
+    idExamen: number, 
+    cabecera: Partial<ExamenLabCabecera>,
+    detalles: ExamenLabDetalle[]
+  ): Promise<ExamenLabCompleto> {
     try {
       const response = await apiService.put<{ success: boolean; data: ExamenLabCompleto }>(
         `${BASE_URL}/laboratorios/${idExamen}`,
-        datos
+        { cabecera, detalles }
       );
       return response.data.data;
     } catch (error) {

@@ -5,6 +5,7 @@ import { laboratoriosService } from '@/app/services/laboratoriosService';
 import { ExamenLabCompleto } from '@/app/types/laboratorios';
 import Loader from '../../Loader/Loader';
 import LabUploadModal from './LabUploadModal';
+import LabFormModal from './LabFormModal';
 import LabResultsTable from './LabResultsTable';
 import styles from './LabResultsSection.module.css';
 
@@ -31,6 +32,7 @@ export default function LabResultsSection({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedExamen, setSelectedExamen] = useState<ExamenLabCompleto | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (numeroVisita) {
@@ -62,6 +64,17 @@ export default function LabResultsSection({
   const handleViewExamen = (examen: ExamenLabCompleto) => {
     setSelectedExamen(examen);
     setShowDetailModal(true);
+  };
+
+  const handleEditExamen = (examen: ExamenLabCompleto) => {
+    setSelectedExamen(examen);
+    setShowEditModal(true);
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    setSelectedExamen(null);
+    loadExamenes();
   };
 
   const handleDeleteExamen = async (idExamen: number) => {
@@ -155,20 +168,25 @@ export default function LabResultsSection({
                 </div>
                 <div className={styles.cardActions}>
                   <button
-                    className={styles.iconButton}
+                    className={styles.actionButton}
                     onClick={() => handleViewExamen(examen)}
                     title="Ver detalle"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    👁️
                   </button>
                   <button
-                    className={styles.iconButton}
-                    onClick={() => examen.IdExamen && handleDeleteExamen(examen.IdExamen)}
+                    className={styles.actionButton}
+                    onClick={() => handleEditExamen(examen)}
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className={`${styles.actionButton} ${styles.deleteButton}`}
+                    onClick={() => handleDeleteExamen(examen.IdExamen!)}
                     title="Eliminar"
                   >
+                    🗑️
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -247,6 +265,19 @@ export default function LabResultsSection({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de edición */}
+      {showEditModal && selectedExamen && numeroVisita && (
+        <LabFormModal
+          numeroVisita={numeroVisita}
+          examenExistente={selectedExamen}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedExamen(null);
+          }}
+          onSuccess={handleEditSuccess}
+        />
       )}
     </div>
   );
