@@ -1,0 +1,225 @@
+.container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #00B5E2;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #6c757d;
+  margin: 0;
+}
+
+.controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.controlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.select {
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  color: #495057;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.select:hover {
+  border-color: #00B5E2;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #00B5E2;
+  box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+}
+
+.viewToggle {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.toggleButton {
+  padding: 10px 20px;
+  border: 1px solid #ced4da;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #495057;
+}
+
+.toggleButton:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #00B5E2;
+}
+
+.toggleButton.active {
+  background: #00B5E2;
+  color: #fff;
+  border-color: #00B5E2;
+}
+
+.toggleButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.content {
+  margin-top: 24px;
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead {
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table th {
+  padding: 12px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #dee2e6;
+  transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.table td {
+  padding: 12px 10px;
+  color: #495057;
+}
+
+.dateCell {
+  font-weight: 500;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+.sectorCell {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.valueCell {
+  text-align: center;
+}
+
+.value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.reference {
+  display: block;
+  font-size: 11px;
+  color: #6c757d;
+  margin-top: 2px;
+}
+
+.noData {
+  color: #adb5bd;
+}
+
+.emptyState,
+.selectParameterMessage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.emptyState p,
+.selectParameterMessage p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controlGroup {
+    min-width: 100%;
+  }
+
+  .viewToggle {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .toggleButton {
+    flex: 1;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px 6px;
+  }
+}

@@ -7,6 +7,7 @@ import Loader from '../../Loader/Loader';
 import LabUploadModal from './LabUploadModal';
 import LabFormModal from './LabFormModal';
 import LabResultsTable from './LabResultsTable';
+import LabAnalysisView from './LabAnalysisView';
 import styles from './LabResultsSection.module.css';
 
 interface LabResultsSectionProps {
@@ -33,6 +34,7 @@ export default function LabResultsSection({
   const [selectedExamen, setSelectedExamen] = useState<ExamenLabCompleto | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'lista' | 'analisis'>('lista');
 
   useEffect(() => {
     if (numeroVisita) {
@@ -137,6 +139,23 @@ export default function LabResultsSection({
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === 'lista' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('lista')}
+        >
+          📋 Lista de Exámenes
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'analisis' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('analisis')}
+          disabled={examenes.length === 0}
+        >
+          📊 Análisis y Gráficos
+        </button>
+      </div>
+
       {/* Error */}
       {error && (
         <div className={styles.error}>
@@ -155,6 +174,8 @@ export default function LabResultsSection({
           <h3>No hay estudios de laboratorio</h3>
           <p>Cargue un nuevo estudio haciendo clic en el botón "Cargar Laboratorio"</p>
         </div>
+      ) : activeTab === 'analisis' ? (
+        <LabAnalysisView examenes={examenes} />
       ) : (
         <div className={styles.examenesGrid}>
           {examenes.map((examen) => (
