@@ -58,7 +58,9 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
   const [observaciones, setObservaciones] = useState(
     isEdit ? (examenExistente.Observaciones || '') : ''
   );
-  const [sectorSeleccionado, setSectorSeleccionado] = useState<string>('');
+  const [sectorSeleccionado, setSectorSeleccionado] = useState<string>(
+    isEdit ? (examenExistente.IdSector || '') : ''
+  );
   
   // Parámetros editables
   const [parametros, setParametros] = useState<ExamenLabDetalle[]>(
