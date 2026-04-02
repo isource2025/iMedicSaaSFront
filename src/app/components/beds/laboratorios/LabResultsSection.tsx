@@ -206,6 +206,12 @@ export default function LabResultsSection({
                     <span className={styles.infoLabel}>Fecha:</span>
                     <span>{laboratoriosService.formatDate(examen.FechaExamen)}</span>
                   </div>
+                  {examen.SectorDescripcion && (
+                    <div className={styles.infoRow}>
+                      <span className={styles.infoLabel}>Sector:</span>
+                      <span>{examen.SectorDescripcion}</span>
+                    </div>
+                  )}
                   {examen.Laboratorio && (
                     <div className={styles.infoRow}>
                       <span className={styles.infoLabel}>Laboratorio:</span>

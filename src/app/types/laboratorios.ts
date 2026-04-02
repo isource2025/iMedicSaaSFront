@@ -12,6 +12,7 @@ export interface ExamenLabCabecera {
   Protocolo?: string;
   Observaciones?: string;
   IdSector?: string;
+  SectorDescripcion?: string;
   ArchivoAdjunto?: string;
   FechaCarga?: string;
   UsuarioCarga?: string;
