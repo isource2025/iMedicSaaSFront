@@ -428,7 +428,12 @@ function CreateUserModal({ onClose, onSuccess }: any) {
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Error al crear usuario');
+      const apiMsg = err.response?.data?.mensaje;
+      setError(
+        typeof apiMsg === 'string' && apiMsg.trim()
+          ? apiMsg
+          : err.message || 'Error al crear usuario'
+      );
     } finally {
       setLoading(false);
     }
