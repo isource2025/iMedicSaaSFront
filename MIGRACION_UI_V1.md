@@ -1,4 +1,4 @@
-# Migración UI v1 - iMedicWS Frontend
+ # Migración UI v1 - iMedicWS Frontend
 
 **Fecha de inicio:** 4 de Febrero 2026  
 **Versión:** 1.0   
@@ -7,7 +7,7 @@
 ---
 
 ## Índice de Cambios 
- 
+  
 1. [Resumen de Migración](#resumen-de-migración) 
 2. [Cambio #1: Nuevo Sidebar](#cambio-1-nuevo-sidebar)
 3. [Archivos Modificados](#archivos-modificados)
