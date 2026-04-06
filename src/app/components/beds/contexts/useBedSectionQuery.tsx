@@ -51,6 +51,7 @@ const endpointBySection: Record<SidebarSection, string> = {
 	informe_evo: '/informe-evo',
 	control: '/control',
 	adjuntos: '/adjuntos',
+	laboratorios: '/laboratorios',
 };
 
 // ===== Cache simple en memoria (compartida por módulo) =====

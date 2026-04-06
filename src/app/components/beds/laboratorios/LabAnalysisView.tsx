@@ -117,9 +117,9 @@ export default function LabAnalysisView({ examenes }: LabAnalysisViewProps) {
         return (a.HoraExamen || "").localeCompare(b.HoraExamen || "");
       });
       const label = laboratoriosService.formatDate(exs[0].FechaExamen);
-      const tipos = [...new Set(exs.map((e) => laboratoriosService.getTipoEstudioNombre(e.TipoEstudio)))].join(
-        " · "
-      );
+      const tipos = Array.from(
+        new Set(exs.map((e) => laboratoriosService.getTipoEstudioNombre(e.TipoEstudio)))
+      ).join(" · ");
       return { key, label, examenes: exs, titleTip: tipos };
     });
   }, [examenes]);
