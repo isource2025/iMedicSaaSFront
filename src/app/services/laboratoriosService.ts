@@ -10,6 +10,9 @@ import {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+/** Guardar/actualizar examen hace muchas idas a BD (OCR + logs + detalles); 15s no alcanza en Render. */
+const SAVE_LAB_TIMEOUT_MS = 120000;
+
 export const laboratoriosService = {
   /**
    * Procesa un archivo con OCR
@@ -49,7 +52,8 @@ export const laboratoriosService = {
     try {
       const response = await apiService.post<{ success: boolean; data: ExamenLabCompleto }>(
         `${BASE_URL}/laboratorios/save`,
-        { cabecera, detalles, pacienteInfo }
+        { cabecera, detalles, pacienteInfo },
+        { timeout: SAVE_LAB_TIMEOUT_MS }
       );
       return response.data.data;
     } catch (error) {
@@ -99,7 +103,8 @@ export const laboratoriosService = {
     try {
       const response = await apiService.put<{ success: boolean; data: ExamenLabCompleto }>(
         `${BASE_URL}/laboratorios/${idExamen}`,
-        { cabecera, detalles }
+        { cabecera, detalles },
+        { timeout: SAVE_LAB_TIMEOUT_MS }
       );
       return response.data.data;
     } catch (error) {
