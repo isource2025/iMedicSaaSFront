@@ -4,7 +4,7 @@
 **Versión:** 1.0   
 **Objetivo:** Implementar nuevo sistema de UI siguiendo guías de diseño establecidas 
 
----
+--- 
 
 ## Índice de Cambios 
   
