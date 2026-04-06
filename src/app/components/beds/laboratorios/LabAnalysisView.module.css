@@ -6,9 +6,9 @@
 }
 
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 2px solid #00B5E2;
+  border-bottom: 2px solid #00b5e2;
 }
 
 .title {
@@ -22,99 +22,33 @@
   font-size: 14px;
   color: #6c757d;
   margin: 0;
-}
-
-.controls {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  align-items: flex-end;
-}
-
-.controlGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #495057;
-}
-
-.select {
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  color: #495057;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.select:hover {
-  border-color: #00B5E2;
-}
-
-.select:focus {
-  outline: none;
-  border-color: #00B5E2;
-  box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
-}
-
-.viewToggle {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.toggleButton {
-  padding: 10px 20px;
-  border: 1px solid #ced4da;
-  background: #fff;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #495057;
-}
-
-.toggleButton:hover:not(:disabled) {
-  background: #f8f9fa;
-  border-color: #00B5E2;
-}
-
-.toggleButton.active {
-  background: #00B5E2;
-  color: #fff;
-  border-color: #00B5E2;
-}
-
-.toggleButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  line-height: 1.45;
 }
 
 .content {
   margin-top: 24px;
 }
 
+/* Contenedor: variable --lab-date-count la setea React (cantidad de columnas de fecha) */
 .tableContainer {
+  --sticky-param-w: clamp(11.5rem, min(30vw, 22rem), 26rem);
+  --date-col-min: 5.75rem;
   overflow-x: auto;
   border-radius: 8px;
   border: 1px solid #dee2e6;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
-  width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  /* Ancho mínimo: columna fija + N columnas con mínimo legible → scroll horizontal si hace falta */
+  min-width: max(100%, calc(var(--sticky-param-w) + var(--lab-date-count, 1) * var(--date-col-min)));
+}
+
+.tableDynamic {
+  table-layout: fixed;
+  width: 100%;
 }
 
 .table thead {
@@ -125,41 +59,234 @@
 }
 
 .table th {
-  padding: 12px 10px;
+  padding: 10px 8px;
   text-align: left;
   font-weight: 600;
   color: #495057;
   border-bottom: 2px solid #dee2e6;
-  white-space: nowrap;
+  vertical-align: bottom;
+  box-sizing: border-box;
+}
+
+.stickyCol {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: var(--sticky-param-w);
+  min-width: var(--sticky-param-w);
+  max-width: var(--sticky-param-w);
+  background: #fff;
+  box-shadow: 4px 0 10px -6px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
+}
+
+.table thead .stickyCol {
+  z-index: 3;
+  background: #f8f9fa;
+}
+
+.headerGraphCheckLabel {
+  flex: 0 0 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+
+.headerGraphCheck {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #00b5e2;
+}
+
+.stickyHeaderInner {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  min-height: 2.5rem;
+}
+
+.stickyHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stickyHeaderTitle {
+  font-weight: 600;
+  font-size: 13px;
+  color: #2c3e50;
+}
+
+.stickyHeaderHint {
+  font-size: 10px;
+  font-weight: 500;
+  color: #868e96;
+  line-height: 1.2;
+}
+
+/* Columnas de fecha: reparten el espacio restante de forma uniforme */
+.dateColHeader {
+  text-align: center;
+  width: calc((100% - var(--sticky-param-w)) / var(--lab-date-count, 1));
+  min-width: var(--date-col-min);
+  white-space: normal;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.colHeaderMain {
+  display: block;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #2c3e50;
+}
+
+.colHeaderSub {
+  display: block;
+  font-weight: 500;
+  font-size: 10px;
+  color: #6c757d;
+  margin-top: 4px;
+  line-height: 1.25;
 }
 
 .table tbody tr {
   border-bottom: 1px solid #dee2e6;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s ease;
 }
 
 .table tbody tr:hover {
   background: #f8f9fa;
 }
 
+.table tbody tr:hover .stickyCol {
+  background: #f8f9fa;
+}
+
+.rowActive {
+  background: #f0f9fc;
+}
+
+.rowActive .stickyCol {
+  background: #f0f9fc;
+}
+
+.rowChartMode .stickyCol {
+  vertical-align: middle;
+}
+
+/* Gráfico: sin padding horizontal. Si hubiera el mismo 8px que .table td, el ancho
+   del contenido sería menor que N×colW y los puntos quedarían desplazados respecto
+   al centro de cada columna donde se centran los valores. */
+.chartInlineCell {
+  vertical-align: middle;
+  background: #f8fafb;
+  border-bottom: 1px solid #dee2e6;
+  width: auto;
+  line-height: 0;
+}
+
+.table tbody td.chartInlineCell {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.rowChartMode .chartInlineCell {
+  background: #f0f9fc;
+}
+
+.rowChartMode:hover .chartInlineCell {
+  background: #f0f9fc;
+}
+
 .table td {
-  padding: 12px 10px;
+  padding: 10px 8px;
   color: #495057;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
-.dateCell {
-  font-weight: 500;
+.paramCell {
+  padding: 8px 6px 8px 8px;
+  vertical-align: middle;
+}
+
+.stickyInner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rowChartBtn {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background: #fff;
+  color: #495057;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.rowChartBtn:hover {
+  background: #e7f7fc;
+  border-color: #00b5e2;
+  color: #0083a9;
+}
+
+.rowChartBtnActive {
+  background: #00b5e2;
+  border-color: #00b5e2;
+  color: #fff;
+}
+
+.rowChartBtnActive:hover {
+  background: #0099c7;
+  border-color: #0099c7;
+  color: #fff;
+}
+
+.paramTextBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.paramName {
+  display: block;
+  font-weight: 600;
   color: #2c3e50;
-  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
-.sectorCell {
+.paramUnit {
+  display: block;
+  font-size: 11px;
   color: #6c757d;
-  font-size: 12px;
+  margin-top: 2px;
 }
 
 .valueCell {
-  text-align: center;
+  width: calc((100% - var(--sticky-param-w)) / var(--lab-date-count, 1));
+  min-width: var(--date-col-min);
+  font-size: 12px;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .value {
@@ -167,19 +294,24 @@
   color: #2c3e50;
 }
 
+.valueAlert {
+  color: #c2410c;
+}
+
 .reference {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   color: #6c757d;
-  margin-top: 2px;
+  margin-top: 3px;
+  line-height: 1.25;
 }
 
 .noData {
   color: #adb5bd;
+  font-weight: 500;
 }
 
-.emptyState,
-.selectParameterMessage {
+.emptyState {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,28 +322,13 @@
   font-size: 14px;
 }
 
-.emptyState p,
-.selectParameterMessage p {
+.emptyState p {
   margin: 0;
 }
 
 @media (max-width: 768px) {
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .controlGroup {
-    min-width: 100%;
-  }
-
-  .viewToggle {
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .toggleButton {
-    flex: 1;
+  .container {
+    padding: 16px;
   }
 
   .table {
@@ -221,5 +338,20 @@
   .table th,
   .table td {
     padding: 8px 6px;
+  }
+
+  .table tbody td.chartInlineCell {
+    padding: 8px 0;
+  }
+
+  .rowChartBtn {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .headerGraphCheckLabel {
+    flex-basis: 36px;
+    width: 36px;
   }
 }
