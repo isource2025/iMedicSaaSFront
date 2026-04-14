@@ -31,6 +31,8 @@ export type VisitDetailPayload = {
       FechaExamen?: string;
       HoraExamen?: string;
       Protocolo?: string;
+      Laboratorio?: string;
+      Estado?: string;
       detalles?: Array<Record<string, unknown>>;
     }>;
     adjuntos?: Array<Record<string, unknown>>;
