@@ -1,0 +1,292 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+@media (min-width: 1024px) {
+  .overlay {
+    left: 70px;
+  }
+}
+
+.dialog {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 32rem;
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #0083a9;
+}
+
+.closeBtn {
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px 8px;
+}
+
+.closeBtn:hover {
+  color: #0f172a;
+}
+
+.body {
+  padding: 16px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: #334155;
+  cursor: pointer;
+}
+
+.checkboxRow input {
+  margin-top: 3px;
+}
+
+.dateRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dateRow label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.dateRow input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+}
+
+.dateRow input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radioRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radioRow label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  color: #334155;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.btnSecondary {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #334155;
+}
+
+.btnPrimary {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #00b5e2 0%, #0083a9 100%);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.selectAllRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.linkish {
+  border: none;
+  background: none;
+  color: #0083a9;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.evoDetails {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 10px 10px;
+  background: #f8fafc;
+}
+
+.evoDetails[open] {
+  padding-bottom: 10px;
+}
+
+.evoSummary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 4px 8px;
+  font-size: 0.88rem;
+  color: #334155;
+}
+
+.evoSummary::-webkit-details-marker {
+  display: none;
+}
+
+.evoSummaryInner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.evoSummaryInner input {
+  margin-top: 3px;
+}
+
+.evoChevron {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.evoServiceBlock {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.evoServiceHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.evoServiceHead input {
+  margin-top: 3px;
+}
+
+.evoItemList {
+  margin: 8px 0 0;
+  padding-left: 1.5rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.evoItemList li {
+  margin-bottom: 4px;
+}
+
+.mutedCount {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.evoHint {
+  margin-top: 4px;
+}

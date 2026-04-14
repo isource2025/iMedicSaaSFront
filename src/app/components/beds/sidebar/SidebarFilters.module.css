@@ -159,6 +159,42 @@
     color: #0083A9;
 }
 
+.navButtonAdjuntosRecientes:not(.active) {
+    border-left: 4px solid #d97706;
+    padding-left: calc(0.875rem - 4px);
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.12) 0%, transparent 100%);
+}
+
+.adjuntosNavLabel {
+    flex: 1;
+    text-align: left;
+}
+
+.navButtonFlex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.adjuntosMenuBadge {
+    flex-shrink: 0;
+    min-width: 1.35rem;
+    padding: 0 6px;
+    height: 1.35rem;
+    line-height: 1.35rem;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    background: #0083a9;
+    border-radius: 999px;
+}
+
+.navButtonAdjuntosRecientes:not(.active) .adjuntosMenuBadge {
+    background: #d97706;
+}
+
 /* Panel fijo - Otras Funciones - Migración UI v1 */
 .fixedPanel {
     border: none;

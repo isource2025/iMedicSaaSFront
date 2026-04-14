@@ -39,6 +39,11 @@ interface BedDetailContextType {
 
 	// Función para toggle de desplegables (uno abierto a la vez) y manejo de panel fijo "otras"
 	toggleSection: (sectionName: string, isCurrentlyOpen: boolean) => void;
+
+	/** Resumen de adjuntos para destacar el ítem del menú (no equivale a push como en otros sistemas) */
+	adjuntosTotalCount: number;
+	adjuntosRecientesCount: number;
+	setAdjuntosSidebarInfo: (total: number, recientes: number) => void;
 }
 
 const BedDetailContext = createContext<BedDetailContextType | undefined>(undefined);
@@ -62,6 +67,13 @@ export function BedDetailProvider({
 
 	const [activeSection, setActiveSection] = useState<SidebarSection>(initialSection);
 	const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
+	const [adjuntosTotalCount, setAdjuntosTotalCount] = useState(0);
+	const [adjuntosRecientesCount, setAdjuntosRecientesCount] = useState(0);
+
+	const setAdjuntosSidebarInfo = (total: number, recientes: number) => {
+		setAdjuntosTotalCount(total);
+		setAdjuntosRecientesCount(recientes);
+	};
 
 	const navigateToSection = (section: SidebarSection) => {
 		setActiveSection(section);
@@ -109,6 +121,9 @@ export function BedDetailProvider({
 		setSelectedDate,
 		navigateToSection,
 		toggleSection,
+		adjuntosTotalCount,
+		adjuntosRecientesCount,
+		setAdjuntosSidebarInfo,
 	};
 
 	return <BedDetailContext.Provider value={value}>{children}</BedDetailContext.Provider>;

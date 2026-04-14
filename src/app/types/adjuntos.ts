@@ -1,3 +1,9 @@
+/** Fila de dbo.hctiposimagenes */
+export interface TipoImagenHC {
+  TipoImagen: string;
+  DescTipoImagen: string;
+}
+
 export interface Adjunto {
   IdAdjunto: number;
   NumeroVisita: number;

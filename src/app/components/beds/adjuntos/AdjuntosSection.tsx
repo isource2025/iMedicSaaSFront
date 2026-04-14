@@ -2,11 +2,31 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { adjuntosService } from '@/app/services/adjuntosService';
-import { Adjunto } from '@/app/types/adjuntos';
+import { authService } from '@/app/services/authService';
+import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import styles from './AdjuntosSection.module.css';
 import Loader from '../../Loader/Loader';
+import { useBedDetail } from '../contexts/BedDetailContext';
+
+function etiquetaUsuarioActual(): string {
+  const u = authService.getCurrentUser() as Record<string, unknown> | null;
+  if (!u) return 'Sesión no identificada';
+  const nom = [u.nombre, u.apellido].filter(Boolean).join(' ').trim();
+  if (nom) return nom;
+  return String(u.username || u.user || u.LoginUsuario || 'Usuario');
+}
+
+const MS_72H = 72 * 60 * 60 * 1000;
+
+function countAdjuntosRecientes(list: Adjunto[]): number {
+  const now = Date.now();
+  return list.filter((a) => {
+    const t = new Date(a.FechaCarga).getTime();
+    return !Number.isNaN(t) && now - t < MS_72H;
+  }).length;
+}
 
 interface AdjuntosSectionProps {
   numeroVisita: number | null;
@@ -25,18 +45,42 @@ export default function AdjuntosSection({
   fechaIngreso,
   horaIngreso,
 }: AdjuntosSectionProps) {
+  const { setAdjuntosSidebarInfo } = useBedDetail();
   const [adjuntos, setAdjuntos] = useState<Adjunto[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
+  const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
   const fileUploadRef = useRef<FileUploadRef>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const tipos = await adjuntosService.getTiposImagenes();
+        if (!cancelled) setTiposImagen(tipos);
+      } catch (e) {
+        console.error('Tipos imagen adjuntos:', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (numeroVisita) {
+      setAdjuntos([]);
+      setAdjuntosSidebarInfo(0, 0);
       loadAdjuntos();
     }
   }, [numeroVisita]);
+
+  useEffect(() => {
+    setAdjuntosSidebarInfo(adjuntos.length, countAdjuntosRecientes(adjuntos));
+  }, [adjuntos, setAdjuntosSidebarInfo]);
 
   const loadAdjuntos = async () => {
     if (!numeroVisita) return;
@@ -64,15 +108,21 @@ export default function AdjuntosSection({
       alert('Selecciona al menos un archivo');
       return;
     }
+    if (!tipoImagenCodigo.trim()) {
+      alert('Seleccione el tipo de estudio');
+      return;
+    }
+
+    const cantidadSubida = selectedFiles.length;
 
     try {
       setUploading(true);
       setError(null);
 
       if (selectedFiles.length === 1) {
-        await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0]);
+        await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0], tipoImagenCodigo);
       } else {
-        await adjuntosService.subirArchivos(numeroVisita, selectedFiles);
+        await adjuntosService.subirArchivos(numeroVisita, selectedFiles, tipoImagenCodigo);
       }
 
       // Limpiar archivos seleccionados
@@ -80,7 +130,7 @@ export default function AdjuntosSection({
       fileUploadRef.current?.clearFiles();
       
       await loadAdjuntos();
-      alert(`${selectedFiles.length} archivo(s) subido(s) correctamente`);
+      alert(`${cantidadSubida} archivo(s) subido(s) correctamente`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al subir archivos');
     } finally {
@@ -142,19 +192,53 @@ export default function AdjuntosSection({
         </div>
       )}
 
+      {adjuntos.length > 0 && countAdjuntosRecientes(adjuntos) > 0 && (
+        <p className={styles.adjuntosNotaRecientes} role="status">
+          Hay archivos cargados en las últimas 72 horas. El ítem &quot;Archivos Adjuntos&quot; del menú se resalta para facilitar su ubicación (no reemplaza notificaciones por base de datos).
+        </p>
+      )}
+
       {/* Upload Section */}
       <div className={styles.uploadSection}>
         <h3 className={styles.sectionTitle}>Subir archivos</h3>
+
+        <div className={styles.uploadMetaGrid}>
+          <div className={styles.uploadMetaCard}>
+            <span className={styles.uploadMetaLabel}>Cargado por</span>
+            <span className={styles.uploadMetaValue}>{etiquetaUsuarioActual()}</span>
+          </div>
+          <div className={styles.uploadMetaCard}>
+            <label className={styles.uploadMetaLabel} htmlFor="adj-tipo-imagen">
+              Tipo de estudio
+            </label>
+            <select
+              id="adj-tipo-imagen"
+              className={styles.tipoSelect}
+              value={tipoImagenCodigo}
+              onChange={(e) => setTipoImagenCodigo(e.target.value)}
+              disabled={uploading}
+            >
+              <option value="">Seleccione un tipo…</option>
+              {tiposImagen.map((t) => (
+                <option key={t.TipoImagen} value={t.TipoImagen}>
+                  {t.DescTipoImagen}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <FileUpload
           ref={fileUploadRef}
           onFilesSelected={handleFilesSelected}
           disabled={uploading}
           maxFiles={5}
         />
+
         {selectedFiles.length > 0 && (
           <button
             onClick={handleUpload}
-            disabled={uploading}
+            disabled={uploading || !tipoImagenCodigo.trim()}
             className={styles.uploadButton}
           >
             {uploading ? 'Subiendo...' : `Subir ${selectedFiles.length} archivo(s)`}

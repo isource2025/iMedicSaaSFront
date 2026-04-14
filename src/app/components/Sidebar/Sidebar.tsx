@@ -47,6 +47,7 @@ const menuItems: MenuItem[] = [
     id: 'admision', label: 'Admisión', icon: ClipboardList,
     subItems: [
       { label: 'Pacientes', path: '/dashboard/patients' },
+      { label: 'Búsqueda Integral', path: '/dashboard/admission/search' },
       { label: 'Nueva Admisión', path: '/dashboard/admission/new' },
       { label: 'Admisiones Vigentes', path: '/dashboard/admission/current' },
       { label: 'Tabla de Admisiones', path: '/dashboard/admission/tables' }

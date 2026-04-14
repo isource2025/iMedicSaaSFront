@@ -21,7 +21,7 @@
 /* Tabla */
 .table {
     width: 100%;
-    min-width: 1040px;
+    min-width: 1140px;
     border-collapse: collapse;
     table-layout: auto;
     font-size: 13px;
@@ -81,6 +81,11 @@
     min-width: 80px;
     width: 80px;
 }
+.colGlucemia {
+    min-width: 100px;
+    width: 100px;
+    white-space: nowrap;
+}
 .colProfesional {
     min-width: 180px;
 }
@@ -99,8 +104,14 @@
 /* Celdas específicas */
 .cellFecha,
 .cellHora,
+.cellGlucemia,
 .cellSector {
     font-weight: 600;
+}
+
+.cellGlucemia {
+    font-variant-numeric: tabular-nums;
+    color: #374151;
 }
 
 .cellProfesional {

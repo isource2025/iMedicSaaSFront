@@ -2,10 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { adjuntosService } from '@/app/services/adjuntosService';
-import { Adjunto } from '@/app/types/adjuntos';
+import { authService } from '@/app/services/authService';
+import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import styles from './AdjuntosModal.module.css';
+
+function etiquetaUsuarioActual(): string {
+  const u = authService.getCurrentUser() as Record<string, unknown> | null;
+  if (!u) return 'Sesión no identificada';
+  const nom = [u.nombre, u.apellido].filter(Boolean).join(' ').trim();
+  if (nom) return nom;
+  return String(u.username || u.user || u.LoginUsuario || 'Usuario');
+}
 
 interface AdjuntosModalProps {
   numeroVisita: number;
@@ -19,6 +28,8 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
+  const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
   const fileUploadRef = useRef<FileUploadRef>(null);
 
   useEffect(() => {
@@ -26,6 +37,22 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       loadAdjuntos();
     }
   }, [isOpen, numeroVisita]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const tipos = await adjuntosService.getTiposImagenes();
+        if (!cancelled) setTiposImagen(tipos);
+      } catch (e) {
+        console.error('Tipos imagen adjuntos:', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const loadAdjuntos = async () => {
     try {
@@ -51,15 +78,21 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       alert('Selecciona al menos un archivo');
       return;
     }
+    if (!tipoImagenCodigo.trim()) {
+      alert('Seleccione el tipo de estudio');
+      return;
+    }
+
+    const cantidadSubida = selectedFiles.length;
 
     try {
       setUploading(true);
       setError(null);
 
       if (selectedFiles.length === 1) {
-        await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0]);
+        await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0], tipoImagenCodigo);
       } else {
-        await adjuntosService.subirArchivos(numeroVisita, selectedFiles);
+        await adjuntosService.subirArchivos(numeroVisita, selectedFiles, tipoImagenCodigo);
       }
 
       // Limpiar archivos seleccionados
@@ -67,7 +100,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       fileUploadRef.current?.clearFiles();
       
       await loadAdjuntos();
-      alert(`${selectedFiles.length} archivo(s) subido(s) correctamente`);
+      alert(`${cantidadSubida} archivo(s) subido(s) correctamente`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al subir archivos');
     } finally {
@@ -107,6 +140,31 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
 
           <div className={styles.uploadSection}>
             <h3 className={styles.sectionTitle}>Subir archivos</h3>
+            <div className={styles.uploadMetaGrid}>
+              <div className={styles.uploadMetaCard}>
+                <span className={styles.uploadMetaLabel}>Cargado por</span>
+                <span className={styles.uploadMetaValue}>{etiquetaUsuarioActual()}</span>
+              </div>
+              <div className={styles.uploadMetaCard}>
+                <label className={styles.uploadMetaLabel} htmlFor="modal-adj-tipo-imagen">
+                  Tipo de estudio
+                </label>
+                <select
+                  id="modal-adj-tipo-imagen"
+                  className={styles.tipoSelect}
+                  value={tipoImagenCodigo}
+                  onChange={(e) => setTipoImagenCodigo(e.target.value)}
+                  disabled={uploading}
+                >
+                  <option value="">Seleccione un tipo…</option>
+                  {tiposImagen.map((t) => (
+                    <option key={t.TipoImagen} value={t.TipoImagen}>
+                      {t.DescTipoImagen}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <FileUpload
               ref={fileUploadRef}
               onFilesSelected={handleFilesSelected}
@@ -116,7 +174,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
             {selectedFiles.length > 0 && (
               <button
                 onClick={handleUpload}
-                disabled={uploading}
+                disabled={uploading || !tipoImagenCodigo.trim()}
                 className={styles.uploadButton}
               >
                 {uploading ? 'Subiendo...' : `Subir ${selectedFiles.length} archivo(s)`}

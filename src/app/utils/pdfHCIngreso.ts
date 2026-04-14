@@ -1,94 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '@/app/services/empresaService';
+import { HCI_CAMPOS_TEXTO_LIBRE, buildHCIPhysicalExamSections } from './hciIngresoDisplay';
 
-interface HCIngresoData {
-    NumeroVisita: number;
-    FechaFormateada?: string;
-    HoraFormateada?: string;
-    ProfesionalNombre?: string;
-    IdProfecional?: number;
-    SectorDescripcion?: string;
-    IdSector?: string;
-    MotivoConsulta?: string;
-    EnfermedadActual?: string;
-    [key: string]: any;
-}
-
-interface SeccionPDF {
-    titulo: string;
-    campos: Array<{ label: string; valor: string }>;
-}
-
-// Configuración de secciones
-const SECCIONES_CONFIG: Record<string, string> = {
-    'SV': 'SIGNOS VITALES',
-    'PF': 'PIEL Y FANERAS',
-    'TCS': 'TEJIDO CELULAR SUBCUTÁNEO',
-    'SL': 'SISTEMA LINFÁTICO',
-    'SOAM': 'SISTEMA OSTEOARTICULOMUSCULAR',
-    'C': 'CABEZA',
-    'CU': 'CUELLO',
-    'M': 'MAMAS',
-    'AR': 'APARATO RESPIRATORIO',
-    'ACV': 'APARATO CARDIOVASCULAR',
-    'A': 'ABDOMEN',
-    'AUG': 'APARATO UROGENITAL',
-    'SN': 'SISTEMA NERVIOSO',
-};
-
-// Función para formatear nombres de campos
-const formatearNombreCampo = (key: string): string => {
-    // Remover prefijo
-    const sinPrefijo = key.replace(/^[A-Z]+_/, '');
-    
-    // Convertir de camelCase/PascalCase a texto legible
-    return sinPrefijo
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^./, str => str.toUpperCase())
-        .trim();
-};
-
-// Función para agrupar campos por sección
-const agruparPorSecciones = (record: HCIngresoData): SeccionPDF[] => {
-    const seccionesMap: Record<string, Array<{ label: string; valor: string }>> = {};
-    
-    Object.keys(record).forEach(key => {
-        const valor = record[key];
-        
-        // Ignorar campos vacíos, null, undefined o de sistema
-        if (!valor || valor === '' || 
-            ['IdHCIngreso', 'NumeroVisita', 'IdSector', 'IdProfecional', 'Fecha', 
-             'FechaFormateada', 'HoraFormateada', 'ProfesionalNombre', 'SectorDescripcion',
-             'MotivoConsulta', 'EnfermedadActual'].includes(key)) {
-            return;
-        }
-        
-        // Buscar el prefijo de la sección
-        const match = key.match(/^([A-Z]+)_/);
-        if (match) {
-            const prefijo = match[1];
-            const nombreSeccion = SECCIONES_CONFIG[prefijo];
-            
-            if (nombreSeccion) {
-                if (!seccionesMap[nombreSeccion]) {
-                    seccionesMap[nombreSeccion] = [];
-                }
-                
-                seccionesMap[nombreSeccion].push({
-                    label: formatearNombreCampo(key),
-                    valor: String(valor)
-                });
-            }
-        }
-    });
-    
-    // Convertir a array de secciones
-    return Object.keys(seccionesMap).map(titulo => ({
-        titulo,
-        campos: seccionesMap[titulo]
-    }));
-};
+type HCIngresoData = Record<string, any>;
 
 export const generarPDFHistoriaClinica = (
     data: HCIngresoData,
@@ -301,10 +216,43 @@ export const generarPDFHistoriaClinica = (
         });
         yPosition += enfermedadLines.length * lineHeight + 5;
     }
+
+    // ===== TEXTOS CLÍNICOS ADICIONALES (columnas planas en imHCI) =====
+    Object.entries(HCI_CAMPOS_TEXTO_LIBRE).forEach(([campo, tituloPdf]) => {
+        const raw = data[campo];
+        const texto = raw != null && raw !== '' ? String(raw).trim() : '';
+        if (!texto) {
+            return;
+        }
+
+        if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 15;
+        }
+
+        doc.setFillColor(...colorSecundario);
+        doc.rect(10, yPosition, 190, 7, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(tituloPdf, 15, yPosition + 5);
+        yPosition += 10;
+
+        doc.setTextColor(...colorTexto);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        const extraLines = doc.splitTextToSize(texto, 180);
+        const lineHeightExtra = 4.5;
+        extraLines.forEach((line: string, index: number) => {
+            doc.text(line, 15, yPosition + index * lineHeightExtra);
+        });
+        yPosition += extraLines.length * lineHeightExtra + 5;
+    });
     
     // ===== SECCIONES DE EXAMEN FÍSICO =====
-    const secciones = agruparPorSecciones(data);
-    
+    const secciones = buildHCIPhysicalExamSections(data);
+    secciones.sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'));
+
     secciones.forEach(seccion => {
         // Verificar si necesitamos nueva página
         if (yPosition > 240) {

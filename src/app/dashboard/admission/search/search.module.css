@@ -1,0 +1,376 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1200px;
+}
+
+.pageIntro {
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.pageTitle {
+  margin: 0 0 4px;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #0083a9;
+}
+
+.pageSubtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.searchPanel {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 10px 12px 8px;
+  border: 1px solid #e8eef2;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 10px;
+}
+
+.modeToggle {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  flex-shrink: 0;
+}
+
+.modeBtn {
+  border: none;
+  background: #f8fafc;
+  color: #475569;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.modeBtn:hover {
+  background: #f1f5f9;
+}
+
+.modeBtnActive {
+  background: #00b5e2;
+  color: #fff;
+}
+
+.modeBtnActive:hover {
+  background: #0083a9;
+  color: #fff;
+}
+
+.inlineField,
+.inlineFieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inlineField {
+  flex: 0 1 120px;
+}
+
+.inlineFieldWide {
+  flex: 1 1 160px;
+}
+
+.inlineField span,
+.inlineFieldWide span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.inlineField input,
+.inlineFieldWide input {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  min-height: 30px;
+}
+
+.inlineField input:focus,
+.inlineFieldWide input:focus {
+  outline: none;
+  border-color: #00b5e2;
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
+}
+
+.periodoInline {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.periodoInlineLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.periodoChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.periodoBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.periodoBtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.periodoBtn:focus-visible {
+  outline: 2px solid #00b5e2;
+  outline-offset: 1px;
+}
+
+.periodoBtnActive {
+  border-color: #0083a9;
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+  color: #006b85;
+}
+
+.periodHint {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.actionPrimary,
+.actionSecondary {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.actionPrimary {
+  background: #00b5e2;
+  color: #fff;
+}
+
+.actionPrimary:hover:not(:disabled) {
+  background: #0083a9;
+}
+
+.actionSecondary {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.actionSecondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.actionPrimary:disabled,
+.actionSecondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pagination button {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #00b5e2;
+  color: #fff;
+  cursor: pointer;
+}
+
+.summary {
+  color: #1f2937;
+  font-size: 0.88rem;
+}
+
+.empty {
+  text-align: center !important;
+  color: #6b7280;
+  padding: 20px !important;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 0.88rem;
+}
+
+.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.linkButton {
+  border: none;
+  background: transparent;
+  color: #0083a9;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.patientFolders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.folderCard {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.folderCard:hover {
+  border-color: #94d2e8;
+  box-shadow: 0 4px 14px rgba(0, 131, 169, 0.12);
+  transform: translateY(-1px);
+}
+
+.folderCard:focus-visible {
+  outline: 2px solid #00b5e2;
+  outline-offset: 2px;
+}
+
+.folderCardInner {
+  position: relative;
+}
+
+.folderAccent {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #00b5e2 0%, #0083a9 100%);
+}
+
+.folderMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 12px 14px;
+}
+
+.folderIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.folderTitleBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.folderPatientName {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.folderPatientDni {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.folderVisitCount {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #e0f7fa;
+  color: #006b85;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 131, 169, 0.2);
+  align-self: center;
+}
+
+.folderOpenHint {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0083a9;
+  align-self: center;
+  padding: 4px 0;
+}
+
+@media (max-width: 720px) {
+  .toolbarActions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .folderMain {
+    flex-wrap: wrap;
+  }
+
+  .folderOpenHint {
+    width: 100%;
+    text-align: right;
+  }
+}

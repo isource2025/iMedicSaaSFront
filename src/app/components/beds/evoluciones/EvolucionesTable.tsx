@@ -17,6 +17,8 @@ export type EvolucionRow = {
     profesional?: number;
     evolucion: string;
     numeroDocumento?: string;
+    /** mg/dL desde control frecuente (Hgt) más reciente hasta la fecha/hora de la evolución */
+    glucemia?: number | string | null;
     profesionalNombre?: string;
     profesionalApellido?: string;
     profesionalNombreCompleto?: string;
@@ -93,6 +95,7 @@ export default function EvolucionesTable({
                             <tr>
                                 <th className={styles.colFecha}>Fecha</th>
                                 <th className={styles.colHora}>Hora</th>
+                                <th className={styles.colGlucemia}>Glucemia</th>
                                 <th className={styles.colEvolucion}>Evolución</th>
                                 <th className={styles.colProfesional}>Profesional</th>
                                 <th className={styles.colSector}>Sector</th>
@@ -118,6 +121,12 @@ export default function EvolucionesTable({
 
                                         <td className={styles.cellHora}>
                                             {r.horaEv || "-"}
+                                        </td>
+
+                                        <td className={styles.cellGlucemia}>
+                                            {r.glucemia != null && r.glucemia !== ""
+                                                ? `${r.glucemia} mg/dL`
+                                                : ""}
                                         </td>
 
                                         <td className={styles.cellEvolucion}>
@@ -224,6 +233,14 @@ export default function EvolucionesTable({
                                     <span className={styles.detailLabel}>Hora:</span>
                                     <span className={styles.detailValue}>{viewingEvolucion.horaEv || "-"}</span>
                                 </div>
+                                {(viewingEvolucion.glucemia != null && viewingEvolucion.glucemia !== "") && (
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Glucemia:</span>
+                                    <span className={styles.detailValue}>
+                                        {`${viewingEvolucion.glucemia} mg/dL`}
+                                    </span>
+                                </div>
+                                )}
                                 <div className={styles.detailItem}>
                                     <span className={styles.detailLabel}>Profesional:</span>
                                     <span className={styles.detailValue}>{getNombreCompleto(viewingEvolucion)}</span>

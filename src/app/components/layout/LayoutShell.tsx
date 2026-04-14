@@ -1,12 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from '../Sidebar/Sidebar';
+import NotificationsFab from './NotificationsFab';
 import styles from './LayoutShell.module.css';
 
+function isBedDetailPath(pathname: string | null) {
+  return !!pathname && /^\/dashboard\/beds\/[^/]+/.test(pathname);
+}
+
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const hideGlobalNotificationsFab = isBedDetailPath(pathname);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -55,6 +63,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
           {children}
         </div>
       </main>
+
+      {!hideGlobalNotificationsFab ? <NotificationsFab /> : null}
     </div>
   );
 }

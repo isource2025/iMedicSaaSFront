@@ -89,6 +89,79 @@
   margin: 0;
 }
 
+.uploadMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.uploadMetaCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.uploadMetaLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.uploadMetaValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tipoSelect {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+}
+
+.filePreviewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.filePreviewItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.filePreviewItem:last-child {
+  border-bottom: none;
+}
+
+.filePreviewName {
+  color: #334155;
+  word-break: break-word;
+}
+
+.filePreviewSize {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
 .uploadButton {
   background: #00B5E2;
   color: white;

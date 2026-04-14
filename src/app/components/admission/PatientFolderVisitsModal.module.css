@@ -1,0 +1,70 @@
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 0 0 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0083a9;
+  background: #e0f7fa;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.visitCard {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.visitHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.visitLink {
+  border: none;
+  background: transparent;
+  color: #0083a9;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.visitLink:hover {
+  text-decoration: underline;
+}
+
+.visitDate {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}

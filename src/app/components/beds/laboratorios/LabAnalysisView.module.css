@@ -25,6 +25,48 @@
   line-height: 1.45;
 }
 
+.tipoSections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tipoAnalysisSection {
+  border-radius: 12px;
+  border-width: 2px;
+  border-style: solid;
+  overflow: hidden;
+}
+
+.tipoAnalysisHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #0f172a;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+}
+
+.tipoAnalysisHeaderIcon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.tipoAnalysisHeaderCount {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.tipoAnalysisBody {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
 .content {
   margin-top: 24px;
 }
@@ -326,9 +368,158 @@
   margin: 0;
 }
 
+/* Toolbar filtros + maximizar */
+.analysisToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.filterRow {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.filterLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.filterHint {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.filterChips {
+  flex: 2 1 320px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.filterChip {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.filterChip:hover {
+  border-color: #00b5e2;
+  background: #f0f9ff;
+}
+
+.filterChipActive {
+  border-color: #00b5e2;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(0, 181, 226, 0.35);
+}
+
+.toolbarActions {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.maximizeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #0ea5e9;
+  background: #fff;
+  color: #0284c7;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.maximizeBtn:hover {
+  background: #e0f2fe;
+}
+
+/* Portal a document.body: por encima del rail lateral y del layout */
+.fullscreenPortalRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  font-family: inherit;
+}
+
+.fullscreenBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(15, 23, 42, 0.48);
+  pointer-events: none;
+}
+
+.fullscreenSheet {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+  background: #f1f5f9;
+  overflow: hidden;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.2);
+}
+
+.fullscreenBody {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 28px;
+}
+
+.containerPlaceholder {
+  min-height: 120px;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 16px;
+  }
+
+  .fullscreenBody {
+    padding: 12px 12px 20px;
+  }
+
+  .analysisToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbarActions {
+    margin-left: 0;
   }
 
   .table {

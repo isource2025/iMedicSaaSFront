@@ -24,6 +24,7 @@ type EvolucionDTO = {
     profesional?: number;
     evolucion: string;
     numeroDocumento?: string;
+    glucemia?: number | string | null;
     profesionalNombre?: string;
     profesionalApellido?: string;
     valorEspecialidad?: number;
@@ -93,6 +94,7 @@ export default function EvolucionesSection({
             profesional: x.Profesional || x.profesional,
             evolucion: x.Evolucion || x.evolucion,
             numeroDocumento: x.NumeroDocumento || x.numeroDocumento,
+            glucemia: x.Glucemia ?? x.glucemia ?? null,
             profesionalNombre: x.ProfesionalNombre || x.profesionalNombre,
             profesionalApellido: x.ProfesionalApellido || x.profesionalApellido,
             profesionalNombreCompleto: x.ProfesionalNombreCompleto || x.profesionalNombreCompleto,
@@ -140,7 +142,8 @@ export default function EvolucionesSection({
                     hay(r.profesionalApellido) ||
                     hay(r.especialidadDescripcion) ||
                     hay(r.idSector) ||
-                    hay(r.nroHC)
+                    hay(r.nroHC) ||
+                    hay(r.glucemia)
                 );
             });
         }
@@ -211,6 +214,7 @@ export default function EvolucionesSection({
             const pdfData = rows.map(row => [
                 row.fechaEv || '-',
                 row.horaEv || '-',
+                row.glucemia != null && row.glucemia !== '' ? `${row.glucemia}` : '',
                 row.profesionalNombreCompleto || '-',
                 row.evolucion || '-',
                 row.idSector || '-'
@@ -219,7 +223,7 @@ export default function EvolucionesSection({
             exportToPDF({
                 title: 'Evoluciones Médicas',
                 subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                headers: ['Fecha', 'Hora', 'Profesional', 'Evolución', 'Sector'],
+                headers: ['Fecha', 'Hora', 'Glucemia (mg/dL)', 'Profesional', 'Evolución', 'Sector'],
                 data: pdfData,
                 fileName: `evoluciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
                 orientation: 'landscape',

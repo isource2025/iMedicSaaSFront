@@ -108,7 +108,14 @@ function Collapse({
 }
 
 export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
-	const { openSections, activeSection, navigateToSection, toggleSection } = useBedDetail();
+	const {
+		openSections,
+		activeSection,
+		navigateToSection,
+		toggleSection,
+		adjuntosTotalCount,
+		adjuntosRecientesCount,
+	} = useBedDetail();
 	const router = useRouter();
 
 	const clickItem = (section: typeof activeSection) => {
@@ -306,6 +313,13 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 						Informe de Evolución
 					</button>
 					<button
+						type="button"
+						className={styles.navButton}
+						onClick={() => window.dispatchEvent(new Event('imedic:notifications-open'))}
+					>
+						Notificaciones
+					</button>
+					<button
 						className={`${styles.navButton} ${isActive('laboratorios') ? styles.active : ''
 							}`}
 						onClick={() => clickItem('laboratorios')}
@@ -313,11 +327,21 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 						Laboratorios
 					</button>
 					<button
-						className={`${styles.navButton} ${isActive('adjuntos') ? styles.active : ''
+						className={`${styles.navButton} ${adjuntosTotalCount > 0 ? styles.navButtonFlex : ''} ${isActive('adjuntos') ? styles.active : ''
+							} ${!isActive('adjuntos') && adjuntosRecientesCount > 0 ? styles.navButtonAdjuntosRecientes : ''
 							}`}
 						onClick={() => clickItem('adjuntos')}
+						type="button"
 					>
-						Archivos Adjuntos
+						<span className={styles.adjuntosNavLabel}>Archivos Adjuntos</span>
+						{adjuntosTotalCount > 0 && (
+							<span
+								className={styles.adjuntosMenuBadge}
+								aria-label={`${adjuntosTotalCount} archivo(s) en la visita`}
+							>
+								{adjuntosTotalCount}
+							</span>
+						)}
 					</button>
 					<button
 						className={styles.closeButton}

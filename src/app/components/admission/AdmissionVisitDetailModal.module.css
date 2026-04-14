@@ -1,0 +1,376 @@
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 50vh;
+  max-height: calc(100vh - 140px);
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.toolbarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.backBtn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #0f172a;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.backBtn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.backBtn:focus-visible {
+  outline: 2px solid #00b5e2;
+  outline-offset: 2px;
+}
+
+.exportToolbarBtn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #fff;
+  background: linear-gradient(135deg, #00b5e2 0%, #0083a9 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 131, 169, 0.2);
+}
+
+.exportToolbarBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exportToolbarBtn:focus-visible {
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
+}
+
+.loadingBox {
+  padding: 1.25rem;
+  text-align: center;
+  background: #f0f9ff;
+  border-radius: 8px;
+  color: #0369a1;
+  font-weight: 500;
+}
+
+.emptyState {
+  margin: 0;
+  padding: 1.5rem;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.tabList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 4px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.tabActive {
+  background: #00b5e2;
+  color: #fff;
+}
+
+.tabBadge {
+  display: inline-block;
+  min-width: 1.25rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.tabActive .tabBadge {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.panel {
+  flex: 1;
+  overflow: auto;
+  padding-top: 4px;
+}
+
+.panelTitle {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: #0083a9;
+}
+
+.dl {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dlRow {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  align-items: start;
+}
+
+.dlRow dt {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.dlRow dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.cardList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.muted {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.textBlock {
+  margin-top: 8px;
+}
+
+.textLabel {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0083a9;
+  margin-bottom: 4px;
+}
+
+.textBody {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+.subList {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.subList ul {
+  margin: 6px 0 0;
+  padding-left: 1.1rem;
+}
+
+.tableScroll {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.dataTable th {
+  background: #00b5e2;
+  color: #fff;
+  text-align: left;
+  padding: 8px 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dataTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.dataTable tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+.tableCompact {
+  font-size: 0.75rem;
+}
+
+.tableCompact th,
+.tableCompact td {
+  padding: 5px 8px;
+}
+
+.cellClamp {
+  max-width: 220px;
+  max-height: 4.5em;
+  overflow: hidden;
+}
+
+.labList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.labBlock {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: #fff;
+}
+
+.labSummary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  list-style: none;
+}
+
+.labSummary::-webkit-details-marker {
+  display: none;
+}
+
+.evoText {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+.hciSectionBlock {
+  margin-top: 14px;
+}
+
+.hciSectionTitle {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0083a9;
+}
+
+.sectionDetails {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.sectionDetails summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #0f172a;
+  list-style: none;
+}
+
+.sectionDetails summary::-webkit-details-marker {
+  display: none;
+}
+
+.sectionDetails[open] summary {
+  border-bottom: 1px solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+.modalFooter {
+  margin-top: 1rem;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+  .dlRow {
+    grid-template-columns: 1fr;
+  }
+}

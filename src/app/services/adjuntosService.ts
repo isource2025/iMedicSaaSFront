@@ -3,18 +3,33 @@ import {
   SubirAdjuntoResponse, 
   SubirMultiplesAdjuntosResponse, 
   ListarAdjuntosResponse,
-  AdjuntosAgrupadosResponse
+  AdjuntosAgrupadosResponse,
+  TipoImagenHC
 } from '../types/adjuntos';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export const adjuntosService = {
   /**
+   * Catálogo HCTiposImagenes (tipo de adjunto / estudio).
+   */
+  async getTiposImagenes(): Promise<TipoImagenHC[]> {
+    const response = await fetch(`${API_URL}/adjuntos/tipos-imagenes`);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Error al obtener tipos' }));
+      throw new Error(error.error || 'Error al obtener tipos de imagen');
+    }
+    const json = await response.json();
+    return json.data ?? [];
+  },
+
+  /**
    * Subir un archivo adjunto
    */
-  async subirArchivo(numeroVisita: number, archivo: File): Promise<SubirAdjuntoResponse> {
+  async subirArchivo(numeroVisita: number, archivo: File, tipoImagen: string): Promise<SubirAdjuntoResponse> {
     const formData = new FormData();
     formData.append('numeroVisita', numeroVisita.toString());
+    formData.append('tipoImagen', tipoImagen.trim());
     formData.append('archivo', archivo);
 
     const response = await fetch(`${API_URL}/adjuntos/upload`, {
@@ -33,9 +48,10 @@ export const adjuntosService = {
   /**
    * Subir múltiples archivos adjuntos
    */
-  async subirArchivos(numeroVisita: number, archivos: File[]): Promise<SubirMultiplesAdjuntosResponse> {
+  async subirArchivos(numeroVisita: number, archivos: File[], tipoImagen: string): Promise<SubirMultiplesAdjuntosResponse> {
     const formData = new FormData();
     formData.append('numeroVisita', numeroVisita.toString());
+    formData.append('tipoImagen', tipoImagen.trim());
     
     archivos.forEach(archivo => {
       formData.append('archivos', archivo);
