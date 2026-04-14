@@ -1,4 +1,4 @@
-# Mapeo de Nombres para Migración de UI - iMedicWS
+ # Mapeo de Nombres para Migración de UI - iMedicWS
 
 **Fecha:** Febrero 2026  
 **Propósito:** Guía de mapeo de nombres actuales para proceso de migración/upgrade de UI
