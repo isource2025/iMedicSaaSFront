@@ -66,6 +66,14 @@ function str(v: unknown): string {
   return String(v);
 }
 
+function getEvolucionService(raw: Record<string, unknown>): string {
+  return (
+    str(raw.EspecialidadDescripcion).trim() ||
+    str(raw.SectorDescripcion).trim() ||
+    (str(raw.IdSector).trim() ? `Servicio (${str(raw.IdSector).trim()})` : 'Sin servicio')
+  );
+}
+
 function EmptyState({ message }: { message: string }) {
   return <p className={styles.emptyState}>{message}</p>;
 }
@@ -191,6 +199,7 @@ export default function AdmissionVisitDetailModal({
   const baseId = useId();
   const [activeTab, setActiveTab] = useState<TabId>('resumen');
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [evolucionServiceFilter, setEvolucionServiceFilter] = useState('todos');
 
   useEffect(() => {
     if (!isOpen) {
@@ -199,6 +208,7 @@ export default function AdmissionVisitDetailModal({
     }
     setActiveTab('resumen');
     setExportModalOpen(false);
+    setEvolucionServiceFilter('todos');
   }, [isOpen, numeroVisita]);
 
   const counts = useMemo(() => {
@@ -240,6 +250,22 @@ export default function AdmissionVisitDetailModal({
   };
 
   const title = numeroVisita ? `Visita #${numeroVisita}` : 'Detalle de visita';
+
+  const evolucionesServicios = useMemo(() => {
+    const set = new Set<string>();
+    for (const raw of data?.evolucionesMedicas || []) {
+      set.add(getEvolucionService(raw as Record<string, unknown>));
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [data?.evolucionesMedicas]);
+
+  const evolucionesFiltradas = useMemo(() => {
+    const rows = data?.evolucionesMedicas || [];
+    if (evolucionServiceFilter === 'todos') return rows;
+    return rows.filter(
+      (raw) => getEvolucionService(raw as Record<string, unknown>) === evolucionServiceFilter
+    );
+  }, [data?.evolucionesMedicas, evolucionServiceFilter]);
 
   return (
     <>
@@ -453,11 +479,37 @@ export default function AdmissionVisitDetailModal({
               className={styles.panel}
             >
               <h3 className={styles.panelTitle}>Evoluciones médicas</h3>
+              {evolucionesServicios.length > 0 ? (
+                <div className={styles.evoFilters}>
+                  <span className={styles.evoFiltersLabel}>Servicio:</span>
+                  <div className={styles.evoFiltersWrap}>
+                    <button
+                      type="button"
+                      className={`${styles.evoFilterBtn} ${evolucionServiceFilter === 'todos' ? styles.evoFilterBtnActive : ''}`}
+                      onClick={() => setEvolucionServiceFilter('todos')}
+                    >
+                      Todos
+                    </button>
+                    {evolucionesServicios.map((srv) => (
+                      <button
+                        key={srv}
+                        type="button"
+                        className={`${styles.evoFilterBtn} ${evolucionServiceFilter === srv ? styles.evoFilterBtnActive : ''}`}
+                        onClick={() => setEvolucionServiceFilter(srv)}
+                      >
+                        {srv}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {!data.evolucionesMedicas?.length ? (
                 <EmptyState message="No hay evoluciones registradas." />
+              ) : evolucionesFiltradas.length === 0 ? (
+                <EmptyState message="No hay evoluciones para el servicio seleccionado." />
               ) : (
                 <ul className={styles.cardList}>
-                  {data.evolucionesMedicas.map((raw, idx) => {
+                  {evolucionesFiltradas.map((raw, idx) => {
                     const e = raw as Record<string, unknown>;
                     const id = str(e.IdHCEvolucion ?? idx);
                     return (
@@ -466,7 +518,10 @@ export default function AdmissionVisitDetailModal({
                           <strong>
                             {str(e.FechaEv)} {str(e.HoraEv)}
                           </strong>
-                          <span className={styles.muted}>{str(e.ProfesionalNombreCompleto)}</span>
+                          <span className={styles.muted}>
+                            {str(e.ProfesionalNombreCompleto)}
+                            {` · ${getEvolucionService(e)}`}
+                          </span>
                         </div>
                         {str(e.Evolucion) ? <p className={styles.evoText}>{str(e.Evolucion)}</p> : null}
                       </li>

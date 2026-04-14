@@ -324,6 +324,44 @@
   white-space: pre-wrap;
 }
 
+.evoFilters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.evoFiltersLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.evoFiltersWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.evoFilterBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.evoFilterBtnActive {
+  border-color: #0083a9;
+  background: #e0f7fa;
+  color: #006b85;
+}
+
 .hciSectionBlock {
   margin-top: 14px;
 }

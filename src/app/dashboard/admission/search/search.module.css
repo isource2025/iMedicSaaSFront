@@ -257,6 +257,60 @@
   text-decoration: underline;
 }
 
+.admisionesResult {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admissionCards {
+  display: none;
+}
+
+.admissionCard {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.admissionCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.admissionCardDate {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: right;
+}
+
+.admissionCardPatient {
+  margin: 8px 0 2px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admissionCardMeta {
+  margin: 0 0 8px;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.mobileEmpty {
+  text-align: center;
+  color: #6b7280;
+  padding: 14px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+}
+
 .patientFolders {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -359,10 +413,55 @@
 }
 
 @media (max-width: 720px) {
+  .container {
+    gap: 10px;
+  }
+
+  .searchPanel {
+    padding: 10px;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .modeToggle {
+    width: 100%;
+  }
+
+  .modeBtn {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .inlineField,
+  .inlineFieldWide {
+    flex: 1 1 100%;
+  }
+
+  .periodoInline {
+    width: 100%;
+  }
+
+  .periodoChips {
+    width: 100%;
+  }
+
+  .periodoBtn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
   .toolbarActions {
     margin-left: 0;
     width: 100%;
-    justify-content: flex-start;
+    justify-content: stretch;
+  }
+
+  .actionPrimary,
+  .actionSecondary {
+    flex: 1 1 0;
   }
 
   .folderMain {
@@ -372,5 +471,27 @@
   .folderOpenHint {
     width: 100%;
     text-align: right;
+  }
+
+  .pagination {
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+  }
+
+  .pagination button {
+    flex: 1 1 120px;
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 860px) {
+  .admisionesResult :global(.tableContainer) {
+    display: none;
+  }
+
+  .admissionCards {
+    display: grid;
+    gap: 8px;
   }
 }

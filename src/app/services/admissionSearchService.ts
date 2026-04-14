@@ -58,6 +58,8 @@ export interface ExportSelectivoBody {
   exportAll: boolean;
   fechaInicio?: string;
   fechaFin?: string;
+  /** Servicio (especialidad/sector normalizado) a incluir en evoluciones. Vacío = todos. */
+  evolucionServicioIds?: string[];
   /** Si se envía y no está vacío, solo evoluciones de esos IdSector (servicio). Vacío = todos los servicios. */
   evolucionSectorIds?: string[];
 }

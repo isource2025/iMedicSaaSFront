@@ -44,10 +44,20 @@ function needsDateFilter(sections: ExportSectionKey[]): boolean {
 }
 
 type EvoGroup = {
-  sectorKey: string;
-  sectorLabel: string;
+  serviceKey: string;
+  serviceLabel: string;
   items: { line: string }[];
 };
+
+function getEvolucionService(raw: Record<string, unknown>): { key: string; label: string } {
+  const esp = str(raw.EspecialidadDescripcion).trim();
+  if (esp) return { key: esp.toLowerCase(), label: esp };
+  const sec = str(raw.SectorDescripcion).trim();
+  if (sec) return { key: sec.toLowerCase(), label: sec };
+  const idSector = str(raw.IdSector).trim();
+  if (idSector) return { key: `servicio_${idSector.toLowerCase()}`, label: `Servicio (${idSector})` };
+  return { key: 'sin-servicio', label: 'Sin servicio' };
+}
 
 interface AdmissionVisitExportModalProps {
   isOpen: boolean;
@@ -67,7 +77,7 @@ export default function AdmissionVisitExportModal({
   const [exportAll, setExportAll] = useState(true);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
-  const [sectorSelected, setSectorSelected] = useState<Record<string, boolean>>({});
+  const [serviceSelected, setServiceSelected] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -75,24 +85,21 @@ export default function AdmissionVisitExportModal({
     const map = new Map<string, { label: string; items: { line: string }[] }>();
     for (const raw of evolucionesMedicas || []) {
       const e = raw as Record<string, unknown>;
-      const sectorKey = String(e.IdSector ?? '').trim();
-      const desc = str(e.SectorDescripcion).trim();
-      const sectorLabel =
-        desc || (sectorKey === '' ? 'Sin servicio' : `Servicio (${sectorKey})`);
+      const { key: serviceKey, label: serviceLabel } = getEvolucionService(e);
       const line =
         `${str(e.FechaEv)} ${str(e.HoraEv)} · ${str(e.ProfesionalNombreCompleto)}`.trim() || '—';
-      if (!map.has(sectorKey)) {
-        map.set(sectorKey, { label: sectorLabel, items: [] });
+      if (!map.has(serviceKey)) {
+        map.set(serviceKey, { label: serviceLabel, items: [] });
       }
-      map.get(sectorKey)!.items.push({ line });
+      map.get(serviceKey)!.items.push({ line });
     }
     return Array.from(map.entries())
-      .map(([sectorKey, v]) => ({
-        sectorKey,
-        sectorLabel: v.label,
+      .map(([serviceKey, v]) => ({
+        serviceKey,
+        serviceLabel: v.label,
         items: v.items,
       }))
-      .sort((a, b) => a.sectorLabel.localeCompare(b.sectorLabel, 'es'));
+      .sort((a, b) => a.serviceLabel.localeCompare(b.serviceLabel, 'es'));
   }, [evolucionesMedicas]);
 
   useEffect(() => {
@@ -101,7 +108,7 @@ export default function AdmissionVisitExportModal({
       setExportAll(true);
       setFechaInicio('');
       setFechaFin('');
-      setSectorSelected({});
+      setServiceSelected({});
       setError('');
       setBusy(false);
     }
@@ -109,10 +116,10 @@ export default function AdmissionVisitExportModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    setSectorSelected((prev) => {
+    setServiceSelected((prev) => {
       const next: Record<string, boolean> = {};
       for (const g of evoGroups) {
-        next[g.sectorKey] = prev[g.sectorKey] !== false;
+        next[g.serviceKey] = prev[g.serviceKey] !== false;
       }
       return next;
     });
@@ -147,7 +154,7 @@ export default function AdmissionVisitExportModal({
     for (const s of SECTIONS) next[s.id] = v;
     setSelection(next);
     if (v && evoGroups.length > 0) {
-      setSectorSelected(Object.fromEntries(evoGroups.map((g) => [g.sectorKey, true])));
+      setServiceSelected(Object.fromEntries(evoGroups.map((g) => [g.serviceKey, true])));
     }
   };
 
@@ -155,10 +162,10 @@ export default function AdmissionVisitExportModal({
     setSelection((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const toggleSector = (sectorKey: string) => {
-    setSectorSelected((prev) => {
-      const on = prev[sectorKey] !== false;
-      return { ...prev, [sectorKey]: !on };
+  const toggleService = (serviceKey: string) => {
+    setServiceSelected((prev) => {
+      const on = prev[serviceKey] !== false;
+      return { ...prev, [serviceKey]: !on };
     });
   };
 
@@ -173,8 +180,8 @@ export default function AdmissionVisitExportModal({
       return;
     }
     if (selection.evoluciones && evoGroups.length > 0) {
-      const anySector = evoGroups.some((g) => sectorSelected[g.sectorKey] !== false);
-      if (!anySector) {
+      const anyService = evoGroups.some((g) => serviceSelected[g.serviceKey] !== false);
+      if (!anyService) {
         setError('Seleccioná al menos un servicio en Evoluciones.');
         return;
       }
@@ -186,16 +193,16 @@ export default function AdmissionVisitExportModal({
     setError('');
     setBusy(true);
     try {
-      const allKeys = evoGroups.map((g) => g.sectorKey);
-      const picked = allKeys.filter((k) => sectorSelected[k] !== false);
-      const subsetSectors = picked.length > 0 && picked.length < allKeys.length;
+      const allKeys = evoGroups.map((g) => g.serviceKey);
+      const picked = allKeys.filter((k) => serviceSelected[k] !== false);
+      const subsetServices = picked.length > 0 && picked.length < allKeys.length;
 
       const body = {
         sections: selectedList,
         exportAll,
         fechaInicio: exportAll ? '' : fechaInicio.trim(),
         fechaFin: exportAll ? '' : fechaFin.trim(),
-        ...(selection.evoluciones && subsetSectors ? { evolucionSectorIds: picked } : {}),
+        ...(selection.evoluciones && subsetServices ? { evolucionServicioIds: picked } : {}),
       };
       const blob = await admissionSearchService.exportSelectivo(numeroVisita, body);
       const url = URL.createObjectURL(blob);
@@ -313,21 +320,21 @@ export default function AdmissionVisitExportModal({
                     </span>
                   </summary>
                   <p className={`${styles.hint} ${styles.evoHint}`}>
-                    Marcá qué servicios (sectores) querés incluir. Las evoluciones listadas son las de esta visita; el
+                    Marcá qué servicios querés incluir. Las evoluciones listadas son las de esta visita; el
                     rango de fechas de arriba sigue aplicando dentro de cada servicio elegido.
                   </p>
                   {evoGroups.map((g) => (
-                    <div key={g.sectorKey === '' ? '_empty' : g.sectorKey} className={styles.evoServiceBlock}>
+                    <div key={g.serviceKey} className={styles.evoServiceBlock}>
                       <label className={styles.evoServiceHead}>
                         <input
                           type="checkbox"
-                          checked={sectorSelected[g.sectorKey] !== false}
+                          checked={serviceSelected[g.serviceKey] !== false}
                           disabled={!selection.evoluciones}
-                          onChange={() => toggleSector(g.sectorKey)}
-                          aria-label={`Incluir evoluciones de ${g.sectorLabel}`}
+                          onChange={() => toggleService(g.serviceKey)}
+                          aria-label={`Incluir evoluciones de ${g.serviceLabel}`}
                         />
                         <span>
-                          {g.sectorLabel}
+                          {g.serviceLabel}
                           <span className={styles.mutedCount}> ({g.items.length})</span>
                         </span>
                       </label>

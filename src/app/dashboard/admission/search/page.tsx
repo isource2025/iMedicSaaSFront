@@ -257,47 +257,77 @@ export default function AdmissionSearchPage() {
       </div>
 
       {viewMode === 'admisiones' ? (
-        <div className={sharedStyles.tableContainer}>
-          <table className={sharedStyles.table}>
-            <thead>
-              <tr>
-                <th>Numero visita</th>
-                <th>Paciente</th>
-                <th>DNI</th>
-                <th>HC</th>
-                <th>Información clínica</th>
-                <th>Fecha admision</th>
-                <th>Hora</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
+        <div className={styles.admisionesResult}>
+          <div className={sharedStyles.tableContainer}>
+            <table className={sharedStyles.table}>
+              <thead>
                 <tr>
-                  <td colSpan={7} className={styles.empty}>
-                    {loading ? 'Buscando...' : 'Sin resultados'}
-                  </td>
+                  <th>Numero visita</th>
+                  <th>Paciente</th>
+                  <th>DNI</th>
+                  <th>HC</th>
+                  <th>Información clínica</th>
+                  <th>Fecha admision</th>
+                  <th>Hora</th>
                 </tr>
-              ) : (
-                rows.map((row) => (
-                  <tr key={row.NumeroVisita}>
-                    <td>
-                      <button type="button" className={styles.linkButton} onClick={() => openVisitDetail(row.NumeroVisita)}>
-                        {row.NumeroVisita}
-                      </button>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className={styles.empty}>
+                      {loading ? 'Buscando...' : 'Sin resultados'}
                     </td>
-                    <td>{row.ApellidoYNombre}</td>
-                    <td>{row.NumeroDocumento || '-'}</td>
-                    <td>{row.NumeroHC || '-'}</td>
-                    <td>
-                      <VisitClinicalBadges row={row} />
-                    </td>
-                    <td>{row.FechaAdmision || '-'}</td>
-                    <td>{row.HoraAdmision || '-'}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  rows.map((row) => (
+                    <tr key={row.NumeroVisita}>
+                      <td>
+                        <button type="button" className={styles.linkButton} onClick={() => openVisitDetail(row.NumeroVisita)}>
+                          {row.NumeroVisita}
+                        </button>
+                      </td>
+                      <td>{row.ApellidoYNombre}</td>
+                      <td>{row.NumeroDocumento || '-'}</td>
+                      <td>{row.NumeroHC || '-'}</td>
+                      <td>
+                        <VisitClinicalBadges row={row} />
+                      </td>
+                      <td>{row.FechaAdmision || '-'}</td>
+                      <td>{row.HoraAdmision || '-'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className={styles.admissionCards} aria-live="polite">
+            {rows.length === 0 ? (
+              <div className={styles.mobileEmpty}>{loading ? 'Buscando...' : 'Sin resultados'}</div>
+            ) : (
+              rows.map((row) => (
+                <article key={`card-${row.NumeroVisita}`} className={styles.admissionCard}>
+                  <div className={styles.admissionCardHead}>
+                    <button
+                      type="button"
+                      className={styles.linkButton}
+                      onClick={() => openVisitDetail(row.NumeroVisita)}
+                    >
+                      Visita #{row.NumeroVisita}
+                    </button>
+                    <span className={styles.admissionCardDate}>
+                      {row.FechaAdmision || '-'} {row.HoraAdmision || '-'}
+                    </span>
+                  </div>
+                  <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
+                  <p className={styles.admissionCardMeta}>
+                    DNI {row.NumeroDocumento || '—'} · HC {row.NumeroHC || '—'}
+                  </p>
+                  <VisitClinicalBadges row={row} />
+                </article>
+              ))
+            )}
+          </div>
         </div>
       ) : (
         <div className={styles.patientFolders}>
