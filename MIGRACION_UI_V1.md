@@ -5,7 +5,7 @@
 **Objetivo:** Implementar nuevo sistema de UI siguiendo guías de diseño establecidas 
 
 --- 
-
+ 
 ## Índice de Cambios 
   
 1. [Resumen de Migración](#resumen-de-migración) 
