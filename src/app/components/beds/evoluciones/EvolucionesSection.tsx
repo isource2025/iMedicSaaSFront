@@ -134,7 +134,7 @@ export default function EvolucionesSection({
         const q = query.trim().toLowerCase();
         if (q) {
             filtered = filtered.filter((r) => {
-                const hay = (v?: string | number) =>
+                const hay = (v?: string | number | null) =>
                     v != null && String(v).toLowerCase().includes(q);
                 return (
                     hay(r.evolucion) ||
