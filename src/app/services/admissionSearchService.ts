@@ -17,6 +17,11 @@ export interface AdmissionSearchRow {
   NumeroHC: string;
   FechaAdmision: string;
   HoraAdmision: string;
+  TipoPaciente?: string;
+  TipoPacienteDescripcion?: string;
+  EstadoAmbulatorio?: string;
+  EstadoAmbulatorioDescripcion?: string;
+  TipoAtencion?: string;
   /** Conteos por tipo de información (desde el listado de búsqueda) */
   CntHistoriaClinica?: number;
   CntIndicaciones?: number;

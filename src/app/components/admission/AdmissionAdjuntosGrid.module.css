@@ -56,6 +56,29 @@
   object-fit: cover;
 }
 
+.loaderWrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loaderSpinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 3px solid #cbd5e1;
+  border-top-color: #00b5e2;
+  animation: spin 0.9s linear infinite;
+}
+
+.loaderText {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
 .skeleton {
   width: 70%;
   height: 55%;
@@ -71,6 +94,12 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -107,4 +136,25 @@
   margin: 0 0 12px;
   font-size: 0.8rem;
   color: #64748b;
+}
+
+.moreRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.moreBtn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.moreBtn:hover {
+  background: #f8fafc;
 }

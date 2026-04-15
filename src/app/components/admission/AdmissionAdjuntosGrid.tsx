@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styles from './AdmissionAdjuntosGrid.module.css';
 
 function baseUrl(): string {
@@ -23,6 +23,8 @@ function isImageMime(m: string): boolean {
   return m.startsWith('image/');
 }
 
+const PREVIEWS_PAGE_SIZE = 12;
+
 function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreArchivo: string }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [mime, setMime] = useState<string | null>(null);
@@ -41,7 +43,7 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
 
         let blob: Blob | null = null;
         for (const url of candidates) {
-          const res = await fetch(url, { credentials: 'include' });
+          const res = await fetch(url);
           if (!res.ok) continue;
           blob = await res.blob();
           break;
@@ -79,7 +81,12 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
   return (
     <button type="button" className={styles.card} onClick={openView} title={`Abrir: ${nombreArchivo}`}>
       <div className={styles.thumb} aria-hidden>
-        {phase === 'loading' ? <span className={styles.skeleton} /> : null}
+        {phase === 'loading' ? (
+          <span className={styles.loaderWrap}>
+            <span className={styles.loaderSpinner} />
+            <span className={styles.loaderText}>Cargando vista previa…</span>
+          </span>
+        ) : null}
         {phase === 'error' ? <span className={styles.fileFallback}>Sin vista previa</span> : null}
         {phase === 'ready' && preview ? <img src={preview} alt="" className={styles.thumbImg} /> : null}
         {phase === 'ready' && !preview && isPdf ? <span className={styles.pdfBadge}>PDF</span> : null}
@@ -94,20 +101,48 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
 
 export default function AdmissionAdjuntosGrid({ items }: { items: Record<string, unknown>[] }) {
   if (!items.length) return null;
+
+  const parsedItems = useMemo(
+    () =>
+      items.flatMap((raw) => {
+        const idRaw = raw.IdAdjunto ?? raw.idAdjunto;
+        const id = typeof idRaw === 'number' ? idRaw : Number(idRaw);
+        if (!Number.isFinite(id) || id <= 0) return [];
+        const name = str(raw.NombreArchivo ?? raw.Descripcion) || `Adjunto ${id}`;
+        return [{ id, name }];
+      }),
+    [items]
+  );
+  const [visibleCount, setVisibleCount] = useState(PREVIEWS_PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PREVIEWS_PAGE_SIZE);
+  }, [items]);
+
+  const visibleItems = parsedItems.slice(0, visibleCount);
+  const hasMore = visibleCount < parsedItems.length;
+
   return (
     <>
       <p className={styles.hint}>
         Vista previa cargada al abrir esta pestaña. Clic en la tarjeta para ver el archivo en el navegador.
       </p>
       <div className={styles.grid}>
-        {items.flatMap((raw) => {
-          const idRaw = raw.IdAdjunto ?? raw.idAdjunto;
-          const id = typeof idRaw === 'number' ? idRaw : Number(idRaw);
-          if (!Number.isFinite(id) || id <= 0) return [];
-          const name = str(raw.NombreArchivo ?? raw.Descripcion) || `Adjunto ${id}`;
-          return [<AdjuntoCard key={id} idAdjunto={id} nombreArchivo={name} />];
-        })}
+        {visibleItems.map((it) => (
+          <AdjuntoCard key={it.id} idAdjunto={it.id} nombreArchivo={it.name} />
+        ))}
       </div>
+      {hasMore ? (
+        <div className={styles.moreRow}>
+          <button
+            type="button"
+            className={styles.moreBtn}
+            onClick={() => setVisibleCount((n) => n + PREVIEWS_PAGE_SIZE)}
+          >
+            Cargar más adjuntos ({parsedItems.length - visibleCount} restantes)
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }

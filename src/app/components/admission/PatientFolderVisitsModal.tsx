@@ -23,6 +23,18 @@ export default function PatientFolderVisitsModal({
   if (!patient) return null;
 
   const title = `Visitas — ${patient.ApellidoYNombre || 'Paciente'}`;
+  const tipoAtencion = (v: AdmissionSearchRow) => {
+    const s = String(v.TipoAtencion || '').trim();
+    if (s) return s;
+    const d = String(v.TipoPacienteDescripcion || v.EstadoAmbulatorioDescripcion || '').trim();
+    return d || 'Sin clasificar';
+  };
+  const tipoClass = (v: AdmissionSearchRow) => {
+    const t = tipoAtencion(v).toLowerCase();
+    if (t.includes('ambul')) return styles.typeAmbulatorio;
+    if (t.includes('intern')) return styles.typeInternado;
+    return styles.typeUnknown;
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="large">
@@ -48,6 +60,9 @@ export default function PatientFolderVisitsModal({
               <span className={styles.visitDate}>
                 {visit.FechaAdmision || '—'} {visit.HoraAdmision || ''}
               </span>
+            </div>
+            <div className={styles.visitMetaRow}>
+              <span className={`${styles.visitTypeBadge} ${tipoClass(visit)}`}>{tipoAtencion(visit)}</span>
             </div>
             <VisitClinicalBadges row={visit} />
           </div>

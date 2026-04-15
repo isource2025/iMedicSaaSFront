@@ -22,6 +22,20 @@ const initialFilters = {
   fechaFin: '',
 };
 
+function tipoAtencion(row: AdmissionSearchRow): string {
+  const s = String(row.TipoAtencion || '').trim();
+  if (s) return s;
+  const d = String(row.TipoPacienteDescripcion || row.EstadoAmbulatorioDescripcion || '').trim();
+  return d || 'Sin clasificar';
+}
+
+function tipoAtencionClass(row: AdmissionSearchRow): string {
+  const t = tipoAtencion(row).toLowerCase();
+  if (t.includes('ambul')) return styles.typeAmbulatorio;
+  if (t.includes('intern')) return styles.typeInternado;
+  return styles.typeUnknown;
+}
+
 export default function AdmissionSearchPage() {
   const [filters, setFilters] = useState(initialFilters);
   const [periodoActivo, setPeriodoActivo] = useState<AdmissionPeriodo | null>(null);
@@ -41,19 +55,7 @@ export default function AdmissionSearchPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
-  const canSearch = useMemo(
-    () => Boolean(filters.dni.trim() || filters.nombreApellido.trim() || filters.fechaInicio || filters.fechaFin),
-    [filters]
-  );
-
   const runSearch = async (targetPage = 1) => {
-    if (!canSearch && targetPage === 1) {
-      setRows([]);
-      setTotalPages(0);
-      setTotal(0);
-      return;
-    }
-
     try {
       setLoading(true);
       setError('');
@@ -101,15 +103,12 @@ export default function AdmissionSearchPage() {
   const onClear = async () => {
     setPeriodoActivo(null);
     setFilters(initialFilters);
-    setRows([]);
-    setPage(1);
-    setTotalPages(0);
-    setTotal(0);
     setError('');
     setSelectedVisit(null);
     setDetailData(null);
     setDetailModalOpen(false);
     setFolderModal(null);
+    await runSearch(1);
   };
 
   const groupedByPatient = useMemo(() => {
@@ -264,6 +263,7 @@ export default function AdmissionSearchPage() {
                 <tr>
                   <th>Numero visita</th>
                   <th>Paciente</th>
+                  <th>Tipo</th>
                   <th>DNI</th>
                   <th>HC</th>
                   <th>Información clínica</th>
@@ -274,7 +274,7 @@ export default function AdmissionSearchPage() {
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className={styles.empty}>
+                    <td colSpan={8} className={styles.empty}>
                       {loading ? 'Buscando...' : 'Sin resultados'}
                     </td>
                   </tr>
@@ -287,6 +287,9 @@ export default function AdmissionSearchPage() {
                         </button>
                       </td>
                       <td>{row.ApellidoYNombre}</td>
+                      <td>
+                        <span className={`${styles.typeBadge} ${tipoAtencionClass(row)}`}>{tipoAtencion(row)}</span>
+                      </td>
                       <td>{row.NumeroDocumento || '-'}</td>
                       <td>{row.NumeroHC || '-'}</td>
                       <td>
@@ -322,6 +325,9 @@ export default function AdmissionSearchPage() {
                   <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
                   <p className={styles.admissionCardMeta}>
                     DNI {row.NumeroDocumento || '—'} · HC {row.NumeroHC || '—'}
+                  </p>
+                  <p className={styles.admissionCardMeta}>
+                    <span className={`${styles.typeBadge} ${tipoAtencionClass(row)}`}>{tipoAtencion(row)}</span>
                   </p>
                   <VisitClinicalBadges row={row} />
                 </article>

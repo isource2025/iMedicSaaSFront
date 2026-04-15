@@ -311,6 +311,37 @@
   border: 1px dashed #cbd5e1;
 }
 
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.typeAmbulatorio {
+  color: #0369a1;
+  background: #e0f2fe;
+  border-color: #bae6fd;
+}
+
+.typeInternado {
+  color: #065f46;
+  background: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+.typeUnknown {
+  color: #475569;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
 .patientFolders {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
