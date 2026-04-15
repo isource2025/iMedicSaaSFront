@@ -153,16 +153,42 @@ export default function AdmissionSearchPage() {
     setDetailData(null);
   };
 
+  const filtrosActivos = useMemo(() => {
+    const out: string[] = [];
+    if (filters.dni.trim()) out.push(`DNI: ${filters.dni.trim()}`);
+    if (filters.nombreApellido.trim()) out.push(`Paciente: ${filters.nombreApellido.trim()}`);
+    if (filters.fechaInicio || filters.fechaFin) {
+      out.push(`Rango: ${formatDMY(filters.fechaInicio || '') || '—'} — ${formatDMY(filters.fechaFin || '') || '—'}`);
+    }
+    return out;
+  }, [filters]);
+
   return (
     <div className={styles.container}>
-      <div className={styles.pageIntro}>
-        <h1 className={styles.pageTitle}>Búsqueda integral de pacientes</h1>
-        <p className={styles.pageSubtitle}>
-          Consultá por admisión o por paciente; en vista carpetas, abrí el paciente en un modal para ver sus visitas.
-        </p>
+      <div className={styles.pageHeader}>
+        <div className={styles.pageIntro}>
+          <h1 className={styles.pageTitle}>Búsqueda de admisiones</h1>
+          <p className={styles.pageSubtitle}>
+            Vista minimalista y ordenada para buscar por visita o por paciente, con acceso directo al detalle clínico.
+          </p>
+        </div>
+        <div className={styles.pageKpis}>
+          <article className={styles.kpiCard}>
+            <span className={styles.kpiLabel}>Resultados</span>
+            <strong className={styles.kpiValue}>{total}</strong>
+          </article>
+          <article className={styles.kpiCard}>
+            <span className={styles.kpiLabel}>Vista</span>
+            <strong className={styles.kpiValue}>{viewMode === 'admisiones' ? 'Admisiones' : 'Pacientes'}</strong>
+          </article>
+        </div>
       </div>
 
       <form className={styles.searchPanel} onSubmit={onSubmit}>
+        <div className={styles.searchPanelHead}>
+          <h2 className={styles.panelTitle}>Filtros</h2>
+          <span className={styles.panelSubtitle}>Podés buscar globalmente sin filtros o acotar por DNI, paciente y período.</span>
+        </div>
         <div className={styles.toolbar}>
           <div className={styles.modeToggle} role="group" aria-label="Modo de vista">
             <button
@@ -238,26 +264,45 @@ export default function AdmissionSearchPage() {
             </button>
           </div>
         </div>
-        <p className={styles.periodHint}>
-          {filters.fechaInicio && filters.fechaFin ? (
-            <>
-              Rango: {formatDMY(filters.fechaInicio)} — {formatDMY(filters.fechaFin)}
-            </>
-          ) : (
-            <>Elegí semana, mes o año en Período (clic otra vez para quitar).</>
-          )}
-        </p>
+        <div className={styles.searchPanelFooter}>
+          <p className={styles.periodHint}>
+            {filters.fechaInicio && filters.fechaFin ? (
+              <>
+                Rango activo: {formatDMY(filters.fechaInicio)} — {formatDMY(filters.fechaFin)}
+              </>
+            ) : (
+              <>Elegí semana, mes o año en Período (clic otra vez para quitar).</>
+            )}
+          </p>
+          <div className={styles.filterChips}>
+            {filtrosActivos.length === 0 ? (
+              <span className={styles.filterChipMuted}>Sin filtros activos</span>
+            ) : (
+              filtrosActivos.map((txt) => (
+                <span key={txt} className={styles.filterChip}>
+                  {txt}
+                </span>
+              ))
+            )}
+          </div>
+        </div>
       </form>
 
       {error ? <div className={styles.error}>{error}</div> : null}
 
-      <div className={styles.summary}>
-        <strong>Resultados:</strong> {total}
+      <div className={styles.resultsHeader}>
+        <div className={styles.summary}>
+          <strong>{total}</strong> resultados
+        </div>
+        <div className={styles.summaryMeta}>
+          Página {page} de {Math.max(1, totalPages)}
+        </div>
       </div>
 
-      {viewMode === 'admisiones' ? (
-        <div className={styles.admisionesResult}>
-          <div className={sharedStyles.tableContainer}>
+      <section className={styles.resultsPanel}>
+        {viewMode === 'admisiones' ? (
+          <div className={styles.admisionesResult}>
+            <div className={sharedStyles.tableContainer}>
             <table className={sharedStyles.table}>
               <thead>
                 <tr>
@@ -302,82 +347,83 @@ export default function AdmissionSearchPage() {
                 )}
               </tbody>
             </table>
-          </div>
+            </div>
 
-          <div className={styles.admissionCards} aria-live="polite">
-            {rows.length === 0 ? (
-              <div className={styles.mobileEmpty}>{loading ? 'Buscando...' : 'Sin resultados'}</div>
+            <div className={styles.admissionCards} aria-live="polite">
+              {rows.length === 0 ? (
+                <div className={styles.mobileEmpty}>{loading ? 'Buscando...' : 'Sin resultados'}</div>
+              ) : (
+                rows.map((row) => (
+                  <article key={`card-${row.NumeroVisita}`} className={styles.admissionCard}>
+                    <div className={styles.admissionCardHead}>
+                      <button
+                        type="button"
+                        className={styles.linkButton}
+                        onClick={() => openVisitDetail(row.NumeroVisita)}
+                      >
+                        Visita #{row.NumeroVisita}
+                      </button>
+                      <span className={styles.admissionCardDate}>
+                        {row.FechaAdmision || '-'} {row.HoraAdmision || '-'}
+                      </span>
+                    </div>
+                    <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
+                    <p className={styles.admissionCardMeta}>
+                      DNI {row.NumeroDocumento || '—'} · HC {row.NumeroHC || '—'}
+                    </p>
+                    <p className={styles.admissionCardMeta}>
+                      <span className={`${styles.typeBadge} ${tipoAtencionClass(row)}`}>{tipoAtencion(row)}</span>
+                    </p>
+                    <VisitClinicalBadges row={row} />
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className={styles.patientFolders}>
+            {groupedByPatient.length === 0 ? (
+              <div className={sharedStyles.noResults}>{loading ? 'Buscando...' : 'Sin resultados'}</div>
             ) : (
-              rows.map((row) => (
-                <article key={`card-${row.NumeroVisita}`} className={styles.admissionCard}>
-                  <div className={styles.admissionCardHead}>
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() => openVisitDetail(row.NumeroVisita)}
-                    >
-                      Visita #{row.NumeroVisita}
-                    </button>
-                    <span className={styles.admissionCardDate}>
-                      {row.FechaAdmision || '-'} {row.HoraAdmision || '-'}
-                    </span>
+              groupedByPatient.map(({ patient, visits }) => (
+                <button
+                  key={patient.IdPaciente}
+                  type="button"
+                  className={styles.folderCard}
+                  onClick={() => setFolderModal({ patient, visits })}
+                >
+                  <div className={styles.folderCardInner}>
+                    <div className={styles.folderAccent} aria-hidden />
+                    <div className={styles.folderMain}>
+                      <span className={styles.folderIcon} aria-hidden>
+                        <svg width="22" height="18" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path
+                            d="M2 6.5C2 5.12 3.12 4 4.5 4H9.17L11 6H19.5C20.88 6 22 7.12 22 8.5V15.5C22 16.88 20.88 18 19.5 18H4.5C3.12 18 2 16.88 2 15.5V6.5Z"
+                            fill="#00b5e2"
+                            fillOpacity="0.2"
+                            stroke="#0083a9"
+                            strokeWidth="1.2"
+                          />
+                        </svg>
+                      </span>
+                      <div className={styles.folderTitleBlock}>
+                        <span className={styles.folderPatientName}>{patient.ApellidoYNombre}</span>
+                        <span className={styles.folderPatientDni}>
+                          DNI {patient.NumeroDocumento || '—'} · HC {patient.NumeroHC || '—'}
+                        </span>
+                      </div>
+                      <span className={styles.folderVisitCount}>
+                        {visits.length} {visits.length === 1 ? 'visita' : 'visitas'}
+                      </span>
+                      <span className={styles.folderOpenHint}>Abrir</span>
+                    </div>
                   </div>
-                  <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
-                  <p className={styles.admissionCardMeta}>
-                    DNI {row.NumeroDocumento || '—'} · HC {row.NumeroHC || '—'}
-                  </p>
-                  <p className={styles.admissionCardMeta}>
-                    <span className={`${styles.typeBadge} ${tipoAtencionClass(row)}`}>{tipoAtencion(row)}</span>
-                  </p>
-                  <VisitClinicalBadges row={row} />
-                </article>
+                </button>
               ))
             )}
           </div>
-        </div>
-      ) : (
-        <div className={styles.patientFolders}>
-          {groupedByPatient.length === 0 ? (
-            <div className={sharedStyles.noResults}>{loading ? 'Buscando...' : 'Sin resultados'}</div>
-          ) : (
-            groupedByPatient.map(({ patient, visits }) => (
-              <button
-                key={patient.IdPaciente}
-                type="button"
-                className={styles.folderCard}
-                onClick={() => setFolderModal({ patient, visits })}
-              >
-                <div className={styles.folderCardInner}>
-                  <div className={styles.folderAccent} aria-hidden />
-                  <div className={styles.folderMain}>
-                    <span className={styles.folderIcon} aria-hidden>
-                      <svg width="22" height="18" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                          d="M2 6.5C2 5.12 3.12 4 4.5 4H9.17L11 6H19.5C20.88 6 22 7.12 22 8.5V15.5C22 16.88 20.88 18 19.5 18H4.5C3.12 18 2 16.88 2 15.5V6.5Z"
-                          fill="#00b5e2"
-                          fillOpacity="0.2"
-                          stroke="#0083a9"
-                          strokeWidth="1.2"
-                        />
-                      </svg>
-                    </span>
-                    <div className={styles.folderTitleBlock}>
-                      <span className={styles.folderPatientName}>{patient.ApellidoYNombre}</span>
-                      <span className={styles.folderPatientDni}>
-                        DNI {patient.NumeroDocumento || '—'} · HC {patient.NumeroHC || '—'}
-                      </span>
-                    </div>
-                    <span className={styles.folderVisitCount}>
-                      {visits.length} {visits.length === 1 ? 'visita' : 'visitas'}
-                    </span>
-                    <span className={styles.folderOpenHint}>Abrir</span>
-                  </div>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      )}
+        )}
+      </section>
 
       <div className={styles.pagination}>
         <button type="button" onClick={() => runSearch(page - 1)} disabled={loading || page <= 1}>

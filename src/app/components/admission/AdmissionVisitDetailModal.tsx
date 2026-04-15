@@ -24,6 +24,7 @@ export type VisitDetailPayload = {
   historialClinico?: Record<string, unknown>[];
   practicasPaciente?: Array<{
     Practica?: string | number;
+    PracticaDescripcion?: string;
     CantidadPractica?: string | number;
     FechaPractica?: string;
     HoraPracticaInicio?: string;
@@ -400,7 +401,9 @@ export default function AdmissionVisitDetailModal({
                         const key = `${str(row.Practica) || 'pr'}-${idx}`;
                         return (
                           <tr key={key}>
-                            <td className={styles.cellClamp}>{str(row.Practica) || '—'}</td>
+                            <td className={styles.cellClamp}>
+                              {str(row.PracticaDescripcion || row.Practica) || '—'}
+                            </td>
                             <td>{str(row.CantidadPractica) || '—'}</td>
                           </tr>
                         );

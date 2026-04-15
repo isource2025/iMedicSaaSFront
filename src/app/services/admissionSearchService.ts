@@ -24,6 +24,7 @@ export interface AdmissionSearchRow {
   TipoAtencion?: string;
   /** Conteos por tipo de información (desde el listado de búsqueda) */
   CntHistoriaClinica?: number;
+  CntPracticas?: number;
   CntIndicaciones?: number;
   CntMedicacion?: number;
   CntLaboratorios?: number;

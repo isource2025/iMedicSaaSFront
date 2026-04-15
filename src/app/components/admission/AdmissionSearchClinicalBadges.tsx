@@ -19,7 +19,8 @@ export function visitClinicalCount(row: AdmissionSearchRow, ...keys: string[]): 
 export function VisitClinicalBadges({ row }: { row: AdmissionSearchRow }) {
   const items = [
     { label: 'HCI', count: visitClinicalCount(row, 'CntHistoriaClinica', 'cntHistoriaClinica') },
-    { label: 'Prác', count: visitClinicalCount(row, 'CntIndicaciones', 'cntIndicaciones') },
+    { label: 'Prác', count: visitClinicalCount(row, 'CntPracticas', 'cntPracticas') },
+    { label: 'Ind', count: visitClinicalCount(row, 'CntIndicaciones', 'cntIndicaciones') },
     { label: 'Med', count: visitClinicalCount(row, 'CntMedicacion', 'cntMedicacion') },
     { label: 'Evo', count: visitClinicalCount(row, 'CntEvoluciones', 'cntEvoluciones') },
     { label: 'Est', count: visitClinicalCount(row, 'CntLaboratorios', 'cntLaboratorios') },
