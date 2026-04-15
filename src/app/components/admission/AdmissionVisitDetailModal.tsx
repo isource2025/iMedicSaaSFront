@@ -22,6 +22,12 @@ export type VisitDetailPayload = {
     HoraAdmision?: string;
   };
   historialClinico?: Record<string, unknown>[];
+  practicasPaciente?: Array<{
+    Practica?: string | number;
+    CantidadPractica?: string | number;
+    FechaPractica?: string;
+    HoraPracticaInicio?: string;
+  }>;
   indicaciones?: Record<string, unknown>[];
   medicamentos?: Record<string, unknown>[];
   practicas?: {
@@ -44,6 +50,7 @@ type TabId =
   | 'resumen'
   | 'hcIngreso'
   | 'practicas'
+  | 'indicaciones'
   | 'medicamentos'
   | 'evoluciones'
   | 'estudios'
@@ -54,6 +61,7 @@ const TAB_LABELS: Record<TabId, string> = {
   resumen: 'Resumen',
   hcIngreso: 'HC de ingreso',
   practicas: 'Prácticas',
+  indicaciones: 'Indicaciones',
   medicamentos: 'Medicamentos suministrados',
   evoluciones: 'Evoluciones',
   estudios: 'Estudios solicitados',
@@ -213,20 +221,22 @@ export default function AdmissionVisitDetailModal({
 
   const counts = useMemo(() => {
     const hci = data?.historialClinico?.length ?? 0;
-    const practicas = data?.indicaciones?.length ?? 0;
+    const practicas = data?.practicasPaciente?.length ?? 0;
+    const indicaciones = data?.indicaciones?.length ?? 0;
     const med = data?.medicamentos?.length ?? 0;
     const evo = data?.evolucionesMedicas?.length ?? 0;
     const labs = data?.practicas?.laboratorios ?? [];
     const estudios = labs.length;
     const protocolos = labs.filter((ex) => str(ex.Protocolo).trim() !== '').length;
     const adj = data?.practicas?.adjuntos?.length ?? 0;
-    return { hci, practicas, med, evo, estudios, protocolos, adj };
+    return { hci, practicas, indicaciones, med, evo, estudios, protocolos, adj };
   }, [data]);
 
   const tabs: TabId[] = [
     'resumen',
     'hcIngreso',
     'practicas',
+    'indicaciones',
     'medicamentos',
     'evoluciones',
     'estudios',
@@ -239,6 +249,7 @@ export default function AdmissionVisitDetailModal({
     const map: Record<Exclude<TabId, 'resumen'>, number> = {
       hcIngreso: counts.hci,
       practicas: counts.practicas,
+      indicaciones: counts.indicaciones,
       medicamentos: counts.med,
       evoluciones: counts.evo,
       estudios: counts.estudios,
@@ -371,9 +382,45 @@ export default function AdmissionVisitDetailModal({
               hidden={activeTab !== 'practicas'}
               className={styles.panel}
             >
-              <h3 className={styles.panelTitle}>Prácticas e indicaciones</h3>
+              <h3 className={styles.panelTitle}>Prácticas por paciente</h3>
+              {!data.practicasPaciente?.length ? (
+                <EmptyState message="No hay prácticas registradas para esta visita." />
+              ) : (
+                <div className={styles.tableScroll}>
+                  <table className={`${styles.dataTable} ${styles.tableCompact}`}>
+                    <thead>
+                      <tr>
+                        <th>Práctica</th>
+                        <th>Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.practicasPaciente.map((raw, idx) => {
+                        const row = raw as Record<string, unknown>;
+                        const key = `${str(row.Practica) || 'pr'}-${idx}`;
+                        return (
+                          <tr key={key}>
+                            <td className={styles.cellClamp}>{str(row.Practica) || '—'}</td>
+                            <td>{str(row.CantidadPractica) || '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div
+              id={`${baseId}-panel-indicaciones`}
+              role="tabpanel"
+              aria-labelledby={`${baseId}-tab-indicaciones`}
+              hidden={activeTab !== 'indicaciones'}
+              className={styles.panel}
+            >
+              <h3 className={styles.panelTitle}>Indicaciones</h3>
               {!data.indicaciones?.length ? (
-                <EmptyState message="No hay prácticas o indicaciones registradas." />
+                <EmptyState message="No hay indicaciones registradas." />
               ) : (
                 <div className={styles.tableScroll}>
                   <table className={`${styles.dataTable} ${styles.tableCompact}`}>

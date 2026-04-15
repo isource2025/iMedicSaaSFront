@@ -52,6 +52,7 @@ export type ExportSectionKey =
   | 'admision'
   | 'hcIngreso'
   | 'practicas'
+  | 'indicaciones'
   | 'medicamentos'
   | 'evoluciones'
   | 'estudios'

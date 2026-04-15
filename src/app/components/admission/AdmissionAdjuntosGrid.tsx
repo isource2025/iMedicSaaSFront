@@ -93,11 +93,13 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
         {phase === 'error' ? <span className={styles.fileFallback}>Sin vista previa</span> : null}
         {phase === 'ready' && preview && !isPdf ? <img src={preview} alt="" className={styles.thumbImg} /> : null}
         {phase === 'ready' && preview && isPdf ? (
-          <iframe
-            src={`${preview}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-            className={styles.pdfPreview}
-            title={`Vista previa PDF ${nombreArchivo}`}
-          />
+          <span className={styles.pdfFrame}>
+            <iframe
+              src={`${preview}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&pagemode=none`}
+              className={styles.pdfPreview}
+              title={`Vista previa PDF ${nombreArchivo}`}
+            />
+          </span>
         ) : null}
         {phase === 'ready' && !preview && isPdf ? <span className={styles.pdfBadge}>PDF</span> : null}
         {phase === 'ready' && !preview && !isPdf ? (

@@ -7,7 +7,8 @@ import styles from './AdmissionVisitExportModal.module.css';
 const SECTIONS: { id: ExportSectionKey; label: string }[] = [
   { id: 'admision', label: 'Datos de admisión' },
   { id: 'hcIngreso', label: 'HC de ingreso' },
-  { id: 'practicas', label: 'Prácticas (indicaciones)' },
+  { id: 'practicas', label: 'Prácticas por paciente' },
+  { id: 'indicaciones', label: 'Indicaciones' },
   { id: 'medicamentos', label: 'Medicamentos suministrados' },
   { id: 'evoluciones', label: 'Evoluciones' },
   { id: 'estudios', label: 'Estudios solicitados (laboratorio con detalle)' },
@@ -21,6 +22,7 @@ const EVO_META = SECTIONS.find((s) => s.id === 'evoluciones')!;
 const NEEDS_DATE_SECTIONS: ExportSectionKey[] = [
   'hcIngreso',
   'practicas',
+  'indicaciones',
   'medicamentos',
   'estudios',
   'protocolos',
