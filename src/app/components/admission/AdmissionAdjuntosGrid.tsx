@@ -57,6 +57,9 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
         if (isImageMime(type) || isImageByName(nombreArchivo)) {
           blobUrl = URL.createObjectURL(blob);
           setPreview(blobUrl);
+        } else if (type === 'application/pdf' || /\.pdf$/i.test(nombreArchivo)) {
+          blobUrl = URL.createObjectURL(blob);
+          setPreview(blobUrl);
         }
         setPhase('ready');
       } catch {
@@ -88,7 +91,14 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
           </span>
         ) : null}
         {phase === 'error' ? <span className={styles.fileFallback}>Sin vista previa</span> : null}
-        {phase === 'ready' && preview ? <img src={preview} alt="" className={styles.thumbImg} /> : null}
+        {phase === 'ready' && preview && !isPdf ? <img src={preview} alt="" className={styles.thumbImg} /> : null}
+        {phase === 'ready' && preview && isPdf ? (
+          <iframe
+            src={`${preview}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+            className={styles.pdfPreview}
+            title={`Vista previa PDF ${nombreArchivo}`}
+          />
+        ) : null}
         {phase === 'ready' && !preview && isPdf ? <span className={styles.pdfBadge}>PDF</span> : null}
         {phase === 'ready' && !preview && !isPdf ? (
           <span className={styles.fileFallback}>Archivo</span>
