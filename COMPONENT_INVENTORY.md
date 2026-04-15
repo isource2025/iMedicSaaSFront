@@ -1,7 +1,7 @@
 # Inventario Detallado de Componentes - iMedicWS Frontend
 
 **Fecha:** Febrero 2026   
-**Propósito:** Inventario completo de archivos para proceso de migración de UI 
+**Propósito:** Inventario completo de archivos para proceso de migración de UI  
 
 ---    
   
