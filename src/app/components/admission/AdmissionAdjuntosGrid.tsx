@@ -10,6 +10,10 @@ function baseUrl(): string {
   return '';
 }
 
+function isImageByName(name: string): boolean {
+  return /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(name || '');
+}
+
 function str(v: unknown): string {
   if (v == null || v === '') return '';
   return String(v);
@@ -30,14 +34,25 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
 
     const run = async () => {
       try {
-        const url = `${baseUrl()}/adjuntos/${idAdjunto}/download`;
-        const res = await fetch(url, { credentials: 'include' });
-        if (!res.ok) throw new Error('fetch');
-        const blob = await res.blob();
+        const candidates = [
+          `${baseUrl()}/adjuntos/${idAdjunto}/download`,
+          `/adjuntos/${idAdjunto}/download`,
+        ];
+
+        let blob: Blob | null = null;
+        for (const url of candidates) {
+          const res = await fetch(url, { credentials: 'include' });
+          if (!res.ok) continue;
+          blob = await res.blob();
+          break;
+        }
+
+        if (!blob) throw new Error('fetch');
         if (cancelled) return;
+
         const type = blob.type || '';
         setMime(type);
-        if (isImageMime(type)) {
+        if (isImageMime(type) || isImageByName(nombreArchivo)) {
           blobUrl = URL.createObjectURL(blob);
           setPreview(blobUrl);
         }

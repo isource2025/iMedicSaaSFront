@@ -39,6 +39,25 @@ function str(v: unknown): string {
   return String(v);
 }
 
+function toYmd(value: unknown): string | null {
+  if (value == null || value === '') return null;
+  const s = String(value).trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  return null;
+}
+
+function inDateRange(ymd: string | null, fechaInicio: string, fechaFin: string, exportAll: boolean): boolean {
+  if (exportAll) return true;
+  const ini = fechaInicio.trim();
+  const fin = fechaFin.trim();
+  if (!ini && !fin) return true;
+  if (!ymd) return true;
+  if (ini && ymd < ini) return false;
+  if (fin && ymd > fin) return false;
+  return true;
+}
+
 function needsDateFilter(sections: ExportSectionKey[]): boolean {
   return sections.some((s) => NEEDS_DATE_SECTIONS.includes(s));
 }
@@ -81,9 +100,17 @@ export default function AdmissionVisitExportModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const evolucionesFiltradas = useMemo(() => {
+    const rows = Array.isArray(evolucionesMedicas) ? evolucionesMedicas : [];
+    return rows.filter((raw) => {
+      const r = raw as Record<string, unknown>;
+      return inDateRange(toYmd(r.FechaEv), fechaInicio, fechaFin, exportAll);
+    });
+  }, [evolucionesMedicas, fechaInicio, fechaFin, exportAll]);
+
   const evoGroups = useMemo((): EvoGroup[] => {
     const map = new Map<string, { label: string; items: { line: string }[] }>();
-    for (const raw of evolucionesMedicas || []) {
+    for (const raw of evolucionesFiltradas) {
       const e = raw as Record<string, unknown>;
       const { key: serviceKey, label: serviceLabel } = getEvolucionService(e);
       const line =
@@ -100,7 +127,7 @@ export default function AdmissionVisitExportModal({
         items: v.items,
       }))
       .sort((a, b) => a.serviceLabel.localeCompare(b.serviceLabel, 'es'));
-  }, [evolucionesMedicas]);
+  }, [evolucionesFiltradas]);
 
   useEffect(() => {
     if (isOpen) {
@@ -322,6 +349,9 @@ export default function AdmissionVisitExportModal({
                   <p className={`${styles.hint} ${styles.evoHint}`}>
                     Marcá qué servicios querés incluir. Las evoluciones listadas son las de esta visita; el
                     rango de fechas de arriba sigue aplicando dentro de cada servicio elegido.
+                  </p>
+                  <p className={`${styles.hint} ${styles.evoHint}`}>
+                    Evoluciones visibles con el filtro actual: {evolucionesFiltradas.length}
                   </p>
                   {evoGroups.map((g) => (
                     <div key={g.serviceKey} className={styles.evoServiceBlock}>
