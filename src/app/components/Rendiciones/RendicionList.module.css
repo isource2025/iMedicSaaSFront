@@ -40,6 +40,9 @@
   text-transform: uppercase;
   color: white;
   background-color: #0083A9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .tableHeader th {
