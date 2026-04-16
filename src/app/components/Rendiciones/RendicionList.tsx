@@ -66,14 +66,30 @@ export default function RendicionList({
 				<table className={styles.table} aria-label='Lista de rendiciones'>
 					<thead className={styles.tableHeader}>
 						<tr>
-							<th scope='col'>ID</th>
+							<th scope='col'>ID Rend</th>
+							<th scope='col'>Fecha</th>
+							<th scope='col'>Tipo</th>
 							<th scope='col'>Cliente</th>
-							<th scope='col'>Convenio</th>
+							<th scope='col' className={styles.coverHeader}>
+								Cobertura / Convenio
+							</th>
+							<th scope='col' className={styles.coverHeader}>
+								Descripción
+							</th>
 							<th scope='col'>Período</th>
-							<th scope='col'>Honorarios</th>
-							<th scope='col'>Gastos</th>
-							<th scope='col'>Total</th>
-							<th scope='col'>Fecha Grabación</th>
+							<th scope='col' className={styles.amountHeader}>
+								Honorarios
+							</th>
+							<th scope='col' className={styles.amountHeader}>
+								Gastos
+							</th>
+							<th scope='col' className={styles.amountHeader}>
+								Medic.
+							</th>
+							<th scope='col' className={styles.amountHeader}>
+								Total
+							</th>
+							<th scope='col'>Admisiones</th>
 							<th scope='col'>Estado</th>
 							<th scope='col'>Acciones</th>
 						</tr>
@@ -102,22 +118,26 @@ export default function RendicionList({
 								return (
 									<tr key={rendicion.IdRendicion} className={styles.tableRow}>
 										<td>{rendicion.IdRendicion}</td>
+										<td>{formatDate(rendicion.FechaGraba)}</td>
+										<td>{rendicion.IdTipoCliente || '-'}</td>
 										<td className={styles.clientColumn}>
 											<div className={styles.clientName}>{rendicion.ClienteRazonSocial || '-'}</div>
 										</td>
-										<td>
+										<td className={styles.coverCell}>
 											<div className={styles.convenioColumn}>
-												<div className={styles.convenioNumber}>ID {rendicion.idCliente}</div>
+												<div className={styles.convenioNumber}>ID {rendicion.ConvenioNumero || rendicion.idConvenio}</div>
 												<div className={styles.convenioDesc}>{rendicion.ConvenioDescripcion || '-'}</div>
 											</div>
 										</td>
+										<td className={`${styles.obsColumn} ${styles.coverCell}`}>{rendicion.Observaciones || '-'}</td>
 										<td>{formatPeriodo(rendicion.Periodo)}</td>
-										<td className={styles.moneyColumn}>{formatMoney(rendicion.Honorarios)}</td>
-										<td className={styles.moneyColumn}>{formatMoney(rendicion.Gastos)}</td>
-										<td className={styles.moneyColumn}>
+										<td className={`${styles.moneyColumn} ${styles.amountCell}`}>{formatMoney(rendicion.Honorarios)}</td>
+										<td className={`${styles.moneyColumn} ${styles.amountCell}`}>{formatMoney(rendicion.Gastos)}</td>
+										<td className={`${styles.moneyColumn} ${styles.amountCell}`}>{formatMoney(rendicion.Medicamentos)}</td>
+										<td className={`${styles.moneyColumn} ${styles.amountCell}`}>
 											<strong>{formatMoney(total)}</strong>
 										</td>
-										<td>{formatDate(rendicion.FechaGraba)}</td>
+										<td className={styles.centerColumn}>{rendicion.Visitas ?? 0}</td>
 										<td>
 											{rendicion.FechaCierre ? (
 												<span className={styles.statusClosed}>Cerrada</span>
