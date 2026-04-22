@@ -14,11 +14,12 @@
   pointer-events: auto;
 }
 
-.fabAdjuntos {
+.fabAdjuntos,
+.fabEnfermeria,
+.fabLaboratorio {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #00b5e2;
   color: #fff;
   border: none;
   cursor: pointer;
@@ -29,11 +30,35 @@
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
+.fabEnfermeria {
+  background: #0083a9;
+}
+
+.fabLaboratorio {
+  background: #5b77d0;
+}
+
+.fabAdjuntos {
+  background: #00b5e2;
+}
+
+.fabEnfermeria:hover {
+  background: #006f8f;
+  transform: scale(1.05);
+}
+
+.fabLaboratorio:hover {
+  background: #4a63b3;
+  transform: scale(1.05);
+}
+
 .fabAdjuntos:hover {
   background: #0083a9;
   transform: scale(1.05);
 }
 
+.fabEnfermeria:active,
+.fabLaboratorio:active,
 .fabAdjuntos:active {
   transform: scale(0.98);
 }
@@ -44,7 +69,9 @@
     bottom: 16px;
   }
 
-  .fabAdjuntos {
+  .fabAdjuntos,
+  .fabEnfermeria,
+  .fabLaboratorio {
     width: 52px;
     height: 52px;
   }

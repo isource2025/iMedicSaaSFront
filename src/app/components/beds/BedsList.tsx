@@ -2,6 +2,7 @@
 import { useBedsManagement } from '../../hooks/useBedsManagement';
 import { useState, useEffect, useRef } from 'react';
 import NursingReportModal from '../nursing/NursingReportModal';
+import LabResultsModal from './laboratorios/LabResultsModal';
 import ModalEgresoPaciente from '../modals/ModalEgresoPaciente';
 import ModalCambiarCama from '../modals/ModalCambiarCama';
 import BedCard from './BedCard';
@@ -41,6 +42,7 @@ const BedsList = () => {
 	} = useBedsManagement();
 
 	const [nursingModalOpen, setNursingModalOpen] = useState(false);
+	const [labModalOpen, setLabModalOpen] = useState(false);
 	const [egresoModalOpen, setEgresoModalOpen] = useState(false);
 	const [cambiarCamaModalOpen, setCambiarCamaModalOpen] = useState(false);
 	const [selectedBed, setSelectedBed] = useState<{
@@ -137,9 +139,18 @@ const BedsList = () => {
 	};
 
 	const handleLabResults = (bedId: string) => {
-		// Implementar la lógica para mostrar los resultados de laboratorio
-		console.log('Mostrando resultados de laboratorio para la cama:', bedId);
-		// Aquí se puede implementar la lógica para mostrar un modal o navegar a una página de resultados
+		const bed = beds.find((item) => item.id === bedId);
+		if (!bed || bed.estado !== 'ocupada' || !bed.numeroVisita) {
+			console.warn('No hay datos suficientes para abrir resultados de laboratorio.');
+			return;
+		}
+		setSelectedBed({
+			numeroVisita: bed.numeroVisita,
+			nombrePaciente: bed.NombrePaciente || 'Paciente',
+			id: bed.numeroCama,
+			sector: bed.sector,
+		});
+		setLabModalOpen(true);
 	};
 
 	const handleDischarge = (bedId: string) => {
@@ -217,6 +228,14 @@ const BedsList = () => {
 					onClose={() => setNursingModalOpen(false)}
 					numeroVisita={selectedBed.numeroVisita}
 					nombrePaciente={selectedBed.nombrePaciente}
+				/>
+			)}
+
+			{labModalOpen && selectedBed && (
+				<LabResultsModal
+					isOpen={labModalOpen}
+					onClose={() => setLabModalOpen(false)}
+					numeroVisita={selectedBed.numeroVisita}
 				/>
 			)}
 

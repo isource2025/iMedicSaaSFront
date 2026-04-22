@@ -277,9 +277,92 @@
     border: 1px solid #e5e7eb;
 }
 
+.mobileList {
+    display: none;
+}
+
+.mobileCard {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.mobileCardActive {
+    border-color: #5bc0de;
+    box-shadow: 0 0 0 2px rgba(91, 192, 222, 0.18);
+}
+
+.mobileCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.mobileDate {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.mobileHour {
+    font-size: 0.8rem;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+.mobileMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mobileBadge {
+    background: #e0f2fe;
+    color: #0c4a6e;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 3px 8px;
+}
+
+.mobileEvolucion {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: #1f2937;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    max-height: 6.2em;
+    overflow: hidden;
+}
+
+.mobileProfesional {
+    margin: 0 0 8px 0;
+    font-size: 0.8rem;
+    color: #374151;
+    font-weight: 600;
+}
+
+.mobileActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.mobileEmpty {
+    padding: 16px 4px;
+}
+
 @media (max-width: 768px) {
-    .tableWrap {
-        display: none;
+    .tableWrap { display: none; }
+    .mobileList {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     
     .detailGrid {

@@ -20,6 +20,8 @@ import AdjuntosModal from './adjuntos/AdjuntosModal';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
 import LabResultsSection from './laboratorios/LabResultsSection';
 import BedFloatingActions from './BedFloatingActions';
+import NursingReportModal from '../nursing/NursingReportModal';
+import LabResultsModal from './laboratorios/LabResultsModal';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -30,6 +32,8 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	const [drawerOpen, setDrawerOpen] = useState(false);
 	// Modal de archivos adjuntos
 	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
+	const [showNursingModal, setShowNursingModal] = useState(false);
+	const [showLabModal, setShowLabModal] = useState(false);
 
 	// Usar el context para filtros y navegación
 	const { activeSection, selectedDate, setSelectedDate, navigateToSection } = useBedDetail();
@@ -290,7 +294,11 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 			</div>
 
 			{bed?.NumeroVisita ? (
-				<BedFloatingActions onOpenAdjuntos={() => setShowAdjuntosModal(true)} />
+				<BedFloatingActions
+					onOpenAdjuntos={() => setShowAdjuntosModal(true)}
+					onOpenNursing={() => setShowNursingModal(true)}
+					onOpenLaboratorios={() => setShowLabModal(true)}
+				/>
 			) : null}
 
 			{/* Modal de archivos adjuntos */}
@@ -299,6 +307,23 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					numeroVisita={bed.NumeroVisita}
 					isOpen={showAdjuntosModal}
 					onClose={() => setShowAdjuntosModal(false)}
+				/>
+			)}
+
+			{bed?.NumeroVisita && (
+				<NursingReportModal
+					isOpen={showNursingModal}
+					onClose={() => setShowNursingModal(false)}
+					numeroVisita={bed.NumeroVisita}
+					nombrePaciente={bed.NombrePaciente || 'Paciente'}
+				/>
+			)}
+
+			{bed?.NumeroVisita && (
+				<LabResultsModal
+					isOpen={showLabModal}
+					onClose={() => setShowLabModal(false)}
+					numeroVisita={bed.NumeroVisita}
 				/>
 			)}
 

@@ -5,15 +5,68 @@ import styles from './BedFloatingActions.module.css';
 
 interface BedFloatingActionsProps {
   onOpenAdjuntos: () => void;
+  onOpenNursing: () => void;
+  onOpenLaboratorios: () => void;
 }
 
 /**
  * Pila flotante en detalle de cama: abajo notificaciones, encima adjuntos (nuevos botones se apilan hacia arriba).
  */
-export default function BedFloatingActions({ onOpenAdjuntos }: BedFloatingActionsProps) {
+export default function BedFloatingActions({
+  onOpenAdjuntos,
+  onOpenNursing,
+  onOpenLaboratorios,
+}: BedFloatingActionsProps) {
   return (
     <div className={styles.root} aria-label="Acciones rápidas">
       <NotificationsFab stack />
+      <button
+        type="button"
+        className={styles.fabEnfermeria}
+        onClick={onOpenNursing}
+        title="Reporte de enfermería"
+        aria-label="Abrir reporte de enfermería"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M9 2h6v4h4v16H5V6h4z" />
+          <path d="M9 6h6" />
+          <path d="M9 11h6" />
+          <path d="M9 15h4" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className={styles.fabLaboratorio}
+        onClick={onOpenLaboratorios}
+        title="Resultados de laboratorio"
+        aria-label="Abrir resultados de laboratorio"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M10 2v6l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V2" />
+          <path d="M8 2h8" />
+          <path d="M7.5 16h9" />
+        </svg>
+      </button>
       <button
         type="button"
         className={styles.fabAdjuntos}

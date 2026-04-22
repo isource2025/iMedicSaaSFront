@@ -199,6 +199,74 @@ export default function EvolucionesTable({
                     )}
                 </div>
             </div>
+            <div className={styles.mobileList}>
+                {hasRows ? (
+                    rows.map((r, index) => (
+                        <article
+                            key={`evolucion-mobile-${r.id}-${index}`}
+                            className={`${styles.mobileCard} ${
+                                selectedId === r.id ? styles.mobileCardActive : ''
+                            }`}
+                        >
+                            <div className={styles.mobileCardHeader}>
+                                <span className={styles.mobileDate}>
+                                    {r.fechaEv
+                                        ? formatSqlDate(r.fechaEv, {
+                                              showTime: false,
+                                              showDate: true,
+                                              showYear: true,
+                                          })
+                                        : '-'}
+                                </span>
+                                <span className={styles.mobileHour}>{r.horaEv || '-'}</span>
+                            </div>
+
+                            <div className={styles.mobileMeta}>
+                                {r.glucemia != null && r.glucemia !== '' && (
+                                    <span className={styles.mobileBadge}>{`${r.glucemia} mg/dL`}</span>
+                                )}
+                                {r.idSector && (
+                                    <span className={styles.mobileBadge}>{`Sector ${r.idSector}`}</span>
+                                )}
+                            </div>
+
+                            <p className={styles.mobileEvolucion}>
+                                {r.evolucion || '-'}
+                            </p>
+
+                            <p className={styles.mobileProfesional}>{getNombreCompleto(r)}</p>
+
+                            <div className={styles.mobileActions}>
+                                <button
+                                    className={styles.btnAction}
+                                    title="Ver evolución completa"
+                                    onClick={() => setViewingEvolucion(r)}
+                                >
+                                    <IoEyeOutline color="#5BC0DE" size="18px" />
+                                </button>
+                                <button
+                                    className={styles.btnAction}
+                                    title="Editar evolución"
+                                    onClick={() => onSelectRow && onSelectRow(r.id)}
+                                >
+                                    <IoPencilOutline color="#5BC0DE" size="18px" />
+                                </button>
+                                <button
+                                    className={styles.btnAction}
+                                    title="Eliminar evolución"
+                                    onClick={() => setDeletingId(r.id)}
+                                >
+                                    <IoTrashOutline color="#5BC0DE" size="18px" />
+                                </button>
+                            </div>
+                        </article>
+                    ))
+                ) : (
+                    <div className={styles.mobileEmpty}>
+                        <EmptyState text="No hay evoluciones registradas para esta visita." />
+                    </div>
+                )}
+            </div>
 
             {/* Modal de confirmación de eliminación */}
             <ConfirmationModal
