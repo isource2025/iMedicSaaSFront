@@ -2,6 +2,8 @@
  * Servicio para gestionar la información de la empresa
  */
 
+import { getResolvedApiBaseUrl } from './axios';
+
 /**
  * Interfaz para la información de la empresa
  */
@@ -30,7 +32,8 @@ export interface EmpresaInfo {
  */
 export const obtenerInfoEmpresa = async (): Promise<EmpresaInfo> => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/empresa`);
+    const base = getResolvedApiBaseUrl();
+    const response = await fetch(`${base}/empresa`);
     
     if (!response.ok) {
       throw new Error('Error al obtener información de la empresa');

@@ -1,0 +1,264 @@
+.form {
+	width: 100%;
+	padding: 0.5rem 0.25rem 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.tabsContainer {
+	position: relative;
+	display: flex;
+	gap: 0;
+	border-bottom: 1.5px solid #e2e8f0;
+	padding: 0 0.2rem;
+}
+
+.tab {
+	padding: 0.7rem 1.25rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: #64748b;
+	cursor: pointer;
+	transition: color 0.2s ease;
+	user-select: none;
+	letter-spacing: 0.02em;
+}
+
+.tab:hover {
+	color: #0083A9;
+}
+
+.tabActive {
+	color: #0083A9;
+}
+
+.indicator {
+	position: absolute;
+	bottom: -1.5px;
+	height: 2.5px;
+	background: linear-gradient(90deg, #00B5E2 0%, #0083A9 100%);
+	border-radius: 2px;
+	transition: left 0.25s ease, width 0.25s ease;
+}
+
+.tabPanel {
+	display: flex;
+	flex-direction: column;
+}
+
+.fieldHalf {
+	grid-column: span 4;
+}
+
+@media (max-width: 860px) {
+	.fieldHalf {
+		grid-column: span 3;
+	}
+}
+
+@media (max-width: 520px) {
+	.fieldHalf {
+		grid-column: span 2;
+	}
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: 0.9rem 1rem;
+	align-content: start;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	min-width: 0;
+}
+
+.fieldId { grid-column: span 2; }
+.fieldTipoDoc { grid-column: span 2; }
+.fieldDni { grid-column: span 4; }
+.fieldNombre { grid-column: span 4; }
+.fieldDomicilio { grid-column: span 6; }
+.fieldLocalidad { grid-column: span 6; }
+.fieldProvincia { grid-column: span 4; }
+.fieldNacionalidad { grid-column: span 4; }
+.fieldFechaNac { grid-column: span 4; }
+.fieldSexo { grid-column: span 3; }
+.fieldEstadoCivil { grid-column: span 4; }
+.fieldTelefono { grid-column: span 5; }
+
+.label {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #0083A9;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.input {
+	width: 100%;
+	padding: 0.55rem 0.75rem;
+	font-size: 0.9rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+	color: #1e293b;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input:focus {
+	outline: none;
+	border-color: #00B5E2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.12);
+}
+
+.readOnly {
+	background: #f1f5f9;
+	color: #64748b;
+	cursor: not-allowed;
+}
+
+.inputError {
+	border-color: #ef4444;
+}
+
+.inputError:focus {
+	box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.error {
+	color: #dc2626;
+	font-size: 0.72rem;
+}
+
+.inputWithButton {
+	display: flex;
+	gap: 0.4rem;
+	align-items: stretch;
+}
+
+.inputWithButton .input {
+	flex: 1;
+}
+
+.renaperButton {
+	border: none;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
+	color: #fff;
+	border-radius: 8px;
+	padding: 0 0.9rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	cursor: pointer;
+	transition: transform 0.15s, box-shadow 0.15s;
+	white-space: nowrap;
+}
+
+.renaperButton:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 10px rgba(0, 131, 169, 0.35);
+}
+
+.renaperButton:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	padding: 1rem 0;
+	border-top: 1px solid #e2e8f0;
+}
+
+.cancelButton {
+	padding: 0.6rem 1.4rem;
+	border: 1.5px solid #cbd5e1;
+	background: #fff;
+	color: #475569;
+	border-radius: 24px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.cancelButton:hover:not(:disabled) {
+	background: #f1f5f9;
+	border-color: #94a3b8;
+}
+
+.submitButton {
+	padding: 0.6rem 1.8rem;
+	border: none;
+	background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
+	color: #fff;
+	border-radius: 24px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.3);
+	transition: all 0.15s;
+}
+
+.submitButton:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.4);
+}
+
+.submitButton:disabled {
+	opacity: 0.75;
+	cursor: not-allowed;
+}
+
+.inlineSpinner {
+	width: 14px;
+	height: 14px;
+	border: 2px solid rgba(255, 255, 255, 0.4);
+	border-top-color: #fff;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+@media (max-width: 860px) {
+	.grid {
+		grid-template-columns: repeat(6, 1fr);
+	}
+	.fieldId { grid-column: span 2; }
+	.fieldTipoDoc { grid-column: span 2; }
+	.fieldDni { grid-column: span 2; }
+	.fieldNombre { grid-column: span 6; }
+	.fieldDomicilio { grid-column: span 6; }
+	.fieldLocalidad { grid-column: span 6; }
+	.fieldProvincia { grid-column: span 3; }
+	.fieldNacionalidad { grid-column: span 3; }
+	.fieldFechaNac { grid-column: span 3; }
+	.fieldSexo { grid-column: span 3; }
+	.fieldEstadoCivil { grid-column: span 3; }
+	.fieldTelefono { grid-column: span 3; }
+}
+
+@media (max-width: 520px) {
+	.grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.fieldId, .fieldTipoDoc, .fieldDni, .fieldNombre, .fieldDomicilio,
+	.fieldLocalidad, .fieldProvincia, .fieldNacionalidad, .fieldFechaNac,
+	.fieldSexo, .fieldEstadoCivil, .fieldTelefono {
+		grid-column: span 2;
+	}
+}

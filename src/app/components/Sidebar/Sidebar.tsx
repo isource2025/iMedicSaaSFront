@@ -84,7 +84,8 @@ const menuItems: MenuItem[] = [
       { label: 'General', path: '/dashboard/settings/general' },
       { label: 'Usuarios', path: '/dashboard/settings/usuarios' },
       { label: 'Permisos', path: '/dashboard/settings/permisos' },
-      { label: 'Sectores', path: '/dashboard/settings/sectores' }
+      { label: 'Sectores', path: '/dashboard/settings/sectores' },
+      { label: 'Personal', path: '/dashboard/personal' }
     ]
   },
   {

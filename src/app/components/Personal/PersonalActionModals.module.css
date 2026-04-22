@@ -1,0 +1,111 @@
+.wrap {
+	padding: 0.25rem 0 0.75rem;
+}
+
+.row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.label {
+	font-size: 0.72rem;
+	font-weight: 600;
+	color: #0083a9;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.input,
+.select {
+	width: 100%;
+	padding: 0.5rem 0.65rem;
+	font-size: 0.88rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+	padding: 0.45rem 1rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1.5px solid #cbd5e1;
+	background: #fff;
+	color: #475569;
+}
+
+.btnPrimary {
+	padding: 0.45rem 1rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+	border: none;
+	background: linear-gradient(135deg, #00b5e2 0%, #0083a9 100%);
+	color: #fff;
+}
+
+.btnDanger {
+	padding: 0.45rem 1rem;
+	border-radius: 20px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1.5px solid #fecaca;
+	background: #fff;
+	color: #b91c1c;
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.listItem {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.45rem 0.6rem;
+	background: #f8fafc;
+	border-radius: 8px;
+	font-size: 0.85rem;
+}
+
+.preview {
+	max-width: 100%;
+	max-height: 180px;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
+.addRow {
+	display: flex;
+	gap: 0.5rem;
+	align-items: flex-end;
+	flex-wrap: wrap;
+}
+
+.addRow .select {
+	flex: 1;
+	min-width: 160px;
+}
+
+.muted {
+	color: #64748b;
+	font-size: 0.85rem;
+}
