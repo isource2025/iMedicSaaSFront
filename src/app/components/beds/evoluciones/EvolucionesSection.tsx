@@ -214,16 +214,15 @@ export default function EvolucionesSection({
             const pdfData = rows.map(row => [
                 row.fechaEv || '-',
                 row.horaEv || '-',
-                row.glucemia != null && row.glucemia !== '' ? `${row.glucemia}` : '',
                 row.profesionalNombreCompleto || '-',
                 row.evolucion || '-',
                 row.idSector || '-'
             ]);
 
-            exportToPDF({
+            await exportToPDF({
                 title: 'Evoluciones Médicas',
                 subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                headers: ['Fecha', 'Hora', 'Glucemia (mg/dL)', 'Profesional', 'Evolución', 'Sector'],
+                headers: ['Fecha', 'Hora', 'Profesional', 'Evolución', 'Sector'],
                 data: pdfData,
                 fileName: `evoluciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
                 orientation: 'landscape',
@@ -236,7 +235,14 @@ export default function EvolucionesSection({
                     fechaIngreso: fechaIngreso,
                     horaIngreso: horaIngreso
                 },
-                profesionalInfo
+                profesionalInfo,
+                columnStyles: {
+                    0: { cellWidth: 22, minCellWidth: 20 },
+                    1: { cellWidth: 16, minCellWidth: 14 },
+                    2: { cellWidth: 42, minCellWidth: 36 },
+                    3: { cellWidth: 92, minCellWidth: 84 },
+                    4: { cellWidth: 18, minCellWidth: 16 },
+                }
             });
         }
     };

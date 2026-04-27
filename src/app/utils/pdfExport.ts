@@ -25,9 +25,28 @@ export interface PDFExportOptions {
     especialidad?: string;
     firmaDigital?: string;
   };
+  columnStyles?: Record<number, { cellWidth?: number | 'auto' | 'wrap'; minCellWidth?: number }>;
 }
 
-export const exportToPDF = ({
+async function loadSignatureDataUrl(source: string): Promise<string | null> {
+  if (!source) return null;
+  if (source.startsWith('data:image/')) return source;
+  try {
+    const response = await fetch(source);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error('No se pudo leer firma'));
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export const exportToPDF = async ({
   title,
   subtitle,
   headers,
@@ -36,7 +55,8 @@ export const exportToPDF = ({
   orientation = 'portrait',
   empresaInfo,
   patientInfo,
-  profesionalInfo
+  profesionalInfo,
+  columnStyles
 }: PDFExportOptions) => {
   const doc = new jsPDF({
     orientation,
@@ -229,8 +249,7 @@ export const exportToPDF = ({
       halign: 'center',
       fontSize: 9
     },
-    columnStyles: {
-      // La columna de evolución/observaciones debe tener más espacio
+    columnStyles: columnStyles || {
       3: { cellWidth: 'auto', minCellWidth: 60 }
     },
     alternateRowStyles: {
@@ -250,12 +269,16 @@ export const exportToPDF = ({
     const firmaX = pageWidth / 2 - 30;
     doc.line(firmaX, firmaY, firmaX + 60, firmaY);
 
-    // Firma digital placeholder (si existe)
-    if (profesionalInfo.firmaDigital) {
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'italic');
-      doc.setTextColor(100, 100, 100);
-      doc.text('Firma Digital', pageWidth / 2, firmaY - 5, { align: 'center' });
+    // Firma digital real (si existe y se puede cargar)
+    const firmaDataUrl = profesionalInfo.firmaDigital
+      ? await loadSignatureDataUrl(profesionalInfo.firmaDigital)
+      : null;
+    if (firmaDataUrl) {
+      try {
+        doc.addImage(firmaDataUrl, 'PNG', pageWidth / 2 - 24, firmaY - 18, 48, 14);
+      } catch {
+        // Ignorar error de formato de imagen y continuar con texto.
+      }
     }
 
     // Información del profesional

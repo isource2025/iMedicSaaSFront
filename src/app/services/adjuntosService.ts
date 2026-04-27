@@ -6,18 +6,33 @@ import {
   AdjuntosAgrupadosResponse,
   TipoImagenHC
 } from '../types/adjuntos';
+import { getResolvedApiBaseUrl } from './axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const getApiUrl = () => getResolvedApiBaseUrl();
+
+async function extractErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const payload = await response.json();
+    return payload?.error || payload?.mensaje || fallback;
+  } catch {
+    try {
+      const text = await response.text();
+      return text || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+}
 
 export const adjuntosService = {
   /**
    * Catálogo HCTiposImagenes (tipo de adjunto / estudio).
    */
   async getTiposImagenes(): Promise<TipoImagenHC[]> {
-    const response = await fetch(`${API_URL}/adjuntos/tipos-imagenes`);
+    const response = await fetch(`${getApiUrl()}/adjuntos/tipos-imagenes`);
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Error al obtener tipos' }));
-      throw new Error(error.error || 'Error al obtener tipos de imagen');
+      const msg = await extractErrorMessage(response, 'Error al obtener tipos de imagen');
+      throw new Error(msg);
     }
     const json = await response.json();
     return json.data ?? [];
@@ -32,14 +47,14 @@ export const adjuntosService = {
     formData.append('tipoImagen', tipoImagen.trim());
     formData.append('archivo', archivo);
 
-    const response = await fetch(`${API_URL}/adjuntos/upload`, {
+    const response = await fetch(`${getApiUrl()}/adjuntos/upload`, {
       method: 'POST',
       body: formData,
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al subir archivo');
+      const msg = await extractErrorMessage(response, 'Error al subir archivo');
+      throw new Error(msg);
     }
 
     return response.json();
@@ -57,14 +72,14 @@ export const adjuntosService = {
       formData.append('archivos', archivo);
     });
 
-    const response = await fetch(`${API_URL}/adjuntos/upload-multiple`, {
+    const response = await fetch(`${getApiUrl()}/adjuntos/upload-multiple`, {
       method: 'POST',
       body: formData,
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al subir archivos');
+      const msg = await extractErrorMessage(response, 'Error al subir archivos');
+      throw new Error(msg);
     }
 
     return response.json();
@@ -74,15 +89,15 @@ export const adjuntosService = {
    * Obtener adjuntos de una visita
    */
   async getAdjuntosPorVisita(numeroVisita: number): Promise<ListarAdjuntosResponse> {
-    const response = await fetch(`${API_URL}/adjuntos/visita/${numeroVisita}`);
+    const response = await fetch(`${getApiUrl()}/adjuntos/visita/${numeroVisita}`);
 
     if (!response.ok) {
       // Si es 404 y no hay adjuntos, devolver array vacío en lugar de error
       if (response.status === 404) {
         return { success: true, data: [], total: 0 };
       }
-      const error = await response.json().catch(() => ({ error: 'Error al obtener adjuntos' }));
-      throw new Error(error.error || 'Error al obtener adjuntos');
+      const msg = await extractErrorMessage(response, 'Error al obtener adjuntos');
+      throw new Error(msg);
     }
 
     return response.json();
@@ -92,14 +107,14 @@ export const adjuntosService = {
    * Obtener adjuntos de una visita agrupados por tipo de imagen
    */
   async getAdjuntosAgrupados(numeroVisita: number): Promise<AdjuntosAgrupadosResponse> {
-    const response = await fetch(`${API_URL}/adjuntos/visita/${numeroVisita}/agrupados`);
+    const response = await fetch(`${getApiUrl()}/adjuntos/visita/${numeroVisita}/agrupados`);
 
     if (!response.ok) {
       if (response.status === 404) {
         return { success: true, data: [], totalGrupos: 0, totalAdjuntos: 0 };
       }
-      const error = await response.json().catch(() => ({ error: 'Error al obtener adjuntos agrupados' }));
-      throw new Error(error.error || 'Error al obtener adjuntos agrupados');
+      const msg = await extractErrorMessage(response, 'Error al obtener adjuntos agrupados');
+      throw new Error(msg);
     }
 
     return response.json();
@@ -109,11 +124,11 @@ export const adjuntosService = {
    * Obtener información de un adjunto
    */
   async getAdjunto(idAdjunto: number): Promise<{ success: boolean; data: Adjunto }> {
-    const response = await fetch(`${API_URL}/adjuntos/${idAdjunto}`);
+    const response = await fetch(`${getApiUrl()}/adjuntos/${idAdjunto}`);
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al obtener adjunto');
+      const msg = await extractErrorMessage(response, 'Error al obtener adjunto');
+      throw new Error(msg);
     }
 
     return response.json();
@@ -124,7 +139,8 @@ export const adjuntosService = {
    */
   async descargarArchivo(idAdjunto: number, nombreArchivo: string): Promise<void> {
     try {
-      const url = `${API_URL}/adjuntos/${idAdjunto}/download`;
+      const base = getApiUrl();
+      const url = `${base}/adjuntos/${idAdjunto}/download`;
       
       // Fetch el archivo como blob
       const response = await fetch(url);
@@ -158,13 +174,13 @@ export const adjuntosService = {
    * Eliminar adjunto
    */
   async eliminarAdjunto(idAdjunto: number): Promise<{ success: boolean; message: string }> {
-    const response = await fetch(`${API_URL}/adjuntos/${idAdjunto}`, {
+    const response = await fetch(`${getApiUrl()}/adjuntos/${idAdjunto}`, {
       method: 'DELETE',
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al eliminar adjunto');
+      const msg = await extractErrorMessage(response, 'Error al eliminar adjunto');
+      throw new Error(msg);
     }
 
     return response.json();
