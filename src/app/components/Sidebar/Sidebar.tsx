@@ -91,7 +91,7 @@ const menuItems: MenuItem[] = [
   {
     id: 'usuario', label: 'Usuario', icon: User,
     subItems: [
-      { label: 'Mi Perfil', path: '/profile' },
+      { label: 'Mi Perfil', path: '/dashboard/profile' },
       { label: 'Configuración', path: '/settings' },
       { label: 'Ayuda', path: '/help' },
       { label: 'Cerrar Sesión', path: '/' }
