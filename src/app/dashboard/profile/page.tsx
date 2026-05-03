@@ -16,9 +16,23 @@ import {
 	RefreshCw,
 	Save,
 	ShieldCheck,
+	TrendingUp,
 	User,
 	X,
 } from 'lucide-react';
+import {
+	Bar,
+	BarChart,
+	CartesianGrid,
+	Cell,
+	Legend,
+	Pie,
+	PieChart,
+	ResponsiveContainer,
+	Tooltip as RechartsTooltip,
+	XAxis,
+	YAxis,
+} from 'recharts';
 import Loader from '@/app/components/Loader/Loader';
 import {
 	miPerfilService,
@@ -29,6 +43,9 @@ import {
 import styles from './profile.module.css';
 
 type TabId = 'resumen' | 'produccion';
+
+const PIE_COLORS = ['#0891b2', '#0e7490', '#164e63', '#06b6d4', '#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626'];
+const BAR_COLORS = ['#0891b2', '#06b6d4', '#22d3ee', '#67e8f9', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc'];
 
 function defaultMonthRange() {
 	const now = new Date();
@@ -53,9 +70,25 @@ function formatImporte(n: number) {
 	return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatHora(s?: string | null) {
-	if (!s) return '—';
-	return String(s).slice(0, 5);
+/** Tooltip del gráfico de torta: nombre completo de la obra social de la porción */
+function PieObraSocialTooltip(props: {
+	active?: boolean;
+	payload?: Array<{ name?: string; value?: number; payload?: { name?: string; value?: number } }>;
+}) {
+	const { active, payload } = props;
+	if (!active || !payload?.length) return null;
+	const item = payload[0];
+	const nombre = item.payload?.name ?? item.name ?? '—';
+	const valor = Number(item.payload?.value ?? item.value ?? 0);
+	return (
+		<div className={styles.pieTooltip}>
+			<div className={styles.pieTooltipKicker}>Obra social</div>
+			<div className={styles.pieTooltipNombre}>{nombre}</div>
+			<div className={styles.pieTooltipMonto}>
+				Facturado: <strong>${formatImporte(valor)}</strong>
+			</div>
+		</div>
+	);
 }
 
 function normalizarCobertura(row: ProduccionFila) {
@@ -200,11 +233,6 @@ export default function MiPerfilPage() {
 	const nombrePerfil = profileForm.ApellidoNombre || resumen?.ApellidoNombrePersonal || 'Sin nombre';
 	const documentoPerfil = profileForm.NumeroDocumento || '—';
 	const matriculaPerfil = profileForm.MatriculaProvincial || resumen?.Matricula || '—';
-	const registrosValorizados = useMemo(
-		() => (prod?.registros || []).filter(tieneValorEconomico).length,
-		[prod?.registros],
-	);
-
 	const profileRows = useMemo(
 		() =>
 			EDITABLE_PROFILE_FIELDS.map((key) => ({
@@ -215,50 +243,24 @@ export default function MiPerfilPage() {
 		[profileForm],
 	);
 
-	const registrosUnicos = useMemo(() => {
-		const all = prod?.registros || [];
-		const seen = new Set<string>();
-		const unique: ProduccionFila[] = [];
-		for (const row of all) {
-			const dedupKey = `${row.id}::${row.idMatch || ''}::${row.codigoPractica}::${row.fecha || ''}::${row.dniPaciente || ''}`;
-			if (seen.has(dedupKey)) continue;
-			seen.add(dedupKey);
-			unique.push(row);
-		}
-		return unique;
-	}, [prod?.registros]);
-
 	const coberturaOptions = useMemo(() => {
 		const values = new Set<string>();
-		for (const row of registrosUnicos) {
+		for (const row of prod?.registros || []) {
 			const cobertura = normalizarCobertura(row);
 			if (cobertura) values.add(cobertura);
 		}
 		return Array.from(values).sort((a, b) => a.localeCompare(b, 'es'));
-	}, [registrosUnicos]);
+	}, [prod?.registros]);
 
 	const registrosFiltrados = useMemo(() => {
 		const cob = (selectedCobertura || '').trim();
-		const filtered = registrosUnicos.filter((r) => {
+		return (prod?.registros || []).filter((r) => {
 			if (cob && normalizarCobertura(r) !== cob) return false;
 			if (estadoValorizacion === 'valorizadas' && !tieneValorEconomico(r)) return false;
 			if (estadoValorizacion === 'no-valorizadas' && tieneValorEconomico(r)) return false;
 			return true;
 		});
-		if (typeof window !== 'undefined') {
-			// eslint-disable-next-line no-console
-			console.debug('[Producción] filtros aplicados', {
-				cobertura: cob || '(todas)',
-				valorizacion: estadoValorizacion,
-				entradaBackend: prod?.registros?.length || 0,
-				entradaUnicos: registrosUnicos.length,
-				salida: filtered.length,
-				muestraCoberturas: filtered.slice(0, 5).map((r) => normalizarCobertura(r)),
-				muestraValores: filtered.slice(0, 5).map((r) => Number(r.total) || 0),
-			});
-		}
-		return filtered;
-	}, [registrosUnicos, selectedCobertura, estadoValorizacion, prod?.registros?.length]);
+	}, [prod?.registros, selectedCobertura, estadoValorizacion]);
 
 	const totalesFiltrados = useMemo(
 		() =>
@@ -270,6 +272,62 @@ export default function MiPerfilPage() {
 				}),
 				{ lineas: 0, total: 0, cantidad: 0 },
 			),
+		[registrosFiltrados],
+	);
+
+	/** Facturación por obra social (solo valorizadas) para gráfico de torta */
+	const chartPorOS = useMemo(() => {
+		const map = new Map<string, number>();
+		for (const r of registrosFiltrados) {
+			if (!tieneValorEconomico(r)) continue;
+			const os = normalizarCobertura(r);
+			map.set(os, (map.get(os) || 0) + (Number(r.total) || 0));
+		}
+		return Array.from(map.entries())
+			.map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
+			.filter((x) => x.value > 0)
+			.sort((a, b) => b.value - a.value)
+			.slice(0, 9);
+	}, [registrosFiltrados]);
+
+	/** Top 8 prácticas por importe facturado para gráfico de barras */
+	const chartTopPracticas = useMemo(() => {
+		const map = new Map<string, { total: number; count: number; desc: string }>();
+		for (const r of registrosFiltrados) {
+			if (!tieneValorEconomico(r)) continue;
+			const key = r.codigoPractica;
+			const ex = map.get(key);
+			if (ex) {
+				ex.total += Number(r.total) || 0;
+				ex.count += 1;
+			} else {
+				map.set(key, { total: Number(r.total) || 0, count: 1, desc: r.descripcionPractica || key });
+			}
+		}
+		return Array.from(map.values())
+			.filter((x) => x.total > 0)
+			.sort((a, b) => b.total - a.total)
+			.slice(0, 8)
+			.map((x) => ({
+				name: x.desc.length > 28 ? x.desc.slice(0, 26) + '…' : x.desc,
+				fullName: x.desc,
+				total: Math.round(x.total * 100) / 100,
+				count: x.count,
+			}));
+	}, [registrosFiltrados]);
+
+	/** KPIs mejorados */
+	const kpiValorizadas = useMemo(() => registrosFiltrados.filter(tieneValorEconomico).length, [registrosFiltrados]);
+	const kpiNoValorizadas = registrosFiltrados.length - kpiValorizadas;
+	const kpiPctValorizacion =
+		registrosFiltrados.length > 0 ? Math.round((kpiValorizadas / registrosFiltrados.length) * 100) : 0;
+	const kpiTopOS = chartPorOS[0] ?? null;
+	const kpiTopOSPct =
+		totalesFiltrados.total > 0 && kpiTopOS
+			? Math.round((kpiTopOS.value / totalesFiltrados.total) * 100)
+			: 0;
+	const kpiRendicionesUnicas = useMemo(
+		() => new Set(registrosFiltrados.map((r) => r.nroRendicion).filter((n) => n != null && n > 0)).size,
 		[registrosFiltrados],
 	);
 
@@ -498,56 +556,53 @@ export default function MiPerfilPage() {
 			{tab === 'produccion' && (
 				<div className={styles.stack}>
 					<section className={styles.productionShell}>
-						<aside className={styles.filtersPanel}>
-							<div className={styles.filtersPanelHead}>
+						{/* ── Barra de filtros horizontal ── */}
+						<div className={styles.filtersBar}>
+							<div className={styles.filtersBarLeft}>
 								<div className={styles.filtersIcon}>
-									<Filter size={20} />
+									<Filter size={16} />
 								</div>
-								<div>
-									<h2>Filtros</h2>
-									<p>Primero se consulta por período. Luego la cobertura y valorización filtran la tabla visible.</p>
-								</div>
+								<span className={styles.filtersPanelTitle}>Filtros</span>
 							</div>
 
-							<div className={styles.filterGroup}>
-								<span className={styles.filterGroupLabel}>
-									<Calendar size={13} strokeWidth={2.5} aria-hidden />
-									Período
-								</span>
-								<div className={styles.dateInputs}>
-									<label className={styles.dateField}>
-										<span>Desde</span>
-										<input
-											type="date"
-											className={styles.dateInput}
-											value={fechaDesde}
-											onChange={(ev) => setFechaDesde(ev.target.value)}
-										/>
-									</label>
-									<label className={styles.dateField}>
-										<span>Hasta</span>
-										<input
-											type="date"
-											className={styles.dateInput}
-											value={fechaHasta}
-											onChange={(ev) => setFechaHasta(ev.target.value)}
-										/>
-									</label>
-								</div>
+							<div className={styles.filterField}>
+								<label className={styles.filterFieldLabel}>
+									<Calendar size={11} strokeWidth={2.5} aria-hidden />
+									Desde
+								</label>
+								<input
+									type="date"
+									className={styles.dateInput}
+									value={fechaDesde}
+									onChange={(ev) => setFechaDesde(ev.target.value)}
+								/>
 							</div>
 
-							<div className={styles.filterGroup}>
-								<span className={styles.filterGroupLabel}>
-									<Building2 size={13} strokeWidth={2.5} aria-hidden />
+							<div className={styles.filterField}>
+								<label className={styles.filterFieldLabel}>
+									<Calendar size={11} strokeWidth={2.5} aria-hidden />
+									Hasta
+								</label>
+								<input
+									type="date"
+									className={styles.dateInput}
+									value={fechaHasta}
+									onChange={(ev) => setFechaHasta(ev.target.value)}
+								/>
+							</div>
+
+							<div className={styles.filterField}>
+								<label className={styles.filterFieldLabel}>
+									<Building2 size={11} strokeWidth={2.5} aria-hidden />
 									Cobertura
-								</span>
+								</label>
 								<select
 									className={styles.dateInput}
 									value={selectedCobertura}
 									onChange={(e) => setSelectedCobertura(e.target.value)}
 									disabled={!prod?.registros?.length}
 								>
-									<option value="">Todas las coberturas</option>
+									<option value="">Todas</option>
 									{coberturaOptions.map((c) => (
 										<option key={c} value={c}>
 											{c}
@@ -556,11 +611,11 @@ export default function MiPerfilPage() {
 								</select>
 							</div>
 
-							<div className={styles.filterGroup}>
-								<span className={styles.filterGroupLabel}>
-									<BadgeCheck size={13} strokeWidth={2.5} aria-hidden />
+							<div className={styles.filterField}>
+								<label className={styles.filterFieldLabel}>
+									<BadgeCheck size={11} strokeWidth={2.5} aria-hidden />
 									Valorización
-								</span>
+								</label>
 								<select
 									className={styles.dateInput}
 									value={estadoValorizacion}
@@ -571,35 +626,34 @@ export default function MiPerfilPage() {
 									}
 								>
 									<option value="todas">Todas</option>
-									<option value="valorizadas">Solo valorizadas</option>
-									<option value="no-valorizadas">Solo no valorizadas</option>
+									<option value="valorizadas">Valorizadas</option>
+									<option value="no-valorizadas">No valorizadas</option>
 								</select>
 							</div>
 
-							<div className={styles.filterActions}>
-								<button
-									type="button"
-									className={styles.btnApply}
-									disabled={loadProd}
-									onClick={() => void cargarProduccionConFiltros(fechaDesde, fechaHasta)}
-								>
-									<RefreshCw size={14} /> Aplicar período
-								</button>
-								<button
-									type="button"
-									className={styles.btnGhost}
-									disabled={loadProd}
-									onClick={() => {
-										setSelectedCobertura('');
-										setEstadoValorizacion('todas');
-										setPaginaActual(1);
-									}}
-								>
-									Limpiar tabla
-								</button>
-							</div>
-						</aside>
+							<button
+								type="button"
+								className={`${styles.btnApply} ${styles.filterBarBtn}`}
+								disabled={loadProd}
+								onClick={() => void cargarProduccionConFiltros(fechaDesde, fechaHasta)}
+							>
+								<RefreshCw size={13} /> Aplicar
+							</button>
+							<button
+								type="button"
+								className={`${styles.btnGhost} ${styles.filterBarBtn}`}
+								disabled={loadProd}
+								onClick={() => {
+									setSelectedCobertura('');
+									setEstadoValorizacion('todas');
+									setPaginaActual(1);
+								}}
+							>
+								Limpiar
+							</button>
+						</div>
 
+						{/* ── Contenido principal ── */}
 						<div className={styles.productionMain}>
 							{loadProd && (
 								<div className={styles.loaderWrap}>
@@ -634,62 +688,170 @@ export default function MiPerfilPage() {
 										</div>
 									</div>
 
+									{/* ── KPIs mejorados ── */}
 									<div className={styles.statsRow}>
-										<div className={styles.statCard}>
-											<div className={styles.statIcon}>
-												<Receipt size={20} />
-											</div>
-											<div>
-												<div className={styles.statLabel}>Prácticas</div>
-												<div className={styles.statValue}>{totalesFiltrados.lineas}</div>
-												<div className={styles.statHint}>{prod.totales.lineas} total(es) en el período</div>
-											</div>
-										</div>
-										<div className={styles.statCard}>
-											<div className={styles.statIcon}>
-												<BadgeCheck size={20} />
-											</div>
-											<div>
-												<div className={styles.statLabel}>Valorizadas</div>
-												<div className={styles.statValue}>{registrosFiltrados.filter(tieneValorEconomico).length}</div>
-												<div className={styles.statHint}>Con total, importe o % mayor a 0</div>
+										{/* Facturado */}
+										<div className={`${styles.statCard} ${styles.statCardPrimary}`}>
+											<div className={styles.statIcon}><Receipt size={18} /></div>
+											<div className={styles.statBody}>
+												<div className={styles.statLabel}>Facturado</div>
+												<div className={`${styles.statValue} ${styles.statValueLarge}`}>
+													${formatImporte(totalesFiltrados.total)}
+												</div>
+												<div className={styles.statHint}>
+													{kpiNoValorizadas > 0
+														? `${kpiNoValorizadas} práctica${kpiNoValorizadas > 1 ? 's' : ''} pendiente${kpiNoValorizadas > 1 ? 's' : ''} de valorizar`
+														: 'Todas valorizadas ✓'}
+												</div>
 											</div>
 										</div>
+
+										{/* Tasa de valorización */}
 										<div className={styles.statCard}>
-											<div className={styles.statIcon}>
-												<FileText size={20} />
-											</div>
-											<div>
-												<div className={styles.statLabel}>Cantidad</div>
-												<div className={styles.statValue}>{totalesFiltrados.cantidad.toLocaleString('es-AR')}</div>
-												<div className={styles.statHint}>Total de prácticas filtradas</div>
+											<div className={styles.statIcon}><BadgeCheck size={18} /></div>
+											<div className={styles.statBody}>
+												<div className={styles.statLabel}>Valorización</div>
+												<div className={styles.statValue}>
+													{kpiPctValorizacion}
+													<span className={styles.statUnit}>%</span>
+												</div>
+												<div className={styles.statProgress}>
+													<div
+														className={styles.statProgressBar}
+														style={{ width: `${kpiPctValorizacion}%` }}
+													/>
+												</div>
+												<div className={styles.statHint}>
+													{kpiValorizadas} de {registrosFiltrados.length} prácticas
+												</div>
 											</div>
 										</div>
+
+										{/* OS principal */}
 										<div className={styles.statCard}>
-											<div className={styles.statIcon}>
-												<ShieldCheck size={20} />
+											<div className={styles.statIcon}><Building2 size={18} /></div>
+											<div className={styles.statBody}>
+												<div className={styles.statLabel}>OS principal</div>
+												<div className={styles.statValueOs} title={kpiTopOS?.name ?? '—'}>
+													{kpiTopOS?.name ?? '—'}
+												</div>
+												<div className={styles.statHint}>
+													{kpiTopOS
+														? `$${formatImporte(kpiTopOS.value)} · ${kpiTopOSPct}% del total`
+														: 'Sin datos valorizados'}
+												</div>
 											</div>
-											<div>
-												<div className={styles.statLabel}>Total valorizado</div>
-												<div className={styles.statValue}>{formatImporte(totalesFiltrados.total)}</div>
-												<div className={styles.statHint}>Importe final filtrado</div>
+										</div>
+
+										{/* Rendiciones */}
+										<div className={styles.statCard}>
+											<div className={styles.statIcon}><TrendingUp size={18} /></div>
+											<div className={styles.statBody}>
+												<div className={styles.statLabel}>Rendiciones</div>
+												<div className={styles.statValue}>{kpiRendicionesUnicas}</div>
+												<div className={styles.statHint}>
+													{totalesFiltrados.lineas} prest. · {totalesFiltrados.cantidad.toLocaleString('es-AR')} unidades
+												</div>
 											</div>
 										</div>
 									</div>
+
+									{/* ── Gráficos ── */}
+									{chartPorOS.length > 0 && (
+										<div className={styles.chartsRow}>
+											{/* Torta: facturación por OS */}
+											<div className={styles.chartCard}>
+												<div className={styles.chartCardHead}>
+													<span className={styles.chartCardTitle}>Facturación por obra social</span>
+													<span className={styles.chartCardSub}>Distribución del importe valorizado</span>
+												</div>
+												<ResponsiveContainer width="100%" height={260}>
+													<PieChart>
+														<Pie
+															data={chartPorOS}
+															cx="50%"
+															cy="50%"
+															innerRadius="38%"
+															outerRadius="65%"
+															paddingAngle={2}
+															dataKey="value"
+														>
+															{chartPorOS.map((_, i) => (
+																<Cell
+																	key={i}
+																	fill={PIE_COLORS[i % PIE_COLORS.length]}
+																/>
+															))}
+														</Pie>
+														<RechartsTooltip content={PieObraSocialTooltip} />
+														<Legend
+															iconType="circle"
+															iconSize={8}
+															formatter={(v: string) => (
+																<span style={{ fontSize: 11, color: '#475569' }}>
+																	{v.length > 22 ? v.slice(0, 20) + '…' : v}
+																</span>
+															)}
+														/>
+													</PieChart>
+												</ResponsiveContainer>
+											</div>
+
+											{/* Barras horizontales: top prácticas */}
+											<div className={styles.chartCard}>
+												<div className={styles.chartCardHead}>
+													<span className={styles.chartCardTitle}>Top prácticas facturadas</span>
+													<span className={styles.chartCardSub}>Por importe total valorizado</span>
+												</div>
+												<ResponsiveContainer width="100%" height={260}>
+													<BarChart
+														data={chartTopPracticas}
+														layout="vertical"
+														margin={{ top: 4, right: 20, left: 8, bottom: 4 }}
+													>
+														<CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+														<XAxis
+															type="number"
+															tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`}
+															tick={{ fontSize: 11, fill: '#94a3b8' }}
+															axisLine={false}
+															tickLine={false}
+														/>
+														<YAxis
+															type="category"
+															dataKey="name"
+															width={110}
+															tick={{ fontSize: 10, fill: '#475569' }}
+															axisLine={false}
+															tickLine={false}
+														/>
+														<RechartsTooltip
+															cursor={{ fill: 'rgba(14,165,233,0.06)' }}
+															formatter={(v: number, _n: string, p: { payload?: { fullName?: string; count?: number } }) => [
+																`$${formatImporte(v)} (${p?.payload?.count ?? ''} prest.)`,
+																p?.payload?.fullName ?? 'Importe',
+															]}
+															contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+														/>
+														<Bar dataKey="total" radius={[0, 6, 6, 0]} maxBarSize={18}>
+															{chartTopPracticas.map((_, i) => (
+																<Cell
+																	key={i}
+																	fill={BAR_COLORS[i % BAR_COLORS.length]}
+																/>
+															))}
+														</Bar>
+													</BarChart>
+												</ResponsiveContainer>
+											</div>
+										</div>
+									)}
 
 									<div className={styles.tableHeaderRow}>
 										<div>
 											<h3 className={styles.tableSectionTitle}>Detalle de prácticas</h3>
 											<p className={styles.tableSubtitle}>
-												Cobertura: <strong>{selectedCobertura || 'Todas'}</strong> · Valorización:{' '}
-												<strong>
-													{estadoValorizacion === 'todas'
-														? 'Todas'
-														: estadoValorizacion === 'valorizadas'
-															? 'Solo valorizadas'
-															: 'Solo no valorizadas'}
-												</strong>{' '}
-												· Período: {prod.totales.lineas} → Filtradas: {registrosFiltrados.length}
+												{registrosFiltrados.length} de {prod.totales.lineas} prácticas del período
 											</p>
 										</div>
 										<span className={styles.tableCount}>
@@ -704,37 +866,83 @@ export default function MiPerfilPage() {
 												<table className={styles.table}>
 													<thead>
 														<tr>
-															<th>Fecha</th>
-															<th>Hora</th>
-															<th>Cód. práctica</th>
-															<th>Descripción</th>
-															<th className={styles.num}>Cantidad</th>
-															<th>DNI paciente</th>
-															<th>Nombre paciente</th>
-															<th>Cobertura (OS)</th>
-															<th className={styles.num}>% facturado</th>
-															<th className={styles.num}>Importe unitario</th>
+															<th className={styles.colFecha}>Fecha</th>
+															<th className={styles.colRendicion}>Rendición</th>
+															<th className={styles.colPractica}>Práctica</th>
+															<th className={styles.num}>Cant.</th>
+															<th className={styles.colPaciente}>Paciente</th>
+															<th className={styles.colCobertura}>Cobertura</th>
+															<th className={styles.num}>% Fact.</th>
+															<th className={styles.num}>Imp. unitario</th>
 															<th className={styles.num}>Total</th>
 														</tr>
 													</thead>
 													<tbody>
-														{registrosPaginados.map((row: ProduccionFila, idx: number) => (
-															<tr
-																key={`${row.id}-${row.idMatch || ''}-${row.codigoPractica}-${row.fecha || ''}-${row.dniPaciente || ''}-${idx}`}
-															>
-																<td>{row.fecha || '—'}</td>
-																<td className={styles.fieldMono}>{formatHora(row.hora)}</td>
-																<td className={styles.fieldMono}>{row.codigoPractica || '—'}</td>
-																<td>{row.descripcionPractica || '—'}</td>
-																<td className={styles.num}>{Number(row.cantidad)}</td>
-																<td className={styles.fieldMono}>{row.dniPaciente || '—'}</td>
-																<td>{row.nombrePaciente || '—'}</td>
-																<td>{normalizarCobertura(row)}</td>
-																<td className={styles.num}>{Number(row.porcentajeFacturado)}</td>
-																<td className={styles.num}>{formatImporte(Number(row.importeUnitario))}</td>
-																<td className={styles.num}>{formatImporte(Number(row.total))}</td>
-															</tr>
-														))}
+														{registrosPaginados.map((row: ProduccionFila, idx: number) => {
+															const valor = tieneValorEconomico(row);
+															return (
+																<tr
+																	key={`${row.id}-${row.idMatch || ''}-${row.codigoPractica}-${row.fecha || ''}-${row.dniPaciente || ''}-${idx}`}
+																	className={valor ? styles.rowValor : styles.rowSinValor}
+																>
+																	<td className={styles.colFecha}>
+																		<div className={styles.fechaCell}>
+																			<Calendar size={13} aria-hidden />
+																			<span>{row.fecha || '—'}</span>
+																		</div>
+																	</td>
+																	<td className={styles.colRendicion}>
+																		{row.nroRendicion != null && row.nroRendicion > 0 ? (
+																			<span className={styles.rendicionTag}>{row.nroRendicion}</span>
+																		) : (
+																			<span className={styles.rendicionTagEmpty}>Pendiente</span>
+																		)}
+																	</td>
+																	<td className={styles.colPractica}>
+																		<div className={styles.practicaCell}>
+																			<span className={styles.practicaCode}>{row.codigoPractica || '—'}</span>
+																			<span className={styles.practicaDesc} title={row.descripcionPractica || ''}>
+																				{row.descripcionPractica || '—'}
+																			</span>
+																		</div>
+																	</td>
+																	<td className={styles.num}>
+																		<span className={styles.qtyPill}>{Number(row.cantidad)}</span>
+																	</td>
+																	<td className={styles.colPaciente}>
+																		<div className={styles.pacienteCell}>
+																			<span className={styles.pacienteNombre}>
+																				{row.nombrePaciente || 'Sin nombre'}
+																			</span>
+																			<span className={styles.pacienteDni}>
+																				DNI {row.dniPaciente || '—'}
+																			</span>
+																		</div>
+																	</td>
+																	<td className={styles.colCobertura}>
+																		<span className={styles.coberturaTag}>{normalizarCobertura(row)}</span>
+																	</td>
+																	<td className={styles.num}>
+																		{Number(row.porcentajeFacturado)}
+																		<span className={styles.percentMark}>%</span>
+																	</td>
+																	<td className={styles.num}>
+																		{valor ? (
+																			<span className={styles.amount}>${formatImporte(Number(row.importeUnitario))}</span>
+																		) : (
+																			<span className={styles.amountMuted}>—</span>
+																		)}
+																	</td>
+																	<td className={styles.num}>
+																		{valor ? (
+																			<span className={styles.amountStrong}>${formatImporte(Number(row.total))}</span>
+																		) : (
+																			<span className={styles.badgePending}>Sin valorizar</span>
+																		)}
+																	</td>
+																</tr>
+															);
+														})}
 													</tbody>
 												</table>
 											</div>

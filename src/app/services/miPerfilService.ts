@@ -32,7 +32,6 @@ export interface ProduccionFila {
 	idMatch?: string | null;
 	valorizada?: boolean;
 	fecha: string | null;
-	hora?: string | null;
 	codigoPractica: string;
 	descripcionPractica: string;
 	cantidad: number;
@@ -42,6 +41,7 @@ export interface ProduccionFila {
 	porcentajeFacturado: number;
 	importeUnitario: number;
 	total: number;
+	nroRendicion?: number | null;
 }
 
 export interface ProduccionPeriodo {
@@ -49,11 +49,6 @@ export interface ProduccionPeriodo {
 	hastaCalendario: string;
 	fechaClarionDesde: number;
 	fechaClarionHasta: number;
-}
-
-export interface ConvenioProduccionOption {
-	idConvenio: number;
-	obraSocial: string;
 }
 
 export interface ProduccionMesResponse {
@@ -72,34 +67,14 @@ export interface ProduccionMesResponse {
 	};
 }
 
-export interface ConveniosProduccionResponse {
-	success: boolean;
-	data: {
-		periodo: ProduccionPeriodo;
-		convenios: ConvenioProduccionOption[];
-	};
-}
-
 export type ProduccionMesQuery = {
 	desde?: string;
 	hasta?: string;
-	/** CSV de IDs numéricos; -1 = sin convenio */
-	idConvenio?: string;
 };
 
 export const miPerfilService = {
 	async obtenerPerfil(): Promise<MiPerfilResponse> {
 		const res = await apiService.get<MiPerfilResponse>('/mi-perfil');
-		return res.data;
-	},
-
-	async listarConveniosProduccion(params: {
-		desde: string;
-		hasta: string;
-	}): Promise<ConveniosProduccionResponse> {
-		const res = await apiService.get<ConveniosProduccionResponse>('/mi-perfil/produccion-mes/convenios', {
-			params: { desde: params.desde, hasta: params.hasta },
-		});
 		return res.data;
 	},
 
@@ -136,7 +111,6 @@ export const miPerfilService = {
 		const params: Record<string, string> = {};
 		if (query?.desde) params.desde = query.desde;
 		if (query?.hasta) params.hasta = query.hasta;
-		if (query?.idConvenio) params.idConvenio = query.idConvenio;
 		const res = await apiService.get<ProduccionMesResponse>('/mi-perfil/produccion-mes', {
 			params: Object.keys(params).length ? params : undefined,
 		});

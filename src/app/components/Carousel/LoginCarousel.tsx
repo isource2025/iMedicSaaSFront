@@ -18,22 +18,19 @@ export default function LoginCarousel() {
 	const slides: Slide[] = useMemo(
 		() => [
 			{
-				imageUrl:
-					"https://i.pinimg.com/736x/c4/8e/f4/c48ef4a6394486a0b7ca4618a0dafd57.jpg",
+				imageUrl: "/images/login-medico.jpg",
 				title: "Tecnología al servicio de la salud",
 				description:
 					"Optimiza procesos clínicos con información en tiempo real.",
 			},
 			{
-				imageUrl:
-					"https://i.pinimg.com/736x/03/20/eb/0320eb09d3c88ec1cbf0ef7efcaec393.jpg",
+				imageUrl: "/images/login-paciente.jpg",
 				title: "Gestión integral del paciente",
 				description:
 					"Historia clínica, internación y análisis en un mismo lugar.",
 			},
 			{
-				imageUrl:
-					"https://i.pinimg.com/736x/65/fb/e4/65fbe47563d0b2f30b7aa827870e7bb1.jpg",
+				imageUrl: "/images/login-laboratorio.jpg",
 				title: "Decisiones basadas en datos",
 				description:
 					"Indicadores y tableros para mejorar la calidad asistencial.",

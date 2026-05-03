@@ -3,7 +3,6 @@
 .container {
 	width: 100%;
 	margin: 0 auto;
-	padding: 0 1rem 2.25rem;
 	display: flex;
 	flex-direction: column;
 	gap: 1.25rem;
@@ -295,34 +294,49 @@
 /* —— Producción: KPIs —— */
 .statsRow {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(170px, 1fr));
-	gap: 0.9rem;
-	margin-bottom: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 0.75rem;
+	margin-bottom: 0.85rem;
 }
 
 .statCard {
 	display: flex;
 	align-items: flex-start;
-	gap: 0.85rem;
+	gap: 0.75rem;
 	min-width: 0;
-	padding: 1rem 1.1rem;
-	background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+	padding: 0.9rem 1rem;
+	background: #fff;
 	border: 1px solid #e5e7eb;
 	border-radius: 16px;
-	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-	transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+	box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+	transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
 }
 
 .statCard:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 4px 10px rgba(0, 131, 169, 0.12);
+	box-shadow: 0 8px 20px rgba(0, 131, 169, 0.1);
 	border-color: #bae6fd;
 }
 
+/* Variante de la card principal (importe total) */
+.statCardPrimary {
+	background: linear-gradient(135deg, #ecfeff 0%, #e0f7fa 100%);
+	border-color: #67e8f9;
+}
+
+.statCardPrimary .statValue {
+	color: #0e7490;
+}
+
+.statBody {
+	min-width: 0;
+	flex: 1;
+}
+
 .statIcon {
-	width: 42px;
-	height: 42px;
-	border-radius: 13px;
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -330,29 +344,147 @@
 	background: linear-gradient(135deg, #ecfeff, #e0f2fe);
 	border: 1px solid #bae6fd;
 	flex-shrink: 0;
+	margin-top: 2px;
 }
 
 .statLabel {
-	font-size: 0.78rem;
-	color: #6b7280;
-	margin-bottom: 0.4rem;
-	font-weight: 600;
+	font-size: 0.7rem;
+	color: #94a3b8;
+	margin-bottom: 0.28rem;
+	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.04em;
+	letter-spacing: 0.05em;
 }
 
 .statValue {
-	font-size: 1.35rem;
-	font-weight: 700;
-	color: #0083a9;
+	font-size: 1.45rem;
+	font-weight: 800;
+	color: #0f172a;
 	font-variant-numeric: tabular-nums;
-	line-height: 1.2;
+	line-height: 1.15;
+}
+
+.statValueLarge {
+	font-size: 1.3rem;
+}
+
+.statValueOs {
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: #0f172a;
+	line-height: 1.25;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+	margin-bottom: 0.2rem;
+}
+
+.statUnit {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #64748b;
+	margin-left: 0.15rem;
 }
 
 .statHint {
-	font-size: 0.75rem;
+	font-size: 0.72rem;
 	color: #94a3b8;
-	margin-top: 0.35rem;
+	margin-top: 0.28rem;
+	line-height: 1.35;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Barra de progreso inline (valorización) */
+.statProgress {
+	height: 4px;
+	background: #e2e8f0;
+	border-radius: 999px;
+	overflow: hidden;
+	margin: 0.4rem 0 0.28rem;
+}
+
+.statProgressBar {
+	height: 100%;
+	background: linear-gradient(90deg, #0891b2, #06b6d4);
+	border-radius: 999px;
+	transition: width 0.6s ease;
+}
+
+/* ── Gráficos ── */
+.chartsRow {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+	gap: 0.85rem;
+	margin-bottom: 0.85rem;
+}
+
+.chartCard {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 18px;
+	padding: 1rem 1rem 0.6rem;
+	box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+	min-width: 0;
+}
+
+.chartCardHead {
+	margin-bottom: 0.5rem;
+}
+
+.chartCardTitle {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.chartCardSub {
+	display: block;
+	font-size: 0.72rem;
+	color: #94a3b8;
+	margin-top: 0.1rem;
+}
+
+/* Tooltip gráfico de torta (obra social) */
+.pieTooltip {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 0.65rem 0.85rem;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+	max-width: min(320px, 85vw);
+}
+
+.pieTooltipKicker {
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #94a3b8;
+	margin-bottom: 0.25rem;
+}
+
+.pieTooltipNombre {
+	font-size: 0.9rem;
+	font-weight: 800;
+	color: #0e7490;
+	line-height: 1.35;
+	word-break: break-word;
+	margin-bottom: 0.45rem;
+}
+
+.pieTooltipMonto {
+	font-size: 0.78rem;
+	color: #64748b;
+}
+
+.pieTooltipMonto strong {
+	color: #0f172a;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
 }
 
 .periodoLine {
@@ -377,70 +509,110 @@
 	font-weight: 500;
 }
 
-.filtersBar {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	margin-bottom: 1.15rem;
-	padding: 1rem 1.1rem;
-	background: #fff;
-	border: 1px solid #e2e8f0;
-	border-radius: 12px;
-	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-}
-
+/* ── Producción: layout vertical (barra + contenido) ── */
 .productionShell {
-	display: grid;
-	gap: 1rem;
-	align-items: start;
-}
-
-.filtersPanel {
-	position: sticky;
-	top: 0.8rem;
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
-	background: rgba(255, 255, 255, 0.92);
-	border: 1px solid #e2e8f0;
-	border-radius: 20px;
-	padding: 1.1rem;
-	box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+	gap: 0.65rem;
 }
 
-.filtersPanelHead {
+/* ── Barra de filtros: una sola fila que envuelve según ancho (CSS Grid auto-fit) ── */
+.filtersBar {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.75rem), 1fr));
+	align-items: end;
+	gap: 0.45rem 0.55rem;
+	background: rgba(255, 255, 255, 0.95);
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 0.55rem 0.75rem;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.filtersBarLeft {
 	display: flex;
-	gap: 0.85rem;
-	align-items: flex-start;
-	padding-bottom: 0.9rem;
-	border-bottom: 1px solid #e2e8f0;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.45rem;
+	min-width: 0;
+	padding: 0.25rem 0.35rem 0.35rem 0;
+	align-self: end;
+	border-right: 1px solid #e2e8f0;
+	margin-right: 0.15rem;
+	padding-right: 0.65rem;
+}
+
+.filtersPanelTitle {
+	font-size: 0.78rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #475569;
+	white-space: nowrap;
 }
 
 .filtersIcon {
-	width: 42px;
-	height: 42px;
-	border-radius: 14px;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	color: #fff;
 	background: linear-gradient(135deg, #0ea5e9, #0284c7);
-	box-shadow: 0 10px 20px rgba(14, 165, 233, 0.25);
 	flex-shrink: 0;
 }
 
-.filtersPanelHead h2 {
-	margin: 0;
-	color: #0f172a;
-	font-size: 1.05rem;
+.filterField {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	min-width: 0;
 }
 
-.filtersPanelHead p {
-	margin: 0.3rem 0 0;
+.filterFieldLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.28rem;
+	font-size: 0.67rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 	color: #64748b;
-	font-size: 0.82rem;
-	line-height: 1.45;
+	cursor: default;
 }
+
+.filterField .dateInput,
+.filterField select.dateInput {
+	width: 100%;
+	box-sizing: border-box;
+	min-width: 0;
+}
+
+.filterBarBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	width: 100%;
+	box-sizing: border-box;
+	min-height: 2.38rem;
+	align-self: end;
+}
+
+.filterDivider {
+	display: none;
+}
+
+/* Mantener referencia al nombre antiguo por compatibilidad con media queries */
+.filtersPanel {
+	display: none;
+}
+
+.filtersPanelHead { display: none; }
 
 .productionMain {
 	min-width: 0;
@@ -448,7 +620,6 @@
 	border: 1px solid #e2e8f0;
 	border-radius: 20px;
 	padding: 1.1rem;
-	box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
 }
 
 .productionHeader {
@@ -539,13 +710,14 @@
 
 .dateInput {
 	font-family: ui-monospace, 'Cascadia Code', monospace;
-	font-size: 0.875rem;
-	padding: 0.45rem 0.6rem;
+	font-size: 0.82rem;
+	padding: 0.38rem 0.55rem;
 	border: 1px solid #e2e8f0;
 	border-radius: 8px;
 	color: #0f172a;
 	background: #f8fafc;
-	min-width: 10.5rem;
+	min-width: 8.5rem;
+	max-width: 100%;
 }
 
 .dateInput:focus {
@@ -607,15 +779,16 @@
     appearance: none;
     border: none;
     cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
-    padding: 0.55rem 1.15rem;
-    border-radius: 9px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.42rem 0.9rem;
+    border-radius: 8px;
     color: #fff;
     background: linear-gradient(135deg, #00b5e2 0%, #0083a9 100%);
-    box-shadow: 0 2px 8px rgba(0, 131, 169, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
     transition: transform 0.12s ease, box-shadow 0.12s ease;
     align-items: center;
+    white-space: nowrap;
 }
 
 .btnApply:hover:not(:disabled) {
@@ -633,12 +806,13 @@
 	border: 1px solid #e2e8f0;
 	background: #fff;
 	color: #475569;
-	font-size: 0.8125rem;
+	font-size: 0.8rem;
 	font-weight: 600;
-	padding: 0.5rem 0.9rem;
+	padding: 0.42rem 0.75rem;
 	border-radius: 8px;
 	cursor: pointer;
 	transition: border-color 0.15s ease, background 0.15s ease;
+	white-space: nowrap;
 }
 
 .btnGhost:hover:not(:disabled) {
@@ -998,12 +1172,13 @@
 	box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
 }
 
-/* —— Tablas —— */
+/* —— Tabla de prácticas (rediseño) —— */
 .tableSectionTitle {
 	margin: 0;
-	font-size: 0.95rem;
-	font-weight: 700;
-	color: #1e293b;
+	font-size: 1.05rem;
+	font-weight: 800;
+	color: #0f172a;
+	letter-spacing: -0.01em;
 }
 
 .tableHeaderRow {
@@ -1011,23 +1186,29 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 1rem;
-	margin: 0.85rem 0 0.65rem;
+	margin: 1rem 0 0.85rem;
+	padding: 0.65rem 0.9rem;
+	background: linear-gradient(135deg, #f0fdff 0%, #ecfeff 100%);
+	border: 1px solid #cffafe;
+	border-radius: 14px;
 }
 
 .tableCount {
-	color: #64748b;
-	font-size: 0.8rem;
-	font-weight: 600;
-	background: #f8fafc;
-	border: 1px solid #e2e8f0;
+	color: #0e7490;
+	font-size: 0.78rem;
+	font-weight: 700;
+	background: #fff;
+	border: 1px solid #67e8f9;
 	border-radius: 999px;
-	padding: 0.32rem 0.62rem;
+	padding: 0.4rem 0.85rem;
+	box-shadow: 0 1px 2px rgba(8, 47, 73, 0.06);
 }
 
 .tableSubtitle {
 	margin: 0.22rem 0 0;
-	color: #64748b;
-	font-size: 0.8rem;
+	color: #475569;
+	font-size: 0.82rem;
+	font-weight: 500;
 }
 
 .tableHint {
@@ -1039,29 +1220,32 @@
 
 .tableWrap {
 	overflow: auto;
-	max-height: min(70vh, 720px);
-	border-radius: 16px;
-	border: 1px solid #e5e7eb;
-	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 10px 24px rgba(15, 23, 42, 0.05);
+	max-height: min(72vh, 760px);
+	border-radius: 18px;
+	border: 1px solid #e2e8f0;
+	box-shadow:
+		0 18px 38px rgba(15, 23, 42, 0.07),
+		0 2px 6px rgba(15, 23, 42, 0.04);
 	background: #fff;
 }
 
 .table {
 	width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 	font-size: 0.8125rem;
 }
 
 .table thead th {
 	text-align: left;
-	padding: 0.75rem 0.9rem;
+	padding: 0.95rem 0.85rem;
 	font-weight: 700;
-	font-size: 0.72rem;
+	font-size: 0.7rem;
 	text-transform: uppercase;
-	letter-spacing: 0.04em;
+	letter-spacing: 0.06em;
 	color: #fff;
-	background: linear-gradient(135deg, #0083a9 0%, #006080 100%);
-	border-bottom: 2px solid #004d63;
+    background: #0891b2;
+	border-bottom: 1px solid rgba(8, 47, 73, 0.4);
 	white-space: nowrap;
 	position: sticky;
 	top: 0;
@@ -1069,31 +1253,246 @@
 }
 
 .table thead th:first-child {
-	border-radius: 11px 0 0 0;
+	padding-left: 1.15rem;
+	border-radius: 14px 0 0 0;
 }
 
 .table thead th:last-child {
-	border-radius: 0 11px 0 0;
+	padding-right: 1.15rem;
+	border-radius: 0 14px 0 0;
 }
 
 .table tbody td {
-	padding: 0.68rem 0.9rem;
+	padding: 0.9rem 0.85rem;
 	border-bottom: 1px solid #f1f5f9;
-	color: #334155;
-	vertical-align: top;
+	color: #1e293b;
+	vertical-align: middle;
+	transition: background-color 0.12s ease;
 }
 
-.table tbody tr:nth-child(even) td {
+.table tbody td:first-child {
+	padding-left: 1.15rem;
+}
+
+.table tbody td:last-child {
+	padding-right: 1.15rem;
+}
+
+.table tbody tr.rowValor td {
+	background: #ffffff;
+}
+
+.table tbody tr.rowSinValor td {
 	background: #fafbfc;
 }
 
 .table tbody tr:hover td {
-	background: #f0fdfa;
+	background: linear-gradient(90deg, #ecfeff 0%, #f0fdff 100%);
+}
+
+.table tbody tr:last-child td {
+	border-bottom: none;
 }
 
 .num {
 	text-align: right;
 	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* Columnas */
+.colFecha { width: 8rem; }
+.colPractica { min-width: 22rem; }
+.colPaciente { min-width: 14rem; }
+.colCobertura { min-width: 12rem; }
+.colRendicion { width: 8.5rem; text-align: center; }
+
+/* Celda fecha */
+.fechaCell {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	color: #0e7490;
+	font-weight: 700;
+	font-size: 0.82rem;
+	padding: 0.32rem 0.6rem;
+	background: #ecfeff;
+	border: 1px solid #cffafe;
+	border-radius: 8px;
+	white-space: nowrap;
+}
+
+.fechaCell svg {
+	flex-shrink: 0;
+}
+
+/* Celda práctica */
+.practicaCell {
+	display: flex;
+	flex-direction: column;
+	gap: 0.18rem;
+	min-width: 0;
+}
+
+.practicaCode {
+	display: inline-block;
+	font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.7rem;
+	font-weight: 700;
+	color: #0f172a;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	padding: 0.12rem 0.42rem;
+	width: fit-content;
+	letter-spacing: 0.02em;
+}
+
+.practicaDesc {
+	font-size: 0.86rem;
+	font-weight: 600;
+	color: #1e293b;
+	line-height: 1.35;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	max-width: 28rem;
+}
+
+/* Cantidad */
+.qtyPill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2rem;
+	padding: 0.22rem 0.55rem;
+	background: #eef2ff;
+	color: #4338ca;
+	border: 1px solid #c7d2fe;
+	border-radius: 999px;
+	font-weight: 700;
+	font-size: 0.78rem;
+}
+
+/* Paciente (DNI + nombre en una sola columna) */
+.pacienteCell {
+	display: flex;
+	flex-direction: column;
+	gap: 0.18rem;
+	min-width: 0;
+}
+
+.pacienteNombre {
+	font-size: 0.86rem;
+	font-weight: 700;
+	color: #0f172a;
+	line-height: 1.3;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 18rem;
+}
+
+.pacienteDni {
+	font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.72rem;
+	color: #64748b;
+	letter-spacing: 0.02em;
+}
+
+/* Cobertura */
+.coberturaTag {
+	display: inline-flex;
+	align-items: center;
+	max-width: 14rem;
+	padding: 0.32rem 0.65rem;
+	color: black;
+	background-color: #b5cfbc94;
+	border-radius: 8px;
+	font-size: 0.74rem;
+	letter-spacing: 0.1em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.percentMark {
+	color: #94a3b8;
+	font-weight: 600;
+	margin-left: 0.1rem;
+}
+
+/* Importes */
+.amount {
+	font-weight: 600;
+	color: #0f172a;
+	font-variant-numeric: tabular-nums;
+}
+
+.amountStrong {
+	display: inline-flex;
+	align-items: center;
+	font-weight: 800;
+	color: #047857;
+	background: #ecfdf5;
+	border: 1px solid #a7f3d0;
+	border-radius: 8px;
+	padding: 0.34rem 0.65rem;
+	font-variant-numeric: tabular-nums;
+	font-size: 0.82rem;
+}
+
+.amountMuted {
+	color: #cbd5e1;
+	font-weight: 500;
+}
+
+.badgePending {
+	display: inline-flex;
+	align-items: center;
+	font-weight: 700;
+	color: #b45309;
+	background: #fffbeb;
+	border: 1px dashed #fcd34d;
+	border-radius: 8px;
+	padding: 0.3rem 0.65rem;
+	font-size: 0.72rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+/* Rendición */
+.rendicionTag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-weight: 700;
+	color: #1e40af;
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	border-radius: 8px;
+	padding: 0.32rem 0.65rem;
+	font-size: 0.78rem;
+	letter-spacing: 0.02em;
+}
+
+.rendicionTagEmpty {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: #94a3b8;
+	background: #f8fafc;
+	border: 1px dashed #cbd5e1;
+	border-radius: 8px;
+	padding: 0.3rem 0.65rem;
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 }
 
 .pagination {
@@ -1177,13 +1576,8 @@
 }
 
 @media (max-width: 1180px) {
-	.productionShell,
 	.profileShell {
 		grid-template-columns: 1fr;
-	}
-
-	.filtersPanel {
-		position: static;
 	}
 
 	.profileAside {
@@ -1247,6 +1641,21 @@
 		gap: 0.35rem;
 	}
 
+	/* Barra filtros: mismo grid auto-fit; en pantallas angostas el bloque "Filtros" ocupa todo el ancho */
+	.filtersBar {
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+	}
+
+	.filtersBarLeft {
+		grid-column: 1 / -1;
+		border-right: none;
+		margin-right: 0;
+		padding-right: 0;
+		padding-bottom: 0.45rem;
+		margin-bottom: 0.1rem;
+		border-bottom: 1px solid #e2e8f0;
+	}
+
 	.dateInputs {
 		flex-direction: column;
 		align-items: stretch;
@@ -1263,5 +1672,26 @@
 
 	.pageButton {
 		justify-content: center;
+	}
+
+	.colPractica,
+	.colPaciente,
+	.colCobertura {
+		min-width: auto;
+	}
+
+	.practicaDesc,
+	.pacienteNombre {
+		max-width: none;
+		white-space: normal;
+	}
+
+	.coberturaTag {
+		max-width: 100%;
+	}
+
+	.amountStrong {
+		padding: 0.28rem 0.5rem;
+		font-size: 0.78rem;
 	}
 }

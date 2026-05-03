@@ -2,6 +2,14 @@
   position: relative;
   width: 100%;
   height: 100%;
+  flex: 1; /* ocupa todo el alto del flex container imageSection */
+  min-height: 0;
+}
+
+.carouselViewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -15,10 +23,22 @@
 .slide {
   position: relative;
   height: 100%;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.slideBg {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center;
-  /* Evitar que el slide se encoja y respete el width inline */
-  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  transition: transform 800ms ease;
+}
+
+.slideActive .slideBg {
+  transform: scale(1.03);
 }
 
 .overlay {
@@ -29,35 +49,38 @@
               linear-gradient(135deg, rgba(0, 131, 169, 0.35), rgba(0, 181, 226, 0.25)); /* Pantone 314C & 313U */
 }
 
-.slideContent {
+.slideContent,
+.slideCard {
   position: absolute;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  top: 70%;
-  left: 3rem;
-  right: 3rem;
-  color: #FFFFFF;
+  bottom: 4.5rem;
+  left: 2rem;
+  right: 2rem;
+  color: #fff;
   z-index: 2;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  padding: 1rem 1.25rem;
+  background: rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 1.1rem 1.4rem;
+  gap: 0.35rem;
 }
 
 .slideTitle {
-  font-size: 2rem;
-  font-weight: 900;
-  line-height: 1.1;
-  margin-bottom: 0.75rem;
-  color: white;
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .slideDescription {
-  font-size: 1rem;
-  max-width: 48ch;
-  color: rgb(214, 177, 177);
+  font-size: 0.9rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.4;
 }
 
 .navButton {
@@ -88,7 +111,7 @@
 
 .dots {
   position: absolute;
-  bottom: 4.5rem;
+  bottom: 1rem;
   left: 0;
   right: 0;
   display: flex;

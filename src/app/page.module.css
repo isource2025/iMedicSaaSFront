@@ -22,6 +22,7 @@
   position: relative;
   overflow: hidden;
   display: none; /* Oculto en mobile por defecto */
+  align-self: stretch; /* hereda el alto del flex container */
 }
 
 .videoTag {
@@ -80,6 +81,7 @@
 /* Media query para tablets y escritorio - Mostrar carrusel 50/50 */
 @media (min-width: 768px) {
   .imageSection {
-    display: block; /* Mostrar carrusel en desktop */
+    display: flex; /* flex en vez de block para que height:100% propague */
+    flex-direction: column;
   }
 }
