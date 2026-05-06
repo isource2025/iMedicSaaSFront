@@ -6,6 +6,7 @@ import { evolucionesService } from "../../../services/evolucionesService";
 import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import { formatSqlDate } from "../../../utils/dateUtils";
+import { useUsuarioActual, esRegistroPropio } from "../../../hooks/useUsuarioActual";
 
 export type EvolucionEnfermeriaRow = {
     NumeroVisita: number;
@@ -18,6 +19,8 @@ export type EvolucionEnfermeriaRow = {
     OperadorApellido?: string | null;
     OperadorNombres?: string | null;
     FechaHoraCarga?: string | null;
+    /** CodOperador del enfermero que cargó la evolución (control de propiedad). */
+    OperadorCarga?: number | null;
 };
 
 type Props = {
@@ -32,6 +35,7 @@ export default function EvolucionEnfermeriaTable({
     const hasRows = rows && rows.length > 0;
     const [deletingEvolucion, setDeletingEvolucion] = useState<EvolucionEnfermeriaRow | null>(null);
     const [viewingEvolucion, setViewingEvolucion] = useState<EvolucionEnfermeriaRow | null>(null);
+    const usuarioActual = useUsuarioActual();
 
     const handleDelete = async (evolucion: EvolucionEnfermeriaRow) => {
         try {
@@ -117,17 +121,7 @@ export default function EvolucionEnfermeriaTable({
                                                 >
                                                     <IoEyeOutline color="#5BC0DE" size="18px" />
                                                 </button>
-                                                <button
-                                                    className={`${styles.btnAction}`}
-                                                    title="Editar evolución"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        // Editar no implementado
-                                                    }}
-                                                    style={{ opacity: 0.3, cursor: 'not-allowed' }}
-                                                >
-                                                    <IoPencilOutline color="#5BC0DE" size="18px" />
-                                                </button>
+                                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) !== false && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Eliminar evolución"
@@ -137,7 +131,7 @@ export default function EvolucionEnfermeriaTable({
                                                     }}
                                                 >
                                                     <IoTrashOutline color="#5BC0DE" size="18px" />
-                                                </button>
+                                                </button>)}
                                             </div>
                                         </td>
                                     </tr>

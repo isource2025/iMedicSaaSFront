@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	BadgeCheck,
 	Building2,
@@ -9,6 +9,8 @@ import {
 	ChevronRight,
 	FileText,
 	Filter,
+	Hammer,
+	HeartPulse,
 	IdCard,
 	MapPin,
 	Pencil,
@@ -16,6 +18,7 @@ import {
 	RefreshCw,
 	Save,
 	ShieldCheck,
+	Stethoscope,
 	TrendingUp,
 	User,
 	X,
@@ -34,6 +37,30 @@ import {
 	YAxis,
 } from 'recharts';
 import Loader from '@/app/components/Loader/Loader';
+import { authService } from '@/app/services/authService';
+
+/** Ícono fijo según el rol del usuario — no editable */
+function RolAvatar() {
+	const rol = authService.getCurrentRol();
+	const nombre = (rol?.nombre || '').toUpperCase();
+
+	const configs: Record<string, { Icon: React.ElementType; bg: string; color: string; label: string }> = {
+		ADMIN:          { Icon: ShieldCheck,  bg: '#eff6ff', color: '#2563eb', label: 'Administrador' },
+		MEDICO:         { Icon: Stethoscope,  bg: '#ecfdf5', color: '#059669', label: 'Médico' },
+		ENFERMERO:      { Icon: HeartPulse,   bg: '#fff1f2', color: '#e11d48', label: 'Enfermero' },
+		ADMINISTRATIVO: { Icon: Hammer,       bg: '#fffbeb', color: '#d97706', label: 'Administrativo' },
+	};
+	const cfg = configs[nombre] ?? { Icon: User, bg: '#f1f5f9', color: '#64748b', label: rol?.nombre || 'Usuario' };
+	return (
+		<div
+			className={styles.rolAvatar}
+			style={{ background: cfg.bg, border: `2px solid ${cfg.color}22` }}
+			title={cfg.label}
+		>
+			<cfg.Icon size={46} color={cfg.color} strokeWidth={1.6} />
+		</div>
+	);
+}
 import {
 	miPerfilService,
 	type MiPerfilResponse,
@@ -158,9 +185,6 @@ export default function MiPerfilPage() {
 	const [editing, setEditing] = useState(false);
 	const [savingProfile, setSavingProfile] = useState(false);
 	const [profileForm, setProfileForm] = useState<Record<string, string>>({});
-	const [fotoDataUrl, setFotoDataUrl] = useState<string | null>(null);
-	const [fotoLoading, setFotoLoading] = useState(false);
-	const fileInputRef = useRef<HTMLInputElement | null>(null);
 
 	const [fechaDesde, setFechaDesde] = useState(def.desde);
 	const [fechaHasta, setFechaHasta] = useState(def.hasta);
@@ -187,7 +211,6 @@ export default function MiPerfilPage() {
 				initialForm[key] = p[key] == null ? '' : String(p[key]);
 			}
 			setProfileForm(initialForm);
-			setFotoDataUrl(res.data.fotoPerfil?.dataUrl || null);
 		} catch (e: unknown) {
 			const msg = e instanceof Error ? e.message : 'No se pudo cargar el perfil';
 			setError(msg);
@@ -365,36 +388,6 @@ export default function MiPerfilPage() {
 		}
 	};
 
-	const onSeleccionarFoto = async (file?: File) => {
-		if (!file) return;
-		setFotoLoading(true);
-		setError(null);
-		try {
-			const res = await miPerfilService.actualizarFotoPerfil(file);
-			if (!res.success) throw new Error(res.mensaje || 'No se pudo actualizar la foto');
-			const fotoRes = await miPerfilService.obtenerFotoPerfil();
-			setFotoDataUrl(fotoRes.data?.dataUrl || null);
-		} catch (e: unknown) {
-			setError(apiErrorMessage(e, 'No se pudo actualizar la foto de perfil'));
-		} finally {
-			setFotoLoading(false);
-		}
-	};
-
-	const eliminarFoto = async () => {
-		setFotoLoading(true);
-		setError(null);
-		try {
-			const res = await miPerfilService.eliminarFotoPerfil();
-			if (!res.success) throw new Error(res.mensaje || 'No se pudo eliminar la foto');
-			setFotoDataUrl(null);
-		} catch (e: unknown) {
-			setError(apiErrorMessage(e, 'No se pudo eliminar la foto de perfil'));
-		} finally {
-			setFotoLoading(false);
-		}
-	};
-
 	return (
 		<div className={styles.container}>
 
@@ -405,126 +398,86 @@ export default function MiPerfilPage() {
 			)}
 			{error && <p className={styles.err}>{error}</p>}
 
-			{!loading && tab === 'resumen' && perfil && (
-				<div className={styles.stack}>
-					<section className={styles.profileShell}>
-						<div className={styles.profileCard}>
-							<div className={styles.profileCover}>
+			{/* ── Header de perfil: siempre visible ── */}
+			{!loading && perfil && (
+				<section className={styles.profileShell}>
+					<div className={styles.profileCard}>
+						<div className={styles.profileCover} />
+						<div className={styles.profileTop}>
+							<div className={styles.avatarBox}>
+								<RolAvatar />
 							</div>
-							<div className={styles.profileTop}>
-								<div className={styles.avatarBox}>
-									{fotoDataUrl ? (
-										<img src={fotoDataUrl} alt="Foto de perfil" className={styles.avatarImg} />
-									) : (
-										<div className={styles.avatarFallback}>
-											<User size={42} strokeWidth={2} />
-										</div>
-									)}
-									<div className={styles.avatarActions}>
-										<button
-											type="button"
-											className={styles.linkAction}
-											disabled={fotoLoading}
-											onClick={() => fileInputRef.current?.click()}
-										>
-											Cambiar foto
-										</button>
-										<button
-											type="button"
-											className={styles.linkDanger}
-											disabled={fotoLoading || !fotoDataUrl}
-											onClick={() => void eliminarFoto()}
-										>
-											Eliminar
-										</button>
-										<input
-											ref={fileInputRef}
-											type="file"
-											accept="image/*"
-											style={{ display: 'none' }}
-											onChange={(e) => void onSeleccionarFoto(e.target.files?.[0])}
-										/>
-									</div>
-								</div>
-								<div className={styles.profileHeadText}>
-									<h2>{nombrePerfil}</h2>
-									<p>Documento {documentoPerfil} · Usuario {resumen?.NombreRed || '—'}</p>
-									<div className={styles.profileChips}>
-										<span>
-											<IdCard size={14} /> Mat. prov. {profileForm.MatriculaProvincial || '—'}
-										</span>
-										<span>
-											<ShieldCheck size={14} /> Mat. nac. {profileForm.MatriculaNacional || '—'}
-										</span>
-										<span>
-											<Building2 size={14} /> {profileForm.LugarTrabajo || 'Sin lugar de trabajo'}
-										</span>
-									</div>
-								</div>
-								<div className={styles.profileActions}>
-									{editing ? (
-										<>
-											<button
-												type="button"
-												className={styles.btnApply}
-												disabled={savingProfile}
-												onClick={() => void guardarPerfil()}
-											>
-												<Save size={14} /> Guardar cambios
-											</button>
-											<button
-												type="button"
-												className={styles.btnGhost}
-												disabled={savingProfile}
-												onClick={() => setEditing(false)}
-											>
-												<X size={14} /> Cancelar
-											</button>
-										</>
-									) : (
-										<>
-											<button type="button" className={styles.btnGhost} onClick={() => setEditing(true)}>
-												<Pencil size={14} /> Editar perfil
-											</button>
-											<button
-												type="button"
-												className={styles.btnProduction}
-												onClick={() => setTab('produccion')}
-											>
-												<Receipt size={14} /> Ver producción
-											</button>
-										</>
-									)}
+							<div className={styles.profileHeadText}>
+								<h2>{nombrePerfil}</h2>
+								<p>Documento {documentoPerfil} · Usuario {resumen?.NombreRed || '—'}</p>
+								<div className={styles.profileChips}>
+									<span>
+										<IdCard size={14} /> Mat. prov. {profileForm.MatriculaProvincial || '—'}
+									</span>
+									<span>
+										<ShieldCheck size={14} /> Mat. nac. {profileForm.MatriculaNacional || '—'}
+									</span>
+									<span>
+										<Building2 size={14} /> {profileForm.LugarTrabajo || 'Sin lugar de trabajo'}
+									</span>
 								</div>
 							</div>
 						</div>
+					</div>
 
-						<aside className={styles.profileAside}>
-							<div className={styles.asideCard}>
-								<div className={styles.asideIcon}>
-									<MapPin size={20} />
-								</div>
-								<span>Ubicación laboral</span>
-								<strong>{profileForm.LugarTrabajo || '—'}</strong>
-								<p>Lugar de trabajo configurado.</p>
+					<aside className={styles.profileAside}>
+						<div className={styles.asideCard}>
+							<div className={styles.asideIcon}>
+								<MapPin size={20} />
 							</div>
-							<div className={styles.asideCard}>
-								<div className={styles.asideIcon}>
-									<FileText size={20} />
-								</div>
-								<span>Cobro</span>
-								<strong>{profileForm.LugarCobro || '—'}</strong>
-								<p>Referencia administrativa del perfil.</p>
+							<span>Ubicación laboral</span>
+							<strong>{profileForm.LugarTrabajo || '—'}</strong>
+							<p>Lugar de trabajo configurado.</p>
+						</div>
+						<div className={styles.asideCard}>
+							<div className={styles.asideIcon}>
+								<FileText size={20} />
 							</div>
-						</aside>
-					</section>
+							<span>Cobro</span>
+							<strong>{profileForm.LugarCobro || '—'}</strong>
+							<p>Referencia administrativa del perfil.</p>
+						</div>
+					</aside>
+				</section>
+			)}
 
+			{/* ── Solapas ── */}
+			{!loading && perfil && (
+				<div className={styles.tabBar}>
+					<button
+						type="button"
+						className={`${styles.tabBtn} ${tab === 'resumen' ? styles.tabBtnActive : ''}`}
+						onClick={() => setTab('resumen')}
+					>
+						<User size={15} strokeWidth={2.2} />
+						Mis Datos
+					</button>
+					<button
+						type="button"
+						className={`${styles.tabBtn} ${tab === 'produccion' ? styles.tabBtnActive : ''}`}
+						onClick={() => setTab('produccion')}
+					>
+						<Receipt size={15} strokeWidth={2.2} />
+						Mi Producción
+					</button>
+				</div>
+			)}
+
+			{/* ── Mis Datos ── */}
+			{!loading && tab === 'resumen' && perfil && (
+				<div className={styles.stack}>
 					<section className={styles.profileDetails}>
 						{PROFILE_FIELD_GROUPS.map((group) => (
 							<div className={styles.detailGroup} key={group.title}>
 								<div className={styles.detailGroupHead}>
 									<h3>{group.title}</h3>
 									<p>{group.description}</p>
+									{/* Botón editar solo aquí, en la primera sección del grupo */}
 								</div>
 								<div className={styles.profileRows}>
 									{profileRows
@@ -550,9 +503,38 @@ export default function MiPerfilPage() {
 							</div>
 						))}
 					</section>
+
+					{/* Botones de edición al pie */}
+					<div className={styles.editFooter}>
+						{editing ? (
+							<>
+								<button
+									type="button"
+									className={styles.btnApply}
+									disabled={savingProfile}
+									onClick={() => void guardarPerfil()}
+								>
+									<Save size={14} /> Guardar cambios
+								</button>
+								<button
+									type="button"
+									className={styles.btnGhost}
+									disabled={savingProfile}
+									onClick={() => setEditing(false)}
+								>
+									<X size={14} /> Cancelar
+								</button>
+							</>
+						) : (
+							<button type="button" className={styles.btnGhost} onClick={() => setEditing(true)}>
+								<Pencil size={14} /> Editar datos
+							</button>
+						)}
+					</div>
 				</div>
 			)}
 
+			{/* ── Mi Producción ── */}
 			{tab === 'produccion' && (
 				<div className={styles.stack}>
 					<section className={styles.productionShell}>

@@ -134,9 +134,23 @@ const handleSubmit = async (e: React.FormEvent) => {
     
     if (data.success) {
       localStorage.setItem('token', data.token || '');
-      
+
       if (data.usuario) {
         localStorage.setItem('user', JSON.stringify(data.usuario));
+      }
+
+      if (data.rol) {
+        localStorage.setItem('rol', JSON.stringify(data.rol));
+      } else {
+        localStorage.removeItem('rol');
+      }
+
+      // Permisos efectivos calculados en el backend desde BD (con fallback
+      // a la matriz hardcoded si la lista viene vacía).
+      if (Array.isArray(data.permisos)) {
+        localStorage.setItem('permisos', JSON.stringify(data.permisos));
+      } else {
+        localStorage.removeItem('permisos');
       }
 
       if (data.sectorSeleccionado) {

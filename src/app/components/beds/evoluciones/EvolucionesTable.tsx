@@ -6,6 +6,7 @@ import { evolucionesService } from "../../../services/evolucionesService";
 import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import { formatSqlDate } from "../../../utils/dateUtils";
+import { useUsuarioActual, esRegistroPropio } from "../../../hooks/useUsuarioActual";
 
 export type EvolucionRow = {
     id: number;
@@ -42,6 +43,7 @@ export default function EvolucionesTable({
     const hasRows = rows && rows.length > 0;
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [viewingEvolucion, setViewingEvolucion] = useState<EvolucionRow | null>(null);
+    const usuarioActual = useUsuarioActual();
 
     const handleDelete = async (id: number) => {
         try {
@@ -164,6 +166,7 @@ export default function EvolucionesTable({
                                                 >
                                                     <IoEyeOutline color="#5BC0DE" size="18px" />
                                                 </button>
+                                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) !== false && (<>
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Editar evolución"
@@ -184,6 +187,7 @@ export default function EvolucionesTable({
                                                 >
                                                     <IoTrashOutline color="#5BC0DE" size="18px" />
                                                 </button>
+                                                </>)}
                                             </div>
                                         </td>
                                     </tr>
@@ -244,6 +248,7 @@ export default function EvolucionesTable({
                                 >
                                     <IoEyeOutline color="#5BC0DE" size="18px" />
                                 </button>
+                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) !== false && (<>
                                 <button
                                     className={styles.btnAction}
                                     title="Editar evolución"
@@ -258,6 +263,7 @@ export default function EvolucionesTable({
                                 >
                                     <IoTrashOutline color="#5BC0DE" size="18px" />
                                 </button>
+                                </>)}
                             </div>
                         </article>
                     ))

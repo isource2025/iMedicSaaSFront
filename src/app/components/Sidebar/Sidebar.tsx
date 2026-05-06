@@ -1,14 +1,14 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { 
-  Home, 
-  Calendar, 
-  ClipboardList, 
-  Bed, 
-  Receipt, 
-  BarChart3, 
+import {
+  Home,
+  Calendar,
+  ClipboardList,
+  Bed,
+  Receipt,
+  BarChart3,
   Settings,
   User,
   ChevronRight,
@@ -17,83 +17,91 @@ import {
 } from 'lucide-react'
 import styles from './Sidebar.module.css'
 import { useAppContext } from '../../contexts/AppContext'
+import { usePermiso } from '@/app/hooks/usePermiso'
 
 interface SubItem {
   label: string
   path: string
+  /** id del submódulo en utils/permisos. Si no se mata el match por path. */
+  submoduloId?: string
 }
 
 interface MenuItem {
   id: string
+  /** id del módulo en utils/permisos (uppercase). */
+  moduloId: string
   label: string
   icon: LucideIcon
   path?: string
+  /** Si true: el item siempre se muestra aunque no haya submódulo permitido (ej. logout). */
+  alwaysVisible?: boolean
   subItems: SubItem[]
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard', subItems: [] },
+  { id: 'dashboard', moduloId: 'DASHBOARD', label: 'Dashboard', icon: Home, path: '/dashboard', subItems: [] },
   {
-    id: 'turnos', label: 'Turnos', icon: Calendar,
+    id: 'turnos', moduloId: 'TURNOS', label: 'Turnos', icon: Calendar,
     subItems: [
-      { label: 'Agenda', path: '/dashboard/turnos/agenda' },
-      { label: 'Admin de Turnos', path: '/dashboard/turnos/admin' },
-      { label: 'Excepciones', path: '/dashboard/turnos/excepciones' },
-      { label: 'Configuración', path: '/dashboard/turnos/configuracion' },
-      { label: 'Tabla de Turnos', path: '/dashboard/turnos/tabla' }
+      { submoduloId: 'AGENDA',        label: 'Agenda',           path: '/dashboard/turnos/agenda' },
+      { submoduloId: 'ADMIN',         label: 'Admin de Turnos',  path: '/dashboard/turnos/admin' },
+      { submoduloId: 'EXCEPCIONES',   label: 'Excepciones',      path: '/dashboard/turnos/excepciones' },
+      { submoduloId: 'CONFIGURACION', label: 'Configuración',    path: '/dashboard/turnos/configuracion' },
+      { submoduloId: 'TABLA',         label: 'Tabla de Turnos',  path: '/dashboard/turnos/tabla' }
     ]
   },
   {
-    id: 'admision', label: 'Admisión', icon: ClipboardList,
+    id: 'admision', moduloId: 'ADMISION', label: 'Admisión', icon: ClipboardList,
     subItems: [
-      { label: 'Pacientes', path: '/dashboard/patients' },
-      { label: 'Búsqueda Integral', path: '/dashboard/admission/search' },
-      { label: 'Nueva Admisión', path: '/dashboard/admission/new' },
-      { label: 'Admisiones Vigentes', path: '/dashboard/admission/current' },
-      { label: 'Tabla de Admisiones', path: '/dashboard/admission/tables' }
+      { submoduloId: 'PACIENTES', label: 'Pacientes',           path: '/dashboard/patients' },
+      { submoduloId: 'BUSQUEDA',  label: 'Búsqueda Integral',   path: '/dashboard/admission/search' },
+      { submoduloId: 'NUEVA',     label: 'Nueva Admisión',      path: '/dashboard/admission/new' },
+      { submoduloId: 'VIGENTES',  label: 'Admisiones Vigentes', path: '/dashboard/admission/current' },
+      { submoduloId: 'TABLA',     label: 'Tabla de Admisiones', path: '/dashboard/admission/tables' }
     ]
   },
   {
-    id: 'internacion', label: 'Internación', icon: Bed,
+    id: 'internacion', moduloId: 'INTERNACION', label: 'Internación', icon: Bed,
     subItems: [
-      { label: 'Gestión de Camas', path: '/dashboard/beds' },
-      { label: 'Ocupación de Camas', path: '/dashboard/beds/occupation' },
-      { label: 'Tabla de Internación', path: '/dashboard/beds/tables' }
+      { submoduloId: 'CAMAS',     label: 'Gestión de Camas',     path: '/dashboard/beds' },
+      { submoduloId: 'OCUPACION', label: 'Ocupación de Camas',   path: '/dashboard/beds/occupation' },
+      { submoduloId: 'TABLA',     label: 'Tabla de Internación', path: '/dashboard/beds/tables' }
     ]
   },
   {
-    id: 'facturacion', label: 'Facturación', icon: Receipt,
+    id: 'facturacion', moduloId: 'FACTURACION', label: 'Facturación', icon: Receipt,
     subItems: [
-      { label: 'Convenios', path: '/dashboard/billing/convenios' },
-      { label: 'Rendiciones', path: '/dashboard/billing/rendiciones' },
-      { label: 'Liquidaciones', path: '/dashboard/billing/liquidaciones' },
-      { label: 'Tabla de Facturación', path: '/dashboard/billing/tables' }
+      { submoduloId: 'CONVENIOS',     label: 'Convenios',             path: '/dashboard/billing/convenios' },
+      { submoduloId: 'RENDICIONES',   label: 'Rendiciones',           path: '/dashboard/billing/rendiciones' },
+      { submoduloId: 'LIQUIDACIONES', label: 'Liquidaciones',         path: '/dashboard/billing/liquidaciones' },
+      { submoduloId: 'TABLA',         label: 'Tabla de Facturación',  path: '/dashboard/billing/tables' }
     ]
   },
   {
-    id: 'reportes', label: 'Reportes', icon: BarChart3,
+    id: 'reportes', moduloId: 'REPORTES', label: 'Reportes', icon: BarChart3,
     subItems: [
-      { label: 'Estadísticas', path: '/dashboard/reports/estadisticas' },
-      { label: 'Facturación', path: '/dashboard/reports/facturacion' },
-      { label: 'Ocupación', path: '/dashboard/reports/ocupacion' }
+      { submoduloId: 'ESTADISTICAS', label: 'Estadísticas', path: '/dashboard/reports/estadisticas' },
+      { submoduloId: 'FACTURACION',  label: 'Facturación',  path: '/dashboard/reports/facturacion' },
+      { submoduloId: 'OCUPACION',    label: 'Ocupación',    path: '/dashboard/reports/ocupacion' }
     ]
   },
   {
-    id: 'configuracion', label: 'Configuración', icon: Settings,
+    id: 'configuracion', moduloId: 'CONFIGURACION', label: 'Configuración', icon: Settings,
     subItems: [
-      { label: 'General', path: '/dashboard/settings/general' },
-      { label: 'Usuarios', path: '/dashboard/settings/usuarios' },
-      { label: 'Permisos', path: '/dashboard/settings/permisos' },
-      { label: 'Sectores', path: '/dashboard/settings/sectores' },
-      { label: 'Personal', path: '/dashboard/personal' }
+      { submoduloId: 'GENERAL',  label: 'General',  path: '/dashboard/settings/general' },
+      { submoduloId: 'USUARIOS', label: 'Usuarios', path: '/dashboard/settings/usuarios' },
+      { submoduloId: 'PERMISOS', label: 'Permisos', path: '/dashboard/settings/permisos' },
+      { submoduloId: 'SECTORES', label: 'Sectores', path: '/dashboard/settings/sectores' },
+      { submoduloId: 'PERSONAL', label: 'Personal', path: '/dashboard/personal' }
     ]
   },
   {
-    id: 'usuario', label: 'Usuario', icon: User,
+    id: 'usuario', moduloId: 'USUARIO', label: 'Usuario', icon: User, alwaysVisible: true,
     subItems: [
-      { label: 'Mi Perfil', path: '/dashboard/profile' },
+      { submoduloId: 'PERFIL', label: 'Mi Perfil',     path: '/dashboard/profile' },
+      // Estos cuatro son utilitarios del usuario actual y siempre se muestran:
       { label: 'Configuración', path: '/settings' },
-      { label: 'Ayuda', path: '/help' },
+      { label: 'Ayuda',         path: '/help' },
       { label: 'Cerrar Sesión', path: '/' }
     ]
   }
@@ -109,9 +117,52 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { empresaInfo, sectorSeleccionado } = useAppContext()
+  const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
+
+  /**
+   * visibleMenu se calcula de la misma manera que la propiedad `menu` del
+   * hook, pero aplicado sobre la definición `menuItems` local (que lleva
+   * iconos Lucide + metadatos de UI que el hook no conoce).
+   *
+   * Reglas:
+   * - Si los permisos aún no cargaron (SSR inicial) → lista vacía (evita flash).
+   * - Si cargaron pero el usuario no tiene rol asignado → sólo Dashboard + Usuario.
+   * - Si tiene rol → filtra por módulo y submódulo.
+   */
+  const visibleMenu = useMemo(() => {
+    // SSR: no sabemos nada todavía — devolvemos vacío para no mostrar items incorrectos
+    if (!loaded) return []
+
+    // Sin rol asignado: sólo Dashboard y el menú de usuario (siempre visibles)
+    if (!rol) {
+      return menuItems.filter((item) => item.id === 'dashboard' || item.alwaysVisible)
+    }
+
+    return menuItems
+      .map((item) => {
+        if (item.alwaysVisible) return item
+
+        // ¿El rol tiene acceso a este módulo?
+        if (!puedeModulo(item.moduloId)) return null
+
+        // Filtrar subitems: si el subitem no tiene submoduloId siempre se muestra
+        const subs = item.subItems.filter((sub) => {
+          if (!sub.submoduloId) return true
+          return puedeSubmodulo(item.moduloId, sub.submoduloId)
+        })
+
+        // Si el item requería subItems y todos fueron filtrados, ocultarlo
+        if (item.subItems.some((s) => s.submoduloId) && subs.filter((s) => s.submoduloId).length === 0) return null
+
+        return { ...item, subItems: subs }
+      })
+      .filter((x): x is MenuItem => x !== null)
+  // puedeModulo y puedeSubmodulo son closures que cambian cuando cambia el estado del hook
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rol, loaded, puedeModulo, puedeSubmodulo])
 
   const getActiveModuleId = (): string | null => {
-    for (const item of menuItems) {
+    for (const item of visibleMenu) {
       if (item.path && pathname === item.path) return item.id
       if (item.subItems.some(sub => pathname === sub.path || pathname.startsWith(sub.path + '/'))) return item.id
     }
@@ -166,6 +217,11 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
             <span className={styles.sectorName}>
               {sectorSeleccionado ? `Sector: ${sectorSeleccionado.descripcion}` : ''}
             </span>
+            {loaded && (
+              <span className={rol ? styles.rolBadge : styles.rolBadgeSinRol}>
+                {rol ? rol.nombre : 'Sin rol'}
+              </span>
+            )}
           </div>
         </div>
         <button 
@@ -178,7 +234,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       
       {/* Navegación */}
       <nav className={styles.nav}>
-        {menuItems.map((item) => (
+        {visibleMenu.map((item) => (
           <React.Fragment key={item.id}>
             {/* Separador antes de Configuración */}
             {item.id === 'configuracion' && <div className={styles.separator} />}

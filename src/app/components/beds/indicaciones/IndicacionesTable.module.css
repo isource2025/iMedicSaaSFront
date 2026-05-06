@@ -306,6 +306,12 @@
     flex-wrap: nowrap;
 }
 
+.noActions {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
 .btnAction {
     border: none;
     background: transparent;

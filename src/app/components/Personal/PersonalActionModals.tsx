@@ -13,6 +13,7 @@ import {
 	PersonalCodigoFacturacion,
 } from '@/app/types/personal';
 import { personalService } from '@/app/services/personalService';
+import { rolesService, type Rol } from '@/app/services/rolesService';
 import styles from './PersonalActionModals.module.css';
 
 export type PersonalExtraKind =
@@ -20,7 +21,8 @@ export type PersonalExtraKind =
 	| 'empresas'
 	| 'firma'
 	| 'sectores'
-	| 'codigosFacturacion';
+	| 'codigosFacturacion'
+	| 'rol';
 
 type Props = {
 	open: boolean;
@@ -73,6 +75,11 @@ export default function PersonalActionModals({
 	const [nuevoFac, setNuevoFac] = useState('');
 	const [facEdits, setFacEdits] = useState<Record<string, string>>({});
 
+	// rol
+	const [roles, setRoles] = useState<Rol[]>([]);
+	const [rolActual, setRolActual] = useState<Rol | null>(null);
+	const [rolSel, setRolSel] = useState<string>('');
+
 	useEffect(() => {
 		if (!open || !id || !kind) return;
 		let cancelled = false;
@@ -123,6 +130,16 @@ export default function PersonalActionModals({
 						setNuevoAsoc('');
 						setNuevoFac('');
 					}
+				} else if (kind === 'rol') {
+					const [cat, actual] = await Promise.all([
+						rolesService.listar(),
+						rolesService.getRolDePersonal(id),
+					]);
+					if (!cancelled) {
+						setRoles(cat);
+						setRolActual(actual);
+						setRolSel(actual ? String(actual.IdRol) : '');
+					}
 				}
 			} catch (e: any) {
 				if (!cancelled) alert(e?.message || 'Error al cargar');
@@ -146,7 +163,27 @@ export default function PersonalActionModals({
 			? 'Sectores'
 			: kind === 'codigosFacturacion'
 			? 'Códigos de facturación'
+			: kind === 'rol'
+			? 'Rol del usuario'
 			: '';
+
+	const guardarRol = async () => {
+		if (!id) return;
+		setSaving(true);
+		try {
+			const idRol = rolSel === '' ? null : Number(rolSel);
+			const result = await rolesService.asignarRolAPersonal(id, idRol);
+			setRolActual(result);
+			setRolSel(result ? String(result.IdRol) : '');
+			await onSaved();
+			onClose();
+		} catch (e: unknown) {
+			const msg = e instanceof Error ? e.message : 'Error al asignar el rol';
+			alert(msg);
+		} finally {
+			setSaving(false);
+		}
+	};
 
 	const guardarServicio = async () => {
 		if (!id) return;
@@ -602,6 +639,48 @@ export default function PersonalActionModals({
 						<div className={styles.actions}>
 							<button type='button' className={styles.btn} onClick={onClose}>
 								Cerrar
+							</button>
+						</div>
+					</div>
+				) : kind === 'rol' ? (
+					<div className={styles.row}>
+						<p className={styles.muted}>
+							Rol actual:{' '}
+							<strong>{rolActual ? rolActual.Nombre : 'Sin rol asignado'}</strong>
+							{rolActual?.Descripcion ? ` — ${rolActual.Descripcion}` : ''}
+						</p>
+						<div>
+							<div className={styles.label}>Asignar rol</div>
+							<select
+								className={styles.select}
+								value={rolSel}
+								onChange={(e) => setRolSel(e.target.value)}
+							>
+								<option value=''>— Sin rol —</option>
+								{roles.map((r) => (
+									<option key={r.IdRol} value={String(r.IdRol)}>
+										{r.Nombre}
+										{r.Descripcion ? ` · ${r.Descripcion}` : ''}
+									</option>
+								))}
+							</select>
+						</div>
+						<p className={styles.muted}>
+							El rol se persiste en <code>imPersonal.Rol</code> y viaja en el JWT al
+							iniciar sesión. Los permisos asociados al rol se aplican desde la matriz del
+							sistema.
+						</p>
+						<div className={styles.actions}>
+							<button type='button' className={styles.btn} onClick={onClose} disabled={saving}>
+								Cerrar
+							</button>
+							<button
+								type='button'
+								className={styles.btnPrimary}
+								onClick={guardarRol}
+								disabled={saving}
+							>
+								{saving ? 'Guardando…' : 'Guardar'}
 							</button>
 						</div>
 					</div>

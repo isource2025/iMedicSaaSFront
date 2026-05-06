@@ -1,13 +1,40 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { CSSTransition } from 'react-transition-group';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import styles from './SidebarFilters.module.css';
 import { useBedDetail } from '../contexts/BedDetailContext';
+import { usePermiso } from '@/app/hooks/usePermiso';
 
 type Props = {
 	bedId?: string;
 	onCloseDrawer?: () => void;
+};
+
+/**
+ * Mapeo entre cada `activeSection` del sidebar y su submódulo de permisos
+ * dentro del módulo INTERNACION.
+ *
+ * Si una sección no aparece en este mapa, se considera siempre visible
+ * (caso de "informe_evo" o utilitarios).
+ */
+const SECTION_TO_PERM: Record<string, string> = {
+	hcIngreso: 'HISTORIA_CLINICA',
+	indicaciones: 'INDICACIONES',
+	evoluciones: 'EVOLUCIONES',
+	'evolucion-enfermeria': 'EVOLUCION_ENFERMERIA',
+	'controles-frecuentes': 'SIGNOS_VITALES',
+	'medicacion-suministrada': 'MEDICACION',
+	dieta: 'DIETA',
+	'balance-hidrico': 'BALANCE_HIDRICO',
+	insumos: 'INSUMOS',
+	solicitudEstudios: 'ESTUDIOS',
+	laboratorios: 'ESTUDIOS',
+	protocolos: 'PROTOCOLOS',
+	procedimientos: 'PROCEDIMIENTOS',
+	movimientos: 'MOVIMIENTOS',
+	adjuntos: 'ADJUNTOS',
+	epicrisis: 'EPICRISIS',
 };
 
 // --- Componente de colapso con altura automática animada (enter/exit distintos) ---
@@ -107,7 +134,7 @@ function Collapse({
 	);
 }
 
-export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
+export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 	const {
 		openSections,
 		activeSection,
@@ -117,6 +144,7 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 		adjuntosRecientesCount,
 	} = useBedDetail();
 	const router = useRouter();
+	const { puedeSubmodulo, puede, rol, loaded } = usePermiso();
 
 	const clickItem = (section: typeof activeSection) => {
 		navigateToSection(section);
@@ -125,9 +153,48 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 
 	const isActive = (section: string) => activeSection === section;
 
+	/**
+	 * Visibilidad de un item DENTRO de su grupo.
+	 * Un item se muestra si el usuario tiene CUALQUIER acción sobre el submódulo.
+	 */
+	const puedeVerSeccion = useMemo(
+		() => (section: string) => {
+			if (!loaded) return true;
+			const sub = SECTION_TO_PERM[section];
+			if (!sub) return true;
+			if (!rol) return false;
+			return puedeSubmodulo('INTERNACION', sub);
+		},
+		[puedeSubmodulo, rol, loaded],
+	);
+
+	/**
+	 * Visibilidad del GRUPO entero.
+	 *
+	 * Un grupo se muestra si el usuario puede ESCRIBIR (CREAR/EDITAR) en al
+	 * menos una de sus secciones propietarias. Así:
+	 *   - El enfermero ve SOLO "Gestión Enfermería" (puede crear evoluciones
+	 *     de enfermería, controles, etc.) y NO "Gestión Médica" (no puede
+	 *     crear HC, evoluciones médicas, etc.).
+	 *   - El médico ve SOLO "Gestión Médica" y NO "Gestión Enfermería".
+	 *   - ADMIN ve ambas.
+	 */
+	const puedeGestionMedica = !loaded
+		? true
+		: puede('INTERNACION.HISTORIA_CLINICA.CREAR') ||
+		  puede('INTERNACION.EVOLUCIONES.CREAR') ||
+		  puede('INTERNACION.INDICACIONES.CREAR');
+
+	const puedeGestionEnfermeria = !loaded
+		? true
+		: puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') ||
+		  puede('INTERNACION.SIGNOS_VITALES.CREAR') ||
+		  puede('INTERNACION.MEDICACION.CREAR');
+
 	return (
 		<div className={styles.wrapper}>
 			{/* ======= Gestión Médica ======= */}
+			{puedeGestionMedica && (
 			<div className={styles.section}>
 				<button
 					type='button'
@@ -153,60 +220,69 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 					className={styles.collapseBody}
 				>
 					<nav id='panel-medica' className={styles.nav}>
+						{puedeVerSeccion('hcIngreso') && (
 						<button
 							className={`${styles.navButton} ${isActive('hcIngreso') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('hcIngreso')}
 						>
 							H.C. de Ingreso
-						</button>
+						</button>)}
+						{puedeVerSeccion('indicaciones') && (
 						<button
 							className={`${styles.navButton} ${isActive('indicaciones') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('indicaciones')}
 						>
 							Indicaciones
-						</button>
+						</button>)}
+						{puedeVerSeccion('evoluciones') && (
 						<button
 							className={`${styles.navButton} ${isActive('evoluciones') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('evoluciones')}
 						>
 							Evoluciones
-						</button>
+						</button>)}
+						{puedeVerSeccion('solicitudEstudios') && (
 						<button
 							className={`${styles.navButton} ${isActive('solicitudEstudios') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('solicitudEstudios')}
 						>
 							Estudios
-						</button>
+						</button>)}
+						{puedeVerSeccion('protocolos') && (
 						<button
 							className={`${styles.navButton} ${isActive('protocolos') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('protocolos')}
 						>
 							Protocolos
-						</button>
+						</button>)}
+						{puedeVerSeccion('procedimientos') && (
 						<button
 							className={`${styles.navButton} ${isActive('procedimientos') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('procedimientos')}
 						>
 							Procedimientos
-						</button>
+						</button>)}
+						{puedeVerSeccion('movimientos') && (
 						<button
 							className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('movimientos')}
 						>
 							Movimientos
-						</button>
+						</button>)}
 					</nav>
 				</Collapse>
 			</div>
+			)}
 
 			{/* ======= Gestión Enfermería ======= */}
+			{puedeGestionEnfermeria && (
 			<div className={styles.section}>
 				<button
 					type='button'
@@ -232,72 +308,81 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 					className={styles.collapseBody}
 				>
 					<nav id='panel-enfermeria' className={styles.nav}>
+						{puedeVerSeccion('indicaciones') && (
 						<button
 							className={`${styles.navButton} ${isActive('indicaciones') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('indicaciones')}
 						>
 							Indicaciones
-						</button>
+						</button>)}
 
+						{puedeVerSeccion('controles-frecuentes') && (
 						<button
 							className={`${styles.navButton} ${isActive('controles-frecuentes') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('controles-frecuentes')}
 						>
 							Controles
-						</button>
+						</button>)}
 
+						{puedeVerSeccion('medicacion-suministrada') && (
 						<button
 							className={`${styles.navButton} ${isActive('medicacion-suministrada') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('medicacion-suministrada')}
 						>
 							Medicación Suministrada
-						</button>
+						</button>)}
 
+						{puedeVerSeccion('dieta') && (
 						<button
 							className={`${styles.navButton} ${isActive('dieta') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('dieta')}
 						>
 							Dietas
-						</button>
+						</button>)}
 
+						{puedeVerSeccion('balance-hidrico') && (
 						<button
 							className={`${styles.navButton} ${isActive('balance-hidrico') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('balance-hidrico')}
 						>
 							Balance Hídrico
-						</button>
+						</button>)}
 
+						{puedeVerSeccion('evolucion-enfermeria') && (
 						<button
 							className={`${styles.navButton} ${isActive('evolucion-enfermeria') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('evolucion-enfermeria')}
 						>
 							Evolución de Enfermería
-						</button>
+						</button>)}
 
+						{puedeVerSeccion('insumos') && (
 						<button
 							className={`${styles.navButton} ${isActive('insumos') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('insumos')}
 						>
 							Insumos
-						</button>
+						</button>)}
 
+						{puedeVerSeccion('movimientos') && (
 						<button
 							className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('movimientos')}
 						>
 							Movimientos
-						</button>
+						</button>)}
 					</nav>
 				</Collapse>
 			</div>
+			)}
 
 			{/* ======= Panel fijo ======= */}
 			<div className={styles.fixedPanel}>
@@ -319,13 +404,15 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 					>
 						Notificaciones
 					</button>
+					{puedeVerSeccion('laboratorios') && (
 					<button
 						className={`${styles.navButton} ${isActive('laboratorios') ? styles.active : ''
 							}`}
 						onClick={() => clickItem('laboratorios')}
 					>
 						Laboratorios
-					</button>
+					</button>)}
+					{puedeVerSeccion('adjuntos') && (
 					<button
 						className={`${styles.navButton} ${adjuntosTotalCount > 0 ? styles.navButtonFlex : ''} ${isActive('adjuntos') ? styles.active : ''
 							} ${!isActive('adjuntos') && adjuntosRecientesCount > 0 ? styles.navButtonAdjuntosRecientes : ''
@@ -342,7 +429,7 @@ export default function SidebarFilters({ bedId, onCloseDrawer }: Props = {}) {
 								{adjuntosTotalCount}
 							</span>
 						)}
-					</button>
+					</button>)}
 					<button
 						className={styles.closeButton}
 						onClick={() => router.replace('/dashboard/beds')}

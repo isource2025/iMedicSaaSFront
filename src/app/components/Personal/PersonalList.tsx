@@ -25,6 +25,7 @@ import {
 	IoImageOutline,
 	IoLayersOutline,
 	IoPricetagOutline,
+	IoShieldCheckmarkOutline,
 } from 'react-icons/io5';
 
 interface PersonalListProps {
@@ -321,6 +322,15 @@ export default function PersonalList({
 														>
 															<IoPricetagOutline size={16} />
 														</button>
+														<button
+															type='button'
+															className={styles.extraActionBtn}
+															title='Rol del usuario'
+															aria-label={`Rol ${p.ApellidoNombre}`}
+															onClick={() => onOpenExtra(p, 'rol')}
+														>
+															<IoShieldCheckmarkOutline size={16} />
+														</button>
 													</>
 												) : null}
 											</div>
@@ -495,6 +505,14 @@ export default function PersonalList({
 													onClick={() => onOpenExtra(p, 'codigosFacturacion')}
 												>
 													<IoPricetagOutline size={15} />
+												</button>
+												<button
+													type='button'
+													className={styles.extraActionBtn}
+													title='Rol del usuario'
+													onClick={() => onOpenExtra(p, 'rol')}
+												>
+													<IoShieldCheckmarkOutline size={15} />
 												</button>
 											</>
 										) : null}

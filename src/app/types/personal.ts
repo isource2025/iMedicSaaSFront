@@ -30,6 +30,8 @@ export interface Personal {
 	Estado: number | null;
 	CUIT: string | null;
 	Observaciones: string | null;
+	/** Rol asignado (IdRol de imRoles). null si el personal no tiene rol. */
+	Rol: number | null;
 }
 
 export interface PersonalFormData {

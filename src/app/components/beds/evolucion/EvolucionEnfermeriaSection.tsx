@@ -12,6 +12,7 @@ import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './EvolucionEnfermeriaSection.module.css';
 import Loader from '../../Loader/Loader';
 import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
+import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -225,7 +226,16 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
               Error al cargar evoluciones: {error.message}
             </div>
           )}
-          {!isLoading && !error && (
+          {!isLoading && !error && filteredEvoluciones.length === 0 && (
+            <EmptyState
+              variant="evolucion"
+              text="Sin evoluciones registradas"
+              description="No hay evoluciones de enfermería para esta fecha. Podés agregar una haciendo clic en el botón de arriba."
+              actionLabel="Nueva Evolución"
+              onAction={onAddEvolucion}
+            />
+          )}
+          {!isLoading && !error && filteredEvoluciones.length > 0 && (
             <EvolucionEnfermeriaTable
               rows={filteredEvoluciones}
               refetch={refetch}

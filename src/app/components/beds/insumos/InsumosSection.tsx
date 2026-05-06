@@ -7,6 +7,7 @@ import InsumosTable, { InsumoRow } from "./InsumosTable";
 import styles from './InsumosSection.module.css';
 import Loader from '../../Loader/Loader';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import EmptyState from '../shared/EmptyState';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
@@ -206,12 +207,20 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
             {/* Contenedor flexible para la tabla */}
             <div className={styles.content}>
                 <div className={styles.tableHolder}>
-                    <InsumosTable
-                        rows={insumosFiltered}
-                        onSelectRow={handleSelectInsumo}
-                        selectedId={selectedInsumoId}
-                        refetch={refetch}
-                    />
+                    {insumosFiltered.length === 0 ? (
+                        <EmptyState
+                            variant="insumos"
+                            text="Sin insumos registrados"
+                            description="No hay insumos/descartables indicados para esta fecha."
+                        />
+                    ) : (
+                        <InsumosTable
+                            rows={insumosFiltered}
+                            onSelectRow={handleSelectInsumo}
+                            selectedId={selectedInsumoId}
+                            refetch={refetch}
+                        />
+                    )}
                 </div>
             </div>
         </div>

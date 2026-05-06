@@ -309,6 +309,26 @@
 	white-space: nowrap;
 }
 
+.badgeHC {
+	display: inline-block;
+	padding: 2px 8px;
+	background: #00B5E2;
+	color: white;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.badgeENF {
+	display: inline-block;
+	padding: 2px 8px;
+	background: #6c757d;
+	color: white;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
 /* Columna de acciones */
 .cellAccion {
 	min-width: 120px;

@@ -63,8 +63,75 @@ export const authService = {
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('rol');
+    localStorage.removeItem('permisos');
     localStorage.removeItem('rememberUser');
     // Redirect to login page is handled by the component or router
+  },
+
+  /**
+   * Devuelve el rol del usuario logueado tal como vino del backend en el login.
+   * Devuelve null si el usuario no tiene rol asignado.
+   */
+  getCurrentRol: (): { id: number; nombre: string; nivel: number } | null => {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem('rol');
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && typeof parsed.nombre === 'string') {
+        return {
+          id: Number(parsed.id ?? 0),
+          nombre: String(parsed.nombre).toUpperCase(),
+          nivel: Number(parsed.nivel ?? 0),
+        };
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  },
+
+  /**
+   * Permisos efectivos del usuario logueado, tal como vinieron del backend
+   * en el login. Devuelve [] si no hay nada cargado todavía.
+   */
+  getCurrentPermisos: (): string[] => {
+    if (typeof window === 'undefined') return [];
+    const raw = localStorage.getItem('permisos');
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter((x) => typeof x === 'string');
+    } catch {
+      return [];
+    }
+    return [];
+  },
+
+  /** Refresca los permisos del usuario desde /api/permisos/me. */
+  refreshPermisos: async (): Promise<string[]> => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || ''}/permisos/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+            Accept: 'application/json',
+          },
+        },
+      );
+      if (!res.ok) return [];
+      const json = await res.json();
+      const permisos: string[] = Array.isArray(json?.data?.permisos)
+        ? json.data.permisos
+        : [];
+      localStorage.setItem('permisos', JSON.stringify(permisos));
+      window.dispatchEvent(new Event('imedic:permisos-refresh'));
+      return permisos;
+    } catch {
+      return [];
+    }
   },
 
   /**

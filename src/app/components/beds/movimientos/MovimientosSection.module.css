@@ -1,0 +1,99 @@
+/* Mismo formato que ControlesFrecuentesSection / MedicacionSuministradaSection */
+.tableWrap {
+	position: relative;
+	flex: 1 1 auto;
+	overflow: auto;
+	max-height: 100%;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.table {
+	width: 100%;
+	min-width: 900px;
+	border-collapse: collapse;
+	table-layout: auto;
+	font-size: 13px;
+	line-height: 1.25;
+	color: #111827;
+}
+
+.table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: #e0f2fe;
+	color: #111827;
+	text-align: left;
+	padding: 6px 12px;
+	font-weight: 700;
+	border-bottom: 2px solid #bae6fd;
+	white-space: nowrap;
+}
+
+.table tbody tr {
+	transition: background 0.15s ease;
+}
+
+.table tbody tr td {
+	padding: 9px 12px;
+	border-top: 1px solid #e5e7eb;
+	vertical-align: middle;
+	background: #fff;
+}
+
+.table tbody tr:nth-child(even) td {
+	background: #fafafaaa;
+}
+
+.table tbody tr:hover td {
+	background: #e0f2fe;
+	color: #111827;
+}
+
+.table th,
+.table td {
+	padding: 8px 12px;
+}
+
+/* Fila actual (primer movimiento = internación vigente) */
+.rowActual td {
+	background: #ecfeff !important;
+	font-weight: 600;
+}
+
+.cellIdx {
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+	color: #64748b;
+	font-size: 0.75rem;
+}
+
+.badgeActual {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 1px 7px;
+	background: #0891b2;
+	color: #fff;
+	border-radius: 999px;
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	vertical-align: middle;
+}
+
+.cellCama {
+	font-weight: 700;
+	color: #0e7490;
+	font-variant-numeric: tabular-nums;
+}
+
+.cellDiag {
+	max-width: 220px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

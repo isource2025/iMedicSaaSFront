@@ -7,6 +7,8 @@ import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
 import { formatSqlDate, formatHoraSimple } from "../../../utils/dateUtils";
+import { useUsuarioActual, esRegistroPropio } from "../../../hooks/useUsuarioActual";
+import { usePermiso } from "../../../hooks/usePermiso";
 
 export type IndicacionHijaRow = {
     nroIndicacion: number;
@@ -45,6 +47,8 @@ export type IndicacionRow = {
     proximaAplicacion?: string;
     estado?: string;
     indicacionesHijas?: IndicacionHijaRow[];
+    /** CodOperador del profesional que cargó la indicación (para control de propiedad). */
+    OperadorCarga?: number | null;
 };
 
 type Props = {
@@ -73,6 +77,28 @@ export default function IndicacionesTable({
 }: Props) {
     const hasRows = rows && rows.length > 0;
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const usuarioActual = useUsuarioActual();
+    const { puede, rol } = usePermiso();
+
+    // Reglas de negocio de indicaciones:
+    //   MEDICO    → puede editar/eliminar solo sus propias indicaciones. NO puede aplicar.
+    //   ENFERMERO → SOLO puede aplicar. No puede editar ni eliminar.
+    //   ADMIN     → puede todo (aplica + edita + elimina sin restricción de propiedad).
+    const puedeAplicar   = puede('INTERNACION.INDICACIONES.APLICAR');
+    const puedeEditar    = puede('INTERNACION.INDICACIONES.EDITAR');
+    const puedeEliminar  = puede('INTERNACION.INDICACIONES.ELIMINAR');
+    const rolNombre      = (rol?.nombre || '').toUpperCase();
+
+    /**
+     * ¿Puede este usuario editar/eliminar esta indicación específica?
+     * ADMIN: sí siempre. MEDICO: solo la suya. ENFERMERO: nunca.
+     */
+    const puedeModificarFila = (r: IndicacionRow): boolean => {
+        if (rolNombre === 'ADMIN') return true;
+        if (!puedeEditar && !puedeEliminar) return false;
+        // MEDICO y otros con permiso de editar: solo la propia
+        return esRegistroPropio(r as Record<string, unknown>, usuarioActual) === true;
+    };
 
     // ✅ Estado para el modal de aplicar indicación
     const [modalAplicar, setModalAplicar] = useState<{
@@ -373,56 +399,51 @@ export default function IndicacionesTable({
 
                                         <td className={styles.cellAccion}>
                                             <div className={styles.actionBtns}>
+                                                {/* Aplicar: solo enfermeros (y admin) */}
+                                                {puedeAplicar && (
                                                 <button
                                                     className={`${styles.btnAction}`}
-                                                    title={r.unicaVez && r.ultimaAplicacion ? "Esta indicación de única vez ya fue aplicada" : "Aplicar Indicacion"}
-                                                    disabled={r.unicaVez && r.ultimaAplicacion ? true : false}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleAplicarIndicacion(r); // ✅ NUEVO
-                                                    }}
+                                                    title={r.unicaVez && r.ultimaAplicacion ? "Esta indicación de única vez ya fue aplicada" : "Aplicar indicación"}
+                                                    disabled={!!(r.unicaVez && r.ultimaAplicacion)}
+                                                    onClick={(e) => { e.stopPropagation(); handleAplicarIndicacion(r); }}
                                                 >
-                                                    <IoMedicalOutline color="#5BC0DE" size="18px" />
-                                                </button>
-                                                <button
-                                                    className={`${styles.btnAction}`}
-                                                    title="Dejar sin Efecto"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                    }}
-                                                >
-                                                    <IoCloseCircleOutline color="#5BC0DE" size="18px" />
-                                                </button>
+                                                    <IoMedicalOutline color="#10b981" size="18px" />
+                                                </button>)}
+
+                                                {/* Reindicar: solo médicos (y admin) — no enfermero */}
+                                                {puedeEditar && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Volver a Indicar"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onActivarModoReindicar?.();
-                                                    }}
+                                                    onClick={(e) => { e.stopPropagation(); onActivarModoReindicar?.(); }}
                                                 >
                                                     <IoRepeatOutline color="#5BC0DE" size="18px" />
-                                                </button>
+                                                </button>)}
+
+                                                {/* Editar: médico dueño o admin */}
+                                                {puedeModificarFila(r) && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Editar indicación"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onSelectRow && onSelectRow(Number(r.id));
-                                                    }}
+                                                    onClick={(e) => { e.stopPropagation(); onSelectRow && onSelectRow(Number(r.id)); }}
                                                 >
                                                     <IoPencilOutline color="#5BC0DE" size="18px" />
-                                                </button>
+                                                </button>)}
+
+                                                {/* Eliminar: médico dueño o admin */}
+                                                {puedeModificarFila(r) && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Eliminar indicación"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDeletingId(r.id);
-                                                    }}
+                                                    onClick={(e) => { e.stopPropagation(); setDeletingId(r.id); }}
                                                 >
-                                                    <IoTrashOutline color="#5BC0DE" size="18px" />
-                                                </button>
+                                                    <IoTrashOutline color="#e11d48" size="18px" />
+                                                </button>)}
+
+                                                {/* Sin acciones disponibles */}
+                                                {!puedeAplicar && !puedeModificarFila(r) && (
+                                                <span className={styles.noActions}>—</span>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -481,27 +502,31 @@ export default function IndicacionesTable({
                         </div>
 
                         <div className={styles.cardActions}>
+                            {puedeAplicar && (
                             <button
                                 className={`${styles.btnAction} ${styles.btnEdit}`}
-                                title="Aplicar"
+                                title="Aplicar indicación"
+                                disabled={!!(r.unicaVez && r.ultimaAplicacion)}
                                 onClick={() => handleAplicarIndicacion(r)}
                             >
-                                <IoMedicalOutline />
-                            </button>
+                                <IoMedicalOutline color="#10b981" />
+                            </button>)}
+                            {puedeModificarFila(r) && (
                             <button
                                 className={`${styles.btnAction} ${styles.btnEdit}`}
                                 title="Editar"
                                 onClick={() => onSelectRow && onSelectRow(Number(r.id))}
                             >
                                 <IoPencilOutline />
-                            </button>
+                            </button>)}
+                            {puedeModificarFila(r) && (
                             <button
                                 className={`${styles.btnAction} ${styles.btnDelete}`}
                                 title="Eliminar"
                                 onClick={() => setDeletingId(r.id)}
                             >
-                                <IoTrashOutline />
-                            </button>
+                                <IoTrashOutline color="#e11d48" />
+                            </button>)}
                         </div>
                     </div>
                 ))}
