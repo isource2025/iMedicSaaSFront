@@ -34,13 +34,16 @@ export interface ProduccionFila {
 	fecha: string | null;
 	codigoPractica: string;
 	descripcionPractica: string;
+	funcionDescripcion?: string;
 	cantidad: number;
+	numeroVisita?: string;
 	dniPaciente: string;
 	nombrePaciente: string;
 	cobertura: string;
 	porcentajeFacturado: number;
 	importeUnitario: number;
 	total: number;
+	noFacturable?: boolean;
 	nroRendicion?: number | null;
 }
 

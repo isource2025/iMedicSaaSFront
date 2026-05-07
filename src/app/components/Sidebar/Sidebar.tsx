@@ -6,6 +6,7 @@ import {
   Home,
   Calendar,
   ClipboardList,
+  FileSearch,
   Bed,
   Receipt,
   BarChart3,
@@ -41,6 +42,14 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { id: 'dashboard', moduloId: 'DASHBOARD', label: 'Dashboard', icon: Home, path: '/dashboard', subItems: [] },
   {
+    id: 'consulta-hc',
+    moduloId: 'ADMISION',
+    label: 'Consultar Historia Clínica',
+    icon: FileSearch,
+    path: '/dashboard/admission/search',
+    subItems: []
+  },
+  {
     id: 'turnos', moduloId: 'TURNOS', label: 'Turnos', icon: Calendar,
     subItems: [
       { submoduloId: 'AGENDA',        label: 'Agenda',           path: '/dashboard/turnos/agenda' },
@@ -54,7 +63,6 @@ const menuItems: MenuItem[] = [
     id: 'admision', moduloId: 'ADMISION', label: 'Admisión', icon: ClipboardList,
     subItems: [
       { submoduloId: 'PACIENTES', label: 'Pacientes',           path: '/dashboard/patients' },
-      { submoduloId: 'BUSQUEDA',  label: 'Búsqueda Integral',   path: '/dashboard/admission/search' },
       { submoduloId: 'NUEVA',     label: 'Nueva Admisión',      path: '/dashboard/admission/new' },
       { submoduloId: 'VIGENTES',  label: 'Admisiones Vigentes', path: '/dashboard/admission/current' },
       { submoduloId: 'TABLA',     label: 'Tabla de Admisiones', path: '/dashboard/admission/tables' }
