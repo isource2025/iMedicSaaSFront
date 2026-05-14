@@ -11,6 +11,7 @@ import RenderControl from './renders_Indicacion/RenderControl';
 import RenderMedicacion from './renders_Indicacion/RenderMedicacion';
 import RenderAsistencial from './renders_Indicacion/RenderAsistencial';
 import {useAppContext} from "@/app/contexts/AppContext";
+import { parseValorPersonalId } from '@/app/utils/valorPersonal';
 
 interface Props {
     isOpen: boolean;
@@ -107,7 +108,11 @@ export default function AplicarIndicacion(props: Props) {
         observaciones: '',
         fechaProximo: '',
         horaProximo: '',
-        profesionalAsiste: usuario?.codigoOperador || usuario?.valorPersonal || usuario?.idValorpersonal || null,
+        profesionalAsiste: parseValorPersonalId(
+            usuario?.codigoOperador,
+            usuario?.valorPersonal,
+            usuario?.idValorpersonal,
+        ),
         control: {
             pulso: '',
             presionArterialMax: '',
@@ -155,7 +160,11 @@ export default function AplicarIndicacion(props: Props) {
                 setFormData(prev => ({
                     ...prev,
                     // Datos de la indicación
-                    profesionalAsiste: usuario?.codigoOperador || usuario?.valorPersonal || usuario?.idValorpersonal || null,
+                    profesionalAsiste: parseValorPersonalId(
+                        usuario?.codigoOperador,
+                        usuario?.valorPersonal,
+                        usuario?.idValorpersonal,
+                    ),
                     profesionalNombre: data.OperadorApellido && data.OperadorNombres
                         ? `${data.OperadorApellido}, ${data.OperadorNombres}`
                         : 'N/A',
@@ -258,7 +267,11 @@ export default function AplicarIndicacion(props: Props) {
                 horaProximo: formData.horaProximo,
                 observaciones: formData.observaciones || '',
                 profesionalAsiste: formData.profesionalAsiste,
-                operadorCarga: usuario?.codigoOperador || usuario?.valorPersonal || usuario?.idValorpersonal || null,
+                operadorCarga: parseValorPersonalId(
+                    usuario?.codigoOperador,
+                    usuario?.valorPersonal,
+                    usuario?.idValorpersonal,
+                ),
                 control: {}, // Inicializar vacío
                 dieta: {
                     tipoDieta: null

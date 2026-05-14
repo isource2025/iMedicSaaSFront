@@ -10,6 +10,7 @@ import { indicacionesService } from "../../services/indicacionesService";
 import CustomSelect from "../Patients/AddPatient/LoadingSelect";
 import { useParams } from "next/navigation";
 import { useAppContext } from "@/app/contexts/AppContext";
+import { parseValorPersonalId } from "@/app/utils/valorPersonal";
 import SlideDrawer from "../UI/SlideDrawer";
 
 interface IndicacionHija {
@@ -148,16 +149,23 @@ export default function IndicacionForm({
         console.log('🆔 idCodOperador:', usuario?.idCodOperador);
         
         if (usuario) {
-            const profesional = usuario?.idValorpersonal || usuario?.valorPersonal;
-            const operador = usuario?.idValorpersonal || usuario?.valorPersonal || usuario?.idCodOperador;
+            const profesional = parseValorPersonalId(
+                usuario.idValorpersonal,
+                usuario.valorPersonal,
+            );
+            const operador = parseValorPersonalId(
+                usuario.idValorpersonal,
+                usuario.valorPersonal,
+                usuario.idCodOperador,
+            );
             
             console.log('✅ ProfesionalAsiste será:', profesional);
             console.log('✅ OperadorCarga será:', operador);
             
             setForm((prev) => ({
                 ...prev,
-                ProfesionalAsiste: profesional,
-                OperadorCarga: operador
+                ProfesionalAsiste: profesional ?? null,
+                OperadorCarga: operador ?? null
             }));
         }
     }, [usuario]);

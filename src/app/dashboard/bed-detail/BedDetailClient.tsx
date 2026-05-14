@@ -36,7 +36,8 @@ export default function BedDetailClient() {
           numeroVisita: 12345,
           valorEstadoOriginal: 'O',
           mostrarNumeroVisita: '12345',
-          observaciones: ''
+          observaciones: '',
+          tipoRecurso: 'cama',
         });
       } catch (error) {
         console.error('Error al cargar datos de la cama:', error);

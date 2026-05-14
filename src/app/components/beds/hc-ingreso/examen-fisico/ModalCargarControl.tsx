@@ -6,6 +6,7 @@ import RenderControlSimplificado from './RenderControlSimplificado';
 import { FormData } from '../../../indicaciones/AplicarIndicacion';
 import { useAppContext } from '@/app/contexts/AppContext';
 import { crearControl } from '@/app/services/controlesFrecuentesService';
+import { parseValorPersonalId } from '@/app/utils/valorPersonal';
 import styles from '../../../indicaciones/AplicarIndicacion.module.css';
 
 export interface ControlDatosCargados {
@@ -56,7 +57,7 @@ export default function ModalCargarControl({
         observaciones: '',
         fechaProximo: '',
         horaProximo: '',
-        profesionalAsiste: usuario?.valorPersonal || usuario?.idValorpersonal,
+        profesionalAsiste: parseValorPersonalId(usuario?.valorPersonal, usuario?.idValorpersonal),
         profesionalNombre: `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim(),
         control: {
             pulso: '',
@@ -102,7 +103,7 @@ export default function ModalCargarControl({
                 numeroVisita,
                 fechaControl: formData.fechaCumplido,
                 horaControl: formData.horaCumplido,
-                operadorCarga: parseInt(usuario?.valorPersonal || usuario?.idValorpersonal || '0'),
+                operadorCarga: parseValorPersonalId(usuario?.valorPersonal, usuario?.idValorpersonal) ?? 0,
                 idHci: idHCIngreso || 0,
                 pulso: formData.control.pulso ? parseInt(formData.control.pulso) : 0,
                 presionMax: formData.control.presionArterialMax ? parseInt(formData.control.presionArterialMax) : 0,
