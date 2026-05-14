@@ -34,6 +34,8 @@ const BedsList = () => {
 		setServicioFilter,
 		searchTerm,
 		setSearchTerm,
+		tipoRecursoFilter,
+		setTipoRecursoFilter,
 		refreshBeds,
 		autoRefresh,
 		setAutoRefresh,
@@ -189,6 +191,8 @@ const BedsList = () => {
 				setServicioFilter={setServicioFilter}
 				searchTerm={searchTerm}
 				setSearchTerm={setSearchTerm}
+				tipoRecursoFilter={tipoRecursoFilter}
+				setTipoRecursoFilter={setTipoRecursoFilter}
 				refreshBeds={handleRefreshBeds}
 				autoRefresh={autoRefresh}
 				setAutoRefresh={setAutoRefresh}

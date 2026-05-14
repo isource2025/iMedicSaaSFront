@@ -12,6 +12,7 @@ import {
 	HeartPulse,
 	IdCard,
 	Pencil,
+	ClipboardList,
 	Receipt,
 	RefreshCw,
 	Save,
@@ -98,13 +99,24 @@ function formatImporte(n: number) {
 /** Tooltip del gráfico de torta: nombre completo de la obra social de la porción */
 function PieObraSocialTooltip(props: {
 	active?: boolean;
-	payload?: Array<{ name?: string; value?: number; payload?: { name?: string; value?: number } }>;
+	payload?: Array<{
+		name?: string;
+		value?: number;
+		payload?: {
+			name?: string;
+			value?: number;
+			noFacturable?: boolean;
+			noFacturableCoberturas?: string[];
+		};
+	}>;
 }) {
 	const { active, payload } = props;
 	if (!active || !payload?.length) return null;
 	const item = payload[0];
 	const nombre = item.payload?.name ?? item.name ?? '—';
 	const valor = Number(item.payload?.value ?? item.value ?? 0);
+	const coberturasNoFact = item.payload?.noFacturableCoberturas ?? [];
+	const mostrarDetalleNoFact = !!item.payload?.noFacturable && coberturasNoFact.length > 0;
 	return (
 		<div className={styles.pieTooltip}>
 			<div className={styles.pieTooltipKicker}>Obra social</div>
@@ -112,6 +124,21 @@ function PieObraSocialTooltip(props: {
 			<div className={styles.pieTooltipMonto}>
 				Facturado: <strong>${formatImporte(valor)}</strong>
 			</div>
+			{mostrarDetalleNoFact && (
+				<div className={styles.pieTooltipDetalle}>
+					<div className={styles.pieTooltipDetalleTitle}>Incluye:</div>
+					<ul className={styles.pieTooltipDetalleList}>
+						{coberturasNoFact.slice(0, 6).map((cobertura) => (
+							<li key={cobertura}>{cobertura}</li>
+						))}
+						{coberturasNoFact.length > 6 && (
+							<li className={styles.pieTooltipDetalleMore}>
+								+y {coberturasNoFact.length - 6} obra{coberturasNoFact.length - 6 > 1 ? 's' : ''} social
+							</li>
+						)}
+					</ul>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -303,26 +330,38 @@ export default function MiPerfilPage() {
 	const chartPorOS = useMemo(() => {
 		const map = new Map<string, number>();
 		let noFact = 0;
+		const noFactByOS = new Map<string, number>();
 		for (const r of registrosFiltrados) {
 			const monto = Number(r.total) || 0;
 			if (r.noFacturable) {
 				noFact += monto;
+				const osNoFact = normalizarCobertura(r);
+				noFactByOS.set(osNoFact, (noFactByOS.get(osNoFact) || 0) + monto);
 				continue;
 			}
 			if (!tieneValorEconomico(r)) continue;
 			const os = normalizarCobertura(r);
 			map.set(os, (map.get(os) || 0) + monto);
 		}
-		const arr = Array.from(map.entries())
+		const arr: Array<{
+			name: string;
+			value: number;
+			noFacturable: boolean;
+			noFacturableCoberturas?: string[];
+		}> = Array.from(map.entries())
 			.map(([name, value]) => ({ name, value: Math.round(value * 100) / 100, noFacturable: false }))
 			.filter((x) => x.value > 0)
 			.sort((a, b) => b.value - a.value)
 			.slice(0, 9);
 		if (noFact > 0) {
+			const coberturasNoFact = Array.from(noFactByOS.entries())
+				.sort((a, b) => b[1] - a[1])
+				.map(([name]) => name);
 			arr.push({
 				name: 'No facturable',
 				value: Math.round(noFact * 100) / 100,
 				noFacturable: true,
+				noFacturableCoberturas: coberturasNoFact,
 			});
 		}
 		return arr;
@@ -388,6 +427,50 @@ export default function MiPerfilPage() {
 		registrosFiltrados.length > 0 ? Math.round((kpiValorizadas / registrosFiltrados.length) * 100) : 0;
 	const kpiPctNoFacturable =
 		registrosFiltrados.length > 0 ? Math.round((kpiNoFacturables / registrosFiltrados.length) * 100) : 0;
+
+	/** Posibles facturables: no marcadas como no facturables (incluye sin valorizar y con importe). */
+	const kpiPosiblesFacturables = useMemo(
+		() => registrosFiltrados.filter((r) => !r.noFacturable).length,
+		[registrosFiltrados],
+	);
+	const kpiPctPosiblesFacturables =
+		registrosFiltrados.length > 0 ? Math.round((kpiPosiblesFacturables / registrosFiltrados.length) * 100) : 0;
+	const kpiPosiblesSinValorizar = useMemo(
+		() => registrosFiltrados.filter((r) => !r.noFacturable && !tieneValorEconomico(r)).length,
+		[registrosFiltrados],
+	);
+	const kpiPctPosiblesSinValorizar =
+		registrosFiltrados.length > 0 ? Math.round((kpiPosiblesSinValorizar / registrosFiltrados.length) * 100) : 0;
+
+	/** Prácticas con valor económico y facturables: % que aún no alcanzan 100% facturado (columna Porcentaje). */
+	const practicasFacturablesValorizadas = useMemo(
+		() => registrosFiltrados.filter((r) => !r.noFacturable && tieneValorEconomico(r)),
+		[registrosFiltrados],
+	);
+	const practicasPendientesDeFacturacion = useMemo(
+		() =>
+			practicasFacturablesValorizadas.filter((r) => {
+				const p = Number(r.porcentajeFacturado) || 0;
+				return p < 99.999;
+			}).length,
+		[practicasFacturablesValorizadas],
+	);
+	const practicasFacturadasCompletas = useMemo(
+		() =>
+			practicasFacturablesValorizadas.filter((r) => (Number(r.porcentajeFacturado) || 0) >= 99.999).length,
+		[practicasFacturablesValorizadas],
+	);
+	const importePendienteFacturacion = useMemo(
+		() =>
+			practicasFacturablesValorizadas
+				.filter((r) => (Number(r.porcentajeFacturado) || 0) < 99.999)
+				.reduce((acc, r) => acc + (Number(r.total) || 0), 0),
+		[practicasFacturablesValorizadas],
+	);
+	const kpiPctPracticasFaltanFacturar =
+		practicasFacturablesValorizadas.length > 0
+			? Math.round((practicasPendientesDeFacturacion / practicasFacturablesValorizadas.length) * 100)
+			: 0;
 	const kpiTopOS = chartPorOS[0] ?? null;
 	const kpiTopOSPct =
 		totalesFiltrados.total > 0 && kpiTopOS
@@ -683,21 +766,6 @@ export default function MiPerfilPage() {
 												{prod.mensaje ? ` · ${prod.mensaje}` : ''}
 											</p>
 										</div>
-										<div className={styles.activeFilters}>
-											<span>{selectedCobertura || 'Todas las coberturas'}</span>
-											<span>
-												{estadoValorizacion === 'todas'
-													? 'Todas'
-													: estadoValorizacion === 'valorizadas'
-														? 'Valorizadas'
-														: 'No valorizadas'}
-											</span>
-											{kpiNoFacturables > 0 && (
-												<span className={styles.activeFilterDanger} title="Prácticas marcadas como No facturables">
-													{kpiNoFacturables} no facturable{kpiNoFacturables > 1 ? 's' : ''}
-												</span>
-											)}
-										</div>
 									</div>
 
 									{/* ── KPIs mejorados ── */}
@@ -727,23 +795,38 @@ export default function MiPerfilPage() {
 													{kpiPctFacturable}
 													<span className={styles.statUnit}>%</span>
 												</div>
-												<div className={styles.statProgressSplit}>
+												<div className={styles.statProgressSplitTri}>
 													<div
 														className={styles.statProgressBarFact}
 														style={{ width: `${kpiPctFacturable}%` }}
+														title="Con importe o señal de facturación"
+													/>
+													<div
+														className={styles.statProgressBarPosible}
+														style={{ width: `${kpiPctPosiblesSinValorizar}%` }}
+														title="Posibles facturables aún sin valorizar"
 													/>
 													<div
 														className={styles.statProgressBarNoFact}
 														style={{ width: `${kpiPctNoFacturable}%` }}
+														title="No facturables"
 													/>
 												</div>
-												<div className={styles.statHintRow}>
+												<div className={styles.statHintRowTri}>
 													<span className={styles.statHintFact}>
-														{kpiPctFacturable}% facturable
+														{kpiPctFacturable}% valorizadas
+													</span>
+													<span className={styles.statHintPosible}>
+														{kpiPctPosiblesSinValorizar}% pos. sin valorizar
 													</span>
 													<span className={styles.statHintDanger}>
-														{kpiPctNoFacturable}% no facturable
+														{kpiPctNoFacturable}% no fact.
 													</span>
+												</div>
+												<div className={styles.statHintPosiblesFact}>
+													<strong>{kpiPctPosiblesFacturables}%</strong> posibles facturables ({kpiPosiblesFacturables}{' '}
+													de {registrosFiltrados.length}: {practicasFacturablesValorizadas.length} con importe,{' '}
+													{kpiPosiblesSinValorizar} sin valorizar)
 												</div>
 											</div>
 										</div>
@@ -776,16 +859,36 @@ export default function MiPerfilPage() {
 											</div>
 										</div>
 
-										{/* No facturables (rojo) */}
+										{/* Totalización por cantidades (sin porcentajes) */}
 										<div className={`${styles.statCard} ${styles.statCardDanger}`}>
-											<div className={styles.statIcon}><X size={18} /></div>
+											<div className={styles.statIcon}><ClipboardList size={18} /></div>
 											<div className={styles.statBody}>
-												<div className={styles.statLabel}>No facturables</div>
-												<div className={styles.statValue}>{kpiNoFacturables}</div>
-												<div className={styles.statHint}>
-													{kpiNoFacturables > 0
-														? `Excluidas de la facturación · $${formatImporte(importeNoFacturable)} no computan`
-														: 'Ninguna práctica marcada como no facturable'}
+												<div className={styles.statLabel}>Totalización del listado</div>
+												<div className={styles.statTotalizadorSubtle}>
+													{registrosFiltrados.length} práctica{registrosFiltrados.length !== 1 ? 's' : ''} en el listado
+												</div>
+												<div className={styles.statTotalizadorCounts}>
+													<div className={styles.statTotalizadorCountCell}>
+														<div className={styles.statTotalizadorCountLabel}>No facturables</div>
+														<div className={styles.statTotalizadorCountValue}>{kpiNoFacturables}</div>
+													</div>
+													<div className={styles.statTotalizadorCountCell}>
+														<div className={styles.statTotalizadorCountLabel}>Facturadas</div>
+														<div className={styles.statTotalizadorCountValue}>{practicasFacturadasCompletas}</div>
+													</div>
+													<div className={styles.statTotalizadorCountCell}>
+														<div className={styles.statTotalizadorCountLabel}>Facturables</div>
+														<div className={styles.statTotalizadorCountValue}>
+															{practicasFacturablesValorizadas.length}
+														</div>
+													</div>
+												</div>
+												<div className={styles.statTotalizadorDivider} />
+												<div className={styles.statTotalizadorFootSingle}>
+													<div className={styles.statTotalizadorSubLabel}>Importe excluido (no facturable)</div>
+													<div className={`${styles.statValue} ${styles.statValueCompact}`}>
+														${formatImporte(importeNoFacturable)}
+													</div>
 												</div>
 											</div>
 										</div>
@@ -949,10 +1052,7 @@ export default function MiPerfilPage() {
 																		<div className={styles.practicaCell}>
 																			<span className={styles.practicaCodeWrap}>
 																				<span className={styles.practicaCode}>{row.codigoPractica || '—'}</span>
-																				{noFact && (
-																					<span className={styles.tagNoFact} title="Esta práctica está marcada como No facturable">
-																						No facturable
-																					</span>
+																				{noFact && (<></>
 																				)}
 																			</span>
 																			<span className={styles.practicaDesc} title={row.descripcionPractica || ''}>

@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './BedFilters.module.css';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { SearchInput } from './SearchInput';
+import type { BedTipoRecurso } from '@/app/types/beds';
 
 export interface BedFiltersProps {
   sectors: { id: string; valor: string; descripcion: string }[];
@@ -16,6 +17,8 @@ export interface BedFiltersProps {
   setServicioFilter?: (servicio: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  tipoRecursoFilter?: 'all' | BedTipoRecurso;
+  setTipoRecursoFilter?: (v: 'all' | BedTipoRecurso) => void;
   refreshBeds: () => void;
   autoRefresh: boolean;
   setAutoRefresh: (auto: boolean) => void;
@@ -38,6 +41,8 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
   setServicioFilter = () => {},
   searchTerm,
   setSearchTerm,
+  tipoRecursoFilter = 'all',
+  setTipoRecursoFilter,
   refreshBeds,
   lastUpdateTime,
   beds = []
@@ -109,6 +114,24 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
             ))}
           </select>
         </div>
+
+        {setTipoRecursoFilter && (
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel}>Tipo de recurso</label>
+            <select
+              className={styles.filterSelect}
+              value={tipoRecursoFilter}
+              onChange={(e) =>
+                setTipoRecursoFilter(e.target.value as 'all' | BedTipoRecurso)
+              }
+            >
+              <option value="all">Todos</option>
+              <option value="cama">Camas (internación)</option>
+              <option value="consultorio">Consultorios</option>
+              <option value="insumos">Insumos</option>
+            </select>
+          </div>
+        )}
 
         
 

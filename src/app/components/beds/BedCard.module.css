@@ -15,7 +15,6 @@
 }
 
 .bedCard:hover {
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
@@ -86,6 +85,287 @@
   color: #C62828;
 }
 
+/* Consultorio ocupado: violeta (diferente de cama de internación) */
+.estado-consultorio-ocupada .cardHeader {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  color: white;
+}
+.estado-consultorio-ocupada .sectorLabel {
+  background-color: rgba(255, 255, 255, 0.22);
+  color: white;
+}
+.estado-consultorio-ocupada .bedNumber {
+  color: white;
+}
+
+.tipoBadgeCama {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.tipoBadgeConsultorio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+.tipoConsultorio .cardHeader {
+  min-height: 48px;
+}
+
+/* Insumos — card estilo “human resources” + paleta violeta */
+.cardInsumos {
+  cursor: pointer;
+  --insumo-bg: #e9d5ff;
+  --insumo-bg-light: #faf5ff;
+  --insumo-text: #4c5656;
+  --insumo-text-hover: #334155;
+  --insumo-shadow: rgba(233, 213, 255, 0.55);
+  border: 2px solid #ddd6fe;
+  background: #fff;
+  border-radius: 12px;
+  border-top-right-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.cardInsumos:hover {
+  transform: translateY(0) scale(1.005) translateZ(0);
+  box-shadow:
+    0 12px 18px rgba(0, 0, 0, 0.05),
+    0 12px 23px var(--insumo-shadow);
+}
+
+.cardInsumos:active {
+  transform: scale(1) translateZ(0);
+  box-shadow:
+    0 15px 24px rgba(0, 0, 0, 0.11),
+    0 15px 24px var(--insumo-shadow);
+}
+
+.cardInsumos:hover .insumoHrIconGroup .insumoHrOverlay {
+  transform: translate(-50%, -50%) scale(4.6) translateZ(0);
+}
+
+.cardInsumos:hover .insumoHrCircle {
+  border-color: var(--insumo-bg-light);
+  background: var(--insumo-bg);
+}
+
+.cardInsumos:hover .insumoHrCircle::after {
+  background: var(--insumo-bg-light);
+}
+
+.cardInsumos:hover .insumoHrTitle {
+  color: var(--insumo-text-hover);
+}
+
+.insumoHrShell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.35rem 0.85rem 0.95rem;
+  overflow: hidden;
+}
+
+.insumoHrOverlay {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: var(--insumo-bg);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  transition: transform 0.3s ease-out;
+  transform: translate(-50%, -50%) translateZ(0);
+  will-change: transform;
+}
+
+.insumoHrTopRow {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.insumoHrIconGroup {
+  position: relative;
+  width: 131px;
+  height: 131px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+.insumoHrCircle {
+  width: 131px;
+  height: 131px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--insumo-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  transition:
+    border-color 0.3s ease-out,
+    background 0.3s ease-out;
+}
+
+.insumoHrCircle::after {
+  content: '';
+  width: 118px;
+  height: 118px;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  background: var(--insumo-bg);
+  border-radius: 50%;
+  transition: background 0.3s ease-out;
+  z-index: 0;
+}
+
+.insumoHrIcon {
+  position: relative;
+  z-index: 2;
+  color: #32224b;
+  transform: translateZ(0);
+}
+
+.insumoStockMockup {
+  position: relative;
+  z-index: 4;
+  min-width: 92px;
+  max-width: 105px;
+  border-radius: 10px;
+  border: 1px solid #d8b4fe;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.45rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  box-shadow: 0 6px 12px rgba(91, 33, 182, 0.1);
+}
+
+.insumoStockLabel {
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6d28d9;
+  line-height: 1;
+}
+
+.insumoStockBarTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #ede9fe;
+  overflow: hidden;
+  border: 1px solid #ddd6fe;
+}
+
+.insumoStockBarFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 50%, #5b21b6 100%);
+  transition: width 0.25s ease-out;
+}
+
+.insumoStockValue {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #4c1d95;
+  line-height: 1;
+  text-align: right;
+}
+
+.insumoHrTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--insumo-text);
+  margin: 26px 0 0;
+  z-index: 2;
+  position: relative;
+  transition: color 0.3s ease-out;
+  text-align: center;
+  line-height: 1.2;
+}
+
+
+.insumoHrVisita {
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(91, 33, 182, 0.12);
+  color: #5b21b6;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+
+.insumoPaciente {
+  font-size: 0.85rem;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.insumoMeta {
+  font-size: 0.68rem;
+  color: #64748b;
+  line-height: 1.25;
+}
+
+.insumoLibre {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 72px;
+}
+
+
+.cardInsumos .actionIcon {
+  font-size: 34px;
+}
+
+.cardInsumos .iconWrapperDisabled {
+  cursor: not-allowed;
+}
+
+.cardInsumos .iconWrapperDisabled .actionIcon {
+  opacity: 0.38;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cardInsumos .iconWrapperDisabled .actionIcon:hover {
+  background-color: #ebf8ff;
+  color: #00b5e2;
+  transform: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 /* QUE HACERES DOMÉSTICOS: Amarillo */
 .estado-que-haceres-domesticos .cardHeader {
   background-color: #FBC02D;
@@ -108,7 +388,8 @@
 .bedInfo {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

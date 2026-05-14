@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Home,
@@ -19,6 +19,8 @@ import {
 import styles from './Sidebar.module.css'
 import { useAppContext } from '../../contexts/AppContext'
 import { usePermiso } from '@/app/hooks/usePermiso'
+import { authService } from '@/app/services/authService'
+import type { UserData } from '@/app/types/AuthInterface'
 
 interface SubItem {
   label: string
@@ -122,10 +124,31 @@ interface SidebarProps {
 
 export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<UserData | null>(null)
   const router = useRouter()
   const pathname = usePathname()
   const { empresaInfo, sectorSeleccionado } = useAppContext()
   const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
+
+  useEffect(() => {
+    setCurrentUser(authService.getCurrentUser())
+  }, [])
+
+  const userDisplay = useMemo(() => {
+    const nombre = String(currentUser?.nombre || '').trim()
+    const apellido = String(currentUser?.apellido || '').trim()
+    const full = [nombre, apellido].filter(Boolean).join(' ').trim()
+    const nombreRed = String(currentUser?.nombreRed || '').trim()
+    const cod =
+      currentUser?.idCodOperador != null && currentUser?.idCodOperador !== ''
+        ? String(currentUser.idCodOperador)
+        : ''
+    const vp =
+      currentUser?.idValorpersonal != null && currentUser?.idValorpersonal !== ''
+        ? String(currentUser.idValorpersonal)
+        : ''
+    return { full, nombreRed, cod, vp }
+  }, [currentUser])
 
   /**
    * visibleMenu se calcula de la misma manera que la propiedad `menu` del
@@ -216,20 +239,21 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
 
   return (
     <aside className={`${styles.sidebar} ${expanded ? styles.expanded : ''}`}>
-      {/* Logo y datos de empresa */}
+      {/* Logo y empresa primero; usuario debajo (solo con menú expandido) */}
       <div className={styles.logo}>
         <div className={styles.logoContent}>
-          <span className={styles.logoIcon}>iM</span>
+          <img
+            className={styles.logoMark}
+            src="/logo-isource.png"
+            alt="iSource"
+            width={48}
+            height={48}
+          />
           <div className={styles.companyInfo}>
             <span className={styles.companyName}>{empresaInfo?.descripcion || ''}</span>
             <span className={styles.sectorName}>
               {sectorSeleccionado ? `Sector: ${sectorSeleccionado.descripcion}` : ''}
             </span>
-            {loaded && (
-              <span className={rol ? styles.rolBadge : styles.rolBadgeSinRol}>
-                {rol ? rol.nombre : 'Sin rol'}
-              </span>
-            )}
           </div>
         </div>
         <button 
@@ -238,6 +262,25 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
         >
           <ChevronLeft size={18} />
         </button>
+      </div>
+
+      <div className={styles.userHeader}>
+        <div className={styles.userHeaderText}>
+          <span className={styles.userFullName}>{userDisplay.full || 'Usuario'}</span>
+          {userDisplay.nombreRed ? (
+            <span className={styles.userNombreRed}>{userDisplay.nombreRed}</span>
+          ) : null}
+          <span className={styles.userIds}>
+            {userDisplay.cod ? `Op. ${userDisplay.cod}` : ''}
+            {userDisplay.cod && userDisplay.vp ? ' · ' : ''}
+            {userDisplay.vp ? `VP ${userDisplay.vp}` : ''}
+          </span>
+          {loaded && (
+            <span className={rol ? styles.userRolPill : styles.userRolPillMuted}>
+              {rol ? rol.nombre : 'Sin rol'}
+            </span>
+          )}
+        </div>
       </div>
       
       {/* Navegación */}

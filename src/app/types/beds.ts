@@ -9,6 +9,9 @@ export type BedEstado =
 	| 'disponible'
 	| 'mantenimiento';
 
+/** Tipo de recurso en imHabitacionCamas.Tipo (texto en BD: cama, consultorio, insumos, …) */
+export type BedTipoRecurso = 'cama' | 'consultorio' | 'insumos';
+
 export interface Bed {
 	id: string;
 	numeroCama: string;
@@ -35,6 +38,10 @@ export interface Bed {
 	fechaIngresoFormateada?: string; // Fecha ya formateada desde el padre
 	fechaIngresoSQL?: string; // Fecha de ingreso en formato SQL (DD/MM/YYYY)
 	horaIngresoSQL?: string; // Hora de ingreso en formato SQL (HH:MM:SS)
+	/** Valor crudo de imHabitacionCamas.Tipo */
+	tipoRaw?: string;
+	/** Tipo de recurso normalizado para UI y permisos de acciones */
+	tipoRecurso: BedTipoRecurso;
 }
 
 export interface BedState {

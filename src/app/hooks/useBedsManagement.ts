@@ -2,8 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { bedsService } from '../services/bedsService';
-import { Bed, BedState } from '../types/beds';
+import { Bed, BedState, BedTipoRecurso } from '../types/beds';
 import { useAppContext } from '../contexts/AppContext';
+
+const ORDEN_TIPO_RECURSO: Record<BedTipoRecurso, number> = {
+	cama: 0,
+	consultorio: 1,
+	insumos: 2,
+};
 
 export const useBedsManagement = () => {
   const { sectorSeleccionado, idsector } = useAppContext();
@@ -15,6 +21,7 @@ export const useBedsManagement = () => {
   const [sectorFilter, setSectorFilter] = useState<string>('all');
   const [servicioFilter, setServicioFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [tipoRecursoFilter, setTipoRecursoFilter] = useState<'all' | BedTipoRecurso>('all');
   const [sectors, setSectors] = useState<{id: string, valor: string, descripcion: string}[]>([]);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   const [refreshInterval, setRefreshInterval] = useState<number>(30000); // 30 segundos por defecto
@@ -113,36 +120,49 @@ export const useBedsManagement = () => {
     return servicios;
   }, [beds]);
 
-  const filteredBeds = beds.filter(bed => {
-    // Filtrar por estado de cama
-    const estadoMatch = 
-      filter === 'all' || 
-      bed.valorEstadoOriginal === filter;
-    
-    // Filtrar por sector
-    const sectorMatch = 
-      sectorFilter === 'all' || 
-      bed.sector === sectorFilter;
-    
-    // Filtrar por servicio médico
-    const servicioMatch = 
-      servicioFilter === 'all' || 
-      bed.servicioMedicoDescripcion === servicioFilter;
-    
-    // Filtrar por término de búsqueda (nombre, DNI o número de visita)
-    const searchMatch = !searchTerm || (
-      // Nombre del paciente
-      (bed.NombrePaciente && bed.NombrePaciente.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      // Número de documento (DNI)
-      (bed.documentoPaciente && bed.documentoPaciente.toString().includes(searchTerm)) ||
-      // Número de visita (admisión)
-      (bed.numeroVisita && bed.numeroVisita.toString().includes(searchTerm)) ||
-      // Número de visita mostrado (puede incluir formato adicional)
-      (bed.mostrarNumeroVisita && bed.mostrarNumeroVisita.toString().includes(searchTerm))
-    );
-    
-    return estadoMatch && sectorMatch && servicioMatch && searchMatch;
-  });
+  const filteredBeds = useMemo(() => {
+    return beds
+      .filter((bed) => {
+        const estadoMatch =
+          filter === 'all' || bed.valorEstadoOriginal === filter;
+
+        const sectorMatch =
+          sectorFilter === 'all' || bed.sector === sectorFilter;
+
+        const servicioMatch =
+          servicioFilter === 'all' ||
+          bed.servicioMedicoDescripcion === servicioFilter;
+
+        const searchMatch =
+          !searchTerm ||
+          (bed.NombrePaciente &&
+            bed.NombrePaciente.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (bed.documentoPaciente &&
+            bed.documentoPaciente.toString().includes(searchTerm)) ||
+          (bed.numeroVisita &&
+            bed.numeroVisita.toString().includes(searchTerm)) ||
+          (bed.mostrarNumeroVisita &&
+            bed.mostrarNumeroVisita.toString().includes(searchTerm));
+
+        const tipoMatch =
+          tipoRecursoFilter === 'all' ||
+          bed.tipoRecurso === tipoRecursoFilter;
+
+        return estadoMatch && sectorMatch && servicioMatch && searchMatch && tipoMatch;
+      })
+      .sort(
+        (a, b) =>
+          (ORDEN_TIPO_RECURSO[a.tipoRecurso] ?? 9) -
+          (ORDEN_TIPO_RECURSO[b.tipoRecurso] ?? 9),
+      );
+  }, [
+    beds,
+    filter,
+    sectorFilter,
+    servicioFilter,
+    searchTerm,
+    tipoRecursoFilter,
+  ]);
 
   return {
     beds: filteredBeds,
@@ -160,10 +180,12 @@ export const useBedsManagement = () => {
     setServicioFilter,
     searchTerm,
     setSearchTerm,
+    tipoRecursoFilter,
+    setTipoRecursoFilter,
     refreshBeds: fetchBeds,
     autoRefresh,
     setAutoRefresh,
     refreshInterval,
-    setRefreshInterval
+    setRefreshInterval,
   };
 };

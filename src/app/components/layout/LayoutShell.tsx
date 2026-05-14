@@ -55,7 +55,13 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
               <span className={styles.menuLine}></span>
               <span className={styles.menuLine}></span>
             </span>
-            <span className={styles.logoText}>iM</span>
+            <img
+              className={styles.logoMark}
+              src="/logo-isource.png"
+              alt="iSource"
+              width={34}
+              height={34}
+            />
           </button>
         )}
 

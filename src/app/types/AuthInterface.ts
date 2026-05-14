@@ -28,6 +28,9 @@ export interface RolInfo {
 
 export interface UserData {
   codigoOperador?: number | string;
+  idCodOperador?: number | string;
+  idValorpersonal?: number | string;
+  nombreRed?: string | null;
   role?: string;         
   nombre?: string;    
   apellido?: string;     

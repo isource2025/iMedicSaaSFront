@@ -11,14 +11,14 @@
   background: rgba(255, 255, 255, 0.7);
   display: flex;
   flex-direction: column;
-  padding-top: 24px;
+  padding-top: 16px;
   z-index: 50;
   transition: width 300ms ease-out, background 300ms ease-out;
 }
 
 .sidebar.expanded {
   width: 320px;
-  padding-top: 24px;
+  padding-top: 16px;
   background: rgba(255, 255, 255, 0);
 }
 
@@ -36,13 +36,95 @@
   background: white;
   border-radius: 24px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  transition: width 300ms ease-out;
+  transition: width 300ms ease-out, top 300ms ease-out;
   pointer-events: none;
   z-index: -1;
 }
 
 .sidebar.expanded::before {
   width: calc(100% - 16px);
+  top: 12px;
+}
+
+/* Usuario logueado (debajo del logo; sólo visible con sidebar expandido) */
+.userHeader {
+  display: none;
+  width: calc(100% - 24px);
+  margin: 0 12px 12px;
+  align-items: flex-start;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar.expanded .userHeader {
+  display: flex;
+}
+
+.userHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+}
+
+.userFullName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userNombreRed {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userIds {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRolPill {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 0.1rem 0.45rem;
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.userRolPillMuted {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 0.1rem 0.45rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1px dashed #cbd5e1;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 /* =============================================
@@ -56,7 +138,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: 32px;
+  margin-bottom: 12px;
   margin-left: 12px;
   margin-right: 12px;
   padding: 0;
@@ -77,17 +159,12 @@
   gap: 12px;
 }
 
-.logoIcon {
-  font-size: 1.5rem;
-  font-weight: 300;
-  font-style: normal;
-  color: var(--color-primary, #00BCD4);
-  flex-shrink: 0;
+.logoMark {
   width: 48px;
   height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Información de la empresa */
@@ -211,7 +288,7 @@
   align-items: center;
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: calc(100vh - 220px);
+  max-height: calc(100vh - 300px);
   padding-top: 0;
 }
 

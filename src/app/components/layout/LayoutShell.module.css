@@ -120,13 +120,12 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Logo iM oculto por defecto */
-.logoText {
+/* Logo iSource oculto por defecto (misma transición que el texto anterior) */
+.logoMark {
   position: absolute;
-  font-size: 1.4rem;
-  font-weight: 300;
-  font-style: italic;
-  color: #00B5E2;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
   opacity: 0;
   transform: scale(0.5) rotate(-180deg);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -142,7 +141,7 @@
   transform: scale(0.5) rotate(180deg);
 }
 
-.menuButtonOpen .logoText {
+.menuButtonOpen .logoMark {
   opacity: 1;
   transform: scale(1) rotate(0deg);
 }
@@ -329,8 +328,9 @@
     width: 16px;
   }
   
-  .logoText {
-    font-size: 1.2rem;
+  .logoMark {
+    width: 30px;
+    height: 30px;
   }
   
   .userMenuContainer {

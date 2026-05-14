@@ -1,16 +1,31 @@
-import { Bed } from '../types/beds';
+import { Bed, BedTipoRecurso } from '../types/beds';
+import { getResolvedApiBaseUrl } from './axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+/** Normaliza imHabitacionCamas.Tipo (texto plano en BD) */
+export function normalizarTipoRecurso(raw: unknown): BedTipoRecurso {
+	const t = String(raw ?? '')
+		.trim()
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '');
+	if (!t || t === 'cama') return 'cama';
+	if (t === 'consultorio') return 'consultorio';
+	if (t === 'insumo' || t === 'insumos') return 'insumos';
+	return 'cama';
+}
 
 export const bedsService = {
 	getAllBeds: async (): Promise<Bed[]> => {
-		const res = await fetch(`${BASE_URL}/beds`);
+		const res = await fetch(`${getResolvedApiBaseUrl()}/beds`);
 		const json = await res.json();
 
 		if (!json.success) throw new Error('Error en la API de camas');
 
 		return json.data.map(
-			(item: any): Bed => ({
+			(item: any): Bed => {
+				const tipoRaw =
+					item.Tipo ?? item.tipo ?? item.TIPO ?? '';
+				return {
 				id: `${item.ValorSector}-${item.ValorHabitacionCama}`,
 				sector: item.ValorSector,
 				numeroCama: item.ValorHabitacionCama,
@@ -31,13 +46,16 @@ export const bedsService = {
 				servicioMedicoDescripcion: item.ServicioMedicoDescripcion || '',
 				fechaIngresoSQL: item.fechaIngresoSQL || '',
 				horaIngresoSQL: item.horaIngresoSQL || '',
-			}),
+				tipoRaw: String(tipoRaw),
+				tipoRecurso: normalizarTipoRecurso(tipoRaw),
+				};
+			},
 		);
 	},
 
 	getBedStates: async (): Promise<{ id: string; valor: string; descripcion: string }[]> => {
 		try {
-			const res = await fetch(`${BASE_URL}/beds/estados`);
+			const res = await fetch(`${getResolvedApiBaseUrl()}/beds/estados`);
 			const json = await res.json();
 
 			if (!json.success) throw new Error('Error al obtener estados de cama');
@@ -55,7 +73,7 @@ export const bedsService = {
 
 	getSectores: async (): Promise<{ id: string; valor: string; descripcion: string }[]> => {
 		try {
-			const res = await fetch(`${BASE_URL}/beds/sectores`);
+			const res = await fetch(`${getResolvedApiBaseUrl()}/beds/sectores`);
 			const json = await res.json();
 
 			if (!json.success) throw new Error('Error al obtener sectores');
@@ -78,7 +96,7 @@ export const bedsService = {
 		camasNoDisponibles: number;
 	}> => {
 		try {
-			const res = await fetch(`${BASE_URL}/beds/total`);
+			const res = await fetch(`${getResolvedApiBaseUrl()}/beds/total`);
 			const json = await res.json();
 
 			if (!json.success) throw new Error('Error al obtener total de camas');
