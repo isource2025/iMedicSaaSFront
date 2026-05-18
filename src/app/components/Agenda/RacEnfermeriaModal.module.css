@@ -1,0 +1,810 @@
+.overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.55);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1100;
+	padding: 1rem;
+	animation: fadeIn 0.18s ease-out;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.modal {
+	background: #fff;
+	border-radius: 14px;
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+	width: 100%;
+	max-width: 1280px;
+	max-height: 94vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	animation: modalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+	from { opacity: 0; transform: translateY(8px) scale(0.985); }
+	to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ───────── Header ───────── */
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.85rem 1.1rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: linear-gradient(135deg, #f0f9ff 0%, #fff 100%);
+}
+
+.headerInfo {
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+}
+
+.headerIcon {
+	width: 42px;
+	height: 42px;
+	border-radius: 10px;
+	background: #0083a9;
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.4rem;
+	flex-shrink: 0;
+}
+
+.header h2 {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #0f172a;
+	font-weight: 700;
+}
+
+.header p {
+	margin: 0.15rem 0 0;
+	font-size: 0.82rem;
+	color: #475569;
+}
+
+.closeBtn {
+	background: transparent;
+	border: 0;
+	font-size: 1.7rem;
+	line-height: 1;
+	color: #64748b;
+	cursor: pointer;
+	padding: 0.2rem 0.5rem;
+	border-radius: 6px;
+}
+
+.closeBtn:hover {
+	background: #f1f5f9;
+	color: #0f172a;
+}
+
+/* ───────── Alerts ───────── */
+.alerts {
+	padding: 0.5rem 1.1rem 0;
+}
+
+.error,
+.info {
+	padding: 0.55rem 0.85rem;
+	border-radius: 8px;
+	font-size: 0.85rem;
+	margin-bottom: 0.5rem;
+}
+
+.error {
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #991b1b;
+}
+
+.info {
+	background: #f0fdf4;
+	border: 1px solid #bbf7d0;
+	color: #166534;
+}
+
+/* ───────── Body ───────── */
+.body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 1rem 1.1rem;
+	background: #f8fafc;
+}
+
+.loading {
+	padding: 3rem;
+	text-align: center;
+	color: #64748b;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 340px;
+	gap: 1rem;
+}
+
+@media (max-width: 1100px) {
+	.grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.left {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	min-width: 0;
+}
+
+.right {
+	min-width: 0;
+}
+
+/* ───────── Panel ───────── */
+.panel {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.panelHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.65rem 0.95rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #f8fafc;
+}
+
+.panelHeader > div:first-child {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.panelHeader h3 {
+	margin: 0;
+	font-size: 0.92rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding: 0 0.45rem;
+	border-radius: 999px;
+	background: #0083a9;
+	color: #fff;
+	font-size: 0.72rem;
+	font-weight: 700;
+}
+
+.panelActions {
+	display: flex;
+	gap: 0.4rem;
+}
+
+/* ───────── Buttons ───────── */
+.btnPrimary {
+	background: #0083a9;
+	color: #fff;
+	border: 0;
+	border-radius: 6px;
+	padding: 0.45rem 0.85rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	cursor: pointer;
+	font-family: inherit;
+	transition: background 0.12s;
+}
+
+.btnPrimary:hover {
+	background: #006d8d;
+}
+
+.btnPrimary:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.btnSecondary {
+	background: #fff;
+	color: #475569;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	padding: 0.45rem 0.85rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.btnSecondary:hover {
+	background: #f1f5f9;
+	color: #0f172a;
+}
+
+.btnIcon {
+	background: transparent;
+	border: 0;
+	color: #dc2626;
+	cursor: pointer;
+	padding: 0.2rem 0.4rem;
+	border-radius: 4px;
+	font-size: 0.95rem;
+}
+
+.btnIcon:hover {
+	background: #fef2f2;
+}
+
+/* ───────── Form ───────── */
+.form {
+	padding: 0.85rem 0.95rem;
+	background: #f8fafc;
+	border-bottom: 1px solid #e2e8f0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+	from { opacity: 0; transform: translateY(-4px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+.formRow {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	gap: 0.6rem;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+.field label,
+.fieldset legend {
+	font-size: 0.7rem;
+	font-weight: 600;
+	color: #475569;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.fieldset {
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 0.55rem 0.65rem;
+	margin: 0;
+	background: #fff;
+}
+
+.fieldset legend {
+	padding: 0 0.35rem;
+	color: #0083a9;
+}
+
+.input,
+.select,
+.textarea {
+	width: 100%;
+	padding: 0.45rem 0.55rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	font-size: 0.85rem;
+	font-family: inherit;
+	background: #fff;
+	color: #0f172a;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+	outline: 2px solid #93c5fd;
+	border-color: #2563eb;
+}
+
+.textarea {
+	resize: vertical;
+	min-height: 50px;
+}
+
+.formActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+/* ───────── Tabla ───────── */
+.tableScroll {
+	overflow-x: auto;
+	max-height: 280px;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.78rem;
+}
+
+.table thead th {
+	position: sticky;
+	top: 0;
+	background: #f1f5f9;
+	color: #334155;
+	font-weight: 700;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	padding: 0.45rem 0.55rem;
+	border-bottom: 2px solid #cbd5e1;
+	border-right: 1px solid #e2e8f0;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.table tbody td {
+	padding: 0.42rem 0.55rem;
+	border-bottom: 1px solid #f1f5f9;
+	border-right: 1px solid #f1f5f9;
+	text-align: center;
+	white-space: nowrap;
+	color: #1e293b;
+}
+
+.table tbody tr:hover td {
+	background: #f8fafc;
+}
+
+.table tbody tr:nth-child(even) td {
+	background: #fafbfc;
+}
+
+.table tbody tr:nth-child(even):hover td {
+	background: #f1f5f9;
+}
+
+.medName {
+	text-align: left !important;
+	font-weight: 500;
+	white-space: normal;
+	min-width: 180px;
+	max-width: 260px;
+}
+
+.cellAccion {
+	width: 38px;
+}
+
+.empty {
+	text-align: center;
+	padding: 2rem 1rem;
+	color: #94a3b8;
+	font-size: 0.85rem;
+	font-style: italic;
+}
+
+/* ───────── Búsqueda medicamento ───────── */
+.medSearch {
+	position: relative;
+}
+
+.medSearch label {
+	display: block;
+	font-size: 0.7rem;
+	font-weight: 600;
+	color: #475569;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	margin-bottom: 0.25rem;
+}
+
+.medResults {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 100%;
+	z-index: 12;
+	max-height: 220px;
+	overflow-y: auto;
+	background: #fff;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+	margin-top: 4px;
+}
+
+.medResultItem {
+	display: block;
+	width: 100%;
+	text-align: left;
+	padding: 0.5rem 0.7rem;
+	border: 0;
+	border-bottom: 1px solid #f1f5f9;
+	background: #fff;
+	cursor: pointer;
+	font-size: 0.82rem;
+	font-family: inherit;
+}
+
+.medResultItem strong {
+	display: block;
+	color: #0f172a;
+}
+
+.medResultItem span {
+	display: block;
+	color: #64748b;
+	font-size: 0.74rem;
+	margin-top: 0.1rem;
+}
+
+.medResultItem:hover {
+	background: #eff6ff;
+}
+
+/* ───────── Triage · pases ───────── */
+.triageBody {
+	padding: 0.85rem 0.75rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+
+.triageHint {
+	margin: 0;
+	font-size: 0.72rem;
+	color: #64748b;
+	text-align: center;
+	line-height: 1.35;
+}
+
+.triageStage {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	min-height: 0;
+	padding: 0.2rem 0.35rem 0.5rem;
+}
+
+.triagePass {
+	position: relative;
+	width: 100%;
+	max-width: 220px;
+	animation: triagePassIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes triagePassIn {
+	from {
+		opacity: 0;
+		transform: translateY(14px) scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.triagePassHanger {
+	width: 52px;
+	height: 16px;
+	margin: 0 auto -1px;
+	background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 100%);
+	border-radius: 5px 5px 2px 2px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	padding-top: 2px;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+	position: relative;
+	z-index: 1;
+}
+
+.triagePassHole {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #64748b;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25) inset;
+}
+
+.triagePassBody {
+	background: var(--pass-bg);
+	color: var(--pass-fg);
+	border-radius: 14px;
+	padding: 0.55rem 0.65rem 0.65rem;
+	box-shadow:
+		0 6px 16px rgba(15, 23, 42, 0.2),
+		0 1px 0 rgba(255, 255, 255, 0.15) inset;
+	transition: box-shadow 0.18s ease;
+}
+
+
+.triagePassTag {
+	display: block;
+	text-align: center;
+	font-size: 0.58rem;
+	font-weight: 800;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	opacity: 0.88;
+	margin-bottom: 0.4rem;
+}
+
+.triagePassFieldLbl {
+	display: block;
+	font-size: 0.58rem;
+	font-weight: 600;
+	opacity: 0.82;
+	margin-bottom: 0.12rem;
+}
+
+.triagePassField {
+	background: rgba(255, 255, 255, 0.94);
+	color: #1e293b;
+	border-radius: 6px;
+	padding: 0.3rem 0.45rem;
+	font-size: 0.7rem;
+	font-weight: 600;
+	line-height: 1.4;
+	white-space: normal;
+	word-break: break-word;
+	overflow: visible;
+	margin-bottom: 0.38rem;
+}
+
+.triagePassCore {
+	border: 2px solid rgba(255, 255, 255, 0.88);
+	border-radius: 9px;
+	background: var(--pass-inner);
+	padding: 0.45rem 0.35rem 0.4rem;
+	text-align: center;
+	margin-bottom: 0.38rem;
+}
+
+.triagePassNumWrap {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 3.4rem;
+	height: 3.1rem;
+	margin-bottom: 0.15rem;
+}
+
+.triagePassNumWrap::before {
+	content: attr(data-num);
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 2.75rem;
+	font-weight: 900;
+	font-style: italic;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.06em;
+	color: transparent;
+	-webkit-text-stroke: 2.5px color-mix(in srgb, var(--pass-fg) 45%, transparent);
+	pointer-events: none;
+}
+
+.triagePassNum {
+	position: relative;
+	z-index: 1;
+	font-size: 2.75rem;
+	font-weight: 900;
+	font-style: italic;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.06em;
+	line-height: 1;
+	color: var(--pass-fg);
+	text-shadow:
+		0 2px 0 rgba(0, 0, 0, 0.12),
+		0 0 18px rgba(255, 255, 255, 0.25);
+}
+
+.triagePassStatus {
+	display: block;
+	font-size: 0.62rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	line-height: 1.35;
+	opacity: 0.95;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.triagePassWait {
+	display: block;
+	margin-top: 0.12rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	opacity: 0.9;
+}
+
+.triageNums {
+	display: flex;
+	gap: 0.45rem;
+	justify-content: center;
+	flex-wrap: wrap;
+	padding: 0.35rem 0.25rem 0.15rem;
+}
+
+.triageNumBtn {
+	width: 2.65rem;
+	height: 2.65rem;
+	padding: 0;
+	border: 2px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+	cursor: pointer;
+	font-family: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition:
+		transform 0.16s ease,
+		border-color 0.16s ease,
+		box-shadow 0.16s ease,
+		background 0.16s ease;
+}
+
+.triageNumBtn:hover:not(:disabled) {
+	transform: translateY(-2px);
+	border-color: var(--num-color);
+	box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.triageNumBtn:disabled {
+	opacity: 0.55;
+	cursor: wait;
+}
+
+.triageNumBtnActive {
+	border-color: var(--num-color);
+	background: color-mix(in srgb, var(--num-color) 12%, #fff);
+	box-shadow:
+		0 0 0 2px #fff,
+		0 0 0 4px var(--num-color);
+	transform: translateY(-2px) scale(1.06);
+}
+
+.triageNumBtnSaved:not(.triageNumBtnActive) {
+	border-color: color-mix(in srgb, var(--num-color) 55%, #e2e8f0);
+}
+
+.triageNumGlyph {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.6rem;
+	height: 1.6rem;
+	font-size: 1.35rem;
+	font-weight: 900;
+	font-style: italic;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.05em;
+	line-height: 1;
+	color: var(--num-color);
+}
+
+.triageNumGlyph::before {
+	content: attr(data-num);
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: transparent;
+	-webkit-text-stroke: 2px color-mix(in srgb, var(--num-color) 35%, transparent);
+	pointer-events: none;
+}
+
+.triageNumBtnActive .triageNumGlyph {
+	animation: triageNumPop 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes triageNumPop {
+	0% {
+		transform: scale(0.75);
+	}
+	55% {
+		transform: scale(1.12);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* ───────── Toast (esquina superior derecha, fuera del modal) ───────── */
+.toast {
+	position: fixed;
+	top: 1.5rem;
+	right: 1.5rem;
+	z-index: 1200;
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	padding: 0.75rem 1.1rem;
+	background: #0f172a;
+	color: #fff;
+	border-radius: 10px;
+	box-shadow:
+		0 12px 32px rgba(15, 23, 42, 0.35),
+		0 0 0 1px rgba(255, 255, 255, 0.08);
+	font-size: 0.9rem;
+	font-weight: 500;
+	max-width: min(360px, calc(100vw - 2rem));
+	animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	pointer-events: none;
+}
+
+@keyframes toastIn {
+	from {
+		opacity: 0;
+		transform: translateX(100%) translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0) translateY(0);
+	}
+}
+
+.toastIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.65rem;
+	height: 1.65rem;
+	border-radius: 50%;
+	background: #16a34a;
+	color: #fff;
+	font-size: 0.85rem;
+	font-weight: 800;
+	flex-shrink: 0;
+}
+
+.toastText {
+	line-height: 1.35;
+}
+
+/* ───────── Footer ───────── */
+.footer {
+	padding: 0.75rem 1.1rem;
+	border-top: 1px solid #e2e8f0;
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	background: #fff;
+}

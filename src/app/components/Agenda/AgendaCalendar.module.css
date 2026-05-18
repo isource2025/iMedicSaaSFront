@@ -1,0 +1,37 @@
+/* Días pasados: no seleccionables, mismo fondo que el calendario */
+.past {
+	opacity: 0.45;
+	cursor: not-allowed;
+	color: #94a3b8;
+}
+
+.past:hover {
+	border-color: transparent !important;
+	background: #e3f2f7 !important;
+}
+
+/* Día con agenda del profesional (solo futuros / hoy, no seleccionado) */
+.hasTurnos {
+	background: #bae6fd !important;
+	color: #0369a1;
+	font-weight: 600;
+}
+
+.hasTurnos:hover {
+	background: #7dd3fc !important;
+	border-color: #0284c7;
+}
+
+/* Día seleccionado: color único, prioridad sobre “con turnos” */
+.selected {
+	background: #0083a9 !important;
+	color: #fff !important;
+	font-weight: 700;
+	border-color: #006080 !important;
+	box-shadow: 0 1px 4px rgba(0, 131, 169, 0.35);
+}
+
+.selected:hover {
+	background: #006080 !important;
+	border-color: #004d66 !important;
+}

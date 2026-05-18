@@ -1,0 +1,70 @@
+/* Encabezados agrupados (orden legacy) con look de agenda */
+.headGroup th {
+	background: #f8fafc;
+	font-weight: 700;
+	font-size: 0.72rem;
+	color: #475569;
+	text-align: center;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	border-bottom: 1px solid #e2e8f0;
+	vertical-align: bottom;
+	padding: 0.5rem 0.65rem;
+}
+
+.headSub th {
+    background: #f2f4f5;
+    font-weight: 600;
+    font-size: 0.68rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid #454c57;
+    padding: 0.4rem 0.65rem;
+}
+
+.horaCell {
+	font-size: 0.82rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.horaMini {
+	display: flex;
+	flex-direction: column;
+	gap: 0.12rem;
+	min-width: 4.5rem;
+}
+
+.profCol {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 7rem;
+	max-width: 14rem;
+}
+
+.profNombre {
+	font-weight: 600;
+	color: #1e293b;
+	line-height: 1.3;
+	word-break: break-word;
+}
+
+.profMat {
+	font-size: 0.72rem;
+	color: #64748b;
+}
+
+.diaCell {
+	font-weight: 600;
+	color: #475569;
+	text-transform: capitalize;
+}
+
+.fechaCell {
+	font-variant-numeric: tabular-nums;
+}
+
+.tableWide {
+	min-width: 1280px;
+}

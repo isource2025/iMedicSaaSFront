@@ -1,0 +1,78 @@
+.panel {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 1rem 1.25rem;
+	animation: agendaFadeUp 0.45s ease-out both;
+}
+
+.header {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.headerIcon {
+	font-size: 1.75rem;
+	line-height: 1;
+}
+
+.title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.subtitle {
+	margin: 0.2rem 0 0;
+	font-size: 0.85rem;
+	color: #64748b;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.65rem;
+}
+
+.item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.label {
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #94a3b8;
+}
+
+.value {
+	font-size: 0.9rem;
+	color: #1e293b;
+	font-weight: 500;
+}
+
+.hint {
+	margin: 1rem 0 0;
+	font-size: 0.82rem;
+	color: #64748b;
+	line-height: 1.5;
+}
+
+@keyframes agendaFadeUp {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

@@ -7,6 +7,8 @@ interface ModalProps {
 	title: string;
 	children: React.ReactNode;
 	size?: 'small' | 'medium' | 'large' | 'xlarge' | 'full';
+	/** Eleva el overlay por encima de otros modales (ej. asignar turno). */
+	priority?: 'default' | 'high';
 }
 
 export default function Modal({
@@ -15,6 +17,7 @@ export default function Modal({
 	title,
 	children,
 	size = 'medium',
+	priority = 'default',
 }: ModalProps) {
 	const modalRef = useRef<HTMLDivElement>(null);
 
@@ -65,7 +68,7 @@ export default function Modal({
 
 	return (
 		<div
-			className={styles.modalOverlay}
+			className={`${styles.modalOverlay} ${priority === 'high' ? styles.modalOverlayHigh : ''}`}
 			onClick={handleBackdropClick}
 			aria-modal='true'
 			role='dialog'

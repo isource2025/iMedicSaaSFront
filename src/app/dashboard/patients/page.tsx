@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { usePatients } from '@/app/hooks/usePatients';
 import { Patient } from '@/app/types/PatientInterface';
 import { PatientFormData } from '@/app/types/PatientFormInterface';
@@ -16,6 +17,10 @@ import Loader from '@/app/components/Loader/Loader';
 import styles from './patients.module.css';
 
 export default function PatientsPage() {
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	const abrioDesdeQuery = useRef(false);
+
 	const {
 		patients,
 		loading,
@@ -66,6 +71,17 @@ export default function PatientsPage() {
 			initializePatients();
 		}
 	}, [initialized, initializePatients]);
+
+	// Abrir modal de alta si se llegó con ?agregar=1 (desde agenda u otros módulos)
+	useEffect(() => {
+		if (!initialized || abrioDesdeQuery.current) return;
+		const debeAbrir =
+			searchParams.get('agregar') === '1' || searchParams.get('nuevo') === '1';
+		if (!debeAbrir) return;
+		abrioDesdeQuery.current = true;
+		openAddModal();
+		router.replace('/dashboard/patients', { scroll: false });
+	}, [initialized, searchParams, openAddModal, router]);
 
 	// Cuando se abre modal de edición, traer datos completos del backend (garantiza consistencia de selects)
 	useEffect(() => {

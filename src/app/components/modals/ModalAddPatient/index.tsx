@@ -11,6 +11,7 @@ interface ModalAddPatientProps {
 	initialData?: Partial<PatientFormData>;
 	isEditing?: boolean;
 	isSubmitting: boolean;
+	priority?: 'default' | 'high';
 }
 
 const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
@@ -20,6 +21,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
 	initialData = {},
 	isEditing = false,
 	isSubmitting,
+	priority = 'default',
 }) => {
 	return (
 		<Modal
@@ -27,6 +29,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
 			onClose={onClose}
 			title={isEditing ? 'Editar Paciente' : 'Agregar Paciente'}
 			size='full'
+			priority={priority}
 		>
 			<PatientFormBase
 				onSubmit={onSubmit}

@@ -64,7 +64,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			{ id: 'AGENDA',        label: 'Agenda',          path: '/dashboard/turnos/agenda',        acciones: [...CRUD] },
 			{ id: 'ADMIN',         label: 'Admin de Turnos', path: '/dashboard/turnos/admin',         acciones: [...CRUD, ACCIONES.GESTIONAR] },
 			{ id: 'EXCEPCIONES',   label: 'Excepciones',     path: '/dashboard/turnos/excepciones',   acciones: [...CRUD] },
-			{ id: 'CONFIGURACION', label: 'Configuración',   path: '/dashboard/turnos/configuracion', acciones: [ACCIONES.VER, ACCIONES.EDITAR] },
+			{ id: 'CONFIGURACION', label: 'Configuración',   path: '/dashboard/turnos/configuracion', acciones: [ACCIONES.VER, ACCIONES.EDITAR, ACCIONES.GESTIONAR] },
 			{ id: 'TABLA',         label: 'Tabla de Turnos', path: '/dashboard/turnos/tabla',         acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
 		],
 	},
@@ -165,9 +165,16 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	MEDICO: [
 		'DASHBOARD.INICIO.VER',
 
+		// Agenda propia
 		'TURNOS.AGENDA.VER',
 		'TURNOS.AGENDA.CREAR',
 		'TURNOS.AGENDA.EDITAR',
+		'TURNOS.AGENDA.ELIMINAR',
+		'TURNOS.EXCEPCIONES.VER',
+		'TURNOS.EXCEPCIONES.CREAR',
+		'TURNOS.EXCEPCIONES.EDITAR',
+		'TURNOS.EXCEPCIONES.ELIMINAR',
+		'TURNOS.CONFIGURACION.VER',
 		'TURNOS.TABLA.VER',
 
 		'ADMISION.PACIENTES.VER',
@@ -219,6 +226,9 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	ENFERMERO: [
 		'DASHBOARD.INICIO.VER',
 
+		'TURNOS.AGENDA.VER',
+		'TURNOS.AGENDA.EDITAR',
+
 		'ADMISION.PACIENTES.VER',
 		'ADMISION.BUSQUEDA.VER',
 		'ADMISION.VIGENTES.VER',
@@ -253,10 +263,21 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	ADMINISTRATIVO: [
 		'DASHBOARD.INICIO.VER',
 
+		// Gestión total de agenda
 		'TURNOS.AGENDA.VER',
 		'TURNOS.AGENDA.CREAR',
 		'TURNOS.AGENDA.EDITAR',
+		'TURNOS.AGENDA.ELIMINAR',
+		'TURNOS.EXCEPCIONES.VER',
+		'TURNOS.EXCEPCIONES.CREAR',
+		'TURNOS.EXCEPCIONES.EDITAR',
+		'TURNOS.EXCEPCIONES.ELIMINAR',
+		'TURNOS.CONFIGURACION.VER',
+		'TURNOS.CONFIGURACION.EDITAR',
+		'TURNOS.CONFIGURACION.GESTIONAR',
 		'TURNOS.TABLA.VER',
+		'TURNOS.TABLA.EXPORTAR',
+		..._todas('TURNOS', 'ADMIN'),
 
 		'ADMISION.PACIENTES.VER',
 		'ADMISION.PACIENTES.CREAR',
@@ -290,6 +311,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'REPORTES.OCUPACION.VER',
 
 		'CONFIGURACION.PERSONAL.VER',
+		'CONFIGURACION.PERSONAL.EDITAR',
+		'CONFIGURACION.PERSONAL.GESTIONAR',
 
 		'USUARIO.PERFIL.VER',
 		'USUARIO.PERFIL.EDITAR',
@@ -313,15 +336,17 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 /**
  * Lista de permisos efectivos del usuario.
  *
- * Si `permisosUsuario` viene definido (típicamente cargado del backend tras el
- * login), se usa esa lista. Si no, se cae a la plantilla hardcodeada del rol.
+ * El rol ADMIN siempre usa la plantilla completa (misma cobertura que un
+ * administrativo para agenda, personal, etc.), aunque venga una lista desde
+ * el login desactualizada respecto de imRolPermisos.
  */
 export function permisosDeRol(
 	rol: { nombre?: string } | string | null | undefined,
 	permisosUsuario?: ReadonlyArray<string> | null,
 ): ReadonlyArray<string> {
-	if (permisosUsuario && permisosUsuario.length) return permisosUsuario;
 	const n = nombreRol(rol);
+	if (n === 'ADMIN') return [...PLANTILLAS.ADMIN];
+	if (permisosUsuario && permisosUsuario.length) return permisosUsuario;
 	if (!n) return [];
 	return PLANTILLAS[n];
 }

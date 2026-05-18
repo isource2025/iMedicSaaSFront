@@ -20,6 +20,8 @@ import type {
 } from '../Patients/typesForRenaper';
 import styles from './PersonalForm.module.css';
 import { nacionalidadDescripcionACodigo } from '../../utils/nacionalidadCodigo';
+import AgendaTab from './AgendaTab/AgendaTab';
+import { usePermiso } from '../../hooks/usePermiso';
 
 interface EstadoCivil {
 	valor: string;
@@ -34,7 +36,7 @@ interface PersonalFormProps {
 	onCancel: () => void;
 }
 
-type Tab = 'personal' | 'profesional';
+type Tab = 'personal' | 'profesional' | 'agenda';
 
 const TIPOS_DOCUMENTO = [
 	{ value: 'DNI', label: 'DNI' },
@@ -171,12 +173,23 @@ export default function PersonalForm({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const { puedeSubmodulo, rol } = usePermiso();
+	const esAdmin = String(rol?.nombre ?? '')
+		.trim()
+		.toUpperCase() === 'ADMIN';
+	const puedeConfigurarAgenda = puedeSubmodulo('TURNOS', 'CONFIGURACION');
+	const showAgendaTab =
+		isEditing && (puedeConfigurarAgenda || esAdmin);
+	const matriculaProfesional = Number(formData.MatriculaProvincial) || null;
+
 	useEffect(() => {
-		const ids: Tab[] = ['personal', 'profesional'];
+		const ids: Tab[] = showAgendaTab
+			? ['personal', 'profesional', 'agenda']
+			: ['personal', 'profesional'];
 		const idx = ids.indexOf(activeTab);
 		const node = tabsRef.current[idx];
 		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
-	}, [activeTab]);
+	}, [activeTab, showAgendaTab]);
 
 	const fetchProvincia = async (valorProvincia: string) => {
 		try {
@@ -372,6 +385,17 @@ export default function PersonalForm({
 				>
 					Datos Profesionales
 				</div>
+				{showAgendaTab && (
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[2] = el;
+						}}
+						className={`${styles.tab} ${activeTab === 'agenda' ? styles.tabActive : ''}`}
+						onClick={() => setActiveTab('agenda')}
+					>
+						Agenda
+					</div>
+				)}
 				<div className={styles.indicator} style={indicatorStyle} />
 			</div>
 
@@ -745,6 +769,10 @@ export default function PersonalForm({
 						/>
 					</div>
 				</div>
+			)}
+
+			{activeTab === 'agenda' && showAgendaTab && (
+				<AgendaTab matricula={matriculaProfesional} />
 			)}
 			</div>
 
