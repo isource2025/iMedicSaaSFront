@@ -219,7 +219,7 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 			);
 			setUnidades(
 				(d.unidadesMedida || []).map(
-					(u: { Valor: string; Descripcion: string }) => ({
+					(u: { Valor: number; Descripcion: string }) => ({
 						Valor: String(u.Valor),
 						Descripcion: u.Descripcion,
 					}),

@@ -21,8 +21,5 @@ export function turnoAdminRowToSlot(row: TurnoAdminRow): AgendaSlot {
 		horaLlegada: row.horallegada,
 		horaAtencion: row.horaAtencion,
 		horaSalida: row.horaSalida,
-		sexo: row.sexo,
-		fechaNacimiento: row.fechaNacimiento,
-		cobertura: row.cobertura,
 	};
 }

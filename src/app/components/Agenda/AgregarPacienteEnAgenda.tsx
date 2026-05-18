@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import ModalAddPatient from '@/app/components/modals/ModalAddPatient';
 import { patientService } from '@/app/services/patientService';
-import type { PatientFormData } from '@/app/types/PatientFormInterface';
+import type { PatientFormData } from '@/app/types/PatientInterface';
 
 export interface PacienteCreadoMin {
 	IDPaciente: number;

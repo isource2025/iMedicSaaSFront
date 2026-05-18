@@ -114,11 +114,22 @@ export default function AgendaPage() {
 	const puedeCancelarTurno =
 		puede('TURNOS.AGENDA.EDITAR') || puedeSubmodulo('TURNOS', 'AGENDA');
 
-	const user = authService.getCurrentUser() as {
+	const [user, setUser] = useState<{
 		matricula?: number | null;
 		nombre?: string;
 		apellido?: string;
-	} | null;
+	} | null>(null);
+
+	useEffect(() => {
+		setUser(
+			authService.getCurrentUser() as {
+				matricula?: number | null;
+				nombre?: string;
+				apellido?: string;
+			} | null,
+		);
+	}, []);
+
 	const matriculaPropia = user?.matricula ?? null;
 
 	const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());

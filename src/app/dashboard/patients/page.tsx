@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { usePatients } from '@/app/hooks/usePatients';
 import { Patient } from '@/app/types/PatientInterface';
@@ -16,7 +16,7 @@ import { patientService } from '@/app/services/patientService';
 import Loader from '@/app/components/Loader/Loader';
 import styles from './patients.module.css';
 
-export default function PatientsPage() {
+function PatientsPageContent() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const abrioDesdeQuery = useRef(false);
@@ -239,5 +239,19 @@ export default function PatientsPage() {
 				)}
 			</div>
 		</div>
+	);
+}
+
+export default function PatientsPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className={styles.container}>
+					<Loader />
+				</div>
+			}
+		>
+			<PatientsPageContent />
+		</Suspense>
 	);
 }

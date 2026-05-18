@@ -1,6 +1,6 @@
 'use client';
 
-import { PatientFormData } from '../../../types/PatientFormInterface';
+import { Patient, PatientFormData } from '../../../types/PatientInterface';
 import Modal from '../../../components/UI/Modal';
 import { PatientFormBase } from '../../../components/Patients/PatientFormBase';
 
@@ -33,7 +33,7 @@ const ModalAddPatient: React.FC<ModalAddPatientProps> = ({
 		>
 			<PatientFormBase
 				onSubmit={onSubmit}
-				initialData={initialData}
+				initialData={initialData as Partial<Patient> | undefined}
 				isEditing={isEditing}
 				onClose={onClose}
 				isSubmitting={isSubmitting}
