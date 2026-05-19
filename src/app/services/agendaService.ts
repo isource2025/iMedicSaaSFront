@@ -6,6 +6,48 @@ interface ApiResp<T> {
 	mensaje?: string;
 }
 
+export interface DiagnosticoCie10 {
+	valor: number;
+	codigo: string;
+	descripcion: string;
+}
+
+export interface ClienteCobertura {
+	valor: number;
+	razonSocial: string;
+	tipo: string;
+}
+
+export interface CierreHciPayload {
+	motivoConsulta?: string;
+	enfermedadActual?: string;
+	semiologia?: string;
+	pa?: string;
+	fc?: string;
+	fr?: string;
+	tax?: string;
+	glucemia?: string;
+	talla?: string;
+	peso?: string;
+	impresionGeneral?: string;
+}
+
+export interface CierreTurnoPayload {
+	diagnostico?: string;
+	contrato?: number;
+	hci?: CierreHciPayload;
+}
+
+export interface CierreTurnoResult {
+	idTurno: number;
+	status: number;
+	horaSalida: string | null;
+	numeroVisita: number;
+	idHci?: number;
+	valorPractica?: number;
+	idFacProfesional?: number;
+}
+
 export interface AgendaJornada {
 	index: number;
 	label: string;
@@ -265,10 +307,28 @@ export const agendaService = {
 	async cerrarTurno(
 		matricula: number,
 		idTurno: number,
-	): Promise<{ idTurno: number; status: number; horaSalida: string | null }> {
-		const r = await apiService.patch<
-			ApiResp<{ idTurno: number; status: number; horaSalida: string | null }>
-		>(`/agenda/${matricula}/turnos/${idTurno}/cerrar`);
+		payload?: CierreTurnoPayload,
+	): Promise<CierreTurnoResult> {
+		const r = await apiService.patch<ApiResp<CierreTurnoResult>>(
+			`/agenda/${matricula}/turnos/${idTurno}/cerrar`,
+			payload || {},
+		);
+		return r.data.data;
+	},
+
+	async buscarDiagnosticos(q: string, limit = 30): Promise<DiagnosticoCie10[]> {
+		const qs = new URLSearchParams({ q, limit: String(limit) });
+		const r = await apiService.get<ApiResp<DiagnosticoCie10[]>>(
+			`/agenda/diagnosticos/buscar?${qs.toString()}`,
+		);
+		return r.data.data;
+	},
+
+	async buscarClientes(q: string, limit = 30): Promise<ClienteCobertura[]> {
+		const qs = new URLSearchParams({ q, limit: String(limit) });
+		const r = await apiService.get<ApiResp<ClienteCobertura[]>>(
+			`/agenda/clientes/buscar?${qs.toString()}`,
+		);
 		return r.data.data;
 	},
 

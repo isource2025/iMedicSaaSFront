@@ -20,6 +20,7 @@ import AgendaEmptyState from '@/app/components/Agenda/AgendaEmptyState';
 import AgendaResumenPanel from '@/app/components/Agenda/AgendaResumenPanel';
 import AgendaPacienteBusqueda from '@/app/components/Agenda/AgendaPacienteBusqueda';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
+import CerrarTurnoModal from '@/app/components/Agenda/CerrarTurnoModal';
 import {
 	AgendaTurnoTablaHead,
 	AgendaTurnoTablaRow,
@@ -175,6 +176,7 @@ export default function AgendaPage() {
 	const [modalSlot, setModalSlot] = useState<AgendaSlot | null>(null);
 	const [modalModo, setModalModo] = useState<ModalAsignarModo>('asignar');
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
+	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
 
 	const abrirMenuSlot = (e: React.MouseEvent, slot: AgendaSlot) => {
 		e.stopPropagation();
@@ -409,18 +411,12 @@ export default function AgendaPage() {
 
 		if (action === 'cerrar') {
 			if (!puedeCancelarTurno) return;
-			const ok = window.confirm(
-				'¿Cerrar este turno? Se registrará la hora de atención actual.',
-			);
-			if (!ok) return;
-			setError(null);
-			try {
-				await agendaService.cerrarTurno(mat, slot.idTurno);
-				refrescarAgenda();
-			} catch (e: unknown) {
-				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
-				setError(err?.response?.data?.mensaje || err?.message || 'Error al cerrar turno');
+			if (esEnfermero) {
+				setError('Sólo médico o administrativo pueden cerrar turnos');
+				return;
 			}
+			setError(null);
+			setCerrarSlot(slot);
 			return;
 		}
 
@@ -866,6 +862,29 @@ export default function AgendaPage() {
 				slot={racSlot}
 				fechaTurno={fechaIso}
 				onClose={cerrarRacModal}
+			/>
+
+			<CerrarTurnoModal
+				open={!!cerrarSlot && !!matriculaMedicoActiva}
+				matricula={matriculaMedicoActiva || 0}
+				turno={
+					cerrarSlot
+						? {
+								idTurno: cerrarSlot.idTurno ?? 0,
+								pacienteNombre: cerrarSlot.pacienteNombre,
+								numeroDocumento: cerrarSlot.numeroDocumento,
+								sector: cerrarSlot.sector,
+								hora: cerrarSlot.hora,
+								fecha: fechaIso,
+								observaciones: cerrarSlot.observaciones,
+							}
+						: null
+				}
+				onClose={() => setCerrarSlot(null)}
+				onCerrado={() => {
+					setCerrarSlot(null);
+					refrescarAgenda();
+				}}
 			/>
 
 			<AsignarTurnoModal

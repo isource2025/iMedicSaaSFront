@@ -14,6 +14,7 @@ import { opcionesMenuTurnoAdmin } from '@/app/components/Agenda/turnoAdminMenuOp
 import { agendaService } from '@/app/services/agendaService';
 import EditarTurnoAdminModal from '@/app/components/Agenda/EditarTurnoAdminModal';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
+import CerrarTurnoModal from '@/app/components/Agenda/CerrarTurnoModal';
 import { turnoAdminRowToSlot } from '@/app/components/Agenda/turnoAdminUtils';
 import type { AgendaSlot } from '@/app/services/agendaService';
 import agendaStyles from '../agenda/agenda.module.css';
@@ -83,6 +84,7 @@ export default function TurnosAdminPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [turnoEditar, setTurnoEditar] = useState<TurnoAdminRow | null>(null);
+	const [turnoCerrar, setTurnoCerrar] = useState<TurnoAdminRow | null>(null);
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [racFecha, setRacFecha] = useState<string>('');
 	const [turnoMenu, setTurnoMenu] = useState<{
@@ -180,18 +182,8 @@ export default function TurnosAdminPage() {
 		}
 
 		if (action === 'cerrar') {
-			const ok = window.confirm(
-				'¿Cerrar este turno? Se registrará la hora de atención actual.',
-			);
-			if (!ok) return;
 			setError(null);
-			try {
-				await agendaService.cerrarTurno(row.profesional, row.idTurno);
-				cargar();
-			} catch (e: unknown) {
-				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
-				setError(err?.response?.data?.mensaje || err?.message || 'Error al cerrar turno');
-			}
+			setTurnoCerrar(row);
 			return;
 		}
 
@@ -420,6 +412,29 @@ export default function TurnosAdminPage() {
 					turno={turnoEditar}
 					onClose={() => setTurnoEditar(null)}
 					onSaved={cargar}
+				/>
+
+				<CerrarTurnoModal
+					open={Boolean(turnoCerrar)}
+					matricula={turnoCerrar?.profesional ?? 0}
+					turno={
+						turnoCerrar
+							? {
+									idTurno: turnoCerrar.idTurno,
+									pacienteNombre: turnoCerrar.pacienteNombre,
+									numeroDocumento: turnoCerrar.numeroDocumento,
+									sector: turnoCerrar.sector,
+									hora: turnoCerrar.hora,
+									fecha: turnoCerrar.fecha,
+									observaciones: turnoCerrar.observaciones,
+								}
+							: null
+					}
+					onClose={() => setTurnoCerrar(null)}
+					onCerrado={() => {
+						setTurnoCerrar(null);
+						cargar();
+					}}
 				/>
 
 				<RacEnfermeriaModal
