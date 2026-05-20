@@ -23,11 +23,19 @@ export type VisitDetailPayload = {
   };
   historialClinico?: Record<string, unknown>[];
   practicasPaciente?: Array<{
+    Valor?: number;
     Practica?: string | number;
     PracticaDescripcion?: string;
+    TipoPractica?: string;
     CantidadPractica?: string | number;
-    FechaPractica?: string;
-    HoraPracticaInicio?: string;
+    FechaPractica?: string | null;
+    HoraPracticaInicio?: string | null;
+    HoraPracticaFin?: string | null;
+    ValorSector?: string;
+    Estado?: string | number;
+    Factura?: string | number;
+    Autorizada?: string | number;
+    Profesionales?: string;
   }>;
   indicaciones?: Record<string, unknown>[];
   medicamentos?: Record<string, unknown>[];
@@ -388,23 +396,44 @@ export default function AdmissionVisitDetailModal({
                 <EmptyState message="No hay prácticas registradas para esta visita." />
               ) : (
                 <div className={styles.tableScroll}>
-                  <table className={`${styles.dataTable} ${styles.tableCompact}`}>
+                  <table className={`${styles.dataTable} ${styles.tableCompact} ${styles.tablePracticas}`}>
                     <thead>
                       <tr>
+                        <th>Código</th>
                         <th>Práctica</th>
-                        <th>Cantidad</th>
+                        <th>Tipo</th>
+                        <th>Cant.</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Sector</th>
+                        <th>Estado</th>
+                        <th>Profesional</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.practicasPaciente.map((raw, idx) => {
                         const row = raw as Record<string, unknown>;
-                        const key = `${str(row.Practica) || 'pr'}-${idx}`;
+                        const key = `${str(row.Valor ?? row.Practica) || 'pr'}-${idx}`;
                         return (
                           <tr key={key}>
-                            <td className={styles.cellClamp}>
+                            <td>{str(row.Practica) || '—'}</td>
+                            <td className={styles.cellClampWide}>
                               {str(row.PracticaDescripcion || row.Practica) || '—'}
                             </td>
+                            <td>{str(row.TipoPractica) || '—'}</td>
                             <td>{str(row.CantidadPractica) || '—'}</td>
+                            <td>{str(row.FechaPractica) || '—'}</td>
+                            <td>
+                              {str(row.HoraPracticaInicio) || '—'}
+                              {row.HoraPracticaFin
+                                ? ` – ${str(row.HoraPracticaFin)}`
+                                : ''}
+                            </td>
+                            <td>{str(row.ValorSector) || '—'}</td>
+                            <td>{str(row.Estado) || '—'}</td>
+                            <td className={styles.cellClampWide}>
+                              {str(row.Profesionales) || '—'}
+                            </td>
                           </tr>
                         );
                       })}

@@ -42,20 +42,21 @@ function leerLocal(): PermisosState {
 /**
  * Hook principal de permisos.
  *
- * – El estado inicial se lee **sincrónicamente** desde localStorage en el
- *   cliente (no hay flash de menú incorrecto).
- * – En SSR devuelve `loaded = false` para que el Sidebar espere antes de
- *   filtrar.
+ * – El estado inicial es vacío (servidor y cliente) para evitar errores de
+ *   hidratación; en `useEffect` se lee localStorage.
+ * – Mientras `loaded = false`, el Sidebar no muestra ítems de menú.
  * – Reactivo a `storage` (otras pestañas) y al evento `imedic:permisos-refresh`.
  */
 export function usePermiso() {
-	const [state, setState] = useState<PermisosState>(() => leerLocal());
+	// Estado inicial idéntico en servidor y cliente (evita hydration mismatch).
+	const [state, setState] = useState<PermisosState>({
+		rol: null,
+		permisos: [],
+		loaded: false,
+	});
 
 	useEffect(() => {
-		// Si vinimos de SSR (loaded = false), forzamos la carga en el cliente.
-		if (!state.loaded) {
-			setState(leerLocal());
-		}
+		setState(leerLocal());
 
 		const onStorage = (e: StorageEvent) => {
 			if (e.key === 'rol' || e.key === 'permisos') setState(leerLocal());

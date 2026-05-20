@@ -66,6 +66,34 @@ function esCancelado(s: AgendaSlot): boolean {
 	return s.estado === 'CANCELADO' || s.status === 1;
 }
 
+/** Convierte un turno asignado (vista médico) al formato de slot del menú contextual. */
+function turnoAsignadoToSlot(t: TurnoAsignado): AgendaSlot {
+	return {
+		hora: t.hora || '—',
+		sector: t.sector,
+		estado: t.estado,
+		status: t.status,
+		tipoTurno: t.tipoTurno,
+		esSobreturno: t.esSobreturno,
+		idTurno: t.idTurno,
+		idPaciente: t.idPaciente,
+		pacienteNombre: t.pacienteNombre,
+		numeroDocumento: t.numeroDocumento,
+		observaciones: t.observaciones,
+		motivoCancelacion: t.motivoCancelacion,
+		idClasificacionTriage: t.idClasificacionTriage,
+		horaLlegada: t.horaLlegada,
+		horaAtencion: t.horaAtencion,
+		horaSalida: t.horaSalida,
+		sexo: t.sexo,
+		fechaNacimiento: t.fechaNacimiento,
+		edad: t.edad,
+		cobertura: t.cobertura,
+		racControles: t.racControles,
+		racMedicacion: t.racMedicacion,
+	};
+}
+
 /** Cupo disponible para asignar (libre o cancelado). */
 function cupoDisponible(s: AgendaSlot): boolean {
 	return esLibre(s) || esCancelado(s);
@@ -606,21 +634,39 @@ export default function AgendaPage() {
 										<table className={`${styles.table} ${styles.tableEnter} ${styles.tableWide}`}>
 										<AgendaTurnoTablaHead />
 										<tbody>
-											{turnosMedico.map((t) => (
-												<AgendaTurnoTablaRow
-													key={t.idTurno}
-													row={t}
-													libre={false}
-													cancelado={t.estado === 'CANCELADO'}
-													badgeEstado={
-														<span className={badge(t.estado, t.esSobreturno)}>
-															{t.esSobreturno && t.estado !== 'LIBRE'
-																? 'SOBRETURNO'
-																: t.estado}
-														</span>
-													}
-												/>
-											))}
+											{turnosMedico.map((t) => {
+												const slot = turnoAsignadoToSlot(t);
+												const cancelado = t.estado === 'CANCELADO';
+												const puedeMenu = !fechaPasada;
+												return (
+													<AgendaTurnoTablaRow
+														key={t.idTurno}
+														row={t}
+														libre={false}
+														cancelado={cancelado}
+														badgeEstado={
+															<span className={badge(t.estado, t.esSobreturno)}>
+																{t.esSobreturno && t.estado !== 'LIBRE'
+																	? 'SOBRETURNO'
+																	: t.estado}
+															</span>
+														}
+														onTrClick={(e) => {
+															if (puedeMenu) abrirMenuSlot(e, slot);
+														}}
+														trStyle={{
+															cursor: puedeMenu ? 'pointer' : 'default',
+														}}
+														trClassName={
+															cancelado
+																? styles.rowCancelado
+																: t.esSobreturno
+																	? styles.rowSobreturno
+																	: styles.rowOcupado
+														}
+													/>
+												);
+											})}
 										</tbody>
 									</table>
 									)}
@@ -877,6 +923,7 @@ export default function AgendaPage() {
 								hora: cerrarSlot.hora,
 								fecha: fechaIso,
 								observaciones: cerrarSlot.observaciones,
+								cobertura: cerrarSlot.cobertura,
 							}
 						: null
 				}

@@ -288,6 +288,16 @@
   overflow: hidden;
 }
 
+.cellClampWide {
+  max-width: 280px;
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.tablePracticas {
+  min-width: 880px;
+}
+
 .labList {
   display: flex;
   flex-direction: column;

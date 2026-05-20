@@ -33,8 +33,7 @@ export interface CierreHciPayload {
 }
 
 export interface CierreTurnoPayload {
-	diagnostico?: string;
-	contrato?: number;
+	diagnostico: string;
 	hci?: CierreHciPayload;
 }
 

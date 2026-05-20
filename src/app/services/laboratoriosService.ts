@@ -18,7 +18,7 @@ export const laboratoriosService = {
    * Procesa un archivo con OCR
    */
   async uploadAndProcessOCR(numeroVisita: number, file: File): Promise<OCRResult> {
-    try {
+    const intentar = async (): Promise<OCRResult> => {
       const formData = new FormData();
       formData.append('archivo', file);
       formData.append('numeroVisita', numeroVisita.toString());
@@ -35,7 +35,27 @@ export const laboratoriosService = {
 
       const result = await response.json();
       return result.data;
+    };
+
+    try {
+      return await intentar();
     } catch (error) {
+      const msg = error instanceof Error ? error.message : '';
+      const esPdfSinTexto =
+        file.type === 'application/pdf' &&
+        msg.includes('No se pudo extraer texto del PDF');
+
+      if (esPdfSinTexto) {
+        console.warn('Reintentando OCR del PDF tras fallo intermitente...');
+        await new Promise((r) => setTimeout(r, 400));
+        try {
+          return await intentar();
+        } catch (retryError) {
+          console.error('Error al procesar archivo con OCR (reintento):', retryError);
+          throw retryError;
+        }
+      }
+
       console.error('Error al procesar archivo con OCR:', error);
       throw error;
     }

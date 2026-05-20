@@ -265,13 +265,9 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       <div className={styles.userHeader}>
         <div className={styles.userHeaderText}>
           <span className={styles.userFullName}>{userDisplay.full || 'Usuario'}</span>
-          {userDisplay.nombreRed ? (<></>
-          ) : null}
-          {loaded && (
-            <span className={rol ? styles.userRolPill : styles.userRolPillMuted}>
-              {rol ? rol.nombre : 'Sin rol'}
-            </span>
-          )}
+          <span className={rol ? styles.userRolPill : styles.userRolPillMuted}>
+            {!loaded ? '…' : rol ? rol.nombre : 'Sin rol'}
+          </span>
         </div>
       </div>
       
