@@ -20,29 +20,22 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
   const [error, setError] = useState<string | null>(null);
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [loadingSectores, setLoadingSectores] = useState(true);
-  
+
   const isEdit = !!examenExistente;
-  
-  // Convertir fecha del OCR de DD/MM/YYYY a YYYY-MM-DD
+
   const convertirFecha = (fecha: string | null | undefined): string => {
     if (!fecha) return new Date().toISOString().split('T')[0];
-    
-    // Si ya está en formato YYYY-MM-DD, retornar
     if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
-    
-    // Convertir DD/MM/YYYY o DD-MM-YYYY a YYYY-MM-DD
     const match = fecha.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
     if (match) {
       const [, dia, mes, anio] = match;
       return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
     }
-    
     return new Date().toISOString().split('T')[0];
   };
 
-  // Estado del formulario
   const [fechaExamen, setFechaExamen] = useState(
-    isEdit 
+    isEdit
       ? examenExistente.FechaExamen?.split('T')[0] || new Date().toISOString().split('T')[0]
       : convertirFecha(ocrResult?.cabecera.fecha || null)
   );
@@ -61,8 +54,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
   const [sectorSeleccionado, setSectorSeleccionado] = useState<string>(
     isEdit ? (examenExistente.IdSector || '') : ''
   );
-  
-  // Parámetros editables
+
   const [parametros, setParametros] = useState<ExamenLabDetalle[]>(
     isEdit
       ? examenExistente.detalles.map((d, index) => ({
@@ -71,7 +63,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
           UnidadMedida: d.UnidadMedida || '',
           ValorReferencia: d.ValorReferencia || '',
           FueraDeRango: d.FueraDeRango || false,
-          Orden: d.Orden || index + 1
+          Orden: d.Orden || index + 1,
         }))
       : ocrResult?.parametros.map((p, index) => ({
           NombreParametro: p.nombreParametro,
@@ -81,18 +73,15 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
           Metodo: p.metodo || '',
           MarcaReactivo: p.marcaReactivo || '',
           FueraDeRango: false,
-          Orden: index + 1
+          Orden: index + 1,
         })) || []
   );
 
-  // Cargar sectores y sector desde localStorage
   useEffect(() => {
     const cargarSectores = async () => {
       try {
         const sectoresData = await sectoresService.getSectores();
         setSectores(sectoresData);
-        
-        // Cargar sector desde localStorage
         const sectorStorage = localStorage.getItem('sectorSeleccionado');
         if (sectorStorage) {
           try {
@@ -102,20 +91,19 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
             console.error('Error al parsear sectorSeleccionado:', e);
           }
         }
-      } catch (error) {
-        console.error('Error al cargar sectores:', error);
+      } catch (err) {
+        console.error('Error al cargar sectores:', err);
       } finally {
         setLoadingSectores(false);
       }
     };
-    
     cargarSectores();
   }, []);
 
   const handleParametroChange = (index: number, field: keyof ExamenLabDetalle, value: string) => {
-    const newParametros = [...parametros];
-    (newParametros[index] as any)[field] = value;
-    setParametros(newParametros);
+    setParametros((prev) =>
+      prev.map((p, i) => (i === index ? { ...p, [field]: value } : p))
+    );
   };
 
   const handleRemoveParametro = (index: number) => {
@@ -131,20 +119,17 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
         UnidadMedida: '',
         ValorReferencia: '',
         FueraDeRango: false,
-        Orden: parametros.length + 1
-      }
+        Orden: parametros.length + 1,
+      },
     ]);
   };
 
   const handleSave = async () => {
-    // Validar que haya al menos un parámetro
     if (parametros.length === 0) {
       setError('Debe agregar al menos un parámetro');
       return;
     }
-
-    // Validar que todos los parámetros tengan nombre y resultado
-    const invalid = parametros.some(p => !p.NombreParametro || !p.Resultado);
+    const invalid = parametros.some((p) => !p.NombreParametro?.trim() || !p.Resultado?.trim());
     if (invalid) {
       setError('Todos los parámetros deben tener nombre y resultado');
       return;
@@ -162,7 +147,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
         Laboratorio: laboratorio,
         Protocolo: protocolo,
         Observaciones: observaciones,
-        IdSector: sectorSeleccionado
+        IdSector: sectorSeleccionado,
       };
 
       if (isEdit) {
@@ -170,7 +155,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
       } else {
         await laboratoriosService.saveExamen(cabecera, parametros);
       }
-      
+
       onSuccess();
     } catch (err) {
       console.error('Error al guardar examen:', err);
@@ -180,181 +165,201 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
     }
   };
 
+  const titulo = isEdit
+    ? 'Editar Examen'
+    : laboratoriosService.getTipoEstudioNombre(ocrResult?.tipoEstudio || 'GENERAL');
+  const icono = isEdit ? '✏️' : laboratoriosService.getTipoEstudioIcon(ocrResult?.tipoEstudio || 'GENERAL');
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>
-            {isEdit ? '✏️' : laboratoriosService.getTipoEstudioIcon(ocrResult?.tipoEstudio || 'GENERAL')}{' '}
-            {isEdit ? 'Editar Examen' : laboratoriosService.getTipoEstudioNombre(ocrResult?.tipoEstudio || 'GENERAL')}
+            {icono} {titulo}
+            {ocrResult?.cabecera.paciente && (
+              <span className={styles.pacienteSub}>
+                {ocrResult.cabecera.paciente}
+                {ocrResult.cabecera.protocolo ? ` · Prot. ${ocrResult.cabecera.protocolo}` : ''}
+              </span>
+            )}
           </h2>
-          <button className={styles.closeButton} onClick={onClose} disabled={saving}>
+          <button className={styles.closeButton} onClick={onClose} disabled={saving} type="button" aria-label="Cerrar">
             ✕
           </button>
         </div>
 
         <div className={styles.body}>
-          {error && (
-            <div className={styles.error}>
-              {error}
-            </div>
-          )}
+          {error && <div className={styles.error}>{error}</div>}
 
-          {/* Información general */}
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Información General</h3>
-            <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
-                <label>Fecha del Examen *</label>
-                <input
-                  type="date"
-                  value={fechaExamen}
-                  onChange={(e) => setFechaExamen(e.target.value)}
-                  className={styles.input}
-                  disabled={saving}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Hora</label>
-                <input
-                  type="time"
-                  value={horaExamen}
-                  onChange={(e) => setHoraExamen(e.target.value)}
-                  className={styles.input}
-                  disabled={saving}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Laboratorio</label>
-                <input
-                  type="text"
-                  value={laboratorio}
-                  onChange={(e) => setLaboratorio(e.target.value)}
-                  className={styles.input}
-                  disabled={saving}
-                  placeholder="Nombre del laboratorio"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Protocolo</label>
-                <input
-                  type="text"
-                  value={protocolo}
-                  onChange={(e) => setProtocolo(e.target.value)}
-                  className={styles.input}
-                  disabled={saving}
-                  placeholder="Número de protocolo"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Sector *</label>
-                <select
-                  value={sectorSeleccionado}
-                  onChange={(e) => setSectorSeleccionado(e.target.value)}
-                  className={styles.input}
-                  disabled={saving || loadingSectores}
-                  required
-                >
-                  <option value="">Seleccione un sector</option>
-                  {sectores.map((sector) => (
-                    <option key={sector.IdSector} value={sector.IdSector}>
-                      {sector.Descripcion}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className={styles.formGroup}>
-              <label>Observaciones</label>
-              <textarea
+          <div className={styles.cabeceraBar}>
+            <label className={styles.cabeceraField}>
+              <span>Fecha *</span>
+              <input
+                type="date"
+                value={fechaExamen}
+                onChange={(e) => setFechaExamen(e.target.value)}
+                className={styles.cabeceraInput}
+                disabled={saving}
+                required
+              />
+            </label>
+            <label className={styles.cabeceraField}>
+              <span>Hora</span>
+              <input
+                type="time"
+                value={horaExamen}
+                onChange={(e) => setHoraExamen(e.target.value)}
+                className={styles.cabeceraInput}
+                disabled={saving}
+              />
+            </label>
+            <label className={styles.cabeceraField}>
+              <span>Laboratorio</span>
+              <input
+                type="text"
+                value={laboratorio}
+                onChange={(e) => setLaboratorio(e.target.value)}
+                className={styles.cabeceraInput}
+                disabled={saving}
+                placeholder="Laboratorio"
+              />
+            </label>
+            <label className={styles.cabeceraField}>
+              <span>Protocolo</span>
+              <input
+                type="text"
+                value={protocolo}
+                onChange={(e) => setProtocolo(e.target.value)}
+                className={styles.cabeceraInput}
+                disabled={saving}
+                placeholder="Nº protocolo"
+              />
+            </label>
+            <label className={styles.cabeceraField}>
+              <span>Sector *</span>
+              <select
+                value={sectorSeleccionado}
+                onChange={(e) => setSectorSeleccionado(e.target.value)}
+                className={styles.cabeceraInput}
+                disabled={saving || loadingSectores}
+                required
+              >
+                <option value="">Seleccionar</option>
+                {sectores.map((sector) => (
+                  <option key={sector.IdSector} value={sector.IdSector}>
+                    {sector.Descripcion}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={`${styles.cabeceraField} ${styles.cabeceraFieldWide}`}>
+              <span>Observaciones</span>
+              <input
+                type="text"
                 value={observaciones}
                 onChange={(e) => setObservaciones(e.target.value)}
-                className={styles.textarea}
+                className={styles.cabeceraInput}
                 disabled={saving}
-                rows={2}
-                placeholder="Observaciones adicionales"
+                placeholder="Opcional"
               />
-            </div>
+            </label>
           </div>
 
-          {/* Parámetros */}
-          <div className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>Parámetros ({parametros.length})</h3>
+          <div className={styles.parametrosSection}>
+            <div className={styles.parametrosToolbar}>
+              <h3 className={styles.parametrosTitle}>Resultados ({parametros.length})</h3>
               <button
+                type="button"
                 className={styles.addButton}
                 onClick={handleAddParametro}
                 disabled={saving}
               >
-                + Agregar Parámetro
+                + Fila
               </button>
             </div>
 
-            <div className={styles.parametrosContainer}>
-              {parametros.map((param, index) => (
-                <div key={index} className={styles.parametroCard}>
-                  <div className={styles.parametroHeader}>
-                    <span className={styles.parametroNumber}>#{index + 1}</span>
-                    <button
-                      className={styles.removeButton}
-                      onClick={() => handleRemoveParametro(index)}
-                      disabled={saving}
-                      title="Eliminar parámetro"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className={styles.parametroGrid}>
-                    <div className={styles.formGroup}>
-                      <label>Parámetro *</label>
-                      <input
-                        type="text"
-                        value={param.NombreParametro}
-                        onChange={(e) => handleParametroChange(index, 'NombreParametro', e.target.value)}
-                        className={styles.input}
-                        disabled={saving}
-                        placeholder="Ej: Hemoglobina"
-                        required
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Resultado *</label>
-                      <input
-                        type="text"
-                        value={param.Resultado}
-                        onChange={(e) => handleParametroChange(index, 'Resultado', e.target.value)}
-                        className={styles.input}
-                        disabled={saving}
-                        placeholder="Ej: 14.5"
-                        required
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Unidad</label>
-                      <input
-                        type="text"
-                        value={param.UnidadMedida || ''}
-                        onChange={(e) => handleParametroChange(index, 'UnidadMedida', e.target.value)}
-                        className={styles.input}
-                        disabled={saving}
-                        placeholder="Ej: g/dl"
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Valor de Referencia</label>
-                      <input
-                        type="text"
-                        value={param.ValorReferencia || ''}
-                        onChange={(e) => handleParametroChange(index, 'ValorReferencia', e.target.value)}
-                        className={styles.input}
-                        disabled={saving}
-                        placeholder="Ej: 13-17 g/dl"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className={styles.tableScroll}>
+              <table className={styles.paramTable}>
+                <thead>
+                  <tr>
+                    <th className={styles.colNum}>#</th>
+                    <th className={styles.colParam}>Parámetro</th>
+                    <th className={styles.colResult}>Resultado</th>
+                    <th className={styles.colUnit}>Unidad</th>
+                    <th className={styles.colRef}>Referencia</th>
+                    <th className={styles.colAction} aria-label="Acciones" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {parametros.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className={styles.emptyRow}>
+                        Sin parámetros. Usá &quot;+ Fila&quot; para agregar uno.
+                      </td>
+                    </tr>
+                  ) : (
+                    parametros.map((param, index) => (
+                      <tr key={index}>
+                        <td className={styles.colNum}>{index + 1}</td>
+                        <td>
+                          <input
+                            type="text"
+                            value={param.NombreParametro}
+                            onChange={(e) => handleParametroChange(index, 'NombreParametro', e.target.value)}
+                            className={styles.cellInput}
+                            disabled={saving}
+                            placeholder="Nombre"
+                            required
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={param.Resultado}
+                            onChange={(e) => handleParametroChange(index, 'Resultado', e.target.value)}
+                            className={`${styles.cellInput} ${styles.cellInputResult}`}
+                            disabled={saving}
+                            placeholder="Valor"
+                            required
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={param.UnidadMedida || ''}
+                            onChange={(e) => handleParametroChange(index, 'UnidadMedida', e.target.value)}
+                            className={styles.cellInput}
+                            disabled={saving}
+                            placeholder="g/dl"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={param.ValorReferencia || ''}
+                            onChange={(e) => handleParametroChange(index, 'ValorReferencia', e.target.value)}
+                            className={styles.cellInput}
+                            disabled={saving}
+                            placeholder="13-17"
+                          />
+                        </td>
+                        <td className={styles.colAction}>
+                          <button
+                            type="button"
+                            className={styles.removeButton}
+                            onClick={() => handleRemoveParametro(index)}
+                            disabled={saving}
+                            title="Eliminar fila"
+                            aria-label={`Eliminar parámetro ${index + 1}`}
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -367,19 +372,16 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
         </div>
 
         <div className={styles.footer}>
-          <button
-            className={styles.cancelButton}
-            onClick={onClose}
-            disabled={saving}
-          >
+          <button type="button" className={styles.cancelButton} onClick={onClose} disabled={saving}>
             Cancelar
           </button>
           <button
+            type="button"
             className={styles.saveButton}
             onClick={handleSave}
             disabled={saving || parametros.length === 0}
           >
-            {saving ? 'Guardando...' : (isEdit ? 'Actualizar Examen' : 'Guardar Examen')}
+            {saving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Guardar'}
           </button>
         </div>
       </div>

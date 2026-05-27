@@ -1,4 +1,4 @@
-import { LoginCredentials, LoginResponse, Sector } from '../types/AuthInterface';
+import { EmpresaLogin, LoginCredentials, LoginResponse, Sector } from '../types/AuthInterface';
 import { apiService } from './axios';
 
 export const authService = {
@@ -10,9 +10,18 @@ export const authService = {
     } catch (error: any) {
       // Handle specific login errors
       if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        const errorMessage = error.response.data?.message || 'Credenciales inválidas. Por favor, intente de nuevo.';
+        const data = error.response.data;
+        if (error.response.status === 409 && Array.isArray(data?.empresas)) {
+          const err = new Error(data?.mensaje || 'Seleccione la empresa para continuar') as Error & {
+            empresas?: { idEmpresa: number; descripcionEmpresa: string }[];
+          };
+          err.empresas = data.empresas;
+          throw err;
+        }
+        const errorMessage =
+          data?.mensaje ||
+          data?.message ||
+          'Credenciales inválidas. Por favor, intente de nuevo.';
         throw new Error(errorMessage);
       } else if (error.request) {
         // The request was made but no response was received
@@ -43,17 +52,56 @@ export const authService = {
    * @param username Nombre de usuario
    * @returns Promise con la lista de sectores filtrados
    */
-  getSectoresPorUsuario: async (username: string): Promise<Sector[]> => {
+  getEmpresasPorUsuario: async (
+    username: string,
+  ): Promise<{ empresas: EmpresaLogin[]; esSuperAdmin: boolean; requiereSector: boolean }> => {
     if (!username) {
-      return [];
+      return { empresas: [], esSuperAdmin: false, requiereSector: true };
     }
-    
+
     try {
-      const response = await apiService.get<{success: boolean, data: Sector[]}>(`/auth/sectores/${username}`);
-      return response.data.data || [];
-    } catch (error: any) {
+      const response = await apiService.get<{
+        success: boolean;
+        data: EmpresaLogin[];
+        esSuperAdmin?: boolean;
+        requiereSector?: boolean;
+      }>(`/auth/empresas/${encodeURIComponent(username)}`);
+      return {
+        empresas: response.data.data || [],
+        esSuperAdmin: !!response.data.esSuperAdmin,
+        requiereSector: response.data.esSuperAdmin
+          ? false
+          : response.data.requiereSector !== false,
+      };
+    } catch (error: unknown) {
+      console.error(`Error al obtener empresas para usuario ${username}:`, error);
+      return { empresas: [], esSuperAdmin: false, requiereSector: true };
+    }
+  },
+
+  getSectoresPorUsuario: async (
+    username: string,
+    idEmpresa?: string | number,
+  ): Promise<{ sectores: Sector[]; requiereSector: boolean }> => {
+    if (!username) {
+      return { sectores: [], requiereSector: true };
+    }
+
+    try {
+      const response = await apiService.get<{
+        success: boolean;
+        data: Sector[];
+        requiereSector?: boolean;
+      }>(`/auth/sectores/${encodeURIComponent(username)}`, {
+        params: idEmpresa != null && idEmpresa !== '' ? { idEmpresa } : undefined,
+      });
+      return {
+        sectores: response.data.data || [],
+        requiereSector: response.data.requiereSector !== false,
+      };
+    } catch (error: unknown) {
       console.error(`Error al obtener sectores para usuario ${username}:`, error);
-      return [];
+      return { sectores: [], requiereSector: true };
     }
   },
 
@@ -63,10 +111,12 @@ export const authService = {
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('userData');
     localStorage.removeItem('rol');
     localStorage.removeItem('permisos');
     localStorage.removeItem('rememberUser');
-    // Redirect to login page is handled by the component or router
+    localStorage.removeItem('empresaInfo');
+    localStorage.removeItem('empresaSeleccionada');
   },
 
   /**

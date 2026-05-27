@@ -1,31 +1,24 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 import {
 	Personal,
 	CatalogoItemNumerico,
 	CatalogoItemTexto,
 } from '../../types/personal';
 import type { PersonalExtraKind } from './PersonalActionModals';
+import PersonalRowMenu, { type PersonalMenuAction } from './PersonalRowMenu';
 import { personalService } from '../../services/personalService';
 import styles from './PersonalList.module.css';
 import Pagination from '../UI/Pagination';
 import Loader from '../Loader/Loader';
 import {
-	IoPencil,
-	IoTrashOutline,
-	IoEyeOutline,
 	IoChevronDown,
 	IoMedicalOutline,
 	IoLocationOutline,
 	IoBriefcaseOutline,
 	IoRibbonOutline,
 	IoCardOutline,
-	IoBusinessOutline,
-	IoImageOutline,
-	IoLayersOutline,
-	IoPricetagOutline,
-	IoShieldCheckmarkOutline,
 } from 'react-icons/io5';
 
 interface PersonalListProps {
@@ -54,6 +47,11 @@ export default function PersonalList({
 	onOpenExtra,
 }: PersonalListProps) {
 	const [expandedId, setExpandedId] = useState<number | null>(null);
+	const [rowMenu, setRowMenu] = useState<{
+		personal: Personal;
+		x: number;
+		y: number;
+	} | null>(null);
 	const [especialidades, setEspecialidades] = useState<CatalogoItemNumerico[]>([]);
 	const [servicios, setServicios] = useState<CatalogoItemTexto[]>([]);
 	const [categorias, setCategorias] = useState<CatalogoItemNumerico[]>([]);
@@ -100,6 +98,19 @@ export default function PersonalList({
 	const toggleExpand = (id: number) =>
 		setExpandedId((prev) => (prev === id ? null : id));
 
+	const abrirMenuPersonal = (e: MouseEvent, p: Personal) => {
+		e.stopPropagation();
+		setRowMenu({ personal: p, x: e.clientX, y: e.clientY });
+	};
+
+	const handleMenuAction = (action: PersonalMenuAction, p: Personal) => {
+		setRowMenu(null);
+		if (action === 'ver') onView(p);
+		else if (action === 'editar') onEdit(p);
+		else if (action === 'eliminar') onDelete(p);
+		else if (onOpenExtra) onOpenExtra(p, action as PersonalExtraKind);
+	};
+
 	const iniciales = (nombre: string) => {
 		const parts = (nombre || '')
 			.split(/[\s,]+/)
@@ -143,7 +154,6 @@ export default function PersonalList({
 							<th scope='col'>Especialidad / Categoría</th>
 							<th scope='col'>Servicio</th>
 							<th scope='col'>Estado</th>
-							<th scope='col' className={styles.colActions}>Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -169,7 +179,13 @@ export default function PersonalList({
 								const catDesc = descCat(p.ValorCategoria);
 								const svDesc = descSv(p.ValorServicio);
 								return (
-									<tr key={p.Valor} className={styles.tableRow}>
+									<tr
+										key={p.Valor}
+										className={styles.tableRow}
+										onClick={(e) => abrirMenuPersonal(e, p)}
+										style={{ cursor: 'pointer' }}
+										title='Clic para ver opciones'
+									>
 										<td className={styles.cellId}>
 											<div className={styles.idPrimary}>{p.Valor}</div>
 											{matricula && (
@@ -182,13 +198,9 @@ export default function PersonalList({
 													{iniciales(p.ApellidoNombre)}
 												</div>
 												<div className={styles.personInfo}>
-													<button
-														className={styles.nameButton}
-														onClick={() => onView(p)}
-														title='Ver detalles'
-													>
+													<span className={styles.nameText}>
 														{p.ApellidoNombre}
-													</button>
+													</span>
 													<div className={styles.secondaryLine}>
 														<IoLocationOutline size={12} />
 														<span className={styles.secondaryText}>
@@ -242,99 +254,6 @@ export default function PersonalList({
 											</div>
 										</td>
 										<td>{renderEstadoBadge(p.Estado)}</td>
-										<td className={styles.actionCell}>
-											<div
-												className={styles.actionToolbar}
-												role='group'
-												aria-label={`Acciones para ${p.ApellidoNombre}`}
-											>
-												<button
-													type='button'
-													onClick={() => onView(p)}
-													className={styles.historyButton}
-													title='Ver detalles'
-													aria-label={`Ver detalles de ${p.ApellidoNombre}`}
-												>
-													<IoEyeOutline size={17} />
-												</button>
-												<button
-													type='button'
-													onClick={() => onEdit(p)}
-													className={styles.editButton}
-													title='Editar'
-													aria-label={`Editar ${p.ApellidoNombre}`}
-												>
-													<IoPencil size={17} />
-												</button>
-												<button
-													type='button'
-													onClick={() => onDelete(p)}
-													className={styles.deleteButton}
-													title='Eliminar'
-													aria-label={`Eliminar ${p.ApellidoNombre}`}
-												>
-													<IoTrashOutline size={17} />
-												</button>
-												{onOpenExtra ? (
-													<>
-														<button
-															type='button'
-															className={styles.extraActionBtn}
-															title='Servicio / facturación'
-															aria-label={`Servicio ${p.ApellidoNombre}`}
-															onClick={() => onOpenExtra(p, 'servicio')}
-														>
-															<IoBriefcaseOutline size={16} />
-														</button>
-														<button
-															type='button'
-															className={styles.extraActionBtn}
-															title='Empresas'
-															aria-label={`Empresas ${p.ApellidoNombre}`}
-															onClick={() => onOpenExtra(p, 'empresas')}
-														>
-															<IoBusinessOutline size={16} />
-														</button>
-														<button
-															type='button'
-															className={styles.extraActionBtn}
-															title='Firma'
-															aria-label={`Firma ${p.ApellidoNombre}`}
-															onClick={() => onOpenExtra(p, 'firma')}
-														>
-															<IoImageOutline size={16} />
-														</button>
-														<button
-															type='button'
-															className={styles.extraActionBtn}
-															title='Sectores'
-															aria-label={`Sectores ${p.ApellidoNombre}`}
-															onClick={() => onOpenExtra(p, 'sectores')}
-														>
-															<IoLayersOutline size={16} />
-														</button>
-														<button
-															type='button'
-															className={styles.extraActionBtn}
-															title='Códigos de facturación'
-															aria-label={`Códigos facturación ${p.ApellidoNombre}`}
-															onClick={() => onOpenExtra(p, 'codigosFacturacion')}
-														>
-															<IoPricetagOutline size={16} />
-														</button>
-														<button
-															type='button'
-															className={styles.extraActionBtn}
-															title='Rol del usuario'
-															aria-label={`Rol ${p.ApellidoNombre}`}
-															onClick={() => onOpenExtra(p, 'rol')}
-														>
-															<IoShieldCheckmarkOutline size={16} />
-														</button>
-													</>
-												) : null}
-											</div>
-										</td>
 									</tr>
 								);
 							})
@@ -364,40 +283,51 @@ export default function PersonalList({
 									isOpen ? styles.mobileItemOpen : ''
 								}`}
 							>
-								<button
-									className={styles.mobileItemHeader}
-									onClick={() => toggleExpand(p.Valor)}
-									aria-expanded={isOpen}
-								>
-									<div className={styles.avatar}>{iniciales(p.ApellidoNombre)}</div>
-									<div className={styles.mobileItemLeft}>
-										<div className={styles.mobileItemName}>
-											{p.ApellidoNombre}
-										</div>
-										<div className={styles.mobileItemTags}>
-											<span className={styles.mobileTag}>
-												<span className={styles.mobileTagLabel}>ID</span> {p.Valor}
-											</span>
-											{matricula ? (
+								<div className={styles.mobileItemHeader}>
+									<button
+										type='button'
+										className={styles.mobileItemMain}
+										onClick={(e) => abrirMenuPersonal(e, p)}
+										aria-label={`Opciones para ${p.ApellidoNombre}`}
+									>
+										<div className={styles.avatar}>{iniciales(p.ApellidoNombre)}</div>
+										<div className={styles.mobileItemLeft}>
+											<div className={styles.mobileItemName}>
+												{p.ApellidoNombre}
+											</div>
+											<div className={styles.mobileItemTags}>
 												<span className={styles.mobileTag}>
-													<span className={styles.mobileTagLabel}>MP</span>{' '}
-													{matricula}
+													<span className={styles.mobileTagLabel}>ID</span> {p.Valor}
 												</span>
-											) : null}
-											{descEsp(p.ValorEspecialidad) ? (
-												<span className={styles.mobileTagAccent}>
-													{descEsp(p.ValorEspecialidad)}
-												</span>
-											) : null}
+												{matricula ? (
+													<span className={styles.mobileTag}>
+														<span className={styles.mobileTagLabel}>MP</span>{' '}
+														{matricula}
+													</span>
+												) : null}
+												{descEsp(p.ValorEspecialidad) ? (
+													<span className={styles.mobileTagAccent}>
+														{descEsp(p.ValorEspecialidad)}
+													</span>
+												) : null}
+											</div>
 										</div>
-									</div>
-									<IoChevronDown
-										size={14}
-										className={`${styles.mobileChevron} ${
-											isOpen ? styles.mobileChevronOpen : ''
-										}`}
-									/>
-								</button>
+									</button>
+									<button
+										type='button'
+										className={styles.mobileExpandBtn}
+										onClick={() => toggleExpand(p.Valor)}
+										aria-expanded={isOpen}
+										aria-label={isOpen ? 'Ocultar detalle' : 'Ver detalle'}
+									>
+										<IoChevronDown
+											size={14}
+											className={`${styles.mobileChevron} ${
+												isOpen ? styles.mobileChevronOpen : ''
+											}`}
+										/>
+									</button>
+								</div>
 								<div
 									className={`${styles.mobileItemBody} ${
 										isOpen ? styles.mobileItemBodyOpen : ''
@@ -435,94 +365,22 @@ export default function PersonalList({
 											{renderEstadoBadge(p.Estado)}
 										</div>
 									</div>
-									<div
-										className={styles.mobileActionToolbar}
-										role='group'
-										aria-label={`Acciones para ${p.ApellidoNombre}`}
-									>
-										<button
-											type='button'
-											onClick={() => onView(p)}
-											className={styles.historyButton}
-											title='Ver detalles'
-										>
-											<IoEyeOutline size={16} />
-										</button>
-										<button
-											type='button'
-											onClick={() => onEdit(p)}
-											className={styles.editButton}
-											title='Editar'
-										>
-											<IoPencil size={16} />
-										</button>
-										<button
-											type='button'
-											onClick={() => onDelete(p)}
-											className={styles.deleteButton}
-											title='Eliminar'
-										>
-											<IoTrashOutline size={16} />
-										</button>
-										{onOpenExtra ? (
-											<>
-												<button
-													type='button'
-													className={styles.extraActionBtn}
-													title='Servicio'
-													onClick={() => onOpenExtra(p, 'servicio')}
-												>
-													<IoBriefcaseOutline size={15} />
-												</button>
-												<button
-													type='button'
-													className={styles.extraActionBtn}
-													title='Empresas'
-													onClick={() => onOpenExtra(p, 'empresas')}
-												>
-													<IoBusinessOutline size={15} />
-												</button>
-												<button
-													type='button'
-													className={styles.extraActionBtn}
-													title='Firma'
-													onClick={() => onOpenExtra(p, 'firma')}
-												>
-													<IoImageOutline size={15} />
-												</button>
-												<button
-													type='button'
-													className={styles.extraActionBtn}
-													title='Sectores'
-													onClick={() => onOpenExtra(p, 'sectores')}
-												>
-													<IoLayersOutline size={15} />
-												</button>
-												<button
-													type='button'
-													className={styles.extraActionBtn}
-													title='Códigos facturación'
-													onClick={() => onOpenExtra(p, 'codigosFacturacion')}
-												>
-													<IoPricetagOutline size={15} />
-												</button>
-												<button
-													type='button'
-													className={styles.extraActionBtn}
-													title='Rol del usuario'
-													onClick={() => onOpenExtra(p, 'rol')}
-												>
-													<IoShieldCheckmarkOutline size={15} />
-												</button>
-											</>
-										) : null}
-									</div>
 								</div>
 							</div>
 						);
 					})
 				)}
 			</div>
+
+			<PersonalRowMenu
+				open={!!rowMenu}
+				x={rowMenu?.x ?? 0}
+				y={rowMenu?.y ?? 0}
+				personal={rowMenu?.personal ?? null}
+				conExtras={!!onOpenExtra}
+				onClose={() => setRowMenu(null)}
+				onAction={handleMenuAction}
+			/>
 
 			{!loading && personalList.length > 0 && (
 				<Pagination

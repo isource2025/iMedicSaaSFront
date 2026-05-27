@@ -30,10 +30,15 @@ export interface EmpresaInfo {
  * Obtiene la información de la empresa desde el backend
  * @returns Promesa con la información de la empresa
  */
-export const obtenerInfoEmpresa = async (): Promise<EmpresaInfo> => {
+export const obtenerInfoEmpresa = async (idEmpresa?: string | number): Promise<EmpresaInfo> => {
   try {
     const base = getResolvedApiBaseUrl();
-    const response = await fetch(`${base}/empresa`);
+    const id =
+      idEmpresa != null && idEmpresa !== ''
+        ? idEmpresa
+        : obtenerInfoEmpresaLocal()?.id;
+    const qs = id ? `?id=${encodeURIComponent(String(id))}` : '';
+    const response = await fetch(`${base}/empresa${qs}`);
     
     if (!response.ok) {
       throw new Error('Error al obtener información de la empresa');

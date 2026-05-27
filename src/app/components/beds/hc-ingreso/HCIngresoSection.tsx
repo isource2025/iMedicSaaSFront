@@ -11,8 +11,46 @@ import {
     actualizarHCIngreso, 
     eliminarHCIngreso 
 } from "@/app/services/hcIngresoService";
+import { useAppContext } from "@/app/contexts/AppContext";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
 import { getEmptyExamenFisico, mapearHCIaExamenFisico, mapearExamenFisicoAHCI } from "@/app/utils/examenFisicoHelpers";
+import {
+    getSectorDescripcion,
+    getSectorId,
+    getSessionSector,
+    getSessionUser,
+    getUserCodOperador,
+    getUserDisplayName,
+} from "@/app/utils/sessionUser";
+
+function fechaHoraLocal(d: Date = new Date()) {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return {
+        fecha: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        hora: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    };
+}
+
+function fechaLocalDesdeDate(d: Date) {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function fechaHoraDesdeRecord(record: HCIngresoRecord): { fecha: string; hora: string } | null {
+    if (record.FechaFormateada) {
+        return {
+            fecha: record.FechaFormateada,
+            hora: (record.HoraFormateada || "00:00").slice(0, 5),
+        };
+    }
+    const raw = record.Fecha;
+    if (!raw) return null;
+    const m = String(raw).match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/);
+    if (m) return { fecha: m[1], hora: `${m[2]}:${m[3]}` };
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return null;
+    return fechaHoraLocal(d);
+}
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
 import { generarPDFHistoriaClinica } from '@/app/utils/pdfHCIngreso';
@@ -222,6 +260,7 @@ export default function HCIngresoSection({
     documentoPaciente,
 }: HCIngresoSectionProps) {
     const { selectedDate } = useBedDetail();
+    const { usuario, sectorSeleccionado } = useAppContext();
     
     // Estado del componente
     const [mode, setMode] = useState<ViewMode>("view");
@@ -290,7 +329,7 @@ export default function HCIngresoSection({
     // Filtrar registros por fecha si está activo el checkbox
     const filteredRecords = useMemo(() => {
         if (!showOnlySelectedDay || !selectedDate) return records;
-        const dateStr = selectedDate.toISOString().split("T")[0];
+        const dateStr = fechaLocalDesdeDate(selectedDate);
         return records.filter((r: HCIngresoRecord) => {
             if (!r.FechaFormateada) return false;
             return r.FechaFormateada === dateStr;
@@ -326,28 +365,14 @@ export default function HCIngresoSection({
 
     // Handlers
     const handleAdd = () => {
-        // Obtener datos del localStorage
-        const userDataStr = localStorage.getItem('userData');
-        const sectorSeleccionado = localStorage.getItem('sectorSeleccionado');
+        const usuarioActual = getSessionUser(usuario);
+        const sectorActual = getSessionSector(sectorSeleccionado);
+        const profesionalId = String(getUserCodOperador(usuarioActual) || "");
+        const profesionalNombre = getUserDisplayName(usuarioActual);
+        const sector = getSectorId(sectorActual);
+        const sectorDescripcion = getSectorDescripcion(sectorActual);
         
-        let profesionalId = "";
-        let profesionalNombre = "";
-        let sector = sectorSeleccionado || "";
-        
-        if (userDataStr) {
-            try {
-                const userData = JSON.parse(userDataStr);
-                profesionalId = String(userData.CodOperador || "");
-                profesionalNombre = `${userData.Apellido || ""} ${userData.Nombres || ""}`.trim();
-            } catch (e) {
-                console.error("Error al parsear userData:", e);
-            }
-        }
-        
-        // Fecha y hora actual
-        const now = new Date();
-        const fecha = now.toISOString().split("T")[0];
-        const hora = now.toTimeString().slice(0, 5);
+        const { fecha, hora } = fechaHoraLocal();
         
         setFormData({
             fecha,
@@ -355,7 +380,7 @@ export default function HCIngresoSection({
             profesionalId,
             profesionalNombre,
             sector,
-            sectorDescripcion: sector, // Por ahora usamos el mismo valor
+            sectorDescripcion: sectorDescripcion || sector,
             motivoConsulta: "",
             enfermedadActual: "",
             antecedentes: "",
@@ -367,18 +392,12 @@ export default function HCIngresoSection({
     const handleEdit = () => {
         if (!selectedRecord) return;
         
-        // Extraer fecha y hora del campo Fecha si existe
-        let fecha = "";
-        let hora = "";
-        if (selectedRecord.Fecha) {
-            const fechaObj = new Date(selectedRecord.Fecha);
-            fecha = fechaObj.toISOString().split("T")[0];
-            hora = fechaObj.toTimeString().slice(0, 5);
-        }
+        const desdeRecord = fechaHoraDesdeRecord(selectedRecord);
+        const ahora = fechaHoraLocal();
         
         setFormData({
-            fecha: fecha || new Date().toISOString().split("T")[0],
-            hora: hora || new Date().toTimeString().slice(0, 5),
+            fecha: desdeRecord?.fecha || ahora.fecha,
+            hora: ahora.hora,
             profesionalId: String(selectedRecord.IdProfecional || ""),
             profesionalNombre: selectedRecord.ProfesionalNombre || "",
             sector: selectedRecord.IdSector,
@@ -418,12 +437,14 @@ export default function HCIngresoSection({
             // Preparar datos para guardar
             const datosExamenFisico = mapearExamenFisicoAHCI(examenFisico);
             
-            const dataToSave: Partial<HCIngresoRecord> = {
+            const dataToSave: Partial<HCIngresoRecord> & { fecha?: string; hora?: string } = {
                 NumeroVisita: numeroVisita,
                 IdSector: formData.sector,
                 MotivoConsulta: formData.motivoConsulta,
                 EnfermedadActual: formData.enfermedadActual,
                 IdProfecional: formData.profesionalId ? parseInt(formData.profesionalId) : undefined,
+                fecha: formData.fecha,
+                hora: formData.hora,
                 ...datosExamenFisico,
             };
             
@@ -972,7 +993,7 @@ export default function HCIngresoSection({
                                 onChange={(signosVitales) => setExamenFisico({ ...examenFisico, signosVitales })}
                                 readOnly={false}
                                 numeroVisita={numeroVisita || undefined}
-                                idHCIngreso={selectedRecordId || undefined}
+                                idHCIngreso={mode === "edit" ? selectedRecordId || undefined : undefined}
                             />
                         </div>
                     )}

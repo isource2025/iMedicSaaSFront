@@ -2,60 +2,58 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { SectorInfo, UserData } from '../types/AuthInterface';
-import { EmpresaInfo, obtenerInfoEmpresaLocal, guardarInfoEmpresaLocal, obtenerInfoEmpresa } from '../services/empresaService';
+import {
+  EmpresaInfo,
+  obtenerInfoEmpresaLocal,
+  guardarInfoEmpresaLocal,
+  obtenerInfoEmpresa,
+} from '../services/empresaService';
+import type { ModulosEmpresa } from '../types/superAdmin';
 
-// Definir la interfaz para el estado del contexto
 interface AppContextState {
-  // Sector context
   sectorSeleccionado: SectorInfo | null;
   idsector: string;
   setSectorSeleccionado: (sector: SectorInfo | null) => void;
-  
-  // Empresa context
+
   empresaInfo: EmpresaInfo | null;
   setEmpresaInfo: (empresa: EmpresaInfo | null) => void;
-  
-  // User context
+  modulosEmpresa: ModulosEmpresa | null;
+  setModulosEmpresa: (modulos: ModulosEmpresa | null) => void;
+
   usuario: UserData | null;
   setUsuario: (usuario: UserData | null) => void;
   isAuthenticated: boolean;
   logout: () => void;
 }
 
-// Crear el contexto con un valor inicial
 const AppContext = createContext<AppContextState>({
   sectorSeleccionado: null,
   idsector: '',
   setSectorSeleccionado: () => {},
   empresaInfo: null,
   setEmpresaInfo: () => {},
+  modulosEmpresa: null,
+  setModulosEmpresa: () => {},
   usuario: null,
   setUsuario: () => {},
   isAuthenticated: false,
-  logout: () => {}
+  logout: () => {},
 });
 
-// Hook personalizado para usar el contexto
 export const useAppContext = () => useContext(AppContext);
 
-// Proveedor del contexto que envolverá la aplicación
 interface AppProviderProps {
   children: ReactNode;
 }
 
 export const AppProvider = ({ children }: AppProviderProps) => {
-  // Estado para almacenar la información del sector seleccionado
   const [sectorSeleccionado, setSectorSeleccionado] = useState<SectorInfo | null>(null);
-  // Estado específico para idsector, derivado de sectorSeleccionado
   const [idsector, setIdsector] = useState<string>('');
-  // Estado para almacenar la información de la empresa
-  const [empresaInfo, setEmpresaInfo] = useState<EmpresaInfo | null>(null);
-  // Estado para almacenar la información del usuario
+  const [empresaInfo, setEmpresaInfoState] = useState<EmpresaInfo | null>(null);
+  const [modulosEmpresa, setModulosEmpresaState] = useState<ModulosEmpresa | null>(null);
   const [usuario, setUsuarioState] = useState<UserData | null>(null);
-  // Estado para controlar si el usuario está autenticado
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  // Cargar el sector seleccionado desde localStorage al iniciar
   useEffect(() => {
     try {
       const storedSector = localStorage.getItem('sectorSeleccionado');
@@ -64,12 +62,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         setSectorSeleccionado(parsedSector);
         setIdsector(parsedSector.idSector || '');
       }
-    } catch (error) {
-      console.error('Error al cargar sector desde localStorage:', error);
+    } catch (err) {
+      console.error('Error al cargar sector desde localStorage:', err);
     }
   }, []);
 
-  // Cargar la información del usuario desde localStorage al iniciar
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('user');
@@ -78,32 +75,49 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         setUsuarioState(parsedUser);
         setIsAuthenticated(true);
       }
-    } catch (error) {
-      console.error('Error al cargar usuario desde localStorage:', error);
+    } catch (err) {
+      console.error('Error al cargar usuario desde localStorage:', err);
     }
   }, []);
 
-  // Cargar la información de la empresa al iniciar
   useEffect(() => {
-    // Primero cargamos desde localStorage para tener algo inmediatamente
+    try {
+      const stored = localStorage.getItem('empresaModulos');
+      if (stored) setModulosEmpresaState(JSON.parse(stored));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
     const localEmpresaInfo = obtenerInfoEmpresaLocal();
-    setEmpresaInfo(localEmpresaInfo);
-    
-    // Luego intentamos obtener la información actualizada del backend
+    if (localEmpresaInfo?.id) {
+      setEmpresaInfoState(localEmpresaInfo);
+    }
+
     const fetchEmpresaInfo = async () => {
       try {
-        const empresaData = await obtenerInfoEmpresa();
-        setEmpresaInfo(empresaData);
+        const idGuardado = localEmpresaInfo?.id;
+        const empresaData = await obtenerInfoEmpresa(idGuardado);
+        setEmpresaInfoState(empresaData);
         guardarInfoEmpresaLocal(empresaData);
-      } catch (error) {
-        console.error('Error al obtener información de la empresa:', error);
+      } catch (err) {
+        console.error('Error al obtener información de la empresa:', err);
       }
     };
-    
+
     fetchEmpresaInfo();
   }, []);
 
-  // Actualizar idsector cuando cambia sectorSeleccionado
+  const setModulosEmpresa = (modulos: ModulosEmpresa | null) => {
+    setModulosEmpresaState(modulos);
+    if (modulos) {
+      localStorage.setItem('empresaModulos', JSON.stringify(modulos));
+    } else {
+      localStorage.removeItem('empresaModulos');
+    }
+  };
+
   useEffect(() => {
     if (sectorSeleccionado) {
       setIdsector(sectorSeleccionado.idSector || '');
@@ -112,10 +126,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     }
   }, [sectorSeleccionado]);
 
-  // Actualizar el localStorage y el idsector cuando cambie sectorSeleccionado
   const handleSetSectorSeleccionado = (sector: SectorInfo | null) => {
     setSectorSeleccionado(sector);
-    
+
     if (sector) {
       setIdsector(sector.idSector || '');
       localStorage.setItem('sectorSeleccionado', JSON.stringify(sector));
@@ -125,10 +138,26 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     }
   };
 
-  // Manejar la actualización del usuario
+  const setEmpresaInfo = (empresa: EmpresaInfo | null) => {
+    setEmpresaInfoState(empresa);
+    if (empresa) {
+      guardarInfoEmpresaLocal(empresa);
+      localStorage.setItem(
+        'empresaSeleccionada',
+        JSON.stringify({
+          idEmpresa: empresa.id,
+          descripcion: empresa.descripcion,
+        })
+      );
+    } else {
+      localStorage.removeItem('empresaInfo');
+      localStorage.removeItem('empresaSeleccionada');
+    }
+  };
+
   const setUsuario = (user: UserData | null) => {
     setUsuarioState(user);
-    
+
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
       setIsAuthenticated(true);
@@ -137,17 +166,23 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     }
   };
 
-  // Función para cerrar sesión
   const logout = () => {
     setUsuarioState(null);
     setSectorSeleccionado(null);
     setIdsector('');
+    setEmpresaInfoState(null);
+    setModulosEmpresaState(null);
     setIsAuthenticated(false);
-    
-    // Limpiar localStorage
+
     localStorage.removeItem('user');
+    localStorage.removeItem('userData');
     localStorage.removeItem('token');
+    localStorage.removeItem('rol');
+    localStorage.removeItem('permisos');
     localStorage.removeItem('sectorSeleccionado');
+    localStorage.removeItem('empresaInfo');
+    localStorage.removeItem('empresaSeleccionada');
+    localStorage.removeItem('empresaModulos');
     localStorage.removeItem('rememberUser');
   };
 
@@ -159,10 +194,12 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         setSectorSeleccionado: handleSetSectorSeleccionado,
         empresaInfo,
         setEmpresaInfo,
+        modulosEmpresa,
+        setModulosEmpresa,
         usuario,
         setUsuario,
         isAuthenticated,
-        logout
+        logout,
       }}
     >
       {children}

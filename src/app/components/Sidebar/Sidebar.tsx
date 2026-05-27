@@ -12,6 +12,7 @@ import {
   BarChart3,
   Settings,
   User,
+  Shield,
   ChevronRight,
   ChevronLeft,
   LucideIcon
@@ -94,6 +95,18 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
+    id: 'plataforma', moduloId: 'PLATAFORMA', label: 'Super Admin', icon: Shield,
+    path: '/dashboard/super-admin',
+    subItems: [
+      { submoduloId: 'PANEL',      label: 'Panel',         path: '/dashboard/super-admin' },
+      { submoduloId: 'EMPRESAS',   label: 'Empresas',      path: '/dashboard/super-admin' },
+      { submoduloId: 'USUARIOS',   label: 'Usuarios',      path: '/dashboard/super-admin' },
+      { submoduloId: 'ONBOARDING', label: 'Onboarding',    path: '/dashboard/super-admin' },
+      { submoduloId: 'COBRANZA',   label: 'Cobranza',      path: '/dashboard/super-admin' },
+      { submoduloId: 'CONFIG',     label: 'Configuración', path: '/dashboard/super-admin' },
+    ]
+  },
+  {
     id: 'configuracion', moduloId: 'CONFIGURACION', label: 'Configuración', icon: Settings,
     subItems: [
       { submoduloId: 'GENERAL',  label: 'General',  path: '/dashboard/settings/general' },
@@ -125,7 +138,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const [currentUser, setCurrentUser] = useState<UserData | null>(null)
   const router = useRouter()
   const pathname = usePathname()
-  const { empresaInfo, sectorSeleccionado } = useAppContext()
+  const { empresaInfo, sectorSeleccionado, modulosEmpresa } = useAppContext()
   const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
 
   useEffect(() => {
@@ -156,22 +169,46 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
    * Reglas:
    * - Si los permisos aún no cargaron (SSR inicial) → lista vacía (evita flash).
    * - Si cargaron pero el usuario no tiene rol asignado → sólo Dashboard + Usuario.
-   * - Si tiene rol → filtra por módulo y submódulo.
+   * - Si tiene rol → (1) módulos contratados por la empresa (packs);
+   *   (2) permisos del rol (módulo y submódulo).
    */
   const visibleMenu = useMemo(() => {
     // SSR: no sabemos nada todavía — devolvemos vacío para no mostrar items incorrectos
     if (!loaded) return []
+
+    // SUPER_ADMIN: solo módulo Plataforma (sin agenda, admisión, internación, etc.)
+    if (rol?.nombre === 'SUPER_ADMIN') {
+      const plataforma = menuItems.find((item) => item.moduloId === 'PLATAFORMA')
+      if (!plataforma) return []
+      return [
+        {
+          ...plataforma,
+          label: 'Plataforma',
+          path: '/dashboard/super-admin',
+          subItems: [],
+        },
+      ]
+    }
 
     // Sin rol asignado: sólo Dashboard y el menú de usuario (siempre visibles)
     if (!rol) {
       return menuItems.filter((item) => item.id === 'dashboard' || item.alwaysVisible)
     }
 
+    const PACK_MODULES = new Set(['TURNOS', 'INTERNACION', 'FACTURACION'])
+    const habilitados = modulosEmpresa?.modulosHabilitados
+
     return menuItems
+      .filter((item) => item.moduloId !== 'PLATAFORMA')
       .map((item) => {
         if (item.alwaysVisible) return item
 
-        // ¿El rol tiene acceso a este módulo?
+        // 1) Módulos contratados por la empresa (packs SaaS; debe estar en modulosHabilitados)
+        if (PACK_MODULES.has(item.moduloId) && !habilitados?.includes(item.moduloId)) {
+          return null
+        }
+
+        // 2) Permisos del rol
         if (!puedeModulo(item.moduloId)) return null
 
         // Filtrar subitems: si el subitem no tiene submoduloId siempre se muestra
@@ -188,7 +225,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       .filter((x): x is MenuItem => x !== null)
   // puedeModulo y puedeSubmodulo son closures que cambian cuando cambia el estado del hook
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rol, loaded, puedeModulo, puedeSubmodulo])
+  }, [rol, loaded, puedeModulo, puedeSubmodulo, modulosEmpresa])
 
   const getActiveModuleId = (): string | null => {
     for (const item of visibleMenu) {
@@ -298,7 +335,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
                 <div className={styles.subMenu}>
                   {item.subItems.map((subItem) => (
                     <button
-                      key={subItem.path}
+                      key={`${item.id}-${subItem.submoduloId || subItem.label}-${subItem.path}`}
                       className={`${styles.subMenuItem} ${pathname === subItem.path || pathname.startsWith(subItem.path + '/') ? styles.subActive : ''}`}
                       onClick={() => handleSubItemClick(subItem.path)}
                     >

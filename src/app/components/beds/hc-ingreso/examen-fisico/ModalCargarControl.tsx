@@ -5,8 +5,11 @@ import ModalBasePaciente from '../../../modals/ModalBasePaciente';
 import RenderControlSimplificado from './RenderControlSimplificado';
 import { FormData } from '../../../indicaciones/AplicarIndicacion';
 import { useAppContext } from '@/app/contexts/AppContext';
-import { crearControl } from '@/app/services/controlesFrecuentesService';
-import { parseValorPersonalId } from '@/app/utils/valorPersonal';
+import {
+    getSessionUser,
+    getUserDisplayName,
+    getUserValorPersonal,
+} from '@/app/utils/sessionUser';
 import styles from '../../../indicaciones/AplicarIndicacion.module.css';
 
 export interface ControlDatosCargados {
@@ -50,6 +53,7 @@ export default function ModalCargarControl({
 }: ModalCargarControlProps) {
     const { usuario } = useAppContext();
     const now = new Date();
+    const usuarioActual = getSessionUser(usuario);
 
     const [formData, setFormData] = useState<FormData>({
         fechaCumplido: getLocalDateString(now),
@@ -57,8 +61,8 @@ export default function ModalCargarControl({
         observaciones: '',
         fechaProximo: '',
         horaProximo: '',
-        profesionalAsiste: parseValorPersonalId(usuario?.valorPersonal, usuario?.idValorpersonal),
-        profesionalNombre: `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim(),
+        profesionalAsiste: getUserValorPersonal(usuarioActual),
+        profesionalNombre: getUserDisplayName(usuarioActual),
         control: {
             pulso: '',
             presionArterialMax: '',
@@ -99,25 +103,8 @@ export default function ModalCargarControl({
                 return;
             }
 
-            await crearControl({
-                numeroVisita,
-                fechaControl: formData.fechaCumplido,
-                horaControl: formData.horaCumplido,
-                operadorCarga: parseValorPersonalId(usuario?.valorPersonal, usuario?.idValorpersonal) ?? 0,
-                idHci: idHCIngreso || 0,
-                pulso: formData.control.pulso ? parseInt(formData.control.pulso) : 0,
-                presionMax: formData.control.presionArterialMax ? parseInt(formData.control.presionArterialMax) : 0,
-                presionMin: formData.control.presionArterialMin ? parseInt(formData.control.presionArterialMin) : 0,
-                presionMedia: formData.control.presionArterialMedia ? parseInt(formData.control.presionArterialMedia) : 0,
-                frecuenciaRespiratoria: formData.control.frResp ? parseInt(formData.control.frResp) : 0,
-                temperaturaAxilar: formData.control.temperaturaAxilar ? parseFloat(formData.control.temperaturaAxilar) : 0,
-                temperaturaRectal: formData.control.temperaturaRectal ? parseFloat(formData.control.temperaturaRectal) : 0,
-                glucemia: formData.control.glucemia ? parseInt(formData.control.glucemia) : 0,
-                saturacion: formData.control.saturometria ? parseInt(formData.control.saturometria) : 0,
-                observaciones: formData.observaciones || '',
-            });
-
-            // Pasar datos cargados al formulario padre
+            // En HC de ingreso solo cargamos los datos al formulario.
+            // La persistencia en `imInterCtrlFrecuente` se hace al guardar la HC.
             const datosCargados: ControlDatosCargados = {
                 pa: formData.control.presionArterialMax && formData.control.presionArterialMin
                     ? `${formData.control.presionArterialMax}/${formData.control.presionArterialMin}`

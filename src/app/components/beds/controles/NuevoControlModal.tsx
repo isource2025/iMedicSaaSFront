@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { crearControl, type CrearControlData } from "../../../services/controlesFrecuentesService";
+import { getSectorId, getSessionUser, getUserCodOperador } from "@/app/utils/sessionUser";
 import styles from "../evolucion/NuevaEvolucionEnfermeriaModal.module.css";
 
 const getLocalDate = (d: Date) =>
@@ -17,15 +18,18 @@ interface Props {
 }
 
 export default function NuevoControlModal({ defaultNumeroVisita, refetch, onClose }: Props) {
-	const { sectorSeleccionado } = useAppContext();
-	const operadorId = sectorSeleccionado?.idPersonal ? parseInt(sectorSeleccionado.idPersonal) : 0;
+	const { usuario, sectorSeleccionado } = useAppContext();
+	const usuarioActual = getSessionUser(usuario);
+	const operadorId = getUserCodOperador(usuarioActual) ?? 0;
+	const idSector = getSectorId(sectorSeleccionado);
 
 	const initial = useMemo<CrearControlData>(() => ({
 		numeroVisita: defaultNumeroVisita || 0,
 		fechaControl: getLocalDate(new Date()),
 		horaControl: getLocalTime(new Date()),
 		operadorCarga: operadorId,
-	}), [defaultNumeroVisita, operadorId]);
+		idSector,
+	}), [defaultNumeroVisita, operadorId, idSector]);
 
 	const [form, setForm] = useState<CrearControlData>(initial);
 	const [saving, setSaving] = useState(false);

@@ -8,7 +8,7 @@
  * `iMedicWSBack/src/utils/permisos.js`. Mantener ambos en sync.
  *
  * Roles definidos en imRoles (IDs fijos):
- *   1 = ADMIN, 2 = MEDICO, 3 = ENFERMERO, 4 = ADMINISTRATIVO
+ *   1 = ADMIN, 2 = MEDICO, 3 = ENFERMERO, 4 = ADMINISTRATIVO, 5 = SUPER_ADMIN
  */
 
 // ============================================================================
@@ -43,7 +43,7 @@ export interface ModuloDef {
 	submodulos: ReadonlyArray<SubmoduloDef>;
 }
 
-export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO';
+export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO' | 'SUPER_ADMIN';
 
 // ============================================================================
 // Estructura de módulos (alineada con el sidebar)
@@ -137,6 +137,18 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		],
 	},
 	{
+		id: 'PLATAFORMA',
+		label: 'Super Admin',
+		submodulos: [
+			{ id: 'PANEL', label: 'Panel', path: '/dashboard/super-admin', acciones: [ACCIONES.VER] },
+			{ id: 'EMPRESAS', label: 'Empresas', path: '/dashboard/super-admin/empresas', acciones: [...CRUD, ACCIONES.GESTIONAR] },
+			{ id: 'USUARIOS', label: 'Usuarios', path: '/dashboard/super-admin/usuarios', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
+			{ id: 'ONBOARDING', label: 'Onboarding', path: '/dashboard/super-admin/onboarding', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
+			{ id: 'COBRANZA', label: 'Cobranza', path: '/dashboard/super-admin/cobranza', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR, ACCIONES.EXPORTAR] },
+			{ id: 'CONFIG', label: 'Configuración', path: '/dashboard/super-admin/configuracion', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
+		],
+	},
+	{
 		id: 'USUARIO',
 		label: 'Usuario',
 		submodulos: [
@@ -158,7 +170,11 @@ function _todas(modId: string, subId: string): string[] {
 // Plantillas por rol
 // ============================================================================
 export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
-	ADMIN: MODULOS.flatMap((m) =>
+	ADMIN: MODULOS.filter((m) => m.id !== 'PLATAFORMA').flatMap((m) =>
+		m.submodulos.flatMap((s) => s.acciones.map((a) => `${m.id}.${s.id}.${a}`)),
+	),
+
+	SUPER_ADMIN: MODULOS.flatMap((m) =>
 		m.submodulos.flatMap((s) => s.acciones.map((a) => `${m.id}.${s.id}.${a}`)),
 	),
 
@@ -327,7 +343,7 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 	if (!rol) return null;
 	const n = typeof rol === 'string' ? rol : rol.nombre || '';
 	const up = String(n).trim().toUpperCase();
-	if (up === 'ADMIN' || up === 'MEDICO' || up === 'ENFERMERO' || up === 'ADMINISTRATIVO') {
+	if (up === 'ADMIN' || up === 'MEDICO' || up === 'ENFERMERO' || up === 'ADMINISTRATIVO' || up === 'SUPER_ADMIN') {
 		return up;
 	}
 	return null;
@@ -346,6 +362,7 @@ export function permisosDeRol(
 ): ReadonlyArray<string> {
 	const n = nombreRol(rol);
 	if (n === 'ADMIN') return [...PLANTILLAS.ADMIN];
+	if (n === 'SUPER_ADMIN') return [...PLANTILLAS.SUPER_ADMIN];
 	if (permisosUsuario && permisosUsuario.length) return permisosUsuario;
 	if (!n) return [];
 	return PLANTILLAS[n];

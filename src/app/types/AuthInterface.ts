@@ -6,6 +6,8 @@ export interface LoginCredentials {
   username: string;
   password: string;
   sector?: string;
+  idSector?: string;
+  idEmpresa?: string;
 }
 
 export interface LoginResponse {
@@ -17,7 +19,41 @@ export interface LoginResponse {
   message?: string;    // Mantener por compatibilidad
   mensaje?: string;    // Añadido para coincidir con el backend
   fuente?: string;     // Origen de la autenticación (base de datos o temporal)
-  sectorSeleccionado?: SectorInfo; // Información del sector seleccionado
+  sectorSeleccionado?: SectorInfo;
+  empresaSeleccionada?: EmpresaInfoLogin | null;
+  modulosEmpresa?: ModulosEmpresaLogin | null;
+}
+
+export interface ModulosEmpresaLogin {
+  packs: string[];
+  modulosHabilitados: string[];
+  modulosGenerales: string[];
+}
+
+/** Empresa en login (lista desplegable) */
+export interface EmpresaLogin {
+  idEmpresa: number;
+  descripcionEmpresa: string;
+}
+
+/** Datos completos de empresa devueltos tras el login */
+export interface EmpresaInfoLogin {
+  id: string;
+  descripcion: string;
+  razonSocial?: string;
+  cuit?: string;
+  calle?: string;
+  calle_nro?: string;
+  Depto?: string;
+  piso?: string;
+  localidad?: string;
+  provincia?: string;
+  telefono?: string;
+  email?: string;
+  condicionIva?: string;
+  ingresosBrutos?: string;
+  fax?: string;
+  logo?: string;
 }
 
 export interface RolInfo {
