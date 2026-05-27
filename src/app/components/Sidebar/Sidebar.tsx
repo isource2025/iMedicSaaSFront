@@ -138,7 +138,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const [currentUser, setCurrentUser] = useState<UserData | null>(null)
   const router = useRouter()
   const pathname = usePathname()
-  const { empresaInfo, sectorSeleccionado, modulosEmpresa } = useAppContext()
+  const { empresaInfo, sectorSeleccionado } = useAppContext()
   const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
 
   useEffect(() => {
@@ -169,8 +169,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
    * Reglas:
    * - Si los permisos aún no cargaron (SSR inicial) → lista vacía (evita flash).
    * - Si cargaron pero el usuario no tiene rol asignado → sólo Dashboard + Usuario.
-   * - Si tiene rol → (1) módulos contratados por la empresa (packs);
-   *   (2) permisos del rol (módulo y submódulo).
+   * - Si tiene rol → permisos del rol (módulo y submódulo).
    */
   const visibleMenu = useMemo(() => {
     // SSR: no sabemos nada todavía — devolvemos vacío para no mostrar items incorrectos
@@ -195,20 +194,11 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       return menuItems.filter((item) => item.id === 'dashboard' || item.alwaysVisible)
     }
 
-    const PACK_MODULES = new Set(['TURNOS', 'INTERNACION', 'FACTURACION'])
-    const habilitados = modulosEmpresa?.modulosHabilitados
-
     return menuItems
       .filter((item) => item.moduloId !== 'PLATAFORMA')
       .map((item) => {
         if (item.alwaysVisible) return item
 
-        // 1) Módulos contratados por la empresa (packs SaaS; debe estar en modulosHabilitados)
-        if (PACK_MODULES.has(item.moduloId) && !habilitados?.includes(item.moduloId)) {
-          return null
-        }
-
-        // 2) Permisos del rol
         if (!puedeModulo(item.moduloId)) return null
 
         // Filtrar subitems: si el subitem no tiene submoduloId siempre se muestra
@@ -225,7 +215,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       .filter((x): x is MenuItem => x !== null)
   // puedeModulo y puedeSubmodulo son closures que cambian cuando cambia el estado del hook
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rol, loaded, puedeModulo, puedeSubmodulo, modulosEmpresa])
+  }, [rol, loaded, puedeModulo, puedeSubmodulo])
 
   const getActiveModuleId = (): string | null => {
     for (const item of visibleMenu) {
