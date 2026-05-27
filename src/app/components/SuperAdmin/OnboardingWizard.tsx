@@ -203,7 +203,7 @@ export default function OnboardingWizard({
     run(async () => {
       await superAdminService.updateOnboarding(empresa.id, {
         pasoActual: 'SECTORES',
-        sectoresDefecto: [...sectoresSel],
+        sectoresDefecto: Array.from(sectoresSel),
         completado: false,
       });
       await refrescarEmpresa();
@@ -246,7 +246,7 @@ export default function OnboardingWizard({
       }
       await superAdminService.crearUsuarioEmpresa(Number(empresa.id), {
         ...nuevoUsuario,
-        sectores: [...sectoresSel],
+        sectores: Array.from(sectoresSel),
         idRol: Number(nuevoUsuario.idRol),
       });
       setNuevoUsuario(emptyUsuario(idRolDefault));
@@ -293,7 +293,7 @@ export default function OnboardingWizard({
   const guardarCobranza = () =>
     run(async () => {
       if (!empresa.suscripcion) return;
-      await superAdminService.updateSuscripcion(empresa.id, empresa.suscripcion);
+      await superAdminService.updateSuscripcion(empresa.id, { ...empresa.suscripcion });
       await refrescarEmpresa();
     });
 
@@ -308,7 +308,7 @@ export default function OnboardingWizard({
       await superAdminService.updateOnboarding(empresa.id, {
         pasoActual: 'ACTIVACION',
         completado: true,
-        sectoresDefecto: [...sectoresSel],
+        sectoresDefecto: Array.from(sectoresSel),
       });
       const det = await refrescarEmpresa();
       const ok =
@@ -345,7 +345,7 @@ export default function OnboardingWizard({
       await superAdminService.updateOnboarding(empresa.id, {
         pasoActual: empresa.onboarding?.pasoActual || 'ACTIVACION',
         completado: false,
-        sectoresDefecto: [...sectoresSel],
+        sectoresDefecto: Array.from(sectoresSel),
       });
       await refrescarEmpresa();
     });
@@ -364,14 +364,14 @@ export default function OnboardingWizard({
       case 'SECTORES':
         await superAdminService.updateOnboarding(empresa.id, {
           pasoActual: 'SECTORES',
-          sectoresDefecto: [...sectoresSel],
+          sectoresDefecto: Array.from(sectoresSel),
           completado: false,
         });
         await refrescarEmpresa();
         break;
       case 'COBRANZA':
         if (empresa.suscripcion) {
-          await superAdminService.updateSuscripcion(empresa.id, empresa.suscripcion);
+          await superAdminService.updateSuscripcion(empresa.id, { ...empresa.suscripcion });
           await refrescarEmpresa();
         }
         break;
@@ -392,7 +392,7 @@ export default function OnboardingWizard({
         await superAdminService.updateOnboarding(empresa.id, {
           pasoActual: PASO_IDS[pasoIdx + 1],
           completado: empresa.onboarding?.completado ?? false,
-          sectoresDefecto: [...sectoresSel],
+          sectoresDefecto: Array.from(sectoresSel),
         });
         await refrescarEmpresa();
       }
@@ -408,7 +408,7 @@ export default function OnboardingWizard({
     const packs = new Set(empresa.packs || []);
     if (packs.has(codigo)) packs.delete(codigo);
     else packs.add(codigo);
-    onEmpresaActualizada({ ...empresa, packs: [...packs] });
+    onEmpresaActualizada({ ...empresa, packs: Array.from(packs) });
   };
 
   const toggleSectorSel = (id: string) => {
@@ -422,7 +422,7 @@ export default function OnboardingWizard({
     const next = new Set(editUserForm.sectores);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    setEditUserForm({ ...editUserForm, sectores: [...next] });
+    setEditUserForm({ ...editUserForm, sectores: Array.from(next) });
   };
 
   const usuarios = empresa.usuarios || [];

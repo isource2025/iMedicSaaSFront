@@ -67,7 +67,9 @@ export const superAdminService = {
   },
 
   async updatePacks(id: string | number, packs: string[]): Promise<unknown> {
-    const res = await apiService.put(`${BASE}/empresas/${id}/packs`, { packs });
+    const res = await apiService.put<{ success: boolean; data: unknown }>(`${BASE}/empresas/${id}/packs`, {
+      packs,
+    });
     return res.data.data;
   },
 
@@ -75,7 +77,10 @@ export const superAdminService = {
     id: string | number,
     body: { pasoActual?: string; completado?: boolean; notas?: string; sectoresDefecto?: string[] },
   ) {
-    const res = await apiService.put(`${BASE}/empresas/${id}/onboarding`, body);
+    const res = await apiService.put<{ success: boolean; data: unknown }>(
+      `${BASE}/empresas/${id}/onboarding`,
+      body,
+    );
     return res.data.data;
   },
 
@@ -121,7 +126,10 @@ export const superAdminService = {
   },
 
   async updateSuscripcion(id: string | number, body: Record<string, unknown>) {
-    const res = await apiService.put(`${BASE}/empresas/${id}/suscripcion`, body);
+    const res = await apiService.put<{ success: boolean; data: unknown }>(
+      `${BASE}/empresas/${id}/suscripcion`,
+      body,
+    );
     return res.data.data;
   },
 
@@ -133,12 +141,17 @@ export const superAdminService = {
   },
 
   async vincularUsuario(idEmpresa: number, idPersonal: number) {
-    const res = await apiService.post(`${BASE}/empresas/${idEmpresa}/usuarios`, { idPersonal });
+    const res = await apiService.post<{ success: boolean; data: unknown }>(
+      `${BASE}/empresas/${idEmpresa}/usuarios`,
+      { idPersonal },
+    );
     return res.data.data;
   },
 
   async desvincularUsuario(idEmpresa: number, idPersonal: number) {
-    const res = await apiService.delete(`${BASE}/empresas/${idEmpresa}/usuarios/${idPersonal}`);
+    const res = await apiService.delete<{ success: boolean; data: unknown }>(
+      `${BASE}/empresas/${idEmpresa}/usuarios/${idPersonal}`,
+    );
     return res.data.data;
   },
 
