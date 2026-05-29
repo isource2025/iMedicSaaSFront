@@ -1,7 +1,9 @@
 // Constantes de configuración para la aplicación
 
+import { getEnvApiBaseUrl } from './apiBaseUrl';
+
 // URL base de la API
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+export const API_BASE_URL = getEnvApiBaseUrl();
 
 // Colores de la paleta Pantone para iMedicWs
 export const COLORS = {

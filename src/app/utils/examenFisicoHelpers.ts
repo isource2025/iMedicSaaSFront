@@ -912,3 +912,65 @@ export const getEmptyExamenFisico = (): ExamenFisicoCompleto => ({
         detalle: "",
     },
 });
+
+/** Signos vitales que generan fila en imInterCtrlFrecuente al guardar HC */
+export const CAMPOS_SIGNOS_VITALES_CONTROLES = [
+    'SV_FC',
+    'SV_FR',
+    'SV_TAX',
+    'SV_PA',
+    'SV_GLUCEMIA',
+    'SV_PESOACTUAL',
+    'SV_TALLA',
+] as const;
+
+export type HcFormBasics = {
+    fecha: string;
+    hora: string;
+    profesionalId: string;
+    sector: string;
+    motivoConsulta: string;
+    enfermedadActual: string;
+};
+
+function normHcVal(v: unknown): string {
+    if (v === undefined || v === null) return '';
+    return String(v).trim();
+}
+
+/** Payload unificado para crear/actualizar HC (campos imHCI + fecha/hora) */
+export function buildHcPayloadFromForm(
+    form: HcFormBasics,
+    examenFisico: ExamenFisicoCompleto,
+    numeroVisita: number,
+): Record<string, unknown> {
+    return {
+        NumeroVisita: numeroVisita,
+        IdSector: form.sector,
+        MotivoConsulta: form.motivoConsulta,
+        EnfermedadActual: form.enfermedadActual,
+        IdProfecional: form.profesionalId ? parseInt(form.profesionalId, 10) : undefined,
+        fecha: form.fecha,
+        hora: form.hora,
+        ...mapearExamenFisicoAHCI(examenFisico),
+    };
+}
+
+/** Solo campos que cambiaron respecto al snapshot al entrar en edición */
+export function diffHcUpdatePayload(
+    baseline: Record<string, unknown>,
+    current: Record<string, unknown>,
+): { patch: Record<string, unknown>; sincronizarSignosVitales: boolean } {
+    const patch: Record<string, unknown> = {};
+    const keys = new Set([...Object.keys(baseline), ...Object.keys(current)]);
+
+    for (const key of keys) {
+        if (key === 'NumeroVisita') continue;
+        if (normHcVal(baseline[key]) !== normHcVal(current[key])) {
+            patch[key] = current[key] ?? '';
+        }
+    }
+
+    const sincronizarSignosVitales = CAMPOS_SIGNOS_VITALES_CONTROLES.some((k) => k in patch);
+    return { patch, sincronizarSignosVitales };
+}

@@ -13,7 +13,13 @@ import {
 } from "@/app/services/hcIngresoService";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
-import { getEmptyExamenFisico, mapearHCIaExamenFisico, mapearExamenFisicoAHCI } from "@/app/utils/examenFisicoHelpers";
+import {
+    getEmptyExamenFisico,
+    mapearHCIaExamenFisico,
+    buildHcPayloadFromForm,
+    diffHcUpdatePayload,
+    type HcFormBasics,
+} from "@/app/utils/examenFisicoHelpers";
 import {
     getSectorDescripcion,
     getSectorId,
@@ -289,6 +295,9 @@ export default function HCIngresoSection({
     // Estado del examen físico
     const [examenFisico, setExamenFisico] = useState<ExamenFisicoCompleto>(getEmptyExamenFisico());
 
+    /** Snapshot al entrar en edición: solo se envían campos que difieren */
+    const [editBaseline, setEditBaseline] = useState<Record<string, unknown> | null>(null);
+
     // Cargar información de empresa al montar
     useEffect(() => {
         const cargarEmpresa = async () => {
@@ -385,17 +394,18 @@ export default function HCIngresoSection({
             enfermedadActual: "",
             antecedentes: "",
         });
+        setEditBaseline(null);
         setActiveSection("motivo");
         setMode("add");
     };
 
     const handleEdit = () => {
-        if (!selectedRecord) return;
+        if (!selectedRecord || !numeroVisita) return;
         
         const desdeRecord = fechaHoraDesdeRecord(selectedRecord);
         const ahora = fechaHoraLocal();
         
-        setFormData({
+        const newFormData: HcFormBasics & { profesionalNombre: string; sectorDescripcion: string; antecedentes: string } = {
             fecha: desdeRecord?.fecha || ahora.fecha,
             hora: ahora.hora,
             profesionalId: String(selectedRecord.IdProfecional || ""),
@@ -404,23 +414,20 @@ export default function HCIngresoSection({
             sectorDescripcion: selectedRecord.SectorDescripcion || selectedRecord.IdSector,
             motivoConsulta: selectedRecord.MotivoConsulta || "",
             enfermedadActual: selectedRecord.EnfermedadActual || "",
-            antecedentes: (selectedRecord as any).Antecedentes || "",
-        });
+            antecedentes: (selectedRecord as { Antecedentes?: string }).Antecedentes || "",
+        };
         
-        // Mapear datos del registro al estado del examen físico
         const examenFisicoMapeado = mapearHCIaExamenFisico(selectedRecord);
+        setFormData(newFormData);
         setExamenFisico(examenFisicoMapeado);
-        
-        console.log('[HC Ingreso] Datos mapeados para edición:', {
-            signosVitales: examenFisicoMapeado.signosVitales,
-            selectedRecord: selectedRecord
-        });
+        setEditBaseline(buildHcPayloadFromForm(newFormData, examenFisicoMapeado, numeroVisita));
         
         setActiveSection("motivo");
         setMode("edit");
     };
 
     const handleCancel = () => {
+        setEditBaseline(null);
         setMode("view");
     };
 
@@ -434,49 +441,55 @@ export default function HCIngresoSection({
             setLoading(true);
             setError(null);
 
-            // Preparar datos para guardar
-            const datosExamenFisico = mapearExamenFisicoAHCI(examenFisico);
-            
-            const dataToSave: Partial<HCIngresoRecord> & { fecha?: string; hora?: string } = {
-                NumeroVisita: numeroVisita,
-                IdSector: formData.sector,
-                MotivoConsulta: formData.motivoConsulta,
-                EnfermedadActual: formData.enfermedadActual,
-                IdProfecional: formData.profesionalId ? parseInt(formData.profesionalId) : undefined,
+            const formBasics: HcFormBasics = {
                 fecha: formData.fecha,
                 hora: formData.hora,
-                ...datosExamenFisico,
+                profesionalId: formData.profesionalId,
+                sector: formData.sector,
+                motivoConsulta: formData.motivoConsulta,
+                enfermedadActual: formData.enfermedadActual,
             };
-            
-            console.log('[HC Ingreso] Guardando con datos completos:', {
-                basicos: { MotivoConsulta: formData.motivoConsulta },
-                signosVitales: examenFisico.signosVitales,
-                datosExamenFisico: Object.keys(datosExamenFisico).length + ' campos'
-            });
+            const payloadActual = buildHcPayloadFromForm(formBasics, examenFisico, numeroVisita);
 
             if (mode === "add") {
-                // Crear nueva HC
-                const result = await crearHCIngreso(dataToSave);
-                console.log("HC creada exitosamente:", result);
-                
-                // Recargar datos
+                const result = await crearHCIngreso(payloadActual as Partial<HCIngresoRecord>);
                 const data = await obtenerHCIngresoPorVisita(numeroVisita);
                 setRecords(data);
-                
-                // Seleccionar el nuevo registro
                 if (result.IdHCIngreso) {
                     setSelectedRecordId(result.IdHCIngreso);
                 }
-            } else if (mode === "edit" && selectedRecordId) {
-                // Actualizar HC existente
+            } else if (mode === "edit" && selectedRecordId && editBaseline) {
+                const { patch, sincronizarSignosVitales } = diffHcUpdatePayload(editBaseline, payloadActual);
+
+                if (Object.keys(patch).length === 0) {
+                    setMode("view");
+                    setEditBaseline(null);
+                    return;
+                }
+
+                const dataToSave: Record<string, unknown> = {
+                    ...patch,
+                    sincronizarSignosVitales,
+                };
+                if (sincronizarSignosVitales) {
+                    dataToSave.NumeroVisita = numeroVisita;
+                    if (dataToSave.IdSector === undefined) dataToSave.IdSector = payloadActual.IdSector;
+                    if (dataToSave.IdProfecional === undefined) {
+                        dataToSave.IdProfecional = payloadActual.IdProfecional;
+                    }
+                }
+
+                console.log('[HC Ingreso] Actualización parcial:', {
+                    campos: Object.keys(patch).length,
+                    sincronizarSignosVitales,
+                });
+
                 await actualizarHCIngreso(selectedRecordId, dataToSave);
-                console.log("HC actualizada exitosamente");
-                
-                // Recargar datos
                 const data = await obtenerHCIngresoPorVisita(numeroVisita);
                 setRecords(data);
             }
 
+            setEditBaseline(null);
             setMode("view");
         } catch (error) {
             console.error("Error al guardar HC:", error);

@@ -1,9 +1,7 @@
 import axios from 'axios';
+import { getEnvApiBaseUrl } from '@/app/config/apiBaseUrl';
 
-const envApiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api').replace(
-	/\/$/,
-	'',
-);
+const envApiBase = getEnvApiBaseUrl();
 
 /**
  * En el navegador, si la app se abre por IP/LAN (p. ej. http://192.168.x.x:3000) y la env
