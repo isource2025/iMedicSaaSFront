@@ -962,7 +962,9 @@ export function diffHcUpdatePayload(
     current: Record<string, unknown>,
 ): { patch: Record<string, unknown>; sincronizarSignosVitales: boolean } {
     const patch: Record<string, unknown> = {};
-    const keys = new Set([...Object.keys(baseline), ...Object.keys(current)]);
+    const keys = Array.from(
+        new Set([...Object.keys(baseline), ...Object.keys(current)]),
+    );
 
     for (const key of keys) {
         if (key === 'NumeroVisita') continue;
