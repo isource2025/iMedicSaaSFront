@@ -90,6 +90,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const localEmpresaInfo = obtenerInfoEmpresaLocal();
     if (localEmpresaInfo?.id) {
       setEmpresaInfoState(localEmpresaInfo);
@@ -97,7 +99,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
     const fetchEmpresaInfo = async () => {
       try {
-        const idGuardado = localEmpresaInfo?.id;
+        const stored = localStorage.getItem('empresaSeleccionada');
+        const idFromLogin = stored
+          ? (JSON.parse(stored) as { idEmpresa?: string | number })?.idEmpresa
+          : undefined;
+        const idGuardado = idFromLogin ?? localEmpresaInfo?.id;
         const empresaData = await obtenerInfoEmpresa(idGuardado);
         setEmpresaInfoState(empresaData);
         guardarInfoEmpresaLocal(empresaData);
@@ -107,7 +113,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     };
 
     fetchEmpresaInfo();
-  }, []);
+  }, [isAuthenticated]);
 
   const setModulosEmpresa = (modulos: ModulosEmpresa | null) => {
     setModulosEmpresaState(modulos);

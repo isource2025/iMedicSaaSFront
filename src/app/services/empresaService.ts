@@ -2,7 +2,7 @@
  * Servicio para gestionar la información de la empresa
  */
 
-import { getResolvedApiBaseUrl } from './axios';
+import { apiService } from './axios';
 
 /**
  * Interfaz para la información de la empresa
@@ -32,27 +32,23 @@ export interface EmpresaInfo {
  */
 export const obtenerInfoEmpresa = async (idEmpresa?: string | number): Promise<EmpresaInfo> => {
   try {
-    const base = getResolvedApiBaseUrl();
     const id =
       idEmpresa != null && idEmpresa !== ''
         ? idEmpresa
         : obtenerInfoEmpresaLocal()?.id;
-    const qs = id ? `?id=${encodeURIComponent(String(id))}` : '';
-    const response = await fetch(`${base}/empresa${qs}`);
-    
-    if (!response.ok) {
-      throw new Error('Error al obtener información de la empresa');
-    }
-    
-    const data = await response.json();
-    
-    console.log("Esta es la empresa:", data);
-    
+    const params = id ? { id: String(id) } : undefined;
+    const response = await apiService.get<{
+      success: boolean;
+      data: EmpresaInfo;
+      message?: string;
+    }>('/empresa', params ? { params } : undefined);
+
+    const data = response.data;
+
     if (data.success) {
       return data.data;
-    } else {
-      throw new Error(data.message || 'Error al obtener los datos de la empresa');
     }
+    throw new Error(data.message || 'Error al obtener los datos de la empresa');
   } catch (error) {
     console.error('Error al cargar datos de la empresa:', error);
     
