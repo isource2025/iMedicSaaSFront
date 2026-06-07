@@ -34,10 +34,10 @@ function labelModo(modo: BotModoControl): string {
 	return 'Bot pausado';
 }
 
-function iconoModo(modo: BotModoControl): string {
-	if (modo === 'BOT') return '🤖';
-	if (modo === 'HUMANO') return '👤';
-	return '⏸️';
+function tagModoClass(modo: BotModoControl): string {
+	if (modo === 'BOT') return styles.tagBot;
+	if (modo === 'HUMANO') return styles.tagHumano;
+	return styles.tagPausado;
 }
 
 interface Props {
@@ -360,8 +360,8 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 													<span className={styles.badgeUnread}>{c.noLeidos}</span>
 												)}
 											</div>
-											<span className={styles.convModo} data-modo={c.modoControl}>
-												{iconoModo(c.modoControl)} {labelModo(c.modoControl)}
+											<span className={`${styles.tag} ${tagModoClass(c.modoControl)}`}>
+												{labelModo(c.modoControl)}
 											</span>
 										</div>
 									</button>
@@ -394,10 +394,8 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 								</div>
 								<div className={styles.chatControls}>
 									<span
-										className={styles.modoBadge}
-										data-modo={convActiva?.modoControl || 'BOT'}
+										className={`${styles.tag} ${styles.tagHeader} ${tagModoClass(convActiva?.modoControl || 'BOT')}`}
 									>
-										{iconoModo(convActiva?.modoControl || 'BOT')}{' '}
 										{labelModo(convActiva?.modoControl || 'BOT')}
 										{convActiva?.modoControl === 'HUMANO' &&
 											convActiva.nombreAgente &&

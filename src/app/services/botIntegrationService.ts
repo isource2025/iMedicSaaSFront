@@ -3,6 +3,8 @@ import type {
 	BotConfigAdmin,
 	BotConfigSavePayload,
 	BotLogsResponse,
+	BotWhatsappConfig,
+	BotWhatsappSavePayload,
 } from '../types/botIntegration';
 
 interface ApiResp<T> {
@@ -29,6 +31,21 @@ export const botIntegrationService = {
 	async saveConfig(payload: BotConfigSavePayload): Promise<BotConfigAdmin> {
 		const { data } = await apiService.patch<ApiResp<BotConfigAdmin>>('/admin/bot/config', payload);
 		if (!data.success) throw new Error(data.mensaje || 'Error al guardar configuración');
+		return data.data;
+	},
+
+	async getWhatsappConfig(): Promise<BotWhatsappConfig> {
+		const { data } = await apiService.get<ApiResp<BotWhatsappConfig>>('/admin/bot/whatsapp');
+		if (!data.success) throw new Error(data.mensaje || 'Error al cargar WhatsApp');
+		return data.data;
+	},
+
+	async saveWhatsappConfig(payload: BotWhatsappSavePayload): Promise<BotWhatsappConfig> {
+		const { data } = await apiService.patch<ApiResp<BotWhatsappConfig>>(
+			'/admin/bot/whatsapp',
+			payload,
+		);
+		if (!data.success) throw new Error(data.mensaje || 'Error al guardar WhatsApp');
 		return data.data;
 	},
 };

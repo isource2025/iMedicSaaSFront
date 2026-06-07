@@ -72,3 +72,22 @@ export interface BotLogsResponse {
 	disponible: boolean;
 	logs: BotLogEntry[];
 }
+
+/** Config WhatsApp Meta por empresa (token enmascarado). */
+export interface BotWhatsappConfig {
+	configurado: boolean;
+	idEmpresa: number;
+	phoneNumberId: string | null;
+	wabaId: string | null;
+	accessTokenMasked: string | null;
+	source: string | null;
+	metaAppId: string | null;
+	verifyTokenConfigured: boolean;
+}
+
+export interface BotWhatsappSavePayload {
+	phoneNumberId?: string;
+	wabaId?: string;
+	/** Solo enviar si se quiere reemplazar el token. */
+	accessToken?: string;
+}

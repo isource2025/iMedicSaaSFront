@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { botIntegrationService } from '@/app/services/botIntegrationService';
-import type { BotConfigAdmin, BotFlujoPaso } from '@/app/types/botIntegration';
+import type { BotConfigAdmin, BotFlujoPaso, BotWhatsappConfig } from '@/app/types/botIntegration';
 import styles from './BotConfigPanel.module.css';
 
-type SeccionConfig = 'general' | 'prompt' | 'mensajes' | 'reglas' | 'flujo';
+type SeccionConfig = 'general' | 'whatsapp' | 'prompt' | 'mensajes' | 'reglas' | 'flujo';
 
 const SECCIONES: { id: SeccionConfig; label: string; icon: string }[] = [
 	{ id: 'general', label: 'General', icon: '🏥' },
+	{ id: 'whatsapp', label: 'WhatsApp Meta', icon: '📱' },
 	{ id: 'prompt', label: 'Prompt IA', icon: '🧠' },
 	{ id: 'mensajes', label: 'Mensajes', icon: '💬' },
 	{ id: 'reglas', label: 'Reglas', icon: '⚙️' },
@@ -46,13 +47,29 @@ export default function BotConfigPanel() {
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [okMsg, setOkMsg] = useState<string | null>(null);
+	const [whatsapp, setWhatsapp] = useState<BotWhatsappConfig | null>(null);
+	const [whatsappForm, setWhatsappForm] = useState({
+		phoneNumberId: '',
+		wabaId: '',
+		accessToken: '',
+	});
+	const [savingWhatsapp, setSavingWhatsapp] = useState(false);
 
 	const cargar = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 		try {
-			const cfg = await botIntegrationService.getAdminConfig();
+			const [cfg, wa] = await Promise.all([
+				botIntegrationService.getAdminConfig(),
+				botIntegrationService.getWhatsappConfig(),
+			]);
 			setForm(configToForm(cfg));
+			setWhatsapp(wa);
+			setWhatsappForm({
+				phoneNumberId: wa.phoneNumberId || '',
+				wabaId: wa.wabaId || '',
+				accessToken: '',
+			});
 			setMeta({
 				apiConfigurada: cfg.apiConfigurada,
 				configDbDisponible: cfg.configDbDisponible,
@@ -93,6 +110,38 @@ export default function BotConfigPanel() {
 			setError(e instanceof Error ? e.message : 'Error al guardar');
 		} finally {
 			setSaving(false);
+		}
+	};
+
+	const guardarWhatsapp = async () => {
+		setSavingWhatsapp(true);
+		setError(null);
+		setOkMsg(null);
+		try {
+			const payload: {
+				phoneNumberId?: string;
+				wabaId?: string;
+				accessToken?: string;
+			} = {
+				phoneNumberId: whatsappForm.phoneNumberId.trim(),
+				wabaId: whatsappForm.wabaId.trim(),
+			};
+			if (whatsappForm.accessToken.trim()) {
+				payload.accessToken = whatsappForm.accessToken.trim();
+			}
+			const wa = await botIntegrationService.saveWhatsappConfig(payload);
+			setWhatsapp(wa);
+			setWhatsappForm((prev) => ({
+				...prev,
+				phoneNumberId: wa.phoneNumberId || prev.phoneNumberId,
+				wabaId: wa.wabaId || prev.wabaId,
+				accessToken: '',
+			}));
+			setOkMsg('Configuración WhatsApp guardada para esta empresa.');
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'Error al guardar WhatsApp');
+		} finally {
+			setSavingWhatsapp(false);
 		}
 	};
 
@@ -177,6 +226,94 @@ export default function BotConfigPanel() {
 								<strong>{pasosActivos}</strong>
 							</div>
 						</div>
+					</section>
+				)}
+
+				{seccion === 'whatsapp' && (
+					<section className={styles.section}>
+						<h2>WhatsApp Meta — esta empresa</h2>
+						<p className={styles.hint}>
+							Cada hospital tiene su propio número de WhatsApp. Los valores globales de la app
+							(Meta App ID, verify token, app secret) se configuran en el servidor; acá guardás
+							el Phone Number ID, WABA y token de acceso de tu institución.
+						</p>
+
+						<div className={styles.statusGrid}>
+							<div className={styles.statusCard}>
+								<span className={styles.statusLabel}>Estado conexión</span>
+								<strong className={whatsapp?.configurado ? styles.okText : styles.warnText}>
+									{whatsapp?.configurado ? 'Listo para enviar/recibir' : 'Incompleto'}
+								</strong>
+							</div>
+							<div className={styles.statusCard}>
+								<span className={styles.statusLabel}>Verify token (servidor)</span>
+								<strong className={whatsapp?.verifyTokenConfigured ? styles.okText : styles.warnText}>
+									{whatsapp?.verifyTokenConfigured ? 'Configurado' : 'Falta en Railway'}
+								</strong>
+							</div>
+							<div className={styles.statusCard}>
+								<span className={styles.statusLabel}>Meta App ID</span>
+								<strong>{whatsapp?.metaAppId || '—'}</strong>
+							</div>
+							<div className={styles.statusCard}>
+								<span className={styles.statusLabel}>Origen datos</span>
+								<strong>{whatsapp?.source || '—'}</strong>
+							</div>
+						</div>
+
+						<label className={styles.field}>
+							Phone Number ID (Meta)
+							<input
+								value={whatsappForm.phoneNumberId}
+								onChange={(e) =>
+									setWhatsappForm({ ...whatsappForm, phoneNumberId: e.target.value })
+								}
+								placeholder="1130114823509506"
+							/>
+						</label>
+						<label className={styles.field}>
+							WABA ID (WhatsApp Business Account)
+							<input
+								value={whatsappForm.wabaId}
+								onChange={(e) =>
+									setWhatsappForm({ ...whatsappForm, wabaId: e.target.value })
+								}
+								placeholder="1502785418183183"
+							/>
+						</label>
+						<label className={styles.field}>
+							Access Token
+							{whatsapp?.accessTokenMasked && (
+								<span className={styles.hint}>
+									{' '}
+									Actual: {whatsapp.accessTokenMasked} — dejá vacío para mantenerlo
+								</span>
+							)}
+							<input
+								type="password"
+								autoComplete="off"
+								value={whatsappForm.accessToken}
+								onChange={(e) =>
+									setWhatsappForm({ ...whatsappForm, accessToken: e.target.value })
+								}
+								placeholder="Token permanente de Meta (solo si querés cambiarlo)"
+							/>
+						</label>
+
+						<p className={styles.varsHint}>
+							Webhook único para todas las empresas:{' '}
+							<code>/api/webhook/whatsapp</code>. Meta identifica la empresa por{' '}
+							<code>phone_number_id</code> en cada mensaje entrante.
+						</p>
+
+						<button
+							type="button"
+							className={styles.btnSave}
+							disabled={savingWhatsapp}
+							onClick={guardarWhatsapp}
+						>
+							{savingWhatsapp ? 'Guardando…' : 'Guardar WhatsApp'}
+						</button>
 					</section>
 				)}
 
