@@ -1,4 +1,5 @@
 import { Diagnostico } from '../types/diagnostico.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -11,7 +12,7 @@ export const getDiagnosticos = async (): Promise<Diagnostico[]> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/diagnosticos`, {
+    const response = await apiFetch(`${API_URL}/diagnosticos`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +44,7 @@ export const createDiagnostico = async (diagnostico: Diagnostico): Promise<Diagn
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/diagnosticos`, {
+    const response = await apiFetch(`${API_URL}/diagnosticos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export const updateDiagnostico = async (valor: string, descripcion: string): Pro
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/diagnosticos/${valor}`, {
+    const response = await apiFetch(`${API_URL}/diagnosticos/${valor}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +113,7 @@ export const deleteDiagnostico = async (valor: string): Promise<void> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/diagnosticos/${valor}`, {
+    const response = await apiFetch(`${API_URL}/diagnosticos/${valor}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -77,11 +77,15 @@ axiosInstance.interceptors.response.use(
 		if (response) {
 			// Handle unauthorized errors
 			if (response.status === 401) {
-				// Clear local storage and redirect to login
 				localStorage.removeItem('token');
 				localStorage.removeItem('user');
+				localStorage.removeItem('userData');
+				localStorage.removeItem('rol');
+				localStorage.removeItem('permisos');
+				localStorage.removeItem('empresaSeleccionada');
+				localStorage.removeItem('empresaInfo');
+				localStorage.removeItem('empresaModulos');
 
-				// Only redirect if not already on login page
 				if (window.location.pathname !== '/') {
 					window.location.href = '/';
 				}

@@ -4,6 +4,7 @@
  */
 
 import { Sexo } from '../types/sexo.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 /**
  * Datos de ejemplo para usar como fallback si falla la conexión
@@ -53,7 +54,7 @@ export class SexoService {
       const url = `${this.apiUrl}/sexo`;
       console.log('URL de la solicitud:', url);
       
-      const response = await fetch(url, { 
+      const response = await apiFetch(url, { 
         signal: controller.signal
       });
       
@@ -91,7 +92,7 @@ export class SexoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/sexo/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         signal: controller.signal
       });
       
@@ -128,7 +129,7 @@ export class SexoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/sexo`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -171,7 +172,7 @@ export class SexoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/sexo/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -213,7 +214,7 @@ export class SexoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/sexo/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'DELETE',
         signal: controller.signal
       });

@@ -1,4 +1,5 @@
 import { HCIngresoRecord } from '@/app/types/hcIngreso';
+import { apiFetch } from '@/app/utils/authFetch';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api';
 
@@ -7,7 +8,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api';
  */
 export async function obtenerHCIngresoPorVisita(numeroVisita: number): Promise<HCIngresoRecord[]> {
     try {
-        const response = await fetch(`${API_URL}/hc-ingreso/visita/${numeroVisita}`, {
+        const response = await apiFetch(`${API_URL}/hc-ingreso/visita/${numeroVisita}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -36,7 +37,7 @@ export async function obtenerHCIngresoPorVisita(numeroVisita: number): Promise<H
  */
 export async function obtenerHCIngresoPorId(id: number): Promise<HCIngresoRecord | null> {
     try {
-        const response = await fetch(`${API_URL}/hc-ingreso/${id}`, {
+        const response = await apiFetch(`${API_URL}/hc-ingreso/${id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -65,7 +66,7 @@ export async function obtenerHCIngresoPorId(id: number): Promise<HCIngresoRecord
  */
 export async function crearHCIngreso(data: Partial<HCIngresoRecord>): Promise<{ IdHCIngreso: number }> {
     try {
-        const response = await fetch(`${API_URL}/hc-ingreso`, {
+        const response = await apiFetch(`${API_URL}/hc-ingreso`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ export async function crearHCIngreso(data: Partial<HCIngresoRecord>): Promise<{ 
  */
 export async function actualizarHCIngreso(id: number, data: Partial<HCIngresoRecord>): Promise<void> {
     try {
-        const response = await fetch(`${API_URL}/hc-ingreso/${id}`, {
+        const response = await apiFetch(`${API_URL}/hc-ingreso/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -123,7 +124,7 @@ export async function actualizarHCIngreso(id: number, data: Partial<HCIngresoRec
  */
 export async function eliminarHCIngreso(id: number): Promise<void> {
     try {
-        const response = await fetch(`${API_URL}/hc-ingreso/${id}`, {
+        const response = await apiFetch(`${API_URL}/hc-ingreso/${id}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

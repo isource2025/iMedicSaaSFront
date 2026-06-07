@@ -28,6 +28,8 @@ interface SubItem {
   path: string
   /** id del submódulo en utils/permisos. Si no se mata el match por path. */
   submoduloId?: string
+  /** Módulo de permisos distinto al del ítem padre (ej. tablas bajo Configuración). */
+  permisoModuloId?: string
 }
 
 interface MenuItem {
@@ -55,9 +57,10 @@ const menuItems: MenuItem[] = [
   {
     id: 'turnos', moduloId: 'TURNOS', label: 'Turnos', icon: Calendar,
     subItems: [
-      { submoduloId: 'AGENDA',        label: 'Agenda',           path: '/dashboard/turnos/agenda' },
-      { submoduloId: 'ADMIN',         label: 'Admin de Turnos',  path: '/dashboard/turnos/admin' },
-      { submoduloId: 'TABLA',         label: 'Tabla de Turnos',  path: '/dashboard/turnos/tabla' }
+      { submoduloId: 'AGENDA', label: 'Agenda',              path: '/dashboard/turnos/agenda' },
+      { submoduloId: 'AGENDA', label: 'Conversaciones',      path: '/dashboard/turnos/chats' },
+      { submoduloId: 'ADMIN',  label: 'Admin de Turnos',     path: '/dashboard/turnos/admin' },
+      { submoduloId: 'ADMIN',  label: 'Configuración bot',   path: '/dashboard/turnos/bot' },
     ]
   },
   {
@@ -66,24 +69,21 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'PACIENTES', label: 'Pacientes',           path: '/dashboard/patients' },
       { submoduloId: 'NUEVA',     label: 'Nueva Admisión',      path: '/dashboard/admission/new' },
       { submoduloId: 'VIGENTES',  label: 'Admisiones Vigentes', path: '/dashboard/admission/current' },
-      { submoduloId: 'TABLA',     label: 'Tabla de Admisiones', path: '/dashboard/admission/tables' }
     ]
   },
   {
     id: 'internacion', moduloId: 'INTERNACION', label: 'Internación', icon: Bed,
     subItems: [
-      { submoduloId: 'CAMAS',     label: 'Gestión de Camas',     path: '/dashboard/beds' },
-      { submoduloId: 'OCUPACION', label: 'Ocupación de Camas',   path: '/dashboard/beds/occupation' },
-      { submoduloId: 'TABLA',     label: 'Tabla de Internación', path: '/dashboard/beds/tables' }
+      { submoduloId: 'CAMAS',     label: 'Gestión de Camas',   path: '/dashboard/beds' },
+      { submoduloId: 'OCUPACION', label: 'Ocupación de Camas', path: '/dashboard/beds/occupation' },
     ]
   },
   {
     id: 'facturacion', moduloId: 'FACTURACION', label: 'Facturación', icon: Receipt,
     subItems: [
-      { submoduloId: 'CONVENIOS',     label: 'Convenios',             path: '/dashboard/billing/convenios' },
-      { submoduloId: 'RENDICIONES',   label: 'Rendiciones',           path: '/dashboard/billing/rendiciones' },
-      { submoduloId: 'LIQUIDACIONES', label: 'Liquidaciones',         path: '/dashboard/billing/liquidaciones' },
-      { submoduloId: 'TABLA',         label: 'Tabla de Facturación',  path: '/dashboard/billing/tables' }
+      { submoduloId: 'CONVENIOS',     label: 'Convenios',     path: '/dashboard/billing/convenios' },
+      { submoduloId: 'RENDICIONES',   label: 'Rendiciones',   path: '/dashboard/billing/rendiciones' },
+      { submoduloId: 'LIQUIDACIONES', label: 'Liquidaciones', path: '/dashboard/billing/liquidaciones' },
     ]
   },
   {
@@ -113,7 +113,11 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'USUARIOS', label: 'Usuarios', path: '/dashboard/settings/usuarios' },
       { submoduloId: 'PERMISOS', label: 'Permisos', path: '/dashboard/settings/permisos' },
       { submoduloId: 'SECTORES', label: 'Sectores', path: '/dashboard/settings/sectores' },
-      { submoduloId: 'PERSONAL', label: 'Personal', path: '/dashboard/personal' }
+      { submoduloId: 'PERSONAL', label: 'Personal', path: '/dashboard/personal' },
+      { submoduloId: 'TABLA', permisoModuloId: 'TURNOS',      label: 'Tabla de Turnos',      path: '/dashboard/turnos/tabla' },
+      { submoduloId: 'TABLA', permisoModuloId: 'ADMISION',    label: 'Tabla de Admisiones',  path: '/dashboard/admission/tables' },
+      { submoduloId: 'TABLA', permisoModuloId: 'INTERNACION', label: 'Tabla de Internación', path: '/dashboard/beds/tables' },
+      { submoduloId: 'TABLA', permisoModuloId: 'FACTURACION', label: 'Tabla de Facturación', path: '/dashboard/billing/tables' },
     ]
   },
   {
@@ -199,12 +203,25 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       .map((item) => {
         if (item.alwaysVisible) return item
 
+        const permisoModulo = (sub: SubItem) => sub.permisoModuloId || item.moduloId
+
+        // Configuración: visible si el usuario tiene acceso a cualquier subítem
+        // (incluye tablas cuyos permisos viven en otros módulos).
+        if (item.id === 'configuracion') {
+          const subs = item.subItems.filter((sub) => {
+            if (!sub.submoduloId) return true
+            return puedeSubmodulo(permisoModulo(sub), sub.submoduloId)
+          })
+          if (subs.filter((s) => s.submoduloId).length === 0) return null
+          return { ...item, subItems: subs }
+        }
+
         if (!puedeModulo(item.moduloId)) return null
 
         // Filtrar subitems: si el subitem no tiene submoduloId siempre se muestra
         const subs = item.subItems.filter((sub) => {
           if (!sub.submoduloId) return true
-          return puedeSubmodulo(item.moduloId, sub.submoduloId)
+          return puedeSubmodulo(permisoModulo(sub), sub.submoduloId)
         })
 
         // Si el item requería subItems y todos fueron filtrados, ocultarlo

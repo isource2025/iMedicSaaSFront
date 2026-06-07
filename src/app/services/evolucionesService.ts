@@ -1,3 +1,4 @@
+import { apiFetch } from '@/app/utils/authFetch';
 import {
     Evolucion,
     EvolucionResponse,
@@ -16,7 +17,7 @@ export const evolucionesService = {
         fecha: string
     ): Promise<Evolucion[]> => {
         try {
-            const res = await fetch(
+            const res = await apiFetch(
                 `${BASE_URL}/evoluciones/${idVisita}/byDate?date=${fecha}`,
                 {
                     method: "GET",
@@ -48,7 +49,7 @@ export const evolucionesService = {
     postNuevaEvolucion: async (
         data: NuevaEvolucionPayload
     ): Promise<Evolucion> => {
-        const res = await fetch(`${BASE_URL}/evoluciones`, {
+        const res = await apiFetch(`${BASE_URL}/evoluciones`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -73,7 +74,7 @@ export const evolucionesService = {
      */
     getEvolucionById: async (id: number): Promise<Evolucion | null> => {
         try {
-            const res = await fetch(`${BASE_URL}/evoluciones/${id}`, {
+            const res = await apiFetch(`${BASE_URL}/evoluciones/${id}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
             });
@@ -101,7 +102,7 @@ export const evolucionesService = {
      */
     deleteEvolucion: async (id: number): Promise<boolean> => {
         try {
-            const res = await fetch(`${BASE_URL}/evoluciones/${id}`, {
+            const res = await apiFetch(`${BASE_URL}/evoluciones/${id}`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
             });
@@ -126,7 +127,7 @@ export const evolucionesService = {
         data: Partial<NuevaEvolucionPayload>
     ): Promise<boolean> => {
         try {
-            const res = await fetch(`${BASE_URL}/evoluciones/${id}`, {
+            const res = await apiFetch(`${BASE_URL}/evoluciones/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),

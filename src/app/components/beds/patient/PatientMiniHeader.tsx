@@ -8,6 +8,7 @@ import { Bed } from 'lucide-react';
 import { usePatients } from '../../../hooks/usePatients';
 import visitaMovimientoService from '../../../services/visitaMovimientoService';
 import { formatSqlDate } from '../../../utils/dateUtils';
+import { apiFetch } from '@/app/utils/authFetch';
 
 type Props = {
 	numeroVisita: string | number;
@@ -40,14 +41,14 @@ export default function PatientMiniHeader({
 
 		try {
 			// Obtener datos de todas las camas (mismo endpoint que ModalBasePaciente)
-			const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+			const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
 			if (!res.ok) throw new Error('Error al obtener información del paciente');
 
 			const data = await res.json();
 			if (!data.success) throw new Error(data.message || 'Error al obtener datos');
 
 			// Obtener datos de la visita para tener acceso a FechaAdmisionS
-			const visitaResponse = await fetch(
+			const visitaResponse = await apiFetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/patients/visitas/${numeroVisita}`,
 			);
 			let visitaData = null;

@@ -1,3 +1,4 @@
+import { apiFetch } from '@/app/utils/authFetch';
 import { 
   Adjunto, 
   SubirAdjuntoResponse, 
@@ -29,7 +30,7 @@ export const adjuntosService = {
    * Catálogo HCTiposImagenes (tipo de adjunto / estudio).
    */
   async getTiposImagenes(): Promise<TipoImagenHC[]> {
-    const response = await fetch(`${getApiUrl()}/adjuntos/tipos-imagenes`);
+    const response = await apiFetch(`${getApiUrl()}/adjuntos/tipos-imagenes`);
     if (!response.ok) {
       const msg = await extractErrorMessage(response, 'Error al obtener tipos de imagen');
       throw new Error(msg);
@@ -47,7 +48,7 @@ export const adjuntosService = {
     formData.append('tipoImagen', tipoImagen.trim());
     formData.append('archivo', archivo);
 
-    const response = await fetch(`${getApiUrl()}/adjuntos/upload`, {
+    const response = await apiFetch(`${getApiUrl()}/adjuntos/upload`, {
       method: 'POST',
       body: formData,
     });
@@ -72,7 +73,7 @@ export const adjuntosService = {
       formData.append('archivos', archivo);
     });
 
-    const response = await fetch(`${getApiUrl()}/adjuntos/upload-multiple`, {
+    const response = await apiFetch(`${getApiUrl()}/adjuntos/upload-multiple`, {
       method: 'POST',
       body: formData,
     });
@@ -89,7 +90,7 @@ export const adjuntosService = {
    * Obtener adjuntos de una visita
    */
   async getAdjuntosPorVisita(numeroVisita: number): Promise<ListarAdjuntosResponse> {
-    const response = await fetch(`${getApiUrl()}/adjuntos/visita/${numeroVisita}`);
+    const response = await apiFetch(`${getApiUrl()}/adjuntos/visita/${numeroVisita}`);
 
     if (!response.ok) {
       // Si es 404 y no hay adjuntos, devolver array vacío en lugar de error
@@ -107,7 +108,7 @@ export const adjuntosService = {
    * Obtener adjuntos de una visita agrupados por tipo de imagen
    */
   async getAdjuntosAgrupados(numeroVisita: number): Promise<AdjuntosAgrupadosResponse> {
-    const response = await fetch(`${getApiUrl()}/adjuntos/visita/${numeroVisita}/agrupados`);
+    const response = await apiFetch(`${getApiUrl()}/adjuntos/visita/${numeroVisita}/agrupados`);
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -124,7 +125,7 @@ export const adjuntosService = {
    * Obtener información de un adjunto
    */
   async getAdjunto(idAdjunto: number): Promise<{ success: boolean; data: Adjunto }> {
-    const response = await fetch(`${getApiUrl()}/adjuntos/${idAdjunto}`);
+    const response = await apiFetch(`${getApiUrl()}/adjuntos/${idAdjunto}`);
 
     if (!response.ok) {
       const msg = await extractErrorMessage(response, 'Error al obtener adjunto');
@@ -143,7 +144,7 @@ export const adjuntosService = {
       const url = `${base}/adjuntos/${idAdjunto}/download`;
       
       // Fetch el archivo como blob
-      const response = await fetch(url);
+      const response = await apiFetch(url);
       if (!response.ok) {
         throw new Error('Error al descargar archivo');
       }
@@ -174,7 +175,7 @@ export const adjuntosService = {
    * Eliminar adjunto
    */
   async eliminarAdjunto(idAdjunto: number): Promise<{ success: boolean; message: string }> {
-    const response = await fetch(`${getApiUrl()}/adjuntos/${idAdjunto}`, {
+    const response = await apiFetch(`${getApiUrl()}/adjuntos/${idAdjunto}`, {
       method: 'DELETE',
     });
 

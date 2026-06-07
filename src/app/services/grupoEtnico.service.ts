@@ -1,4 +1,5 @@
 import { GrupoEtnico } from '../types/grupoEtnico.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 // Datos de fallback para usar cuando falla la conexión con el backend
 const GRUPOS_ETNICOS_FALLBACK: GrupoEtnico[] = [
@@ -33,7 +34,7 @@ class GrupoEtnicoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -97,7 +98,7 @@ class GrupoEtnicoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/grupos-etnicos/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/grupos-etnicos/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -131,7 +132,7 @@ class GrupoEtnicoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/grupos-etnicos`, {
+      const response = await apiFetch(`${this.apiUrl}/grupos-etnicos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -169,7 +170,7 @@ class GrupoEtnicoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/grupos-etnicos/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/grupos-etnicos/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -203,7 +204,7 @@ class GrupoEtnicoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/grupos-etnicos/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/grupos-etnicos/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

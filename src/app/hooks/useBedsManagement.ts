@@ -12,7 +12,7 @@ const ORDEN_TIPO_RECURSO: Record<BedTipoRecurso, number> = {
 };
 
 export const useBedsManagement = () => {
-  const { sectorSeleccionado, idsector } = useAppContext();
+  const { sectorSeleccionado, idsector, isAuthenticated } = useAppContext();
   const [beds, setBeds] = useState<Bed[]>([]);
   const [bedStates, setBedStates] = useState<BedState[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,10 +47,11 @@ export const useBedsManagement = () => {
     }
   }, []);
 
-  // Cargar sectores al iniciar
+  // Cargar sectores al iniciar (solo autenticado)
   useEffect(() => {
+    if (!isAuthenticated) return;
     fetchSectores();
-  }, [fetchSectores]);
+  }, [fetchSectores, isAuthenticated]);
 
   // Cargar el sector del usuario desde el contexto global
   useEffect(() => {
@@ -89,10 +90,14 @@ export const useBedsManagement = () => {
   }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     fetchBeds();
     fetchBedStates();
     fetchSectores();
-  }, [fetchBeds, fetchBedStates, fetchSectores]);
+  }, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated]);
 
   useEffect(() => {
     if (autoRefresh) {

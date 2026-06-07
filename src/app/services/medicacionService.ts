@@ -1,11 +1,12 @@
 import { MedicacionActiva, MedicacionActivaResponse } from "../types/medicacion";
+import { apiFetch } from '@/app/utils/authFetch';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const medicacionService = {
   getMedicacionActivaPorVisita: async (numeroVisita: number): Promise<MedicacionActiva[]> => {
     try {
-      const res = await fetch(`${BASE_URL}/medicaciones/visita/${numeroVisita}`, {
+      const res = await apiFetch(`${BASE_URL}/medicaciones/visita/${numeroVisita}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });

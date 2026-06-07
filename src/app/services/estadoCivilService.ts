@@ -1,4 +1,5 @@
 import { EstadoCivil } from '../types/estadoCivil.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 class EstadoCivilService {
   private apiUrl: string;
@@ -13,7 +14,7 @@ class EstadoCivilService {
    */
   async getEstadosCiviles(): Promise<EstadoCivil[]> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-civiles`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-civiles`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -45,7 +46,7 @@ class EstadoCivilService {
    */
   async getEstadoCivil(valor: string): Promise<EstadoCivil | null> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-civiles/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-civiles/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -73,7 +74,7 @@ class EstadoCivilService {
    */
   async createEstadoCivil(estadoCivil: EstadoCivil): Promise<EstadoCivil | null> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-civiles`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-civiles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -104,7 +105,7 @@ class EstadoCivilService {
    */
   async updateEstadoCivil(valor: string, descripcion: string): Promise<EstadoCivil | null> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-civiles/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-civiles/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -134,7 +135,7 @@ class EstadoCivilService {
    */
   async deleteEstadoCivil(valor: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-civiles/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-civiles/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

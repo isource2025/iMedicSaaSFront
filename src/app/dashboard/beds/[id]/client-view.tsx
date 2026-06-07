@@ -6,6 +6,7 @@ import BedDetailView from '../../../components/beds/BedDetailView';
 import Loader from '../../../components/Loader/Loader';
 import { BedDetailProvider } from '../../../components/beds/contexts/BedDetailContext';
 import type { Bed } from '../../../types/beds';
+import { apiFetch } from '@/app/utils/authFetch';
 
 type Props = { id: string };
 
@@ -46,7 +47,7 @@ export default function ClientBedView({ id }: Props) {
 			setError(null);
 			try {
 				const token = getTokenFromLocalStorage();
-				const res = await fetch(url, {
+				const res = await apiFetch(url, {
 					signal: ctrl.signal,
 					headers: {
 						accept: 'application/json',

@@ -4,6 +4,7 @@
  */
 
 import { Requisito } from '../types/requisito.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 /**
  * Datos de ejemplo para usar como fallback si falla la conexión
@@ -54,7 +55,7 @@ export class RequisitoService {
       const url = `${this.apiUrl}/requisitos`;
       console.log('URL de la solicitud:', url);
       
-      const response = await fetch(url, { 
+      const response = await apiFetch(url, { 
         signal: controller.signal
       });
       
@@ -92,7 +93,7 @@ export class RequisitoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/requisitos/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         signal: controller.signal
       });
       
@@ -129,7 +130,7 @@ export class RequisitoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/requisitos`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -172,7 +173,7 @@ export class RequisitoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/requisitos/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -212,7 +213,7 @@ export class RequisitoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/requisitos/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'DELETE',
         signal: controller.signal
       });

@@ -1,4 +1,5 @@
 import { EstadoMilitar } from '../types/estadoMilitar.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 /**
  * Servicio para gestionar los Estados Militares
@@ -19,7 +20,7 @@ class EstadoMilitarService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/estados-militares`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-militares`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -57,7 +58,7 @@ class EstadoMilitarService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/estados-militares/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-militares/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -91,7 +92,7 @@ class EstadoMilitarService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/estados-militares`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-militares`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -129,7 +130,7 @@ class EstadoMilitarService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/estados-militares/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-militares/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -163,7 +164,7 @@ class EstadoMilitarService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/estados-militares/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-militares/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

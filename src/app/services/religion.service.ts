@@ -4,6 +4,7 @@
  */
 
 import { Religion } from '../types/religion.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 /**
  * Datos de ejemplo para usar como fallback si falla la conexión
@@ -58,7 +59,7 @@ export class ReligionService {
       const url = `${this.apiUrl}/religion`;
       console.log('URL de la solicitud:', url);
       
-      const response = await fetch(url, { 
+      const response = await apiFetch(url, { 
         signal: controller.signal
       });
       
@@ -96,7 +97,7 @@ export class ReligionService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/religion/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         signal: controller.signal
       });
       
@@ -133,7 +134,7 @@ export class ReligionService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/religion`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -176,7 +177,7 @@ export class ReligionService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/religion/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -216,7 +217,7 @@ export class ReligionService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/religion/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'DELETE',
         signal: controller.signal
       });

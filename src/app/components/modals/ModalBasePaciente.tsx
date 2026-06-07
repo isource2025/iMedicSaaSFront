@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './ModalBasePaciente.module.css';
 import Loader from '../Loader/Loader';
+import { apiFetch } from '@/app/utils/authFetch';
 import {
 	formatDate,
 	formatTime,
@@ -65,7 +66,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 
 		try {
 			// Obtener datos de la cama
-			const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+			const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
 			if (!res.ok) throw new Error('Error al obtener información del paciente');
 
 			const data = await res.json();
@@ -75,7 +76,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 			const movimiento = await visitaMovimientoService.getUltimoMovimiento(numeroVisita);
 
 			// Obtener datos de la visita para tener acceso a FechaAdmisionS
-			const visitaResponse = await fetch(
+			const visitaResponse = await apiFetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/patients/visitas/${numeroVisita}`,
 			);
 			let visitaData = null;

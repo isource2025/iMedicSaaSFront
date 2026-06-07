@@ -3,6 +3,7 @@
  * @module services/activityService
  */
 
+import { apiFetch } from '@/app/utils/authFetch';
 import { 
   MovimientoInternacion, 
   ActividadReciente, 
@@ -34,7 +35,7 @@ class ActivityService {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         ...options,
         signal: controller.signal
       });

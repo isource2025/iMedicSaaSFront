@@ -70,10 +70,14 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('user');
-      if (storedUser) {
+      const token = localStorage.getItem('token');
+      if (storedUser && token) {
         const parsedUser = JSON.parse(storedUser);
         setUsuarioState(parsedUser);
         setIsAuthenticated(true);
+      } else if (storedUser && !token) {
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
       }
     } catch (err) {
       console.error('Error al cargar usuario desde localStorage:', err);

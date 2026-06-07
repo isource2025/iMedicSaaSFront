@@ -4,6 +4,7 @@
  */
 
 import { Raza } from '../types/raza.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 /**
  * Datos de ejemplo para usar como fallback si falla la conexión
@@ -54,7 +55,7 @@ export class RazaService {
       const url = `${this.apiUrl}/raza`;
       console.log('URL de la solicitud:', url);
       
-      const response = await fetch(url, { 
+      const response = await apiFetch(url, { 
         signal: controller.signal
       });
       
@@ -92,7 +93,7 @@ export class RazaService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/raza/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         signal: controller.signal
       });
       
@@ -129,7 +130,7 @@ export class RazaService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/raza`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -172,7 +173,7 @@ export class RazaService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/raza/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -212,7 +213,7 @@ export class RazaService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/raza/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'DELETE',
         signal: controller.signal
       });

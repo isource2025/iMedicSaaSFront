@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useBedDetail, SidebarSection } from '../contexts/BedDetailContext';
+import { apiFetch } from '@/app/utils/authFetch';
 
 // ===== Helpers =====
 function toISODate(d: Date | null | undefined) {
@@ -165,7 +166,7 @@ export function useBedSectionFetch<T = unknown>(
 
 		setIsLoading(true);
 		try {
-			const res = await fetch(finalUrl, {
+			const res = await apiFetch(finalUrl, {
 				method: 'GET',
 				...(opts?.fetchInit ?? {}),
 				signal: controller.signal,

@@ -4,6 +4,7 @@
  */
 
 import { RolContacto } from '../types/rolContacto.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 /**
  * Datos de ejemplo para usar como fallback si falla la conexión
@@ -55,7 +56,7 @@ export class RolContactoService {
       const url = `${this.apiUrl}/rolcontacto`;
       console.log('URL de la solicitud:', url);
       
-      const response = await fetch(url, { 
+      const response = await apiFetch(url, { 
         signal: controller.signal
       });
       
@@ -93,7 +94,7 @@ export class RolContactoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/rolcontacto/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         signal: controller.signal
       });
       
@@ -130,7 +131,7 @@ export class RolContactoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/rolcontacto`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -173,7 +174,7 @@ export class RolContactoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/rolcontacto/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -215,7 +216,7 @@ export class RolContactoService {
       const timeoutId = setTimeout(() => controller.abort(), this.timeoutDuration);
 
       const url = `${this.apiUrl}/rolcontacto/${valor}`;
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'DELETE',
         signal: controller.signal
       });

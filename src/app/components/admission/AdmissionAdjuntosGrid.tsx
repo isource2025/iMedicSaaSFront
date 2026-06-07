@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import styles from './AdmissionAdjuntosGrid.module.css';
+import { apiFetch } from '@/app/utils/authFetch';
 
 function baseUrl(): string {
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
@@ -43,7 +44,7 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
 
         let blob: Blob | null = null;
         for (const url of candidates) {
-          const res = await fetch(url);
+          const res = await apiFetch(url);
           if (!res.ok) continue;
           blob = await res.blob();
           break;

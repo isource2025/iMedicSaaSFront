@@ -1,4 +1,5 @@
 import { HCIItem, HCIItemWithMedicoAndSector, NuevaHCPayload, HCIResponse } from '../types/hci';
+import { apiFetch } from '@/app/utils/authFetch';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -11,7 +12,7 @@ export const hciService = {
    */
   async getByNumeroVisita(numeroVisita: number): Promise<HCIItemWithMedicoAndSector[]> {
     try {
-      const res = await fetch(`${BASE_URL}/hci/visita/${numeroVisita}`, {
+      const res = await apiFetch(`${BASE_URL}/hci/visita/${numeroVisita}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -39,7 +40,7 @@ export const hciService = {
    */
   async getById(id: number): Promise<HCIItemWithMedicoAndSector | null> {
     try {
-      const res = await fetch(`${BASE_URL}/hci/${id}`, {
+      const res = await apiFetch(`${BASE_URL}/hci/${id}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -67,7 +68,7 @@ export const hciService = {
    */
   async getByIdPaciente(idPaciente: number): Promise<HCIItemWithMedicoAndSector[]> {
     try {
-      const res = await fetch(`${BASE_URL}/hci/paciente/${idPaciente}`, {
+      const res = await apiFetch(`${BASE_URL}/hci/paciente/${idPaciente}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -94,7 +95,7 @@ export const hciService = {
    * Crea una nueva HC
    */
   async crear(data: NuevaHCPayload): Promise<HCIItem> {
-    const res = await fetch(`${BASE_URL}/hci`, {
+    const res = await apiFetch(`${BASE_URL}/hci`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -118,7 +119,7 @@ export const hciService = {
    * Actualiza una HC existente
    */
   async actualizar(id: number, data: Partial<NuevaHCPayload>): Promise<HCIItem> {
-    const res = await fetch(`${BASE_URL}/hci/${id}`, {
+    const res = await apiFetch(`${BASE_URL}/hci/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -143,7 +144,7 @@ export const hciService = {
    */
   async eliminar(id: number): Promise<boolean> {
     try {
-      const res = await fetch(`${BASE_URL}/hci/${id}`, {
+      const res = await apiFetch(`${BASE_URL}/hci/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });

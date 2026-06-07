@@ -1,4 +1,5 @@
 import { ClasePaciente } from '../types/clasePaciente.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -11,7 +12,7 @@ export const getClasesPaciente = async (): Promise<ClasePaciente[]> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/clases-paciente`, {
+    const response = await apiFetch(`${API_URL}/clases-paciente`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +44,7 @@ export const createClasePaciente = async (clasePaciente: ClasePaciente): Promise
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/clases-paciente`, {
+    const response = await apiFetch(`${API_URL}/clases-paciente`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export const updateClasePaciente = async (valor: string, descripcion: string): P
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/clases-paciente/${valor}`, {
+    const response = await apiFetch(`${API_URL}/clases-paciente/${valor}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +113,7 @@ export const deleteClasePaciente = async (valor: string): Promise<void> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/clases-paciente/${valor}`, {
+    const response = await apiFetch(`${API_URL}/clases-paciente/${valor}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

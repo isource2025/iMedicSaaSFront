@@ -1,4 +1,5 @@
 import { ControlFrecuente, ControlesFrecuentesResponse } from '../types/controlesFrecuentes';
+import { apiFetch } from '@/app/utils/authFetch';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api';
 
@@ -15,7 +16,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}) => {
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
   try {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       ...options,
       signal: controller.signal,
     });

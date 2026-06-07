@@ -1,4 +1,5 @@
 import { apiService } from './axios';
+import { apiFetch } from '@/app/utils/authFetch';
 import {
   ExamenLabCabecera,
   ExamenLabDetalle,
@@ -23,7 +24,7 @@ export const laboratoriosService = {
       formData.append('archivo', file);
       formData.append('numeroVisita', numeroVisita.toString());
 
-      const response = await fetch(`${BASE_URL}/laboratorios/upload-ocr`, {
+      const response = await apiFetch(`${BASE_URL}/laboratorios/upload-ocr`, {
         method: 'POST',
         body: formData,
       });

@@ -1,4 +1,5 @@
 import { EvolucionEnfermeria, EvolucionEnfermeriaResponse } from '../types/evolucionEnfermeria';
+import { apiFetch } from '@/app/utils/authFetch';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api';
 
@@ -49,7 +50,7 @@ export async function obtenerEvolucionesPorVisitaYFecha(
   fecha: string
 ): Promise<EvolucionEnfermeria[]> {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_URL}/evolucion-enfermeria/${numeroVisita}/byDate?fecha=${fecha}`,
       {
         method: 'GET',
@@ -87,7 +88,7 @@ export async function eliminarEvolucion(
   horaControlClarion: number
 ): Promise<void> {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_URL}/evolucion-enfermeria/?numeroVisita=${numeroVisita}&fechaControl=${fechaControlClarion}&horaControl=${horaControlClarion}`,
       {
         method: 'DELETE',
@@ -145,7 +146,7 @@ export async function crearEvolucion(payload: {
   Profesional?: number;
 }): Promise<any> {
   try {
-    const response = await fetch(`${API_URL}/evolucion-enfermeria/`, {
+    const response = await apiFetch(`${API_URL}/evolucion-enfermeria/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import { IdiomaISO } from '../types/idiomaISO.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 // Datos de fallback para usar cuando falla la conexión con el backend
 const IDIOMAS_ISO_FALLBACK: IdiomaISO[] = [
@@ -38,7 +39,7 @@ class IdiomaISOService {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       console.log('[DEBUG] Iniciando fetch con timeout de 5s');
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ class IdiomaISOService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/idiomas-iso/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/idiomas-iso/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -148,7 +149,7 @@ class IdiomaISOService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/idiomas-iso`, {
+      const response = await apiFetch(`${this.apiUrl}/idiomas-iso`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -182,7 +183,7 @@ class IdiomaISOService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/idiomas-iso/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/idiomas-iso/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -215,7 +216,7 @@ class IdiomaISOService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/idiomas-iso/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/idiomas-iso/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

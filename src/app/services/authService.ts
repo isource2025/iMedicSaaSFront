@@ -1,5 +1,6 @@
 import { EmpresaLogin, LoginCredentials, LoginResponse, Sector } from '../types/AuthInterface';
 import { apiService } from './axios';
+import { apiFetch } from '@/app/utils/authFetch';
 
 export const authService = {
   
@@ -162,7 +163,7 @@ export const authService = {
   /** Refresca los permisos del usuario desde /api/permisos/me. */
   refreshPermisos: async (): Promise<string[]> => {
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${process.env.NEXT_PUBLIC_API_URL || ''}/permisos/me`,
         {
           headers: {

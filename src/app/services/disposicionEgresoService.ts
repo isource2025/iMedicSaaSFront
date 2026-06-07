@@ -1,4 +1,5 @@
 import { DisposicionEgreso } from '../types/disposicionEgreso.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -11,7 +12,7 @@ export const getDisposicionesEgreso = async (): Promise<DisposicionEgreso[]> => 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/disposiciones-egreso`, {
+    const response = await apiFetch(`${API_URL}/disposiciones-egreso`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +44,7 @@ export const createDisposicionEgreso = async (disposicionEgreso: DisposicionEgre
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/disposiciones-egreso`, {
+    const response = await apiFetch(`${API_URL}/disposiciones-egreso`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export const updateDisposicionEgreso = async (valor: number, descripcion: string
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/disposiciones-egreso/${valor}`, {
+    const response = await apiFetch(`${API_URL}/disposiciones-egreso/${valor}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +113,7 @@ export const deleteDisposicionEgreso = async (valor: number): Promise<void> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
     
-    const response = await fetch(`${API_URL}/disposiciones-egreso/${valor}`, {
+    const response = await apiFetch(`${API_URL}/disposiciones-egreso/${valor}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

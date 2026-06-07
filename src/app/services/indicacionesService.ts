@@ -1,3 +1,4 @@
+import { apiFetch } from '@/app/utils/authFetch';
 import {
     Indicacion,
     IndicacionResponse,
@@ -17,7 +18,7 @@ export const indicacionesService = {
         numeroVisita: number
     ): Promise<Indicacion | null> => {
         try {
-            const res = await fetch(
+            const res = await apiFetch(
                 `${BASE_URL}/indicaciones/ultima/${numeroVisita}`,
                 {
                     method: "GET",
@@ -53,7 +54,7 @@ export const indicacionesService = {
         numeroVisita: number
     ): Promise<Indicacion[]> => {
         try {
-            const res = await fetch(
+            const res = await apiFetch(
                 `${BASE_URL}/indicaciones/ultimas/${numeroVisita}?limit=50`,
                 {
                     method: "GET",
@@ -89,7 +90,7 @@ export const indicacionesService = {
             return ultima ? [ultima] : [];
         }
         try {
-            const res = await fetch(
+            const res = await apiFetch(
                 `${BASE_URL}/indicaciones/ultimas/${numeroVisita}?limit=${encodeURIComponent(
                     limit
                 )}`,
@@ -119,7 +120,7 @@ export const indicacionesService = {
      */
     getFormularioDatos: async (): Promise<FormularioDatosResponse | null> => {
         try {
-            const res = await fetch(
+            const res = await apiFetch(
                 `${BASE_URL}/indicaciones/formulario/datos`,
                 {
                     method: "GET",
@@ -140,7 +141,7 @@ export const indicacionesService = {
     },
 
     postNuevaIndicacion: async (payload: NuevaIndicacionPayload) => {
-        const resp = await fetch(`${BASE_URL}/indicaciones`, {
+        const resp = await apiFetch(`${BASE_URL}/indicaciones`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -157,7 +158,7 @@ export const indicacionesService = {
     },
 
     deleteIndicacion: async (id: number) => {
-        const resp = await fetch(`${BASE_URL}/indicaciones/${id}`, {
+        const resp = await apiFetch(`${BASE_URL}/indicaciones/${id}`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
         });
@@ -170,7 +171,7 @@ export const indicacionesService = {
     },
 
     deleteIndicacionHija: async (id: number) => {
-        const resp = await fetch(`${BASE_URL}/indicaciones/hija/${id}`, {
+        const resp = await apiFetch(`${BASE_URL}/indicaciones/hija/${id}`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
         });
@@ -186,7 +187,7 @@ export const indicacionesService = {
         nroIndicacion: number
     ): Promise<Indicacion | null> => {
         try {
-            const res = await fetch(
+            const res = await apiFetch(
                 `${BASE_URL}/indicaciones/${nroIndicacion}`,
                 {
                     method: "GET",
@@ -213,7 +214,7 @@ export const indicacionesService = {
         id: number,
         payload: Partial<NuevaIndicacionPayload>
     ) => {
-        const resp = await fetch(`${BASE_URL}/indicaciones/${id}`, {
+        const resp = await apiFetch(`${BASE_URL}/indicaciones/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -230,7 +231,7 @@ export const indicacionesService = {
     },
 
     aplicarIndicacion: async (payload: Payload) => {
-        const resp = await fetch(
+        const resp = await apiFetch(
             `${BASE_URL}/indicaciones/${payload.nroIndicacion}/aplicar`,
             {
                 method: "POST",
@@ -247,7 +248,7 @@ export const indicacionesService = {
     },
 
     crearIndicacionHija: async (payload: any) => {
-        const resp = await fetch(`${BASE_URL}/indicaciones/hija`, {
+        const resp = await apiFetch(`${BASE_URL}/indicaciones/hija`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),

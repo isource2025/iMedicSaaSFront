@@ -1,6 +1,7 @@
 'use client';
 
 import { OpcGrd, OpcGrdGroup, CreateOpcGrdDto, UpdateOpcGrdDto } from '../types/opcGrd.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 // URL base de la API desde variables de entorno
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5006/api';
@@ -33,7 +34,7 @@ class OpcGrdService {
         params.append('search', search.trim());
       }
       
-      const response = await fetch(`${API_BASE_URL}/admin/opcgrd?${params.toString()}`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/opcgrd?${params.toString()}`, {
         signal: AbortSignal.timeout(10000) // 10 segundos de timeout para paginación
       });
       
@@ -129,7 +130,7 @@ class OpcGrdService {
    */
   async createOpcGrd(opcGrd: CreateOpcGrdDto): Promise<OpcGrd | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/opcgrd`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/opcgrd`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -166,7 +167,7 @@ class OpcGrdService {
         throw new Error(`No se encontró la opción con rubro ${rubro} y descripción ${descripcion}`);
       }
       
-      const response = await fetch(`${API_BASE_URL}/admin/opcgrd/${opcion.id}`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/opcgrd/${opcion.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -202,7 +203,7 @@ class OpcGrdService {
         throw new Error(`No se encontró la opción con rubro ${rubro} y descripción ${descripcion}`);
       }
       
-      const response = await fetch(`${API_BASE_URL}/admin/opcgrd/${opcion.id}`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/opcgrd/${opcion.id}`, {
         method: 'DELETE'
       });
       

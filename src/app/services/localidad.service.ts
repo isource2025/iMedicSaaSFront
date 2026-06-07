@@ -1,4 +1,5 @@
 import { Localidad } from '../types/localidad.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 // Datos de fallback para usar cuando falla la conexión con el backend
 const LOCALIDADES_FALLBACK: Localidad[] = [
@@ -38,7 +39,7 @@ class LocalidadService {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       console.log('[DEBUG] Iniciando fetch con timeout de 5s');
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +115,7 @@ class LocalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/localidad/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/localidad/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -157,7 +158,7 @@ class LocalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/localidad`, {
+      const response = await apiFetch(`${this.apiUrl}/localidad`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -191,7 +192,7 @@ class LocalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/localidad/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/localidad/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -224,7 +225,7 @@ class LocalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/localidad/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/localidad/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

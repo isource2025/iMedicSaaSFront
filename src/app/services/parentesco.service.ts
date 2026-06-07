@@ -1,4 +1,5 @@
 import { Parentesco } from '../types/parentesco.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 // Datos de fallback para usar cuando falla la conexión con el backend
 const PARENTESCOS_FALLBACK: Parentesco[] = [
@@ -33,7 +34,7 @@ class ParentescoService {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       console.log('[DEBUG] Iniciando fetch con timeout de 5s');
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +91,7 @@ class ParentescoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/parentesco/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/parentesco/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -130,7 +131,7 @@ class ParentescoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/parentesco`, {
+      const response = await apiFetch(`${this.apiUrl}/parentesco`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -164,7 +165,7 @@ class ParentescoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/parentesco/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/parentesco/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -197,7 +198,7 @@ class ParentescoService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/parentesco/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/parentesco/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

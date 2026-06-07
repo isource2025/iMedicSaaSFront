@@ -1,4 +1,5 @@
 import { Provincia } from '../types/provincia.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 /**
  * Datos de fallback para cuando no se puede conectar al backend.
@@ -57,7 +58,7 @@ class ProvinciaService {
       const url = `${this.apiUrl}/provincia`;
       console.log('URL de la solicitud:', url);
       
-      const response = await fetch(url, { 
+      const response = await apiFetch(url, { 
         signal: controller.signal
       });
       
@@ -95,7 +96,7 @@ class ProvinciaService {
       const url = `${this.apiUrl}/provincia/${valor}`;
       console.log('Solicitando provincia específica:', url);
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         signal: controller.signal
       });
       
@@ -132,7 +133,7 @@ class ProvinciaService {
       const url = `${this.apiUrl}/provincia/nacionalidad/${valorNacionalidad}`;
       console.log('Solicitando provincias por nacionalidad:', url);
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         signal: controller.signal
       });
       
@@ -169,7 +170,7 @@ class ProvinciaService {
       const url = `${this.apiUrl}/provincia`;
       console.log('Creando nueva provincia:', url, provincia);
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -212,7 +213,7 @@ class ProvinciaService {
       const url = `${this.apiUrl}/provincia/${valor}`;
       console.log('Actualizando provincia:', url, data);
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -257,7 +258,7 @@ class ProvinciaService {
       const url = `${this.apiUrl}/provincia/${valor}`;
       console.log('Eliminando provincia:', url);
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'DELETE',
         signal: controller.signal
       });

@@ -1,4 +1,5 @@
 import { EstadoAmbulatorio } from '../types/estadoAmbulatorio.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 class EstadoAmbulatorioService {
   private apiUrl: string;
@@ -13,7 +14,7 @@ class EstadoAmbulatorioService {
    */
   async getEstadosAmbulatorios(): Promise<EstadoAmbulatorio[]> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-ambulatorios`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-ambulatorios`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -45,7 +46,7 @@ class EstadoAmbulatorioService {
    */
   async getEstadoAmbulatorio(valor: string): Promise<EstadoAmbulatorio | null> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-ambulatorios/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-ambulatorios/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -72,7 +73,7 @@ class EstadoAmbulatorioService {
    */
   async createEstadoAmbulatorio(estadoAmbulatorio: EstadoAmbulatorio): Promise<EstadoAmbulatorio | null> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-ambulatorios`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-ambulatorios`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -101,7 +102,7 @@ class EstadoAmbulatorioService {
    */
   async updateEstadoAmbulatorio(valor: string, descripcion: string): Promise<EstadoAmbulatorio | null> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-ambulatorios/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-ambulatorios/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -129,7 +130,7 @@ class EstadoAmbulatorioService {
    */
   async deleteEstadoAmbulatorio(valor: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.apiUrl}/estados-ambulatorios/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/estados-ambulatorios/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

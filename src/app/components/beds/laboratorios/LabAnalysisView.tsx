@@ -35,7 +35,7 @@ function themeForTipoLaboratorio(tipo: string, groupIndex: number) {
   return TIPO_THEME_FALLBACK[groupIndex % TIPO_THEME_FALLBACK.length];
 }
 
-/** Agrupa por día de calendario (sin distinguir tipo de estudio). */
+/** Extrae YYYY-MM-DD de la fecha del examen (clave de respaldo si no hay IdExamen). */
 function fechaSoloDia(fechaExamen: string): string {
   const s = fechaExamen.trim();
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -47,19 +47,47 @@ function fechaSoloDia(fechaExamen: string): string {
   return s;
 }
 
-/** Último resultado del día (por hora) si hay varios estudios con el mismo parámetro. */
-function detalleParametroEnDia(examenesDelDia: ExamenLabCompleto[], param: string): ExamenLabDetalle | undefined {
-  const sorted = [...examenesDelDia].sort((a, b) => {
-    const ta = new Date(a.FechaExamen).getTime() - new Date(b.FechaExamen).getTime();
-    if (ta !== 0) return ta;
-    return (a.HoraExamen || "").localeCompare(b.HoraExamen || "");
+/** Clave única por estudio (columna de la tabla). */
+function columnaKeyExamen(ex: ExamenLabCompleto, index: number): string {
+  if (ex.IdExamen != null) return `ex-${ex.IdExamen}`;
+  return `ex-${fechaSoloDia(ex.FechaExamen)}-${ex.HoraExamen || "00:00"}-${index}`;
+}
+
+function sortExamenesChrono(a: ExamenLabCompleto, b: ExamenLabCompleto): number {
+  const ta = new Date(a.FechaExamen).getTime() - new Date(b.FechaExamen).getTime();
+  if (ta !== 0) return ta;
+  return (a.HoraExamen || "").localeCompare(b.HoraExamen || "");
+}
+
+function detalleParametroEnExamen(examen: ExamenLabCompleto, param: string): ExamenLabDetalle | undefined {
+  return examen.detalles.find((x) => x.NombreParametro === param);
+}
+
+interface ColumnaEstudio {
+  key: string;
+  label: string;
+  sublabel?: string;
+  examen: ExamenLabCompleto;
+  titleTip: string;
+}
+
+/** Una columna por estudio (no se unifican muestras del mismo día). */
+function buildColumnasEstudio(examenes: ExamenLabCompleto[]): ColumnaEstudio[] {
+  const sorted = [...examenes].sort(sortExamenesChrono);
+  return sorted.map((examen, index) => {
+    const label = laboratoriosService.formatDate(examen.FechaExamen);
+    const hora = laboratoriosService.formatTime(examen.HoraExamen);
+    const sublabel = hora !== "-" ? hora : undefined;
+    const tipo = laboratoriosService.getTipoEstudioNombre(examen.TipoEstudio);
+    const titleTip = [tipo, sublabel, examen.Protocolo, examen.Laboratorio].filter(Boolean).join(" · ");
+    return {
+      key: columnaKeyExamen(examen, index),
+      label,
+      sublabel,
+      examen,
+      titleTip,
+    };
   });
-  let found: ExamenLabDetalle | undefined;
-  for (const ex of sorted) {
-    const d = ex.detalles.find((x) => x.NombreParametro === param);
-    if (d) found = d;
-  }
-  return found;
 }
 
 function parseValorNumerico(resultado: string | undefined): number | null {
@@ -127,28 +155,7 @@ function LabAnalysisTableBlock({ examenes }: { examenes: ExamenLabCompleto[] }) 
     });
   };
 
-  const columnasFecha = useMemo(() => {
-    const map = new Map<string, ExamenLabCompleto[]>();
-    examenes.forEach((ex) => {
-      const k = fechaSoloDia(ex.FechaExamen);
-      if (!map.has(k)) map.set(k, []);
-      map.get(k)!.push(ex);
-    });
-    const keys = Array.from(map.keys()).sort((a, b) => a.localeCompare(b));
-    return keys.map((key) => {
-      const exs = map.get(key)!;
-      exs.sort((a, b) => {
-        const ta = new Date(a.FechaExamen).getTime() - new Date(b.FechaExamen).getTime();
-        if (ta !== 0) return ta;
-        return (a.HoraExamen || "").localeCompare(b.HoraExamen || "");
-      });
-      const label = laboratoriosService.formatDate(exs[0].FechaExamen);
-      const tipos = Array.from(
-        new Set(exs.map((e) => laboratoriosService.getTipoEstudioNombre(e.TipoEstudio)))
-      ).join(" · ");
-      return { key, label, examenes: exs, titleTip: tipos };
-    });
-  }, [examenes]);
+  const columnasEstudio = useMemo(() => buildColumnasEstudio(examenes), [examenes]);
 
   const todosParametros = useMemo(() => {
     const nombres = new Set<string>();
@@ -179,25 +186,24 @@ function LabAnalysisTableBlock({ examenes }: { examenes: ExamenLabCompleto[] }) 
 
   const unidadPorParametro = useMemo(() => {
     const map = new Map<string, string>();
-    columnasFecha.forEach(({ examenes: exs }) => {
-      exs.forEach((examen) => {
-        examen.detalles.forEach((d) => {
-          if (!map.has(d.NombreParametro) && d.UnidadMedida) {
-            map.set(d.NombreParametro, d.UnidadMedida);
-          }
-        });
+    columnasEstudio.forEach(({ examen }) => {
+      examen.detalles.forEach((d) => {
+        if (!map.has(d.NombreParametro) && d.UnidadMedida) {
+          map.set(d.NombreParametro, d.UnidadMedida);
+        }
       });
     });
     return map;
-  }, [columnasFecha]);
+  }, [columnasEstudio]);
 
   const chartSeriesByParam = useMemo(() => {
     const m = new Map<string, LabDataPoint[]>();
     for (const param of todosParametros) {
-      const puntos: LabDataPoint[] = columnasFecha.map(({ label, examenes: exs }) => {
-        const detalle = detalleParametroEnDia(exs, param);
+      const puntos: LabDataPoint[] = columnasEstudio.map(({ label, sublabel, examen }) => {
+        const detalle = detalleParametroEnExamen(examen, param);
+        const fechaHora = sublabel ? `${label} ${sublabel}` : label;
         return {
-          fechaHora: label,
+          fechaHora,
           valor: detalle ? parseValorNumerico(detalle.Resultado) : null,
           valorReferencia: detalle?.ValorReferencia,
         };
@@ -205,9 +211,9 @@ function LabAnalysisTableBlock({ examenes }: { examenes: ExamenLabCompleto[] }) 
       m.set(param, puntos);
     }
     return m;
-  }, [todosParametros, columnasFecha]);
+  }, [todosParametros, columnasEstudio]);
 
-  const dateCount = columnasFecha.length;
+  const dateCount = columnasEstudio.length;
 
   if (examenes.length === 0) {
     return null;
@@ -243,9 +249,10 @@ function LabAnalysisTableBlock({ examenes }: { examenes: ExamenLabCompleto[] }) 
                 </div>
               </div>
             </th>
-            {columnasFecha.map((col) => (
+            {columnasEstudio.map((col) => (
               <th key={col.key} className={styles.dateColHeader} scope="col" title={col.titleTip || undefined}>
                 <span className={styles.colHeaderMain}>{col.label}</span>
+                {col.sublabel ? <span className={styles.colHeaderSub}>{col.sublabel}</span> : null}
               </th>
             ))}
           </tr>
@@ -286,8 +293,8 @@ function LabAnalysisTableBlock({ examenes }: { examenes: ExamenLabCompleto[] }) 
                     />
                   </td>
                 ) : (
-                  columnasFecha.map((col) => {
-                    const detalle = detalleParametroEnDia(col.examenes, param);
+                  columnasEstudio.map((col) => {
+                    const detalle = detalleParametroEnExamen(col.examen, param);
                     return (
                       <td key={col.key} className={styles.valueCell}>
                         {detalle ? (
@@ -495,7 +502,8 @@ export default function LabAnalysisView({ examenes }: LabAnalysisViewProps) {
       <div className={styles.header}>
         <h3 className={styles.title}>Análisis de Laboratorios</h3>
         <p className={styles.subtitle}>
-          Los estudios se agrupan por tipo. En cada bloque, una columna por fecha de muestra (el mismo día se unifica).
+          Los estudios se agrupan por tipo. En cada bloque hay una columna por muestra (fecha y hora);
+          si hay varios estudios el mismo día, cada uno conserva su columna y sus valores.
           La casilla del encabezado activa o desactiva el gráfico en todas las filas de ese bloque.
         </p>
       </div>

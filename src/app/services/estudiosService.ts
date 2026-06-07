@@ -1,11 +1,12 @@
 import { EstudioProgramado, EstudiosProgramadosResponse } from "../types/estudios";
+import { apiFetch } from '@/app/utils/authFetch';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const estudiosService = {
   getEstudiosProgramadosPorVisita: async (numeroVisita: number): Promise<EstudioProgramado[]> => {
     try {
-      const res = await fetch(`${BASE_URL}/estudios/visita/${numeroVisita}`, {
+      const res = await apiFetch(`${BASE_URL}/estudios/visita/${numeroVisita}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });

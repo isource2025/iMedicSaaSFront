@@ -1,4 +1,5 @@
 import { Nacionalidad } from '../types/nacionalidad.types';
+import { apiFetch } from '@/app/utils/authFetch';
 
 // Datos de fallback para usar cuando falla la conexión con el backend
 const NACIONALIDADES_FALLBACK: Nacionalidad[] = [
@@ -33,7 +34,7 @@ class NacionalidadService {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       console.log('[DEBUG] Iniciando fetch con timeout de 5s');
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +91,7 @@ class NacionalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/nacionalidad/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/nacionalidad/${valor}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -131,7 +132,7 @@ class NacionalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/nacionalidad`, {
+      const response = await apiFetch(`${this.apiUrl}/nacionalidad`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -165,7 +166,7 @@ class NacionalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/nacionalidad/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/nacionalidad/${valor}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -198,7 +199,7 @@ class NacionalidadService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.apiUrl}/nacionalidad/${valor}`, {
+      const response = await apiFetch(`${this.apiUrl}/nacionalidad/${valor}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

@@ -5,6 +5,7 @@ import styles from "./NuevaEvolucionModal.module.css";
 import { NuevaEvolucionPayload } from "../../../types/evoluciones";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { evolucionesService } from "../../../services/evolucionesService";
+import { apiFetch } from '@/app/utils/authFetch';
 
 interface NuevaEvolucionModalProps {
     onClose: () => void;
@@ -58,7 +59,7 @@ export default function NuevaEvolucionModal({
     useEffect(() => {
         const obtenerDocumento = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+                const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data.success) return;
