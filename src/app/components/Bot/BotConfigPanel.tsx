@@ -515,6 +515,22 @@ export default function BotConfigPanel() {
 								/>
 								Permitir sobreturnos
 							</label>
+							<label className={styles.toggle}>
+								<input
+									type="checkbox"
+									checked={form.reglas.sugerirPrimerTurnoDisponible ?? false}
+									onChange={(e) =>
+										setForm({
+											...form,
+											reglas: {
+												...form.reglas,
+												sugerirPrimerTurnoDisponible: e.target.checked,
+											},
+										})
+									}
+								/>
+								Sugerir primer turno disponible (1.er médico alfabético con agenda)
+							</label>
 						</div>
 					</section>
 				)}

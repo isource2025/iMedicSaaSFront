@@ -12,6 +12,7 @@ export interface BotReglas {
 	requiereRenaper: boolean;
 	permiteSobreturno: boolean;
 	crearPacienteAutomatico: boolean;
+	sugerirPrimerTurnoDisponible: boolean;
 }
 
 export interface BotServicio {
