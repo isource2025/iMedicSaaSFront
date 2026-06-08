@@ -151,6 +151,32 @@ export default function BotConfigPanel() {
 		setForm({ ...form, flujo });
 	};
 
+	const renumerarFlujo = (pasos: BotFlujoPaso[]) =>
+		pasos.map((p, i) => ({ ...p, paso: i + 1 }));
+
+	const agregarFlujoPaso = () => {
+		if (!form) return;
+		const n = form.flujo.length + 1;
+		const nuevo: BotFlujoPaso = {
+			paso: n,
+			id: `PASO_${n}`,
+			titulo: `Paso ${n}`,
+			mensajeUsuario: '',
+			descripcion: '',
+			activo: true,
+		};
+		const flujo = renumerarFlujo([...form.flujo, nuevo]);
+		setForm({ ...form, flujo });
+		setWizardPaso(flujo.length - 1);
+	};
+
+	const eliminarFlujoPaso = (index: number) => {
+		if (!form || form.flujo.length <= 1) return;
+		const flujo = renumerarFlujo(form.flujo.filter((_, i) => i !== index));
+		setForm({ ...form, flujo });
+		setWizardPaso(Math.min(wizardPaso, Math.max(0, flujo.length - 1)));
+	};
+
 	if (loading || !form) {
 		return <div className={styles.loading}>Cargando configuración…</div>;
 	}
@@ -497,9 +523,23 @@ export default function BotConfigPanel() {
 					<section className={styles.section}>
 						<h2>Wizard — flujo paso a paso</h2>
 						<p className={styles.hint}>
-							Definí el recorrido del paciente. Podés activar/desactivar pasos y personalizar
-							el mensaje en cada etapa.
+							Definí el recorrido del paciente. Activá/desactivá pasos (especialidad,
+							profesional, etc.), editá mensajes o agregá/eliminá etapas.
 						</p>
+
+						<div className={styles.wizardToolbar}>
+							<button type="button" className={styles.btnSecondary} onClick={agregarFlujoPaso}>
+								+ Agregar paso
+							</button>
+							<button
+								type="button"
+								className={styles.btnSecondary}
+								disabled={form.flujo.length <= 1}
+								onClick={() => eliminarFlujoPaso(wizardPaso)}
+							>
+								Eliminar paso actual
+							</button>
+						</div>
 
 						<div className={styles.wizardSteps}>
 							{form.flujo.map((p, i) => (
@@ -532,6 +572,17 @@ export default function BotConfigPanel() {
 										Paso activo
 									</label>
 								</div>
+								<label className={styles.field}>
+									ID interno (no cambiar si ya está en uso)
+									<input
+										value={pasoFlujo.id}
+										onChange={(e) =>
+											updateFlujoPaso(wizardPaso, {
+												id: e.target.value.replace(/\s/g, '_').toUpperCase(),
+											})
+										}
+									/>
+								</label>
 								<label className={styles.field}>
 									Título del paso
 									<input
