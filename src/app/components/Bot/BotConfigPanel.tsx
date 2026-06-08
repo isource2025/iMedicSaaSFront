@@ -487,6 +487,97 @@ export default function BotConfigPanel() {
 							</label>
 						</div>
 
+						<h3 className={styles.subheading}>Búsqueda de disponibilidad</h3>
+						<p className={styles.hint}>
+							Controla cuánto tarda y cuánto consulta el bot al buscar turnos libres en la agenda
+							(cuando el paciente elige especialidad o pide otro horario).
+						</p>
+						<div className={styles.rulesGrid}>
+							<label className={styles.field}>
+								Días a explorar (sin preferencia de día)
+								<input
+									type="number"
+									min={1}
+									max={120}
+									value={form.reglas.busquedaMaxDias ?? 21}
+									onChange={(e) =>
+										setForm({
+											...form,
+											reglas: {
+												...form.reglas,
+												busquedaMaxDias: Math.max(1, Number(e.target.value) || 21),
+											},
+										})
+									}
+								/>
+								<span className={styles.fieldHint}>
+									Si el paciente pide un día concreto, se usa el máximo de antelación general.
+								</span>
+							</label>
+							<label className={styles.field}>
+								Máx. profesionales por especialidad
+								<input
+									type="number"
+									min={1}
+									max={30}
+									value={form.reglas.busquedaMaxProfesionales ?? 12}
+									onChange={(e) =>
+										setForm({
+											...form,
+											reglas: {
+												...form.reglas,
+												busquedaMaxProfesionales: Math.max(1, Number(e.target.value) || 12),
+											},
+										})
+									}
+								/>
+							</label>
+							<label className={styles.field}>
+								Consultas en paralelo
+								<input
+									type="number"
+									min={1}
+									max={8}
+									value={form.reglas.busquedaConcurrencia ?? 4}
+									onChange={(e) =>
+										setForm({
+											...form,
+											reglas: {
+												...form.reglas,
+												busquedaConcurrencia: Math.max(1, Number(e.target.value) || 4),
+											},
+										})
+									}
+								/>
+								<span className={styles.fieldHint}>
+									Más paralelismo = más rápido, pero más carga en SQL Server.
+								</span>
+							</label>
+							<label className={styles.field}>
+								Tiempo máximo de búsqueda (ms)
+								<input
+									type="number"
+									min={3000}
+									max={60000}
+									step={1000}
+									value={form.reglas.busquedaTimeoutMs ?? 12000}
+									onChange={(e) =>
+										setForm({
+											...form,
+											reglas: {
+												...form.reglas,
+												busquedaTimeoutMs: Math.max(3000, Number(e.target.value) || 12000),
+											},
+										})
+									}
+								/>
+								<span className={styles.fieldHint}>
+									12000 = 12 segundos. Si se agota, el bot responde que no pudo completar la
+									búsqueda.
+								</span>
+							</label>
+						</div>
+
 						<h3 className={styles.subheading}>Límites y validaciones</h3>
 						<div className={styles.rulesGrid}>
 							<label className={styles.field}>

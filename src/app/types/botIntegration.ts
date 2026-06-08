@@ -13,6 +13,14 @@ export interface BotReglas {
 	permiteSobreturno: boolean;
 	crearPacienteAutomatico: boolean;
 	sugerirPrimerTurnoDisponible: boolean;
+	/** Días hacia adelante al buscar el primer turno (sin preferencia de día). */
+	busquedaMaxDias: number;
+	/** Máximo de profesionales consultados por especialidad. */
+	busquedaMaxProfesionales: number;
+	/** Consultas de agenda en paralelo por día. */
+	busquedaConcurrencia: number;
+	/** Tiempo máximo de búsqueda en milisegundos. */
+	busquedaTimeoutMs: number;
 }
 
 export interface BotServicio {
