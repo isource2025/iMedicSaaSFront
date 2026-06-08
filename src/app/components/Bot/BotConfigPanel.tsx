@@ -419,23 +419,54 @@ export default function BotConfigPanel() {
 				{seccion === 'reglas' && (
 					<section className={styles.section}>
 						<h2>Reglas de negocio</h2>
+
+						<h3 className={styles.subheading}>Turnos sugeridos por WhatsApp</h3>
+						<p className={styles.hint}>
+							Al elegir especialidad, el bot propone un solo turno (el libre más cercano). La
+							anticipación mínima evita ofrecer horarios demasiado próximos para que el paciente
+							pueda confirmar y asistir.
+						</p>
+						<div className={styles.toggles}>
+							<label className={styles.toggle}>
+								<input
+									type="checkbox"
+									checked={form.reglas.sugerirPrimerTurnoDisponible ?? true}
+									onChange={(e) =>
+										setForm({
+											...form,
+											reglas: {
+												...form.reglas,
+												sugerirPrimerTurnoDisponible: e.target.checked,
+											},
+										})
+									}
+								/>
+								Sugerir turno libre más cercano (un médico + horario, sin listar profesionales)
+							</label>
+						</div>
 						<div className={styles.rulesGrid}>
 							<label className={styles.field}>
-								Anticipación mínima (horas)
+								Anticipación mínima para reservar (horas)
 								<input
 									type="number"
 									min={0}
+									max={72}
+									step={1}
 									value={form.reglas.anticipacionMinHoras}
 									onChange={(e) =>
 										setForm({
 											...form,
 											reglas: {
 												...form.reglas,
-												anticipacionMinHoras: Number(e.target.value),
+												anticipacionMinHoras: Math.max(0, Number(e.target.value) || 0),
 											},
 										})
 									}
 								/>
+								<span className={styles.fieldHint}>
+									Solo se ofrecen turnos con al menos esta cantidad de horas de margen desde
+									ahora (ej. 2 = no sugerir un slot dentro de las próximas 2 h).
+								</span>
 							</label>
 							<label className={styles.field}>
 								Máx. días de antelación
@@ -454,6 +485,10 @@ export default function BotConfigPanel() {
 									}
 								/>
 							</label>
+						</div>
+
+						<h3 className={styles.subheading}>Límites y validaciones</h3>
+						<div className={styles.rulesGrid}>
 							<label className={styles.field}>
 								Máx. turnos por paciente / día
 								<input
@@ -514,22 +549,6 @@ export default function BotConfigPanel() {
 									}
 								/>
 								Permitir sobreturnos
-							</label>
-							<label className={styles.toggle}>
-								<input
-									type="checkbox"
-									checked={form.reglas.sugerirPrimerTurnoDisponible ?? false}
-									onChange={(e) =>
-										setForm({
-											...form,
-											reglas: {
-												...form.reglas,
-												sugerirPrimerTurnoDisponible: e.target.checked,
-											},
-										})
-									}
-								/>
-								Sugerir primer turno disponible (1.er médico alfabético con agenda)
 							</label>
 						</div>
 					</section>

@@ -40,6 +40,15 @@ function tagModoClass(modo: BotModoControl): string {
 	return styles.tagPausado;
 }
 
+const MSG_API_BOT_404 =
+	'El backend no expone /admin/bot/conversaciones (404). En Vercel configurá NEXT_PUBLIC_API_URL=https://imedicwsback-production.up.railway.app/api (el Render congelado no tiene inbox WhatsApp).';
+
+function es404ConversacionesApi(e: unknown): boolean {
+	if (typeof e !== 'object' || e === null) return false;
+	const ax = e as { response?: { status?: number }; message?: string };
+	return ax.response?.status === 404 || /status code 404/i.test(String(ax.message || ''));
+}
+
 interface Props {
 	puedeEditar?: boolean;
 	fullHeight?: boolean;
@@ -91,7 +100,9 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 			setConversaciones(data.conversaciones);
 		} catch (e: unknown) {
 			const err = e as { message?: string };
-			setError(err.message || 'Error cargando conversaciones');
+			setError(
+				es404ConversacionesApi(e) ? MSG_API_BOT_404 : err.message || 'Error cargando conversaciones',
+			);
 		} finally {
 			setLoadingLista(false);
 		}
