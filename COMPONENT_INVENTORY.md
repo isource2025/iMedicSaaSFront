@@ -5,7 +5,7 @@
  
 ---      
   
-## Estructura Completa de Componentes 
+## Estructura Completa de Componentes
    
 ### 📁 components/AnalyticsLoader/  
 ` 
