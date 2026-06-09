@@ -90,6 +90,45 @@
 	display: block;
 }
 
+/* Conversaciones WhatsApp: ocupa el alto visible sin scroll en LayoutShell.main */
+.chatsPage {
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 3rem);
+	min-height: 0;
+}
+
+.chatsPage .main {
+	flex: 1;
+	min-height: 0;
+	height: auto;
+}
+
+.chatsPage .mainCard {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	height: 100%;
+}
+
+.chatsPage .cardHeader {
+	flex-shrink: 0;
+}
+
+.chatsPage .cardBody {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+	padding: 0.75rem;
+}
+
+@media (max-width: 768px) {
+	.chatsPage {
+		height: calc(100vh - 5.75rem);
+	}
+}
+
 .cardTitle {
 	margin: 0;
 	font-size: 1.05rem;

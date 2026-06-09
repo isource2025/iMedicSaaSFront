@@ -8,22 +8,54 @@
 }
 
 .inboxFull {
-	min-height: calc(100vh - 220px);
+	flex: 1;
+	min-height: 0;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
 .inboxFull .layout {
-	min-height: calc(100vh - 320px);
+	flex: 1;
+	min-height: 0;
+}
+
+.inboxFull .lista {
+	min-height: 0;
+	overflow: hidden;
 }
 
 .inboxFull .listaScroll {
 	max-height: none;
 	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.inboxFull .chat {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
 }
 
 .inboxFull .mensajes {
 	max-height: none;
 	flex: 1;
-	min-height: 360px;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.inboxFull .chatHeader,
+.inboxFull .contextoPaciente,
+.inboxFull .composer {
+	flex-shrink: 0;
+}
+
+.inboxFull > .toolbar,
+.inboxFull > .simulador,
+.inboxFull > .error {
+	flex-shrink: 0;
 }
 
 .toolbar {
@@ -186,6 +218,10 @@
 	background: #fff;
 }
 
+.inboxFull > .layout {
+	min-height: 0;
+}
+
 @media (max-width: 900px) {
 	.layout {
 		grid-template-columns: 1fr;
@@ -196,6 +232,7 @@
 .lista {
 	display: flex;
 	flex-direction: column;
+	min-height: 0;
 	border-right: 1px solid var(--color-gray-200, #e2e8f0);
 	background: #fff;
 }
@@ -204,6 +241,7 @@
 	padding: 0.5rem;
 	border-bottom: 1px solid var(--color-gray-200, #e2e8f0);
 	background: var(--color-gray-50, #f8fafc);
+	flex-shrink: 0;
 }
 
 .busqueda {
@@ -365,6 +403,8 @@
 .chat {
 	display: flex;
 	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
 	background: var(--bg, #f6fbfd);
 	background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2393c5fd' fill-opacity='0.12'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
@@ -477,10 +517,12 @@
 
 .mensajes {
 	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
+	overflow-x: hidden;
 	padding: 0.75rem;
 	max-height: 320px;
-	min-height: 280px;
+	overscroll-behavior: contain;
 }
 
 .bubbleRow {

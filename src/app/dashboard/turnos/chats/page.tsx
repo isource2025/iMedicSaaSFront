@@ -19,7 +19,7 @@ export default function ConversacionesPage() {
 	}
 
 	return (
-		<div className={styles.page}>
+		<div className={styles.chatsPage}>
 			<div className={styles.layoutFull}>
 				<div className={styles.main}>
 					<div className={styles.mainCard}>

@@ -134,7 +134,10 @@ export const evolucionesService = {
             });
 
             if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(
+                    errorData.mensaje || `HTTP error! status: ${res.status}`
+                );
             }
 
             const json = await res.json();

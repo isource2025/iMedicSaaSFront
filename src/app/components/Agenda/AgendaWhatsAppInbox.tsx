@@ -73,7 +73,7 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 	const [simMsg, setSimMsg] = useState('Hola, quiero un turno');
 	const [simulando, setSimulando] = useState(false);
 
-	const chatEndRef = useRef<HTMLDivElement>(null);
+	const mensajesRef = useRef<HTMLDivElement>(null);
 	const ultimoIdRef = useRef<number>(0);
 
 	const convFiltradas = useMemo(() => {
@@ -174,7 +174,9 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 	}, [selId, cargarChat]);
 
 	useEffect(() => {
-		chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+		const el = mensajesRef.current;
+		if (!el) return;
+		el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
 	}, [mensajes]);
 
 	const handleControl = async (modo: BotModoControl) => {
@@ -456,7 +458,7 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 								</div>
 							)}
 
-							<div className={styles.mensajes}>
+							<div ref={mensajesRef} className={styles.mensajes}>
 								{loadingChat ? (
 									<div className={styles.loading}>Cargando mensajes…</div>
 								) : (
@@ -484,7 +486,6 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 										);
 									})
 								)}
-								<div ref={chatEndRef} />
 							</div>
 
 							<footer className={styles.composer}>
