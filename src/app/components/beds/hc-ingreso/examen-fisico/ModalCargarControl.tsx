@@ -8,7 +8,7 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import {
     getSessionUser,
     getUserDisplayName,
-    getUserValorPersonal,
+    getHcIdProfesional,
 } from '@/app/utils/sessionUser';
 import styles from '../../../indicaciones/AplicarIndicacion.module.css';
 
@@ -61,7 +61,7 @@ export default function ModalCargarControl({
         observaciones: '',
         fechaProximo: '',
         horaProximo: '',
-        profesionalAsiste: getUserValorPersonal(usuarioActual),
+        profesionalAsiste: getHcIdProfesional(usuarioActual),
         profesionalNombre: getUserDisplayName(usuarioActual),
         control: {
             pulso: '',

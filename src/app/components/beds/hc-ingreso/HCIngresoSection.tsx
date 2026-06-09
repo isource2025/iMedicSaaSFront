@@ -21,12 +21,10 @@ import {
     type HcFormBasics,
 } from "@/app/utils/examenFisicoHelpers";
 import {
-    getSectorDescripcion,
-    getSectorId,
-    getSessionSector,
     getSessionUser,
-    getUserCodOperador,
+    getHcIdProfesional,
     getUserDisplayName,
+    resolveHcSector,
 } from "@/app/utils/sessionUser";
 
 function fechaHoraLocal(d: Date = new Date()) {
@@ -253,6 +251,8 @@ interface HCIngresoSectionProps {
     patientName?: string;
     patientLocation?: string;
     documentoPaciente?: string;
+    /** Sector de la cama/recurso (fallback si el login no trae sector, p. ej. admin Grupo 11). */
+    bedSector?: string;
 }
 
 type ViewMode = "view" | "add" | "edit";
@@ -264,6 +264,7 @@ export default function HCIngresoSection({
     patientName,
     patientLocation,
     documentoPaciente,
+    bedSector,
 }: HCIngresoSectionProps) {
     const { selectedDate } = useBedDetail();
     const { usuario, sectorSeleccionado } = useAppContext();
@@ -375,11 +376,12 @@ export default function HCIngresoSection({
     // Handlers
     const handleAdd = () => {
         const usuarioActual = getSessionUser(usuario);
-        const sectorActual = getSessionSector(sectorSeleccionado);
-        const profesionalId = String(getUserCodOperador(usuarioActual) || "");
+        const sectorResolved = resolveHcSector(sectorSeleccionado, bedSector);
+        const profesionalIdNum = getHcIdProfesional(usuarioActual);
+        const profesionalId = profesionalIdNum != null ? String(profesionalIdNum) : "";
         const profesionalNombre = getUserDisplayName(usuarioActual);
-        const sector = getSectorId(sectorActual);
-        const sectorDescripcion = getSectorDescripcion(sectorActual);
+        const sector = sectorResolved.id;
+        const sectorDescripcion = sectorResolved.descripcion || sector;
         
         const { fecha, hora } = fechaHoraLocal();
         
@@ -441,11 +443,15 @@ export default function HCIngresoSection({
             setLoading(true);
             setError(null);
 
+            const usuarioActual = getSessionUser(usuario);
+            const sectorResolved = resolveHcSector(sectorSeleccionado, bedSector);
+            const profFallback = getHcIdProfesional(usuarioActual);
+
             const formBasics: HcFormBasics = {
                 fecha: formData.fecha,
                 hora: formData.hora,
-                profesionalId: formData.profesionalId,
-                sector: formData.sector,
+                profesionalId: formData.profesionalId || (profFallback != null ? String(profFallback) : ""),
+                sector: formData.sector || sectorResolved.id,
                 motivoConsulta: formData.motivoConsulta,
                 enfermedadActual: formData.enfermedadActual,
             };

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { crearControl, type CrearControlData } from "../../../services/controlesFrecuentesService";
-import { getSectorId, getSessionUser, getUserCodOperador } from "@/app/utils/sessionUser";
+import { getSectorId, getSessionUser, getUserCodOperador, getHcIdProfesional } from "@/app/utils/sessionUser";
 import styles from "../evolucion/NuevaEvolucionEnfermeriaModal.module.css";
 
 const getLocalDate = (d: Date) =>
@@ -20,7 +20,7 @@ interface Props {
 export default function NuevoControlModal({ defaultNumeroVisita, refetch, onClose }: Props) {
 	const { usuario, sectorSeleccionado } = useAppContext();
 	const usuarioActual = getSessionUser(usuario);
-	const operadorId = getUserCodOperador(usuarioActual) ?? 0;
+	const operadorId = getHcIdProfesional(usuarioActual) ?? getUserCodOperador(usuarioActual) ?? 0;
 	const idSector = getSectorId(sectorSeleccionado);
 
 	const initial = useMemo<CrearControlData>(() => ({

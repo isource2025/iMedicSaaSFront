@@ -145,6 +145,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientName={bed?.NombrePaciente}
 							patientLocation={bed?.ubicacionPaciente}
 							documentoPaciente={bed?.documentoPaciente}
+							bedSector={bed?.sector}
 						/>
 					) : activeSection === 'evoluciones' ? (
 						<>

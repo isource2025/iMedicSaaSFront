@@ -25,9 +25,43 @@ export function getSessionUser(contextUser?: UserData | null): UserData | null {
 export function getUserCodOperador(user?: UserData | null): number | undefined {
 	return parseNumericId(
 		user?.idCodOperador,
-		user?.codigoOperador,
 		user?.codOperador,
+		user?.codigoOperador,
+		user?.CodOperador,
 	);
+}
+
+/** Matrícula profesional (imPersonal.Matricula). */
+export function getUserMatricula(user?: UserData | null): number | undefined {
+	return parseNumericId(user?.matricula, user?.Matricula);
+}
+
+/**
+ * CodOperador para imHCI.IdProfecional e imInterCtrlFrecuente (OperadorCarga / Profesional).
+ * Siempre prioriza localStorage vía getSessionUser.
+ */
+export function getHcIdProfesional(contextUser?: UserData | null): number | undefined {
+	const user = getSessionUser(contextUser);
+	return getUserCodOperador(user);
+}
+
+export function resolveHcSector(
+	sectorFromContext?: SectorInfo | null,
+	bedSector?: string | null,
+): { id: string; descripcion: string } {
+	const fromSession = getSessionSector(sectorFromContext);
+	const idFromSession = getSectorId(fromSession);
+	if (idFromSession) {
+		return {
+			id: idFromSession,
+			descripcion: getSectorDescripcion(fromSession) || idFromSession,
+		};
+	}
+	const bed = String(bedSector || '').trim();
+	if (bed) {
+		return { id: bed.slice(0, 4), descripcion: bed };
+	}
+	return { id: '', descripcion: '' };
 }
 
 export function getUserValorPersonal(user?: UserData | null): number | undefined {
