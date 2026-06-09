@@ -396,6 +396,7 @@ export default function HCIngresoSection({
             enfermedadActual: "",
             antecedentes: "",
         });
+        setExamenFisico(getEmptyExamenFisico());
         setEditBaseline(null);
         setActiveSection("motivo");
         setMode("add");
@@ -430,6 +431,7 @@ export default function HCIngresoSection({
 
     const handleCancel = () => {
         setEditBaseline(null);
+        setExamenFisico(getEmptyExamenFisico());
         setMode("view");
     };
 

@@ -3,6 +3,11 @@ import { apiFetch } from '@/app/utils/authFetch';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api';
 
+function parseApiError(result: Record<string, unknown>, fallback: string): string {
+    const msg = result.error ?? result.message ?? result.mensaje;
+    return typeof msg === 'string' && msg.trim() ? msg : fallback;
+}
+
 /**
  * Obtener HC de Ingreso por número de visita
  */
@@ -74,14 +79,14 @@ export async function crearHCIngreso(data: Partial<HCIngresoRecord>): Promise<{ 
             body: JSON.stringify(data),
         });
 
-        if (!response.ok) {
-            throw new Error(`Error al crear HC de Ingreso: ${response.statusText}`);
-        }
-
         const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(parseApiError(result, `Error al crear HC de Ingreso (${response.status})`));
+        }
         
         if (!result.success) {
-            throw new Error(result.message || 'Error al crear HC de Ingreso');
+            throw new Error(parseApiError(result, 'Error al crear HC de Ingreso'));
         }
 
         return result.data;
@@ -104,14 +109,14 @@ export async function actualizarHCIngreso(id: number, data: Partial<HCIngresoRec
             body: JSON.stringify(data),
         });
 
-        if (!response.ok) {
-            throw new Error(`Error al actualizar HC de Ingreso: ${response.statusText}`);
-        }
-
         const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(parseApiError(result, `Error al actualizar HC de Ingreso (${response.status})`));
+        }
         
         if (!result.success) {
-            throw new Error(result.message || 'Error al actualizar HC de Ingreso');
+            throw new Error(parseApiError(result, 'Error al actualizar HC de Ingreso'));
         }
     } catch (error) {
         console.error('Error en actualizarHCIngreso:', error);
