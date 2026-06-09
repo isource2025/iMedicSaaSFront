@@ -6,7 +6,7 @@ import { evolucionesService } from "../../../services/evolucionesService";
 import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import { formatSqlDate } from "../../../utils/dateUtils";
-import { useUsuarioActual, esRegistroPropio } from "../../../hooks/useUsuarioActual";
+import { useUsuarioActual, esRegistroPropio, esAdminClinico } from "../../../hooks/useUsuarioActual";
 
 export type EvolucionRow = {
     id: number;
@@ -43,7 +43,10 @@ export default function EvolucionesTable({
     const hasRows = rows && rows.length > 0;
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [viewingEvolucion, setViewingEvolucion] = useState<EvolucionRow | null>(null);
-    const usuarioActual = useUsuarioActual();
+	const usuarioActual = useUsuarioActual();
+	const esAdmin = esAdminClinico();
+	const puedeModificarEvolucion = (row: EvolucionRow) =>
+		esAdmin || esRegistroPropio(row as unknown as Record<string, unknown>, usuarioActual) !== false;
 
     const handleDelete = async (id: number) => {
         try {
@@ -159,7 +162,7 @@ export default function EvolucionesTable({
                                                 >
                                                     <IoEyeOutline color="#5BC0DE" size="18px" />
                                                 </button>
-                                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) !== false && (<>
+                                                {puedeModificarEvolucion(r) && (<>
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Editar evolución"
@@ -238,7 +241,7 @@ export default function EvolucionesTable({
                                 >
                                     <IoEyeOutline color="#5BC0DE" size="18px" />
                                 </button>
-                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) !== false && (<>
+                                {puedeModificarEvolucion(r) && (<>
                                 <button
                                     className={styles.btnAction}
                                     title="Editar evolución"

@@ -5,6 +5,7 @@ import styles from "./NuevaEvolucionModal.module.css";
 import { NuevaEvolucionPayload } from "../../../types/evoluciones";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { evolucionesService } from "../../../services/evolucionesService";
+import { authService } from "../../../services/authService";
 import { apiFetch } from '@/app/utils/authFetch';
 
 interface NuevaEvolucionModalProps {
@@ -29,6 +30,16 @@ const getLocalTimeString = (date: Date): string => {
     return `${hh}:${mm}`;
 };
 
+const resolverProfecional = (idPersonalFallback: string): number | undefined => {
+    const u = authService.getCurrentUser() as Record<string, unknown> | null;
+    const mat = u?.matricula ?? u?.Matricula;
+    if (mat != null && Number(mat) > 0) return Number(mat);
+    const vp = u?.idValorpersonal ?? u?.valorPersonal;
+    if (vp != null && Number(vp) > 0) return Number(vp);
+    if (idPersonalFallback) return parseInt(idPersonalFallback, 10);
+    return undefined;
+};
+
 const emptyPayload = (idVisita: number | null, numeroDocumento: string, idSector: string, idPersonal: string): NuevaEvolucionPayload => {
     return {
         IdVisita: idVisita || 0,
@@ -37,7 +48,7 @@ const emptyPayload = (idVisita: number | null, numeroDocumento: string, idSector
         IdSector: idSector,
         Evolucion: "",
         NumeroDocumento: numeroDocumento,
-        Profecional: idPersonal ? parseInt(idPersonal) : undefined,
+        Profecional: resolverProfecional(idPersonal),
     };
 };
 

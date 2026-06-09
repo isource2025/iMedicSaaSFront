@@ -8,6 +8,8 @@ export interface UsuarioActual {
 	codOperador: number | null;
 	/** ValorPersonal en imPersonal (FK de imPassword). */
 	valorPersonal: number | null;
+	/** Matrícula profesional (imPersonal.Matricula). */
+	matricula: number | null;
 	nombre: string;
 	apellido: string;
 }
@@ -34,9 +36,16 @@ export function useUsuarioActual(): UsuarioActual | null {
 				: u.valorPersonal != null
 				  ? Number(u.valorPersonal)
 				  : null;
+		const matricula =
+			u.matricula != null
+				? Number(u.matricula)
+				: u.Matricula != null
+				  ? Number(u.Matricula)
+				  : null;
 		return {
 			codOperador: Number.isFinite(codOperador) ? codOperador : null,
 			valorPersonal: Number.isFinite(valorPersonal) ? valorPersonal : null,
+			matricula: Number.isFinite(matricula) ? matricula : null,
 			nombre: String(u.nombre || ''),
 			apellido: String(u.apellido || ''),
 		};
@@ -56,6 +65,13 @@ export function useUsuarioActual(): UsuarioActual | null {
  * Si el campo no existe en el registro devuelve `null` (no se puede
  * determinar propiedad → la capa de UI debe decidir si bloquear o no).
  */
+export function esAdminClinico(): boolean {
+	if (typeof window === 'undefined') return false;
+	const rol = authService.getCurrentRol();
+	if (!rol) return false;
+	return rol.nombre === 'ADMIN' || rol.id === 1;
+}
+
 export function esRegistroPropio(
 	registro: Record<string, unknown> | null | undefined,
 	usuario: UsuarioActual | null,
@@ -82,6 +98,9 @@ export function esRegistroPropio(
 
 	// Algunos registros guardan ValorPersonal en cambio
 	if (usuario.valorPersonal != null && autorNum === usuario.valorPersonal) return true;
+
+	// imHCEvolucion: Profecional puede ser la matrícula
+	if (usuario.matricula != null && autorNum === usuario.matricula) return true;
 
 	return false;
 }
