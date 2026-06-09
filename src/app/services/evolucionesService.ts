@@ -6,8 +6,6 @@ import {
     NuevaEvolucionPayload,
 } from "../types/evoluciones";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 export const evolucionesService = {
     /**
      * Obtener evoluciones por visita y fecha
@@ -18,7 +16,7 @@ export const evolucionesService = {
     ): Promise<Evolucion[]> => {
         try {
             const res = await apiFetch(
-                `${BASE_URL}/evoluciones/${idVisita}/byDate?date=${fecha}`,
+                `/evoluciones/${idVisita}/byDate?date=${fecha}`,
                 {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
@@ -49,7 +47,7 @@ export const evolucionesService = {
     postNuevaEvolucion: async (
         data: NuevaEvolucionPayload
     ): Promise<Evolucion> => {
-        const res = await apiFetch(`${BASE_URL}/evoluciones`, {
+        const res = await apiFetch('/evoluciones', {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -74,7 +72,7 @@ export const evolucionesService = {
      */
     getEvolucionById: async (id: number): Promise<Evolucion | null> => {
         try {
-            const res = await apiFetch(`${BASE_URL}/evoluciones/${id}`, {
+            const res = await apiFetch(`/evoluciones/${id}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
             });
@@ -102,7 +100,7 @@ export const evolucionesService = {
      */
     deleteEvolucion: async (id: number): Promise<boolean> => {
         try {
-            const res = await apiFetch(`${BASE_URL}/evoluciones/${id}`, {
+            const res = await apiFetch(`/evoluciones/${id}`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
             });
@@ -127,7 +125,7 @@ export const evolucionesService = {
         data: Partial<NuevaEvolucionPayload>
     ): Promise<boolean> => {
         try {
-            const res = await apiFetch(`${BASE_URL}/evoluciones/${id}`, {
+            const res = await apiFetch(`/evoluciones/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
