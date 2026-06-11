@@ -11,15 +11,17 @@
 }
 
 /* Día con agenda del profesional (solo futuros / hoy, no seleccionado) */
-.hasTurnos {
+.hasTurnos,
+.cellHasTurnos {
 	background: #bae6fd !important;
-	color: #0369a1;
+	color: #0369a1 !important;
 	font-weight: 600;
 }
 
-.hasTurnos:hover {
+.hasTurnos:hover,
+.cellHasTurnos:hover {
 	background: #7dd3fc !important;
-	border-color: #0284c7;
+	border-color: #0284c7 !important;
 }
 
 /* Día seleccionado: color único, prioridad sobre “con turnos” */

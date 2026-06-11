@@ -2,14 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import styles from './AdmissionAdjuntosGrid.module.css';
-import { apiFetch } from '@/app/utils/authFetch';
-
-function baseUrl(): string {
-  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-  }
-  return '';
-}
+import { apiFetchBlob } from '@/app/utils/authFetch';
+import { adjuntosService } from '@/app/services/adjuntosService';
 
 function isImageByName(name: string): boolean {
   return /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(name || '');
@@ -37,20 +31,7 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
 
     const run = async () => {
       try {
-        const candidates = [
-          `${baseUrl()}/adjuntos/${idAdjunto}/download`,
-          `/adjuntos/${idAdjunto}/download`,
-        ];
-
-        let blob: Blob | null = null;
-        for (const url of candidates) {
-          const res = await apiFetch(url);
-          if (!res.ok) continue;
-          blob = await res.blob();
-          break;
-        }
-
-        if (!blob) throw new Error('fetch');
+        const blob = await apiFetchBlob(`/adjuntos/${idAdjunto}/download`);
         if (cancelled) return;
 
         const type = blob.type || '';
@@ -75,8 +56,13 @@ function AdjuntoCard({ idAdjunto, nombreArchivo }: { idAdjunto: number; nombreAr
     };
   }, [idAdjunto]);
 
-  const openView = () => {
-    window.open(`${baseUrl()}/adjuntos/${idAdjunto}/download`, '_blank', 'noopener,noreferrer');
+  const openView = async () => {
+    try {
+      await adjuntosService.abrirArchivo(idAdjunto);
+    } catch (err) {
+      console.error('Error al abrir adjunto:', err);
+      alert(err instanceof Error ? err.message : 'No se pudo abrir el archivo');
+    }
   };
 
   const isPdf =

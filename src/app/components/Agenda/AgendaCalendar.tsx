@@ -44,20 +44,41 @@ export default function AgendaCalendar({
 		let cancel = false;
 		const desde = toIso(monthStart);
 		const hasta = toIso(monthEnd);
+		const aplicarFechas = (lista: string[]) => {
+			const fechas = new Set<string>();
+			for (const f of lista) {
+				const iso = String(f).slice(0, 10);
+				if (iso.length === 10) fechas.add(iso);
+			}
+			setDiasConAgenda(fechas);
+		};
+
 		agendaService
-			.getSlots(matricula, desde, hasta)
+			.getDiasConAgenda(matricula, desde, hasta)
 			.then((r) => {
 				if (cancel) return;
-				const fechas = new Set<string>();
-				for (const dia of r.dias) {
-					if (!dia.bloqueado && dia.slots.length > 0) {
-						fechas.add(dia.fecha);
+				aplicarFechas(r.fechas || []);
+			})
+			.catch(async (err) => {
+				if (cancel) return;
+				// Backend anterior sin /dias-agenda: fallback a slots ligero del mes
+				if (err?.response?.status === 404) {
+					try {
+						const r = await agendaService.getSlots(matricula, desde, hasta, { ligero: true });
+						if (!cancel) {
+							aplicarFechas(
+								(r.dias || [])
+									.filter((d) => !d.bloqueado && d.slots?.length > 0)
+									.map((d) => d.fecha),
+							);
+						}
+						return;
+					} catch {
+						/* sigue abajo */
 					}
 				}
-				setDiasConAgenda(fechas);
-			})
-			.catch(() => {
-				if (!cancel) setDiasConAgenda(new Set());
+				setDiasConAgenda(new Set());
+				console.warn('[AgendaCalendar] No se pudieron cargar días con agenda', err);
 			});
 		return () => {
 			cancel = true;
@@ -178,7 +199,7 @@ export default function AgendaCalendar({
 											className={[
 												styles.cell,
 												outside ? styles.muted : '',
-												hasTurnos ? calExtra.hasTurnos : '',
+												hasTurnos ? `${calExtra.hasTurnos} ${calExtra.cellHasTurnos}` : '',
 												active ? calExtra.selected : '',
 												past ? calExtra.past : '',
 											]

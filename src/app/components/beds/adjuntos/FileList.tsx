@@ -51,12 +51,13 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
     );
   };
 
-  const handleView = (adjunto: Adjunto) => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const url = `${API_URL}/adjuntos/${adjunto.IdAdjunto}/download`;
-    
-    // Abrir en nueva ventana para visualizar
-    window.open(url, '_blank');
+  const handleView = async (adjunto: Adjunto) => {
+    try {
+      await adjuntosService.abrirArchivo(adjunto.IdAdjunto);
+    } catch (err) {
+      console.error('Error al visualizar adjunto:', err);
+      alert(err instanceof Error ? err.message : 'No se pudo abrir el archivo');
+    }
   };
 
   const handleDownload = (adjunto: Adjunto) => {

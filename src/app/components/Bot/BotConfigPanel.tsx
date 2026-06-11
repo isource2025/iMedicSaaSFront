@@ -409,9 +409,23 @@ export default function BotConfigPanel() {
 								}
 							/>
 						</label>
+						<label className={styles.field}>
+							Tras agradecimiento (turno ya confirmado)
+							<textarea
+								rows={2}
+								value={form.mensajes.agradecimiento || ''}
+								onChange={(e) =>
+									setForm({
+										...form,
+										mensajes: { ...form.mensajes, agradecimiento: e.target.value },
+									})
+								}
+							/>
+						</label>
 						<p className={styles.varsHint}>
-							Variables disponibles en confirmación:{' '}
-							<code>{'{fecha}'}</code>, <code>{'{hora}'}</code>, <code>{'{medico}'}</code>
+							Variables en confirmación: <code>{'{fecha}'}</code>, <code>{'{hora}'}</code>,{' '}
+							<code>{'{medico}'}</code>. En flujo → Especialidad: <code>{'{nombre}'}</code>{' '}
+							(contacto WhatsApp).
 						</p>
 					</section>
 				)}
@@ -671,7 +685,10 @@ export default function BotConfigPanel() {
 						<h2>Wizard — flujo paso a paso</h2>
 						<p className={styles.hint}>
 							Definí el recorrido del paciente. Activá/desactivá pasos (especialidad,
-							profesional, etc.), editá mensajes o agregá/eliminá etapas.
+							profesional, etc.), editá mensajes o agregá/eliminá etapas. Usá{' '}
+							<code>{'{nombre}'}</code> en el mensaje del paso Especialidad. El paso{' '}
+							<em>Turno confirmado</em> (TURNO_COMPLETADO) define la respuesta a
+							agradecimientos tras reservar.
 						</p>
 
 						<div className={styles.wizardToolbar}>

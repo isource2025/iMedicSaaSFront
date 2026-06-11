@@ -1,4 +1,4 @@
-import { apiFetch } from '@/app/utils/authFetch';
+import { apiFetch, apiFetchBlob, openAuthenticatedBlob } from '@/app/utils/authFetch';
 import { 
   Adjunto, 
   SubirAdjuntoResponse, 
@@ -136,39 +136,30 @@ export const adjuntosService = {
   },
 
   /**
-   * Descargar archivo adjunto
+   * Descargar archivo adjunto (con JWT — requerido en producción/Render).
    */
   async descargarArchivo(idAdjunto: number, nombreArchivo: string): Promise<void> {
     try {
-      const base = getApiUrl();
-      const url = `${base}/adjuntos/${idAdjunto}/download`;
-      
-      // Fetch el archivo como blob
-      const response = await apiFetch(url);
-      if (!response.ok) {
-        throw new Error('Error al descargar archivo');
-      }
-      
-      // Obtener el blob
-      const blob = await response.blob();
-      
-      // Crear URL del blob
+      const blob = await apiFetchBlob(`/adjuntos/${idAdjunto}/download`);
       const blobUrl = window.URL.createObjectURL(blob);
-      
-      // Crear link temporal y descargar
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = nombreArchivo;
       document.body.appendChild(link);
       link.click();
-      
-      // Limpiar
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error('Error al descargar archivo:', error);
       throw error;
     }
+  },
+
+  /**
+   * Visualizar adjunto en pestaña nueva (con JWT).
+   */
+  async abrirArchivo(idAdjunto: number): Promise<void> {
+    await openAuthenticatedBlob(`/adjuntos/${idAdjunto}/download`);
   },
 
   /**

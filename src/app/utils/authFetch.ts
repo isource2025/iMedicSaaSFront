@@ -28,6 +28,37 @@ export async function apiFetch(pathOrUrl: string, init?: RequestInit): Promise<R
 	return fetch(url, withAuthHeaders(init));
 }
 
+async function readFetchErrorMessage(response: Response, fallback: string): Promise<string> {
+	try {
+		const payload = await response.clone().json();
+		return payload?.mensaje || payload?.error || fallback;
+	} catch {
+		try {
+			const text = await response.clone().text();
+			return text || fallback;
+		} catch {
+			return fallback;
+		}
+	}
+}
+
+/** Descarga binaria autenticada (adjuntos, exports, etc.). */
+export async function apiFetchBlob(pathOrUrl: string, init?: RequestInit): Promise<Blob> {
+	const response = await apiFetch(pathOrUrl, init);
+	if (!response.ok) {
+		throw new Error(await readFetchErrorMessage(response, 'Error al obtener el archivo'));
+	}
+	return response.blob();
+}
+
+/** Abre un recurso autenticado en pestaña nueva (evita window.open sin JWT en Render). */
+export async function openAuthenticatedBlob(pathOrUrl: string, init?: RequestInit): Promise<void> {
+	const blob = await apiFetchBlob(pathOrUrl, init);
+	const blobUrl = URL.createObjectURL(blob);
+	window.open(blobUrl, '_blank', 'noopener,noreferrer');
+	window.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
+}
+
 /** Convierte URL absoluta legacy (NEXT_PUBLIC_API_URL + path) a path relativo. */
 export function toApiPath(url: string): string {
 	const base = (process.env.NEXT_PUBLIC_API_URL || getResolvedApiBaseUrl())

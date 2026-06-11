@@ -111,6 +111,13 @@ export interface SlotsResponse {
 	profesional?: AgendaProfesionalMeta;
 }
 
+export interface DiasAgendaResponse {
+	matricula: number;
+	desde: string;
+	hasta: string;
+	fechas: string[];
+}
+
 export interface ResumenDia {
 	fecha: string;
 	bloqueado: boolean;
@@ -208,10 +215,26 @@ export const agendaService = {
 		matricula: number,
 		desde: string,
 		hasta: string,
+		opts?: { ligero?: boolean },
 	): Promise<SlotsResponse> {
 		const qs = new URLSearchParams({ desde, hasta });
+		if (opts?.ligero) qs.set('ligero', '1');
 		const r = await apiService.get<ApiResp<SlotsResponse>>(
 			`/agenda/${matricula}/slots?${qs.toString()}`,
+		);
+		return r.data.data;
+	},
+
+	/** Días del rango con cupos de agenda (calendario mensual). */
+	async getDiasConAgenda(
+		matricula: number,
+		desde: string,
+		hasta: string,
+	): Promise<DiasAgendaResponse> {
+		const qs = new URLSearchParams({ desde, hasta });
+		const r = await apiService.get<ApiResp<DiasAgendaResponse>>(
+			`/agenda/${matricula}/dias-agenda?${qs.toString()}`,
+			{ timeout: 60_000 },
 		);
 		return r.data.data;
 	},

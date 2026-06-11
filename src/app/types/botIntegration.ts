@@ -2,6 +2,8 @@ export interface BotMensajes {
 	bienvenida: string;
 	confirmacion: string;
 	pedirDni: string;
+	/** Respuesta tras agradecimiento cuando el turno ya fue confirmado */
+	agradecimiento: string;
 }
 
 export interface BotReglas {
