@@ -20,8 +20,11 @@ import {
 import styles from './Sidebar.module.css'
 import { useAppContext } from '../../contexts/AppContext'
 import { usePermiso } from '@/app/hooks/usePermiso'
+import { useWhatsAppInboxUnread } from '@/app/hooks/useWhatsAppInboxUnread'
 import { authService } from '@/app/services/authService'
 import type { UserData } from '@/app/types/AuthInterface'
+
+const CHATS_PATH = '/dashboard/turnos/chats'
 
 interface SubItem {
   label: string
@@ -144,6 +147,8 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const pathname = usePathname()
   const { empresaInfo, sectorSeleccionado } = useAppContext()
   const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
+  const puedeVerChats = loaded && puedeSubmodulo('TURNOS', 'AGENDA')
+  const { count: chatsUnread } = useWhatsAppInboxUnread(puedeVerChats)
 
   useEffect(() => {
     setCurrentUser(authService.getCurrentUser())
@@ -327,7 +332,14 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
                 className={`${styles.menuButton} ${isSelected(item) ? styles.selected : ''}`}
                 onClick={() => handleMenuClick(item)}
               >
-                <item.icon className={styles.menuIcon} size={22} strokeWidth={1.5} />
+                <span className={styles.menuIconWrap}>
+                  <item.icon className={styles.menuIcon} size={22} strokeWidth={1.5} />
+                  {item.id === 'turnos' && chatsUnread > 0 ? (
+                    <span className={styles.menuBadge} aria-label={`${chatsUnread} mensajes sin leer`}>
+                      {chatsUnread > 99 ? '99+' : chatsUnread}
+                    </span>
+                  ) : null}
+                </span>
                 <span className={styles.menuLabel}>{item.label}</span>
                 {item.subItems.length > 0 && (
                   <ChevronRight 
@@ -346,7 +358,12 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
                       className={`${styles.subMenuItem} ${pathname === subItem.path || pathname.startsWith(subItem.path + '/') ? styles.subActive : ''}`}
                       onClick={() => handleSubItemClick(subItem.path)}
                     >
-                      {subItem.label}
+                      <span className={styles.subMenuLabel}>{subItem.label}</span>
+                      {subItem.path === CHATS_PATH && chatsUnread > 0 ? (
+                        <span className={styles.subMenuBadge}>
+                          {chatsUnread > 99 ? '99+' : chatsUnread}
+                        </span>
+                      ) : null}
                     </button>
                   ))}
                 </div>

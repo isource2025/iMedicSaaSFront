@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { authService } from '@/app/services/authService';
 import { notificacionesService, type NotificacionItem } from '@/app/services/notificacionesService';
+import { INBOX_UNREAD_EVENT } from '@/app/hooks/useWhatsAppInboxUnread';
 import styles from './NotificationsFab.module.css';
 
 function valorPersonalFromUser(user: Record<string, unknown> | null): number | null {
@@ -19,7 +21,14 @@ function valorPersonalFromUser(user: Record<string, unknown> | null): number | n
 
 const OPEN_EVENT = 'imedic:notifications-open';
 
+function esNotificacionWhatsApp(n: NotificacionItem): boolean {
+  const tipo = String(n.TipoNotificacion || '').toUpperCase();
+  const ent = String(n.EntidadTipo || '').toUpperCase();
+  return tipo === 'WHATSAPP_MENSAJE' || ent === 'BOT_CONVERSACION';
+}
+
 export default function NotificationsFab({ stack = false }: { stack?: boolean }) {
+  const router = useRouter();
   const [userId, setUserId] = useState<number | null>(null);
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -68,7 +77,12 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
     if (!userId) return;
     fetchCount();
     const t = window.setInterval(fetchCount, 45000);
-    return () => window.clearInterval(t);
+    const onInbox = () => fetchCount();
+    window.addEventListener(INBOX_UNREAD_EVENT, onInbox);
+    return () => {
+      window.clearInterval(t);
+      window.removeEventListener(INBOX_UNREAD_EVENT, onInbox);
+    };
   }, [userId, fetchCount]);
 
   useEffect(() => {
@@ -103,17 +117,28 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
     setOpen((v) => !v);
   };
 
-  const marcarUna = async (n: NotificacionItem) => {
+  const abrirNotificacion = async (n: NotificacionItem) => {
     if (!userId) return;
-    try {
-      await notificacionesService.marcarLeida(userId, n.IdNotificacion);
-      setItems((prev) =>
-        prev.map((x) => (x.IdNotificacion === n.IdNotificacion ? { ...x, Leida: 1 } : x))
-      );
-      fetchCount();
-    } catch {
-      /* noop */
+    const leida = n.Leida === 1 || n.Leida === true;
+    if (!leida) {
+      try {
+        await notificacionesService.marcarLeida(userId, n.IdNotificacion);
+        setItems((prev) =>
+          prev.map((x) => (x.IdNotificacion === n.IdNotificacion ? { ...x, Leida: 1 } : x))
+        );
+        fetchCount();
+      } catch {
+        /* noop */
+      }
     }
+    if (esNotificacionWhatsApp(n)) {
+      setOpen(false);
+      router.push('/dashboard/turnos/chats');
+    }
+  };
+
+  const marcarUna = async (n: NotificacionItem) => {
+    await abrirNotificacion(n);
   };
 
   const marcarTodas = async () => {
@@ -177,7 +202,16 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
                   const leida = n.Leida === 1 || n.Leida === true;
                   return (
                     <li key={n.IdNotificacion} className={`${styles.item} ${!leida ? styles.itemUnread : ''}`}>
-                      <p className={styles.itemText}>{n.DescNotificacion || n.TipoNotificacion || 'Aviso'}</p>
+                      <button
+                        type="button"
+                        className={styles.itemOpen}
+                        onClick={() => abrirNotificacion(n)}
+                      >
+                        {esNotificacionWhatsApp(n) ? (
+                          <span className={styles.itemTag}>WhatsApp</span>
+                        ) : null}
+                        <p className={styles.itemText}>{n.DescNotificacion || n.TipoNotificacion || 'Aviso'}</p>
+                      </button>
                       {n.FechaCarga ? (
                         <time className={styles.itemTime} dateTime={n.FechaCarga}>
                           {new Date(n.FechaCarga).toLocaleString('es-AR', {
@@ -188,7 +222,7 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
                       ) : null}
                       {!leida ? (
                         <button type="button" className={styles.itemAction} onClick={() => marcarUna(n)}>
-                          Marcar leída
+                          {esNotificacionWhatsApp(n) ? 'Ver chat' : 'Marcar leída'}
                         </button>
                       ) : null}
                     </li>

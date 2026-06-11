@@ -30,6 +30,23 @@
   pointer-events: none;
 }
 
+/* Vista inbox WhatsApp: scroll interno en el chat, no en el main */
+.mainLocked {
+  overflow: hidden;
+  height: 100vh;
+  min-height: 0;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.mainLocked .content {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* =============================================
    OVERLAY
    ============================================= */

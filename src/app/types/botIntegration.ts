@@ -12,6 +12,8 @@ export interface BotReglas {
 	requiereRenaper: boolean;
 	permiteSobreturno: boolean;
 	crearPacienteAutomatico: boolean;
+	/** Preguntar obra social / cobertura tras confirmar identidad. */
+	preguntarCobertura: boolean;
 	sugerirPrimerTurnoDisponible: boolean;
 	/** Días hacia adelante al buscar el primer turno (sin preferencia de día). */
 	busquedaMaxDias: number;

@@ -17,6 +17,14 @@ interface ApiResp<T> {
 }
 
 export const botConversacionService = {
+	async contarNoLeidos(): Promise<number> {
+		const { data } = await apiService.get<ApiResp<{ total: number }>>(
+			'/admin/bot/conversaciones/no-leidos',
+		);
+		if (!data.success) throw new Error(data.mensaje || 'Error al contar mensajes');
+		return data.data.total ?? 0;
+	},
+
 	async getEstadoAlmacen(): Promise<BotEstadoAlmacen> {
 		const { data } = await apiService.get<ApiResp<BotEstadoAlmacen>>(
 			'/admin/bot/conversaciones/estado-almacen',

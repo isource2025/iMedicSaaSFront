@@ -7,7 +7,15 @@ import type {
 	BotMensajeChat,
 	BotModoControl,
 } from '@/app/types/botConversacion';
+import AgendaEmptyState from '@/app/components/Agenda/AgendaEmptyState';
+import { emitInboxUnreadChanged } from '@/app/hooks/useWhatsAppInboxUnread';
 import styles from './AgendaWhatsAppInbox.module.css';
+import agendaStyles from '@/app/dashboard/turnos/agenda/agenda.module.css';
+
+const MSG_SQL_REQUERIDO =
+	'Las conversaciones deben persistir en SQL Server (imBotConfig + imBotChat). Ejecutá scripts/sql/setup_bot_minimal.sql en la BD tenant o: node scripts/ejecutar_setup_bot.js';
+
+type FiltroLista = 'TODOS' | 'NO_LEIDOS' | 'BOT' | 'HUMANO';
 
 function formatHora(fecha: string | null | undefined): string {
 	if (!fecha) return '';
@@ -28,16 +36,22 @@ function formatFechaRelativa(fecha: string | null | undefined): string {
 	return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
 }
 
-function labelModo(modo: BotModoControl): string {
-	if (modo === 'BOT') return 'Bot activo';
-	if (modo === 'HUMANO') return 'Agente';
-	return 'Bot pausado';
-}
-
-function tagModoClass(modo: BotModoControl): string {
-	if (modo === 'BOT') return styles.tagBot;
-	if (modo === 'HUMANO') return styles.tagHumano;
-	return styles.tagPausado;
+function formatDiaMensaje(fecha: string): string {
+	const d = new Date(fecha);
+	if (Number.isNaN(d.getTime())) return '';
+	const hoy = new Date();
+	const ayer = new Date();
+	ayer.setDate(hoy.getDate() - 1);
+	if (d.toDateString() === hoy.toDateString()) return 'Hoy';
+	if (d.toDateString() === ayer.toDateString()) return 'Ayer';
+	return d
+		.toLocaleDateString('es-AR', {
+			weekday: 'long',
+			day: '2-digit',
+			month: 'long',
+			year: 'numeric',
+		})
+		.replace(/^\w/, (c) => c.toUpperCase());
 }
 
 const MSG_API_BOT_404 =
@@ -49,64 +63,121 @@ function es404ConversacionesApi(e: unknown): boolean {
 	return ax.response?.status === 404 || /status code 404/i.test(String(ax.message || ''));
 }
 
+function agruparMensajesPorDia(mensajes: BotMensajeChat[]) {
+	const grupos: { dia: string; items: BotMensajeChat[] }[] = [];
+	let diaActual = '';
+	for (const m of mensajes) {
+		const dia = formatDiaMensaje(m.fechaMensaje);
+		if (dia !== diaActual) {
+			diaActual = dia;
+			grupos.push({ dia, items: [m] });
+		} else {
+			grupos[grupos.length - 1].items.push(m);
+		}
+	}
+	return grupos;
+}
+
 interface Props {
 	puedeEditar?: boolean;
 	fullHeight?: boolean;
+	onEstadoChange?: (data: {
+		conversaciones: BotConversacion[];
+		activa: BotConversacion | null;
+		almacenamiento: 'sql' | 'memoria' | null;
+		loadingLista: boolean;
+	}) => void;
 }
 
-export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = false }: Props) {
+export default function AgendaWhatsAppInbox({
+	puedeEditar = true,
+	fullHeight = false,
+	onEstadoChange,
+}: Props) {
 	const [conversaciones, setConversaciones] = useState<BotConversacion[]>([]);
 	const [selId, setSelId] = useState<string | null>(null);
 	const [mensajes, setMensajes] = useState<BotMensajeChat[]>([]);
 	const [convActiva, setConvActiva] = useState<BotConversacion | null>(null);
 	const [busqueda, setBusqueda] = useState('');
-	const [soloNoLeidos, setSoloNoLeidos] = useState(false);
+	const [filtroLista, setFiltroLista] = useState<FiltroLista>('TODOS');
 	const [textoEnvio, setTextoEnvio] = useState('');
 	const [loadingLista, setLoadingLista] = useState(true);
 	const [loadingChat, setLoadingChat] = useState(false);
 	const [enviando, setEnviando] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [almacenamiento, setAlmacenamiento] = useState<'sql' | 'memoria' | null>(null);
-	const [showSimulador, setShowSimulador] = useState(false);
-	const [simTel, setSimTel] = useState('5491123456789');
-	const [simNombre, setSimNombre] = useState('');
-	const [simMsg, setSimMsg] = useState('Hola, quiero un turno');
-	const [simulando, setSimulando] = useState(false);
+	const [togglingBot, setTogglingBot] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
 
 	const mensajesRef = useRef<HTMLDivElement>(null);
 	const ultimoIdRef = useRef<number>(0);
+	const debeScrollRef = useRef(true);
 
 	const convFiltradas = useMemo(() => {
+		let list = conversaciones;
+		if (filtroLista === 'NO_LEIDOS') list = list.filter((c) => c.noLeidos > 0);
+		if (filtroLista === 'BOT') list = list.filter((c) => c.modoControl === 'BOT');
+		if (filtroLista === 'HUMANO') list = list.filter((c) => c.modoControl === 'HUMANO');
+
 		const q = busqueda.trim().toLowerCase();
-		if (!q) return conversaciones;
-		return conversaciones.filter(
+		if (!q) return list;
+		return list.filter(
 			(c) =>
 				c.telefonoWhatsApp.includes(q) ||
 				(c.nombreContacto || '').toLowerCase().includes(q) ||
 				(c.dniPaciente || '').includes(q) ||
-				(c.ultimoMensaje || '').toLowerCase().includes(q),
+				(c.ultimoMensaje || '').toLowerCase().includes(q) ||
+				(c.pasoBot || '').toLowerCase().includes(q),
 		);
-	}, [conversaciones, busqueda]);
+	}, [conversaciones, busqueda, filtroLista]);
 
-	const puedeEscribir =
-		puedeEditar && convActiva && convActiva.modoControl !== 'BOT';
+	const mensajesAgrupados = useMemo(() => agruparMensajesPorDia(mensajes), [mensajes]);
+
+	const botActivo = convActiva?.modoControl === 'BOT';
+
+	const puedeEscribir = puedeEditar && convActiva && !botActivo;
+
+	useEffect(() => {
+		const checkMobile = () => setIsMobile(window.innerWidth < 900);
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+		return () => window.removeEventListener('resize', checkMobile);
+	}, []);
+
+	useEffect(() => {
+		onEstadoChange?.({
+			conversaciones,
+			activa: convActiva,
+			almacenamiento,
+			loadingLista,
+		});
+	}, [conversaciones, convActiva, almacenamiento, loadingLista, onEstadoChange]);
 
 	const cargarLista = useCallback(async () => {
 		try {
-			const data = await botConversacionService.listarConversaciones({
-				limit: 80,
-				soloNoLeidos,
-			});
+			const data = await botConversacionService.listarConversaciones({ limit: 80 });
 			setConversaciones(data.conversaciones);
+			setAlmacenamiento(data.almacenamiento);
+			if (data.almacenamiento !== 'sql') {
+				setError(MSG_SQL_REQUERIDO);
+			}
+			emitInboxUnreadChanged();
 		} catch (e: unknown) {
-			const err = e as { message?: string };
+			const err = e as { message?: string; response?: { status?: number; data?: { codigo?: string } } };
+			const sinSql =
+				err.response?.status === 503 ||
+				err.response?.data?.codigo === 'BOT_CONVERSACIONES_SIN_SQL';
 			setError(
-				es404ConversacionesApi(e) ? MSG_API_BOT_404 : err.message || 'Error cargando conversaciones',
+				es404ConversacionesApi(e)
+					? MSG_API_BOT_404
+					: sinSql
+						? MSG_SQL_REQUERIDO
+						: err.message || 'Error cargando conversaciones',
 			);
 		} finally {
 			setLoadingLista(false);
 		}
-	}, [soloNoLeidos]);
+	}, []);
 
 	const cargarChat = useCallback(async (id: string, silencioso = false) => {
 		if (!silencioso) setLoadingChat(true);
@@ -117,11 +188,13 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 			ultimoIdRef.current = det.mensajes.length
 				? Math.max(...det.mensajes.map((m) => m.idMensaje))
 				: 0;
+			debeScrollRef.current = true;
 			if (det.conversacion.noLeidos > 0) {
 				await botConversacionService.marcarLeida(id);
 				setConversaciones((prev) =>
 					prev.map((c) => (c.idConversacion === id ? { ...c, noLeidos: 0 } : c)),
 				);
+				emitInboxUnreadChanged();
 			}
 		} catch (e: unknown) {
 			const err = e as { message?: string };
@@ -139,6 +212,7 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 				ultimoIdRef.current || undefined,
 			);
 			if (nuevos.length) {
+				debeScrollRef.current = true;
 				setMensajes((prev) => [...prev, ...nuevos]);
 				ultimoIdRef.current = Math.max(...nuevos.map((m) => m.idMensaje));
 			}
@@ -174,10 +248,12 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 	}, [selId, cargarChat]);
 
 	useEffect(() => {
+		if (!debeScrollRef.current) return;
 		const el = mensajesRef.current;
 		if (!el) return;
-		el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-	}, [mensajes]);
+		el.scrollTop = el.scrollHeight;
+		debeScrollRef.current = false;
+	}, [mensajes, loadingChat]);
 
 	const handleControl = async (modo: BotModoControl) => {
 		if (!selId || !puedeEditar) return;
@@ -195,6 +271,17 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 		}
 	};
 
+	const handleToggleBot = async () => {
+		if (!selId || !puedeEditar || togglingBot) return;
+		setTogglingBot(true);
+		setError(null);
+		try {
+			await handleControl(botActivo ? 'HUMANO' : 'BOT');
+		} finally {
+			setTogglingBot(false);
+		}
+	};
+
 	const handleEnviar = async () => {
 		if (!selId || !textoEnvio.trim() || !puedeEscribir) return;
 		setEnviando(true);
@@ -202,6 +289,7 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 		try {
 			await botConversacionService.enviarMensaje(selId, textoEnvio.trim());
 			setTextoEnvio('');
+			debeScrollRef.current = true;
 			await cargarChat(selId, true);
 			await cargarLista();
 		} catch (e: unknown) {
@@ -212,145 +300,89 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 		}
 	};
 
-	const handleSimular = async () => {
-		if (!simTel.trim() || !simMsg.trim()) return;
-		setSimulando(true);
-		setError(null);
-		try {
-			const r = await botConversacionService.simularMensajeEntrante({
-				telefono: simTel.trim(),
-				mensaje: simMsg.trim(),
-				nombreContacto: simNombre.trim() || undefined,
-			});
-			setSelId(r.conversacion.idConversacion);
-			await cargarLista();
-			setShowSimulador(false);
-		} catch (e: unknown) {
-			const err = e as { message?: string };
-			setError(err.message || 'Error al simular');
-		} finally {
-			setSimulando(false);
-		}
-	};
-
 	const tituloContacto =
 		convActiva?.nombreContacto ||
 		(convActiva ? `+${convActiva.telefonoWhatsApp}` : 'Seleccioná un chat');
 
+	const filtros: { id: FiltroLista; label: string }[] = [
+		{ id: 'TODOS', label: 'Todas' },
+		{ id: 'NO_LEIDOS', label: 'No leídas' },
+		{ id: 'BOT', label: 'Bot activo' },
+		{ id: 'HUMANO', label: 'Agente' },
+	];
+
+	const layoutMobileClass =
+		isMobile && selId
+			? styles.layoutMobileChat
+			: isMobile
+				? styles.layoutMobileList
+				: '';
+
 	return (
 		<div className={`${styles.inbox} ${fullHeight ? styles.inboxFull : ''}`}>
-			<div className={styles.toolbar}>
-				<div className={styles.toolbarLeft}>
-					<span className={styles.toolbarTitle}>Conversaciones WhatsApp</span>
-					{almacenamiento === 'memoria' && (
-						<span className={styles.badgeMemoria} title="Ejecutá create_bot_conversaciones.sql para persistir">
-							Modo prueba (memoria)
-						</span>
-					)}
-				</div>
-				<div className={styles.toolbarActions}>
-					<label className={styles.checkFilter}>
-						<input
-							type="checkbox"
-							checked={soloNoLeidos}
-							onChange={(e) => {
-								setSoloNoLeidos(e.target.checked);
-								setLoadingLista(true);
-							}}
-						/>
-						Solo no leídos
-					</label>
-					{puedeEditar && (
-						<button
-							type="button"
-							className={styles.btnSimular}
-							onClick={() => setShowSimulador((v) => !v)}
-						>
-							{showSimulador ? 'Cerrar simulador' : 'Simular mensaje'}
-						</button>
-					)}
-				</div>
-			</div>
-
-			{showSimulador && puedeEditar && (
-				<div className={styles.simulador}>
-					<p className={styles.simuladorHint}>
-						Probá el inbox sin Meta: simula un mensaje entrante del paciente.
-					</p>
-					<div className={styles.simuladorGrid}>
-						<label>
-							Teléfono (WhatsApp)
-							<input
-								value={simTel}
-								onChange={(e) => setSimTel(e.target.value)}
-								placeholder="5491123456789"
-							/>
-						</label>
-						<label>
-							Nombre (opcional)
-							<input
-								value={simNombre}
-								onChange={(e) => setSimNombre(e.target.value)}
-								placeholder="María García"
-							/>
-						</label>
-						<label className={styles.simuladorMsg}>
-							Mensaje
-							<input
-								value={simMsg}
-								onChange={(e) => setSimMsg(e.target.value)}
-								onKeyDown={(e) => e.key === 'Enter' && handleSimular()}
-							/>
-						</label>
-						<button
-							type="button"
-							className={styles.btnPrimary}
-							disabled={simulando}
-							onClick={handleSimular}
-						>
-							{simulando ? 'Enviando…' : 'Simular entrante'}
-						</button>
-					</div>
-				</div>
-			)}
-
 			{error && <div className={styles.error}>{error}</div>}
 
-			<div className={styles.layout}>
+			<div className={`${styles.layout} ${layoutMobileClass}`}>
 				<aside className={styles.lista}>
+					<div className={styles.listaHeader}>
+						<span className={styles.listaTitle}>
+							Chats
+							{convFiltradas.length > 0 && (
+								<span className={styles.listaCount}>{convFiltradas.length}</span>
+							)}
+						</span>
+					</div>
 					<div className={styles.busquedaWrap}>
 						<input
 							type="search"
 							className={styles.busqueda}
-							placeholder="Buscar por teléfono, nombre o DNI…"
+							placeholder="Buscar teléfono, nombre, DNI o paso…"
 							value={busqueda}
 							onChange={(e) => setBusqueda(e.target.value)}
 						/>
 					</div>
+					<div className={styles.listaFiltros}>
+						{filtros.map((f) => (
+							<button
+								key={f.id}
+								type="button"
+								className={`${styles.filterChip} ${filtroLista === f.id ? styles.filterChipActive : ''}`}
+								onClick={() => setFiltroLista(f.id)}
+							>
+								{f.label}
+							</button>
+						))}
+					</div>
 					<div className={styles.listaScroll}>
 						{loadingLista ? (
-							<div className={styles.loading}>Cargando…</div>
-						) : convFiltradas.length === 0 ? (
-							<div className={styles.emptyLista}>
-								<p>Sin conversaciones</p>
-								{puedeEditar && (
-									<button
-										type="button"
-										className={styles.linkBtn}
-										onClick={() => setShowSimulador(true)}
-									>
-										Simular primer mensaje
-									</button>
-								)}
+							<div className={agendaStyles.loading}>
+								<span className={agendaStyles.spinner} />
+								Cargando conversaciones…
 							</div>
+						) : convFiltradas.length === 0 ? (
+							<AgendaEmptyState
+								compact
+								icon="💬"
+								title={
+									filtroLista !== 'TODOS' || busqueda
+										? 'Sin resultados'
+										: 'Sin conversaciones'
+								}
+								description={
+									filtroLista !== 'TODOS' || busqueda
+										? 'Probá otro filtro o limpiá la búsqueda.'
+										: 'Cuando lleguen mensajes de WhatsApp aparecerán acá.'
+								}
+							/>
 						) : (
 							convFiltradas.map((c) => {
 								const activa = selId === c.idConversacion;
+								const botOff = c.modoControl !== 'BOT';
 								return (
 									<button
 										key={c.idConversacion}
 										type="button"
-										className={`${styles.convItem} ${activa ? styles.convItemActive : ''}`}
+										className={`${styles.convItem} ${activa ? styles.convItemActive : ''} ${botOff ? styles.convItemBotOff : ''} ${c.noLeidos > 0 ? styles.convItemUnread : ''}`}
 										onClick={() => setSelId(c.idConversacion)}
 									>
 										<div className={styles.convAvatar}>
@@ -373,9 +405,16 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 													<span className={styles.badgeUnread}>{c.noLeidos}</span>
 												)}
 											</div>
-											<span className={`${styles.tag} ${tagModoClass(c.modoControl)}`}>
-												{labelModo(c.modoControl)}
-											</span>
+											{c.pasoBot && !botOff && (
+												<div className={styles.convMeta}>
+													<span className={styles.pasoTag}>{c.pasoBot}</span>
+												</div>
+											)}
+											{botOff && (
+												<div className={styles.convMeta}>
+													<span className={styles.convAgenteLabel}>Agente al mando</span>
+												</div>
+											)}
 										</div>
 									</button>
 								);
@@ -386,112 +425,132 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 
 				<section className={styles.chat}>
 					{!selId ? (
-						<div className={styles.chatEmpty}>
-							<div className={styles.chatEmptyIcon}>💬</div>
-							<h3>Inbox WhatsApp — Agenda</h3>
-							<p>
-								Pausá el bot, tomá el control y respondé como agente. Al conectar Meta,
-								los mensajes entrarán por webhook automáticamente.
-							</p>
-						</div>
+						<AgendaEmptyState
+							icon="💬"
+							title="Seleccioná una conversación"
+							description="Elegí un chat de la lista para ver el historial, pausar el bot o responder como agente."
+						/>
 					) : (
 						<>
-							<header className={styles.chatHeader}>
+							<header
+								className={`${styles.chatHeader} ${!botActivo ? styles.chatHeaderAgente : ''}`}
+							>
 								<div className={styles.chatHeaderInfo}>
-									<h3>{tituloContacto}</h3>
-									<span className={styles.chatSub}>
-										+{convActiva?.telefonoWhatsApp}
-										{convActiva?.dniPaciente && ` · DNI ${convActiva.dniPaciente}`}
-										{convActiva?.pasoBot && ` · Paso: ${convActiva.pasoBot}`}
-									</span>
-								</div>
-								<div className={styles.chatControls}>
-									<span
-										className={`${styles.tag} ${styles.tagHeader} ${tagModoClass(convActiva?.modoControl || 'BOT')}`}
-									>
-										{labelModo(convActiva?.modoControl || 'BOT')}
-										{convActiva?.modoControl === 'HUMANO' &&
-											convActiva.nombreAgente &&
-											` · ${convActiva.nombreAgente}`}
-									</span>
-									{puedeEditar && (
-										<>
+									<div className={styles.chatHeaderTitleRow}>
+										{isMobile && (
 											<button
 												type="button"
-												className={styles.btnControl}
-												disabled={convActiva?.modoControl === 'PAUSADO'}
-												onClick={() => handleControl('PAUSADO')}
-												title="Detiene respuestas automáticas del bot"
+												className={styles.btnBack}
+												onClick={() => setSelId(null)}
+												aria-label="Volver a la lista de chats"
 											>
-												⏸ Pausar bot
+												←
 											</button>
-											<button
-												type="button"
-												className={`${styles.btnControl} ${styles.btnControlPrimary}`}
-												disabled={convActiva?.modoControl === 'HUMANO'}
-												onClick={() => handleControl('HUMANO')}
-												title="Tomás el chat; el bot no responde"
-											>
-												👤 Tomar control
-											</button>
-											<button
-												type="button"
-												className={styles.btnControl}
-												disabled={convActiva?.modoControl === 'BOT'}
-												onClick={() => handleControl('BOT')}
-												title="El bot vuelve a atender solo"
-											>
-												🤖 Devolver al bot
-											</button>
-										</>
+										)}
+										<div className={styles.chatHeaderNames}>
+											<h3>{tituloContacto}</h3>
+											{convActiva?.telefonoWhatsApp && (
+												<span className={styles.chatTel}>
+													+{convActiva.telefonoWhatsApp}
+												</span>
+											)}
+										</div>
+									</div>
+									{!botActivo && convActiva?.nombreAgente && (
+										<span className={styles.chatAgente}>
+											Atendido por {convActiva.nombreAgente}
+										</span>
 									)}
 								</div>
+								{puedeEditar && (
+									<div
+										className={styles.botToggle}
+										title={botActivo ? 'Desactivar bot y tomar control' : 'Activar bot'}
+									>
+										<span className={styles.botToggleLabel}>Bot</span>
+										<button
+											type="button"
+											role="switch"
+											aria-checked={botActivo}
+											aria-label={botActivo ? 'Desactivar bot' : 'Activar bot'}
+											className={`${styles.botSwitch} ${botActivo ? styles.botSwitchOn : styles.botSwitchOff}`}
+											disabled={togglingBot}
+											onClick={handleToggleBot}
+										>
+											<span className={styles.botSwitchThumb} />
+										</button>
+										<span className={styles.botToggleState}>
+											{botActivo ? 'Activo' : 'Off · vos respondés'}
+										</span>
+									</div>
+								)}
 							</header>
 
 							{convActiva?.idPaciente && (
 								<div className={styles.contextoPaciente}>
 									<span>Paciente identificado</span>
 									<strong>ID {convActiva.idPaciente}</strong>
-									{convActiva.dniPaciente && (
-										<span>DNI {convActiva.dniPaciente}</span>
-									)}
 								</div>
 							)}
 
-							<div ref={mensajesRef} className={styles.mensajes}>
-								{loadingChat ? (
-									<div className={styles.loading}>Cargando mensajes…</div>
-								) : (
-									mensajes.map((m) => {
-										const esOut = m.direccion === 'OUT';
-										const esSistema = m.origen === 'SISTEMA';
-										return (
-											<div
-												key={m.idMensaje}
-												className={`${styles.bubbleRow} ${esOut ? styles.bubbleRowOut : styles.bubbleRowIn}`}
-											>
-												<div
-													className={`${styles.bubble} ${esOut ? styles.bubbleOut : styles.bubbleIn} ${esSistema ? styles.bubbleSistema : ''}`}
-												>
-													{!esSistema && m.origen === 'AGENTE' && m.nombreAgente && (
-														<span className={styles.bubbleAgente}>{m.nombreAgente}</span>
-													)}
-													<p>{m.contenido}</p>
-													<span className={styles.bubbleTime}>
-														{formatHora(m.fechaMensaje)}
-														{esOut && m.origen === 'AGENTE' && ' ✓'}
-													</span>
+							<div className={styles.chatBody}>
+								<div ref={mensajesRef} className={styles.mensajes}>
+									{loadingChat ? (
+										<div className={agendaStyles.loading}>
+											<span className={agendaStyles.spinner} />
+											Cargando mensajes…
+										</div>
+									) : mensajes.length === 0 ? (
+										<AgendaEmptyState
+											compact
+											icon="📩"
+											title="Sin mensajes"
+											description="Todavía no hay mensajes en esta conversación."
+										/>
+									) : (
+										mensajesAgrupados.map((grupo) => (
+											<div key={grupo.dia} className={styles.diaGrupo}>
+												<div className={styles.diaSeparador}>
+													<span>{grupo.dia}</span>
 												</div>
+												{grupo.items.map((m) => {
+													const esOut = m.direccion === 'OUT';
+													const esSistema = m.origen === 'SISTEMA';
+													return (
+														<div
+															key={m.idMensaje}
+															className={`${styles.bubbleRow} ${esOut ? styles.bubbleRowOut : styles.bubbleRowIn}`}
+														>
+															<div
+																className={`${styles.bubble} ${esOut ? styles.bubbleOut : styles.bubbleIn} ${esSistema ? styles.bubbleSistema : ''} ${m.origen === 'BOT' ? styles.bubbleBot : ''}`}
+															>
+																{!esSistema && m.origen === 'AGENTE' && m.nombreAgente && (
+																	<span className={styles.bubbleAgente}>
+																		{m.nombreAgente}
+																	</span>
+																)}
+																{!esSistema && m.origen === 'BOT' && (
+																	<span className={styles.bubbleBotLabel}>Bot</span>
+																)}
+																<p>{m.contenido}</p>
+																<span className={styles.bubbleTime}>
+																	{formatHora(m.fechaMensaje)}
+																	{esOut && m.origen === 'AGENTE' && ' ✓'}
+																</span>
+															</div>
+														</div>
+													);
+												})}
 											</div>
-										);
-									})
-								)}
+										))
+									)}
+								</div>
 							</div>
 
 							<footer className={styles.composer}>
-								{convActiva?.modoControl === 'BOT' && (
+								{botActivo && (
 									<p className={styles.composerHint}>
-										El bot está activo. Pausalo o tomá el control para escribir.
+										Desactivá el bot para tomar el control y escribir.
 									</p>
 								)}
 								<div className={styles.composerRow}>
@@ -499,13 +558,13 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 										className={styles.composerInput}
 										placeholder={
 											puedeEscribir
-												? 'Escribí un mensaje…'
-												: 'Pausá el bot o tomá el control para responder'
+												? 'Escribí un mensaje… (Enter para enviar)'
+												: 'Desactivá el bot para responder'
 										}
 										value={textoEnvio}
 										onChange={(e) => setTextoEnvio(e.target.value)}
 										disabled={!puedeEscribir || enviando}
-										rows={1}
+										rows={2}
 										onKeyDown={(e) => {
 											if (e.key === 'Enter' && !e.shiftKey) {
 												e.preventDefault();
@@ -518,6 +577,7 @@ export default function AgendaWhatsAppInbox({ puedeEditar = true, fullHeight = f
 										className={styles.btnSend}
 										disabled={!puedeEscribir || enviando || !textoEnvio.trim()}
 										onClick={handleEnviar}
+										aria-label="Enviar mensaje"
 									>
 										{enviando ? '…' : '➤'}
 									</button>

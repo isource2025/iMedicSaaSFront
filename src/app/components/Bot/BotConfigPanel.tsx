@@ -602,6 +602,27 @@ export default function BotConfigPanel() {
 							<label className={styles.toggle}>
 								<input
 									type="checkbox"
+									checked={form.reglas.preguntarCobertura ?? false}
+									onChange={(e) => {
+										const checked = e.target.checked;
+										const flujo = form.flujo.map((p) =>
+											p.id === 'ELEGIR_COBERTURA' ? { ...p, activo: checked } : p,
+										);
+										setForm({
+											...form,
+											flujo,
+											reglas: {
+												...form.reglas,
+												preguntarCobertura: checked,
+											},
+										});
+									}}
+								/>
+								Preguntar obra social / cobertura (guarda NumeroCuenta en imPacientes). Activá también el paso *Obra social* en Flujo paso a paso.
+							</label>
+							<label className={styles.toggle}>
+								<input
+									type="checkbox"
 									checked={form.reglas.requiereRenaper}
 									onChange={(e) =>
 										setForm({

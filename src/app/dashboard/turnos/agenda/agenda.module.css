@@ -94,14 +94,27 @@
 .chatsPage {
 	display: flex;
 	flex-direction: column;
-	height: calc(100vh - 3rem);
+	height: 100%;
 	min-height: 0;
+	max-height: 100%;
+	overflow: hidden;
+}
+
+.chatsPage .layoutFull {
+	flex: 1 1 0;
+	min-height: 0;
+	height: 100%;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 .chatsPage .main {
 	flex: 1;
 	min-height: 0;
 	height: auto;
+	display: flex;
+	flex-direction: column;
 }
 
 .chatsPage .mainCard {
@@ -121,13 +134,15 @@
 	min-height: 0;
 	overflow: hidden;
 	padding: 0.75rem;
+	display: flex;
+	flex-direction: column;
 }
 
-@media (max-width: 768px) {
-	.chatsPage {
-		height: calc(100vh - 5.75rem);
-	}
+.chatsPage .cardBody > * {
+	flex: 1;
+	min-height: 0;
 }
+
 
 .cardTitle {
 	margin: 0;

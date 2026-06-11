@@ -10,11 +10,16 @@ function isBedDetailPath(pathname: string | null) {
   return !!pathname && /^\/dashboard\/beds\/[^/]+/.test(pathname);
 }
 
+function isChatsPath(pathname: string | null) {
+  return !!pathname && pathname.startsWith('/dashboard/turnos/chats');
+}
+
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const hideGlobalNotificationsFab = isBedDetailPath(pathname);
+  const lockMainScroll = isChatsPath(pathname);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -42,7 +47,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       />
       
       {/* Contenido principal con efectos de blur y desplazamiento */}
-      <main className={`${styles.main} ${sidebarExpanded ? styles.mainShifted : ''}`}>
+      <main
+        className={`${styles.main} ${sidebarExpanded ? styles.mainShifted : ''} ${lockMainScroll ? styles.mainLocked : ''}`}
+      >
         {/* Botón de menú hamburguesa/logo para mobile */}
         {isMobile && (
           <button 
