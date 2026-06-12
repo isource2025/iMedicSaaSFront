@@ -11,8 +11,10 @@ export function apiPath(path: string): string {
 /** Headers con JWT del login (requerido en todas las rutas /api/*). */
 export function withAuthHeaders(init?: RequestInit): RequestInit {
 	const headers = new Headers(init?.headers);
+	const method = String(init?.method || 'GET').toUpperCase();
 	const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
-	if (!isFormData && !headers.has('Content-Type')) {
+	const hasBody = init?.body != null && init.body !== '';
+	if (!isFormData && hasBody && method !== 'GET' && method !== 'HEAD' && !headers.has('Content-Type')) {
 		headers.set('Content-Type', 'application/json');
 	}
 	if (typeof window !== 'undefined') {
@@ -20,6 +22,12 @@ export function withAuthHeaders(init?: RequestInit): RequestInit {
 		if (token) headers.set('Authorization', `Bearer ${token}`);
 	}
 	return { ...init, headers };
+}
+
+function getStoredToken(): string | null {
+	if (typeof window === 'undefined') return null;
+	const token = localStorage.getItem('token');
+	return token && token.trim() ? token.trim() : null;
 }
 
 /** fetch autenticado hacia la API iMedic (path relativo o URL absoluta). */
@@ -51,12 +59,34 @@ export async function apiFetchBlob(pathOrUrl: string, init?: RequestInit): Promi
 	return response.blob();
 }
 
-/** Abre un recurso autenticado en pestaña nueva (evita window.open sin JWT en Render). */
+/**
+ * Abre un recurso autenticado en pestaña nueva.
+ * Abre la ventana de forma síncrona (click del usuario) para evitar bloqueo de pop-ups.
+ */
 export async function openAuthenticatedBlob(pathOrUrl: string, init?: RequestInit): Promise<void> {
-	const blob = await apiFetchBlob(pathOrUrl, init);
-	const blobUrl = URL.createObjectURL(blob);
-	window.open(blobUrl, '_blank', 'noopener,noreferrer');
-	window.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
+	const popup = window.open('', '_blank', 'noopener,noreferrer');
+	if (!popup) {
+		const token = getStoredToken();
+		if (token) {
+			const sep = pathOrUrl.includes('?') ? '&' : '?';
+			const rel = /^https?:\/\//i.test(pathOrUrl) ? pathOrUrl : apiPath(pathOrUrl);
+			window.open(`${rel}${sep}access_token=${encodeURIComponent(token)}`, '_blank', 'noopener,noreferrer');
+			return;
+		}
+		throw new Error('El navegador bloqueó la ventana emergente. Permití pop-ups para este sitio.');
+	}
+	try {
+		popup.document.title = 'Cargando…';
+		popup.document.body.innerHTML =
+			'<p style="font-family:sans-serif;padding:2rem;color:#334155">Cargando archivo…</p>';
+		const blob = await apiFetchBlob(pathOrUrl, init);
+		const blobUrl = URL.createObjectURL(blob);
+		popup.location.replace(blobUrl);
+		window.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
+	} catch (err) {
+		popup.close();
+		throw err;
+	}
 }
 
 /** Convierte URL absoluta legacy (NEXT_PUBLIC_API_URL + path) a path relativo. */

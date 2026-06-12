@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Adjunto } from '@/app/types/adjuntos';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import styles from './FileList.module.css';
@@ -12,6 +12,8 @@ interface FileListProps {
 }
 
 export default function FileList({ adjuntos, onDelete, readOnly = false }: FileListProps) {
+  const [accionId, setAccionId] = useState<number | null>(null);
+
   const getFileIcon = (tipoArchivo: string) => {
     if (tipoArchivo.includes('pdf')) {
       return (
@@ -52,16 +54,29 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
   };
 
   const handleView = async (adjunto: Adjunto) => {
+    if (accionId != null) return;
+    setAccionId(adjunto.IdAdjunto);
     try {
       await adjuntosService.abrirArchivo(adjunto.IdAdjunto);
     } catch (err) {
       console.error('Error al visualizar adjunto:', err);
       alert(err instanceof Error ? err.message : 'No se pudo abrir el archivo');
+    } finally {
+      setAccionId(null);
     }
   };
 
-  const handleDownload = (adjunto: Adjunto) => {
-    adjuntosService.descargarArchivo(adjunto.IdAdjunto, adjunto.NombreArchivo);
+  const handleDownload = async (adjunto: Adjunto) => {
+    if (accionId != null) return;
+    setAccionId(adjunto.IdAdjunto);
+    try {
+      await adjuntosService.descargarArchivo(adjunto.IdAdjunto, adjunto.NombreArchivo);
+    } catch (err) {
+      console.error('Error al descargar adjunto:', err);
+      alert(err instanceof Error ? err.message : 'No se pudo descargar el archivo');
+    } finally {
+      setAccionId(null);
+    }
   };
 
   const handleDelete = async (idAdjunto: number) => {
@@ -101,17 +116,15 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
       .sort((a, b) => b.cantidad - a.cantidad);
   }, [adjuntos]);
 
-  // Estado para controlar qué grupos están expandidos
-  const [gruposExpandidos, setGruposExpandidos] = useState<{ [key: string]: boolean }>(
-    () => {
-      // Por defecto, todos los grupos cerrados
-      const inicial: { [key: string]: boolean } = {};
-      adjuntosAgrupados.forEach(grupo => {
-        inicial[grupo.nombre] = false;
-      });
-      return inicial;
-    }
-  );
+  const [gruposExpandidos, setGruposExpandidos] = useState<{ [key: string]: boolean }>({});
+
+  useEffect(() => {
+    const inicial: { [key: string]: boolean } = {};
+    adjuntosAgrupados.forEach((grupo) => {
+      inicial[grupo.nombre] = true;
+    });
+    setGruposExpandidos(inicial);
+  }, [adjuntosAgrupados]);
 
   const toggleGrupo = (nombre: string) => {
     setGruposExpandidos(prev => ({
@@ -183,9 +196,11 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
             </div>
             <div className={styles.fileActions}>
               <button
+                type="button"
                 onClick={() => handleView(adjunto)}
                 className={styles.viewButton}
                 title="Visualizar"
+                disabled={accionId === adjunto.IdAdjunto}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -193,9 +208,11 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
                 </svg>
               </button>
               <button
+                type="button"
                 onClick={() => handleDownload(adjunto)}
                 className={styles.downloadButton}
                 title="Descargar"
+                disabled={accionId === adjunto.IdAdjunto}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -205,9 +222,11 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
               </button>
               {!readOnly && onDelete && (
                 <button
+                  type="button"
                   onClick={() => handleDelete(adjunto.IdAdjunto)}
                   className={styles.deleteButton}
                   title="Eliminar"
+                  disabled={accionId === adjunto.IdAdjunto}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6"/>

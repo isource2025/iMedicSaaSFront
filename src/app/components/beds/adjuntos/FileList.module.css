@@ -112,7 +112,7 @@
   color: white;
 }
 
-.downloadButton:hover {
+.downloadButton:hover:not(:disabled) {
   background: #0083A9;
   transform: translateY(-1px);
 }
@@ -123,7 +123,7 @@
   margin-left: 8px;
 }
 
-.deleteButton:hover {
+.deleteButton:hover:not(:disabled) {
   background: #dc2626;
   transform: translateY(-1px);
 }
@@ -202,9 +202,17 @@
   color: white;
 }
 
-.viewButton:hover {
+.viewButton:hover:not(:disabled) {
   background: #41C8DC;
   transform: translateY(-1px);
+}
+
+.viewButton:disabled,
+.downloadButton:disabled,
+.deleteButton:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
 }
 
 .viewButton svg {
