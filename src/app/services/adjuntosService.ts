@@ -127,6 +127,9 @@ export const adjuntosService = {
 
   async cargarBlobAdjunto(idAdjunto: number): Promise<{ blob: Blob; blobUrl: string }> {
     const blob = await apiFetchBlob(`/adjuntos/${idAdjunto}/download`);
+    if (!blob.size) {
+      throw new Error('El archivo está vacío o no se pudo obtener desde el servidor de archivos');
+    }
     return { blob, blobUrl: URL.createObjectURL(blob) };
   },
 
