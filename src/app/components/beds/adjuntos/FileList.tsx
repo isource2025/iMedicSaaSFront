@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Adjunto } from '@/app/types/adjuntos';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import styles from './FileList.module.css';
@@ -116,15 +116,15 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
       .sort((a, b) => b.cantidad - a.cantidad);
   }, [adjuntos]);
 
-  const [gruposExpandidos, setGruposExpandidos] = useState<{ [key: string]: boolean }>({});
-
-  useEffect(() => {
-    const inicial: { [key: string]: boolean } = {};
-    adjuntosAgrupados.forEach((grupo) => {
-      inicial[grupo.nombre] = true;
-    });
-    setGruposExpandidos(inicial);
-  }, [adjuntosAgrupados]);
+  const [gruposExpandidos, setGruposExpandidos] = useState<{ [key: string]: boolean }>(
+    () => {
+      const inicial: { [key: string]: boolean } = {};
+      adjuntosAgrupados.forEach((grupo) => {
+        inicial[grupo.nombre] = false;
+      });
+      return inicial;
+    },
+  );
 
   const toggleGrupo = (nombre: string) => {
     setGruposExpandidos(prev => ({
