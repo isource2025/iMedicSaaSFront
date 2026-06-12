@@ -60,31 +60,32 @@ export async function apiFetchBlob(pathOrUrl: string, init?: RequestInit): Promi
 }
 
 /**
- * Abre un recurso autenticado en pestaña nueva.
- * Abre la ventana de forma síncrona (click del usuario) para evitar bloqueo de pop-ups.
+ * Abre blob en pestaña nueva (sin noopener para poder asignar la URL tras el fetch).
+ * Preferir visor en página (AdjuntoFileViewer) cuando sea posible.
  */
 export async function openAuthenticatedBlob(pathOrUrl: string, init?: RequestInit): Promise<void> {
-	const popup = window.open('', '_blank', 'noopener,noreferrer');
+	const popup = window.open('about:blank', '_blank');
 	if (!popup) {
 		const token = getStoredToken();
 		if (token) {
-			const sep = pathOrUrl.includes('?') ? '&' : '?';
 			const rel = /^https?:\/\//i.test(pathOrUrl) ? pathOrUrl : apiPath(pathOrUrl);
-			window.open(`${rel}${sep}access_token=${encodeURIComponent(token)}`, '_blank', 'noopener,noreferrer');
+			const sep = rel.includes('?') ? '&' : '?';
+			window.open(`${rel}${sep}access_token=${encodeURIComponent(token)}`, '_blank');
 			return;
 		}
 		throw new Error('El navegador bloqueó la ventana emergente. Permití pop-ups para este sitio.');
 	}
 	try {
-		popup.document.title = 'Cargando…';
-		popup.document.body.innerHTML =
-			'<p style="font-family:sans-serif;padding:2rem;color:#334155">Cargando archivo…</p>';
 		const blob = await apiFetchBlob(pathOrUrl, init);
 		const blobUrl = URL.createObjectURL(blob);
-		popup.location.replace(blobUrl);
-		window.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
+		popup.location.href = blobUrl;
 	} catch (err) {
-		popup.close();
+		const msg = err instanceof Error ? err.message : 'No se pudo abrir el archivo';
+		popup.document.open();
+		popup.document.write(
+			`<!DOCTYPE html><html><body style="font-family:sans-serif;padding:2rem;color:#991b1b"><p>${msg}</p></body></html>`,
+		);
+		popup.document.close();
 		throw err;
 	}
 }

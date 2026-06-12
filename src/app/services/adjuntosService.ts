@@ -1,4 +1,4 @@
-import { apiFetch, apiFetchBlob, apiPath, openAuthenticatedBlob } from '@/app/utils/authFetch';
+import { apiFetch, apiFetchBlob } from '@/app/utils/authFetch';
 import {
   Adjunto,
   SubirAdjuntoResponse,
@@ -122,19 +122,16 @@ export const adjuntosService = {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
+    window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
   },
 
-  async abrirArchivo(idAdjunto: number): Promise<void> {
-    await openAuthenticatedBlob(`/adjuntos/${idAdjunto}/download`);
+  async cargarBlobAdjunto(idAdjunto: number): Promise<{ blob: Blob; blobUrl: string }> {
+    const blob = await apiFetchBlob(`/adjuntos/${idAdjunto}/download`);
+    return { blob, blobUrl: URL.createObjectURL(blob) };
   },
 
-  urlDescargaAutenticada(idAdjunto: number): string {
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('token')?.trim() : null;
-    const base = apiPath(`/adjuntos/${idAdjunto}/download`);
-    if (!token) return base;
-    return `${base}?access_token=${encodeURIComponent(token)}`;
+  revocarBlobUrl(blobUrl: string | null | undefined) {
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
   },
 
   async eliminarAdjunto(idAdjunto: number): Promise<{ success: boolean; message: string }> {

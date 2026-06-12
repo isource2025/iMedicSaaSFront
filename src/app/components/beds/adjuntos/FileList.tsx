@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Adjunto } from '@/app/types/adjuntos';
 import { adjuntosService } from '@/app/services/adjuntosService';
+import AdjuntoFileViewer, { AdjuntoViewerState } from './AdjuntoFileViewer';
 import styles from './FileList.module.css';
 
 interface FileListProps {
@@ -13,6 +14,8 @@ interface FileListProps {
 
 export default function FileList({ adjuntos, onDelete, readOnly = false }: FileListProps) {
   const [accionId, setAccionId] = useState<number | null>(null);
+  const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
 
   const getFileIcon = (tipoArchivo: string) => {
     if (tipoArchivo.includes('pdf')) {
@@ -54,16 +57,28 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
   };
 
   const handleView = async (adjunto: Adjunto) => {
-    if (accionId != null) return;
+    if (accionId != null || viewerLoading) return;
     setAccionId(adjunto.IdAdjunto);
+    setViewerLoading(true);
     try {
-      await adjuntosService.abrirArchivo(adjunto.IdAdjunto);
+      const { blob, blobUrl } = await adjuntosService.cargarBlobAdjunto(adjunto.IdAdjunto);
+      setViewer({
+        blobUrl,
+        fileName: adjunto.NombreArchivo,
+        mimeType: blob.type || adjunto.TipoArchivo || '',
+      });
     } catch (err) {
       console.error('Error al visualizar adjunto:', err);
       alert(err instanceof Error ? err.message : 'No se pudo abrir el archivo');
     } finally {
+      setViewerLoading(false);
       setAccionId(null);
     }
+  };
+
+  const closeViewer = () => {
+    adjuntosService.revocarBlobUrl(viewer?.blobUrl);
+    setViewer(null);
   };
 
   const handleDownload = async (adjunto: Adjunto) => {
@@ -142,6 +157,8 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
   }
 
   return (
+    <>
+    <AdjuntoFileViewer viewer={viewer} loading={viewerLoading} onClose={closeViewer} />
     <div className={styles.container}>
       <h4 className={styles.title}>Archivos adjuntos ({adjuntos.length})</h4>
       
@@ -244,5 +261,6 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
         </div>
       ))}
     </div>
+    </>
   );
 }
