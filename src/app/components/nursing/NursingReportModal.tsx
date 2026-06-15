@@ -41,7 +41,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
       setError(null);
       
       // Obtener IdSector de los datos de la cama
-      const bedsResponse = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+      const bedsResponse = await apiFetch('/beds');
       if (bedsResponse.ok) {
         const bedsData = await bedsResponse.json();
         if (bedsData.success) {
@@ -53,7 +53,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
       }
       
       const daysParam = periodFilter === 'all' ? '' : `?days=${periodFilter}`;
-      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/beds/controles-frecuentes/${numeroVisita}${daysParam}`);
+      const response = await apiFetch(`/beds/controles-frecuentes/${numeroVisita}${daysParam}`);
       if (!response.ok) throw new Error('Error al obtener los controles frecuentes');
       const data = await response.json();
       if (data.success) {

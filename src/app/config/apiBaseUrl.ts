@@ -51,3 +51,19 @@ export function normalizeApiBaseUrl(raw?: string): string {
 export function getEnvApiBaseUrl(): string {
 	return normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 }
+
+/**
+ * Convierte paths legacy (host sin protocolo + ruta) a path relativo /api/...
+ * Ej: "imedicsaasback.../beds" → "/beds"
+ */
+export function normalizeApiRequestPath(pathOrUrl: string): string {
+	const trimmed = String(pathOrUrl ?? '').trim();
+	if (!trimmed) return '/';
+	if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+	// host.tld/path o host.tld:port/path → /path
+	const hostPath = trimmed.match(/^(?:[a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?::\d+)?\/+(.+)$/i);
+	if (hostPath) return `/${hostPath[1].replace(/^\/+/, '')}`;
+
+	return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+}

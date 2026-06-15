@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getEnvApiBaseUrl } from '@/app/config/apiBaseUrl';
+import { getEnvApiBaseUrl, normalizeApiRequestPath } from '@/app/config/apiBaseUrl';
 
 const envApiBase = getEnvApiBaseUrl();
 
@@ -49,6 +49,9 @@ if (typeof window !== 'undefined') {
 axiosInstance.interceptors.request.use(
 	(config: any) => {
 		config.baseURL = getResolvedApiBaseUrl();
+		if (config.url) {
+			config.url = normalizeApiRequestPath(config.url);
+		}
 
 		const token = localStorage.getItem('token');
 
@@ -75,19 +78,26 @@ axiosInstance.interceptors.response.use(
 		const { response } = error;
 
 		if (response) {
-			// Handle unauthorized errors
+			// Handle unauthorized errors (no logout en rutas públicas de branding/login)
 			if (response.status === 401) {
-				localStorage.removeItem('token');
-				localStorage.removeItem('user');
-				localStorage.removeItem('userData');
-				localStorage.removeItem('rol');
-				localStorage.removeItem('permisos');
-				localStorage.removeItem('empresaSeleccionada');
-				localStorage.removeItem('empresaInfo');
-				localStorage.removeItem('empresaModulos');
+				const reqUrl = String(response.config?.url || '');
+				const isPublicRoute =
+					reqUrl.includes('/empresa') ||
+					reqUrl.includes('/auth/') ||
+					reqUrl.includes('/health');
+				if (!isPublicRoute) {
+					localStorage.removeItem('token');
+					localStorage.removeItem('user');
+					localStorage.removeItem('userData');
+					localStorage.removeItem('rol');
+					localStorage.removeItem('permisos');
+					localStorage.removeItem('empresaSeleccionada');
+					localStorage.removeItem('empresaInfo');
+					localStorage.removeItem('empresaModulos');
 
-				if (window.location.pathname !== '/') {
-					window.location.href = '/';
+					if (window.location.pathname !== '/') {
+						window.location.href = '/';
+					}
 				}
 			}
 

@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from '../utils/fetchUtils';
+import { API_BASE_URL } from '../config/constants';
 
 // Interfaz para opciones de tabla dinámicas
 export interface TableOption {
@@ -16,7 +17,7 @@ export interface TableData {
 }
 
 // URLs de servicios
-const BASE_URL = 'http://localhost:5006';
+const BASE_URL = API_BASE_URL;
 const API_TIMEOUT = 5000; // 5 segundos
 
 /**
@@ -24,7 +25,7 @@ const API_TIMEOUT = 5000; // 5 segundos
  */
 export async function getAdmissionTablesOptions(): Promise<TableOption[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/admin/opcgrd`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/admin/opcgrd`, {}, API_TIMEOUT);
     
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -43,7 +44,7 @@ export async function getAdmissionTablesOptions(): Promise<TableOption[]> {
  */
 export async function getClasesPaciente(): Promise<TableData[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/tables/clasespac`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/tables/clasespac`, {}, API_TIMEOUT);
     if (!response.ok) throw new Error(`Error ${response.status}`);
     
     const data = await response.json();
@@ -59,7 +60,7 @@ export async function getClasesPaciente(): Promise<TableData[]> {
  */
 export async function getDadoresOrganos(): Promise<TableData[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/tables/dadores`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/tables/dadores`, {}, API_TIMEOUT);
     if (!response.ok) throw new Error(`Error ${response.status}`);
     
     const data = await response.json();
@@ -75,7 +76,7 @@ export async function getDadoresOrganos(): Promise<TableData[]> {
  */
 export async function getDiagnosticos(): Promise<TableData[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/tables/diagnosticos`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/tables/diagnosticos`, {}, API_TIMEOUT);
     if (!response.ok) throw new Error(`Error ${response.status}`);
     
     const data = await response.json();
@@ -91,7 +92,7 @@ export async function getDiagnosticos(): Promise<TableData[]> {
  */
 export async function getDisposicionesEgreso(): Promise<TableData[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/tables/dispegreso`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/tables/dispegreso`, {}, API_TIMEOUT);
     if (!response.ok) throw new Error(`Error ${response.status}`);
     
     const data = await response.json();
@@ -107,7 +108,7 @@ export async function getDisposicionesEgreso(): Promise<TableData[]> {
  */
 export async function getEstadosAmbulatorios(): Promise<TableData[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/tables/estadosamb`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/tables/estadosamb`, {}, API_TIMEOUT);
     if (!response.ok) throw new Error(`Error ${response.status}`);
     
     const data = await response.json();
@@ -123,7 +124,7 @@ export async function getEstadosAmbulatorios(): Promise<TableData[]> {
  */
 export async function getEstadosCiviles(): Promise<TableData[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/tables/estadosciv`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/tables/estadosciv`, {}, API_TIMEOUT);
     if (!response.ok) throw new Error(`Error ${response.status}`);
     
     const data = await response.json();
@@ -139,7 +140,7 @@ export async function getEstadosCiviles(): Promise<TableData[]> {
  */
 export async function getEstadosMilitares(): Promise<TableData[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/api/tables/estadosmil`, {}, API_TIMEOUT);
+    const response = await fetchWithTimeout(`${BASE_URL}/tables/estadosmil`, {}, API_TIMEOUT);
     if (!response.ok) throw new Error(`Error ${response.status}`);
     
     const data = await response.json();

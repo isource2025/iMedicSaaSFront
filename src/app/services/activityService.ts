@@ -79,7 +79,7 @@ export class InternacionActivityService extends ActivityService {
 
   constructor() {
     super();
-    this.endpoint = `${this.baseUrl}${DEFAULT_CONFIG.visitaMovimientos}`;
+    this.endpoint = DEFAULT_CONFIG.visitaMovimientos;
   }
 
   /**

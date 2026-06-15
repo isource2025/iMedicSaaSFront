@@ -70,7 +70,7 @@ export default function NuevaEvolucionModal({
     useEffect(() => {
         const obtenerDocumento = async () => {
             try {
-                const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+                const res = await apiFetch('/beds');
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data.success) return;

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useBedDetail, SidebarSection } from '../contexts/BedDetailContext';
 import { apiFetch } from '@/app/utils/authFetch';
+import { getResolvedApiBaseUrl } from '@/app/services/axios';
 
 // ===== Helpers =====
 function toISODate(d: Date | null | undefined) {
@@ -94,7 +95,7 @@ export function useBedSectionFetch<T = unknown>(
 	const section = activeSection;
 	const dateISO = toISODate(selectedDate);
 
-	const apiBase = (opts?.apiBase ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(
+	const apiBase = (opts?.apiBase ?? getResolvedApiBaseUrl()).replace(
 		/\/+$/,
 		'',
 	);

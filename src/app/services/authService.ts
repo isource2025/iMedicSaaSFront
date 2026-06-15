@@ -163,15 +163,12 @@ export const authService = {
   /** Refresca los permisos del usuario desde /api/permisos/me. */
   refreshPermisos: async (): Promise<string[]> => {
     try {
-      const res = await apiFetch(
-        `${process.env.NEXT_PUBLIC_API_URL || ''}/permisos/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-            Accept: 'application/json',
-          },
+      const res = await apiFetch('/permisos/me', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          Accept: 'application/json',
         },
-      );
+      });
       if (!res.ok) return [];
       const json = await res.json();
       const permisos: string[] = Array.isArray(json?.data?.permisos)

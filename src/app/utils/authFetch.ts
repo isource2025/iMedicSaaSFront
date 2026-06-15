@@ -1,4 +1,5 @@
 import { getResolvedApiBaseUrl } from '@/app/services/axios';
+import { getEnvApiBaseUrl, normalizeApiRequestPath } from '@/app/config/apiBaseUrl';
 
 /** Ruta relativa → URL absoluta del backend local/remoto configurado. */
 export function apiPath(path: string): string {
@@ -32,7 +33,8 @@ function getStoredToken(): string | null {
 
 /** fetch autenticado hacia la API iMedic (path relativo o URL absoluta). */
 export async function apiFetch(pathOrUrl: string, init?: RequestInit): Promise<Response> {
-	const url = /^https?:\/\//i.test(pathOrUrl) ? pathOrUrl : apiPath(pathOrUrl);
+	const normalized = normalizeApiRequestPath(pathOrUrl);
+	const url = /^https?:\/\//i.test(normalized) ? normalized : apiPath(normalized);
 	return fetch(url, withAuthHeaders(init));
 }
 
@@ -92,8 +94,7 @@ export async function openAuthenticatedBlob(pathOrUrl: string, init?: RequestIni
 
 /** Convierte URL absoluta legacy (NEXT_PUBLIC_API_URL + path) a path relativo. */
 export function toApiPath(url: string): string {
-	const base = (process.env.NEXT_PUBLIC_API_URL || getResolvedApiBaseUrl())
-		.replace(/\/+$/, '');
+	const base = getEnvApiBaseUrl().replace(/\/+$/, '');
 	if (url.startsWith(base)) return url.slice(base.length) || '/';
 	if (/^https?:\/\//i.test(url)) {
 		try {
@@ -103,5 +104,5 @@ export function toApiPath(url: string): string {
 			return url;
 		}
 	}
-	return url.startsWith('/') ? url : `/${url}`;
+	return normalizeApiRequestPath(url);
 }

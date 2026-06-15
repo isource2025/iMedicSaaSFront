@@ -10,9 +10,6 @@ import { apiFetch } from '@/app/utils/authFetch';
 
 type Props = { id: string };
 
-function getBaseUrl() {
-	return (process.env.NEXT_PUBLIC_API_URL ?? window.location.origin).replace(/\/$/, '');
-}
 function getTokenFromLocalStorage(): string | undefined {
 	try {
 		const raw = localStorage.getItem('auth_token') ?? localStorage.getItem('token');
@@ -30,7 +27,7 @@ function getTokenFromLocalStorage(): string | undefined {
 export default function ClientBedView({ id }: Props) {
 	const router = useRouter();
 	const url = useMemo(
-		() => (id ? `${getBaseUrl()}/beds/${encodeURIComponent(id)}` : null),
+		() => (id ? `/beds/${encodeURIComponent(id)}` : null),
 		[id],
 	);
 

@@ -92,9 +92,9 @@ export interface EndpointConfig {
   timeout: number;
 }
 
-// Configuración por defecto
+// Configuración por defecto — paths relativos; apiFetch/apiService agregan la base URL
 export const DEFAULT_CONFIG: EndpointConfig = {
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseUrl: '',
   visitaMovimientos: '/visita-movimientos',
   timeout: 10000
 };

@@ -41,7 +41,7 @@ export default function PatientMiniHeader({
 
 		try {
 			// Obtener datos de todas las camas (mismo endpoint que ModalBasePaciente)
-			const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/beds`);
+			const res = await apiFetch('/beds');
 			if (!res.ok) throw new Error('Error al obtener información del paciente');
 
 			const data = await res.json();
@@ -49,7 +49,7 @@ export default function PatientMiniHeader({
 
 			// Obtener datos de la visita para tener acceso a FechaAdmisionS
 			const visitaResponse = await apiFetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/patients/visitas/${numeroVisita}`,
+				`/patients/visitas/${numeroVisita}`,
 			);
 			let visitaData = null;
 			if (visitaResponse.ok) {
