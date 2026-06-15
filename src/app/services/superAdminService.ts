@@ -25,6 +25,13 @@ export const superAdminService = {
     return res.data.data;
   },
 
+  async getCatalogosEmpresa(id: string | number): Promise<SuperAdminCatalogos> {
+    const res = await apiService.get<{ success: boolean; data: SuperAdminCatalogos }>(
+      `${BASE}/empresas/${id}/catalogos`,
+    );
+    return res.data.data;
+  },
+
   async listEmpresas(q?: string): Promise<EmpresaAdmin[]> {
     const res = await apiService.get<{ success: boolean; data: EmpresaAdmin[] }>(`${BASE}/empresas`, {
       params: q ? { q } : undefined,
@@ -121,8 +128,10 @@ export const superAdminService = {
     return res.data.data;
   },
 
-  async eliminarSector(valor: string): Promise<void> {
-    await apiService.delete(`${BASE}/sectores/${encodeURIComponent(valor)}`);
+  async eliminarSector(valor: string, idEmpresa: number): Promise<void> {
+    await apiService.delete(`${BASE}/sectores/${encodeURIComponent(valor)}`, {
+      params: { idEmpresa },
+    });
   },
 
   async updateSuscripcion(id: string | number, body: Record<string, unknown>) {

@@ -121,6 +121,9 @@ export default function OnboardingWizard({
     });
     setSectoresSel(new Set(empresa.onboarding?.sectoresDefecto || []));
     setAvisoActivacion(null);
+    void superAdminService.getCatalogosEmpresa(Number(empresa.id)).then((cat) => {
+      setSectoresCatalogo(cat.sectores || []);
+    });
   }, [empresa.id]);
 
   useEffect(() => {
@@ -209,31 +212,37 @@ export default function OnboardingWizard({
       await refrescarEmpresa();
     });
 
+  const refreshSectoresCatalogo = async () => {
+    const cat = await superAdminService.getCatalogosEmpresa(Number(empresa.id));
+    setSectoresCatalogo(cat.sectores || []);
+    return cat;
+  };
+
   const crearSector = () =>
     run(async () => {
-      await superAdminService.crearSector(nuevoSector);
+      await superAdminService.crearSector({ ...nuevoSector, idEmpresa: Number(empresa.id) });
       setNuevoSector({ valor: '', descripcion: '', ambInt: 'A' });
-      const cat = await onRefreshCatalogos();
-      setSectoresCatalogo(cat.sectores || []);
+      await refreshSectoresCatalogo();
     });
 
   const guardarSectorEdit = () =>
     run(async () => {
       if (!editSector) return;
-      await superAdminService.actualizarSector(editSector, editSectorForm);
+      await superAdminService.actualizarSector(editSector, {
+        ...editSectorForm,
+        idEmpresa: Number(empresa.id),
+      });
       setEditSector(null);
-      const cat = await onRefreshCatalogos();
-      setSectoresCatalogo(cat.sectores || []);
+      await refreshSectoresCatalogo();
     });
 
   const eliminarSector = (id: string) =>
     run(async () => {
       if (!confirm(`¿Eliminar el sector ${id}?`)) return;
-      await superAdminService.eliminarSector(id);
+      await superAdminService.eliminarSector(id, Number(empresa.id));
       sectoresSel.delete(id);
       setSectoresSel(new Set(sectoresSel));
-      const cat = await onRefreshCatalogos();
-      setSectoresCatalogo(cat.sectores || []);
+      await refreshSectoresCatalogo();
     });
 
   const crearUsuario = () =>

@@ -76,6 +76,7 @@ export interface ActualizarUsuarioEmpresaBody {
 }
 
 export interface SectorBody {
+  idEmpresa?: number;
   valor?: string;
   descripcion: string;
   ambInt?: string;
