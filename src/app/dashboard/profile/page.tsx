@@ -48,6 +48,7 @@ function RolAvatar() {
 		MEDICO:         { Icon: Stethoscope,  bg: '#ecfdf5', color: '#059669', label: 'Médico' },
 		ENFERMERO:      { Icon: HeartPulse,   bg: '#fff1f2', color: '#e11d48', label: 'Enfermero' },
 		ADMINISTRATIVO: { Icon: Hammer,       bg: '#fffbeb', color: '#d97706', label: 'Administrativo' },
+		CARGA_HC:       { Icon: IdCard,         bg: '#f0fdf4', color: '#15803d', label: 'Carga documental HC' },
 	};
 	const cfg = configs[nombre] ?? { Icon: User, bg: '#f1f5f9', color: '#64748b', label: rol?.nombre || 'Usuario' };
 	return (
@@ -67,6 +68,7 @@ import {
 	type ProduccionMesResponse,
 } from '@/app/services/miPerfilService';
 import styles from './profile.module.css';
+import { usePermiso } from '@/app/hooks/usePermiso';
 
 type TabId = 'resumen' | 'produccion';
 
@@ -204,6 +206,8 @@ const PROFILE_FIELD_GROUPS = [
 
 export default function MiPerfilPage() {
 	const def = defaultMonthRange();
+	const { puede } = usePermiso();
+	const puedeProduccion = puede('USUARIO.PRODUCCION.VER');
 	const [tab, setTab] = useState<TabId>('resumen');
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -565,6 +569,7 @@ export default function MiPerfilPage() {
 						<User size={15} strokeWidth={2.2} />
 						Mis Datos
 					</button>
+					{puedeProduccion && (
 					<button
 						type="button"
 						className={`${styles.tabBtn} ${tab === 'produccion' ? styles.tabBtnActive : ''}`}
@@ -573,6 +578,7 @@ export default function MiPerfilPage() {
 						<Receipt size={15} strokeWidth={2.2} />
 						Mi Producción
 					</button>
+					)}
 				</div>
 			)}
 

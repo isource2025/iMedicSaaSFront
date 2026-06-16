@@ -85,6 +85,20 @@
 	opacity: 1;
 }
 
+.internacion {
+	background: linear-gradient(180deg, #b8e8f5 0%, #d4f0f8 100%);
+	border-color: #7dd3ea;
+	font-weight: 600;
+	color: #0c4a6e;
+}
+.internacionFirst {
+	box-shadow: inset 0 0 0 2px #0083a9;
+}
+.internacion.active {
+	background: #00b5e2;
+	color: #fff;
+}
+
 /* === Transición por opacidad (sin desplazamiento) === */
 .fadeOnly-enter {
 	opacity: 0;

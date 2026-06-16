@@ -6,10 +6,15 @@ import BedDetailView from '../../../components/beds/BedDetailView';
 import Loader from '../../../components/Loader/Loader';
 import { BedDetailProvider } from '../../../components/beds/contexts/BedDetailContext';
 import type { Bed } from '../../../types/beds';
+import type { SidebarSection } from '../../../components/beds/contexts/BedDetailContext';
 import { apiFetch } from '@/app/utils/authFetch';
+import { authService } from '@/app/services/authService';
 
 type Props = { id: string };
 
+function getBaseUrl() {
+	return (process.env.NEXT_PUBLIC_API_URL ?? window.location.origin).replace(/\/$/, '');
+}
 function getTokenFromLocalStorage(): string | undefined {
 	try {
 		const raw = localStorage.getItem('auth_token') ?? localStorage.getItem('token');
@@ -27,7 +32,7 @@ function getTokenFromLocalStorage(): string | undefined {
 export default function ClientBedView({ id }: Props) {
 	const router = useRouter();
 	const url = useMemo(
-		() => (id ? `/beds/${encodeURIComponent(id)}` : null),
+		() => (id ? `${getBaseUrl()}/beds/${encodeURIComponent(id)}` : null),
 		[id],
 	);
 
@@ -54,7 +59,6 @@ export default function ClientBedView({ id }: Props) {
 				});
 
 				if (res.status === 404) {
-					// ⬇️ redirige a la misma ruta con ?nf=1 para disparar notFound() en el server
 					router.replace(`/dashboard/beds/${id}?nf=1`);
 					return;
 				}
@@ -63,7 +67,6 @@ export default function ClientBedView({ id }: Props) {
 					const err = new Error(
 						`GET ${url} → ${res.status} ${res.statusText}\n${body}`,
 					);
-					// podrías manejar 401 → login aquí si quieres
 					throw err;
 				}
 
@@ -88,8 +91,6 @@ export default function ClientBedView({ id }: Props) {
 
 	if (loading) return <div style={{ position: 'relative', minHeight: '300px' }}><Loader /></div>;
 	if (error) {
-		// Si prefieres también mandar errores desconocidos al notFound, descomenta:
-		// router.replace(`/dashboard/beds/${id}?nf=1`);
 		return (
 			<div style={{ padding: 16, color: '#b45309' }}>
 				<b>Error:</b> {error}
@@ -98,8 +99,12 @@ export default function ClientBedView({ id }: Props) {
 	}
 	if (!bed) return <div style={{ position: 'relative', minHeight: '300px' }}><Loader /></div>;
 
+	const rol = authService.getCurrentRol()?.nombre?.toUpperCase();
+	const initialSection: SidebarSection =
+		rol === 'CARGA_HC' ? 'adjuntos' : 'indicaciones';
+
 	return (
-		<BedDetailProvider initialSection='indicaciones' initialDate={new Date()}>
+		<BedDetailProvider initialSection={initialSection} initialDate={new Date()}>
 			<BedDetailView bed={bed} />
 		</BedDetailProvider>
 	);

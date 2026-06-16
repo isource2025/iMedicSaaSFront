@@ -1,0 +1,94 @@
+.wrap {
+	padding: 1rem 1.25rem;
+}
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+.title {
+	margin: 0;
+	font-size: 1.25rem;
+	color: #0083a9;
+}
+.primaryBtn {
+	background: #00b5e2;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+.primaryBtn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+.form {
+	display: grid;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+	padding: 1rem;
+	background: #f0f9fc;
+	border-radius: 10px;
+}
+.form label {
+	display: grid;
+	gap: 0.35rem;
+	font-size: 0.85rem;
+	color: #334155;
+}
+.form input,
+.form textarea {
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	padding: 0.5rem 0.65rem;
+	font: inherit;
+}
+.list {
+	display: grid;
+	gap: 0.75rem;
+}
+.card {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 0.85rem 1rem;
+	background: #fff;
+}
+.cardHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+}
+.badge {
+	font-size: 0.75rem;
+	background: #e0f2fe;
+	color: #0369a1;
+	padding: 0.15rem 0.5rem;
+	border-radius: 999px;
+}
+.meta {
+	margin: 0.35rem 0;
+	font-size: 0.8rem;
+	color: #64748b;
+}
+.motivo {
+	margin: 0;
+	white-space: pre-wrap;
+}
+.respuesta {
+	margin: 0.5rem 0 0;
+	color: #0f766e;
+	font-size: 0.9rem;
+}
+.empty,
+.error {
+	padding: 1rem;
+	color: #64748b;
+}
+.error {
+	color: #b45309;
+}

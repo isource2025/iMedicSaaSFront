@@ -20,6 +20,7 @@ import HCIngresoSection from './hc-ingreso/HCIngresoSection';
 import AdjuntosModal from './adjuntos/AdjuntosModal';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
 import LabResultsSection from './laboratorios/LabResultsSection';
+import InterconsultaSection from './interconsulta/InterconsultaSection';
 import BedFloatingActions from './BedFloatingActions';
 import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
@@ -65,7 +66,10 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
 							✕
 						</button>
-						<CalendarPanel selected={selectedDate ?? undefined} />
+						<CalendarPanel
+							selected={selectedDate ?? undefined}
+							fechaIngreso={bed?.fechaIngresoSQL}
+						/>
 						<SidebarFilters onCloseDrawer={() => setDrawerOpen(false)} />
 					</div>
 				</aside>
@@ -158,26 +162,17 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
+					) : activeSection === 'interconsulta' ? (
+						<InterconsultaSection numeroVisita={bed?.NumeroVisita || null} />
 					) : activeSection === 'solicitudEstudios' ? (
-						<div className={styles.placeholderCard}>
-							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-								<div style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-									🧪
-								</div>
-								<h3 style={{ margin: '0 0 0.5rem 0', color: '#0083A9' }}>
-									Estudios y Laboratorios
-								</h3>
-								<p style={{ color: '#666', margin: '0' }}>
-									Resultados de análisis clínicos y estudios diagnósticos
-									para el paciente.
-									<br />
-									<strong>Paciente:</strong> {bed.NombrePaciente}
-									<br />
-									<strong>Fecha de ingreso:</strong>{' '}
-									{bed.fechaIngresoFormateada || 'No disponible'}
-								</p>
-							</div>
-						</div>
+						<LabResultsSection
+							numeroVisita={bed?.NumeroVisita || null}
+							patientName={bed?.NombrePaciente}
+							patientLocation={bed?.ubicacionPaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
+						/>
 					) : activeSection === 'protocolos' ? (
 						<div className={styles.placeholderCard}>
 							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>

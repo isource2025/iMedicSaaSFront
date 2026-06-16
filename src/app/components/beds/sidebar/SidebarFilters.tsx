@@ -22,6 +22,7 @@ const SECTION_TO_PERM: Record<string, string> = {
 	hcIngreso: 'HISTORIA_CLINICA',
 	indicaciones: 'INDICACIONES',
 	evoluciones: 'EVOLUCIONES',
+	interconsulta: 'INTERCONSULTAS',
 	'evolucion-enfermeria': 'EVOLUCION_ENFERMERIA',
 	'controles-frecuentes': 'SIGNOS_VITALES',
 	'medicacion-suministrada': 'MEDICACION',
@@ -191,6 +192,12 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 		  puede('INTERNACION.SIGNOS_VITALES.CREAR') ||
 		  puede('INTERNACION.MEDICACION.CREAR');
 
+	const puedeCargaDocumental =
+		loaded &&
+		(puede('INTERNACION.ADJUNTOS.CREAR') || puede('INTERNACION.ESTUDIOS.CREAR')) &&
+		!puedeGestionMedica &&
+		!puedeGestionEnfermeria;
+
 	return (
 		<div className={styles.wrapper}>
 			{/* ======= Gestión Médica ======= */}
@@ -244,13 +251,21 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 						>
 							Evoluciones
 						</button>)}
+						{puedeVerSeccion('interconsulta') && (
+						<button
+							className={`${styles.navButton} ${isActive('interconsulta') ? styles.active : ''
+								}`}
+							onClick={() => clickItem('interconsulta')}
+						>
+							Interconsulta
+						</button>)}
 						{puedeVerSeccion('solicitudEstudios') && (
 						<button
 							className={`${styles.navButton} ${isActive('solicitudEstudios') ? styles.active : ''
 								}`}
 							onClick={() => clickItem('solicitudEstudios')}
 						>
-							Estudios
+							Laboratorios
 						</button>)}
 						{puedeVerSeccion('protocolos') && (
 						<button
@@ -384,6 +399,37 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 			</div>
 			)}
 
+			{/* Carga documental (rol CARGA_HC): laboratorios y adjuntos fuera de Otras Funciones */}
+			{puedeCargaDocumental && (
+			<div className={styles.section}>
+				<div className={styles.panelHeader}>
+					<span>Carga documental</span>
+				</div>
+				<nav className={styles.fixedNav}>
+					{puedeVerSeccion('solicitudEstudios') && (
+					<button
+						className={`${styles.navButton} ${isActive('solicitudEstudios') ? styles.active : ''}`}
+						onClick={() => clickItem('solicitudEstudios')}
+					>
+						Laboratorios
+					</button>)}
+					{puedeVerSeccion('adjuntos') && (
+					<button
+						className={`${styles.navButton} ${adjuntosTotalCount > 0 ? styles.navButtonFlex : ''} ${isActive('adjuntos') ? styles.active : ''}`}
+						onClick={() => clickItem('adjuntos')}
+						type="button"
+					>
+						<span className={styles.adjuntosNavLabel}>Archivos adjuntos</span>
+						{adjuntosTotalCount > 0 && (
+							<span className={styles.adjuntosMenuBadge} aria-label={`${adjuntosTotalCount} archivo(s)`}>
+								{adjuntosTotalCount}
+							</span>
+						)}
+					</button>)}
+				</nav>
+			</div>
+			)}
+
 			{/* ======= Panel fijo ======= */}
 			<div className={styles.fixedPanel}>
 				<div className={styles.panelHeader}>
@@ -404,32 +450,6 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 					>
 						Notificaciones
 					</button>
-					{puedeVerSeccion('laboratorios') && (
-					<button
-						className={`${styles.navButton} ${isActive('laboratorios') ? styles.active : ''
-							}`}
-						onClick={() => clickItem('laboratorios')}
-					>
-						Laboratorios
-					</button>)}
-					{puedeVerSeccion('adjuntos') && (
-					<button
-						className={`${styles.navButton} ${adjuntosTotalCount > 0 ? styles.navButtonFlex : ''} ${isActive('adjuntos') ? styles.active : ''
-							} ${!isActive('adjuntos') && adjuntosRecientesCount > 0 ? styles.navButtonAdjuntosRecientes : ''
-							}`}
-						onClick={() => clickItem('adjuntos')}
-						type="button"
-					>
-						<span className={styles.adjuntosNavLabel}>Archivos Adjuntos</span>
-						{adjuntosTotalCount > 0 && (
-							<span
-								className={styles.adjuntosMenuBadge}
-								aria-label={`${adjuntosTotalCount} archivo(s) en la visita`}
-							>
-								{adjuntosTotalCount}
-							</span>
-						)}
-					</button>)}
 					<button
 						className={styles.closeButton}
 						onClick={() => router.replace('/dashboard/beds')}

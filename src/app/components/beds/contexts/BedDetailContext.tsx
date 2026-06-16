@@ -5,6 +5,7 @@ export type SidebarSection =
 	| 'hcIngreso'
 	| 'indicaciones'
 	| 'evoluciones'
+	| 'interconsulta'
 	| 'solicitudEstudios'
 	| 'protocolos'
 	| 'epicrisis'

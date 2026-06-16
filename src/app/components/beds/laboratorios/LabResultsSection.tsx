@@ -28,7 +28,7 @@ export default function LabResultsSection({ numeroVisita }: LabResultsSectionPro
   const [selectedExamen, setSelectedExamen] = useState<ExamenLabCompleto | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'lista' | 'analisis'>('lista');
+  const [activeTab, setActiveTab] = useState<'lista' | 'analisis'>('analisis');
 
   useEffect(() => {
     if (numeroVisita) {
@@ -105,19 +105,19 @@ export default function LabResultsSection({ numeroVisita }: LabResultsSectionPro
           <h2 className={styles.title}>Resultados de Laboratorio</h2>
           <div className={styles.tabs}>
             <button
-              className={`${styles.tab} ${activeTab === 'lista' ? styles.activeTab : ''}`}
-              onClick={() => setActiveTab('lista')}
-              type="button"
-            >
-              Lista de exámenes
-            </button>
-            <button
               className={`${styles.tab} ${activeTab === 'analisis' ? styles.activeTab : ''}`}
               onClick={() => setActiveTab('analisis')}
               disabled={examenes.length === 0}
               type="button"
             >
-              Análisis y gráficos
+              Análisis comparativo
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'lista' ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab('lista')}
+              type="button"
+            >
+              Lista de exámenes
             </button>
           </div>
         </div>

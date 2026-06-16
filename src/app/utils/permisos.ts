@@ -43,7 +43,7 @@ export interface ModuloDef {
 	submodulos: ReadonlyArray<SubmoduloDef>;
 }
 
-export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO' | 'SUPER_ADMIN';
+export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO' | 'SUPER_ADMIN' | 'CARGA_HC';
 
 // ============================================================================
 // Estructura de módulos (alineada con el sidebar)
@@ -91,6 +91,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			{ id: 'HISTORIA_CLINICA',     label: 'Historia clínica',           acciones: [...CRUD] },
 			{ id: 'INDICACIONES',         label: 'Indicaciones médicas',       acciones: [...CRUD, ACCIONES.APLICAR] },
 			{ id: 'EVOLUCIONES',          label: 'Evoluciones médicas',        acciones: [...CRUD] },
+			{ id: 'INTERCONSULTAS',       label: 'Interconsultas',             acciones: [...CRUD] },
 			{ id: 'EVOLUCION_ENFERMERIA', label: 'Evolución de enfermería',    acciones: [...CRUD] },
 			{ id: 'SIGNOS_VITALES',       label: 'Controles / signos vitales', acciones: [...CRUD] },
 			{ id: 'MEDICACION',           label: 'Medicación suministrada',    acciones: [...CRUD] },
@@ -212,6 +213,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.INDICACIONES.EDITAR',
 		'INTERNACION.INDICACIONES.ELIMINAR',
 		..._todas('INTERNACION', 'EVOLUCIONES'),
+		..._todas('INTERNACION', 'INTERCONSULTAS'),
 		..._todas('INTERNACION', 'ESTUDIOS'),
 		..._todas('INTERNACION', 'PROTOCOLOS'),
 		..._todas('INTERNACION', 'PROCEDIMIENTOS'),
@@ -333,6 +335,18 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'USUARIO.PERFIL.VER',
 		'USUARIO.PERFIL.EDITAR',
 	],
+
+	CARGA_HC: [
+		'DASHBOARD.INICIO.VER',
+		'INTERNACION.CAMAS.VER',
+		'INTERNACION.CAMAS.GESTIONAR',
+		'INTERNACION.ESTUDIOS.VER',
+		'INTERNACION.ESTUDIOS.CREAR',
+		'INTERNACION.ADJUNTOS.VER',
+		'INTERNACION.ADJUNTOS.CREAR',
+		'USUARIO.PERFIL.VER',
+		'USUARIO.PERFIL.EDITAR',
+	],
 };
 
 // ============================================================================
@@ -343,8 +357,8 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 	if (!rol) return null;
 	const n = typeof rol === 'string' ? rol : rol.nombre || '';
 	const up = String(n).trim().toUpperCase();
-	if (up === 'ADMIN' || up === 'MEDICO' || up === 'ENFERMERO' || up === 'ADMINISTRATIVO' || up === 'SUPER_ADMIN') {
-		return up;
+	if (up === 'ADMIN' || up === 'MEDICO' || up === 'ENFERMERO' || up === 'ADMINISTRATIVO' || up === 'SUPER_ADMIN' || up === 'CARGA_HC') {
+		return up as RolNombre;
 	}
 	return null;
 }

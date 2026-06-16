@@ -8,45 +8,65 @@ import { CSSTransition, SwitchTransition } from 'react-transition-group';
 type Props = {
 	selected?: Date | null;
 	onSelect?: (d: Date) => void;
+	/** Fecha ingreso DD/MM/YYYY */
+	fechaIngreso?: string | null;
 };
 
-export default function CalendarPanel({ selected, onSelect }: Props) {
+function parseAdmissionDate(fechaIngreso?: string | null): Date | null {
+	if (!fechaIngreso) return null;
+	const m = String(fechaIngreso).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+	if (m) {
+		const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+		d.setHours(0, 0, 0, 0);
+		return d;
+	}
+	const iso = new Date(fechaIngreso);
+	if (Number.isNaN(iso.getTime())) return null;
+	iso.setHours(0, 0, 0, 0);
+	return iso;
+}
+
+function startOfDay(d: Date) {
+	const x = new Date(d);
+	x.setHours(0, 0, 0, 0);
+	return x;
+}
+
+export default function CalendarPanel({ selected, onSelect, fechaIngreso }: Props) {
 	const { selectedDate, setSelectedDate } = useBedDetail();
 	const { cursor, monthStart, monthEnd, prev, next } = useCalendar(
 		selectedDate ?? new Date(),
 	);
 
-	// Dirección por si luego quisieras volver a slide; ahora la usamos igual para llaves
+	const admission = useMemo(() => parseAdmissionDate(fechaIngreso), [fechaIngreso]);
+	const today = useMemo(() => startOfDay(new Date()), []);
+
 	const [dir, setDir] = useState<1 | -1>(1);
 	const titleRef = useRef<HTMLDivElement>(null);
 	const gridRef = useRef<HTMLDivElement>(null);
 	const monthKey = `${cursor.getFullYear()}-${cursor.getMonth()}`;
 
-	// Genera SIEMPRE 6 filas (42 celdas). Incluye días del mes anterior y siguiente.
 	const cells = useMemo(() => {
-		const startWeekDay = (monthStart.getDay() + 6) % 7; // lunes=0
+		const startWeekDay = (monthStart.getDay() + 6) % 7;
 		const currentMonthDays = monthEnd.getDate();
 
 		const prevMonthLastDate = new Date(
 			monthStart.getFullYear(),
 			monthStart.getMonth(),
 			0,
-		).getDate(); // último día del mes anterior
+		).getDate();
 
 		const result: Date[] = [];
 
-		// Días del mes anterior para rellenar el inicio
 		for (let i = startWeekDay - 1; i >= 0; i--) {
 			const day = prevMonthLastDate - i;
 			result.push(new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, day));
 		}
 
-		// Días del mes actual
 		for (let d = 1; d <= currentMonthDays; d++) {
 			result.push(new Date(monthStart.getFullYear(), monthStart.getMonth(), d));
 		}
 
-		// Días del mes siguiente para completar hasta 42
 		while (result.length < 42) {
 			const nextIndex = result.length - (startWeekDay + currentMonthDays) + 1;
 			result.push(
@@ -65,6 +85,15 @@ export default function CalendarPanel({ selected, onSelect }: Props) {
 		a.getDate() === b.getDate();
 
 	const isOutsideMonth = (d: Date) => d.getMonth() !== monthStart.getMonth();
+
+	const internacionInfo = (d: Date) => {
+		if (!admission) return null;
+		const day = startOfDay(d);
+		if (day < admission || day > today) return null;
+		const dayNumber =
+			Math.floor((day.getTime() - admission.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+		return { dayNumber, isFirst: isSame(day, admission) };
+	};
 
 	const handlePrev = () => {
 		setDir(-1);
@@ -88,7 +117,6 @@ export default function CalendarPanel({ selected, onSelect }: Props) {
 					◀
 				</button>
 
-				{/* Título con transición por opacidad */}
 				<SwitchTransition mode='out-in'>
 					<CSSTransition
 						key={monthKey}
@@ -114,7 +142,6 @@ export default function CalendarPanel({ selected, onSelect }: Props) {
 				</button>
 			</div>
 
-			{/* Encabezados DOW fijos */}
 			<div className={styles.grid}>
 				{['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
 					<div key={i} className={styles.dow}>
@@ -123,7 +150,6 @@ export default function CalendarPanel({ selected, onSelect }: Props) {
 				))}
 			</div>
 
-			{/* Vista del mes (42 celdas) con transición por opacidad */}
 			<div className={styles.viewport}>
 				<SwitchTransition mode='out-in'>
 					<CSSTransition
@@ -138,18 +164,26 @@ export default function CalendarPanel({ selected, onSelect }: Props) {
 						}}
 					>
 						<div ref={gridRef}>
-							<div className={styles.grid /* misma rejilla, 7 cols */}>
+							<div className={styles.grid}>
 								{cells.map((d, i) => {
 									const outside = isOutsideMonth(d);
 									const active = isSame(d, selectedDate);
+									const stay = internacionInfo(d);
 									return (
 										<button
 											key={i}
 											className={`${styles.cell} ${
 												outside ? styles.muted : ''
-											} ${active ? styles.active : ''}`}
+											} ${active ? styles.active : ''} ${
+												stay ? styles.internacion : ''
+											} ${stay?.isFirst ? styles.internacionFirst : ''}`}
 											onClick={() => handleSelect(d)}
 											aria-pressed={active}
+											title={
+												stay
+													? `Día ${stay.dayNumber} de internación`
+													: undefined
+											}
 										>
 											{d.getDate()}
 										</button>
