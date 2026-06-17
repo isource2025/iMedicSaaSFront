@@ -26,6 +26,7 @@ export interface BotMensajeChat {
 	direccion: BotDireccionMensaje;
 	origen: BotOrigenMensaje;
 	contenido: string;
+	esAudio?: boolean;
 	estadoEntrega: string;
 	idAgente: number | null;
 	nombreAgente: string | null;

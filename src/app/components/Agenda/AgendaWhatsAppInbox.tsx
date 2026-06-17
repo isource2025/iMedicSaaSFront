@@ -532,6 +532,11 @@ export default function AgendaWhatsAppInbox({
 																{!esSistema && m.origen === 'BOT' && (
 																	<span className={styles.bubbleBotLabel}>Bot</span>
 																)}
+																{m.esAudio && (
+																	<span className={styles.bubbleAudioTag}>
+																		🎤 Audio transcripto
+																	</span>
+																)}
 																<p>{m.contenido}</p>
 																<span className={styles.bubbleTime}>
 																	{formatHora(m.fechaMensaje)}
