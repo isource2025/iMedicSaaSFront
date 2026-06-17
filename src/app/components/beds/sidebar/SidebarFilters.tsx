@@ -243,13 +243,13 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 						>
 							Indicaciones
 						</button>)}
-						{puedeVerSeccion('evoluciones') && (
+						{puedeVerSeccion('solicitudEstudios') && (
 						<button
-							className={`${styles.navButton} ${isActive('evoluciones') ? styles.active : ''
+							className={`${styles.navButton} ${isActive('solicitudEstudios') ? styles.active : ''
 								}`}
-							onClick={() => clickItem('evoluciones')}
+							onClick={() => clickItem('solicitudEstudios')}
 						>
-							Evoluciones
+							Estudios
 						</button>)}
 						{puedeVerSeccion('interconsulta') && (
 						<button
@@ -257,15 +257,7 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 								}`}
 							onClick={() => clickItem('interconsulta')}
 						>
-							Interconsulta
-						</button>)}
-						{puedeVerSeccion('solicitudEstudios') && (
-						<button
-							className={`${styles.navButton} ${isActive('solicitudEstudios') ? styles.active : ''
-								}`}
-							onClick={() => clickItem('solicitudEstudios')}
-						>
-							Laboratorios
+							Interconsultas
 						</button>)}
 						{puedeVerSeccion('protocolos') && (
 						<button
@@ -283,13 +275,21 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 						>
 							Procedimientos
 						</button>)}
-						{puedeVerSeccion('movimientos') && (
+						{puedeVerSeccion('evoluciones') && (
 						<button
-							className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
+							className={`${styles.navButton} ${isActive('evoluciones') ? styles.active : ''
 								}`}
-							onClick={() => clickItem('movimientos')}
+							onClick={() => clickItem('evoluciones')}
 						>
-							Movimientos
+							Evoluciones
+						</button>)}
+						{puedeVerSeccion('epicrisis') && (
+						<button
+							className={`${styles.navButton} ${isActive('epicrisis') ? styles.active : ''
+								}`}
+							onClick={() => clickItem('epicrisis')}
+						>
+							Epicrisis
 						</button>)}
 					</nav>
 				</Collapse>
@@ -385,15 +385,6 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 						>
 							Insumos
 						</button>)}
-
-						{puedeVerSeccion('movimientos') && (
-						<button
-							className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
-								}`}
-							onClick={() => clickItem('movimientos')}
-						>
-							Movimientos
-						</button>)}
 					</nav>
 				</Collapse>
 			</div>
@@ -436,6 +427,14 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 					<span>Otras Funciones</span>
 				</div>
 				<nav className={styles.fixedNav}>
+					{puedeVerSeccion('movimientos') && (
+					<button
+						className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
+							}`}
+						onClick={() => clickItem('movimientos')}
+					>
+						Movimientos
+					</button>)}
 					<button
 						className={`${styles.navButton} ${isActive('informe_evo') ? styles.active : ''
 							}`}

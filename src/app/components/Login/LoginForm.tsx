@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useLoginForm } from '../../hooks/useLoginForm';
 import styles from './LoginForm.module.css';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -233,6 +234,12 @@ export default function LoginForm() {
             {loading ? 'Procesando...' : 'Ingresar'}
           </button>
         </form>
+
+        <p className={styles.privacyNote}>
+          <Link href="/politica-de-privacidad" className={styles.privacyLink}>
+            Política de privacidad
+          </Link>
+        </p>
       </div>
     </div>
   );

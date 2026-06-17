@@ -1,0 +1,101 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f6fbfd 0%, #ffffff 40%);
+  color: #123;
+}
+
+.header {
+  border-bottom: 1px solid rgba(0, 131, 169, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+}
+
+.headerInner {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0083a9;
+  letter-spacing: 0.02em;
+}
+
+.backLink {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0083a9;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: #00b5e2;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0083a9;
+  margin: 0 0 0.5rem;
+}
+
+.updated {
+  font-size: 0.8125rem;
+  color: #6b7a90;
+  margin: 0 0 2rem;
+}
+
+.section {
+  margin-bottom: 1.75rem;
+}
+
+.section h2 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #0083a9;
+  margin: 0 0 0.625rem;
+}
+
+.section p,
+.section li {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: #334155;
+  margin: 0 0 0.75rem;
+}
+
+.section ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.section a {
+  color: #0083a9;
+  font-weight: 600;
+}
+
+.section a:hover {
+  color: #00b5e2;
+}
+
+.footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e6eef5;
+  font-size: 0.8125rem;
+  color: #6b7a90;
+}
