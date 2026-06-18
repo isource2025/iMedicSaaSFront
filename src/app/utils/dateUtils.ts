@@ -325,6 +325,51 @@ export const calculateAge = (birthDate: Date | string | number | null | undefine
   return age;
 };
 
+/** Zona horaria del bot WhatsApp (Argentina). */
+export const TZ_ARGENTINA = 'America/Argentina/Buenos_Aires';
+
+export function parseFechaArgentina(iso: string | null | undefined): Date | null {
+	if (!iso) return null;
+	const s = String(iso).trim();
+	if (!s) return null;
+	const d = new Date(s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s) ? s : `${s}Z`);
+	return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function formatHoraArgentina(fecha: string | null | undefined): string {
+	const d = parseFechaArgentina(fecha);
+	if (!d) return '';
+	return d.toLocaleTimeString('es-AR', {
+		timeZone: TZ_ARGENTINA,
+		hour: '2-digit',
+		minute: '2-digit',
+	});
+}
+
+export function fechaCalendarioArgentina(ref: Date = new Date()): string {
+	return ref.toLocaleDateString('en-CA', { timeZone: TZ_ARGENTINA });
+}
+
+export function formatDiaMensajeArgentina(fecha: string | null | undefined): string {
+	const d = parseFechaArgentina(fecha);
+	if (!d) return '';
+	const hoy = fechaCalendarioArgentina();
+	const ayerDate = new Date(Date.now() - 86400000);
+	const ayer = fechaCalendarioArgentina(ayerDate);
+	const cal = d.toLocaleDateString('en-CA', { timeZone: TZ_ARGENTINA });
+	if (cal === hoy) return 'Hoy';
+	if (cal === ayer) return 'Ayer';
+	return d
+		.toLocaleDateString('es-AR', {
+			timeZone: TZ_ARGENTINA,
+			weekday: 'long',
+			day: '2-digit',
+			month: 'long',
+			year: 'numeric',
+		})
+		.replace(/^\w/, (c) => c.toUpperCase());
+}
+
 export const useDateFormatter = () => {
   return {
     formatDate,

@@ -10,7 +10,12 @@ import type {
 import AgendaEmptyState from '@/app/components/Agenda/AgendaEmptyState';
 import { emitInboxUnreadChanged } from '@/app/hooks/useWhatsAppInboxUnread';
 import styles from './AgendaWhatsAppInbox.module.css';
-import agendaStyles from '@/app/dashboard/turnos/agenda/agenda.module.css';
+import {
+	formatDiaMensajeArgentina,
+	formatHoraArgentina,
+	parseFechaArgentina,
+	fechaCalendarioArgentina,
+} from '@/app/utils/dateUtils';
 
 const MSG_SQL_REQUERIDO =
 	'Las conversaciones deben persistir en SQL Server (imBotConfig + imBotChat). Ejecutá scripts/sql/setup_bot_minimal.sql en la BD tenant o: node scripts/ejecutar_setup_bot.js';
@@ -18,40 +23,34 @@ const MSG_SQL_REQUERIDO =
 type FiltroLista = 'TODOS' | 'NO_LEIDOS' | 'BOT' | 'HUMANO';
 
 function formatHora(fecha: string | null | undefined): string {
-	if (!fecha) return '';
-	const d = new Date(fecha);
-	if (Number.isNaN(d.getTime())) return '';
-	return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+	return formatHoraArgentina(fecha);
 }
 
 function formatFechaRelativa(fecha: string | null | undefined): string {
 	if (!fecha) return '';
-	const d = new Date(fecha);
-	if (Number.isNaN(d.getTime())) return '';
-	const hoy = new Date();
-	const ayer = new Date();
-	ayer.setDate(hoy.getDate() - 1);
-	if (d.toDateString() === hoy.toDateString()) return formatHora(fecha);
-	if (d.toDateString() === ayer.toDateString()) return 'Ayer';
-	return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+	const d = parseFechaArgentina(fecha);
+	if (!d) return '';
+	const cal = d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+	const hoy = fechaCalendarioArgentina();
+	const ayer = fechaCalendarioArgentina(new Date(Date.now() - 86400000));
+	if (cal === hoy) return formatHora(fecha);
+	if (cal === ayer) return 'Ayer';
+	return d.toLocaleDateString('es-AR', {
+		timeZone: 'America/Argentina/Buenos_Aires',
+		day: '2-digit',
+		month: '2-digit',
+	});
 }
 
 function formatDiaMensaje(fecha: string): string {
-	const d = new Date(fecha);
-	if (Number.isNaN(d.getTime())) return '';
-	const hoy = new Date();
-	const ayer = new Date();
-	ayer.setDate(hoy.getDate() - 1);
-	if (d.toDateString() === hoy.toDateString()) return 'Hoy';
-	if (d.toDateString() === ayer.toDateString()) return 'Ayer';
-	return d
-		.toLocaleDateString('es-AR', {
-			weekday: 'long',
-			day: '2-digit',
-			month: 'long',
-			year: 'numeric',
-		})
-		.replace(/^\w/, (c) => c.toUpperCase());
+	return formatDiaMensajeArgentina(fecha);
+}
+
+function mergeMensajesUnicos(prev: BotMensajeChat[], nuevos: BotMensajeChat[]): BotMensajeChat[] {
+	const map = new Map<number, BotMensajeChat>();
+	for (const m of prev) map.set(m.idMensaje, m);
+	for (const m of nuevos) map.set(m.idMensaje, m);
+	return [...map.values()].sort((a, b) => a.idMensaje - b.idMensaje);
 }
 
 const MSG_API_BOT_404 =
@@ -209,11 +208,11 @@ export default function AgendaWhatsAppInbox({
 		try {
 			const nuevos = await botConversacionService.listarMensajes(
 				selId,
-				ultimoIdRef.current || undefined,
+				ultimoIdRef.current > 0 ? ultimoIdRef.current : undefined,
 			);
 			if (nuevos.length) {
 				debeScrollRef.current = true;
-				setMensajes((prev) => [...prev, ...nuevos]);
+				setMensajes((prev) => mergeMensajesUnicos(prev, nuevos));
 				ultimoIdRef.current = Math.max(...nuevos.map((m) => m.idMensaje));
 			}
 			const det = await botConversacionService.obtenerDetalle(selId);
@@ -240,6 +239,7 @@ export default function AgendaWhatsAppInbox({
 	}, [cargarLista, pollMensajes]);
 
 	useEffect(() => {
+		ultimoIdRef.current = 0;
 		if (selId) cargarChat(selId);
 		else {
 			setConvActiva(null);
