@@ -1,0 +1,110 @@
+.modalOverlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1200;
+	padding: 1rem;
+}
+
+.modalContent {
+	background: #fff;
+	border-radius: 12px;
+	width: min(720px, 100%);
+	max-height: 90vh;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modalHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #f0f9fc;
+}
+
+.modalHeader h3 {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #0083a9;
+}
+
+.btnClose {
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	line-height: 1;
+	cursor: pointer;
+	color: #64748b;
+	padding: 0.25rem;
+}
+
+.modalBody {
+	padding: 1.25rem;
+	overflow-y: auto;
+}
+
+.detailGrid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.85rem 1.25rem;
+}
+
+.detailItem {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.detailItemFull {
+	grid-column: 1 / -1;
+}
+
+.detailLabel {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #64748b;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.detailValue {
+	font-size: 0.95rem;
+	color: #0f172a;
+}
+
+.textBlock {
+	white-space: pre-wrap;
+	line-height: 1.5;
+	padding: 0.75rem;
+	background: #f8fafc;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
+.urgenciaBadge {
+	display: inline-block;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.urgenciaUrgente { background: #fee2e2; color: #b91c1c; }
+.urgenciaMedio { background: #fef9c3; color: #a16207; }
+.urgenciaBajo,
+.urgenciaNormal { background: #dcfce7; color: #15803d; }
+.urgenciaNone { background: #f1f5f9; color: #475569; }
+
+@media (max-width: 640px) {
+	.detailGrid {
+		grid-template-columns: 1fr;
+	}
+}

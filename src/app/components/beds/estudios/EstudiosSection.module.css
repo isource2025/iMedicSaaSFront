@@ -41,6 +41,12 @@
 .table tbody tr:hover {
 	background: #f8fdff;
 }
+.clickableRow {
+	cursor: pointer;
+}
+.clickableRow:hover {
+	background: #e0f7ff !important;
+}
 .urgencia {
 	display: inline-block;
 	width: 0.65rem;

@@ -5,16 +5,22 @@ export interface PedidoEstudio {
   FechaPedidoISO: string;
   HoraPedido?: string;
   IdTipoPedido?: number;
+  TipoPedidoDescripcion?: string;
   CodigoPractica?: number;
   PracticaSolicitada: string;
+  NomencladorDescripcion?: string;
   NotasObservacion?: string;
   MatriculaSolicitante?: number;
   MedicoSolicitanteNombre?: string;
   IdProtocolo?: number;
   EstadoUrgencia?: string;
   SectorSolicitante?: string;
+  SectorSolicitanteNombre?: string;
   SectorReceptor?: string;
   SectorReceptorNombre?: string;
+  ServicioCodigo?: string;
+  ServicioDescripcion?: string;
+  CategoriaPedido?: string;
 }
 
 export interface PedidosEstudiosResponse {

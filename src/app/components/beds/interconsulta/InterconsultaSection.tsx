@@ -4,11 +4,39 @@ import { useCallback, useEffect, useState } from 'react';
 import { interconsultasService, InterconsultaRow } from '@/app/services/interconsultasService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import Loader from '../../Loader/Loader';
+import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import styles from './InterconsultaSection.module.css';
 
 type Props = {
 	numeroVisita: number | null;
 };
+
+function buildInterconsultaFields(row: InterconsultaRow) {
+	if (row.Origen === 'WEB') {
+		return [
+			{ label: 'Fecha / hora', value: [row.FechaSolicitud, row.HoraSolicitud].filter(Boolean).join(' ') },
+			{ label: 'Especialidad solicitada', value: row.Especialidad },
+			{ label: 'Estado', value: row.Estado },
+			{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
+			{ label: 'Matrícula', value: row.MedicoSolicitante },
+			{ label: 'Origen', value: 'Registro web' },
+		];
+	}
+
+	return [
+		{ label: 'Fecha / hora', value: [row.FechaSolicitud, row.HoraSolicitud].filter(Boolean).join(' ') },
+		{ label: 'Especialidad / destino', value: row.Especialidad || row.SectorReceptorNombre || row.ServicioDescripcion },
+		{ label: 'Urgencia', value: row.EstadoUrgencia || row.Estado },
+		{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
+		{ label: 'Matrícula', value: row.MedicoSolicitante },
+		{ label: 'Sector solicitante', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
+		{ label: 'Servicio destino', value: row.ServicioDescripcion || row.SectorReceptorNombre },
+		{ label: 'Código práctica', value: row.CodigoPractica },
+		{ label: 'Nomenclador', value: row.NomencladorDescripcion },
+		{ label: 'Id protocolo', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
+		{ label: 'Id pedido', value: row.IdPedido || row.IdInterconsulta },
+	];
+}
 
 export default function InterconsultaSection({ numeroVisita }: Props) {
 	const { puede } = usePermiso();
@@ -19,6 +47,7 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 	const [especialidad, setEspecialidad] = useState('');
 	const [motivo, setMotivo] = useState('');
 	const [saving, setSaving] = useState(false);
+	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
 
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
 
@@ -66,9 +95,22 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 		}
 	};
 
+	const handleCardClick = async (row: InterconsultaRow) => {
+		const id = row.Origen === 'WEB' ? row.IdInterconsulta : (row.IdPedido || row.IdInterconsulta);
+		const detail = await interconsultasService.obtenerPorId(id, row.Origen || 'LEGACY');
+		setSelected(detail || row);
+	};
+
 	if (!numeroVisita) {
 		return <div className={styles.empty}>No hay visita seleccionada</div>;
 	}
+
+	const selectedTextBlocks = selected
+		? [
+				{ label: 'Motivo / consulta', value: selected.Motivo },
+				...(selected.Respuesta ? [{ label: 'Respuesta', value: selected.Respuesta }] : []),
+			]
+		: [];
 
 	return (
 		<div className={styles.wrap}>
@@ -105,20 +147,46 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 			) : (
 				<div className={styles.list}>
 					{rows.map((r) => (
-						<article key={r.IdInterconsulta} className={styles.card}>
+						<article
+							key={`${r.Origen || 'LEGACY'}-${r.IdInterconsulta}`}
+							className={styles.card}
+							onClick={() => handleCardClick(r)}
+							role="button"
+							tabIndex={0}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									handleCardClick(r);
+								}
+							}}
+						>
 							<div className={styles.cardHead}>
-								<strong>{r.Especialidad || 'Sin especialidad'}</strong>
-								<span className={styles.badge}>{r.Estado}</span>
+								<strong>{r.Especialidad || r.SectorReceptorNombre || 'Sin especialidad'}</strong>
+								<span className={styles.badge}>{r.EstadoUrgencia || r.Estado}</span>
 							</div>
 							<p className={styles.meta}>
 								{r.FechaSolicitud} {r.HoraSolicitud || ''}
 								{r.MedicoSolicitanteNombre ? ` · ${r.MedicoSolicitanteNombre}` : ''}
+								{r.IdProtocolo && r.IdProtocolo > 0 ? ` · Protocolo ${r.IdProtocolo}` : ''}
+								{r.Origen === 'WEB' ? ' · Web' : ''}
 							</p>
-							<p className={styles.motivo}>{r.Motivo}</p>
+							<p className={styles.motivo}>
+								{r.Motivo.length > 160 ? `${r.Motivo.slice(0, 160)}…` : r.Motivo}
+							</p>
 							{r.Respuesta && <p className={styles.respuesta}>Respuesta: {r.Respuesta}</p>}
 						</article>
 					))}
 				</div>
+			)}
+
+			{selected && (
+				<PedidoDetalleModal
+					title={selected.Especialidad || selected.PracticaSolicitada || 'Interconsulta'}
+					urgencia={selected.EstadoUrgencia}
+					fields={buildInterconsultaFields(selected)}
+					textBlocks={selectedTextBlocks}
+					onClose={() => setSelected(null)}
+				/>
 			)}
 		</div>
 	);

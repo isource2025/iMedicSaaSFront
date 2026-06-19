@@ -56,6 +56,12 @@
 	border-radius: 10px;
 	padding: 0.85rem 1rem;
 	background: #fff;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+.card:hover {
+	background: #f0f9fc;
+	border-color: #7dd3fc;
 }
 .cardHead {
 	display: flex;

@@ -2,18 +2,30 @@ import { apiFetch } from '@/app/utils/authFetch';
 
 export type InterconsultaRow = {
 	IdInterconsulta: number;
+	IdPedido?: number;
 	IdVisita: number;
 	FechaSolicitud: string;
 	HoraSolicitud?: string;
+	IdTipoPedido?: number;
+	TipoPedidoDescripcion?: string;
+	CodigoPractica?: number;
+	PracticaSolicitada?: string;
+	NomencladorDescripcion?: string;
 	Especialidad?: string;
 	MedicoSolicitante?: number;
 	MedicoSolicitanteNombre?: string;
 	Motivo: string;
 	Estado: string;
+	EstadoUrgencia?: string;
 	Respuesta?: string;
 	FechaRespuesta?: string;
 	IdProtocolo?: number;
+	SectorSolicitante?: string;
+	SectorSolicitanteNombre?: string;
 	SectorReceptor?: string;
+	SectorReceptorNombre?: string;
+	ServicioCodigo?: string;
+	ServicioDescripcion?: string;
 	Origen?: 'LEGACY' | 'WEB';
 };
 
@@ -23,6 +35,13 @@ export const interconsultasService = {
 		if (!res.ok) throw new Error('Error al cargar interconsultas');
 		const json = await res.json();
 		return json.data || [];
+	},
+
+	async obtenerPorId(id: number, origen: 'LEGACY' | 'WEB' = 'LEGACY'): Promise<InterconsultaRow | null> {
+		const res = await apiFetch(`/interconsultas/detalle/${id}?origen=${origen}`);
+		if (!res.ok) return null;
+		const json = await res.json();
+		return json?.success ? json.data : null;
 	},
 
 	async crear(payload: {
