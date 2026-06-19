@@ -12,6 +12,9 @@ export type InterconsultaRow = {
 	Estado: string;
 	Respuesta?: string;
 	FechaRespuesta?: string;
+	IdProtocolo?: number;
+	SectorReceptor?: string;
+	Origen?: 'LEGACY' | 'WEB';
 };
 
 export const interconsultasService = {

@@ -20,6 +20,7 @@ import HCIngresoSection from './hc-ingreso/HCIngresoSection';
 import AdjuntosModal from './adjuntos/AdjuntosModal';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
 import LabResultsSection from './laboratorios/LabResultsSection';
+import EstudiosSection from './estudios/EstudiosSection';
 import InterconsultaSection from './interconsulta/InterconsultaSection';
 import BedFloatingActions from './BedFloatingActions';
 import NursingReportModal from '../nursing/NursingReportModal';
@@ -165,14 +166,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					) : activeSection === 'interconsulta' ? (
 						<InterconsultaSection numeroVisita={bed?.NumeroVisita || null} />
 					) : activeSection === 'solicitudEstudios' ? (
-						<LabResultsSection
-							numeroVisita={bed?.NumeroVisita || null}
-							patientName={bed?.NombrePaciente}
-							patientLocation={bed?.ubicacionPaciente}
-							documentoPaciente={bed?.documentoPaciente}
-							fechaIngreso={bed?.fechaIngresoSQL}
-							horaIngreso={bed?.horaIngresoSQL}
-						/>
+						<EstudiosSection numeroVisita={bed?.NumeroVisita || null} />
 					) : activeSection === 'protocolos' ? (
 						<div className={styles.placeholderCard}>
 							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>

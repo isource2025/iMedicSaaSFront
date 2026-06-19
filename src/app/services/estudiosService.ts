@@ -1,28 +1,24 @@
-import { EstudioProgramado, EstudiosProgramadosResponse } from "../types/estudios";
+import { PedidoEstudio, PedidosEstudiosResponse } from '../types/estudios';
 import { apiFetch } from '@/app/utils/authFetch';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 const estudiosService = {
-  getEstudiosProgramadosPorVisita: async (numeroVisita: number): Promise<EstudioProgramado[]> => {
+  async listarPorVisita(numeroVisita: number): Promise<PedidoEstudio[]> {
     try {
-      const res = await apiFetch(`${BASE_URL}/estudios/visita/${numeroVisita}`, {
+      const res = await apiFetch(`/estudios/visita/${numeroVisita}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
 
-      if (!res.ok) {
-        return [];
-      }
+      if (!res.ok) return [];
 
-      const json: EstudiosProgramadosResponse = await res.json();
+      const json: PedidosEstudiosResponse = await res.json();
       if (!json?.success) return [];
       return Array.isArray(json.data) ? json.data : [];
     } catch (e) {
-      console.error('Error obteniendo estudios programados:', e);
+      console.error('Error obteniendo pedidos de estudios:', e);
       return [];
     }
-  }
+  },
 };
 
 export default estudiosService;
