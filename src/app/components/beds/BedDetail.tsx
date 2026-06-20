@@ -273,11 +273,11 @@ const BedDetail = ({
                   ) : (
                     <ul>
                       {studies.map(s => (
-                        <li key={s.id}>
-                          <strong>{s.descripcion}</strong>
-                          {s.area ? ` · ${s.area}` : ''}
-                          {s.fecha ? ` · ${s.fecha}` : ''}
-                          {s.hora ? ` ${s.hora}` : ''}
+                        <li key={s.IdPedido}>
+                          <strong>{s.PracticaSolicitada}</strong>
+                          {s.SectorReceptorNombre ? ` · ${s.SectorReceptorNombre}` : ''}
+                          {s.FechaPedidoISO ? ` · ${s.FechaPedidoISO}` : ''}
+                          {s.HoraPedido ? ` ${s.HoraPedido}` : ''}
                         </li>
                       ))}
                     </ul>

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { MedicacionActiva } from '../types/medicacion';
-import { EstudioProgramado } from '../types/estudios';
+import { PedidoEstudio } from '../types/estudios';
 
 interface UseBedRelatedDataResult {
   meds: MedicacionActiva[];
-  studies: EstudioProgramado[];
+  studies: PedidoEstudio[];
   loading: boolean;
   error: string | null;
   refresh: () => void;
@@ -12,7 +12,7 @@ interface UseBedRelatedDataResult {
 
 export function useBedRelatedData(numeroVisita?: number | null): UseBedRelatedDataResult {
   const [meds, setMeds] = useState<MedicacionActiva[]>([]);
-  const [studies, setStudies] = useState<EstudioProgramado[]>([]);
+  const [studies, setStudies] = useState<PedidoEstudio[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);

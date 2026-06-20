@@ -50,7 +50,7 @@ function mergeMensajesUnicos(prev: BotMensajeChat[], nuevos: BotMensajeChat[]): 
 	const map = new Map<number, BotMensajeChat>();
 	for (const m of prev) map.set(m.idMensaje, m);
 	for (const m of nuevos) map.set(m.idMensaje, m);
-	return [...map.values()].sort((a, b) => a.idMensaje - b.idMensaje);
+	return Array.from(map.values()).sort((a, b) => a.idMensaje - b.idMensaje);
 }
 
 const MSG_API_BOT_404 =
@@ -355,8 +355,8 @@ export default function AgendaWhatsAppInbox({
 					</div>
 					<div className={styles.listaScroll}>
 						{loadingLista ? (
-							<div className={agendaStyles.loading}>
-								<span className={agendaStyles.spinner} />
+							<div className={styles.loading}>
+								<span className={styles.spinner} />
 								Cargando conversaciones…
 							</div>
 						) : convFiltradas.length === 0 ? (
@@ -496,8 +496,8 @@ export default function AgendaWhatsAppInbox({
 							<div className={styles.chatBody}>
 								<div ref={mensajesRef} className={styles.mensajes}>
 									{loadingChat ? (
-										<div className={agendaStyles.loading}>
-											<span className={agendaStyles.spinner} />
+										<div className={styles.loading}>
+											<span className={styles.spinner} />
 											Cargando mensajes…
 										</div>
 									) : mensajes.length === 0 ? (

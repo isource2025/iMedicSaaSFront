@@ -758,3 +758,26 @@
 	box-shadow: none;
 	cursor: not-allowed;
 }
+
+.loading {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: #64748b;
+	padding: 1.25rem 1rem;
+}
+
+.spinner {
+	width: 18px;
+	height: 18px;
+	border: 2px solid #cbd5e1;
+	border-top-color: #2563eb;
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
