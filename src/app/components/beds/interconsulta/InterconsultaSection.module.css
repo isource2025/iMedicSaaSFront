@@ -3,7 +3,7 @@
 }
 .header {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
 	gap: 1rem;
 	margin-bottom: 1rem;
@@ -13,6 +13,12 @@
 	font-size: 1.25rem;
 	color: #0083a9;
 }
+.subtitle {
+	margin: 0.35rem 0 0;
+	font-size: 0.85rem;
+	color: #64748b;
+	max-width: 42rem;
+}
 .primaryBtn {
 	background: #00b5e2;
 	color: #fff;
@@ -21,6 +27,7 @@
 	padding: 0.5rem 1rem;
 	font-weight: 600;
 	cursor: pointer;
+	flex-shrink: 0;
 }
 .primaryBtn:disabled {
 	opacity: 0.6;
@@ -47,48 +54,60 @@
 	padding: 0.5rem 0.65rem;
 	font: inherit;
 }
-.list {
-	display: grid;
-	gap: 0.75rem;
-}
-.card {
+.tableWrap {
+	overflow-x: auto;
 	border: 1px solid #e2e8f0;
 	border-radius: 10px;
-	padding: 0.85rem 1rem;
 	background: #fff;
+}
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+.table th,
+.table td {
+	padding: 0.65rem 0.75rem;
+	border-bottom: 1px solid #eef2f7;
+	text-align: left;
+	vertical-align: top;
+}
+.table th {
+	background: #f8fafc;
+	color: #475569;
+	font-weight: 600;
+	white-space: nowrap;
+}
+.clickableRow {
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease;
 }
-.card:hover {
-	background: #f0f9fc;
-	border-color: #7dd3fc;
+.clickableRow:hover {
+	background: #e0f7ff !important;
 }
-.cardHead {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
+.urgencia {
+	display: inline-block;
+	width: 0.65rem;
+	height: 0.65rem;
+	border-radius: 50%;
+	vertical-align: middle;
 }
-.badge {
-	font-size: 0.75rem;
-	background: #e0f2fe;
-	color: #0369a1;
-	padding: 0.15rem 0.5rem;
-	border-radius: 999px;
-}
-.meta {
-	margin: 0.35rem 0;
-	font-size: 0.8rem;
-	color: #64748b;
+.urgenciaUrgente { background: #ef4444; }
+.urgenciaMedio { background: #eab308; }
+.urgenciaBajo,
+.urgenciaNormal { background: #22c55e; }
+.urgenciaNone { background: #cbd5e1; }
+.destino {
+	font-weight: 600;
+	color: #0f172a;
 }
 .motivo {
-	margin: 0;
 	white-space: pre-wrap;
+	max-width: 28rem;
+	color: #334155;
 }
-.respuesta {
-	margin: 0.5rem 0 0;
-	color: #0f766e;
-	font-size: 0.9rem;
+.meta {
+	color: #64748b;
+	font-size: 0.8rem;
 }
 .empty,
 .error {

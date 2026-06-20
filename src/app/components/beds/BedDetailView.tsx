@@ -167,6 +167,15 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<InterconsultaSection numeroVisita={bed?.NumeroVisita || null} />
 					) : activeSection === 'solicitudEstudios' ? (
 						<EstudiosSection numeroVisita={bed?.NumeroVisita || null} />
+					) : activeSection === 'laboratorios' ? (
+						<LabResultsSection
+							numeroVisita={bed?.NumeroVisita || null}
+							patientName={bed?.NombrePaciente}
+							patientLocation={bed?.ubicacionPaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
+						/>
 					) : activeSection === 'protocolos' ? (
 						<div className={styles.placeholderCard}>
 							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
@@ -234,17 +243,6 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					) : activeSection === 'adjuntos' ? (
 						<>
 							<AdjuntosSection
-								numeroVisita={bed?.NumeroVisita || null}
-								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
-								documentoPaciente={bed?.documentoPaciente}
-								fechaIngreso={bed?.fechaIngresoSQL}
-								horaIngreso={bed?.horaIngresoSQL}
-							/>
-						</>
-					) : activeSection === 'laboratorios' ? (
-						<>
-							<LabResultsSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}

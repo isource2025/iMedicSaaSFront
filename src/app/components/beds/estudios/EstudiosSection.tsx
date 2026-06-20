@@ -78,7 +78,7 @@ export default function EstudiosSection({ numeroVisita }: Props) {
 			<div className={styles.header}>
 				<h2 className={styles.title}>Pedidos de estudios</h2>
 				<p className={styles.subtitle}>
-					Solicitudes de imagen y diagnóstico por complementarios (ecografía, tomografía, radiología, etc.)
+					Pedidos de imagen y diagnóstico por complementarios desde imPedidosEstudios (ecografía, TAC, rayos, etc.). No incluye laboratorio.
 				</p>
 			</div>
 

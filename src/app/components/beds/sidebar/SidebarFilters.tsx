@@ -30,7 +30,7 @@ const SECTION_TO_PERM: Record<string, string> = {
 	'balance-hidrico': 'BALANCE_HIDRICO',
 	insumos: 'INSUMOS',
 	solicitudEstudios: 'ESTUDIOS',
-	laboratorios: 'ESTUDIOS',
+	laboratorios: 'ADJUNTOS',
 	protocolos: 'PROTOCOLOS',
 	procedimientos: 'PROCEDIMIENTOS',
 	movimientos: 'MOVIMIENTOS',
@@ -390,17 +390,17 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 			</div>
 			)}
 
-			{/* Carga documental (rol CARGA_HC): laboratorios y adjuntos fuera de Otras Funciones */}
+			{/* Carga documental (rol CARGA_HC): laboratorios y adjuntos — estudios de imagen van en Gestión Médica */}
 			{puedeCargaDocumental && (
 			<div className={styles.section}>
 				<div className={styles.panelHeader}>
 					<span>Carga documental</span>
 				</div>
 				<nav className={styles.fixedNav}>
-					{puedeVerSeccion('solicitudEstudios') && (
+					{puedeVerSeccion('laboratorios') && (
 					<button
-						className={`${styles.navButton} ${isActive('solicitudEstudios') ? styles.active : ''}`}
-						onClick={() => clickItem('solicitudEstudios')}
+						className={`${styles.navButton} ${isActive('laboratorios') ? styles.active : ''}`}
+						onClick={() => clickItem('laboratorios')}
 					>
 						Laboratorios
 					</button>)}
