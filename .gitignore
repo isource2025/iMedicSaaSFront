@@ -4,4 +4,4 @@ node_modules/
 .env    
 .env.development
 .next  
-temp_table.txt 
+temp_table.txt  
