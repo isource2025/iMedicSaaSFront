@@ -332,7 +332,16 @@ export function parseFechaArgentina(iso: string | null | undefined): Date | null
 	if (!iso) return null;
 	const s = String(iso).trim();
 	if (!s) return null;
-	const d = new Date(s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s) ? s : `${s}Z`);
+	// Fechas SQL/Node sin zona (GETDATE en servidor) → interpretar como hora Argentina, no UTC.
+	let normalizado = s;
+	if (!s.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(s)) {
+		if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
+			normalizado = `${s}-03:00`;
+		} else if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+			normalizado = `${s}T12:00:00-03:00`;
+		}
+	}
+	const d = new Date(normalizado);
 	return Number.isNaN(d.getTime()) ? null : d;
 }
 
