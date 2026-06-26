@@ -6,6 +6,7 @@ import { authService } from '@/app/services/authService';
 import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
+import DicomVideoImporter from './DicomVideoImporter';
 import styles from './AdjuntosModal.module.css';
 
 function etiquetaUsuarioActual(): string {
@@ -30,6 +31,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
+  const [dicomImporterOpen, setDicomImporterOpen] = useState(false);
   const fileUploadRef = useRef<FileUploadRef>(null);
 
   useEffect(() => {
@@ -170,6 +172,30 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
               onFilesSelected={handleFilesSelected}
               disabled={uploading}
               maxFiles={5}
+            />
+            <button
+              type="button"
+              className={styles.dicomImportButton}
+              disabled={uploading}
+              onClick={() => {
+                if (!tipoImagenCodigo.trim()) {
+                  alert('Seleccione el tipo de estudio antes de importar la serie DICOM.');
+                  return;
+                }
+                setDicomImporterOpen(true);
+              }}
+            >
+              Importar serie DICOM → Video
+            </button>
+            <DicomVideoImporter
+              open={dicomImporterOpen}
+              onClose={() => setDicomImporterOpen(false)}
+              numeroVisita={numeroVisita}
+              tipoImagenCodigo={tipoImagenCodigo}
+              onUploaded={async () => {
+                await loadAdjuntos();
+                alert('Video generado y guardado como adjunto.');
+              }}
             />
             {selectedFiles.length > 0 && (
               <button

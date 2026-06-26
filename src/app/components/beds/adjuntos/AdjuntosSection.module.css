@@ -176,6 +176,29 @@
   cursor: not-allowed;
 }
 
+.dicomImportButton {
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.dicomImportButton:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.dicomImportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .listSection {
   padding: 24px;
   background: white;

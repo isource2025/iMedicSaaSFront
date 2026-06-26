@@ -1,7 +1,7 @@
 'use client';
 
 import styles from './AdjuntoFileViewer.module.css';
-import { isDicom, isImage, isPdf } from '@/app/utils/adjuntoFileTypes';
+import { isDicom, isImage, isPdf, isVideo } from '@/app/utils/adjuntoFileTypes';
 import DicomViewer from './DicomViewer';
 
 export interface AdjuntoViewerState {
@@ -25,6 +25,7 @@ export default function AdjuntoFileViewer({ viewer, loading = false, onClose }: 
   const pdf = viewer ? isPdf(fileName, mimeType) : false;
   const image = viewer ? isImage(fileName, mimeType) : false;
   const dicom = viewer ? isDicom(fileName, mimeType) : false;
+  const video = viewer ? isVideo(fileName, mimeType) : false;
 
   return (
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
@@ -51,7 +52,10 @@ export default function AdjuntoFileViewer({ viewer, loading = false, onClose }: 
             <img src={blobUrl} alt={fileName} className={styles.image} />
           ) : null}
           {!loading && viewer && dicom ? <DicomViewer blobUrl={blobUrl} /> : null}
-          {!loading && viewer && !pdf && !image && !dicom ? (
+          {!loading && viewer && video ? (
+            <video src={blobUrl} className={styles.frame} controls playsInline title={fileName} />
+          ) : null}
+          {!loading && viewer && !pdf && !image && !dicom && !video ? (
             <div className={styles.fallback}>
               <p>Vista previa no disponible para este formato.</p>
               <a className={styles.btnDownload} href={blobUrl} download={fileName}>

@@ -13,3 +13,7 @@ export function isDicom(fileName: string, mimeType: string): boolean {
     /\.dicom$/i.test(fileName)
   );
 }
+
+export function isVideo(fileName: string, mimeType: string): boolean {
+  return mimeType.startsWith('video/') || /\.(webm|mp4)$/i.test(fileName);
+}
