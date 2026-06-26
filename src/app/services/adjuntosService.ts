@@ -160,6 +160,7 @@ export const adjuntosService = {
 
   getIconoTipo(tipoArchivo: string): string {
     if (tipoArchivo.includes('pdf')) return '📄';
+    if (tipoArchivo.includes('dicom') || tipoArchivo.includes('dcm')) return '🩻';
     if (tipoArchivo.includes('image')) return '🖼️';
     if (tipoArchivo.includes('word')) return '📝';
     return '📎';

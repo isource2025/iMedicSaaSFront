@@ -5,6 +5,8 @@ import styles from './AdmissionAdjuntosGrid.module.css';
 import { apiFetchBlob } from '@/app/utils/authFetch';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import AdjuntoFileViewer, { AdjuntoViewerState } from '@/app/components/beds/adjuntos/AdjuntoFileViewer';
+import { isDicom, isImage } from '@/app/utils/adjuntoFileTypes';
+import { renderDicomPreviewDataUrl } from '@/app/utils/dicomRenderer';
 
 function isImageByName(name: string): boolean {
   return /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(name || '');
@@ -16,7 +18,7 @@ function str(v: unknown): string {
 }
 
 function isImageMime(m: string): boolean {
-  return m.startsWith('image/');
+  return isImage('', m);
 }
 
 const PREVIEWS_PAGE_SIZE = 12;
@@ -51,6 +53,13 @@ function AdjuntoCard({
         } else if (type === 'application/pdf' || /\.pdf$/i.test(nombreArchivo)) {
           blobUrl = URL.createObjectURL(blob);
           setPreview(blobUrl);
+        } else if (isDicom(nombreArchivo, type)) {
+          try {
+            const dataUrl = await renderDicomPreviewDataUrl(await blob.arrayBuffer());
+            if (!cancelled) setPreview(dataUrl);
+          } catch {
+            // Sin miniatura: se muestra badge DICOM
+          }
         }
         setPhase('ready');
       } catch {
@@ -67,6 +76,7 @@ function AdjuntoCard({
 
   const isPdf =
     mime === 'application/pdf' || (!mime && /\.pdf$/i.test(nombreArchivo));
+  const isDicomFile = isDicom(nombreArchivo, mime || '');
 
   return (
     <button
@@ -94,7 +104,8 @@ function AdjuntoCard({
           </span>
         ) : null}
         {phase === 'ready' && !preview && isPdf ? <span className={styles.pdfBadge}>PDF</span> : null}
-        {phase === 'ready' && !preview && !isPdf ? (
+        {phase === 'ready' && !preview && isDicomFile ? <span className={styles.pdfBadge}>DICOM</span> : null}
+        {phase === 'ready' && !preview && !isPdf && !isDicomFile ? (
           <span className={styles.fileFallback}>Archivo</span>
         ) : null}
       </div>

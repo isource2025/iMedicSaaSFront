@@ -18,7 +18,16 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const allowedTypes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'application/dicom',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
   const maxSize = 10 * 1024 * 1024; // 10MB
 
   const validateFiles = (files: FileList | null): File[] => {
@@ -28,7 +37,8 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
     const errors: string[] = [];
 
     Array.from(files).forEach(file => {
-      if (!allowedTypes.includes(file.type)) {
+      const isDicom = file.type === 'application/dicom' || /\.dcm$/i.test(file.name);
+      if (!allowedTypes.includes(file.type) && !isDicom) {
         errors.push(`${file.name}: Tipo de archivo no permitido`);
         return;
       }
@@ -118,7 +128,7 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
           ref={inputRef}
           type="file"
           multiple
-          accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
+          accept=".pdf,.jpg,.jpeg,.png,.gif,.dcm,.doc,.docx"
           onChange={handleChange}
           disabled={disabled}
           className={styles.fileInput}
@@ -129,7 +139,7 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
             Arrastra archivos aquí o haz click para seleccionar
           </p>
           <p className={styles.dropZoneHint}>
-            PDF, JPG, PNG, GIF, DOC (máx {maxFiles} archivos, 10MB cada uno)
+            PDF, JPG, PNG, GIF, DICOM (.dcm), DOC (máx {maxFiles} archivos, 10MB cada uno)
           </p>
         </div>
       </div>
