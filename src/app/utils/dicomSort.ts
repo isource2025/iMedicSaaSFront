@@ -1,7 +1,17 @@
+function extractAllNumbers(text: string): number[] {
+  const nums: number[] = [];
+  const re = /\d+/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    nums.push(Number.parseInt(match[0], 10));
+  }
+  return nums;
+}
+
 /** Extrae el índice numérico principal del nombre de archivo DICOM. */
 export function extractNumericOrder(fileName: string): number {
   const base = fileName.replace(/\.(dcm|dicom)$/i, '');
-  const matches = [...base.matchAll(/\d+/g)].map((m) => Number.parseInt(m[0], 10));
+  const matches = extractAllNumbers(base);
   if (!matches.length) return Number.MAX_SAFE_INTEGER;
   return matches[matches.length - 1];
 }
