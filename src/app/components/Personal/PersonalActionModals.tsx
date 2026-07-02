@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Modal from '@/app/components/UI/Modal';
 import Loader from '@/app/components/Loader/Loader';
 import PersonalFirmaPad, { type PersonalFirmaPadRef } from '@/app/components/Personal/PersonalFirmaPad';
+import PersonalCuentaTab from '@/app/components/Personal/PersonalCuentaTab';
 import {
 	Personal,
 	CatalogoItemTexto,
@@ -22,7 +23,8 @@ export type PersonalExtraKind =
 	| 'firma'
 	| 'sectores'
 	| 'codigosFacturacion'
-	| 'rol';
+	| 'rol'
+	| 'cuenta';
 
 type Props = {
 	open: boolean;
@@ -165,6 +167,8 @@ export default function PersonalActionModals({
 			? 'Códigos de facturación'
 			: kind === 'rol'
 			? 'Rol del usuario'
+			: kind === 'cuenta'
+			? 'Cuenta de acceso'
 			: '';
 
 	const guardarRol = async () => {
@@ -360,9 +364,11 @@ export default function PersonalActionModals({
 	return (
 		<Modal isOpen={open} onClose={onClose} title={title} size='large'>
 			<div className={styles.wrap}>
-				<p className={styles.muted}>
-					<strong>{personal.ApellidoNombre}</strong> — ID {personal.Valor}
-				</p>
+				{kind !== 'cuenta' && (
+					<p className={styles.muted}>
+						<strong>{personal.ApellidoNombre}</strong> — ID {personal.Valor}
+					</p>
+				)}
 				{loading ? (
 					<div style={{ position: 'relative', minHeight: 160 }}>
 						<Loader />
@@ -684,6 +690,14 @@ export default function PersonalActionModals({
 							</button>
 						</div>
 					</div>
+				) : kind === 'cuenta' ? (
+					<PersonalCuentaTab
+						personalId={personal.Valor}
+						apellidoNombre={personal.ApellidoNombre}
+						variant='modal'
+						onSaved={onSaved}
+						onClose={onClose}
+					/>
 				) : null}
 			</div>
 		</Modal>

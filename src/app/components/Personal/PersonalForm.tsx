@@ -21,6 +21,7 @@ import type {
 import styles from './PersonalForm.module.css';
 import { nacionalidadDescripcionACodigo } from '../../utils/nacionalidadCodigo';
 import AgendaTab from './AgendaTab/AgendaTab';
+import PersonalCuentaTab from './PersonalCuentaTab';
 import { usePermiso } from '../../hooks/usePermiso';
 
 interface EstadoCivil {
@@ -36,7 +37,7 @@ interface PersonalFormProps {
 	onCancel: () => void;
 }
 
-type Tab = 'personal' | 'profesional' | 'agenda';
+type Tab = 'personal' | 'profesional' | 'cuenta' | 'agenda';
 
 const TIPOS_DOCUMENTO = [
 	{ value: 'DNI', label: 'DNI' },
@@ -71,6 +72,11 @@ const buildInitial = (d?: Partial<Personal> | null): PersonalFormData => ({
 	NumeroSocio: toStr(d?.NumeroSocio),
 	ConvenioFacturacion: toStr(d?.ConvenioFacturacion),
 	IdEspecialidadME: toStr(d?.IdEspecialidadME),
+	CrearUsuario: !d?.Valor,
+	NombreRed: '',
+	Password: '',
+	ConfirmPassword: '',
+	CodOperador: '',
 });
 
 const normalizeCity = (raw: string) =>
@@ -180,16 +186,18 @@ export default function PersonalForm({
 	const puedeConfigurarAgenda = puedeSubmodulo('TURNOS', 'CONFIGURACION');
 	const showAgendaTab =
 		isEditing && (puedeConfigurarAgenda || esAdmin);
+	const showCuentaTab = isEditing && !!formData.Valor;
 	const matriculaProfesional = Number(formData.MatriculaProvincial) || null;
 
+	const tabIds: Tab[] = ['personal', 'profesional'];
+	if (showCuentaTab) tabIds.push('cuenta');
+	if (showAgendaTab) tabIds.push('agenda');
+
 	useEffect(() => {
-		const ids: Tab[] = showAgendaTab
-			? ['personal', 'profesional', 'agenda']
-			: ['personal', 'profesional'];
-		const idx = ids.indexOf(activeTab);
+		const idx = tabIds.indexOf(activeTab);
 		const node = tabsRef.current[idx];
 		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
-	}, [activeTab, showAgendaTab]);
+	}, [activeTab, showAgendaTab, showCuentaTab]);
 
 	const fetchProvincia = async (valorProvincia: string) => {
 		try {
@@ -334,10 +342,27 @@ export default function PersonalForm({
 			newErrors.MatriculaProvincial = 'Matrícula inválida';
 		if (formData.MatriculaNacional && isNaN(Number(formData.MatriculaNacional)))
 			newErrors.MatriculaNacional = 'Matrícula inválida';
+		if (!isEditing && formData.CrearUsuario) {
+			if (!String(formData.NombreRed || '').trim()) {
+				newErrors.NombreRed = 'El nombre de usuario es obligatorio';
+			}
+			if (!formData.Password || formData.Password.length < 4) {
+				newErrors.Password = 'La contraseña debe tener al menos 4 caracteres';
+			}
+			if (formData.Password !== formData.ConfirmPassword) {
+				newErrors.ConfirmPassword = 'Las contraseñas no coinciden';
+			}
+		}
 		setErrors(newErrors);
 		if (Object.keys(newErrors).length > 0) {
-			if (newErrors.ApellidoNombre || newErrors.NumeroDocumento || newErrors.FechaNacimiento) {
+			if (
+				newErrors.ApellidoNombre ||
+				newErrors.NumeroDocumento ||
+				newErrors.FechaNacimiento
+			) {
 				setActiveTab('personal');
+			} else if (newErrors.NombreRed || newErrors.Password || newErrors.ConfirmPassword) {
+				setActiveTab('profesional');
 			} else {
 				setActiveTab('profesional');
 			}
@@ -351,7 +376,22 @@ export default function PersonalForm({
 		if (!validate()) return;
 		try {
 			setInternalSubmitting(true);
-			const ok = await onSubmit(formData);
+			const payload: PersonalFormData = { ...formData };
+			if (isEditing) {
+				delete payload.CrearUsuario;
+				delete payload.NombreRed;
+				delete payload.Password;
+				delete payload.ConfirmPassword;
+				delete payload.CodOperador;
+			} else if (!payload.CrearUsuario) {
+				delete payload.NombreRed;
+				delete payload.Password;
+				delete payload.ConfirmPassword;
+				delete payload.CodOperador;
+			} else {
+				delete payload.ConfirmPassword;
+			}
+			const ok = await onSubmit(payload);
 			if (ok) onCancel();
 		} finally {
 			setInternalSubmitting(false);
@@ -385,10 +425,21 @@ export default function PersonalForm({
 				>
 					Datos Profesionales
 				</div>
+				{showCuentaTab && (
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[tabIds.indexOf('cuenta')] = el;
+						}}
+						className={`${styles.tab} ${activeTab === 'cuenta' ? styles.tabActive : ''}`}
+						onClick={() => setActiveTab('cuenta')}
+					>
+						Cuenta de acceso
+					</div>
+				)}
 				{showAgendaTab && (
 					<div
 						ref={(el) => {
-							if (el) tabsRef.current[2] = el;
+							if (el) tabsRef.current[tabIds.indexOf('agenda')] = el;
 						}}
 						className={`${styles.tab} ${activeTab === 'agenda' ? styles.tabActive : ''}`}
 						onClick={() => setActiveTab('agenda')}
@@ -768,7 +819,100 @@ export default function PersonalForm({
 							tabIndex={41}
 						/>
 					</div>
+
+					{!isEditing && (
+						<div className={styles.usuarioSection}>
+							<div className={styles.usuarioHead}>
+								<label className={styles.checkboxLabel}>
+									<input
+										type='checkbox'
+										checked={!!formData.CrearUsuario}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												CrearUsuario: e.target.checked,
+											}))
+										}
+									/>
+									Crear usuario de acceso al sistema
+								</label>
+								<p className={styles.usuarioHint}>
+									Genera el registro en imPassword con el mismo ID del personal para poder iniciar sesión.
+								</p>
+							</div>
+							{formData.CrearUsuario && (
+								<div className={styles.usuarioGrid}>
+									<div className={`${styles.field} ${styles.fieldHalf}`}>
+										<label className={styles.label}>Usuario (NombreRed) *</label>
+										<input
+											type='text'
+											name='NombreRed'
+											value={formData.NombreRed || ''}
+											onChange={handleChange}
+											className={`${styles.input} ${errors.NombreRed ? styles.inputError : ''}`}
+											autoComplete='off'
+											placeholder='Ej. jperez'
+											tabIndex={42}
+										/>
+										{errors.NombreRed && (
+											<span className={styles.error}>{errors.NombreRed}</span>
+										)}
+									</div>
+									<div className={`${styles.field} ${styles.fieldHalf}`}>
+										<label className={styles.label}>Código operador</label>
+										<input
+											type='text'
+											name='CodOperador'
+											value={formData.CodOperador || ''}
+											onChange={handleChange}
+											className={styles.input}
+											autoComplete='off'
+											tabIndex={43}
+										/>
+									</div>
+									<div className={`${styles.field} ${styles.fieldHalf}`}>
+										<label className={styles.label}>Contraseña *</label>
+										<input
+											type='password'
+											name='Password'
+											value={formData.Password || ''}
+											onChange={handleChange}
+											className={`${styles.input} ${errors.Password ? styles.inputError : ''}`}
+											autoComplete='new-password'
+											tabIndex={44}
+										/>
+										{errors.Password && (
+											<span className={styles.error}>{errors.Password}</span>
+										)}
+									</div>
+									<div className={`${styles.field} ${styles.fieldHalf}`}>
+										<label className={styles.label}>Confirmar contraseña *</label>
+										<input
+											type='password'
+											name='ConfirmPassword'
+											value={formData.ConfirmPassword || ''}
+											onChange={handleChange}
+											className={`${styles.input} ${errors.ConfirmPassword ? styles.inputError : ''}`}
+											autoComplete='new-password'
+											tabIndex={45}
+										/>
+										{errors.ConfirmPassword && (
+											<span className={styles.error}>{errors.ConfirmPassword}</span>
+										)}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
 				</div>
+			)}
+
+			{activeTab === 'cuenta' && showCuentaTab && formData.Valor && (
+				<PersonalCuentaTab
+					personalId={formData.Valor}
+					apellidoNombre={formData.ApellidoNombre}
+					variant='form'
+				/>
 			)}
 
 			{activeTab === 'agenda' && showAgendaTab && (
@@ -786,6 +930,7 @@ export default function PersonalForm({
 				>
 					Cancelar
 				</button>
+				{activeTab !== 'cuenta' && (
 				<button
 					type='submit'
 					className={`${styles.submitButton} ${internalSubmitting ? styles.loading : ''}`}
@@ -795,6 +940,7 @@ export default function PersonalForm({
 					{internalSubmitting && <span className={styles.inlineSpinner} aria-hidden='true' />}
 					{internalSubmitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
 				</button>
+				)}
 			</div>
 		</form>
 	);

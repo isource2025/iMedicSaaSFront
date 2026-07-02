@@ -24,6 +24,7 @@ const OPCIONES_BASE: OpcionMenu[] = [
 ];
 
 const OPCIONES_EXTRA: OpcionMenu[] = [
+	{ id: 'cuenta', label: 'Cuenta de acceso' },
 	{ id: 'servicio', label: 'Servicio / facturación' },
 	{ id: 'empresas', label: 'Empresas' },
 	{ id: 'firma', label: 'Firma' },

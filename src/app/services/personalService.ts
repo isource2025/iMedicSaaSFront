@@ -10,6 +10,9 @@ import {
 	PersonalServicioDto,
 	PersonalSectorAsignado,
 	PersonalCodigoFacturacion,
+	PersonalCuentaEstado,
+	CrearPersonalCuentaData,
+	ActualizarPersonalCuentaData,
 } from '../types/personal';
 
 /** Obtiene listado paginado de personal */
@@ -304,6 +307,52 @@ export const removePersonalCodigoFacturacion = async (
 	throw new Error(res.data.mensaje || 'Error al eliminar código');
 };
 
+export const getPersonalCuenta = async (id: number): Promise<PersonalCuentaEstado> => {
+	const res = await apiService.get<ApiResponse<PersonalCuentaEstado>>(`/personal/${id}/cuenta`);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al obtener cuenta de acceso');
+};
+
+export const createPersonalCuenta = async (
+	id: number,
+	data: CrearPersonalCuentaData,
+): Promise<PersonalCuentaEstado['cuenta']> => {
+	const res = await apiService.post<ApiResponse<PersonalCuentaEstado['cuenta']>>(
+		`/personal/${id}/cuenta`,
+		data,
+	);
+	if (res.data.success && res.data.data) {
+		return { tieneCuenta: true, ...res.data.data };
+	}
+	throw new Error(res.data.mensaje || 'Error al crear cuenta de acceso');
+};
+
+export const updatePersonalCuenta = async (
+	id: number,
+	data: ActualizarPersonalCuentaData,
+): Promise<PersonalCuentaEstado['cuenta']> => {
+	const res = await apiService.put<ApiResponse<PersonalCuentaEstado['cuenta']>>(
+		`/personal/${id}/cuenta`,
+		data,
+	);
+	if (res.data.success && res.data.data) {
+		return { tieneCuenta: true, ...res.data.data };
+	}
+	throw new Error(res.data.mensaje || 'Error al actualizar cuenta de acceso');
+};
+
+export const changePersonalCuentaPassword = async (
+	id: number,
+	password: string,
+): Promise<void> => {
+	const res = await apiService.put<ApiResponse<unknown>>(`/personal/${id}/cuenta/password`, {
+		password,
+	});
+	if (!res.data.success) {
+		throw new Error(res.data.mensaje || 'Error al cambiar contraseña');
+	}
+};
+
 export const personalService = {
 	getPersonalList,
 	getNextId,
@@ -333,6 +382,10 @@ export const personalService = {
 	addPersonalCodigoFacturacion,
 	updatePersonalCodigoFacturacion,
 	removePersonalCodigoFacturacion,
+	getPersonalCuenta,
+	createPersonalCuenta,
+	updatePersonalCuenta,
+	changePersonalCuentaPassword,
 };
 
 export default personalService;

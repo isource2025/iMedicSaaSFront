@@ -262,3 +262,40 @@
 		grid-column: span 2;
 	}
 }
+
+.usuarioSection {
+	grid-column: 1 / -1;
+	margin-top: 0.5rem;
+	padding: 1rem;
+	border: 1px solid #dbeafe;
+	border-radius: 10px;
+	background: #f8fdff;
+}
+
+.usuarioHead {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-bottom: 0.75rem;
+}
+
+.checkboxLabel {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: 600;
+	color: #0f172a;
+	font-size: 0.9rem;
+}
+
+.usuarioHint {
+	margin: 0;
+	font-size: 0.8rem;
+	color: #64748b;
+}
+
+.usuarioGrid {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: 0.9rem 1rem;
+}

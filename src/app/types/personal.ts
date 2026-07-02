@@ -59,6 +59,12 @@ export interface PersonalFormData {
 	NumeroSocio: string;
 	ConvenioFacturacion: string;
 	IdEspecialidadME: string;
+	/** Alta: crear usuario en imPassword vinculado al Valor del personal */
+	CrearUsuario?: boolean;
+	NombreRed?: string;
+	Password?: string;
+	ConfirmPassword?: string;
+	CodOperador?: string;
 }
 
 export interface ApiResponse<T> {
@@ -106,4 +112,38 @@ export interface PersonalSectorAsignado {
 export interface PersonalCodigoFacturacion {
 	CodigoAsociacion: string;
 	CodigoFacturacion: string;
+}
+
+export interface PersonalCuentaSector {
+	idSector: string;
+	descripcionSector: string;
+}
+
+export interface PersonalCuenta {
+	tieneCuenta: boolean;
+	ValorPersonal?: number;
+	CodOperador?: string;
+	Apellido?: string;
+	Nombres?: string;
+	NombreRed?: string;
+	NumeroDocumento?: string;
+	Legajo?: string;
+	MarcadeBaja?: number;
+	sectores?: PersonalCuentaSector[];
+}
+
+export interface PersonalCuentaEstado {
+	tieneCuenta: boolean;
+	cuenta: PersonalCuenta | null;
+}
+
+export interface CrearPersonalCuentaData {
+	nombreRed: string;
+	password: string;
+	codOperador?: string;
+}
+
+export interface ActualizarPersonalCuentaData {
+	nombreRed: string;
+	codOperador?: string;
 }

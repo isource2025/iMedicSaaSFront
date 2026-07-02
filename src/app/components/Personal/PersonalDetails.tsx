@@ -40,27 +40,34 @@ export default function PersonalDetails({
 	const [servicios, setServicios] = useState<CatalogoItemTexto[]>([]);
 	const [categorias, setCategorias] = useState<CatalogoItemNumerico[]>([]);
 	const [clases, setClases] = useState<CatalogoItemTexto[]>([]);
+	const [cuentaUsuario, setCuentaUsuario] = useState<string | null>(null);
+	const [cuentaActiva, setCuentaActiva] = useState<boolean | null>(null);
 
 	useEffect(() => {
 		(async () => {
 			try {
-				const [esp, fn, sv, cat, cl] = await Promise.all([
+				const [esp, fn, sv, cat, cl, cuenta] = await Promise.all([
 					personalService.getEspecialidades(),
 					personalService.getFunciones(),
 					personalService.getServicios(),
 					personalService.getCategorias(),
 					personalService.getClases(),
+					personalService.getPersonalCuenta(personal.Valor).catch(() => null),
 				]);
 				setEspecialidades(esp);
 				setFunciones(fn);
 				setServicios(sv);
 				setCategorias(cat);
 				setClases(cl);
+				if (cuenta) {
+					setCuentaActiva(cuenta.tieneCuenta);
+					setCuentaUsuario(cuenta.cuenta?.NombreRed || null);
+				}
 			} catch (e) {
 				console.error('catalogs details', e);
 			}
 		})();
-	}, []);
+	}, [personal.Valor]);
 
 	const descNum = (list: CatalogoItemNumerico[], val: number | null) =>
 		val == null ? '-' : list.find((i) => i.valor === val)?.descripcion || String(val);
@@ -192,6 +199,26 @@ export default function PersonalDetails({
 					<div className={styles.item}>
 						<div className={modalStyles.label}>Id especialidad ME</div>
 						<div className={styles.value}>{personal.IdEspecialidadME ?? '-'}</div>
+					</div>
+				</div>
+			</div>
+
+			<div className={styles.section}>
+				<div className={modalStyles.label}>Cuenta de acceso</div>
+				<div className={styles.grid}>
+					<div className={styles.item}>
+						<div className={modalStyles.label}>Estado</div>
+						<div className={styles.value}>
+							{cuentaActiva == null
+								? '—'
+								: cuentaActiva
+								? 'Activa'
+								: 'Sin cuenta'}
+						</div>
+					</div>
+					<div className={styles.item}>
+						<div className={modalStyles.label}>Usuario (NombreRed)</div>
+						<div className={styles.value}>{cuentaUsuario || '—'}</div>
 					</div>
 				</div>
 			</div>
