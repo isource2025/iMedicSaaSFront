@@ -322,7 +322,7 @@ export const createPersonalCuenta = async (
 		data,
 	);
 	if (res.data.success && res.data.data) {
-		return { tieneCuenta: true, ...res.data.data };
+		return res.data.data;
 	}
 	throw new Error(res.data.mensaje || 'Error al crear cuenta de acceso');
 };
@@ -336,7 +336,7 @@ export const updatePersonalCuenta = async (
 		data,
 	);
 	if (res.data.success && res.data.data) {
-		return { tieneCuenta: true, ...res.data.data };
+		return res.data.data;
 	}
 	throw new Error(res.data.mensaje || 'Error al actualizar cuenta de acceso');
 };
