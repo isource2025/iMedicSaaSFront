@@ -10,6 +10,8 @@ import styles from './PersonalActionModals.module.css';
 type Props = {
 	personalId: number;
 	apellidoNombre?: string;
+	/** Matrícula provincial: define el código operador (solo lectura). */
+	matriculaProvincial?: number | string | null;
 	/** En modal muestra botón cerrar; en formulario se integra en la solapa */
 	variant?: 'form' | 'modal';
 	onSaved?: () => void | Promise<void>;
@@ -25,9 +27,22 @@ function extractError(err: unknown, fallback: string): string {
 	return fallback;
 }
 
+function codOperadorDisplay(
+	matriculaProvincial: number | string | null | undefined,
+	personalId: number,
+	cuentaCod?: string | null,
+) {
+	if (cuentaCod != null && String(cuentaCod).trim()) return String(cuentaCod).trim();
+	if (matriculaProvincial != null && String(matriculaProvincial).trim()) {
+		return String(matriculaProvincial).trim();
+	}
+	return String(personalId);
+}
+
 export default function PersonalCuentaTab({
 	personalId,
 	apellidoNombre,
+	matriculaProvincial,
 	variant = 'form',
 	onSaved,
 	onClose,
@@ -39,7 +54,6 @@ export default function PersonalCuentaTab({
 	const [estado, setEstado] = useState<PersonalCuentaEstado | null>(null);
 
 	const [nombreRed, setNombreRed] = useState('');
-	const [codOperador, setCodOperador] = useState('');
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [newPassword, setNewPassword] = useState('');
@@ -51,13 +65,7 @@ export default function PersonalCuentaTab({
 		try {
 			const data = await personalService.getPersonalCuenta(personalId);
 			setEstado(data);
-			if (data.tieneCuenta && data.cuenta) {
-				setNombreRed(data.cuenta.NombreRed || '');
-				setCodOperador(data.cuenta.CodOperador || '');
-			} else {
-				setNombreRed('');
-				setCodOperador('');
-			}
+			setNombreRed(data.tieneCuenta && data.cuenta ? data.cuenta.NombreRed || '' : '');
 			setPassword('');
 			setConfirmPassword('');
 			setNewPassword('');
@@ -74,6 +82,11 @@ export default function PersonalCuentaTab({
 	}, [cargar]);
 
 	const tieneCuenta = !!estado?.tieneCuenta;
+	const codOperador = codOperadorDisplay(
+		matriculaProvincial,
+		personalId,
+		estado?.cuenta?.CodOperador,
+	);
 
 	const validarPasswordPar = (pwd: string, confirm: string): string | null => {
 		if (pwd !== confirm) return 'Las contraseñas no coinciden';
@@ -98,7 +111,6 @@ export default function PersonalCuentaTab({
 			const cuenta = await personalService.createPersonalCuenta(personalId, {
 				nombreRed: nombreRed.trim(),
 				password,
-				codOperador: codOperador.trim() || undefined,
 			});
 			setEstado({ tieneCuenta: true, cuenta });
 			setPassword('');
@@ -112,46 +124,44 @@ export default function PersonalCuentaTab({
 		}
 	};
 
-	const handleActualizarCuenta = async () => {
+	const handleGuardarCambios = async () => {
 		if (!nombreRed.trim()) {
 			setError('El nombre de usuario (NombreRed) es obligatorio');
 			return;
 		}
+
+		const quiereCambiarPassword = !!(newPassword || confirmNewPassword);
+		if (quiereCambiarPassword) {
+			const pwdErr = validarPasswordPar(newPassword, confirmNewPassword);
+			if (pwdErr) {
+				setError(pwdErr);
+				return;
+			}
+		}
+
 		setSaving(true);
 		setError('');
 		setSuccess('');
 		try {
 			const cuenta = await personalService.updatePersonalCuenta(personalId, {
 				nombreRed: nombreRed.trim(),
-				codOperador: codOperador.trim() || undefined,
 			});
 			setEstado({ tieneCuenta: true, cuenta });
-			setSuccess('Datos de acceso actualizados.');
-			await onSaved?.();
-		} catch (e) {
-			setError(extractError(e, 'Error al actualizar la cuenta'));
-		} finally {
-			setSaving(false);
-		}
-	};
 
-	const handleCambiarPassword = async () => {
-		const pwdErr = validarPasswordPar(newPassword, confirmNewPassword);
-		if (pwdErr) {
-			setError(pwdErr);
-			return;
-		}
-		setSaving(true);
-		setError('');
-		setSuccess('');
-		try {
-			await personalService.changePersonalCuentaPassword(personalId, newPassword);
-			setNewPassword('');
-			setConfirmNewPassword('');
-			setSuccess('Contraseña actualizada correctamente.');
+			if (quiereCambiarPassword) {
+				await personalService.changePersonalCuentaPassword(personalId, newPassword);
+				setNewPassword('');
+				setConfirmNewPassword('');
+			}
+
+			setSuccess(
+				quiereCambiarPassword
+					? 'Datos de acceso y contraseña actualizados.'
+					: 'Datos de acceso actualizados.',
+			);
 			await onSaved?.();
 		} catch (e) {
-			setError(extractError(e, 'Error al cambiar la contraseña'));
+			setError(extractError(e, 'Error al guardar los cambios'));
 		} finally {
 			setSaving(false);
 		}
@@ -166,6 +176,9 @@ export default function PersonalCuentaTab({
 	}
 
 	const wrapClass = variant === 'form' ? formStyles.usuarioSection : styles.row;
+	const actionClass = variant === 'form' ? formStyles.actions : styles.actions;
+	const primaryBtnClass = variant === 'form' ? formStyles.submitButton : styles.btnPrimary;
+	const secondaryBtnClass = variant === 'form' ? formStyles.cancelButton : styles.btn;
 
 	return (
 		<div className={wrapClass}>
@@ -177,236 +190,145 @@ export default function PersonalCuentaTab({
 
 			<div className={formStyles.usuarioHead}>
 				<p className={formStyles.usuarioHint}>
-					La cuenta de acceso se guarda en <code>imPassword</code> con el mismo ID del personal (
-					<strong>ValorPersonal = {personalId}</strong>). Es la misma credencial que usa el login del
-					sistema.
+					Credencial de login del sistema vinculada al personal (ID {personalId}). El código
+					operador se toma de la matrícula provincial y no se edita desde aquí.
 				</p>
 				{tieneCuenta ? (
-					<span
-						style={{
-							display: 'inline-block',
-							padding: '0.2rem 0.6rem',
-							borderRadius: 999,
-							background: '#dcfce7',
-							color: '#166534',
-							fontSize: '0.78rem',
-							fontWeight: 600,
-						}}
-					>
-						Cuenta activa
-					</span>
+					<span className={formStyles.statusBadgeActive}>Cuenta activa</span>
 				) : (
-					<span
-						style={{
-							display: 'inline-block',
-							padding: '0.2rem 0.6rem',
-							borderRadius: 999,
-							background: '#fef3c7',
-							color: '#92400e',
-							fontSize: '0.78rem',
-							fontWeight: 600,
-						}}
-					>
-						Sin cuenta de acceso
-					</span>
+					<span className={formStyles.statusBadgeInactive}>Sin cuenta de acceso</span>
 				)}
 			</div>
 
-			{error && (
-				<div
-					style={{
-						padding: '0.5rem 0.75rem',
-						marginBottom: '0.75rem',
-						borderRadius: 8,
-						background: '#fef2f2',
-						color: '#b91c1c',
-						fontSize: '0.85rem',
-					}}
-				>
-					{error}
+			{error && <div className={formStyles.alertError}>{error}</div>}
+			{success && <div className={formStyles.alertSuccess}>{success}</div>}
+
+			<div className={formStyles.usuarioGrid}>
+				<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+					<label className={formStyles.label}>Usuario (NombreRed) *</label>
+					<input
+						type='text'
+						value={nombreRed}
+						onChange={(e) => setNombreRed(e.target.value)}
+						className={formStyles.input}
+						autoComplete='off'
+						placeholder='Ej. jperez o DNI'
+						disabled={saving}
+					/>
 				</div>
-			)}
-			{success && (
-				<div
-					style={{
-						padding: '0.5rem 0.75rem',
-						marginBottom: '0.75rem',
-						borderRadius: 8,
-						background: '#f0fdf4',
-						color: '#166534',
-						fontSize: '0.85rem',
-					}}
-				>
-					{success}
+				<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+					<label className={formStyles.label}>Código operador</label>
+					<input
+						type='text'
+						value={codOperador}
+						readOnly
+						disabled
+						className={`${formStyles.input} ${formStyles.readOnly}`}
+						tabIndex={-1}
+					/>
+					<span className={formStyles.fieldHint}>
+						Definido por la matrícula provincial en Datos Profesionales.
+					</span>
+				</div>
+
+				{!tieneCuenta && (
+					<>
+						<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+							<label className={formStyles.label}>Contraseña *</label>
+							<input
+								type='password'
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								className={formStyles.input}
+								autoComplete='new-password'
+								disabled={saving}
+							/>
+						</div>
+						<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+							<label className={formStyles.label}>Confirmar contraseña *</label>
+							<input
+								type='password'
+								value={confirmPassword}
+								onChange={(e) => setConfirmPassword(e.target.value)}
+								className={formStyles.input}
+								autoComplete='new-password'
+								disabled={saving}
+							/>
+						</div>
+					</>
+				)}
+			</div>
+
+			{tieneCuenta && estado?.cuenta?.sectores && estado.cuenta.sectores.length > 0 && (
+				<div className={formStyles.readOnlyBlock}>
+					<div className={styles.label}>Sectores de login</div>
+					<div className={styles.list} style={{ maxHeight: 120 }}>
+						{estado.cuenta.sectores.map((s) => (
+							<div key={s.idSector} className={styles.listItem}>
+								<span>{s.descripcionSector || s.idSector}</span>
+							</div>
+						))}
+					</div>
+					<p className={formStyles.usuarioHint}>
+						Los sectores se gestionan desde el menú &quot;Sectores&quot; del personal.
+					</p>
 				</div>
 			)}
 
-			{!tieneCuenta ? (
-				<div className={formStyles.usuarioGrid}>
-					<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-						<label className={formStyles.label}>Usuario (NombreRed) *</label>
-						<input
-							type='text'
-							value={nombreRed}
-							onChange={(e) => setNombreRed(e.target.value)}
-							className={formStyles.input}
-							autoComplete='off'
-							placeholder='Ej. jperez'
-							disabled={saving}
-						/>
-					</div>
-					<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-						<label className={formStyles.label}>Código operador</label>
-						<input
-							type='text'
-							value={codOperador}
-							onChange={(e) => setCodOperador(e.target.value)}
-							className={formStyles.input}
-							autoComplete='off'
-							disabled={saving}
-						/>
-					</div>
-					<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-						<label className={formStyles.label}>Contraseña *</label>
-						<input
-							type='password'
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className={formStyles.input}
-							autoComplete='new-password'
-							disabled={saving}
-						/>
-					</div>
-					<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-						<label className={formStyles.label}>Confirmar contraseña *</label>
-						<input
-							type='password'
-							value={confirmPassword}
-							onChange={(e) => setConfirmPassword(e.target.value)}
-							className={formStyles.input}
-							autoComplete='new-password'
-							disabled={saving}
-						/>
-					</div>
-				</div>
-			) : (
-				<>
+			{tieneCuenta && (
+				<div className={formStyles.subsection}>
+					<p className={formStyles.subsectionTitle}>Cambiar contraseña</p>
 					<div className={formStyles.usuarioGrid}>
 						<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-							<label className={formStyles.label}>Usuario (NombreRed) *</label>
+							<label className={formStyles.label}>Nueva contraseña</label>
 							<input
-								type='text'
-								value={nombreRed}
-								onChange={(e) => setNombreRed(e.target.value)}
+								type='password'
+								value={newPassword}
+								onChange={(e) => setNewPassword(e.target.value)}
 								className={formStyles.input}
-								autoComplete='off'
+								autoComplete='new-password'
 								disabled={saving}
 							/>
 						</div>
 						<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-							<label className={formStyles.label}>Código operador</label>
+							<label className={formStyles.label}>Confirmar nueva contraseña</label>
 							<input
-								type='text'
-								value={codOperador}
-								onChange={(e) => setCodOperador(e.target.value)}
+								type='password'
+								value={confirmNewPassword}
+								onChange={(e) => setConfirmNewPassword(e.target.value)}
 								className={formStyles.input}
-								autoComplete='off'
+								autoComplete='new-password'
 								disabled={saving}
 							/>
 						</div>
 					</div>
-
-					{estado?.cuenta?.sectores && estado.cuenta.sectores.length > 0 && (
-						<div style={{ marginTop: '0.75rem' }}>
-							<div className={styles.label}>Sectores de login</div>
-							<div className={styles.list} style={{ maxHeight: 120 }}>
-								{estado.cuenta.sectores.map((s) => (
-									<div key={s.idSector} className={styles.listItem}>
-										<span>{s.descripcionSector || s.idSector}</span>
-									</div>
-								))}
-							</div>
-							<p className={formStyles.usuarioHint}>
-								Los sectores se gestionan desde el menú &quot;Sectores&quot; del personal.
-							</p>
-						</div>
-					)}
-
-					<div
-						style={{
-							marginTop: '1rem',
-							paddingTop: '1rem',
-							borderTop: '1px solid #dbeafe',
-						}}
-					>
-						<p className={formStyles.checkboxLabel} style={{ marginBottom: '0.5rem' }}>
-							Cambiar contraseña
-						</p>
-						<div className={formStyles.usuarioGrid}>
-							<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-								<label className={formStyles.label}>Nueva contraseña</label>
-								<input
-									type='password'
-									value={newPassword}
-									onChange={(e) => setNewPassword(e.target.value)}
-									className={formStyles.input}
-									autoComplete='new-password'
-									disabled={saving}
-								/>
-							</div>
-							<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
-								<label className={formStyles.label}>Confirmar nueva contraseña</label>
-								<input
-									type='password'
-									value={confirmNewPassword}
-									onChange={(e) => setConfirmNewPassword(e.target.value)}
-									className={formStyles.input}
-									autoComplete='new-password'
-									disabled={saving}
-								/>
-							</div>
-						</div>
-					</div>
-				</>
+				</div>
 			)}
 
-			<div className={variant === 'modal' ? styles.actions : formStyles.actions}>
+			<div className={actionClass}>
 				{variant === 'modal' && onClose && (
-					<button type='button' className={styles.btn} onClick={onClose} disabled={saving}>
+					<button type='button' className={secondaryBtnClass} onClick={onClose} disabled={saving}>
 						Cerrar
 					</button>
 				)}
 				{!tieneCuenta ? (
 					<button
 						type='button'
-						className={variant === 'modal' ? styles.btnPrimary : formStyles.submitButton}
+						className={primaryBtnClass}
 						onClick={handleCrearCuenta}
 						disabled={saving}
 					>
 						{saving ? 'Creando…' : 'Crear cuenta de acceso'}
 					</button>
 				) : (
-					<>
-						<button
-							type='button'
-							className={variant === 'modal' ? styles.btnPrimary : formStyles.submitButton}
-							onClick={handleActualizarCuenta}
-							disabled={saving}
-						>
-							{saving ? 'Guardando…' : 'Guardar datos de acceso'}
-						</button>
-						{(newPassword || confirmNewPassword) && (
-							<button
-								type='button'
-								className={variant === 'modal' ? styles.btn : formStyles.cancelButton}
-								onClick={handleCambiarPassword}
-								disabled={saving}
-								style={variant === 'form' ? { marginLeft: '0.5rem' } : undefined}
-							>
-								{saving ? 'Guardando…' : 'Actualizar contraseña'}
-							</button>
-						)}
-					</>
+					<button
+						type='button'
+						className={primaryBtnClass}
+						onClick={handleGuardarCambios}
+						disabled={saving}
+					>
+						{saving ? 'Guardando…' : 'Guardar cambios'}
+					</button>
 				)}
 			</div>
 		</div>

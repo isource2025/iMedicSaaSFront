@@ -533,6 +533,14 @@
   color: #64748b;
 }
 
+.folderLastVisit {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0083a9;
+}
+
 .folderVisitCount {
   flex-shrink: 0;
   font-size: 0.68rem;

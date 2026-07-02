@@ -862,13 +862,21 @@ export default function PersonalForm({
 										<label className={styles.label}>Código operador</label>
 										<input
 											type='text'
-											name='CodOperador'
-											value={formData.CodOperador || ''}
-											onChange={handleChange}
-											className={styles.input}
-											autoComplete='off'
-											tabIndex={43}
+											value={
+												formData.MatriculaProvincial
+													? String(formData.MatriculaProvincial)
+													: displayId
+														? String(displayId)
+														: '—'
+											}
+											readOnly
+											disabled
+											className={`${styles.input} ${styles.readOnly}`}
+											tabIndex={-1}
 										/>
+										<span className={styles.fieldHint}>
+											Se asigna automáticamente desde la matrícula provincial.
+										</span>
 									</div>
 									<div className={`${styles.field} ${styles.fieldHalf}`}>
 										<label className={styles.label}>Contraseña *</label>
@@ -911,6 +919,7 @@ export default function PersonalForm({
 				<PersonalCuentaTab
 					personalId={formData.Valor}
 					apellidoNombre={formData.ApellidoNombre}
+					matriculaProvincial={formData.MatriculaProvincial || null}
 					variant='form'
 				/>
 			)}
@@ -921,6 +930,12 @@ export default function PersonalForm({
 			</div>
 
 			<div className={styles.actions}>
+				{(activeTab === 'cuenta' || activeTab === 'agenda') && (
+					<p className={styles.tabActionsHint}>
+						Los cambios de esta solapa se guardan con el botón dentro de la sección.
+					</p>
+				)}
+				<div className={styles.actionsButtons}>
 				<button
 					type='button'
 					onClick={onCancel}
@@ -930,7 +945,7 @@ export default function PersonalForm({
 				>
 					Cancelar
 				</button>
-				{activeTab !== 'cuenta' && (
+				{activeTab !== 'cuenta' && activeTab !== 'agenda' && (
 				<button
 					type='submit'
 					className={`${styles.submitButton} ${internalSubmitting ? styles.loading : ''}`}
@@ -941,6 +956,7 @@ export default function PersonalForm({
 					{internalSubmitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
 				</button>
 				)}
+				</div>
 			</div>
 		</form>
 	);

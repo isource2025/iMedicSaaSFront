@@ -694,6 +694,7 @@ export default function PersonalActionModals({
 					<PersonalCuentaTab
 						personalId={personal.Valor}
 						apellidoNombre={personal.ApellidoNombre}
+						matriculaProvincial={personal.MatriculaProvincial}
 						variant='modal'
 						onSaved={onSaved}
 						onClose={onClose}

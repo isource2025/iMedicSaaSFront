@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '../Sidebar/Sidebar';
-import NotificationsFab from './NotificationsFab';
+import LayoutFloatingStack from './LayoutFloatingStack';
 import styles from './LayoutShell.module.css';
 
 function isBedDetailPath(pathname: string | null) {
@@ -77,7 +77,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         </div>
       </main>
 
-      {!hideGlobalNotificationsFab ? <NotificationsFab /> : null}
+      {!hideGlobalNotificationsFab ? <LayoutFloatingStack /> : null}
     </div>
   );
 }

@@ -14,6 +14,7 @@
   color: #0369a1;
   white-space: nowrap;
   border: 1px solid rgba(3, 105, 161, 0.12);
+  font-family: inherit;
 }
 
 .visitBadgeZero {
@@ -21,4 +22,19 @@
   background: #f1f5f9;
   color: #64748b;
   border-color: #e2e8f0;
+}
+
+.visitBadgeClickable {
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.visitBadgeClickable:hover {
+  background: #bae6fd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.18);
+}
+
+.visitBadgeClickable:active {
+  transform: translateY(0);
 }

@@ -1,0 +1,127 @@
+.wrap {
+  position: fixed;
+  right: 24px;
+  bottom: 92px;
+  z-index: 10050;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.wrapInStack {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .wrap:not(.wrapInStack) {
+    right: 16px;
+    bottom: 84px;
+  }
+}
+
+.fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: #fff;
+  background: linear-gradient(145deg, #00b5e2 0%, #0083a9 100%);
+}
+
+.fab:hover {
+  transform: scale(1.06);
+  box-shadow: 0 10px 32px rgba(0, 131, 169, 0.35);
+}
+
+.fab:active {
+  transform: scale(0.98);
+}
+
+.searchForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 28px;
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.16);
+  min-width: min(280px, calc(100vw - 48px));
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  min-width: 0;
+  background: transparent;
+  color: #0f172a;
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+.searchSubmit {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(145deg, #00b5e2 0%, #0083a9 100%);
+  flex-shrink: 0;
+}
+
+.searchSubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inlineError {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  padding: 4px 10px;
+  border-radius: 8px;
+  max-width: min(280px, calc(100vw - 48px));
+  text-align: right;
+}
+
+.toastError {
+  position: fixed;
+  right: 24px;
+  bottom: 160px;
+  z-index: 10060;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+@media (max-width: 768px) {
+  .toastError {
+    right: 16px;
+    bottom: 148px;
+  }
+}

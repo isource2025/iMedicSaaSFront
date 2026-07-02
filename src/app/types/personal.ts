@@ -140,10 +140,8 @@ export interface PersonalCuentaEstado {
 export interface CrearPersonalCuentaData {
 	nombreRed: string;
 	password: string;
-	codOperador?: string;
 }
 
 export interface ActualizarPersonalCuentaData {
 	nombreRed: string;
-	codOperador?: string;
 }

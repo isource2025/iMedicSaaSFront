@@ -2,7 +2,10 @@
 
 import Modal from '@/app/components/UI/Modal';
 import type { AdmissionSearchRow } from '@/app/services/admissionSearchService';
-import { VisitClinicalBadges } from './AdmissionSearchClinicalBadges';
+import {
+	VisitClinicalBadges,
+	type ClinicalBadgeKind,
+} from './AdmissionSearchClinicalBadges';
 import styles from './PatientFolderVisitsModal.module.css';
 
 interface PatientFolderVisitsModalProps {
@@ -11,6 +14,7 @@ interface PatientFolderVisitsModalProps {
   patient: AdmissionSearchRow | null;
   visits: AdmissionSearchRow[];
   onOpenVisit: (numeroVisita: number) => void;
+  onBadgeClick?: (kind: ClinicalBadgeKind, numeroVisita: number) => void;
 }
 
 export default function PatientFolderVisitsModal({
@@ -19,6 +23,7 @@ export default function PatientFolderVisitsModal({
   patient,
   visits,
   onOpenVisit,
+  onBadgeClick,
 }: PatientFolderVisitsModalProps) {
   if (!patient) return null;
 
@@ -64,7 +69,7 @@ export default function PatientFolderVisitsModal({
             <div className={styles.visitMetaRow}>
               <span className={`${styles.visitTypeBadge} ${tipoClass(visit)}`}>{tipoAtencion(visit)}</span>
             </div>
-            <VisitClinicalBadges row={visit} />
+            <VisitClinicalBadges row={visit} onBadgeClick={onBadgeClick} />
           </div>
         ))}
       </div>

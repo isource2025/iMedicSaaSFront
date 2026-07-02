@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { admissionSearchService, AdmissionSearchRow } from '@/app/services/admissionSearchService';
-import AdmissionVisitDetailModal, {
-  type VisitDetailPayload,
-} from '@/app/components/admission/AdmissionVisitDetailModal';
+import AdmissionVisitDetailModal from '@/app/components/admission/AdmissionVisitDetailModal';
 import PatientFolderVisitsModal from '@/app/components/admission/PatientFolderVisitsModal';
-import { VisitClinicalBadges } from '@/app/components/admission/AdmissionSearchClinicalBadges';
+import {
+	VisitClinicalBadges,
+	clinicalBadgeToTab,
+	type ClinicalBadgeKind,
+} from '@/app/components/admission/AdmissionSearchClinicalBadges';
+import { useAdmissionVisitDetail } from '@/app/hooks/useAdmissionVisitDetail';
 import styles from './search.module.css';
 import sharedStyles from '../tables/tables.module.css';
 import {
@@ -14,6 +17,7 @@ import {
   formatDMY,
   rangoDesdePeriodo,
 } from '@/app/utils/admissionDatePeriod';
+import { groupRowsByPatient } from '@/app/utils/admissionSearchUtils';
 
 const initialFilters = {
   dni: '',
@@ -50,10 +54,16 @@ export default function AdmissionSearchPage() {
     patient: AdmissionSearchRow;
     visits: AdmissionSearchRow[];
   } | null>(null);
-  const [selectedVisit, setSelectedVisit] = useState<number | null>(null);
-  const [detailData, setDetailData] = useState<VisitDetailPayload | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  const {
+    selectedVisit,
+    detailData,
+    loadingDetail,
+    detailModalOpen,
+    detailInitialTab,
+    openVisitDetail,
+    closeVisitDetail,
+  } = useAdmissionVisitDetail();
 
   const runSearch = async (targetPage = 1) => {
     try {
@@ -104,53 +114,15 @@ export default function AdmissionSearchPage() {
     setPeriodoActivo(null);
     setFilters(initialFilters);
     setError('');
-    setSelectedVisit(null);
-    setDetailData(null);
-    setDetailModalOpen(false);
+    closeVisitDetail();
     setFolderModal(null);
     await runSearch(1);
   };
 
-  const groupedByPatient = useMemo(() => {
-    const map = new Map<number, { patient: AdmissionSearchRow; visits: AdmissionSearchRow[] }>();
-    for (const row of rows) {
-      if (!map.has(row.IdPaciente)) {
-        map.set(row.IdPaciente, { patient: row, visits: [] });
-      }
-      map.get(row.IdPaciente)!.visits.push(row);
-    }
-    const list = Array.from(map.values());
-    for (const g of list) {
-      g.visits.sort((a, b) => {
-        const da = `${a.FechaAdmision || ''} ${a.HoraAdmision || ''}`;
-        const db = `${b.FechaAdmision || ''} ${b.HoraAdmision || ''}`;
-        return db.localeCompare(da);
-      });
-    }
-    return list;
-  }, [rows]);
+  const groupedByPatient = useMemo(() => groupRowsByPatient(rows), [rows]);
 
-  const openVisitDetail = async (numeroVisita: number) => {
-    setSelectedVisit(numeroVisita);
-    setDetailModalOpen(true);
-    setDetailData(null);
-    try {
-      setLoadingDetail(true);
-      setError('');
-      const data = await admissionSearchService.detalle(numeroVisita);
-      setDetailData(data as VisitDetailPayload);
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      setError(err?.response?.data?.message || err?.message || 'No se pudo cargar el detalle de la visita');
-    } finally {
-      setLoadingDetail(false);
-    }
-  };
-
-  const closeVisitDetail = () => {
-    setDetailModalOpen(false);
-    setSelectedVisit(null);
-    setDetailData(null);
+  const handleBadgeClick = (kind: ClinicalBadgeKind, numeroVisita: number) => {
+    void openVisitDetail(numeroVisita, clinicalBadgeToTab(kind));
   };
 
   const filtrosActivos = useMemo(() => {
@@ -169,7 +141,7 @@ export default function AdmissionSearchPage() {
         <div className={styles.pageIntro}>
           <h1 className={styles.pageTitle}>Búsqueda de admisiones</h1>
           <p className={styles.pageSubtitle}>
-            Vista minimalista y ordenada para buscar por visita o por paciente, con acceso directo al detalle clínico.
+            Consultá por visita o abrí la carpeta del paciente con sus admisiones ordenadas de la más reciente a la más antigua.
           </p>
         </div>
         <div className={styles.pageKpis}>
@@ -179,7 +151,9 @@ export default function AdmissionSearchPage() {
           </article>
           <article className={styles.kpiCard}>
             <span className={styles.kpiLabel}>Vista</span>
-            <strong className={styles.kpiValue}>{viewMode === 'admisiones' ? 'Admisiones' : 'Pacientes'}</strong>
+            <strong className={styles.kpiValue}>
+              {viewMode === 'admisiones' ? 'Por visita' : 'Carpeta de paciente'}
+            </strong>
           </article>
         </div>
       </div>
@@ -196,14 +170,14 @@ export default function AdmissionSearchPage() {
               className={`${styles.modeBtn} ${viewMode === 'admisiones' ? styles.modeBtnActive : ''}`}
               onClick={() => setViewMode('admisiones')}
             >
-              Por admisiones
+              Por visita
             </button>
             <button
               type="button"
               className={`${styles.modeBtn} ${viewMode === 'pacientes' ? styles.modeBtnActive : ''}`}
               onClick={() => setViewMode('pacientes')}
             >
-              Por pacientes
+              Carpeta de paciente
             </button>
           </div>
 
@@ -338,7 +312,7 @@ export default function AdmissionSearchPage() {
                       <td>{row.NumeroDocumento || '-'}</td>
                       <td>{row.NumeroHC || '-'}</td>
                       <td>
-                        <VisitClinicalBadges row={row} />
+                        <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
                       </td>
                       <td>{row.FechaAdmision || '-'}</td>
                       <td>{row.HoraAdmision || '-'}</td>
@@ -374,7 +348,7 @@ export default function AdmissionSearchPage() {
                     <p className={styles.admissionCardMeta}>
                       <span className={`${styles.typeBadge} ${tipoAtencionClass(row)}`}>{tipoAtencion(row)}</span>
                     </p>
-                    <VisitClinicalBadges row={row} />
+                    <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
                   </article>
                 ))
               )}
@@ -411,6 +385,11 @@ export default function AdmissionSearchPage() {
                         <span className={styles.folderPatientDni}>
                           DNI {patient.NumeroDocumento || '—'} · HC {patient.NumeroHC || '—'}
                         </span>
+                        {visits[0] ? (
+                          <span className={styles.folderLastVisit}>
+                            Última visita: {visits[0].FechaAdmision || '—'} {visits[0].HoraAdmision || ''}
+                          </span>
+                        ) : null}
                       </div>
                       <span className={styles.folderVisitCount}>
                         {visits.length} {visits.length === 1 ? 'visita' : 'visitas'}
@@ -443,6 +422,7 @@ export default function AdmissionSearchPage() {
         patient={folderModal?.patient ?? null}
         visits={folderModal?.visits ?? []}
         onOpenVisit={(numeroVisita) => void openVisitDetail(numeroVisita)}
+        onBadgeClick={handleBadgeClick}
       />
 
       <AdmissionVisitDetailModal
@@ -451,6 +431,7 @@ export default function AdmissionSearchPage() {
         numeroVisita={selectedVisit}
         loading={loadingDetail}
         data={detailData}
+        initialTab={detailInitialTab}
       />
     </div>
   );

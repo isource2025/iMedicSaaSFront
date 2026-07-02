@@ -1,6 +1,7 @@
 'use client';
 
 import NotificationsFab from '@/app/components/layout/NotificationsFab';
+import PatientFolderFab from '@/app/components/layout/PatientFolderFab';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import styles from './BedFloatingActions.module.css';
 
@@ -25,11 +26,19 @@ export default function BedFloatingActions({
     puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') ||
     puede('INTERNACION.SIGNOS_VITALES.CREAR');
 
-  if (!showAdjuntos && !showLabs && !showNursing) return null;
+  if (!showAdjuntos && !showLabs && !showNursing) {
+    return (
+      <div className={styles.root} aria-label="Acciones rápidas">
+        <NotificationsFab stack />
+        <PatientFolderFab stack />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.root} aria-label="Acciones rápidas">
       <NotificationsFab stack />
+      <PatientFolderFab stack />
       {showNursing && (
       <button
         type="button"

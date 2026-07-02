@@ -66,6 +66,8 @@ type TabId =
   | 'protocolos'
   | 'adjuntos';
 
+export type VisitDetailTabId = TabId;
+
 const TAB_LABELS: Record<TabId, string> = {
   resumen: 'Resumen',
   hcIngreso: 'HC de ingreso',
@@ -204,6 +206,7 @@ interface AdmissionVisitDetailModalProps {
   numeroVisita: number | null;
   loading: boolean;
   data: VisitDetailPayload | null;
+  initialTab?: VisitDetailTabId;
 }
 
 export default function AdmissionVisitDetailModal({
@@ -212,6 +215,7 @@ export default function AdmissionVisitDetailModal({
   numeroVisita,
   loading,
   data,
+  initialTab,
 }: AdmissionVisitDetailModalProps) {
   const baseId = useId();
   const [activeTab, setActiveTab] = useState<TabId>('resumen');
@@ -223,10 +227,10 @@ export default function AdmissionVisitDetailModal({
       setExportModalOpen(false);
       return;
     }
-    setActiveTab('resumen');
+    setActiveTab(initialTab && initialTab !== 'resumen' ? initialTab : 'resumen');
     setExportModalOpen(false);
     setEvolucionServiceFilter('todos');
-  }, [isOpen, numeroVisita]);
+  }, [isOpen, numeroVisita, initialTab]);
 
   const counts = useMemo(() => {
     const hci = data?.historialClinico?.length ?? 0;
