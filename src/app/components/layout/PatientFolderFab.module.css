@@ -58,6 +58,11 @@
   border: 1.5px solid #cbd5e1;
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.16);
   min-width: min(280px, calc(100vw - 48px));
+  position: relative;
+}
+
+.searchForm:has(:disabled.searchInput) {
+  opacity: 0.92;
 }
 
 .searchInput {
@@ -90,8 +95,47 @@
 }
 
 .searchSubmit:disabled {
-  opacity: 0.5;
+  opacity: 0.85;
   cursor: not-allowed;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: fabSpin 0.7s linear infinite;
+}
+
+.spinnerDark {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #cbd5e1;
+  border-top-color: #0083a9;
+  border-radius: 50%;
+  animation: fabSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.searchingStatus {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0369a1;
+  background: #f0f9ff;
+  padding: 5px 12px;
+  border-radius: 8px;
+  max-width: min(280px, calc(100vw - 48px));
+}
+
+@keyframes fabSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .inlineError {

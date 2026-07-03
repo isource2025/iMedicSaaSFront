@@ -112,12 +112,17 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 							type="submit"
 							className={styles.searchSubmit}
 							disabled={searching || !dni.trim()}
-							aria-label="Buscar"
+							aria-label={searching ? 'Buscando' : 'Buscar'}
+							aria-busy={searching}
 						>
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-								<circle cx="11" cy="11" r="7" />
-								<path d="M20 20l-3.5-3.5" />
-							</svg>
+							{searching ? (
+								<span className={styles.spinner} aria-hidden />
+							) : (
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+									<circle cx="11" cy="11" r="7" />
+									<path d="M20 20l-3.5-3.5" />
+								</svg>
+							)}
 						</button>
 					</form>
 				) : (
@@ -134,7 +139,13 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 						</svg>
 					</button>
 				)}
-				{searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
+				{searching ? (
+					<p className={styles.searchingStatus} role="status" aria-live="polite">
+						<span className={styles.spinnerDark} aria-hidden />
+						Buscando…
+					</p>
+				) : null}
+				{!searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
 			</div>
 
 			<PatientFolderVisitsModal
