@@ -12,6 +12,7 @@ import {
 } from '@/app/services/agendaService';
 import { indicacionesService } from '@/app/services/indicacionesService';
 import type { AgendaSlot } from '@/app/services/agendaService';
+import { formatIMC } from '@/app/utils/antropometria';
 import styles from './RacEnfermeriaModal.module.css';
 
 interface TriageNivel {
@@ -625,6 +626,16 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 														onChange={numChange('talla')}
 													/>
 												</div>
+												<div className={styles.field}>
+													<label>IMC (kg/m²)</label>
+													<input
+														type='text'
+														className={styles.input}
+														value={formatIMC(controlForm.peso, controlForm.talla)}
+														readOnly
+														tabIndex={-1}
+													/>
+												</div>
 											</div>
 
 											<div className={styles.field}>
@@ -677,6 +688,7 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 														<th rowSpan={2}>Sat</th>
 														<th rowSpan={2}>Peso</th>
 														<th rowSpan={2}>Talla</th>
+														<th rowSpan={2}>IMC</th>
 														<th rowSpan={2}></th>
 													</tr>
 													<tr>
@@ -707,6 +719,7 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 															</td>
 															<td>{dec(c.Peso)}</td>
 															<td>{num(c.Talla)}</td>
+															<td>{formatIMC(c.Peso, c.Talla, c.IMC)}</td>
 															<td className={styles.cellAccion}>
 																<button
 																	type='button'

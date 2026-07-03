@@ -122,6 +122,8 @@ export interface CrearControlData {
   temperaturaRectal?: number;
   glucemia?: number;
   saturacion?: number;
+  peso?: number;
+  talla?: number;
   observaciones?: string;
   idSector?: string;
 }

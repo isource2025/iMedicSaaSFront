@@ -14,6 +14,9 @@ export interface ControlFrecuente {
   Rectal: number;
   Saturometria: number;
   HGT: number;
+  Peso: number | null;
+  Talla: number | null;
+  IMC: number | null;
   Observaciones: string;
   Profesional: string;
 }

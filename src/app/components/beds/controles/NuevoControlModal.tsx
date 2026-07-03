@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { crearControl, type CrearControlData } from "../../../services/controlesFrecuentesService";
+import { formatIMC } from "@/app/utils/antropometria";
 import { getSectorId, getSessionUser, getUserCodOperador, getHcIdProfesional } from "@/app/utils/sessionUser";
 import styles from "../evolucion/NuevaEvolucionEnfermeriaModal.module.css";
 
@@ -42,6 +43,8 @@ export default function NuevoControlModal({ defaultNumeroVisita, refetch, onClos
 
 	const setNum = (k: keyof CrearControlData) => (e: React.ChangeEvent<HTMLInputElement>) =>
 		set(k, e.target.value === "" ? undefined : Number(e.target.value) as any);
+
+	const imcPreview = formatIMC(form.peso, form.talla);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -120,7 +123,16 @@ export default function NuevoControlModal({ defaultNumeroVisita, refetch, onClos
 				<div className={styles.field}>
 					<label className={styles.label}>Peso <span className={styles.unit}>(kg)</span></label>
 					<input className={styles.input} type="number" step="0.1" min={0}
-						value={(form as any).peso ?? ""} onChange={e => set("observaciones" as any, e.target.value)} placeholder="—" />
+						value={form.peso ?? ""} onChange={setNum("peso")} placeholder="—" />
+				</div>
+				<div className={styles.field}>
+					<label className={styles.label}>Talla <span className={styles.unit}>(cm)</span></label>
+					<input className={styles.input} type="number" min={0}
+						value={form.talla ?? ""} onChange={setNum("talla")} placeholder="—" />
+				</div>
+				<div className={styles.field}>
+					<label className={styles.label}>IMC <span className={styles.unit}>(kg/m²)</span></label>
+					<input className={styles.input} type="text" value={imcPreview} readOnly tabIndex={-1} placeholder="—" />
 				</div>
 			</div>
 

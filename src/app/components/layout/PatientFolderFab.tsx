@@ -3,12 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { admissionSearchService, type AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import PatientFolderVisitsModal from '@/app/components/admission/PatientFolderVisitsModal';
-import AdmissionVisitDetailModal from '@/app/components/admission/AdmissionVisitDetailModal';
-import {
-	clinicalBadgeToTab,
-	type ClinicalBadgeKind,
-} from '@/app/components/admission/AdmissionSearchClinicalBadges';
-import { useAdmissionVisitDetail } from '@/app/hooks/useAdmissionVisitDetail';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { groupRowsByPatient, sortVisitsByDateDesc } from '@/app/utils/admissionSearchUtils';
 import styles from './PatientFolderFab.module.css';
@@ -28,18 +22,6 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 
 	const inputRef = useRef<HTMLInputElement>(null);
 	const wrapRef = useRef<HTMLDivElement>(null);
-
-	const {
-		selectedVisit,
-		detailData,
-		loadingDetail,
-		detailModalOpen,
-		detailInitialTab,
-		detailError,
-		setDetailError,
-		openVisitDetail,
-		closeVisitDetail,
-	} = useAdmissionVisitDetail();
 
 	useEffect(() => {
 		if (expanded) {
@@ -69,7 +51,6 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 		}
 		setSearching(true);
 		setSearchError('');
-		setDetailError('');
 		try {
 			const response = await admissionSearchService.buscar({
 				dni: trimmed,
@@ -95,11 +76,7 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 		} finally {
 			setSearching(false);
 		}
-	}, [dni, setDetailError]);
-
-	const onBadgeClick = (kind: ClinicalBadgeKind, numeroVisita: number) => {
-		void openVisitDetail(numeroVisita, clinicalBadgeToTab(kind));
-	};
+	}, [dni]);
 
 	if (!canUse) return null;
 
@@ -165,24 +142,7 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 				onClose={() => setFolderModal(null)}
 				patient={folderModal?.patient ?? null}
 				visits={folderModal?.visits ?? []}
-				onOpenVisit={(numeroVisita) => void openVisitDetail(numeroVisita)}
-				onBadgeClick={onBadgeClick}
 			/>
-
-			<AdmissionVisitDetailModal
-				isOpen={detailModalOpen}
-				onClose={closeVisitDetail}
-				numeroVisita={selectedVisit}
-				loading={loadingDetail}
-				data={detailData}
-				initialTab={detailInitialTab}
-			/>
-
-			{detailError ? (
-				<div className={styles.toastError} role="alert">
-					{detailError}
-				</div>
-			) : null}
 		</>
 	);
 }

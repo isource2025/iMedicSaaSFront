@@ -149,6 +149,7 @@ export interface ControlFrecuenteTurno {
 	Saturometria?: number | null;
 	Peso?: number | null;
 	Talla?: number | null;
+	IMC?: number | null;
 	Observaciones?: string | null;
 	OperadorApellido?: string | null;
 	OperadorNombres?: string | null;

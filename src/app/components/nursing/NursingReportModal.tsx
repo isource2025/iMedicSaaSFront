@@ -11,6 +11,7 @@ import Loader from '../Loader/Loader';
 import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
 import { NuevaIndicacionPayload } from '@/app/types/indicaciones';
 import { indicacionesService } from '@/app/services/indicacionesService';
+import { formatIMC } from '@/app/utils/antropometria';
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
@@ -179,7 +180,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                       <colgroup>
                         <col className={styles.colFecha} />
                         <col className={styles.colHora} />
-                        <col className={styles.colNumerico} span={9} />
+                        <col className={styles.colNumerico} span={12} />
                         <col className={styles.colProfesional} />
                         <col className={styles.colObservaciones} />
                       </colgroup>
@@ -196,6 +197,9 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                           <th>Rectal</th>
                           <th>Saturometría</th>
                           <th>HGT</th>
+                          <th>Peso</th>
+                          <th>Talla</th>
+                          <th>IMC</th>
                           <th>Profesional</th>
                           <th>Observaciones</th>
                         </tr>
@@ -214,6 +218,9 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                             <td>{control.Rectal || '-'}</td>
                             <td>{control.Saturometria || '-'}</td>
                             <td>{control.HGT || '-'}</td>
+                            <td>{control.Peso ? `${control.Peso} kg` : '-'}</td>
+                            <td>{control.Talla ? `${control.Talla} cm` : '-'}</td>
+                            <td>{formatIMC(control.Peso, control.Talla, control.IMC)}</td>
                             <td>{control.Profesional || '-'}</td>
                             <td>{control.Observaciones || '-'}</td>
                           </tr>

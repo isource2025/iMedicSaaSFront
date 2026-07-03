@@ -8,6 +8,7 @@ import {
 	obtenerNombreCompleto,
 	eliminarControl,
 } from '../../../services/controlesFrecuentesService';
+import { formatIMC } from '@/app/utils/antropometria';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from '../indicaciones/IndicacionesSection.module.css';
@@ -267,6 +268,11 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 									['HGT', selectedControl.Hgt || '-'],
 									['Peso', selectedControl.Peso ? `${selectedControl.Peso} kg` : '-'],
 									['Talla', selectedControl.Talla ? `${selectedControl.Talla} cm` : '-'],
+									['IMC', selectedControl.IMC
+										? `${selectedControl.IMC} kg/m²`
+										: (selectedControl.Peso && selectedControl.Talla
+											? `${formatIMC(selectedControl.Peso, selectedControl.Talla)} kg/m²`
+											: '-')],
 									['Operador', obtenerNombreCompleto(selectedControl.OperadorApellido, selectedControl.OperadorNombres)],
 									['Profesional', obtenerNombreCompleto(selectedControl.ProfesionalApellido, selectedControl.ProfesionalNombres)],
 								].map(([label, value]) => (

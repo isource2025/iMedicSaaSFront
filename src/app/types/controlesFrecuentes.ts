@@ -25,6 +25,7 @@ export interface ControlFrecuente {
   Saturometria: number | null;
   Peso: number | null;
   Talla: number | null;
+  IMC: number | null;
   IdTurno: number | null;
   IdHci: number | null;
 }

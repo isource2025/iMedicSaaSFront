@@ -1,4 +1,5 @@
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
+import { calcularIMC } from "@/app/utils/antropometria";
 
 /**
  * Mapea datos de BD (imHCI) al estado del formulario
@@ -311,6 +312,8 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.signosVitales.glucemia) datos.SV_GLUCEMIA = examenFisico.signosVitales.glucemia;
     if (examenFisico.signosVitales.talla) datos.SV_TALLA = examenFisico.signosVitales.talla;
     if (examenFisico.signosVitales.pesoActual) datos.SV_PESOACTUAL = examenFisico.signosVitales.pesoActual;
+    const imc = calcularIMC(examenFisico.signosVitales.pesoActual, examenFisico.signosVitales.talla);
+    if (imc != null) datos.IMC = String(imc);
     if (examenFisico.signosVitales.pesoHabitual) datos.SV_PESOHABITUAL = examenFisico.signosVitales.pesoHabitual;
     if (examenFisico.signosVitales.estadoNutricional) datos.SV_ESTADONUTRICIONAL = examenFisico.signosVitales.estadoNutricional;
     if (examenFisico.signosVitales.impresionGeneral) datos.SV_IMPRESIONGENERAL = examenFisico.signosVitales.impresionGeneral;

@@ -421,8 +421,6 @@ export default function AdmissionSearchPage() {
         onClose={() => setFolderModal(null)}
         patient={folderModal?.patient ?? null}
         visits={folderModal?.visits ?? []}
-        onOpenVisit={(numeroVisita) => void openVisitDetail(numeroVisita)}
-        onBadgeClick={handleBadgeClick}
       />
 
       <AdmissionVisitDetailModal

@@ -1,6 +1,7 @@
 "use client";
 
 import { SignosVitales } from "@/app/types/examenFisico";
+import { formatIMC } from "@/app/utils/antropometria";
 import styles from "./ExamenFisicoForm.module.css";
 import { useState } from "react";
 import ModalCargarControl, { ControlDatosCargados } from "./ModalCargarControl";
@@ -16,6 +17,7 @@ interface SignosVitalesProps {
 export default function SignosVitalesForm({ data, onChange, readOnly = false, numeroVisita, idHCIngreso }: SignosVitalesProps) {
     const [showControlesModal, setShowControlesModal] = useState(false);
     const [controlCargado, setControlCargado] = useState<ControlDatosCargados | null>(null);
+    const imcCalculado = formatIMC(data.pesoActual, data.talla);
     
     const handleChange = (field: keyof SignosVitales, value: string) => {
         onChange({ ...data, [field]: value });
@@ -141,6 +143,17 @@ export default function SignosVitalesForm({ data, onChange, readOnly = false, nu
                             placeholder="kg"
                             min="0"
                             max="300"
+                        />
+                    </div>
+                    <div className={styles.formField}>
+                        <label className={styles.formLabel}>IMC (kg/m²):</label>
+                        <input
+                            type="text"
+                            className={styles.formInput}
+                            value={imcCalculado}
+                            readOnly
+                            tabIndex={-1}
+                            placeholder="—"
                         />
                     </div>
                 </div>
