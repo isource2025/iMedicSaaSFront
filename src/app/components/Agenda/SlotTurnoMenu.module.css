@@ -53,6 +53,17 @@
 	color: #1e3a8a;
 }
 
+.itemFlowNext {
+	background: #eff6ff;
+	color: #1d4ed8;
+	font-weight: 600;
+}
+
+.itemFlowNext:hover {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
 .itemMock {
 	color: #64748b;
 }

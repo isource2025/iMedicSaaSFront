@@ -7,7 +7,6 @@ import {
 	type AgendaProfesionalMeta,
 	type AgendaSlot,
 	type MedicoDisponible,
-	type TurnoAsignado,
 } from '@/app/services/agendaService';
 import { authService } from '@/app/services/authService';
 import { usePermiso } from '@/app/hooks/usePermiso';
@@ -20,7 +19,9 @@ import AgendaEmptyState from '@/app/components/Agenda/AgendaEmptyState';
 import AgendaResumenPanel from '@/app/components/Agenda/AgendaResumenPanel';
 import AgendaPacienteBusqueda from '@/app/components/Agenda/AgendaPacienteBusqueda';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
-import CerrarTurnoModal from '@/app/components/Agenda/CerrarTurnoModal';
+import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
+import DetalleTurnoModal from '@/app/components/Agenda/DetalleTurnoModal';
+import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import {
 	AgendaTurnoTablaHead,
 	AgendaTurnoTablaRow,
@@ -28,6 +29,7 @@ import {
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { personalService } from '@/app/services/personalService';
 import { esFechaPasada } from '@/app/utils/agendaFecha';
+import { claseFilaAgenda } from '@/app/utils/agendaFilaEstilos';
 import styles from './agenda.module.css';
 
 function toIso(d: Date): string {
@@ -58,40 +60,19 @@ function badge(estado: string, esSobreturno?: boolean): string {
 	return `${styles.badge} ${styles.badgeOcupado}`;
 }
 
+function badgeText(estado: string, esSobreturno?: boolean): string {
+	if (!esSobreturno || estado === 'LIBRE') return estado;
+	// Sobreturno: mostrar la etiqueta base + su estado real (cancelado / atendido)
+	if (estado === 'OCUPADO') return 'SOBRETURNO';
+	return `SOBRETURNO ${estado}`;
+}
+
 function esLibre(s: AgendaSlot): boolean {
 	return s.estado === 'LIBRE';
 }
 
 function esCancelado(s: AgendaSlot): boolean {
 	return s.estado === 'CANCELADO' || s.status === 1;
-}
-
-/** Convierte un turno asignado (vista médico) al formato de slot del menú contextual. */
-function turnoAsignadoToSlot(t: TurnoAsignado): AgendaSlot {
-	return {
-		hora: t.hora || '—',
-		sector: t.sector,
-		estado: t.estado,
-		status: t.status,
-		tipoTurno: t.tipoTurno,
-		esSobreturno: t.esSobreturno,
-		idTurno: t.idTurno,
-		idPaciente: t.idPaciente,
-		pacienteNombre: t.pacienteNombre,
-		numeroDocumento: t.numeroDocumento,
-		observaciones: t.observaciones,
-		motivoCancelacion: t.motivoCancelacion,
-		idClasificacionTriage: t.idClasificacionTriage,
-		horaLlegada: t.horaLlegada,
-		horaAtencion: t.horaAtencion,
-		horaSalida: t.horaSalida,
-		sexo: t.sexo,
-		fechaNacimiento: t.fechaNacimiento,
-		edad: t.edad,
-		cobertura: t.cobertura,
-		racControles: t.racControles,
-		racMedicacion: t.racMedicacion,
-	};
 }
 
 /** Cupo disponible para asignar (libre o cancelado). */
@@ -137,7 +118,10 @@ export default function AgendaPage() {
 		.trim()
 		.toUpperCase() === 'ENFERMERO';
 	const puedeVer = puedeSubmodulo('TURNOS', 'AGENDA');
-	const puedeRacEnfermeria = esAdmin || esEnfermero;
+	const puedeRacEnfermeria = esAdmin || esEnfermero || esMedico;
+	const puedeAtender =
+		(esMedico || puede('TURNOS.AGENDA.EDITAR') || puedeSubmodulo('TURNOS', 'AGENDA')) &&
+		!esEnfermero;
 	const puedeBorrarTurno =
 		!esMedico && (puede('TURNOS.AGENDA.ELIMINAR') || puedeSubmodulo('TURNOS', 'AGENDA'));
 	const puedeCancelarTurno =
@@ -190,8 +174,8 @@ export default function AgendaPage() {
 	const [calendarioRefresh, setCalendarioRefresh] = useState(0);
 
 	// Vista médico
-	const [turnosMedico, setTurnosMedico] = useState<TurnoAsignado[]>([]);
-	const [loadingTurnos, setLoadingTurnos] = useState(false);
+	const [diaMotivo, setDiaMotivo] = useState<string | null>(null);
+	const [fechaMedicoLista, setFechaMedicoLista] = useState(false);
 
 	const [error, setError] = useState<string | null>(null);
 
@@ -205,6 +189,15 @@ export default function AgendaPage() {
 	const [modalModo, setModalModo] = useState<ModalAsignarModo>('asignar');
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
+	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
+	const [confirmDialog, setConfirmDialog] = useState<{
+		title: string;
+		message: string;
+		confirmLabel: string;
+		tone: 'danger' | 'default';
+		onConfirm: () => void | Promise<void>;
+	} | null>(null);
+	const [confirmBusy, setConfirmBusy] = useState(false);
 
 	const abrirMenuSlot = (e: React.MouseEvent, slot: AgendaSlot) => {
 		e.stopPropagation();
@@ -319,21 +312,23 @@ export default function AgendaPage() {
 		};
 	}, [fechaIso, esMedico, puedeVer, servicioParam, especialidadSel]);
 
-	// Carga: todos los slots del médico (libres + ocupados)
+	// Carga: grilla completa (libres + ocupados) del profesional activo
 	const cargarSlots = useCallback(async () => {
-		if (esMedico || !matriculaSel) {
+		const mat = esMedico ? matriculaPropia : matriculaSel;
+		if (!mat) {
 			setTodosSlots([]);
 			setJornadas([]);
 			setProfesionalAgenda(null);
+			setDiaMotivo(null);
 			return;
 		}
 		setLoadingSlots(true);
 		try {
-			const r = await agendaService.getSlots(matriculaSel, fechaIso, fechaIso);
+			const r = await agendaService.getSlots(mat, fechaIso, fechaIso);
 			const dia = r.dias[0];
-			const slots = dia && !dia.bloqueado ? dia.slots : [];
+			setDiaMotivo(dia?.motivo ?? null);
+			setTodosSlots(dia?.slots ?? []);
 			const j = dia?.jornadas?.length ? dia.jornadas : [];
-			setTodosSlots(slots);
 			setJornadas(j);
 			setJornadaSel(0);
 			setProfesionalAgenda(r.profesional ?? null);
@@ -342,46 +337,50 @@ export default function AgendaPage() {
 			setError(err?.response?.data?.mensaje || err?.message || 'Error cargando slots');
 			setTodosSlots([]);
 			setJornadas([]);
+			setDiaMotivo(null);
 		} finally {
 			setLoadingSlots(false);
 		}
-	}, [esMedico, matriculaSel, fechaIso]);
+	}, [esMedico, matriculaPropia, matriculaSel, fechaIso]);
 
 	useEffect(() => {
 		cargarSlots();
 	}, [cargarSlots]);
 
 	useEffect(() => {
-		setFiltroSlots('TODOS');
-		setJornadaSel(0);
-	}, [matriculaSel, fechaIso]);
-
-	const cargarTurnosMedico = useCallback(async () => {
-		if (!esMedico || !matriculaPropia) {
-			setTurnosMedico([]);
-			return;
-		}
-		setLoadingTurnos(true);
-		setError(null);
-		try {
-			const rows = await agendaService.getTurnos(matriculaPropia, fechaIso, fechaIso);
-			setTurnosMedico(rows.filter((t) => t.idPaciente && t.idPaciente > 0));
-		} catch (e: unknown) {
-			const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
-			setError(err?.response?.data?.mensaje || err?.message || 'Error cargando turnos');
-			setTurnosMedico([]);
-		} finally {
-			setLoadingTurnos(false);
-		}
-	}, [esMedico, matriculaPropia, fechaIso]);
+		if (!esMedico || !matriculaPropia || fechaMedicoLista) return;
+		let cancel = false;
+		const hoy = new Date();
+		const desde = toIso(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1));
+		const hasta = toIso(new Date(hoy.getFullYear(), hoy.getMonth() + 4, 0));
+		agendaService
+			.getDiasConAgenda(matriculaPropia, desde, hasta)
+			.then(({ fechas }) => {
+				if (cancel) return;
+				if (fechas.length > 0) {
+					const hoyIso = toIso(hoy);
+					const sorted = [...fechas].sort();
+					const futuro = sorted.find((f) => f >= hoyIso);
+					const elegida = futuro ?? sorted[sorted.length - 1];
+					setSelectedDate(new Date(`${elegida}T12:00:00`));
+				}
+				setFechaMedicoLista(true);
+			})
+			.catch(() => {
+				if (!cancel) setFechaMedicoLista(true);
+			});
+		return () => {
+			cancel = true;
+		};
+	}, [esMedico, matriculaPropia, fechaMedicoLista]);
 
 	useEffect(() => {
-		cargarTurnosMedico();
-	}, [cargarTurnosMedico]);
+		setFiltroSlots('TODOS');
+		setJornadaSel(0);
+	}, [matriculaSel, matriculaPropia, fechaIso]);
 
 	const refrescarAgenda = useCallback(() => {
 		cargarSlots();
-		cargarTurnosMedico();
 		setCalendarioRefresh((n) => n + 1);
 		if (!esMedico) {
 			agendaService
@@ -392,14 +391,28 @@ export default function AgendaPage() {
 				.then((rows) => setStatsDia(new Map(rows.map((r) => [r.matricula, r]))))
 				.catch(() => {});
 		}
-	}, [
-		cargarSlots,
-		cargarTurnosMedico,
-		esMedico,
-		fechaIso,
-		servicioParam,
-		especialidadSel,
-	]);
+	}, [cargarSlots, esMedico, fechaIso, servicioParam, especialidadSel]);
+
+	const abrirSobreturnoDia = useCallback(() => {
+		const sector =
+			profesionalAgenda?.sector?.trim() ||
+			todosSlots.find((s) => s.sector)?.sector ||
+			'';
+		const now = new Date();
+		const hora = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+		setModalModo('sobreturno');
+		setModalSlot({
+			hora,
+			sector,
+			estado: 'LIBRE',
+		});
+	}, [profesionalAgenda, todosSlots]);
+
+	const patchSlot = useCallback((idTurno: number, patch: Partial<AgendaSlot>) => {
+		setTodosSlots((prev) =>
+			prev.map((s) => (s.idTurno === idTurno ? { ...s, ...patch } : s)),
+		);
+	}, []);
 
 	const cerrarRacModal = useCallback(() => {
 		setRacSlot(null);
@@ -421,50 +434,104 @@ export default function AgendaPage() {
 		if (!mat || !slot.idTurno) return;
 
 		if (action === 'cancelar') {
-			if (!puedeCancelarTurno) return;
-			const ok = window.confirm(
-				'¿Cancelar este turno? Una vez cancelado no podrá recuperarse.',
-			);
-			if (!ok) return;
+			if (!puedeCancelarTurno || !slot.idTurno) return;
+			const idTurno = slot.idTurno;
+			setConfirmDialog({
+				title: 'Cancelar turno',
+				message:
+					'¿Seguro que querés cancelar este turno? Una vez cancelado no podrá recuperarse.',
+				confirmLabel: 'Cancelar turno',
+				tone: 'danger',
+				onConfirm: async () => {
+					setError(null);
+					try {
+						await agendaService.cancelarTurno(mat, idTurno);
+						setConfirmDialog(null);
+						refrescarAgenda();
+					} catch (e: unknown) {
+						const err = e as {
+							response?: { data?: { mensaje?: string } };
+							message?: string;
+						};
+						setConfirmDialog(null);
+						setError(
+							err?.response?.data?.mensaje || err?.message || 'Error al cancelar',
+						);
+					}
+				},
+			});
+			return;
+		}
+
+		if (action === 'marcar-llegada') {
 			setError(null);
 			try {
-				await agendaService.cancelarTurno(mat, slot.idTurno);
-				refrescarAgenda();
+				const resp = await agendaService.marcarLlegada(mat, slot.idTurno);
+				patchSlot(slot.idTurno, { horaLlegada: resp.horaLlegada ?? slot.horaLlegada });
 			} catch (e: unknown) {
 				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
-				setError(err?.response?.data?.mensaje || err?.message || 'Error al cancelar');
+				setError(err?.response?.data?.mensaje || err?.message || 'Error al marcar llegada');
 			}
 			return;
 		}
 
-		if (action === 'cerrar') {
-			if (!puedeCancelarTurno) return;
-			if (esEnfermero) {
-				setError('Sólo médico o administrativo pueden cerrar turnos');
-				return;
+		if (action === 'marcar-ingreso') {
+			setError(null);
+			try {
+				const resp = await agendaService.marcarIngreso(mat, slot.idTurno);
+				patchSlot(slot.idTurno, { horaIngreso: resp.horaIngreso ?? slot.horaIngreso });
+				if (puedeAtender && slot.idTurno) {
+					setCerrarSlot({
+						...slot,
+						horaIngreso: resp.horaIngreso ?? slot.horaIngreso,
+					});
+				}
+			} catch (e: unknown) {
+				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
+				setError(err?.response?.data?.mensaje || err?.message || 'Error al marcar ingreso');
 			}
+			return;
+		}
+
+		if (action === 'ver-detalle') {
+			if (slot.idTurno) setDetalleTurnoId(slot.idTurno);
+			return;
+		}
+
+		if (action === 'atender' || action === 'cerrar') {
+			if (!puedeAtender) return;
 			setError(null);
 			setCerrarSlot(slot);
 			return;
 		}
 
 		if (action === 'borrar') {
-			if (!puedeBorrarTurno) return;
+			if (!puedeBorrarTurno || !slot.idTurno) return;
+			const idTurno = slot.idTurno;
 			const esSt = slot.esSobreturno || slot.tipoTurno === 1;
-			const ok = window.confirm(
-				esSt
+			setConfirmDialog({
+				title: esSt ? 'Eliminar sobreturno' : 'Borrar turno',
+				message: esSt
 					? '¿Eliminar este sobreturno por completo?'
 					: '¿Borrar este turno y liberar el cupo para otro paciente?',
-			);
-			if (!ok) return;
-			setError(null);
-			try {
-				await agendaService.borrarTurno(mat, slot.idTurno);
-				refrescarAgenda();
-			} catch (e: unknown) {
-				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
-				setError(err?.response?.data?.mensaje || err?.message || 'Error al borrar');
-			}
+				confirmLabel: esSt ? 'Eliminar' : 'Borrar',
+				tone: 'danger',
+				onConfirm: async () => {
+					setError(null);
+					try {
+						await agendaService.borrarTurno(mat, idTurno);
+						setConfirmDialog(null);
+						refrescarAgenda();
+					} catch (e: unknown) {
+						const err = e as {
+							response?: { data?: { mensaje?: string } };
+							message?: string;
+						};
+						setConfirmDialog(null);
+						setError(err?.response?.data?.mensaje || err?.message || 'Error al borrar');
+					}
+				},
+			});
 		}
 	};
 
@@ -561,17 +628,13 @@ export default function AgendaPage() {
 							stats={statsSlots}
 						/>
 					)}
-					{esMedico && matriculaPropia && !loadingTurnos && (
+					{esMedico && matriculaPropia && !loadingSlots && (
 						<AgendaResumenPanel
 							fechaLabel={formatFechaLarga(selectedDate)}
 							nombreProfesional={
 								`${user?.nombre || ''} ${user?.apellido || ''}`.trim() || undefined
 							}
-							stats={{
-								total: turnosMedico.length,
-								libres: 0,
-								ocupados: turnosMedico.length,
-							}}
+							stats={statsSlots}
 						/>
 					)}
 				</aside>
@@ -612,63 +675,140 @@ export default function AgendaPage() {
 							<div className={styles.agendaSection}>
 								<div
 									key={fechaIso}
-									className={`${styles.tableWrap} ${!loadingTurnos ? styles.tableWrapEnter : ''}`}
+									className={`${styles.tableWrap} ${!loadingSlots ? styles.tableWrapEnter : ''}`}
 								>
-									<header>
-										<span>Mis turnos asignados</span>
-										{turnosMedico.length > 0 && (
-											<span className={styles.badge}>{turnosMedico.length}</span>
-										)}
+									<header className={styles.tableHeader}>
+										<div className={styles.tableHeaderTop}>
+											<span>Mi agenda del día</span>
+											<div className={styles.tableHeaderActions}>
+												{slotsFiltrados.length > 0 && (
+													<span className={styles.badge}>{slotsFiltrados.length}</span>
+												)}
+												{!fechaPasada && diaMotivo === 'sin_horario' ? (
+													<button
+														type='button'
+														className={styles.headerActionBtn}
+														onClick={abrirSobreturnoDia}
+													>
+														+ Agregar sobreturno
+													</button>
+												) : null}
+											</div>
+										</div>
 									</header>
-									{loadingTurnos ? (
+									{jornadas.length > 1 && (
+										<div className={styles.jornadaTabs}>
+											{jornadas.map((j) => (
+												<button
+													key={j.index}
+													type='button'
+													className={
+														jornadaSel === j.index
+															? styles.jornadaTabActive
+															: styles.jornadaTab
+													}
+													onClick={() => setJornadaSel(j.index)}
+												>
+													{j.titulo || j.label}
+												</button>
+											))}
+										</div>
+									)}
+									<div className={styles.kpis}>
+										<button
+											type='button'
+											className={`${styles.kpi} ${filtroSlots === 'TODOS' ? styles.kpiActive : ''}`}
+											onClick={() => setFiltroSlots('TODOS')}
+										>
+											<div className={styles.kpiValue}>{statsSlots.total}</div>
+											<div className={styles.kpiLabel}>Total</div>
+										</button>
+										<button
+											type='button'
+											className={`${styles.kpi} ${filtroSlots === 'LIBRES' ? styles.kpiActive : ''}`}
+											onClick={() =>
+												setFiltroSlots((f) => (f === 'LIBRES' ? 'TODOS' : 'LIBRES'))
+											}
+										>
+											<div className={styles.kpiValue}>{statsSlots.libres}</div>
+											<div className={styles.kpiLabel}>Libres</div>
+										</button>
+										<button
+											type='button'
+											className={`${styles.kpi} ${filtroSlots === 'OCUPADOS' ? styles.kpiActive : ''}`}
+											onClick={() =>
+												setFiltroSlots((f) =>
+													f === 'OCUPADOS' ? 'TODOS' : 'OCUPADOS',
+												)
+											}
+										>
+											<div className={styles.kpiValue}>{statsSlots.ocupados}</div>
+											<div className={styles.kpiLabel}>Ocupados</div>
+										</button>
+									</div>
+									{loadingSlots ? (
 										<div className={styles.loading}>
 											<span className={styles.spinner} aria-hidden /> Cargando…
 										</div>
-									) : turnosMedico.length === 0 ? (
+									) : slotsFiltrados.length === 0 ? (
 										<AgendaEmptyState
-											icon="📋"
-											title="Sin turnos asignados"
-											description="No tenés pacientes agendados para esta fecha. Elegí otra fecha en el calendario o consultá con administración si esperabas turnos."
+											icon='📋'
+											title={
+												diaMotivo === 'sin_horario'
+													? 'Sin horario configurado'
+													: 'Sin turnos en la agenda'
+											}
+											description={
+												diaMotivo === 'sin_horario'
+													? 'Este día no tiene grilla de turnos. Podés agregar un sobreturno igualmente.'
+													: 'No hay cupos para esta fecha con el filtro actual.'
+											}
+											action={
+												!fechaPasada &&
+												(diaMotivo === 'sin_horario' || filtroSlots === 'TODOS')
+													? {
+															label: '+ Agregar sobreturno',
+															onClick: abrirSobreturnoDia,
+														}
+													: undefined
+											}
 										/>
 									) : (
 										<table className={`${styles.table} ${styles.tableEnter} ${styles.tableWide}`}>
-										<AgendaTurnoTablaHead />
-										<tbody>
-											{turnosMedico.map((t) => {
-												const slot = turnoAsignadoToSlot(t);
-												const cancelado = t.estado === 'CANCELADO';
-												const puedeMenu = !fechaPasada;
-												return (
-													<AgendaTurnoTablaRow
-														key={t.idTurno}
-														row={t}
-														libre={false}
-														cancelado={cancelado}
-														badgeEstado={
-															<span className={badge(t.estado, t.esSobreturno)}>
-																{t.esSobreturno && t.estado !== 'LIBRE'
-																	? 'SOBRETURNO'
-																	: t.estado}
-															</span>
-														}
-														onTrClick={(e) => {
-															if (puedeMenu) abrirMenuSlot(e, slot);
-														}}
-														trStyle={{
-															cursor: puedeMenu ? 'pointer' : 'default',
-														}}
-														trClassName={
-															cancelado
-																? styles.rowCancelado
-																: t.esSobreturno
-																	? styles.rowSobreturno
-																	: styles.rowOcupado
-														}
-													/>
-												);
-											})}
-										</tbody>
-									</table>
+											<AgendaTurnoTablaHead />
+											<tbody>
+												{slotsFiltrados.map((s) => {
+													const key = `${s.hora}-${s.sector}-${s.idTurno ?? 'n'}`;
+													const libre = esLibre(s);
+													const cancelado = esCancelado(s);
+													const puedeMenu = !fechaPasada;
+													return (
+														<AgendaTurnoTablaRow
+															key={key}
+															row={s}
+															libre={libre}
+															cancelado={cancelado}
+															trClassName={claseFilaAgenda(styles, s, {
+																libre,
+																cancelado,
+																esSobreturno: s.esSobreturno,
+															})}
+															onTrClick={(e) => {
+																if (puedeMenu) abrirMenuSlot(e, s);
+															}}
+															trStyle={{
+																cursor: puedeMenu ? 'pointer' : 'default',
+															}}
+															badgeEstado={
+																<span className={badge(s.estado, s.esSobreturno)}>
+																	{badgeText(s.estado, s.esSobreturno)}
+																</span>
+															}
+														/>
+													);
+												})}
+											</tbody>
+										</table>
 									)}
 								</div>
 							</div>
@@ -774,9 +914,22 @@ export default function AgendaPage() {
 									<header className={styles.tableHeader}>
 										<div className={styles.tableHeaderTop}>
 											<span>{tituloAgendaAdmin}</span>
-											{matriculaSel && slotsFiltrados.length > 0 && (
-												<span className={styles.badge}>{slotsFiltrados.length}</span>
-											)}
+											<div className={styles.tableHeaderActions}>
+												{matriculaSel && slotsFiltrados.length > 0 && (
+													<span className={styles.badge}>{slotsFiltrados.length}</span>
+												)}
+												{!fechaPasada &&
+												matriculaSel &&
+												diaMotivo === 'sin_horario' ? (
+													<button
+														type='button'
+														className={styles.headerActionBtn}
+														onClick={abrirSobreturnoDia}
+													>
+														+ Agregar sobreturno
+													</button>
+												) : null}
+											</div>
 										</div>
 										{jornadas.length > 1 && (
 											<div className={styles.jornadaTabs} role='tablist'>
@@ -810,25 +963,39 @@ export default function AgendaPage() {
 									) : slotsFiltrados.length === 0 ? (
 										<AgendaEmptyState
 											compact
-											icon="📅"
+											icon='📅'
 											title={
 												filtroSlots === 'LIBRES'
 													? 'Sin turnos libres'
 													: filtroSlots === 'OCUPADOS'
 														? 'Sin turnos ocupados'
-														: 'Sin turnos en la agenda'
+														: diaMotivo === 'sin_horario'
+															? 'Sin horario configurado'
+															: 'Sin turnos en la agenda'
 											}
 											description={
 												filtroSlots === 'LIBRES'
 													? 'No hay cupos libres con el filtro actual. Probá ver «Total» u «Ocupados», o elegí otra fecha.'
 													: filtroSlots === 'OCUPADOS'
 														? 'No hay turnos ocupados con el filtro actual. Los cupos libres aparecen en «Libres» o «Total».'
-														: 'Este profesional no tiene turnos generados para la fecha seleccionada.'
+														: diaMotivo === 'sin_horario'
+															? 'Este profesional no tiene grilla ese día. Podés agregar un sobreturno.'
+															: 'Este profesional no tiene turnos generados para la fecha seleccionada.'
+											}
+											action={
+												!fechaPasada &&
+												matriculaSel &&
+												(diaMotivo === 'sin_horario' || filtroSlots === 'TODOS')
+													? {
+															label: '+ Agregar sobreturno',
+															onClick: abrirSobreturnoDia,
+														}
+													: undefined
 											}
 										/>
 									) : (
 										<table className={`${styles.table} ${styles.tableEnter} ${styles.tableWide}`}>
-											<AgendaTurnoTablaHead conMenu />
+											<AgendaTurnoTablaHead />
 											<tbody>
 												{slotsFiltrados.map((s) => {
 													const key = `${s.hora}-${s.sector}-${s.idTurno ?? 'n'}`;
@@ -841,15 +1008,11 @@ export default function AgendaPage() {
 															row={s}
 															libre={libre}
 															cancelado={cancelado}
-															trClassName={
-																libre
-																	? styles.rowLibre
-																	: cancelado
-																		? styles.rowCancelado
-																		: s.esSobreturno
-																			? styles.rowSobreturno
-																			: styles.rowOcupado
-															}
+															trClassName={claseFilaAgenda(styles, s, {
+																libre,
+																cancelado,
+																esSobreturno: s.esSobreturno,
+															})}
 															onTrClick={(e) => {
 																if (puedeMenu) abrirMenuSlot(e, s);
 															}}
@@ -858,24 +1021,8 @@ export default function AgendaPage() {
 															}}
 															badgeEstado={
 																<span className={badge(s.estado, s.esSobreturno)}>
-																	{s.esSobreturno && s.estado !== 'LIBRE'
-																		? 'SOBRETURNO'
-																		: s.estado}
+																	{badgeText(s.estado, s.esSobreturno)}
 																</span>
-															}
-															menuCelda={
-																puedeMenu ? (
-																	<span aria-hidden title='Opciones'>
-																		⋯
-																	</span>
-																) : (
-																	<span
-																		className={styles.sinPaciente}
-																		title='Fecha pasada'
-																	>
-																		—
-																	</span>
-																)
 															}
 														/>
 													);
@@ -899,8 +1046,30 @@ export default function AgendaPage() {
 				slot={slotMenu?.slot ?? null}
 				puedeBorrar={puedeBorrarTurno}
 				puedeRacEnfermeria={puedeRacEnfermeria}
+				puedeAtender={puedeAtender}
 				onClose={() => setSlotMenu(null)}
 				onAction={handleAccionSlot}
+			/>
+
+			<ConfirmDialog
+				open={!!confirmDialog}
+				title={confirmDialog?.title ?? ''}
+				message={confirmDialog?.message ?? ''}
+				confirmLabel={confirmDialog?.confirmLabel ?? 'Confirmar'}
+				tone={confirmDialog?.tone ?? 'default'}
+				busy={confirmBusy}
+				onCancel={() => {
+					if (!confirmBusy) setConfirmDialog(null);
+				}}
+				onConfirm={async () => {
+					if (!confirmDialog) return;
+					setConfirmBusy(true);
+					try {
+						await confirmDialog.onConfirm();
+					} finally {
+						setConfirmBusy(false);
+					}
+				}}
 			/>
 
 			<RacEnfermeriaModal
@@ -910,9 +1079,10 @@ export default function AgendaPage() {
 				onClose={cerrarRacModal}
 			/>
 
-			<CerrarTurnoModal
+			<AtencionTurnoModal
 				open={!!cerrarSlot && !!matriculaMedicoActiva}
 				matricula={matriculaMedicoActiva || 0}
+				fechaTurno={fechaIso}
 				turno={
 					cerrarSlot
 						? {
@@ -924,6 +1094,12 @@ export default function AgendaPage() {
 								fecha: fechaIso,
 								observaciones: cerrarSlot.observaciones,
 								cobertura: cerrarSlot.cobertura,
+								horaLlegada: cerrarSlot.horaLlegada,
+								horaIngreso: cerrarSlot.horaIngreso,
+								horaSalida: cerrarSlot.horaSalida,
+								idClasificacionTriage: cerrarSlot.idClasificacionTriage,
+								racControles: cerrarSlot.racControles,
+								racMedicacion: cerrarSlot.racMedicacion,
 							}
 						: null
 				}
@@ -932,6 +1108,12 @@ export default function AgendaPage() {
 					setCerrarSlot(null);
 					refrescarAgenda();
 				}}
+			/>
+
+			<DetalleTurnoModal
+				open={detalleTurnoId != null}
+				idTurno={detalleTurnoId}
+				onClose={() => setDetalleTurnoId(null)}
 			/>
 
 			<AsignarTurnoModal

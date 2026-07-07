@@ -12,6 +12,10 @@ export type SlotMenuAction =
 	| 'sobreturno'
 	| 'cancelar'
 	| 'rac-enfermeria'
+	| 'marcar-llegada'
+	| 'marcar-ingreso'
+	| 'atender'
+	| 'ver-detalle'
 	| 'llamar-pantalla'
 	| 'cerrar';
 
@@ -19,6 +23,7 @@ type OpcionMenu = {
 	id: SlotMenuAction;
 	label: string;
 	mock?: boolean;
+	flowNext?: boolean;
 };
 
 const OPCIONES_LIBRE: OpcionMenu[] = [
@@ -28,12 +33,14 @@ const OPCIONES_LIBRE: OpcionMenu[] = [
 ];
 
 const OPCIONES_OCUPADO_BASE: OpcionMenu[] = [
+	{ id: 'marcar-llegada', label: 'Marcar llegada' },
+	{ id: 'marcar-ingreso', label: 'Ingresó a consultorio' },
+	{ id: 'atender', label: 'Atender / Cerrar turno' },
 	{ id: 'cambiar', label: 'Cambiar turno', mock: true },
 	{ id: 'sobreturno', label: 'Agregar sobreturno' },
 	{ id: 'cancelar', label: 'Cancelar turno' },
 	{ id: 'borrar', label: 'Borrar turno' },
 	{ id: 'llamar-pantalla', label: 'Llamar por pantalla', mock: true },
-	{ id: 'cerrar', label: 'Cerrar turno' },
 ];
 
 interface Props {
@@ -43,6 +50,7 @@ interface Props {
 	slot: AgendaSlot | null;
 	puedeBorrar?: boolean;
 	puedeRacEnfermeria?: boolean;
+	puedeAtender?: boolean;
 	onClose: () => void;
 	onAction: (action: SlotMenuAction, slot: AgendaSlot) => void;
 }
@@ -59,6 +67,25 @@ function esOcupado(slot: AgendaSlot): boolean {
 	return slot.estado === 'OCUPADO' || slot.estado === 'ATENDIDO';
 }
 
+function turnoTieneDatosAtencion(slot: AgendaSlot): boolean {
+	return (
+		slot.estado === 'ATENDIDO' ||
+		Boolean(slot.horaSalida) ||
+		Boolean(slot.horaLlegada) ||
+		Boolean(slot.horaIngreso) ||
+		slot.idClasificacionTriage != null ||
+		(Number(slot.racControles) || 0) > 0 ||
+		(Number(slot.racMedicacion) || 0) > 0
+	);
+}
+
+function getFlowNextAction(slot: AgendaSlot): SlotMenuAction | null {
+	if (!slot.idTurno || slot.estado === 'ATENDIDO' || slot.horaSalida) return null;
+	if (!slot.horaLlegada) return 'marcar-llegada';
+	if (!slot.horaIngreso) return 'marcar-ingreso';
+	return 'atender';
+}
+
 export default function SlotTurnoMenu({
 	open,
 	x,
@@ -66,35 +93,55 @@ export default function SlotTurnoMenu({
 	slot,
 	puedeBorrar = false,
 	puedeRacEnfermeria = false,
+	puedeAtender = true,
 	onClose,
 	onAction,
 }: Props) {
 	const ref = useRef<HTMLDivElement>(null);
 
-	const opciones = useMemo(() => {
+	const opciones = useMemo((): OpcionMenu[] => {
 		if (!slot) return [];
 		if (esSlotLibre(slot)) return OPCIONES_LIBRE;
 		if (esCancelado(slot)) {
 			return OPCIONES_LIBRE.filter((o) => o.id === 'asignar' || o.id === 'sobreturno');
 		}
+
+		const flowNext = getFlowNextAction(slot);
+		const cerrado = slot.estado === 'ATENDIDO' || Boolean(slot.horaSalida);
 		const base = OPCIONES_OCUPADO_BASE.filter((o) => {
 			if (o.id === 'borrar' && !puedeBorrar) return false;
 			if (o.id === 'cancelar' && !slot.idTurno) return false;
 			if (o.id === 'borrar' && !slot.idTurno) return false;
-			if (o.id === 'cerrar') {
-				if (!slot.idTurno) return false;
-				if (slot.estado === 'ATENDIDO' || slot.horaAtencion) return false;
+			// Una vez cerrada la atención no se puede cancelar, cambiar ni llamar por pantalla
+			if (cerrado && (o.id === 'cancelar' || o.id === 'cambiar' || o.id === 'llamar-pantalla'))
+				return false;
+			// Llamar por pantalla solo si el paciente ya registró llegada
+			if (o.id === 'llamar-pantalla' && !slot.horaLlegada) return false;
+			if (o.id === 'marcar-llegada' && slot.horaLlegada) return false;
+			if (o.id === 'marcar-ingreso' && (!slot.horaLlegada || slot.horaIngreso)) return false;
+			if (o.id === 'atender') {
+				if (!puedeAtender || !slot.idTurno) return false;
+				if (cerrado) return false;
+				if (!slot.horaLlegada || !slot.horaIngreso) return false;
 			}
 			return true;
-		});
-		if (puedeRacEnfermeria && esOcupado(slot) && slot.idTurno) {
-			return [
-				{ id: 'rac-enfermeria' as const, label: 'RAC de enfermería' },
-				...base,
-			];
+		}).map((o) => ({
+			...o,
+			flowNext: flowNext != null && o.id === flowNext,
+		}));
+
+		const conDetalle: OpcionMenu[] = turnoTieneDatosAtencion(slot)
+			? [{ id: 'ver-detalle', label: 'Ver detalle de atención' }]
+			: [];
+
+		const merged: OpcionMenu[] = [...conDetalle, ...base];
+
+		// El RAC de enfermería solo se habilita si el paciente ya registró llegada
+		if (puedeRacEnfermeria && esOcupado(slot) && slot.idTurno && slot.horaLlegada) {
+			return [{ id: 'rac-enfermeria', label: 'RAC de enfermería' }, ...merged];
 		}
-		return base;
-	}, [slot, puedeBorrar, puedeRacEnfermeria]);
+		return merged;
+	}, [slot, puedeBorrar, puedeRacEnfermeria, puedeAtender]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -142,7 +189,7 @@ export default function SlotTurnoMenu({
 					<li key={opt.id}>
 						<button
 							type='button'
-							className={`${styles.item} ${opt.mock ? styles.itemMock : ''}`}
+							className={`${styles.item} ${opt.mock ? styles.itemMock : ''} ${opt.flowNext ? styles.itemFlowNext : ''}`}
 							onClick={() => onAction(opt.id, slot)}
 						>
 							<span>{opt.label}</span>

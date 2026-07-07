@@ -109,6 +109,7 @@ interface Props {
 	open: boolean;
 	slot: AgendaSlot | null;
 	fechaTurno: string;
+	embedded?: boolean;
 	onClose: () => void;
 }
 
@@ -137,7 +138,7 @@ const MED_INICIAL = {
 	observaciones: '',
 };
 
-export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: Props) {
+export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = false, onClose }: Props) {
 	const { sectorSeleccionado } = useAppContext();
 	const user = authService.getCurrentUser() as {
 		codigoOperador?: number | string;
@@ -172,7 +173,11 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 	const [medForm, setMedForm] = useState(MED_INICIAL);
 
 	const [triageSel, setTriageSel] = useState<number | null>(null);
-	const [triageVista, setTriageVista] = useState(1);
+
+	const TRIAGE_ORDEN = useMemo(() => [...TRIAGE_NIVELES].slice().reverse(), []);
+	const triageGuardado = triageSel
+		? TRIAGE_NIVELES.find((n) => n.id === triageSel)
+		: null;
 
 	const idTurno = slot?.idTurno ?? null;
 
@@ -184,8 +189,9 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 			const data = await agendaService.getRacTurno(idTurno);
 			setRac(data);
 			const nivel = data.turno.idClasificacionTriage;
-			setTriageSel(nivel);
-			setTriageVista(nivel ?? 1);
+			setTriageSel(
+				nivel != null && nivel >= 1 && nivel <= 5 ? nivel : null,
+			);
 		} catch (e: unknown) {
 			const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
 			setError(err?.response?.data?.mensaje || err?.message || 'Error al cargar RAC');
@@ -197,16 +203,16 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 	useEffect(() => {
 		if (!open || !idTurno) {
 			setRac(null);
-			setShowControlForm(false);
-			setShowMedForm(false);
-			setMedSel(null);
-			setMedTerm('');
-			setControlForm(CONTROL_INICIAL);
-			setMedForm(MED_INICIAL);
-			setError(null);
-			return;
-		}
-		cargar();
+		setShowControlForm(false);
+		setShowMedForm(false);
+		setMedSel(null);
+		setMedTerm('');
+		setControlForm(CONTROL_INICIAL);
+		setMedForm(MED_INICIAL);
+		setError(null);
+		return;
+	}
+	cargar();
 		indicacionesService.getFormularioDatos().then((d) => {
 			if (!d) return;
 			setVademecum(
@@ -227,7 +233,7 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 				),
 			);
 		});
-	}, [open, idTurno, cargar]);
+	}, [open, idTurno, cargar, embedded]);
 
 	const medFiltrados = useMemo(() => {
 		const t = medTerm.trim().toLowerCase();
@@ -254,9 +260,9 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 		toastTimerRef.current = setTimeout(() => setToast(null), 2800);
 	};
 
-	const guardarControl = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!idTurno) return;
+	const guardarControl = async (e?: React.FormEvent) => {
+		e?.preventDefault();
+		if (!idTurno || saving) return;
 		setSaving(true);
 		setError(null);
 		try {
@@ -279,8 +285,8 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 				observaciones: controlForm.observaciones || undefined,
 				idSector: slot?.sector,
 			});
+			setControlForm({ ...CONTROL_INICIAL, fechaControl: nowDate(), horaControl: nowTime() });
 			setShowControlForm(false);
-			setControlForm(CONTROL_INICIAL);
 			await cargar();
 			flash('Control guardado');
 		} catch (err: unknown) {
@@ -291,9 +297,9 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 		}
 	};
 
-	const guardarMedicacion = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!idTurno || !medSel) return;
+	const guardarMedicacion = async (e?: React.FormEvent) => {
+		e?.preventDefault();
+		if (!idTurno || !medSel || saving) return;
 		setSaving(true);
 		setError(null);
 		try {
@@ -309,10 +315,15 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 				observaciones: medForm.observaciones || undefined,
 				idSector: slot?.sector,
 			});
-			setShowMedForm(false);
 			setMedSel(null);
 			setMedTerm('');
-			setMedForm({ ...MED_INICIAL, tipoUnidad: unidades[0]?.Valor || '' });
+			setMedForm({
+				...MED_INICIAL,
+				fechaControl: nowDate(),
+				horaControl: nowTime(),
+				tipoUnidad: unidades[0]?.Valor || '',
+			});
+			setShowMedForm(false);
 			await cargar();
 			flash('Medicación registrada');
 		} catch (err: unknown) {
@@ -334,8 +345,14 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 				idClasificacionTriage: nivel,
 			});
 			setRac(data);
-			setTriageSel(data.turno.idClasificacionTriage);
-			flash('Triage guardado');
+			setTriageSel(
+				data.turno.idClasificacionTriage != null &&
+					data.turno.idClasificacionTriage >= 1 &&
+					data.turno.idClasificacionTriage <= 5
+					? data.turno.idClasificacionTriage
+					: null,
+			);
+			flash(nivel == null ? 'Triage quitado' : 'Triage guardado');
 		} catch (err: unknown) {
 			const e2 = err as { response?: { data?: { mensaje?: string } }; message?: string };
 			setError(e2?.response?.data?.mensaje || e2?.message || 'Error al guardar triage');
@@ -344,12 +361,12 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 		}
 	};
 
-	const triageVisible =
-		TRIAGE_NIVELES.find((n) => n.id === triageVista) ?? TRIAGE_NIVELES[0];
-
 	const elegirTriage = (id: number) => {
-		setTriageVista(id);
-		if (triageSel !== id) guardarTriage(id);
+		if (triageSel === id) {
+			void guardarTriage(null);
+		} else {
+			void guardarTriage(id);
+		}
 	};
 
 	const eliminarControl = async (c: ControlFrecuenteTurno) => {
@@ -409,17 +426,15 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 				)
 			: null;
 
-	return (
-		<>
-			{toastNode}
-			<div className={styles.overlay} onClick={onClose}>
-			<div
-				className={styles.modal}
-				role='dialog'
-				aria-modal='true'
-				aria-label='RAC de enfermería'
-				onClick={(e) => e.stopPropagation()}
-			>
+	const modalBody = (
+		<div
+			className={embedded ? styles.modalEmbedded : styles.modal}
+			role={embedded ? undefined : 'dialog'}
+			aria-modal={embedded ? undefined : 'true'}
+			aria-label={embedded ? undefined : 'RAC de enfermería'}
+			onClick={embedded ? undefined : (e) => e.stopPropagation()}
+		>
+			{!embedded && (
 				<header className={styles.header}>
 					<div className={styles.headerInfo}>
 						<div className={styles.headerIcon} aria-hidden>
@@ -444,20 +459,72 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 						×
 					</button>
 				</header>
+			)}
 
-				{error && (
-					<div className={styles.alerts}>
+			{error && (
+				<div className={styles.alerts}>
 						<div className={styles.error}>{error}</div>
 					</div>
 				)}
 
-				<div className={styles.body}>
+				<div className={`${styles.body} ${embedded ? styles.bodyEmbedded : ''}`}>
 					{loading ? (
 						<div className={styles.loading}>Cargando…</div>
 					) : (
 						<div className={styles.grid}>
-							{/* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Columna izquierda: tablas â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
 							<div className={styles.left}>
+								<section className={styles.triagePanel}>
+									<header className={styles.triageHeader}>
+										<h3>Triage Manchester</h3>
+										{triageSel && triageGuardado ? (
+											<span
+												className={styles.triageBadge}
+												style={{ background: triageGuardado.color }}
+											>
+												Nivel {triageSel}
+											</span>
+										) : null}
+									</header>
+
+									<div className={styles.triageCompact}>
+										<p className={styles.triageHintCompact}>
+											{triageSel
+												? `Nivel ${triageSel} guardado · volvé a hacer clic para quitar`
+												: 'Elegí el nivel de urgencia (5 = menos urgente → 1 = emergencia)'}
+										</p>
+
+										<div
+											className={styles.triageBar}
+											role='group'
+											aria-label='Nivel de triage'
+										>
+											{TRIAGE_ORDEN.map((n) => (
+												<button
+													key={n.id}
+													type='button'
+													className={`${styles.triageChip} ${triageSel === n.id ? styles.triageChipActive : ''} ${triageSel === n.id ? styles.triageChipSaved : ''}`}
+													style={
+														{
+															'--chip-color': n.color,
+														} as React.CSSProperties
+													}
+													onClick={() => elegirTriage(n.id)}
+													disabled={saving}
+													aria-pressed={triageSel === n.id}
+													aria-label={`Nivel ${n.id}: ${n.titulo}`}
+												>
+													<span
+														className={styles.triageChipDot}
+														aria-hidden
+													/>
+													<span className={styles.triageChipNum}>{n.id}</span>
+													<span className={styles.triageChipLabel}>{n.titulo}</span>
+												</button>
+											))}
+										</div>
+									</div>
+								</section>
+
 								{/* Controles */}
 								<section className={styles.panel}>
 									<header className={styles.panelHeader}>
@@ -468,22 +535,30 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 											</span>
 										</div>
 										<div className={styles.panelActions}>
-											<button
-												type='button'
-												className={styles.btnPrimary}
-												onClick={() => setShowControlForm((v) => !v)}
-											>
-												{showControlForm ? 'Cancelar' : '+ Agregar'}
-											</button>
+											{!showControlForm ? (
+												<button
+													type='button'
+													className={styles.btnPrimary}
+													disabled={saving}
+													onClick={() => {
+														setShowControlForm(true);
+														setControlForm({
+															...CONTROL_INICIAL,
+															fechaControl: nowDate(),
+															horaControl: nowTime(),
+														});
+													}}
+												>
+													{(rac?.controles.length ?? 0) > 0
+														? '+ Agregar otro'
+														: '+ Agregar'}
+												</button>
+											) : null}
 										</div>
 									</header>
 
 									{showControlForm && (
-										<form
-											className={styles.form}
-											onSubmit={guardarControl}
-											key='form-control'
-										>
+										<div className={styles.form} key='form-control'>
 											<div className={styles.formRow}>
 												<div className={styles.field}>
 													<label>Fecha</label>
@@ -494,7 +569,6 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 														onChange={(e) =>
 															setCF('fechaControl', e.target.value)
 														}
-														required
 													/>
 												</div>
 												<div className={styles.field}>
@@ -506,7 +580,6 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 														onChange={(e) =>
 															setCF('horaControl', e.target.value)
 														}
-														required
 													/>
 												</div>
 												<div className={styles.field}>
@@ -653,20 +726,14 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 											<div className={styles.formActions}>
 												<button
 													type='button'
-													className={styles.btnSecondary}
-													onClick={() => setShowControlForm(false)}
-												>
-													Cancelar
-												</button>
-												<button
-													type='submit'
-													className={styles.btnPrimary}
+													className={styles.btnConfirm}
 													disabled={saving}
+													onClick={() => void guardarControl()}
 												>
-													{saving ? 'Guardando…' : 'Guardar control'}
+													{saving ? 'Guardando…' : 'Confirmar'}
 												</button>
 											</div>
-										</form>
+										</div>
 									)}
 
 									<div className={styles.tableScroll}>
@@ -748,30 +815,31 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 											</span>
 										</div>
 										<div className={styles.panelActions}>
-											<button
-												type='button'
-												className={styles.btnPrimary}
-												onClick={() => {
-													setShowMedForm((v) => !v);
-													if (!medForm.tipoUnidad && unidades[0]) {
-														setMedForm((p) => ({
-															...p,
-															tipoUnidad: unidades[0].Valor,
-														}));
-													}
-												}}
-											>
-												{showMedForm ? 'Cancelar' : '+ Agregar'}
-											</button>
+											{!showMedForm ? (
+												<button
+													type='button'
+													className={styles.btnPrimary}
+													disabled={saving}
+													onClick={() => {
+														setShowMedForm(true);
+														if (!medForm.tipoUnidad && unidades[0]) {
+															setMedForm((p) => ({
+																...p,
+																tipoUnidad: unidades[0].Valor,
+															}));
+														}
+													}}
+												>
+													{(rac?.medicacion.length ?? 0) > 0
+														? '+ Agregar otro'
+														: '+ Agregar'}
+												</button>
+											) : null}
 										</div>
 									</header>
 
 									{showMedForm && (
-										<form
-											className={styles.form}
-											onSubmit={guardarMedicacion}
-											key='form-med'
-										>
+										<div className={styles.form} key='form-med'>
 
 											<div className={styles.formRow}>
 												<div className={styles.field}>
@@ -786,7 +854,6 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 																fechaControl: e.target.value,
 															}))
 														}
-														required
 													/>
 												</div>
 												<div className={styles.field}>
@@ -801,7 +868,6 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 																horaControl: e.target.value,
 															}))
 														}
-														required
 													/>
 												</div>
 												<div className={styles.field}>
@@ -818,7 +884,6 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 																cantidad: Number(e.target.value),
 															}))
 														}
-														required
 													/>
 												</div>
 												<div className={styles.field}>
@@ -896,22 +961,14 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 											<div className={styles.formActions}>
 												<button
 													type='button'
-													className={styles.btnSecondary}
-													onClick={() => setShowMedForm(false)}
-												>
-													Cancelar
-												</button>
-												<button
-													type='submit'
-													className={styles.btnPrimary}
+													className={styles.btnConfirm}
 													disabled={saving || !medSel}
+													onClick={() => void guardarMedicacion()}
 												>
-													{saving
-														? 'Guardando…'
-														: 'Registrar como aplicado'}
+													{saving ? 'Guardando…' : 'Confirmar'}
 												</button>
 											</div>
-										</form>
+										</div>
 									)}
 
 									<div className={styles.tableScroll}>
@@ -963,121 +1020,35 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, onClose }: 
 									</div>
 								</section>
 							</div>
-
-							{/* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Columna derecha: triage â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-							<aside className={styles.right}>
-								<section className={styles.panel}>
-									<header className={styles.panelHeader}>
-										<div>
-											<h3>Triage de Manchester</h3>
-										</div>
-									</header>
-
-									<div className={styles.triageBody}>
-										<p className={styles.triageHint}>
-											{triageSel
-												? 'Nivel asignado · elegí otro número para cambiar'
-												: 'Elegí un número para clasificar al paciente'}
-										</p>
-
-										<div className={styles.triageStage}>
-											<article
-												key={triageVisible.id}
-												className={styles.triagePass}
-												style={
-													{
-														'--pass-bg': triageVisible.color,
-														'--pass-inner': triageVisible.colorInner,
-														'--pass-fg': triageVisible.colorTexto,
-													} as React.CSSProperties
-												}
-												aria-live='polite'
-											>
-												<div className={styles.triagePassHanger} aria-hidden>
-													<span className={styles.triagePassHole} />
-													<span className={styles.triagePassHole} />
-												</div>
-												<div className={styles.triagePassBody}>
-													<span className={styles.triagePassTag}>
-														Tag · Triage
-													</span>
-													<span className={styles.triagePassFieldLbl}>
-														Paciente
-													</span>
-													<div className={styles.triagePassField}>
-														{paciente}
-													</div>
-													<div className={styles.triagePassCore}>
-														<span
-															className={styles.triagePassNumWrap}
-															data-num={triageVisible.id}
-														>
-															<span className={styles.triagePassNum}>
-																{triageVisible.id}
-															</span>
-														</span>
-														<span className={styles.triagePassStatus}>
-															{triageVisible.titulo}
-														</span>
-														<span className={styles.triagePassWait}>
-															{triageVisible.tiempo}
-														</span>
-													</div>
-													<span className={styles.triagePassFieldLbl}>
-														Detalle
-													</span>
-													<div className={styles.triagePassField}>
-														{triageVisible.descripcion}
-													</div>
-												</div>
-											</article>
-										</div>
-
-										<div
-											className={styles.triageNums}
-											role='group'
-											aria-label='Nivel de triage'
-										>
-											{TRIAGE_NIVELES.map((n) => (
-												<button
-													key={n.id}
-													type='button'
-													className={`${styles.triageNumBtn} ${triageVista === n.id ? styles.triageNumBtnActive : ''} ${triageSel === n.id ? styles.triageNumBtnSaved : ''}`}
-													style={
-														{ '--num-color': n.color } as React.CSSProperties
-													}
-													onClick={() => elegirTriage(n.id)}
-													disabled={saving}
-													aria-pressed={triageVista === n.id}
-													aria-label={`Nivel ${n.id}: ${n.titulo}`}
-												>
-													<span
-														className={styles.triageNumGlyph}
-														data-num={n.id}
-													>
-														{n.id}
-													</span>
-												</button>
-											))}
-										</div>
-									</div>
-								</section>
-							</aside>
 						</div>
 					)}
 				</div>
 
-				<footer className={styles.footer}>
-					<button
-						type='button'
-						className={styles.btnSecondary}
-						onClick={onClose}
-					>
-						Cerrar
-					</button>
-				</footer>
-			</div>
+				{!embedded && (
+					<footer className={styles.footer}>
+						<button type='button' className={styles.btnSecondary} onClick={onClose}>
+							Cerrar
+						</button>
+					</footer>
+				)}
 		</div>
+	);
+
+	if (embedded) {
+		return (
+			<>
+				{toastNode}
+				{modalBody}
+			</>
+		);
+	}
+
+	return (
+		<>
+			{toastNode}
+			<div className={styles.overlay} onClick={onClose}>
+				{modalBody}
+			</div>
 		</>
 	);
 }

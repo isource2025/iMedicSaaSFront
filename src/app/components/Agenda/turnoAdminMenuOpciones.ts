@@ -1,6 +1,6 @@
 import type { TurnoAdminRow } from '@/app/services/turnosAdminService';
 
-export type TurnoAdminAction = 'editar' | 'rac' | 'cancelar' | 'cerrar' | 'borrar';
+export type TurnoAdminAction = 'editar' | 'rac' | 'cancelar' | 'cerrar' | 'borrar' | 'detalle';
 
 export type TurnoAdminOpcion = {
 	id: TurnoAdminAction;
@@ -10,6 +10,16 @@ export type TurnoAdminOpcion = {
 
 function tienePaciente(row: TurnoAdminRow): boolean {
 	return Boolean(row.idPaciente && row.idPaciente > 0);
+}
+
+function turnoTieneDatosAtencion(row: TurnoAdminRow): boolean {
+	return (
+		row.estado === 'ATENDIDO' ||
+		Boolean(row.horaSalida) ||
+		Boolean(row.horallegada) ||
+		Boolean(row.horaIngreso) ||
+		row.idClasificacionTriage != null
+	);
 }
 
 export function opcionesMenuTurnoAdmin(
@@ -34,6 +44,9 @@ export function opcionesMenuTurnoAdmin(
 	}
 	if (opts.puedeRac && conPac && (ocupado || atendido)) {
 		list.push({ id: 'rac', label: 'RAC de enfermería' });
+	}
+	if (turnoTieneDatosAtencion(row)) {
+		list.unshift({ id: 'detalle', label: 'Ver detalle de atención' });
 	}
 	if (opts.puedeEditar && ocupado && conPac) {
 		list.push({ id: 'cancelar', label: 'Cancelar turno', danger: true });

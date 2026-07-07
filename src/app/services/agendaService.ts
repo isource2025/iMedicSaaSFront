@@ -1,4 +1,5 @@
 import { apiService } from './axios';
+import { apiFetch } from '@/app/utils/authFetch';
 
 interface ApiResp<T> {
 	success: boolean;
@@ -18,6 +19,29 @@ export interface ClienteCobertura {
 	tipo: string;
 }
 
+export interface TipoPedidoEstudio {
+	idTipoPedido: number;
+	descripcion: string;
+	idPractica: number;
+}
+
+export interface CierreProcedimientoPayload {
+	idTipoPedido: number;
+}
+
+export interface CierrePedidoEstudioPayload {
+	idTipoPedido: number;
+	idSectorReceptor: string;
+	notas?: string;
+	estadoUrgencia?: 'Normal' | 'Urgente' | 'Medio';
+}
+
+export interface SectorReceptorEstudio {
+	valor: string;
+	descripcion: string;
+	prefijos: string[];
+}
+
 export interface CierreHciPayload {
 	motivoConsulta?: string;
 	enfermedadActual?: string;
@@ -35,6 +59,8 @@ export interface CierreHciPayload {
 export interface CierreTurnoPayload {
 	diagnostico: string;
 	hci?: CierreHciPayload;
+	procedimientos?: CierreProcedimientoPayload[];
+	pedidosEstudios?: CierrePedidoEstudioPayload[];
 }
 
 export interface CierreTurnoResult {
@@ -45,6 +71,9 @@ export interface CierreTurnoResult {
 	idHci?: number;
 	valorPractica?: number;
 	idFacProfesional?: number;
+	valoresPracticasProcedimientos?: number[];
+	procedimientosRegistrados?: number;
+	pedidosEstudiosRegistrados?: number;
 }
 
 export interface AgendaJornada {
@@ -72,6 +101,7 @@ export interface AgendaSlot {
 	motivoCancelacion?: string | null;
 	idClasificacionTriage?: number | null;
 	horaLlegada?: string | null;
+	horaIngreso?: string | null;
 	horaAtencion?: string | null;
 	horaSalida?: string | null;
 	sexo?: string | null;
@@ -80,6 +110,7 @@ export interface AgendaSlot {
 	cobertura?: string | null;
 	racControles?: number;
 	racMedicacion?: number;
+	numeroVisita?: number;
 }
 
 /** 0 = turno de grilla, 1 = sobreturno */
@@ -183,6 +214,99 @@ export interface RacTurnoData {
 	medicacion: MedicacionTurno[];
 }
 
+export interface DetalleAtencionTurno {
+	turno: {
+		idTurno: number;
+		fecha: string | null;
+		hora: string | null;
+		sector: string;
+		status: number;
+		estado: string;
+		tipoTurno: number;
+		observaciones: string | null;
+		numeroVisita: number;
+		idClasificacionTriage: number | null;
+		horaLlegada: string | null;
+		horaIngreso: string | null;
+		horaSalida: string | null;
+		especialidad: number;
+	};
+	paciente: {
+		nombre: string | null;
+		numeroDocumento: number | string | null;
+		numeroHC: string | null;
+		sexo: string | null;
+		fechaNacimiento: string | null;
+		edad: number | null;
+		cobertura: string | null;
+	};
+	profesional: {
+		matricula: number;
+		nombre: string | null;
+	};
+	hc: {
+		motivoConsulta: string | null;
+		enfermedadActual: string | null;
+		semiologia: string | null;
+		pa: string | null;
+		fc: string | null;
+		fr: string | null;
+		tax: string | null;
+		glucemia: string | null;
+		talla: string | null;
+		peso: string | null;
+		impresionGeneral: string | null;
+	} | null;
+	diagnostico: { codigo: string; descripcion: string | null } | null;
+	rac: {
+		controles: ControlFrecuenteTurno[];
+		medicacion: MedicacionTurno[];
+	};
+	adjuntos: {
+		idAdjunto: number;
+		nombreArchivo: string;
+		tipoImagen: string;
+		tipoImagenNombre?: string;
+		fechaCarga?: string;
+	}[];
+	trazabilidad?: {
+		asignacion: {
+			nombre: string | null;
+			fecha: string | null;
+			hora: string | null;
+		} | null;
+		llegada: { hora: string; operador: string | null } | null;
+		ingreso: { hora: string; operador: string | null } | null;
+		cierre: {
+			hora: string | null;
+			operador: string | null;
+		} | null;
+	};
+	procedimientosRealizados?: DetalleProcedimientoRealizado[];
+	pedidosEstudios?: DetallePedidoEstudio[];
+}
+
+export interface DetalleProcedimientoRealizado {
+	valor: number;
+	codigoPractica: number;
+	descripcion: string;
+	cantidad: number;
+	hora: string | null;
+	profesional: string | null;
+}
+
+export interface DetallePedidoEstudio {
+	idPedido: number;
+	idTipoPedido: number;
+	codigoPractica: number;
+	descripcion: string;
+	sectorReceptor: string;
+	sectorReceptorNombre: string | null;
+	estadoUrgencia: string | null;
+	notas: string | null;
+	fechaPedido: string | null;
+}
+
 export interface TurnoAsignado {
 	idTurno: number;
 	fecha: string;
@@ -201,6 +325,7 @@ export interface TurnoAsignado {
 	motivoCancelacion: string | null;
 	idClasificacionTriage?: number | null;
 	horaLlegada?: string | null;
+	horaIngreso?: string | null;
 	horaAtencion?: string | null;
 	horaSalida?: string | null;
 	sexo?: string | null;
@@ -209,6 +334,7 @@ export interface TurnoAsignado {
 	cobertura?: string | null;
 	racControles?: number;
 	racMedicacion?: number;
+	numeroVisita?: number;
 }
 
 export const agendaService = {
@@ -347,6 +473,21 @@ export const agendaService = {
 		return r.data.data;
 	},
 
+	async buscarTiposPedidosEstudios(q: string, limit = 30): Promise<TipoPedidoEstudio[]> {
+		const qs = new URLSearchParams({ q, limit: String(limit) });
+		const r = await apiService.get<ApiResp<TipoPedidoEstudio[]>>(
+			`/agenda/tipos-pedidos-estudios/buscar?${qs.toString()}`,
+		);
+		return r.data.data;
+	},
+
+	async listarSectoresReceptorEstudios(): Promise<SectorReceptorEstudio[]> {
+		const r = await apiService.get<ApiResp<SectorReceptorEstudio[]>>(
+			'/agenda/sectores-receptor-estudios',
+		);
+		return r.data.data;
+	},
+
 	async buscarClientes(q: string, limit = 30): Promise<ClienteCobertura[]> {
 		const qs = new URLSearchParams({ q, limit: String(limit) });
 		const r = await apiService.get<ApiResp<ClienteCobertura[]>>(
@@ -367,8 +508,12 @@ export const agendaService = {
 		return r.data.data;
 	},
 
-	async getTurnosPorPaciente(idPaciente: number): Promise<TurnoAsignado[]> {
+	async getTurnosPorPaciente(
+		idPaciente: number,
+		opts?: { soloActivos?: boolean },
+	): Promise<TurnoAsignado[]> {
 		const qs = new URLSearchParams({ idPaciente: String(idPaciente) });
+		if (opts?.soloActivos) qs.set('soloActivos', '1');
 		const r = await apiService.get<ApiResp<TurnoAsignado[]>>(
 			`/agenda/turnos-por-paciente?${qs.toString()}`,
 		);
@@ -377,6 +522,13 @@ export const agendaService = {
 
 	async getRacTurno(idTurno: number): Promise<RacTurnoData> {
 		const r = await apiService.get<ApiResp<RacTurnoData>>(`/agenda/turnos/${idTurno}/rac`);
+		return r.data.data;
+	},
+
+	async getDetalleAtencionTurno(idTurno: number): Promise<DetalleAtencionTurno> {
+		const r = await apiService.get<ApiResp<DetalleAtencionTurno>>(
+			`/agenda/turnos/${idTurno}/detalle`,
+		);
 		return r.data.data;
 	},
 
@@ -419,5 +571,48 @@ export const agendaService = {
 
 	async eliminarMedicacionRac(idTurno: number, idCtrlMedica: number): Promise<void> {
 		await apiService.delete(`/agenda/turnos/${idTurno}/rac/medicacion/${idCtrlMedica}`);
+	},
+
+	async marcarLlegada(
+		matricula: number,
+		idTurno: number,
+	): Promise<{ idTurno: number; horaLlegada: string | null }> {
+		const r = await apiService.patch<ApiResp<{ idTurno: number; horaLlegada: string | null }>>(
+			`/agenda/${matricula}/turnos/${idTurno}/llegada`,
+		);
+		return r.data.data;
+	},
+
+	async marcarIngreso(
+		matricula: number,
+		idTurno: number,
+	): Promise<{ idTurno: number; horaIngreso: string | null }> {
+		const r = await apiService.patch<ApiResp<{ idTurno: number; horaIngreso: string | null }>>(
+			`/agenda/${matricula}/turnos/${idTurno}/ingreso`,
+		);
+		return r.data.data;
+	},
+
+	async getAdjuntosTurno(idTurno: number) {
+		const r = await apiService.get<ApiResp<import('@/app/types/adjuntos').Adjunto[]>>(
+			`/agenda/turnos/${idTurno}/adjuntos`,
+		);
+		return r.data.data;
+	},
+
+	async subirAdjuntoTurno(idTurno: number, archivo: File, tipoImagen: string) {
+		const formData = new FormData();
+		formData.append('archivo', archivo);
+		formData.append('tipoImagen', tipoImagen.trim());
+		const response = await apiFetch(`/agenda/turnos/${idTurno}/adjuntos`, {
+			method: 'POST',
+			body: formData,
+		});
+		if (!response.ok) {
+			const payload = await response.json().catch(() => ({}));
+			throw new Error(payload?.mensaje || payload?.error || 'Error al subir archivo');
+		}
+		const json = await response.json();
+		return json.data as { idAdjunto: number; nombreArchivo: string };
 	},
 };

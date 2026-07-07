@@ -225,6 +225,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
 
         // Filtrar subitems: si el subitem no tiene submoduloId siempre se muestra
         const subs = item.subItems.filter((sub) => {
+          if (rol?.nombre === 'MEDICO' && sub.path === CHATS_PATH) return false
           if (!sub.submoduloId) return true
           return puedeSubmodulo(permisoModulo(sub), sub.submoduloId)
         })

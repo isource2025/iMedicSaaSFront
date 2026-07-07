@@ -139,12 +139,6 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 						</svg>
 					</button>
 				)}
-				{searching ? (
-					<p className={styles.searchingStatus} role="status" aria-live="polite">
-						<span className={styles.spinnerDark} aria-hidden />
-						Buscando…
-					</p>
-				) : null}
 				{!searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
 			</div>
 

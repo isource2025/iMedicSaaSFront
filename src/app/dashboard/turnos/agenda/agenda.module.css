@@ -306,6 +306,30 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	gap: 0.75rem;
+}
+
+.tableHeaderActions {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-shrink: 0;
+}
+
+.headerActionBtn {
+	border: 1px solid #0083a9;
+	background: #fff;
+	color: #0083a9;
+	font-size: 0.78rem;
+	font-weight: 600;
+	padding: 0.3rem 0.65rem;
+	border-radius: 6px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.headerActionBtn:hover {
+	background: #f0f9ff;
 }
 
 .jornadaTabs {
@@ -387,6 +411,30 @@
 
 .rowOcupado td {
 	background: #fff7ed;
+}
+
+.rowLlegada td {
+	background: #fffbeb;
+}
+
+.rowLlegada:hover td {
+	background: #fef3c7;
+}
+
+.rowIngreso td {
+	background: #eff6ff;
+}
+
+.rowIngreso:hover td {
+	background: #dbeafe;
+}
+
+.rowCerrado td {
+	background: #f0fdf4;
+}
+
+.rowCerrado:hover td {
+	background: #dcfce7;
 }
 
 .rowOcupado:hover td {

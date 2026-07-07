@@ -13,6 +13,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import coberturaService from '../../services/coberturaService';
 import { apiService } from '../../services/axios';
 import type { PersonaResponse, LocalidadResponse, LocalidadData } from './typesForRenaper';
+import { mapRenaperToPatientFields } from '@/app/utils/renaperMapper';
 
 interface PatientFormBaseProps {
 	onSubmit: (data: any) => Promise<boolean> | boolean;
@@ -258,30 +259,35 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			const { data } = await apiService.get<PersonaResponse>(endpoint);
 
 			if (data?.persona) {
-				const ciudadNorm = normalizeCity(data.persona.ciudad || '');
+				const mapped = mapRenaperToPatientFields(
+					data.persona as Record<string, unknown>,
+				);
+				const ciudadNorm = normalizeCity(mapped.ciudadNorm);
 				const dataLocalidad = ciudadNorm ? await safeFetchLocalidad(ciudadNorm) : null;
 
 				await fetchLocalidades?.();
 				setFormData((prev) => ({
 					...prev,
-					NumeroDocumento: String(data.persona!.numeroDocumento ?? ''),
-					ApellidoyNombre: `${data.persona!.apellido ?? ''}, ${
-						data.persona!.nombres ?? ''
-					}`
-						.trim()
-						.replaceAll(',', ''),
-					Domicilio: `${data.persona!.calle ?? ''} ${
-						data.persona!.numero ?? ''
-					}`.trim(),
+					NumeroDocumento: mapped.NumeroDocumento || prev.NumeroDocumento,
+					ApellidoyNombre: mapped.ApellidoyNombre || prev.ApellidoyNombre,
+					Domicilio: mapped.Domicilio || prev.Domicilio,
 					ValorLocalidad: dataLocalidad?.Valor
 						? String(dataLocalidad.Valor)
 						: prev.ValorLocalidad,
-					FechaNacimiento: data.persona!.fechaNacimiento ?? prev.FechaNacimiento,
-					Sexo: data.persona!.sexo ?? prev.Sexo,
+					Provincia: mapped.Provincia || prev.Provincia,
+					Nacionalidad: mapped.Nacionalidad || prev.Nacionalidad,
+					CUIT: mapped.CUIT || prev.CUIT,
+					FechaNacimiento: mapped.FechaNacimiento ?? prev.FechaNacimiento,
+					Sexo: mapped.Sexo ?? prev.Sexo,
 				}));
 
 				if (dataLocalidad?.ValorProvincia) {
 					await handleGetProvincia(String(dataLocalidad.ValorProvincia));
+				} else if (mapped.Provincia && !dataLocalidad) {
+					setFormData((prev) => ({
+						...prev,
+						Provincia: mapped.Provincia || prev.Provincia,
+					}));
 				}
 			}
 		} catch (err) {

@@ -1,0 +1,94 @@
+.overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1700;
+	padding: 1rem;
+}
+
+.box {
+	background: #fff;
+	border-radius: 12px;
+	padding: 1.4rem;
+	max-width: 420px;
+	width: 100%;
+	box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+	animation: confirmIn 0.16s ease-out both;
+}
+
+@keyframes confirmIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.title {
+	margin: 0 0 0.5rem;
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.text {
+	margin: 0 0 1.25rem;
+	font-size: 0.9rem;
+	color: #475569;
+	line-height: 1.5;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+
+.btnSecondary,
+.btnPrimary {
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid transparent;
+}
+
+.btnSecondary {
+	background: #fff;
+	border-color: #cbd5e1;
+	color: #475569;
+}
+
+.btnSecondary:hover:not(:disabled) {
+	background: #f1f5f9;
+}
+
+.btnPrimary {
+	background: #0083a9;
+	color: #fff;
+}
+
+.btnPrimary:hover:not(:disabled) {
+	background: #006d8c;
+}
+
+.btnDanger {
+	background: #dc2626;
+}
+
+.btnDanger:hover:not(:disabled) {
+	background: #b91c1c;
+}
+
+.btnSecondary:disabled,
+.btnPrimary:disabled {
+	opacity: 0.6;
+	cursor: default;
+}

@@ -15,6 +15,7 @@ interface CustomSelectProps {
     options: Option[];
     tabIndex?: number; // NEW: permitir orden de tabulación
     autoFocus?: boolean; // NEW: permitir autoFocus
+    disabled?: boolean; // NEW: bloquear apertura mostrando el valor seleccionado
 }
 
 type Placement = "top" | "bottom";
@@ -28,13 +29,13 @@ export default function CustomSelect({
     options,
     tabIndex, // NEW
     autoFocus, // NEW
+    disabled, // NEW
 }: CustomSelectProps) {
     const [mounted, setMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [placement, setPlacement] = useState<Placement>("bottom");
-    const [coords, setCoords] = useState({ left: 0, top: 0, width: 0 });
-    const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+    const [coords, setCoords] = useState({ left: 0, top: 0, width: 0, maxHeight: 320 });
 
     const wrapperRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLDivElement>(null);
@@ -73,11 +74,15 @@ export default function CustomSelect({
             spaceBelow >= Math.min(estimated, vh * 0.4) ||
             spaceBelow >= spaceAbove;
 
+        const available = openDown ? spaceBelow - 8 : spaceAbove - 8;
+        const maxHeight = Math.min(320, Math.max(120, available));
+
         setPlacement(openDown ? "bottom" : "top");
         setCoords({
-            left: Math.round(r.left + window.scrollX),
-            top: Math.round(openDown ? r.bottom + 4 + window.scrollY : r.top - 4 + window.scrollY),
+            left: Math.round(r.left),
+            top: Math.round(openDown ? r.bottom + 4 : r.top - 4),
             width: Math.round(r.width),
+            maxHeight,
         });
     };
 
@@ -116,17 +121,9 @@ export default function CustomSelect({
         return () => document.removeEventListener("mousedown", handleClick);
     }, [isOpen]);
 
-    useEffect(() => {
-        if (!wrapperRef.current) return;
-        const modalRoot = wrapperRef.current.closest<HTMLElement>(
-            '[data-modal-root], [role="dialog"], .modal, .Modal, .MuiModal-root'
-        );
-        setPortalEl(modalRoot ?? document.body);
-    }, []);
-
     const selectClasses = [
         styles.select,
-        isLoading ? styles.selectDisabled : "",
+        isLoading || disabled ? styles.selectDisabled : "",
         isLoading ? styles.selectLoading : "",
     ]
         .filter(Boolean)
@@ -136,7 +133,7 @@ export default function CustomSelect({
     const handleTriggerKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (
         e
     ) => {
-        if (isLoading) return;
+        if (isLoading || disabled) return;
         if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             setIsOpen((v) => !v);
@@ -184,16 +181,16 @@ export default function CustomSelect({
                     id={name}
                     ref={triggerRef}
                     className={selectClasses}
-                    onClick={() => !isLoading && setIsOpen((v) => !v)}
+                    onClick={() => !isLoading && !disabled && setIsOpen((v) => !v)}
                     role="combobox" // NEW: ARIA adecuado
                     aria-haspopup="listbox"
                     aria-expanded={isOpen}
-                    aria-disabled={isLoading}
+                    aria-disabled={isLoading || disabled}
                     aria-controls={`${name}-listbox`}
                     aria-activedescendant={
                         isOpen ? `${name}-active` : undefined
                     }
-                    tabIndex={isLoading ? -1 : tabIndex ?? 0} // NEW: enfocable y ordenable
+                    tabIndex={isLoading || disabled ? -1 : tabIndex ?? 0} // NEW: enfocable y ordenable
                     onKeyDown={handleTriggerKeyDown} // NEW
                 >
                     {isLoading
@@ -213,7 +210,6 @@ export default function CustomSelect({
             {mounted &&
                 isOpen &&
                 !isLoading &&
-                portalEl &&
                 createPortal(
                     <div
                         ref={dropdownRef}
@@ -222,18 +218,12 @@ export default function CustomSelect({
                                 ? styles.dropTop
                                 : styles.dropBottom
                         }`}
-                        style={
-                            portalEl === document.body
-                                ? {
-                                      left: coords.left,
-                                      top: coords.top,
-                                      width: coords.width,
-                                  }
-                                : {
-                                      top: coords.top,
-                                      width: coords.width,
-                                  }
-                        }
+                        style={{
+                            left: coords.left,
+                            top: coords.top,
+                            width: coords.width,
+                            maxHeight: coords.maxHeight,
+                        }}
                         role="listbox"
                         id={`${name}-listbox`}
                         aria-labelledby={name}
@@ -336,7 +326,7 @@ export default function CustomSelect({
                             )}
                         </ul>
                     </div>,
-                    portalEl
+                    document.body
                 )}
         </div>
     );

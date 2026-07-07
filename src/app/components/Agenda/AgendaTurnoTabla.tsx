@@ -58,8 +58,11 @@ export function AgendaTurnoTablaRow({
 			<td>
 				<CeldaHoras
 					horaTurno={row.hora}
-					horaAtencion={row.horaAtencion}
+					horaLlegada={row.horaLlegada}
+					horaIngreso={row.horaIngreso}
+					horaSalida={row.horaSalida}
 					conPaciente={conPaciente}
+					cancelado={cancelado}
 				/>
 			</td>
 			<td>
@@ -69,6 +72,7 @@ export function AgendaTurnoTablaRow({
 					idPaciente={row.idPaciente}
 					pacienteNombre={row.pacienteNombre}
 					numeroDocumento={row.numeroDocumento}
+					numeroVisita={row.numeroVisita}
 				/>
 			</td>
 			<td>{conPaciente && row.edad != null ? `${row.edad} años` : '—'}</td>

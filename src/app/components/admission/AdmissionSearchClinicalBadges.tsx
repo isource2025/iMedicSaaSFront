@@ -48,16 +48,19 @@ const BADGE_ITEMS: {
 type Props = {
 	row: AdmissionSearchRow;
 	onBadgeClick?: (kind: ClinicalBadgeKind, numeroVisita: number) => void;
+	/** Badge actualmente expandido en el panel inline. */
+	activeKind?: ClinicalBadgeKind;
 };
 
-export function VisitClinicalBadges({ row, onBadgeClick }: Props) {
+export function VisitClinicalBadges({ row, onBadgeClick, activeKind }: Props) {
 	return (
 		<div className={styles.visitBadges} role="group" aria-label="Registros clínicos por tipo">
 			{BADGE_ITEMS.map(({ label, keys, title }) => {
 				const count = visitClinicalCount(row, ...keys);
+				const isActive = activeKind === label;
 				const className = `${styles.visitBadge} ${count === 0 ? styles.visitBadgeZero : ''} ${
 					count > 0 && onBadgeClick ? styles.visitBadgeClickable : ''
-				}`;
+				} ${isActive ? styles.visitBadgeActive : ''}`;
 				const content = (
 					<>
 						{label} · {count}

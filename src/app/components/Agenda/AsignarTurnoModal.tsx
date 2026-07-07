@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { searchPatients } from '@/app/services/patientService';
 import AgregarPacienteEnAgenda from '@/app/components/Agenda/AgregarPacienteEnAgenda';
 import {
@@ -10,7 +11,9 @@ import {
 	type AgendaProfesionalMeta,
 	type AgendaSlot,
 } from '@/app/services/agendaService';
-import { esFechaPasada } from '@/app/utils/agendaFecha';
+import { agendaConfigService } from '@/app/services/agendaConfigService';
+import { esFechaPasada, toIsoLocal } from '@/app/utils/agendaFecha';
+import { useModalLayer } from '@/app/hooks/useModalLayer';
 import styles from './AsignarTurnoModal.module.css';
 
 interface PacienteRow {
@@ -46,6 +49,7 @@ export default function AsignarTurnoModal({
 	onAssigned,
 }: Props) {
 	const esSobreturno = modo === 'sobreturno';
+	const mounted = useModalLayer(open);
 	const [term, setTerm] = useState('');
 	const [results, setResults] = useState<PacienteRow[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -53,9 +57,17 @@ export default function AsignarTurnoModal({
 
 	const [observaciones, setObservaciones] = useState('');
 	const [sectorEdit, setSectorEdit] = useState<string>('');
+	const [tipoTurno, setTipoTurno] = useState<number>(TIPO_TURNO_GRILLA);
+	const [tiposTurno, setTiposTurno] = useState<{ valor: number; label: string }[]>([]);
+	const [especialidades, setEspecialidades] = useState<{ valor: number; descripcion: string }[]>(
+		[],
+	);
 
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	const [fechaSt, setFechaSt] = useState(fecha);
+	const [horaSt, setHoraSt] = useState('08:00');
 
 	useEffect(() => {
 		if (!open) return;
@@ -64,8 +76,46 @@ export default function AsignarTurnoModal({
 		setPaciente(null);
 		setObservaciones('');
 		setSectorEdit(profesional?.sector || slot?.sector || '');
+		setTipoTurno(esSobreturno ? TIPO_TURNO_SOBRETURNO : TIPO_TURNO_GRILLA);
 		setError(null);
-	}, [open, slot, profesional]);
+		if (esSobreturno) {
+			const now = new Date();
+			setFechaSt(toIsoLocal(now));
+			setHoraSt(
+				`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+			);
+		} else {
+			setFechaSt(fecha);
+			setHoraSt(slot?.hora?.replace(/\s*·\s*ST$/i, '') || '08:00');
+		}
+	}, [open, slot, profesional, esSobreturno, fecha]);
+
+	useEffect(() => {
+		if (!open) return;
+		let cancel = false;
+		agendaConfigService
+			.getCatalogos()
+			.then((cat) => {
+				if (cancel) return;
+				const tipos = Object.entries(cat.tipoTurno || {})
+					.map(([k, v]) => ({ valor: Number(k), label: String(v) }))
+					.filter((t) => Number.isFinite(t.valor))
+					.sort((a, b) => a.valor - b.valor);
+				setTiposTurno(tipos);
+				setEspecialidades(cat.especialidades ?? []);
+			})
+			.catch(() => {
+				if (!cancel) {
+					setTiposTurno([
+						{ valor: TIPO_TURNO_GRILLA, label: 'Grilla' },
+						{ valor: TIPO_TURNO_SOBRETURNO, label: 'Sobreturno' },
+					]);
+				}
+			});
+		return () => {
+			cancel = true;
+		};
+	}, [open]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -92,9 +142,12 @@ export default function AsignarTurnoModal({
 		};
 	}, [term, open]);
 
-	const horaLabel = slot?.hora || '—';
+	const horaLabel = esSobreturno ? horaSt : slot?.hora || '—';
+	const fechaEnvio = esSobreturno ? fechaSt : fecha;
 
-	const fechaInvalida = esFechaPasada(fecha);
+	const fechaInvalida = esFechaPasada(fechaEnvio);
+
+	const tipoTurnoEnvio = esSobreturno ? TIPO_TURNO_SOBRETURNO : tipoTurno;
 
 	const submit = async () => {
 		if (!slot || !paciente || fechaInvalida) return;
@@ -102,13 +155,13 @@ export default function AsignarTurnoModal({
 		setError(null);
 		try {
 			await agendaService.asignarTurno(matricula, {
-				fecha,
-				hora: slot.hora.replace(/\s*·\s*ST$/i, ''),
-				horaClarion: slot.horaClarion,
+				fecha: fechaEnvio,
+				hora: esSobreturno ? horaSt : slot.hora.replace(/\s*·\s*ST$/i, ''),
+				horaClarion: esSobreturno ? undefined : slot.horaClarion,
 				sector: (profesional?.sector || slot?.sector || sectorEdit || '').trim(),
 				idPaciente: paciente.IDPaciente,
 				observaciones: observaciones.trim() || undefined,
-				tipoTurno: esSobreturno ? TIPO_TURNO_SOBRETURNO : TIPO_TURNO_GRILLA,
+				tipoTurno: tipoTurnoEnvio,
 			});
 			onAssigned();
 			onClose();
@@ -125,26 +178,34 @@ export default function AsignarTurnoModal({
 		}
 	};
 
+	const especialidadLabel = useMemo(() => {
+		const val = profesional?.especialidad;
+		if (val == null || val === 0) return '—';
+		return (
+			especialidades.find((e) => e.valor === val)?.descripcion?.trim() || String(val)
+		);
+	}, [profesional?.especialidad, especialidades]);
+
 	const puedeGuardar = useMemo(
 		() => Boolean(slot && paciente && !submitting && !fechaInvalida),
 		[slot, paciente, submitting, fechaInvalida],
 	);
 
-	if (!open) return null;
+	if (!open || !mounted) return null;
 
-	return (
-		<div className={styles.overlay} onClick={onClose}>
+	const modal = (
+		<div className={styles.overlay}>
 			<div
 				className={styles.modal}
 				role='dialog'
 				aria-modal='true'
-				onClick={(e) => e.stopPropagation()}
+				aria-label={esSobreturno ? 'Agregar sobreturno' : 'Asignar turno'}
 			>
 				<header className={styles.header}>
 					<div>
 						<h2>{esSobreturno ? 'Agregar sobreturno' : 'Asignar turno'}</h2>
 						<p>
-							{fecha} · <strong>{horaLabel}</strong>
+							{fechaEnvio} · <strong>{horaLabel}</strong>
 							{(profesional?.sector || slot?.sector)
 								? ` · Sector ${profesional?.sector || slot?.sector}`
 								: ''}
@@ -230,6 +291,28 @@ export default function AsignarTurnoModal({
 					</section>
 
 					<section className={styles.grid}>
+						{esSobreturno ? (
+							<>
+								<div>
+									<label>Fecha del sobreturno</label>
+									<input
+										type='date'
+										className={styles.input}
+										value={fechaSt}
+										onChange={(e) => setFechaSt(e.target.value)}
+									/>
+								</div>
+								<div>
+									<label>Hora del sobreturno</label>
+									<input
+										type='time'
+										className={styles.input}
+										value={horaSt}
+										onChange={(e) => setHoraSt(e.target.value)}
+									/>
+								</div>
+							</>
+						) : null}
 						<div>
 							<label>Sector</label>
 							<input
@@ -241,28 +324,42 @@ export default function AsignarTurnoModal({
 								title='Sector del horario (IdServicio)'
 							/>
 						</div>
-						<div>
-							<label>Tipo de turno</label>
-							<input
-								type='text'
-								className={styles.input}
-								value='Reserva (1)'
-								readOnly
-								title='TipoTurno = 1 — reserva legacy'
-							/>
-						</div>
+						{!esSobreturno ? (
+							<div>
+								<label>Tipo de turno</label>
+								<select
+									className={styles.input}
+									value={tipoTurno}
+									onChange={(e) => setTipoTurno(Number(e.target.value))}
+								>
+									{tiposTurno.map((t) => (
+										<option key={t.valor} value={t.valor}>
+											{t.label}
+										</option>
+									))}
+								</select>
+							</div>
+						) : (
+							<div>
+								<label>Tipo de turno</label>
+								<input
+									type='text'
+									className={styles.input}
+									value='Sobreturno'
+									readOnly
+									tabIndex={-1}
+								/>
+							</div>
+						)}
 						<div>
 							<label>Especialidad del profesional</label>
 							<input
 								type='text'
 								className={styles.input}
-								value={
-									profesional?.especialidad
-										? String(profesional.especialidad)
-										: '—'
-								}
+								value={especialidadLabel}
 								readOnly
-								title='ValorEspecialidad del médico titular (imPersonal)'
+								tabIndex={-1}
+								title='Código de especialidad del médico titular'
 							/>
 						</div>
 					</section>
@@ -297,10 +394,18 @@ export default function AsignarTurnoModal({
 						disabled={!puedeGuardar}
 						onClick={submit}
 					>
-						{submitting ? 'Asignando…' : 'Asignar turno'}
+						{submitting
+							? esSobreturno
+								? 'Agregando…'
+								: 'Asignando…'
+							: esSobreturno
+								? 'Agregar sobreturno'
+								: 'Asignar turno'}
 					</button>
 				</footer>
 			</div>
 		</div>
 	);
+
+	return createPortal(modal, document.body);
 }

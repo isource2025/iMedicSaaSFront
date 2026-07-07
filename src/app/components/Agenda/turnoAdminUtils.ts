@@ -19,6 +19,7 @@ export function turnoAdminRowToSlot(row: TurnoAdminRow): AgendaSlot {
 		motivoCancelacion: row.motivoCancelacion,
 		idClasificacionTriage: row.idClasificacionTriage,
 		horaLlegada: row.horallegada,
+		horaIngreso: row.horaIngreso,
 		horaAtencion: row.horaAtencion,
 		horaSalida: row.horaSalida,
 	};

@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from '../utils/fetchUtils';
+import { apiFetch } from '../utils/authFetch';
 import { API_BASE_URL } from '../config/constants';
 
 // Interfaz para opciones de tabla dinámicas
@@ -25,12 +26,14 @@ const API_TIMEOUT = 5000; // 5 segundos
  */
 export async function getAdmissionTablesOptions(): Promise<TableOption[]> {
   try {
-    const response = await fetchWithTimeout(`${BASE_URL}/admin/opcgrd`, {}, API_TIMEOUT);
-    
+    const response = await apiFetch('/admin/opcgrd', {
+      signal: AbortSignal.timeout(API_TIMEOUT),
+    });
+
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data.data || [];
   } catch (error) {

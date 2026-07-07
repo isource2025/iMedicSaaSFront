@@ -38,3 +38,10 @@
 .visitBadgeClickable:active {
   transform: translateY(0);
 }
+
+.visitBadgeActive {
+  background: #0083a9;
+  color: #fff;
+  border-color: #0083a9;
+  box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
+}

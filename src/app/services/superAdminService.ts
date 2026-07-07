@@ -5,10 +5,13 @@ import type {
   ConfigPlataforma,
   CrearUsuarioEmpresaBody,
   EmpresaAdmin,
+  EmpresaConexion,
   EmpresaUsuario,
+  ResultadoImport,
   SectorBody,
   SuperAdminCatalogos,
   SuperAdminDashboard,
+  TablaImportable,
   UsuarioPlataforma,
 } from '../types/superAdmin';
 
@@ -65,6 +68,29 @@ export const superAdminService = {
   async probarConexion(id: string | number): Promise<{ ok: boolean }> {
     const res = await apiService.post<{ success: boolean; data: { ok: boolean } }>(
       `${BASE}/empresas/${id}/conexion/probar`,
+    );
+    return res.data.data;
+  },
+
+  async probarConexionDatos(body: EmpresaConexion): Promise<{ ok: boolean; error?: string }> {
+    const res = await apiService.post<{ success: boolean; data: { ok: boolean; error?: string } }>(
+      `${BASE}/conexion/probar`,
+      body || {},
+    );
+    return res.data.data;
+  },
+
+  async getTablasImportables(id: string | number): Promise<TablaImportable[]> {
+    const res = await apiService.get<{ success: boolean; data: TablaImportable[] }>(
+      `${BASE}/empresas/${id}/importar/tablas`,
+    );
+    return res.data.data;
+  },
+
+  async importarTablas(id: string | number, tablas: string[]): Promise<ResultadoImport> {
+    const res = await apiService.post<{ success: boolean; data: ResultadoImport }>(
+      `${BASE}/empresas/${id}/importar`,
+      { tablas },
     );
     return res.data.data;
   },

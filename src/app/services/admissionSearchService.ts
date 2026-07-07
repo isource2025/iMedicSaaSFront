@@ -99,6 +99,36 @@ export const admissionSearchService = {
     return response.data?.data;
   },
 
+  async getTurnosActivos(idPaciente: number): Promise<
+    {
+      idTurno: number;
+      fecha: string;
+      hora: string | null;
+      profesional: number;
+      profesionalNombre?: string | null;
+      sector: string;
+      observaciones?: string | null;
+      estado: string;
+      esSobreturno?: boolean;
+    }[]
+  > {
+    const response = await apiService.get<{
+      success: boolean;
+      data: {
+        idTurno: number;
+        fecha: string;
+        hora: string | null;
+        profesional: number;
+        profesionalNombre?: string | null;
+        sector: string;
+        observaciones?: string | null;
+        estado: string;
+        esSobreturno?: boolean;
+      }[];
+    }>(`/admission-search/paciente/${idPaciente}/turnos-activos`);
+    return response.data?.data ?? [];
+  },
+
   async exportSelectivo(numeroVisita: number, body: ExportSelectivoBody): Promise<Blob> {
     try {
       const response = await apiService.post<Blob>(

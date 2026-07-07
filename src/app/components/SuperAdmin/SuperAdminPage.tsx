@@ -68,6 +68,7 @@ export default function SuperAdminPage() {
     descripcion: '',
     cuit: '',
     email: '',
+    tipoServidor: 'NUBE' as 'NUBE' | 'FISICO',
     packs: ['AGENDA'] as string[],
   });
 
@@ -142,7 +143,7 @@ export default function SuperAdminPage() {
     try {
       setError(null);
       const creada = await superAdminService.createEmpresa({ ...nuevaEmpresa, descripcion: desc });
-      setNuevaEmpresa({ descripcion: '', cuit: '', email: '', packs: ['AGENDA'] });
+      setNuevaEmpresa({ descripcion: '', cuit: '', email: '', tipoServidor: 'NUBE', packs: ['AGENDA'] });
       await cargar();
       setSelectedEmpresa(creada);
       setTab('onboarding');
@@ -270,6 +271,17 @@ export default function SuperAdminPage() {
               value={nuevaEmpresa.cuit}
               onChange={(e) => setNuevaEmpresa({ ...nuevaEmpresa, cuit: e.target.value })}
             />
+            <select
+              className={styles.select}
+              value={nuevaEmpresa.tipoServidor}
+              onChange={(e) =>
+                setNuevaEmpresa({ ...nuevaEmpresa, tipoServidor: e.target.value as 'NUBE' | 'FISICO' })
+              }
+              title="Dónde viven los datos de la clínica"
+            >
+              <option value="NUBE">Servidor nube (Railway)</option>
+              <option value="FISICO">Servidor físico (on-premise)</option>
+            </select>
             <button type="button" className={styles.btn} onClick={crearEmpresa}>
               + Empresa
             </button>

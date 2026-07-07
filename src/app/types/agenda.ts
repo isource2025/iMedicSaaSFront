@@ -83,4 +83,5 @@ export interface AgendaCatalogos {
 	statusTurno: Record<number, string>;
 	tipoTurno: Record<number, string>;
 	intervalosSugeridos: number[];
+	especialidades?: { valor: number; descripcion: string }[];
 }

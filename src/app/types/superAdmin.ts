@@ -33,9 +33,32 @@ export interface EmpresaConexion {
   tienePassword?: boolean;
 }
 
+export type TipoServidor = 'NUBE' | 'FISICO';
+
+export interface TablaImportable {
+  tabla: string;
+  label: string;
+  existeOrigen: boolean;
+  existeDestino: boolean;
+  filasOrigen: number | null;
+}
+
+export interface ResultadoImportTabla {
+  tabla: string;
+  leidas: number;
+  escritas: number;
+  error: string | null;
+}
+
+export interface ResultadoImport {
+  idEmpresa: number;
+  resultados: ResultadoImportTabla[];
+}
+
 export interface EmpresaAdmin {
   id: string;
   descripcion: string;
+  tipoServidor?: TipoServidor;
   conexion?: EmpresaConexion;
   cuit?: string;
   localidad?: string;

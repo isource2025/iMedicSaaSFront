@@ -7,7 +7,10 @@ import type {
   CatalogoSector,
   EmpresaAdmin,
   EmpresaUsuario,
+  ResultadoImport,
   SuperAdminCatalogos,
+  TablaImportable,
+  TipoServidor,
 } from '@/app/types/superAdmin';
 import styles from './superAdmin.module.css';
 
@@ -69,7 +72,16 @@ export default function OnboardingWizard({
     calle: empresa.calle || '',
     calle_nro: empresa.calle_nro || '',
     localidad: empresa.localidad || '',
+    tipoServidor: (empresa.tipoServidor || 'FISICO') as TipoServidor,
   });
+
+  const esNube = datosForm.tipoServidor === 'NUBE';
+
+  const [testConexion, setTestConexion] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [tablasImport, setTablasImport] = useState<TablaImportable[]>([]);
+  const [tablasImportSel, setTablasImportSel] = useState<Set<string>>(new Set());
+  const [importResult, setImportResult] = useState<ResultadoImport | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
 
   const [conexionForm, setConexionForm] = useState({
     dbServer: empresa.conexion?.dbServer || '',
@@ -110,7 +122,12 @@ export default function OnboardingWizard({
       calle: empresa.calle || '',
       calle_nro: empresa.calle_nro || '',
       localidad: empresa.localidad || '',
+      tipoServidor: (empresa.tipoServidor || 'FISICO') as TipoServidor,
     });
+    setTestConexion(null);
+    setTablasImport([]);
+    setTablasImportSel(new Set());
+    setImportResult(null);
     setConexionForm({
       dbServer: empresa.conexion?.dbServer || '',
       dbPort: empresa.conexion?.dbPort != null ? String(empresa.conexion.dbPort) : '1433',
@@ -187,6 +204,61 @@ export default function OnboardingWizard({
       if (!r.ok) throw new Error('No se pudo conectar a la base de datos');
       await refrescarEmpresa();
     });
+
+  const probarConexionSinGuardar = () =>
+    run(async () => {
+      setTestConexion(null);
+      const r = await superAdminService.probarConexionDatos({
+        dbServer: conexionForm.dbServer,
+        dbPort: conexionForm.dbPort ? Number(conexionForm.dbPort) : null,
+        dbInstance: conexionForm.dbInstance,
+        dbName: conexionForm.dbName,
+        dbUser: conexionForm.dbUser,
+        dbPassword: conexionForm.dbPassword || undefined,
+      });
+      setTestConexion(
+        r.ok
+          ? { ok: true, msg: 'Conexión exitosa al servidor físico.' }
+          : { ok: false, msg: r.error || 'No se pudo conectar.' },
+      );
+    });
+
+  const cargarTablasImport = () =>
+    run(async () => {
+      setImportResult(null);
+      const tablas = await superAdminService.getTablasImportables(empresa.id);
+      setTablasImport(tablas);
+      setTablasImportSel(
+        new Set(tablas.filter((t) => t.existeOrigen && t.existeDestino).map((t) => t.tabla)),
+      );
+    });
+
+  const toggleTablaImport = (tabla: string) => {
+    const next = new Set(tablasImportSel);
+    if (next.has(tabla)) next.delete(tabla);
+    else next.add(tabla);
+    setTablasImportSel(next);
+  };
+
+  const ejecutarImport = async () => {
+    if (tablasImportSel.size === 0) {
+      onError('Seleccioná al menos una tabla para importar');
+      return;
+    }
+    if (!confirm(`¿Importar ${tablasImportSel.size} tabla(s) del servidor físico a la nube? Se sobreescriben registros con la misma clave.`)) {
+      return;
+    }
+    setImportLoading(true);
+    onError(null);
+    try {
+      const res = await superAdminService.importarTablas(empresa.id, Array.from(tablasImportSel));
+      setImportResult(res);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : 'Error al importar');
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
   const eliminarEmpresa = () =>
     run(async () => {
@@ -532,73 +604,230 @@ export default function OnboardingWizard({
             </div>
 
             <div className={styles.stepToolbar} style={{ marginTop: '1.25rem' }}>
-              <span className={styles.stepTitle}>Conexión SQL (tenant)</span>
-              <div className={styles.stepActions}>
-                <button type="button" className={styles.btn} disabled={guardando} onClick={guardarConexion}>
-                  Guardar conexión
-                </button>
-                <button type="button" className={styles.btnSecondary} disabled={guardando} onClick={probarConexion}>
-                  Probar conexión
-                </button>
-              </div>
+              <span className={styles.stepTitle}>Tipo de infraestructura</span>
             </div>
-            <p className={styles.packDesc} style={{ marginBottom: '0.75rem' }}>
-              Vacío = misma BD que el servidor (.env). La contraseña se guarda cifrada; dejar en blanco para no cambiarla.
+            <div className={styles.packGrid}>
+              <button
+                type="button"
+                className={`${styles.packCard} ${esNube ? styles.packCardActive : ''}`}
+                onClick={() => setDatosForm({ ...datosForm, tipoServidor: 'NUBE' })}
+              >
+                <span className={styles.packTitle}>☁ Servidor nube (Railway)</span>
+                <span className={styles.packDesc}>
+                  Todos los datos de la clínica viven en la nube. No requiere conexión externa.
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.packCard} ${!esNube ? styles.packCardActive : ''}`}
+                onClick={() => setDatosForm({ ...datosForm, tipoServidor: 'FISICO' })}
+              >
+                <span className={styles.packTitle}>🖥 Servidor físico (on-premise)</span>
+                <span className={styles.packDesc}>
+                  La clínica corre sobre su propio SQL Server. Podés probar la conexión e importar sus tablas a la nube.
+                </span>
+              </button>
+            </div>
+            <p className={styles.wizardHint} style={{ marginTop: '0.5rem' }}>
+              Guardá los datos para aplicar el tipo de infraestructura elegido.
             </p>
-            <div className={styles.grid2}>
-              <div className={styles.formGroup}>
-                <label>Servidor</label>
-                <input
-                  className={styles.input}
-                  value={conexionForm.dbServer}
-                  onChange={(e) => setConexionForm({ ...conexionForm, dbServer: e.target.value })}
-                  placeholder="190.227.150.183"
-                />
+
+            {esNube ? (
+              <div className={styles.wizardAlert} style={{ marginTop: '1.25rem' }}>
+                <span>
+                  Esta empresa usa la infraestructura en la nube (Railway). Sectores, usuarios y catálogos se
+                  administran directamente en la nube; no hay servidor físico que configurar.
+                </span>
               </div>
-              <div className={styles.formGroup}>
-                <label>Puerto</label>
-                <input
-                  className={styles.input}
-                  value={conexionForm.dbPort}
-                  onChange={(e) => setConexionForm({ ...conexionForm, dbPort: e.target.value })}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Instancia</label>
-                <input
-                  className={styles.input}
-                  value={conexionForm.dbInstance}
-                  onChange={(e) => setConexionForm({ ...conexionForm, dbInstance: e.target.value })}
-                  placeholder="SQLEXPRESS"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Base de datos</label>
-                <input
-                  className={styles.input}
-                  value={conexionForm.dbName}
-                  onChange={(e) => setConexionForm({ ...conexionForm, dbName: e.target.value })}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Usuario SQL</label>
-                <input
-                  className={styles.input}
-                  value={conexionForm.dbUser}
-                  onChange={(e) => setConexionForm({ ...conexionForm, dbUser: e.target.value })}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Contraseña SQL</label>
-                <input
-                  type="password"
-                  className={styles.input}
-                  value={conexionForm.dbPassword}
-                  onChange={(e) => setConexionForm({ ...conexionForm, dbPassword: e.target.value })}
-                  placeholder={empresa.conexion?.tienePassword ? '•••• (sin cambiar)' : ''}
-                />
-              </div>
-            </div>
+            ) : (
+              <>
+                <div className={styles.stepToolbar} style={{ marginTop: '1.25rem' }}>
+                  <span className={styles.stepTitle}>Conexión SQL (servidor físico)</span>
+                  <div className={styles.stepActions}>
+                    <button type="button" className={styles.btn} disabled={guardando} onClick={guardarConexion}>
+                      Guardar conexión
+                    </button>
+                    <button type="button" className={styles.btnSecondary} disabled={guardando} onClick={probarConexionSinGuardar}>
+                      Probar (sin guardar)
+                    </button>
+                    <button type="button" className={styles.btnSecondary} disabled={guardando} onClick={probarConexion}>
+                      Guardar y probar
+                    </button>
+                  </div>
+                </div>
+                <p className={styles.packDesc} style={{ marginBottom: '0.75rem' }}>
+                  La contraseña se guarda cifrada; dejar en blanco para no cambiarla.
+                </p>
+                {testConexion && (
+                  <div
+                    className={`${styles.wizardAlert} ${testConexion.ok ? styles.wizardAlertOk : styles.wizardAlertError}`}
+                    role="alert"
+                  >
+                    <span>{testConexion.msg}</span>
+                    <button
+                      type="button"
+                      className={styles.wizardAlertDismiss}
+                      aria-label="Cerrar aviso"
+                      onClick={() => setTestConexion(null)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <div className={styles.grid2}>
+                  <div className={styles.formGroup}>
+                    <label>Servidor</label>
+                    <input
+                      className={styles.input}
+                      value={conexionForm.dbServer}
+                      onChange={(e) => setConexionForm({ ...conexionForm, dbServer: e.target.value })}
+                      placeholder="190.227.150.183"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Puerto</label>
+                    <input
+                      className={styles.input}
+                      value={conexionForm.dbPort}
+                      onChange={(e) => setConexionForm({ ...conexionForm, dbPort: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Instancia</label>
+                    <input
+                      className={styles.input}
+                      value={conexionForm.dbInstance}
+                      onChange={(e) => setConexionForm({ ...conexionForm, dbInstance: e.target.value })}
+                      placeholder="SQLEXPRESS"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Base de datos</label>
+                    <input
+                      className={styles.input}
+                      value={conexionForm.dbName}
+                      onChange={(e) => setConexionForm({ ...conexionForm, dbName: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Usuario SQL</label>
+                    <input
+                      className={styles.input}
+                      value={conexionForm.dbUser}
+                      onChange={(e) => setConexionForm({ ...conexionForm, dbUser: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Contraseña SQL</label>
+                    <input
+                      type="password"
+                      className={styles.input}
+                      value={conexionForm.dbPassword}
+                      onChange={(e) => setConexionForm({ ...conexionForm, dbPassword: e.target.value })}
+                      placeholder={empresa.conexion?.tienePassword ? '•••• (sin cambiar)' : ''}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.stepToolbar} style={{ marginTop: '1.25rem' }}>
+                  <span className={styles.stepTitle}>Importar tablas a la nube</span>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    disabled={guardando || importLoading}
+                    onClick={cargarTablasImport}
+                  >
+                    Detectar tablas
+                  </button>
+                </div>
+                <p className={styles.packDesc} style={{ marginBottom: '0.75rem' }}>
+                  Guardá la conexión y presioná &quot;Detectar tablas&quot; para listar los datos del servidor físico que se
+                  pueden copiar a la nube.
+                </p>
+
+                {tablasImport.length > 0 && (
+                  <>
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Importar</th>
+                            <th>Tabla</th>
+                            <th>Filas en origen</th>
+                            <th>Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tablasImport.map((t) => {
+                            const disponible = t.existeOrigen && t.existeDestino;
+                            return (
+                              <tr key={t.tabla}>
+                                <td>
+                                  <input
+                                    type="checkbox"
+                                    checked={tablasImportSel.has(t.tabla)}
+                                    disabled={!disponible}
+                                    onChange={() => toggleTablaImport(t.tabla)}
+                                  />
+                                </td>
+                                <td>
+                                  {t.label}
+                                  <br />
+                                  <span className={styles.packDesc}>{t.tabla}</span>
+                                </td>
+                                <td>{t.filasOrigen ?? '—'}</td>
+                                <td>
+                                  {!t.existeOrigen
+                                    ? 'No existe en el físico'
+                                    : !t.existeDestino
+                                      ? 'No existe en la nube'
+                                      : 'Lista'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className={styles.stepActions} style={{ marginTop: '0.75rem' }}>
+                      <button
+                        type="button"
+                        className={styles.btn}
+                        disabled={importLoading || tablasImportSel.size === 0}
+                        onClick={ejecutarImport}
+                      >
+                        {importLoading ? 'Importando…' : `Importar ${tablasImportSel.size} tabla(s)`}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {importResult && (
+                  <div className={styles.tableWrap} style={{ marginTop: '0.75rem' }}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Tabla</th>
+                          <th>Leídas</th>
+                          <th>Escritas</th>
+                          <th>Resultado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importResult.resultados.map((r) => (
+                          <tr key={r.tabla}>
+                            <td>{r.tabla}</td>
+                            <td>{r.leidas}</td>
+                            <td>{r.escritas}</td>
+                            <td>{r.error ? `✗ ${r.error}` : '✓ OK'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 

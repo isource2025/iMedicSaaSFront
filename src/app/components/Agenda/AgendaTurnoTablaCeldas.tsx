@@ -23,12 +23,15 @@ export type FilaTurnoAgenda = {
 	idClasificacionTriage?: number | null;
 	horaAtencion?: string | null;
 	horaLlegada?: string | null;
+	horaIngreso?: string | null;
+	horaSalida?: string | null;
 	edad?: number | null;
 	cobertura?: string | null;
 	sexo?: string | null;
 	fechaNacimiento?: string | null;
 	racControles?: number;
 	racMedicacion?: number;
+	numeroVisita?: number;
 };
 
 function fmtSexo(s: string | null | undefined): string {
@@ -64,18 +67,19 @@ export function CeldaTriage({ nivel }: { nivel: number | null | undefined }) {
 
 export function CeldaHoras({
 	horaTurno,
-	horaAtencion,
+	horaLlegada,
+	horaIngreso,
+	horaSalida,
 	conPaciente,
+	cancelado,
 }: {
 	horaTurno: string | null | undefined;
-	horaAtencion?: string | null;
+	horaLlegada?: string | null;
+	horaIngreso?: string | null;
+	horaSalida?: string | null;
 	conPaciente?: boolean;
+	cancelado?: boolean;
 }) {
-	let atencionLabel = '—';
-	if (conPaciente) {
-		atencionLabel = horaAtencion ? horaAtencion : 'No atendido';
-	}
-
 	return (
 		<div className={styles.horasCol}>
 			<div className={styles.horasLine}>
@@ -83,13 +87,23 @@ export function CeldaHoras({
 				<span>{horaTurno || '—'}</span>
 			</div>
 			<div className={styles.horasLine}>
-				<span className={styles.horasLbl}>Atención</span>
+				<span className={styles.horasLbl}>Llegada</span>
+				<span className={conPaciente && !horaLlegada ? styles.noAtendido : undefined}>
+					{conPaciente ? horaLlegada || '—' : '—'}
+				</span>
+			</div>
+			<div className={styles.horasLine}>
+				<span className={styles.horasLbl}>Ingreso</span>
+				<span>{conPaciente ? horaIngreso || '—' : '—'}</span>
+			</div>
+			<div className={styles.horasLine}>
+				<span className={styles.horasLbl}>Cierre</span>
 				<span
 					className={
-						conPaciente && !horaAtencion ? styles.noAtendido : undefined
+						conPaciente && !cancelado && !horaSalida ? styles.noAtendido : undefined
 					}
 				>
-					{atencionLabel}
+					{cancelado ? '—' : conPaciente ? horaSalida || 'Pendiente' : '—'}
 				</span>
 			</div>
 		</div>
@@ -102,12 +116,14 @@ export function CeldaPaciente({
 	idPaciente,
 	pacienteNombre,
 	numeroDocumento,
+	numeroVisita,
 }: {
 	libre?: boolean;
 	cancelado?: boolean;
 	idPaciente?: number | null;
 	pacienteNombre?: string | null;
 	numeroDocumento?: number | null;
+	numeroVisita?: number | null;
 }) {
 	if (libre && !cancelado) {
 		return <span className={styles.muted}>—</span>;
@@ -117,9 +133,14 @@ export function CeldaPaciente({
 			<span className={styles.pacienteNombre}>
 				{pacienteNombre || (idPaciente ? `Paciente #${idPaciente}` : '—')}
 			</span>
-			{numeroDocumento ? (
-				<span className={styles.pacienteDni}>DNI {numeroDocumento}</span>
-			) : null}
+			<span className={styles.pacienteMeta}>
+				{numeroDocumento ? `DNI ${numeroDocumento}` : null}
+				{numeroDocumento && numeroVisita != null && numeroVisita > 0 ? ' · ' : null}
+				{numeroVisita != null && numeroVisita > 0 ? (
+					<span className={styles.pacienteVisitaInline}>Visita #{numeroVisita}</span>
+				) : null}
+				{!numeroDocumento && !(numeroVisita != null && numeroVisita > 0) ? '—' : null}
+			</span>
 		</div>
 	);
 }

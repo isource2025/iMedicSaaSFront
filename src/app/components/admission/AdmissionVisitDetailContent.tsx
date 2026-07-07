@@ -135,6 +135,10 @@ export interface AdmissionVisitDetailContentProps {
   onBack?: () => void;
   backLabel?: string;
   exportButton?: React.ReactNode;
+  /** Muestra solo el cuerpo de una sección (panel inline, sin acordeones). */
+  singleSectionOnly?: Exclude<VisitDetailSectionId, 'resumen'>;
+  hideToolbar?: boolean;
+  hideResumen?: boolean;
 }
 
 export default function AdmissionVisitDetailContent({
@@ -145,6 +149,9 @@ export default function AdmissionVisitDetailContent({
   onBack,
   backLabel = '← Atrás',
   exportButton,
+  singleSectionOnly,
+  hideToolbar = false,
+  hideResumen = false,
 }: AdmissionVisitDetailContentProps) {
   const baseId = useId();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
@@ -406,7 +413,7 @@ export default function AdmissionVisitDetailContent({
 
   return (
     <div className={styles.contentRoot}>
-      {(onBack || exportButton) && (
+      {!hideToolbar && (onBack || exportButton) && (
         <div className={styles.toolbarRow}>
           {onBack ? (
             <button type="button" className={styles.backBtn} onClick={onBack}>
@@ -421,7 +428,7 @@ export default function AdmissionVisitDetailContent({
 
       {loading ? (
         <div className={styles.loadingBox} role="status" aria-live="polite">
-          Cargando información de la visita…
+          <span className={styles.loadingSpinner} aria-hidden />
         </div>
       ) : null}
 
@@ -429,21 +436,30 @@ export default function AdmissionVisitDetailContent({
         <EmptyState message="No se pudo cargar el detalle. Probá de nuevo." />
       ) : null}
 
-      {!loading && data ? (
+      {!loading && data && singleSectionOnly ? (
+        <div className={styles.inlineSectionPanel}>
+          <h4 className={styles.inlineSectionTitle}>{SECTION_LABELS[singleSectionOnly]}</h4>
+          <div className={styles.sectionBody}>{renderSectionBody(singleSectionOnly)}</div>
+        </div>
+      ) : null}
+
+      {!loading && data && !singleSectionOnly ? (
         <>
-          <section className={styles.resumenBlock} aria-label="Datos de admisión">
-            <h3 className={styles.resumenHeading}>Admisión</h3>
-            <p className={styles.resumenLine}>
-              Visita <strong>#{str(data.admision?.NumeroVisita)}</strong>
-              {str(data.admision?.ApellidoYNombre) ? ` · ${str(data.admision?.ApellidoYNombre)}` : ''}
-            </p>
-            <p className={styles.resumenLine}>
-              DNI {str(data.admision?.NumeroDocumento) || '—'} · HC {str(data.admision?.NumeroHC) || '—'}
-            </p>
-            <p className={styles.resumenLine}>
-              Ingreso: {str(data.admision?.FechaAdmision) || '—'} {str(data.admision?.HoraAdmision) || ''}
-            </p>
-          </section>
+          {!hideResumen ? (
+            <section className={styles.resumenBlock} aria-label="Datos de admisión">
+              <h3 className={styles.resumenHeading}>Admisión</h3>
+              <p className={styles.resumenLine}>
+                Visita <strong>#{str(data.admision?.NumeroVisita)}</strong>
+                {str(data.admision?.ApellidoYNombre) ? ` · ${str(data.admision?.ApellidoYNombre)}` : ''}
+              </p>
+              <p className={styles.resumenLine}>
+                DNI {str(data.admision?.NumeroDocumento) || '—'} · HC {str(data.admision?.NumeroHC) || '—'}
+              </p>
+              <p className={styles.resumenLine}>
+                Ingreso: {str(data.admision?.FechaAdmision) || '—'} {str(data.admision?.HoraAdmision) || ''}
+              </p>
+            </section>
+          ) : null}
 
           <div className={styles.jumpChips} role="group" aria-label="Ir a sección clínica">
             {SECTION_ORDER.map((id) => {

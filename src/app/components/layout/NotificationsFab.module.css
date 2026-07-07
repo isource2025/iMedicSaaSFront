@@ -2,7 +2,7 @@
   position: fixed;
   right: 24px;
   bottom: 24px;
-  z-index: 10050;
+  z-index: 900;
   font-family: inherit;
 }
 
@@ -85,8 +85,8 @@
 
 .panel {
   position: absolute;
-  right: 0;
-  bottom: calc(100% + 12px);
+  right: 80px;
+  bottom: 16px;
   width: min(380px, calc(100vw - 32px));
   max-height: min(420px, 55vh);
   background: #fff;

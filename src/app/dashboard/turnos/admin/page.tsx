@@ -14,7 +14,8 @@ import { opcionesMenuTurnoAdmin } from '@/app/components/Agenda/turnoAdminMenuOp
 import { agendaService } from '@/app/services/agendaService';
 import EditarTurnoAdminModal from '@/app/components/Agenda/EditarTurnoAdminModal';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
-import CerrarTurnoModal from '@/app/components/Agenda/CerrarTurnoModal';
+import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
+import DetalleTurnoModal from '@/app/components/Agenda/DetalleTurnoModal';
 import { turnoAdminRowToSlot } from '@/app/components/Agenda/turnoAdminUtils';
 import type { AgendaSlot } from '@/app/services/agendaService';
 import agendaStyles from '../agenda/agenda.module.css';
@@ -87,6 +88,7 @@ export default function TurnosAdminPage() {
 	const [turnoCerrar, setTurnoCerrar] = useState<TurnoAdminRow | null>(null);
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [racFecha, setRacFecha] = useState<string>('');
+	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
 	const [turnoMenu, setTurnoMenu] = useState<{
 		row: TurnoAdminRow;
 		x: number;
@@ -161,6 +163,10 @@ export default function TurnosAdminPage() {
 		if (action === 'rac') {
 			setRacSlot(turnoAdminRowToSlot(row));
 			setRacFecha(row.fecha || '');
+			return;
+		}
+		if (action === 'detalle') {
+			setDetalleTurnoId(row.idTurno);
 			return;
 		}
 		if (!row.profesional) return;
@@ -414,9 +420,10 @@ export default function TurnosAdminPage() {
 					onSaved={cargar}
 				/>
 
-				<CerrarTurnoModal
+				<AtencionTurnoModal
 					open={Boolean(turnoCerrar)}
 					matricula={turnoCerrar?.profesional ?? 0}
+					fechaTurno={turnoCerrar?.fecha || ''}
 					turno={
 						turnoCerrar
 							? {
@@ -427,6 +434,9 @@ export default function TurnosAdminPage() {
 									hora: turnoCerrar.hora,
 									fecha: turnoCerrar.fecha,
 									observaciones: turnoCerrar.observaciones,
+									horaLlegada: turnoCerrar.horallegada,
+									horaIngreso: turnoCerrar.horaIngreso,
+									horaSalida: turnoCerrar.horaSalida,
 								}
 							: null
 					}
@@ -435,6 +445,12 @@ export default function TurnosAdminPage() {
 						setTurnoCerrar(null);
 						cargar();
 					}}
+				/>
+
+				<DetalleTurnoModal
+					open={detalleTurnoId != null}
+					idTurno={detalleTurnoId}
+					onClose={() => setDetalleTurnoId(null)}
 				/>
 
 				<RacEnfermeriaModal

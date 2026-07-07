@@ -1,147 +1,295 @@
 .meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-  padding: 0 0 12px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 0.82rem;
-  color: #64748b;
-  font-weight: 500;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	padding: 0 0 12px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid #e2e8f0;
+	font-size: 0.82rem;
+	color: #64748b;
+	font-weight: 500;
 }
 
-.count {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #0083a9;
-  background: #e0f7fa;
-  padding: 4px 10px;
-  border-radius: 999px;
+.mainTabs {
+	display: flex;
+	gap: 4px;
+	padding: 4px;
+	margin-bottom: 14px;
+	background: #f1f5f9;
+	border-radius: 10px;
+}
+
+.mainTab,
+.mainTabActive {
+	flex: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 0.5rem 0.75rem;
+	border: none;
+	border-radius: 8px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+	font-family: inherit;
+	background: transparent;
+	color: #64748b;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.mainTab:hover {
+	color: #0f172a;
+}
+
+.mainTabActive {
+	background: #fff;
+	color: #0083a9;
+	box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.tabCount {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 0.3rem;
+	border-radius: 999px;
+	background: #e0f7fa;
+	color: #0083a9;
+	font-size: 0.68rem;
+	font-weight: 700;
+}
+
+.mainTabActive .tabCount {
+	background: #0083a9;
+	color: #fff;
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-bottom: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding-bottom: 8px;
+	max-height: min(68vh, 640px);
+	overflow-y: auto;
+}
+
+.emptyMsg {
+	margin: 0;
+	padding: 2rem 1rem;
+	text-align: center;
+	color: #64748b;
+	font-size: 0.9rem;
 }
 
 .visitCard {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 12px 14px;
 }
 
-.detailWrap {
-  min-height: 50vh;
-  max-height: calc(100vh - 140px);
-  overflow: auto;
+.inlinePanel {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px dashed #e2e8f0;
 }
 
 .detailError {
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 0.88rem;
+	margin: 0 0 8px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: #fef2f2;
+	color: #b91c1c;
+	font-size: 0.85rem;
 }
 
 .visitHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 12px;
-  margin-bottom: 10px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px 12px;
+	margin-bottom: 8px;
 }
 
-.visitLink {
-  border: none;
-  background: transparent;
-  color: #0083a9;
-  font-weight: 800;
-  font-size: 0.95rem;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
-
-.visitLink:hover {
-  text-decoration: underline;
+.visitTitle {
+	color: #0f172a;
+	font-weight: 800;
+	font-size: 0.95rem;
 }
 
 .visitDate {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #64748b;
-  font-variant-numeric: tabular-nums;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: #64748b;
+	font-variant-numeric: tabular-nums;
 }
 
 .visitMetaRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 10px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 10px;
 }
 
 .visitTypeBadge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  border: 1px solid transparent;
+	display: inline-flex;
+	align-items: center;
+	border-radius: 999px;
+	padding: 3px 10px;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	border: 1px solid transparent;
 }
 
 .typeAmbulatorio {
-  color: #0369a1;
-  background: #e0f2fe;
-  border-color: #bae6fd;
+	color: #0369a1;
+	background: #e0f2fe;
+	border-color: #bae6fd;
 }
 
 .typeInternado {
-  color: #065f46;
-  background: #dcfce7;
-  border-color: #bbf7d0;
+	color: #065f46;
+	background: #dcfce7;
+	border-color: #bbf7d0;
 }
 
 .typeUnknown {
-  color: #475569;
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+	color: #475569;
+	background: #f1f5f9;
+	border-color: #cbd5e1;
+}
+
+.turnosPanel {
+	min-height: 200px;
+	max-height: min(68vh, 640px);
+	overflow-y: auto;
+}
+
+.turnosLoading {
+	display: flex;
+	justify-content: center;
+	padding: 2.5rem;
+}
+
+.spinner {
+	width: 22px;
+	height: 22px;
+	border: 2px solid #cbd5e1;
+	border-top-color: #0083a9;
+	border-radius: 50%;
+	animation: folderSpin 0.7s linear infinite;
+}
+
+@keyframes folderSpin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.turnosList {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.turnoCard {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 12px 14px;
+	background: #fff;
+}
+
+.turnoHead {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 4px;
+}
+
+.turnoHora {
+	font-size: 0.88rem;
+	font-weight: 700;
+	color: #0083a9;
+	font-variant-numeric: tabular-nums;
+}
+
+.turnoProf {
+	margin: 0 0 6px;
+	font-size: 0.85rem;
+	color: #334155;
+}
+
+.turnoMeta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	font-size: 0.78rem;
+	color: #64748b;
+}
+
+.turnoObs {
+	margin: 8px 0 0;
+	font-size: 0.82rem;
+	color: #475569;
+	line-height: 1.4;
+}
+
+.turnoBadge {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 700;
+	padding: 0.15rem 0.45rem;
+	border-radius: 4px;
+}
+
+.turnoOcupado {
+	background: #dbeafe;
+	color: #1d4ed8;
+}
+
+.turnoAtendido {
+	background: #dcfce7;
+	color: #15803d;
+}
+
+.turnoCancelado {
+	background: #fee2e2;
+	color: #b91c1c;
+}
+
+.turnoSt {
+	background: #fef3c7;
+	color: #b45309;
 }
 
 @media (max-width: 720px) {
-  .meta {
-    font-size: 0.76rem;
-    gap: 6px 10px;
-  }
+	.meta {
+		font-size: 0.76rem;
+	}
 
-  .count {
-    font-size: 0.7rem;
-    padding: 3px 8px;
-  }
+	.visitCard {
+		padding: 10px;
+	}
 
-  .visitCard {
-    padding: 10px 10px;
-  }
+	.visitTitle {
+		font-size: 0.88rem;
+	}
 
-  .visitLink {
-    font-size: 0.88rem;
-  }
-
-  .visitDate {
-    width: 100%;
-    text-align: left;
-    font-size: 0.76rem;
-  }
+	.visitDate {
+		width: 100%;
+		font-size: 0.76rem;
+	}
 }
