@@ -8,6 +8,7 @@ import {
   guardarInfoEmpresaLocal,
   obtenerInfoEmpresa,
 } from '../services/empresaService';
+import { getIdEmpresaFromToken } from '../utils/jwtSession';
 import type { ModulosEmpresa } from '../types/superAdmin';
 
 interface AppContextState {
@@ -107,7 +108,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         const idFromLogin = stored
           ? (JSON.parse(stored) as { idEmpresa?: string | number })?.idEmpresa
           : undefined;
-        const idGuardado = idFromLogin ?? localEmpresaInfo?.id;
+        const idGuardado =
+          getIdEmpresaFromToken() ?? idFromLogin ?? localEmpresaInfo?.id;
+        if (!idGuardado) return;
         const empresaData = await obtenerInfoEmpresa(idGuardado);
         setEmpresaInfoState(empresaData);
         guardarInfoEmpresaLocal(empresaData);

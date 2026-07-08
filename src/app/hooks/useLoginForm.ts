@@ -306,9 +306,14 @@ export function useLoginForm() {
           localStorage.setItem(
             'empresaSeleccionada',
             JSON.stringify({
-              idEmpresa: empresa.id,
+              idEmpresa: data.idEmpresa ?? empresa.id,
               descripcion: empresa.descripcion,
             }),
+          );
+        } else if (data.idEmpresa != null) {
+          localStorage.setItem(
+            'empresaSeleccionada',
+            JSON.stringify({ idEmpresa: data.idEmpresa }),
           );
         }
 

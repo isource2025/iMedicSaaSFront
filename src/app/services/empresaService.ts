@@ -3,6 +3,7 @@
  */
 
 import { apiService } from './axios';
+import { getIdEmpresaFromToken } from '@/app/utils/jwtSession';
 
 /**
  * Interfaz para la información de la empresa
@@ -35,13 +36,16 @@ export const obtenerInfoEmpresa = async (idEmpresa?: string | number): Promise<E
     const id =
       idEmpresa != null && idEmpresa !== ''
         ? idEmpresa
-        : obtenerInfoEmpresaLocal()?.id;
-    const params = id ? { id: String(id) } : undefined;
+        : getIdEmpresaFromToken() ?? obtenerInfoEmpresaLocal()?.id;
+    if (!id) {
+      throw new Error('Sin empresa activa en la sesión');
+    }
+    const params = { id: String(id) };
     const response = await apiService.get<{
       success: boolean;
       data: EmpresaInfo;
       message?: string;
-    }>('/empresa', params ? { params } : undefined);
+    }>('/empresa', { params });
 
     const data = response.data;
 
@@ -51,12 +55,9 @@ export const obtenerInfoEmpresa = async (idEmpresa?: string | number): Promise<E
     throw new Error(data.message || 'Error al obtener los datos de la empresa');
   } catch (error) {
     console.error('Error al cargar datos de la empresa:', error);
-    
-    // Devolver datos por defecto en caso de error
-    return {
-      id: '1',
-      descripcion: 'iMedicWS'
-    };
+    const local = obtenerInfoEmpresaLocal();
+    if (local?.id) return local;
+    throw error instanceof Error ? error : new Error('Error al obtener los datos de la empresa');
   }
 };
 
@@ -64,7 +65,7 @@ export const obtenerInfoEmpresa = async (idEmpresa?: string | number): Promise<E
  * Obtiene la información de la empresa desde localStorage o usa valores por defecto
  * @returns Información de la empresa almacenada localmente
  */
-export const obtenerInfoEmpresaLocal = (): EmpresaInfo => {
+export const obtenerInfoEmpresaLocal = (): EmpresaInfo | null => {
   try {
     const storedEmpresa = localStorage.getItem('empresaInfo');
     if (storedEmpresa) {
@@ -73,12 +74,7 @@ export const obtenerInfoEmpresaLocal = (): EmpresaInfo => {
   } catch (error) {
     console.error('Error al leer información de empresa del localStorage:', error);
   }
-  
-  // Valores por defecto si no hay datos en localStorage
-  return {
-    id: '1',
-    descripcion: 'iMedicWS'
-  };
+  return null;
 };
 
 /**

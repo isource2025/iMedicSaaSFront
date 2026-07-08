@@ -20,6 +20,7 @@ export interface LoginResponse {
   mensaje?: string;    // Añadido para coincidir con el backend
   fuente?: string;     // Origen de la autenticación (base de datos o temporal)
   sectorSeleccionado?: SectorInfo;
+  idEmpresa?: number | null;
   empresaSeleccionada?: EmpresaInfoLogin | null;
   modulosEmpresa?: ModulosEmpresaLogin | null;
 }
