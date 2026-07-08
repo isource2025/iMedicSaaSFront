@@ -618,7 +618,23 @@ export default function OnboardingWizard({
           <select
             className={styles.select}
             value={form.idRol}
-            onChange={(e) => actualizarUsuarioModal({ idRol: Number(e.target.value) })}
+            onChange={(e) => {
+              const idRol = Number(e.target.value);
+              setUsuarioModal((prev) => {
+                if (!prev) return prev;
+                const rol = rolesCatalogo.find((r) => r.idRol === idRol);
+                const esAdmin =
+                  idRol === 1 || String(rol?.nombre || '').toUpperCase() === 'ADMIN';
+                return {
+                  ...prev,
+                  form: {
+                    ...prev.form,
+                    idRol,
+                    sectores: esAdmin ? sectoresCatalogo.map((s) => s.id) : prev.form.sectores,
+                  },
+                };
+              });
+            }}
             disabled={rolesCatalogo.length === 0}
           >
             <option value={0}>— Sin rol (asignar después) —</option>
