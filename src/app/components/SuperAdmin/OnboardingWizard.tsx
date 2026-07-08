@@ -226,6 +226,18 @@ export default function OnboardingWizard({
   const cargarTablasImport = () =>
     run(async () => {
       setImportResult(null);
+      // Guardar la conexión antes de detectar: la lectura de tablas usa la conexión
+      // persistida de la empresa (no las credenciales tipeadas del test).
+      await superAdminService.updateConexion(empresa.id, {
+        dbServer: conexionForm.dbServer,
+        dbPort: conexionForm.dbPort ? Number(conexionForm.dbPort) : null,
+        dbInstance: conexionForm.dbInstance,
+        dbName: conexionForm.dbName,
+        dbUser: conexionForm.dbUser,
+        dbPassword: conexionForm.dbPassword || undefined,
+      });
+      await refrescarEmpresa();
+      setConexionForm((f) => ({ ...f, dbPassword: '' }));
       const tablas = await superAdminService.getTablasImportables(empresa.id);
       setTablasImport(tablas);
       setTablasImportSel(
@@ -741,8 +753,8 @@ export default function OnboardingWizard({
                   </button>
                 </div>
                 <p className={styles.packDesc} style={{ marginBottom: '0.75rem' }}>
-                  Guardá la conexión y presioná &quot;Detectar tablas&quot; para listar los datos del servidor físico que se
-                  pueden copiar a la nube.
+                  &quot;Detectar tablas&quot; guarda la conexión y lista los datos del servidor físico que se pueden copiar a
+                  la nube. Completá los datos de conexión de arriba antes de detectar.
                 </p>
 
                 {tablasImport.length > 0 && (
