@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { apiService } from './axios';
 import type {
   ActualizarUsuarioEmpresaBody,
@@ -18,6 +17,19 @@ import type {
 } from '../types/superAdmin';
 
 const BASE = '/super-admin';
+
+function importarTablasError(e: unknown): string | null {
+  if (!e || typeof e !== 'object') return null;
+  const err = e as {
+    code?: string;
+    response?: { data?: { mensaje?: string } };
+  };
+  if (err.code === 'ECONNABORTED') {
+    return 'La importación tardó demasiado en responder (timeout). Revisá los logs de Railway: puede haber terminado parcialmente. Volvé a detectar tablas e intentá de nuevo.';
+  }
+  const msg = err.response?.data?.mensaje;
+  return typeof msg === 'string' && msg.trim() ? msg : null;
+}
 
 export const superAdminService = {
   async getDashboard(): Promise<SuperAdminDashboard> {
@@ -109,15 +121,8 @@ export const superAdminService = {
       }
       return res.data.data;
     } catch (e) {
-      if (axios.isAxiosError(e)) {
-        if (e.code === 'ECONNABORTED') {
-          throw new Error(
-            'La importación tardó demasiado en responder (timeout). Revisá los logs de Railway: puede haber terminado parcialmente. Volvé a detectar tablas e intentá de nuevo.',
-          );
-        }
-        const msg = (e.response?.data as { mensaje?: string } | undefined)?.mensaje;
-        if (msg) throw new Error(msg);
-      }
+      const msg = importarTablasError(e);
+      if (msg) throw new Error(msg);
       throw e;
     }
   },
