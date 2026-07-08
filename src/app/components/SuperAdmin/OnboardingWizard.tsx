@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { superAdminService } from '@/app/services/superAdminService';
 import type {
+  CatalogoRol,
   CatalogoSector,
   EmpresaAdmin,
   EmpresaUsuario,
@@ -36,14 +37,21 @@ type Props = {
   onError: (msg: string | null) => void;
 };
 
-const emptyUsuario = (idRol: number) => ({
+const emptyUsuarioForm = (idRol: number, sectores: string[] = []) => ({
   nombreRed: '',
   password: '',
   apellido: '',
   nombres: '',
   numeroDocumento: '',
   idRol,
+  sectores,
 });
+
+type UsuarioForm = ReturnType<typeof emptyUsuarioForm>;
+type UsuarioModal =
+  | null
+  | { mode: 'create'; form: UsuarioForm }
+  | { mode: 'edit'; idPersonal: number; form: UsuarioForm };
 
 export default function OnboardingWizard({
   empresa,
@@ -63,7 +71,10 @@ export default function OnboardingWizard({
   } | null>(null);
 
   const pasoActual = PASO_IDS[pasoIdx] ?? 'DATOS';
-  const idRolDefault = catalogos.roles?.[0]?.idRol ?? 1;
+
+  const [sectoresCatalogo, setSectoresCatalogo] = useState<CatalogoSector[]>(catalogos.sectores || []);
+  const [rolesCatalogo, setRolesCatalogo] = useState<CatalogoRol[]>(catalogos.roles || []);
+  const idRolDefault = rolesCatalogo[0]?.idRol ?? 0;
 
   const [datosForm, setDatosForm] = useState({
     descripcion: empresa.descripcion,
@@ -95,7 +106,6 @@ export default function OnboardingWizard({
     dbPassword: '',
   });
 
-  const [sectoresCatalogo, setSectoresCatalogo] = useState<CatalogoSector[]>(catalogos.sectores || []);
   const [sectoresSel, setSectoresSel] = useState<Set<string>>(
     () => new Set(empresa.onboarding?.sectoresDefecto || []),
   );
@@ -104,17 +114,7 @@ export default function OnboardingWizard({
   const [editSector, setEditSector] = useState<string | null>(null);
   const [editSectorForm, setEditSectorForm] = useState({ descripcion: '', ambInt: 'A' });
 
-  const [nuevoUsuario, setNuevoUsuario] = useState(emptyUsuario(idRolDefault));
-  const [editUserId, setEditUserId] = useState<number | null>(null);
-  const [editUserForm, setEditUserForm] = useState({
-    nombreRed: '',
-    apellido: '',
-    nombres: '',
-    numeroDocumento: '',
-    password: '',
-    idRol: idRolDefault,
-    sectores: [] as string[],
-  });
+  const [usuarioModal, setUsuarioModal] = useState<UsuarioModal>(null);
 
   useEffect(() => {
     setDatosForm({
@@ -143,8 +143,17 @@ export default function OnboardingWizard({
     setAvisoActivacion(null);
     void superAdminService.getCatalogosEmpresa(Number(empresa.id)).then((cat) => {
       setSectoresCatalogo(cat.sectores || []);
+      setRolesCatalogo(cat.roles || []);
     });
   }, [empresa.id]);
+
+  useEffect(() => {
+    if (pasoActual !== 'USUARIOS') return;
+    void superAdminService.getCatalogosEmpresa(Number(empresa.id)).then((cat) => {
+      setRolesCatalogo(cat.roles || []);
+      setSectoresCatalogo(cat.sectores || []);
+    });
+  }, [pasoActual, empresa.id]);
 
   useEffect(() => {
     setAvisoActivacion(null);
@@ -152,7 +161,8 @@ export default function OnboardingWizard({
 
   useEffect(() => {
     setSectoresCatalogo(catalogos.sectores || []);
-  }, [catalogos.sectores]);
+    if ((catalogos.roles || []).length) setRolesCatalogo(catalogos.roles || []);
+  }, [catalogos.sectores, catalogos.roles]);
 
   const refrescarEmpresa = useCallback(async () => {
     const det = await superAdminService.getEmpresa(empresa.id);
@@ -345,49 +355,77 @@ export default function OnboardingWizard({
       await refreshSectoresCatalogo();
     });
 
-  const crearUsuario = () =>
-    run(async () => {
-      if (!nuevoUsuario.nombreRed.trim() || !nuevoUsuario.password.trim()) {
-        throw new Error('Usuario y contraseña son obligatorios');
-      }
-      if (!nuevoUsuario.apellido.trim() || !nuevoUsuario.nombres.trim()) {
-        throw new Error('Apellido y nombres son obligatorios');
-      }
-      await superAdminService.crearUsuarioEmpresa(Number(empresa.id), {
-        ...nuevoUsuario,
-        sectores: Array.from(sectoresSel),
-        idRol: Number(nuevoUsuario.idRol),
-      });
-      setNuevoUsuario(emptyUsuario(idRolDefault));
-      await refrescarEmpresa();
-    });
-
-  const iniciarEditarUsuario = (u: EmpresaUsuario) => {
-    setEditUserId(u.idPersonal);
-    setEditUserForm({
-      nombreRed: u.usuario,
-      apellido: u.apellido,
-      nombres: u.nombre,
-      numeroDocumento: u.numeroDocumento || '',
-      password: '',
-      idRol: u.idRol ?? idRolDefault,
-      sectores: (u.sectores || []).map((s) => s.id),
+  const abrirModalCrearUsuario = () => {
+    setUsuarioModal({
+      mode: 'create',
+      form: emptyUsuarioForm(idRolDefault, Array.from(sectoresSel)),
     });
   };
 
-  const guardarUsuarioEdit = () =>
+  const abrirModalEditarUsuario = (u: EmpresaUsuario) => {
+    setUsuarioModal({
+      mode: 'edit',
+      idPersonal: u.idPersonal,
+      form: {
+        nombreRed: u.usuario,
+        apellido: u.apellido,
+        nombres: u.nombre,
+        numeroDocumento: u.numeroDocumento || '',
+        password: '',
+        idRol: u.idRol ?? idRolDefault,
+        sectores: (u.sectores || []).map((s) => s.id),
+      },
+    });
+  };
+
+  const actualizarUsuarioModal = (patch: Partial<UsuarioForm>) => {
+    setUsuarioModal((prev) => (prev ? { ...prev, form: { ...prev.form, ...patch } } : prev));
+  };
+
+  const toggleSectorUsuarioModal = (id: string) => {
+    setUsuarioModal((prev) => {
+      if (!prev) return prev;
+      const next = new Set(prev.form.sectores);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return { ...prev, form: { ...prev.form, sectores: Array.from(next) } };
+    });
+  };
+
+  const guardarUsuarioModal = () =>
     run(async () => {
-      if (editUserId == null) return;
-      await superAdminService.actualizarUsuarioEmpresa(Number(empresa.id), editUserId, {
-        nombreRed: editUserForm.nombreRed,
-        apellido: editUserForm.apellido,
-        nombres: editUserForm.nombres,
-        numeroDocumento: editUserForm.numeroDocumento,
-        password: editUserForm.password || undefined,
-        idRol: Number(editUserForm.idRol),
-        sectores: editUserForm.sectores,
-      });
-      setEditUserId(null);
+      if (!usuarioModal) return;
+      const { form } = usuarioModal;
+      const idRol = form.idRol > 0 ? form.idRol : undefined;
+
+      if (usuarioModal.mode === 'create') {
+        if (!form.nombreRed.trim() || !form.password.trim()) {
+          throw new Error('Usuario y contraseña son obligatorios');
+        }
+        if (!form.apellido.trim() || !form.nombres.trim()) {
+          throw new Error('Apellido y nombres son obligatorios');
+        }
+        await superAdminService.crearUsuarioEmpresa(Number(empresa.id), {
+          nombreRed: form.nombreRed,
+          password: form.password,
+          apellido: form.apellido,
+          nombres: form.nombres,
+          numeroDocumento: form.numeroDocumento,
+          idRol: idRol ?? 0,
+          sectores: form.sectores,
+        });
+      } else {
+        await superAdminService.actualizarUsuarioEmpresa(Number(empresa.id), usuarioModal.idPersonal, {
+          nombreRed: form.nombreRed,
+          apellido: form.apellido,
+          nombres: form.nombres,
+          numeroDocumento: form.numeroDocumento,
+          password: form.password || undefined,
+          idRol,
+          sectores: form.sectores,
+        });
+      }
+      setUsuarioModal(null);
       await refrescarEmpresa();
     });
 
@@ -395,7 +433,9 @@ export default function OnboardingWizard({
     run(async () => {
       if (!confirm(`¿Desvincular a "${usuario}" de esta empresa?`)) return;
       await superAdminService.desvincularUsuarioEmpresa(Number(empresa.id), idPersonal);
-      if (editUserId === idPersonal) setEditUserId(null);
+      if (usuarioModal?.mode === 'edit' && usuarioModal.idPersonal === idPersonal) {
+        setUsuarioModal(null);
+      }
       await refrescarEmpresa();
     });
 
@@ -527,14 +567,93 @@ export default function OnboardingWizard({
     setSectoresSel(next);
   };
 
-  const toggleSectorUsuario = (id: string) => {
-    const next = new Set(editUserForm.sectores);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setEditUserForm({ ...editUserForm, sectores: Array.from(next) });
-  };
-
   const usuarios = empresa.usuarios || [];
+
+  const renderUsuarioFormFields = (form: UsuarioForm, mode: 'create' | 'edit') => (
+    <>
+      <div className={styles.grid2}>
+        <div className={styles.formGroup}>
+          <label>Usuario de red {mode === 'create' ? '*' : ''}</label>
+          <input
+            className={styles.input}
+            value={form.nombreRed}
+            onChange={(e) => actualizarUsuarioModal({ nombreRed: e.target.value })}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label>{mode === 'create' ? 'Contraseña *' : 'Nueva contraseña (opcional)'}</label>
+          <input
+            className={styles.input}
+            type="password"
+            value={form.password}
+            onChange={(e) => actualizarUsuarioModal({ password: e.target.value })}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label>Apellido {mode === 'create' ? '*' : ''}</label>
+          <input
+            className={styles.input}
+            value={form.apellido}
+            onChange={(e) => actualizarUsuarioModal({ apellido: e.target.value })}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label>Nombres {mode === 'create' ? '*' : ''}</label>
+          <input
+            className={styles.input}
+            value={form.nombres}
+            onChange={(e) => actualizarUsuarioModal({ nombres: e.target.value })}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label>DNI / documento</label>
+          <input
+            className={styles.input}
+            value={form.numeroDocumento}
+            onChange={(e) => actualizarUsuarioModal({ numeroDocumento: e.target.value })}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label>Rol</label>
+          <select
+            className={styles.select}
+            value={form.idRol}
+            onChange={(e) => actualizarUsuarioModal({ idRol: Number(e.target.value) })}
+            disabled={rolesCatalogo.length === 0}
+          >
+            <option value={0}>— Sin rol (asignar después) —</option>
+            {rolesCatalogo.map((r) => (
+              <option key={r.idRol} value={r.idRol}>
+                {r.nombre}
+              </option>
+            ))}
+          </select>
+          {rolesCatalogo.length === 0 && (
+            <p className={styles.packDesc} style={{ marginTop: '0.35rem' }}>
+              No se cargaron roles. Volvé a este paso o recargá la página.
+            </p>
+          )}
+        </div>
+      </div>
+      <p className={styles.wizardHint}>Sectores del usuario:</p>
+      <div className={styles.sectorGrid}>
+        {sectoresCatalogo.length === 0 ? (
+          <p className={styles.packDesc}>No hay sectores. Creálos en el paso anterior.</p>
+        ) : (
+          sectoresCatalogo.map((s) => (
+            <label key={s.id} className={styles.sectorChip}>
+              <input
+                type="checkbox"
+                checked={form.sectores.includes(s.id)}
+                onChange={() => toggleSectorUsuarioModal(s.id)}
+              />
+              <span>{s.descripcion}</span>
+            </label>
+          ))
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div className={styles.wizard}>
@@ -1051,6 +1170,9 @@ export default function OnboardingWizard({
           <div className={styles.wizardContent}>
             <div className={styles.stepToolbar}>
               <span className={styles.stepTitle}>Usuarios de la empresa</span>
+              <button type="button" className={styles.btn} disabled={guardando} onClick={abrirModalCrearUsuario}>
+                + Nuevo usuario
+              </button>
             </div>
 
             <div className={styles.tableWrap}>
@@ -1084,7 +1206,7 @@ export default function OnboardingWizard({
                           <button
                             type="button"
                             className={styles.btnSmSecondary}
-                            onClick={() => iniciarEditarUsuario(u)}
+                            onClick={() => abrirModalEditarUsuario(u)}
                           >
                             Editar
                           </button>
@@ -1101,144 +1223,6 @@ export default function OnboardingWizard({
                   )}
                 </tbody>
               </table>
-            </div>
-
-            {editUserId != null && (
-              <div className={styles.crudBlock}>
-                <p className={styles.crudBlockTitle}>Editar usuario</p>
-                <div className={styles.grid2}>
-                  <div className={styles.formGroup}>
-                    <label>Usuario de red</label>
-                    <input
-                      className={styles.input}
-                      value={editUserForm.nombreRed}
-                      onChange={(e) => setEditUserForm({ ...editUserForm, nombreRed: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Nueva contraseña (opcional)</label>
-                    <input
-                      className={styles.input}
-                      type="password"
-                      value={editUserForm.password}
-                      onChange={(e) => setEditUserForm({ ...editUserForm, password: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Apellido</label>
-                    <input
-                      className={styles.input}
-                      value={editUserForm.apellido}
-                      onChange={(e) => setEditUserForm({ ...editUserForm, apellido: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Nombres</label>
-                    <input
-                      className={styles.input}
-                      value={editUserForm.nombres}
-                      onChange={(e) => setEditUserForm({ ...editUserForm, nombres: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Rol</label>
-                    <select
-                      className={styles.select}
-                      value={editUserForm.idRol}
-                      onChange={(e) =>
-                        setEditUserForm({ ...editUserForm, idRol: Number(e.target.value) })
-                      }
-                    >
-                      {(catalogos.roles || []).map((r) => (
-                        <option key={r.idRol} value={r.idRol}>
-                          {r.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <p className={styles.wizardHint}>Sectores del usuario:</p>
-                <div className={styles.sectorGrid}>
-                  {sectoresCatalogo.map((s) => (
-                    <label key={s.id} className={styles.sectorChip}>
-                      <input
-                        type="checkbox"
-                        checked={editUserForm.sectores.includes(s.id)}
-                        onChange={() => toggleSectorUsuario(s.id)}
-                      />
-                      <span>{s.descripcion}</span>
-                    </label>
-                  ))}
-                </div>
-                <div className={styles.stepActions}>
-                  <button type="button" className={styles.btn} onClick={guardarUsuarioEdit}>
-                    Guardar cambios
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.btnSecondary}
-                    onClick={() => setEditUserId(null)}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className={styles.crudBlock}>
-              <p className={styles.crudBlockTitle}>Nuevo usuario</p>
-              <div className={styles.grid2}>
-                <div className={styles.formGroup}>
-                  <label>Usuario de red *</label>
-                  <input
-                    className={styles.input}
-                    value={nuevoUsuario.nombreRed}
-                    onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, nombreRed: e.target.value })}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Contraseña *</label>
-                  <input
-                    className={styles.input}
-                    type="password"
-                    value={nuevoUsuario.password}
-                    onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Apellido *</label>
-                  <input
-                    className={styles.input}
-                    value={nuevoUsuario.apellido}
-                    onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, apellido: e.target.value })}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Nombres *</label>
-                  <input
-                    className={styles.input}
-                    value={nuevoUsuario.nombres}
-                    onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, nombres: e.target.value })}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Rol</label>
-                  <select
-                    className={styles.select}
-                    value={nuevoUsuario.idRol}
-                    onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, idRol: Number(e.target.value) })}
-                  >
-                    {(catalogos.roles || []).map((r) => (
-                      <option key={r.idRol} value={r.idRol}>
-                        {r.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <button type="button" className={styles.btn} disabled={guardando} onClick={crearUsuario}>
-                + Crear y vincular
-              </button>
             </div>
           </div>
         )}
@@ -1409,6 +1393,56 @@ export default function OnboardingWizard({
           </button>
         )}
       </div>
+
+      {usuarioModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className={styles.modalOverlay}
+          onClick={() => setUsuarioModal(null)}
+        >
+          <div className={styles.modalPanel} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <strong>
+                {usuarioModal.mode === 'create' ? 'Nuevo usuario' : 'Editar usuario'}
+              </strong>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setUsuarioModal(null)}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {renderUsuarioFormFields(usuarioModal.form, usuarioModal.mode)}
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                disabled={guardando}
+                onClick={() => setUsuarioModal(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.btn}
+                disabled={guardando}
+                onClick={guardarUsuarioModal}
+              >
+                {guardando
+                  ? 'Guardando…'
+                  : usuarioModal.mode === 'create'
+                    ? 'Crear y vincular'
+                    : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {(preview || previewLoading) && (
         <div
