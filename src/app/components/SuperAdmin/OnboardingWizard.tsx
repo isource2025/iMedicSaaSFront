@@ -770,10 +770,14 @@ export default function OnboardingWizard({
                 </div>
                 <p className={styles.packDesc} style={{ marginBottom: '0.75rem' }}>
                   &quot;Detectar tablas&quot; guarda la conexión y lista los datos del servidor físico que se pueden copiar a
-                  la nube. Completá los datos de conexión de arriba antes de detectar. Los catálogos de plataforma
-                  (roles y permisos) y las tablas que no existan en el servidor físico se toman automáticamente de la
-                  nube. Al importar, los IDs de personal se reindexan por empresa para no chocar con otras clínicas.
+                  la nube. Los catálogos de plataforma (roles y permisos) se toman de Railway. Los IDs de personal se
+                  conservan iguales al servidor físico (aislados por empresa). La importación puede tardar 1–2 minutos.
                 </p>
+                {importLoading && (
+                  <p className={styles.packDesc} style={{ marginBottom: '0.75rem', color: 'var(--color-primary, #2563eb)' }}>
+                    Importando… no cierres esta ventana. Al finalizar verás el detalle por tabla.
+                  </p>
+                )}
 
                 {tablasImport.length > 0 && (
                   <>

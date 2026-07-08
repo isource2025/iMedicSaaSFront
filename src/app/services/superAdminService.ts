@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiService } from './axios';
 import type {
   ActualizarUsuarioEmpresaBody,
@@ -97,11 +98,28 @@ export const superAdminService = {
   },
 
   async importarTablas(id: string | number, tablas: string[]): Promise<ResultadoImport> {
-    const res = await apiService.post<{ success: boolean; data: ResultadoImport }>(
-      `${BASE}/empresas/${id}/importar`,
-      { tablas },
-    );
-    return res.data.data;
+    try {
+      const res = await apiService.post<{ success: boolean; data: ResultadoImport; mensaje?: string }>(
+        `${BASE}/empresas/${id}/importar`,
+        { tablas },
+        { timeout: 300_000 },
+      );
+      if (!res.data.success) {
+        throw new Error(res.data.mensaje || 'Error al importar');
+      }
+      return res.data.data;
+    } catch (e) {
+      if (axios.isAxiosError(e)) {
+        if (e.code === 'ECONNABORTED') {
+          throw new Error(
+            'La importación tardó demasiado en responder (timeout). Revisá los logs de Railway: puede haber terminado parcialmente. Volvé a detectar tablas e intentá de nuevo.',
+          );
+        }
+        const msg = (e.response?.data as { mensaje?: string } | undefined)?.mensaje;
+        if (msg) throw new Error(msg);
+      }
+      throw e;
+    }
   },
 
   async deleteEmpresa(id: string | number): Promise<void> {
