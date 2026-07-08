@@ -754,7 +754,9 @@ export default function OnboardingWizard({
                 </div>
                 <p className={styles.packDesc} style={{ marginBottom: '0.75rem' }}>
                   &quot;Detectar tablas&quot; guarda la conexión y lista los datos del servidor físico que se pueden copiar a
-                  la nube. Completá los datos de conexión de arriba antes de detectar.
+                  la nube. Completá los datos de conexión de arriba antes de detectar. Los catálogos de plataforma
+                  (roles y permisos) y las tablas que no existan en el servidor físico se toman automáticamente de la
+                  nube. Al importar, los IDs de personal se reindexan por empresa para no chocar con otras clínicas.
                 </p>
 
                 {tablasImport.length > 0 && (
@@ -771,14 +773,24 @@ export default function OnboardingWizard({
                         </thead>
                         <tbody>
                           {tablasImport.map((t) => {
-                            const disponible = t.existeOrigen && t.existeDestino;
+                            const copiable = t.estrategia !== 'nube' && t.existeOrigen && t.existeDestino;
+                            const estado =
+                              t.estrategia === 'nube'
+                                ? 'Provista por la nube'
+                                : !t.existeOrigen
+                                  ? t.existeDestino
+                                    ? 'Se toma de la nube'
+                                    : 'No existe en el físico'
+                                  : !t.existeDestino
+                                    ? 'No existe en la nube'
+                                    : 'Lista para importar';
                             return (
                               <tr key={t.tabla}>
                                 <td>
                                   <input
                                     type="checkbox"
                                     checked={tablasImportSel.has(t.tabla)}
-                                    disabled={!disponible}
+                                    disabled={!copiable}
                                     onChange={() => toggleTablaImport(t.tabla)}
                                   />
                                 </td>
@@ -787,14 +799,8 @@ export default function OnboardingWizard({
                                   <br />
                                   <span className={styles.packDesc}>{t.tabla}</span>
                                 </td>
-                                <td>{t.filasOrigen ?? '—'}</td>
-                                <td>
-                                  {!t.existeOrigen
-                                    ? 'No existe en el físico'
-                                    : !t.existeDestino
-                                      ? 'No existe en la nube'
-                                      : 'Lista'}
-                                </td>
+                                <td>{t.estrategia === 'nube' ? '—' : (t.filasOrigen ?? '—')}</td>
+                                <td>{estado}</td>
                               </tr>
                             );
                           })}
@@ -831,7 +837,13 @@ export default function OnboardingWizard({
                             <td>{r.tabla}</td>
                             <td>{r.leidas}</td>
                             <td>{r.escritas}</td>
-                            <td>{r.error ? `✗ ${r.error}` : '✓ OK'}</td>
+                            <td>
+                              {r.error
+                                ? `✗ ${r.error}`
+                                : r.omitida
+                                  ? `↷ ${r.nota || 'Se usa la nube'}`
+                                  : '✓ OK'}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

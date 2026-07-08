@@ -35,18 +35,25 @@ export interface EmpresaConexion {
 
 export type TipoServidor = 'NUBE' | 'FISICO';
 
+export type EstrategiaImport = 'nube' | 'tenant';
+
 export interface TablaImportable {
   tabla: string;
   label: string;
+  estrategia?: EstrategiaImport;
   existeOrigen: boolean;
   existeDestino: boolean;
   filasOrigen: number | null;
+  desdeNube?: boolean;
 }
 
 export interface ResultadoImportTabla {
   tabla: string;
+  estrategia?: EstrategiaImport;
   leidas: number;
   escritas: number;
+  omitida?: boolean;
+  nota?: string | null;
   error: string | null;
 }
 
