@@ -7,6 +7,7 @@ import type {
   EmpresaAdmin,
   EmpresaConexion,
   EmpresaUsuario,
+  PreviewTabla,
   ResultadoImport,
   SectorBody,
   SuperAdminCatalogos,
@@ -83,6 +84,14 @@ export const superAdminService = {
   async getTablasImportables(id: string | number): Promise<TablaImportable[]> {
     const res = await apiService.get<{ success: boolean; data: TablaImportable[] }>(
       `${BASE}/empresas/${id}/importar/tablas`,
+    );
+    return res.data.data;
+  },
+
+  async getPreviewTabla(id: string | number, tabla: string, limite = 50): Promise<PreviewTabla> {
+    const res = await apiService.get<{ success: boolean; data: PreviewTabla }>(
+      `${BASE}/empresas/${id}/importar/tablas/${encodeURIComponent(tabla)}/preview`,
+      { params: { limite } },
     );
     return res.data.data;
   },

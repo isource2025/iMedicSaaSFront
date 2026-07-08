@@ -62,6 +62,16 @@ export interface ResultadoImport {
   resultados: ResultadoImportTabla[];
 }
 
+export interface PreviewTabla {
+  tabla: string;
+  label: string;
+  estrategia?: EstrategiaImport;
+  total: number | null;
+  columnas: string[];
+  filas: Record<string, unknown>[];
+  nota?: string | null;
+}
+
 export interface EmpresaAdmin {
   id: string;
   descripcion: string;

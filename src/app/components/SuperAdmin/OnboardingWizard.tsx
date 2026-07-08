@@ -7,6 +7,7 @@ import type {
   CatalogoSector,
   EmpresaAdmin,
   EmpresaUsuario,
+  PreviewTabla,
   ResultadoImport,
   SuperAdminCatalogos,
   TablaImportable,
@@ -82,6 +83,8 @@ export default function OnboardingWizard({
   const [tablasImportSel, setTablasImportSel] = useState<Set<string>>(new Set());
   const [importResult, setImportResult] = useState<ResultadoImport | null>(null);
   const [importLoading, setImportLoading] = useState(false);
+  const [preview, setPreview] = useState<PreviewTabla | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const [conexionForm, setConexionForm] = useState({
     dbServer: empresa.conexion?.dbServer || '',
@@ -250,6 +253,19 @@ export default function OnboardingWizard({
     if (next.has(tabla)) next.delete(tabla);
     else next.add(tabla);
     setTablasImportSel(next);
+  };
+
+  const abrirPreview = async (tabla: string) => {
+    setPreviewLoading(true);
+    onError(null);
+    try {
+      const data = await superAdminService.getPreviewTabla(empresa.id, tabla);
+      setPreview(data);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : 'Error al obtener la vista previa');
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   const ejecutarImport = async () => {
@@ -785,8 +801,13 @@ export default function OnboardingWizard({
                                     ? 'No existe en la nube'
                                     : 'Lista para importar';
                             return (
-                              <tr key={t.tabla}>
-                                <td>
+                              <tr
+                                key={t.tabla}
+                                onClick={() => abrirPreview(t.tabla)}
+                                style={{ cursor: 'pointer' }}
+                                title="Ver datos del servidor"
+                              >
+                                <td onClick={(e) => e.stopPropagation()}>
                                   <input
                                     type="checkbox"
                                     checked={tablasImportSel.has(t.tabla)}
@@ -1384,6 +1405,108 @@ export default function OnboardingWizard({
           </button>
         )}
       </div>
+
+      {(preview || previewLoading) && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreview(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              width: 'min(1100px, 96vw)',
+              maxHeight: '86vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.9rem 1.1rem',
+                borderBottom: '1px solid #e5e7eb',
+              }}
+            >
+              <div>
+                <strong>{preview ? preview.label : 'Cargando…'}</strong>
+                {preview && (
+                  <span className={styles.packDesc} style={{ marginLeft: 8 }}>
+                    {preview.tabla}
+                    {preview.total != null ? ` · ${preview.total} fila(s) en el servidor` : ''}
+                    {preview.filas.length ? ` · mostrando ${preview.filas.length}` : ''}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                className={styles.wizardAlertDismiss}
+                aria-label="Cerrar"
+                onClick={() => setPreview(null)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ padding: '1rem', overflow: 'auto' }}>
+              {previewLoading && <p className={styles.wizardHint}>Consultando el servidor físico…</p>}
+              {!previewLoading && preview && preview.nota && (
+                <p className={styles.wizardHint}>{preview.nota}</p>
+              )}
+              {!previewLoading && preview && !preview.nota && preview.filas.length === 0 && (
+                <p className={styles.wizardHint}>La tabla no tiene filas en el servidor.</p>
+              )}
+              {!previewLoading && preview && preview.filas.length > 0 && (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        {preview.columnas.map((c) => (
+                          <th key={c}>{c}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.filas.map((fila, i) => (
+                        <tr key={i}>
+                          {preview.columnas.map((c) => {
+                            const v = fila[c];
+                            return (
+                              <td key={c}>
+                                {v == null ? (
+                                  <span className={styles.packDesc}>—</span>
+                                ) : (
+                                  String(v)
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
