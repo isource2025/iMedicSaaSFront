@@ -788,16 +788,16 @@ export default function AgendaPage() {
 										</div>
 									</header>
 									{jornadas.length > 1 && (
-										<div className={styles.jornadaTabs}>
+										<div className={styles.jornadaTabs} role='tablist'>
 											{jornadas.map((j) => (
 												<button
 													key={j.index}
 													type='button'
-													className={
-														jornadaSel === j.index
-															? styles.jornadaTabActive
-															: styles.jornadaTab
-													}
+													role='tab'
+													aria-selected={jornadaSel === j.index}
+													className={`${styles.jornadaTab} ${
+														jornadaSel === j.index ? styles.jornadaTabActive : ''
+													}`}
 													onClick={() => setJornadaSel(j.index)}
 												>
 													{j.titulo || j.label}
