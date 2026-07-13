@@ -402,12 +402,46 @@
 	padding-top: 0.75rem;
 }
 
+.medicosPanelHero {
+	flex: 1 1 auto;
+	border-top: none;
+	padding-top: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.medicosPanelHero .listTitle {
+	font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+	margin-bottom: 0.75rem;
+}
+
 .medicosGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 	gap: 0.45rem;
 	max-height: 28vh;
 	overflow: auto;
+}
+
+.medicosPanelHero .medicosGrid {
+	flex: 1 1 auto;
+	max-height: none;
+	align-content: start;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 0.75rem;
+}
+
+.soloMedicos .medicoCard {
+	padding: clamp(0.75rem, 2vw, 1.15rem);
+}
+
+.soloMedicos .medicoNombre {
+	font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+}
+
+.soloMedicos .medicoHorario {
+	font-size: clamp(0.85rem, 1.6vw, 1.1rem);
 }
 
 .medicoCard {

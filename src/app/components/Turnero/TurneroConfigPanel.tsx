@@ -44,6 +44,15 @@ function normalizeLoadedConfig(c: TurneroConfig): TurneroConfig {
 						})(),
 			loop: c.video?.loop !== false,
 		},
+		display: {
+			...DEFAULT_TURNERO_CONFIG.display,
+			...c.display,
+			mostrarLlamados: c.display?.mostrarLlamados !== false,
+			mostrarMedicosHoy: c.display?.mostrarMedicosHoy !== false,
+			sectoresFiltrados: Array.isArray(c.display?.sectoresFiltrados)
+				? c.display.sectoresFiltrados
+				: [],
+		},
 	};
 }
 
@@ -783,6 +792,26 @@ export default function TurneroConfigPanel() {
 							}
 						/>
 						Mostrar consultorio
+					</label>
+					<label className={styles.checkRow}>
+						<input
+							type="checkbox"
+							checked={config.display.mostrarLlamados !== false}
+							onChange={(e) => {
+								const on = e.target.checked;
+								patchConfig({
+									display: {
+										...config.display,
+										mostrarLlamados: on,
+										// Pantalla solo cartelera: mantener médicos visibles
+										mostrarMedicosHoy: on
+											? config.display.mostrarMedicosHoy
+											: true,
+									},
+								});
+							}}
+						/>
+						Mostrar llamados de pacientes
 					</label>
 					<label className={styles.checkRow}>
 						<input

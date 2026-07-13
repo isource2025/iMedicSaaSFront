@@ -45,12 +45,11 @@ export default function TurneroLiveDisplay({ token, forceKiosk = false }: Props)
 
 	const kioskMode = forceKiosk || !!state?.config.display.modoKiosk;
 
-	const needsAudio =
-		state?.config.audio.sonidoActivo || state?.config.audio.vozActiva;
-
 	const procesarLlamado = useCallback((llamado: TurneroLlamado) => {
 		const cfg = configRef.current;
 		if (cfg && !sectorVisibleEnPantalla(llamado.sector, cfg)) return;
+		// Pantalla solo médicos: no actualizar UI ni anunciar audio
+		if (cfg && cfg.display.mostrarLlamados === false) return;
 
 		setState((prev) => {
 			if (!prev) return prev;
@@ -67,6 +66,11 @@ export default function TurneroLiveDisplay({ token, forceKiosk = false }: Props)
 		}
 		queueRef.current.enqueue(llamado, cfgAudio.audio);
 	}, [audioReady]);
+
+	const needsAudioGate =
+		(state?.config.display.mostrarLlamados !== false &&
+			(state?.config.audio.sonidoActivo || state?.config.audio.vozActiva)) ||
+		(state?.config.video.activo && state?.config.video.conSonido !== false);
 
 	const activarAudio = async () => {
 		try {
@@ -303,7 +307,7 @@ export default function TurneroLiveDisplay({ token, forceKiosk = false }: Props)
 				videoAtenuado={videoAtenuado}
 			/>
 
-			{needsAudio && !audioReady && (
+			{needsAudioGate && !audioReady && (
 				<div className={styles.audioGate}>
 					<div className={styles.audioGateCard}>
 						<h2 className={styles.audioGateTitle}>Activar audio</h2>

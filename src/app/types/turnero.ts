@@ -51,6 +51,8 @@ export interface TurneroDisplayOptions {
 	mostrarHora: boolean;
 	mostrarConsultorio: boolean;
 	mostrarProfesional: boolean;
+	/** Hero + lista de llamados de pacientes. Desactivar = solo médicos / video. */
+	mostrarLlamados: boolean;
 	mostrarMedicosHoy: boolean;
 	mantenerPantallaEncendida: boolean;
 	autoFullscreen: boolean;
@@ -173,6 +175,7 @@ export const DEFAULT_TURNERO_CONFIG: TurneroConfig = {
 		mostrarHora: true,
 		mostrarConsultorio: true,
 		mostrarProfesional: true,
+		mostrarLlamados: true,
 		mostrarMedicosHoy: true,
 		mantenerPantallaEncendida: true,
 		autoFullscreen: false,

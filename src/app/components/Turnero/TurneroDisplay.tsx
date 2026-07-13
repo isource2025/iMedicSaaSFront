@@ -57,13 +57,22 @@ export default function TurneroDisplay({
 	const themeVars = useMemo(() => expandTurneroTheme(config.colores), [config.colores]);
 
 	const showVideo = config.video.activo && !!config.video.url?.trim();
+	const showLlamados = config.display.mostrarLlamados !== false;
+	const showMedicos = config.display.mostrarMedicosHoy !== false;
 
-	const lista = llamados.length > 0 ? llamados : ultimoLlamado ? [ultimoLlamado] : [];
+	const lista = showLlamados
+		? llamados.length > 0
+			? llamados
+			: ultimoLlamado
+				? [ultimoLlamado]
+				: []
+		: [];
 	const recientes = lista.slice(1, config.display.maxLlamadosLista);
+	const soloMedicos = !showLlamados && showMedicos;
 
 	return (
 		<div
-			className={rootClass}
+			className={`${rootClass}${soloMedicos ? ` ${styles.soloMedicos}` : ''}`}
 			style={
 				{
 					...themeVars,
@@ -107,29 +116,31 @@ export default function TurneroDisplay({
 				)}
 
 				<div className={styles.contentPane} style={config.video.posicion === 'derecha' ? { order: 1 } : undefined}>
-					<section className={`${styles.hero} ${highlightKey ? styles.heroPulse : ''}`} key={highlightKey ?? ultimoLlamado?.idLlamado ?? 'empty'}>
-						{ultimoLlamado ? (
-							<>
-								<p className={styles.heroLabel}>Último llamado</p>
-								<h2 className={styles.heroName}>{ultimoLlamado.paciente}</h2>
-								<p className={styles.heroMeta}>
-									{config.display.mostrarConsultorio && ultimoLlamado.consultorio && (
-										<span>Consultorio {ultimoLlamado.consultorio}</span>
-									)}
-									{config.display.mostrarProfesional && ultimoLlamado.profesional && (
-										<span>{ultimoLlamado.profesional}</span>
-									)}
-									{config.display.mostrarHora && ultimoLlamado.horaTurno && (
-										<span>Turno {ultimoLlamado.horaTurno}</span>
-									)}
-								</p>
-							</>
-						) : (
-							<p className={styles.emptyHero}>Esperando llamados…</p>
-						)}
-					</section>
+					{showLlamados && (
+						<section className={`${styles.hero} ${highlightKey ? styles.heroPulse : ''}`} key={highlightKey ?? ultimoLlamado?.idLlamado ?? 'empty'}>
+							{ultimoLlamado ? (
+								<>
+									<p className={styles.heroLabel}>Último llamado</p>
+									<h2 className={styles.heroName}>{ultimoLlamado.paciente}</h2>
+									<p className={styles.heroMeta}>
+										{config.display.mostrarConsultorio && ultimoLlamado.consultorio && (
+											<span>Consultorio {ultimoLlamado.consultorio}</span>
+										)}
+										{config.display.mostrarProfesional && ultimoLlamado.profesional && (
+											<span>{ultimoLlamado.profesional}</span>
+										)}
+										{config.display.mostrarHora && ultimoLlamado.horaTurno && (
+											<span>Turno {ultimoLlamado.horaTurno}</span>
+										)}
+									</p>
+								</>
+							) : (
+								<p className={styles.emptyHero}>Esperando llamados…</p>
+							)}
+						</section>
+					)}
 
-					{recientes.length > 0 && (
+					{showLlamados && recientes.length > 0 && (
 						<section className={styles.listSection}>
 							<h3 className={styles.listTitle}>Llamados recientes</h3>
 							<ul className={styles.list}>
@@ -153,21 +164,34 @@ export default function TurneroDisplay({
 						</section>
 					)}
 
-					{config.display.mostrarMedicosHoy && medicosHoy.length > 0 && (
-						<section className={styles.medicosPanel}>
-							<h3 className={styles.listTitle}>Atienden hoy</h3>
-							<div className={styles.medicosGrid}>
-								{medicosHoy.map((m: TurneroMedicoHoy) => (
-									<div key={m.matricula} className={styles.medicoCard}>
-										<p className={styles.medicoNombre}>{m.nombre}</p>
-										<p className={styles.medicoHorario}>
-											{m.horarioTexto}
-											{m.consultorio ? ` · Cons. ${m.consultorio}` : ''}
-										</p>
-									</div>
-								))}
-							</div>
+					{showMedicos && (
+						<section className={`${styles.medicosPanel}${soloMedicos ? ` ${styles.medicosPanelHero}` : ''}`}>
+							<h3 className={styles.listTitle}>
+								{soloMedicos ? 'Médicos que atienden hoy' : 'Atienden hoy'}
+							</h3>
+							{medicosHoy.length > 0 ? (
+								<div className={styles.medicosGrid}>
+									{medicosHoy.map((m: TurneroMedicoHoy) => (
+										<div key={m.matricula} className={styles.medicoCard}>
+											<p className={styles.medicoNombre}>{m.nombre}</p>
+											<p className={styles.medicoHorario}>
+												{m.horarioTexto}
+												{m.consultorio ? ` · Cons. ${m.consultorio}` : ''}
+											</p>
+										</div>
+									))}
+								</div>
+							) : (
+								<p className={styles.emptyHero}>No hay médicos con horario para hoy.</p>
+							)}
 						</section>
+					)}
+
+					{!showLlamados && !showMedicos && (
+						<p className={styles.emptyHero}>
+							Activá «Mostrar llamados» o «Médicos que atienden hoy» en la configuración de
+							pantalla.
+						</p>
 					)}
 				</div>
 			</div>
@@ -205,8 +229,8 @@ export function buildPreviewState(config: TurneroConfig): Pick<
 	return {
 		config,
 		empresa: { nombre: 'Vista previa — Institución' },
-		ultimoLlamado: mock,
-		llamados: [mock, mock2],
+		ultimoLlamado: config.display.mostrarLlamados !== false ? mock : null,
+		llamados: config.display.mostrarLlamados !== false ? [mock, mock2] : [],
 		medicosHoy: [
 			{
 				matricula: 1,
