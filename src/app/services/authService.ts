@@ -1,115 +1,32 @@
-import { EmpresaLogin, LoginCredentials, LoginResponse, Sector } from '../types/AuthInterface';
+import { LoginCredentials, LoginResponse } from '../types/AuthInterface';
 import { apiService } from './axios';
 import { apiFetch } from '@/app/utils/authFetch';
+import { stopSessionActivityMonitor } from '@/app/utils/sessionActivity';
 
 export const authService = {
-  
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
       const response = await apiService.post<LoginResponse>('/auth/login', credentials);
       return response.data;
-    } catch (error: any) {
-      // Handle specific login errors
-      if (error.response) {
-        const data = error.response.data;
-        if (error.response.status === 409 && Array.isArray(data?.empresas)) {
-          const err = new Error(data?.mensaje || 'Seleccione la empresa para continuar') as Error & {
-            empresas?: { idEmpresa: number; descripcionEmpresa: string }[];
-          };
-          err.empresas = data.empresas;
-          throw err;
-        }
-        const errorMessage =
-          data?.mensaje ||
-          data?.message ||
-          'Credenciales inválidas. Por favor, intente de nuevo.';
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosErr = error as { response?: { data?: LoginResponse & { mensaje?: string }; status?: number } };
+        const data = axiosErr.response?.data;
+        const errorMessage = data?.mensaje || 'Usuario o contraseña incorrectos';
         throw new Error(errorMessage);
-      } else if (error.request) {
-        // The request was made but no response was received
-        throw new Error('Error de conexión. Por favor, intente de nuevo más tarde.');
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        throw new Error('Error al procesar la solicitud.');
       }
+      if (error instanceof Error) throw error;
+      throw new Error('Error de conexión. Por favor, intente de nuevo más tarde.');
     }
   },
 
-  /**
-   * Obtiene los sectores disponibles desde la tabla impersonalsectores
-   * @returns Promise con la lista de sectores
-   */
-  getSectores: async (): Promise<Sector[]> => {
+  logout: async () => {
+    stopSessionActivityMonitor();
     try {
-      const response = await apiService.get<{success: boolean, data: Sector[]}>('/auth/sectores');
-      return response.data.data || [];
-    } catch (error: any) {
-      console.error('Error al obtener sectores:', error);
-      return [];
+      await apiService.post('/auth/logout', {});
+    } catch {
+      /* limpiar cliente igual */
     }
-  },
-
-  /**
-   * Obtiene los sectores disponibles para un usuario específico
-   * @param username Nombre de usuario
-   * @returns Promise con la lista de sectores filtrados
-   */
-  getEmpresasPorUsuario: async (
-    username: string,
-  ): Promise<{ empresas: EmpresaLogin[]; esSuperAdmin: boolean; requiereSector: boolean }> => {
-    if (!username) {
-      return { empresas: [], esSuperAdmin: false, requiereSector: true };
-    }
-
-    try {
-      const response = await apiService.get<{
-        success: boolean;
-        data: EmpresaLogin[];
-        esSuperAdmin?: boolean;
-        requiereSector?: boolean;
-      }>(`/auth/empresas/${encodeURIComponent(username)}`);
-      return {
-        empresas: response.data.data || [],
-        esSuperAdmin: !!response.data.esSuperAdmin,
-        requiereSector: response.data.esSuperAdmin
-          ? false
-          : response.data.requiereSector !== false,
-      };
-    } catch (error: unknown) {
-      console.error(`Error al obtener empresas para usuario ${username}:`, error);
-      return { empresas: [], esSuperAdmin: false, requiereSector: true };
-    }
-  },
-
-  getSectoresPorUsuario: async (
-    username: string,
-    idEmpresa?: string | number,
-  ): Promise<{ sectores: Sector[]; requiereSector: boolean }> => {
-    if (!username) {
-      return { sectores: [], requiereSector: true };
-    }
-
-    try {
-      const response = await apiService.get<{
-        success: boolean;
-        data: Sector[];
-        requiereSector?: boolean;
-      }>(`/auth/sectores/${encodeURIComponent(username)}`, {
-        params: idEmpresa != null && idEmpresa !== '' ? { idEmpresa } : undefined,
-      });
-      return {
-        sectores: response.data.data || [],
-        requiereSector: response.data.requiereSector !== false,
-      };
-    } catch (error: unknown) {
-      console.error(`Error al obtener sectores para usuario ${username}:`, error);
-      return { sectores: [], requiereSector: true };
-    }
-  },
-
-  /**
-   * Log out the current user
-   */
-  logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('userData');
@@ -118,12 +35,17 @@ export const authService = {
     localStorage.removeItem('rememberUser');
     localStorage.removeItem('empresaInfo');
     localStorage.removeItem('empresaSeleccionada');
+    localStorage.removeItem('empresaModulos');
   },
 
-  /**
-   * Devuelve el rol del usuario logueado tal como vino del backend en el login.
-   * Devuelve null si el usuario no tiene rol asignado.
-   */
+  /** Sesión actual (cookie httpOnly + validación servidor). */
+  me: async () => {
+    const res = await apiService.get<{ success: boolean; usuario?: unknown; rol?: unknown }>(
+      '/auth/me',
+    );
+    return res.data;
+  },
+
   getCurrentRol: (): { id: number; nombre: string; nivel: number } | null => {
     if (typeof window === 'undefined') return null;
     const raw = localStorage.getItem('rol');
@@ -143,10 +65,6 @@ export const authService = {
     return null;
   },
 
-  /**
-   * Permisos efectivos del usuario logueado, tal como vinieron del backend
-   * en el login. Devuelve [] si no hay nada cargado todavía.
-   */
   getCurrentPermisos: (): string[] => {
     if (typeof window === 'undefined') return [];
     const raw = localStorage.getItem('permisos');
@@ -160,20 +78,12 @@ export const authService = {
     return [];
   },
 
-  /** Refresca los permisos del usuario desde /api/permisos/me. */
   refreshPermisos: async (): Promise<string[]> => {
     try {
-      const res = await apiFetch('/permisos/me', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-          Accept: 'application/json',
-        },
-      });
+      const res = await apiFetch('/permisos/me', { headers: { Accept: 'application/json' } });
       if (!res.ok) return [];
       const json = await res.json();
-      const permisos: string[] = Array.isArray(json?.data?.permisos)
-        ? json.data.permisos
-        : [];
+      const permisos: string[] = Array.isArray(json?.data?.permisos) ? json.data.permisos : [];
       localStorage.setItem('permisos', JSON.stringify(permisos));
       window.dispatchEvent(new Event('imedic:permisos-refresh'));
       return permisos;
@@ -182,28 +92,29 @@ export const authService = {
     }
   },
 
-  /**
-   * Check if a user is authenticated
-   * @returns Boolean indicating if user is authenticated
-   */
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('token');
+    return !!localStorage.getItem('user');
   },
 
-  /**
-   * Get the current user data from localStorage
-   * @returns User data or null if not authenticated
-   */
   getCurrentUser: () => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
         return JSON.parse(userStr);
-      } catch (e) {
-        console.error('Error parsing user data:', e);
+      } catch {
         return null;
       }
     }
     return null;
-  }
+  },
+
+  /** Actualiza matrícula en localStorage (p. ej. sincronizada desde imPersonal tenant). */
+  patchCurrentUser: (partial: Record<string, unknown>) => {
+    if (typeof window === 'undefined') return null;
+    const current = authService.getCurrentUser();
+    if (!current || typeof current !== 'object') return null;
+    const next = { ...current, ...partial };
+    localStorage.setItem('user', JSON.stringify(next));
+    return next;
+  },
 };

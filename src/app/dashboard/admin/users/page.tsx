@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usersService, Usuario } from '@/app/services/usersService';
-import { authService } from '@/app/services/authService';
+import { sectoresService } from '@/app/services/sectoresService';
 import Loader from '@/app/components/Loader/Loader';
 import styles from './users.module.css';
 import { IoSearch, IoAdd, IoKey, IoFolderOpen, IoPencil } from 'react-icons/io5';
@@ -36,7 +36,7 @@ export default function UsersAdminPage() {
 
   const cargarSectores = async () => {
     try {
-      const sectores = await authService.getSectores();
+      const sectores = await sectoresService.getSectores();
       setSectoresDisponibles(sectores);
     } catch (error) {
       console.error('Error al cargar sectores:', error);

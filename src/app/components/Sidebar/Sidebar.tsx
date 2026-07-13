@@ -63,7 +63,7 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'AGENDA', label: 'Agenda',              path: '/dashboard/turnos/agenda' },
       { submoduloId: 'AGENDA', label: 'Conversaciones',      path: '/dashboard/turnos/chats' },
       { submoduloId: 'ADMIN',  label: 'Admin de Turnos',     path: '/dashboard/turnos/admin' },
-      { submoduloId: 'ADMIN',  label: 'Configuración bot',   path: '/dashboard/turnos/bot' },
+      { submoduloId: 'ADMIN',  label: 'Configuración',       path: '/dashboard/turnos/configuracion' },
     ]
   },
   {

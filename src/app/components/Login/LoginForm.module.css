@@ -252,3 +252,30 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+.stepHint {
+  font-size: 0.875rem;
+  color: #475569;
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  color: #0083a9;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.backLink:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.backLink:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

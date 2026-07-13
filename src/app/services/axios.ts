@@ -27,6 +27,7 @@ export function getResolvedApiBaseUrl(): string {
 const axiosInstance = axios.create({
 	baseURL: envApiBase,
 	timeout: 15000,
+	withCredentials: true,
 	headers: {
 		'Content-Type': 'application/json',
 	},

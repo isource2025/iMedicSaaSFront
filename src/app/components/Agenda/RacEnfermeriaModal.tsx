@@ -13,6 +13,7 @@ import {
 import { indicacionesService } from '@/app/services/indicacionesService';
 import type { AgendaSlot } from '@/app/services/agendaService';
 import { formatIMC } from '@/app/utils/antropometria';
+import { fechaCalendarioArgentina, horaWallArgentina } from '@/app/utils/dateUtils';
 import styles from './RacEnfermeriaModal.module.css';
 
 interface TriageNivel {
@@ -74,13 +75,11 @@ const TRIAGE_NIVELES: TriageNivel[] = [
 ];
 
 function nowDate(): string {
-	const d = new Date();
-	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+	return fechaCalendarioArgentina();
 }
 
 function nowTime(): string {
-	const d = new Date();
-	return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+	return horaWallArgentina(false);
 }
 
 function fmtFecha(iso: string | null | undefined): string {

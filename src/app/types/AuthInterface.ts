@@ -8,10 +8,14 @@ export interface LoginCredentials {
   sector?: string;
   idSector?: string;
   idEmpresa?: string;
+  tempToken?: string;
 }
 
 export interface LoginResponse {
   success: boolean;
+  step?: 'SELECT_EMPRESA' | 'COMPLETE';
+  tempToken?: string;
+  empresas?: EmpresaLogin[];
   token?: string;
   usuario?: UserData;  // Cambiado de user a usuario para coincidir con el backend
   rol?: RolInfo | null; // Rol resuelto en el backend (Fase 1)

@@ -593,6 +593,32 @@ export const agendaService = {
 		return r.data.data;
 	},
 
+	async llamarPorPantalla(
+		matricula: number,
+		idTurno: number,
+	): Promise<{
+		idLlamado: number;
+		paciente: string;
+		consultorio?: string;
+		displayPath?: string;
+		displayPaths?: string[];
+		publicadoEnPantalla?: boolean;
+		pantallasPublicadas?: number;
+	}> {
+		const r = await apiService.post<
+			ApiResp<{
+				idLlamado: number;
+				paciente: string;
+				consultorio?: string;
+				displayPath?: string;
+				displayPaths?: string[];
+				publicadoEnPantalla?: boolean;
+				pantallasPublicadas?: number;
+			}>
+		>(`/agenda/${matricula}/turnos/${idTurno}/llamar`);
+		return r.data.data;
+	},
+
 	async getAdjuntosTurno(idTurno: number) {
 		const r = await apiService.get<ApiResp<import('@/app/types/adjuntos').Adjunto[]>>(
 			`/agenda/turnos/${idTurno}/adjuntos`,

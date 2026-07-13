@@ -13,6 +13,7 @@ import type {
 } from '@/app/types/superAdmin';
 import Loader from '../Loader/Loader';
 import OnboardingWizard from './OnboardingWizard';
+import SuperAdminSeguridadPanel from './SuperAdminSeguridadPanel';
 import styles from './superAdmin.module.css';
 
 const TABS: { id: SuperAdminTab; label: string }[] = [
@@ -21,6 +22,7 @@ const TABS: { id: SuperAdminTab; label: string }[] = [
   { id: 'onboarding', label: 'Onboarding' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'configuracion', label: 'Config' },
+  { id: 'seguridad', label: 'Seguridad' },
 ];
 
 const TAB_IDS = new Set(TABS.map((t) => t.id));
@@ -432,6 +434,8 @@ export default function SuperAdminPage() {
           </button>
         </section>
       )}
+
+      {tab === 'seguridad' && <SuperAdminSeguridadPanel />}
     </div>
   );
 }

@@ -234,4 +234,35 @@ export const superAdminService = {
     });
     return res.data.data;
   },
+
+  async getSeguridadConfig(): Promise<{
+    idleTimeoutMinutes: number;
+    paises: { CodigoISO: string; Nombre: string; Activo: boolean | number }[];
+  }> {
+    const res = await apiService.get<{
+      success: boolean;
+      data: { idleTimeoutMinutes: number; paises: { CodigoISO: string; Nombre: string; Activo: boolean | number }[] };
+    }>('/auth/seguridad/config');
+    return res.data.data;
+  },
+
+  async saveSeguridadConfig(body: { idleTimeoutMinutes: number }) {
+    await apiService.put('/auth/seguridad/config', body);
+  },
+
+  async agregarPaisPermitido(codigoISO: string, nombre: string) {
+    const res = await apiService.post<{
+      success: boolean;
+      data: { CodigoISO: string; Nombre: string; Activo: boolean | number }[];
+    }>('/auth/seguridad/paises', { codigoISO, nombre, activo: true });
+    return res.data.data;
+  },
+
+  async togglePaisPermitido(codigoISO: string, activo: boolean) {
+    const res = await apiService.patch<{
+      success: boolean;
+      data: { CodigoISO: string; Nombre: string; Activo: boolean | number }[];
+    }>(`/auth/seguridad/paises/${encodeURIComponent(codigoISO)}`, { activo });
+    return res.data.data;
+  },
 };

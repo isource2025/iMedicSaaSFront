@@ -18,6 +18,7 @@ import SlotTurnoMenu, { type SlotMenuAction } from '@/app/components/Agenda/Slot
 import AgendaEmptyState from '@/app/components/Agenda/AgendaEmptyState';
 import AgendaResumenPanel from '@/app/components/Agenda/AgendaResumenPanel';
 import AgendaPacienteBusqueda from '@/app/components/Agenda/AgendaPacienteBusqueda';
+import TurneroAgendaLink from '@/app/components/Turnero/TurneroAgendaLink';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
 import DetalleTurnoModal from '@/app/components/Agenda/DetalleTurnoModal';
@@ -30,6 +31,7 @@ import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { personalService } from '@/app/services/personalService';
 import { esFechaPasada } from '@/app/utils/agendaFecha';
 import { claseFilaAgenda } from '@/app/utils/agendaFilaEstilos';
+import { horaWallArgentina } from '@/app/utils/dateUtils';
 import styles from './agenda.module.css';
 
 function toIso(d: Date): string {
@@ -134,14 +136,32 @@ export default function AgendaPage() {
 	} | null>(null);
 
 	useEffect(() => {
-		setUser(
-			authService.getCurrentUser() as {
+		let cancel = false;
+		(async () => {
+			const local = authService.getCurrentUser() as {
 				matricula?: number | null;
 				nombre?: string;
 				apellido?: string;
-			} | null,
-		);
-	}, []);
+			} | null;
+			if (!cancel) setUser(local);
+			if (!esMedico) return;
+			try {
+				const me = await authService.me();
+				const u = me?.usuario as { matricula?: number | null } | undefined;
+				const mat =
+					u?.matricula != null && Number(u.matricula) > 0 ? Number(u.matricula) : null;
+				if (mat && !cancel) {
+					authService.patchCurrentUser({ matricula: mat });
+					setUser((prev) => ({ ...(prev || {}), matricula: mat }));
+				}
+			} catch {
+				/* keep localStorage */
+			}
+		})();
+		return () => {
+			cancel = true;
+		};
+	}, [esMedico]);
 
 	const matriculaPropia = user?.matricula ?? null;
 
@@ -178,6 +198,12 @@ export default function AgendaPage() {
 	const [fechaMedicoLista, setFechaMedicoLista] = useState(false);
 
 	const [error, setError] = useState<string | null>(null);
+	const [successCall, setSuccessCall] = useState<{
+		paciente: string;
+		displayPath?: string;
+		publicadoEnPantalla?: boolean;
+		pantallasPublicadas?: number;
+	} | null>(null);
 
 	// Menú contextual (posición del mouse) + modal asignar turno
 	const [slotMenu, setSlotMenu] = useState<{
@@ -325,6 +351,16 @@ export default function AgendaPage() {
 		setLoadingSlots(true);
 		try {
 			const r = await agendaService.getSlots(mat, fechaIso, fechaIso);
+			if (
+				esMedico &&
+				r?.matricula != null &&
+				Number(r.matricula) > 0 &&
+				Number(r.matricula) !== Number(mat)
+			) {
+				const correcta = Number(r.matricula);
+				authService.patchCurrentUser({ matricula: correcta });
+				setUser((prev) => ({ ...(prev || {}), matricula: correcta }));
+			}
 			const dia = r.dias[0];
 			setDiaMotivo(dia?.motivo ?? null);
 			setTodosSlots(dia?.slots ?? []);
@@ -398,8 +434,7 @@ export default function AgendaPage() {
 			profesionalAgenda?.sector?.trim() ||
 			todosSlots.find((s) => s.sector)?.sector ||
 			'';
-		const now = new Date();
-		const hora = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+		const hora = horaWallArgentina(false);
 		setModalModo('sobreturno');
 		setModalSlot({
 			hora,
@@ -489,6 +524,25 @@ export default function AgendaPage() {
 			} catch (e: unknown) {
 				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
 				setError(err?.response?.data?.mensaje || err?.message || 'Error al marcar ingreso');
+			}
+			return;
+		}
+
+		if (action === 'llamar-pantalla') {
+			setError(null);
+			setSuccessCall(null);
+			try {
+				const resp = await agendaService.llamarPorPantalla(mat, slot.idTurno);
+				setSuccessCall({
+					paciente: resp.paciente || slot.pacienteNombre || 'paciente',
+					displayPath: resp.displayPath,
+					publicadoEnPantalla: resp.publicadoEnPantalla !== false,
+					pantallasPublicadas: resp.pantallasPublicadas,
+				});
+				window.setTimeout(() => setSuccessCall(null), 8000);
+			} catch (e: unknown) {
+				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
+				setError(err?.response?.data?.mensaje || err?.message || 'Error al llamar por pantalla');
 			}
 			return;
 		}
@@ -641,14 +695,19 @@ export default function AgendaPage() {
 				<div className={styles.main}>
 					<div className={styles.mainCard}>
 						<div className={styles.cardHeader}>
-							<h1 className={styles.cardTitle}>Agenda de turnos</h1>
-							<p className={styles.cardSubtitle}>
-								{esMedico
-									? `${user?.nombre || ''} ${user?.apellido || ''}`.trim() || 'Mi agenda'
-									: esAdmin
-										? 'Administrador — gestión completa de agendas (igual que administrativo)'
-										: 'Vista administrativa'}
-							</p>
+							<div className={styles.cardHeaderTop}>
+								<div>
+									<h1 className={styles.cardTitle}>Agenda de turnos</h1>
+									<p className={styles.cardSubtitle}>
+										{esMedico
+											? `${user?.nombre || ''} ${user?.apellido || ''}`.trim() || 'Mi agenda'
+											: esAdmin
+												? 'Administrador — gestión completa de agendas (igual que administrativo)'
+												: 'Vista administrativa'}
+									</p>
+								</div>
+								<TurneroAgendaLink />
+							</div>
 							<div className={styles.fechaSel}>📅 {formatFechaLarga(selectedDate)}</div>
 						</div>
 
@@ -656,6 +715,38 @@ export default function AgendaPage() {
 					<AgendaPacienteBusqueda />
 
 					{error && <div className={styles.error}>{error}</div>}
+					{successCall && (
+						<div
+							className={
+								successCall.publicadoEnPantalla === false
+									? styles.warning
+									: styles.success
+							}
+						>
+							<span>
+								{successCall.publicadoEnPantalla === false
+									? `Llamado registrado (${successCall.paciente}) — sector no visible en ninguna pantalla`
+									: (
+										<>
+											Llamado en pantalla: <strong>{successCall.paciente}</strong>
+											{(successCall.pantallasPublicadas ?? 0) > 1 && (
+												<> ({successCall.pantallasPublicadas} pantallas)</>
+											)}
+										</>
+									)}
+							</span>
+							{successCall.displayPath && (
+								<a
+									className={styles.successLink}
+									href={successCall.displayPath}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									Abrir pantalla del turnero
+								</a>
+							)}
+						</div>
+					)}
 					{fechaPasada && (
 						<div className={styles.warning}>
 							No se pueden asignar turnos en fechas anteriores al día de hoy. Elegí

@@ -13,6 +13,7 @@ import {
 } from '@/app/services/agendaService';
 import { agendaConfigService } from '@/app/services/agendaConfigService';
 import { esFechaPasada, toIsoLocal } from '@/app/utils/agendaFecha';
+import { horaWallArgentina, fechaCalendarioArgentina } from '@/app/utils/dateUtils';
 import { useModalLayer } from '@/app/hooks/useModalLayer';
 import styles from './AsignarTurnoModal.module.css';
 
@@ -79,11 +80,8 @@ export default function AsignarTurnoModal({
 		setTipoTurno(esSobreturno ? TIPO_TURNO_SOBRETURNO : TIPO_TURNO_GRILLA);
 		setError(null);
 		if (esSobreturno) {
-			const now = new Date();
-			setFechaSt(toIsoLocal(now));
-			setHoraSt(
-				`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-			);
+			setFechaSt(fechaCalendarioArgentina());
+			setHoraSt(horaWallArgentina(false));
 		} else {
 			setFechaSt(fecha);
 			setHoraSt(slot?.hora?.replace(/\s*·\s*ST$/i, '') || '08:00');

@@ -35,7 +35,7 @@ function getStoredToken(): string | null {
 export async function apiFetch(pathOrUrl: string, init?: RequestInit): Promise<Response> {
 	const normalized = normalizeApiRequestPath(pathOrUrl);
 	const url = /^https?:\/\//i.test(normalized) ? normalized : apiPath(normalized);
-	return fetch(url, withAuthHeaders(init));
+	return fetch(url, { ...withAuthHeaders(init), credentials: 'include' });
 }
 
 async function readFetchErrorMessage(response: Response, fallback: string): Promise<string> {
@@ -68,13 +68,6 @@ export async function apiFetchBlob(pathOrUrl: string, init?: RequestInit): Promi
 export async function openAuthenticatedBlob(pathOrUrl: string, init?: RequestInit): Promise<void> {
 	const popup = window.open('about:blank', '_blank');
 	if (!popup) {
-		const token = getStoredToken();
-		if (token) {
-			const rel = /^https?:\/\//i.test(pathOrUrl) ? pathOrUrl : apiPath(pathOrUrl);
-			const sep = rel.includes('?') ? '&' : '?';
-			window.open(`${rel}${sep}access_token=${encodeURIComponent(token)}`, '_blank');
-			return;
-		}
 		throw new Error('El navegador bloqueó la ventana emergente. Permití pop-ups para este sitio.');
 	}
 	try {

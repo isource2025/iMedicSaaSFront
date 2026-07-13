@@ -198,4 +198,5 @@ export type SuperAdminTab =
   | 'empresas'
   | 'onboarding'
   | 'usuarios'
-  | 'configuracion';
+  | 'configuracion'
+  | 'seguridad';

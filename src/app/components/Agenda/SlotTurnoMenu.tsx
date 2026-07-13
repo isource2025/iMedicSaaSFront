@@ -29,7 +29,6 @@ type OpcionMenu = {
 const OPCIONES_LIBRE: OpcionMenu[] = [
 	{ id: 'asignar', label: 'Asignar turno' },
 	{ id: 'sobreturno', label: 'Agregar sobreturno' },
-	{ id: 'llamar-pantalla', label: 'Llamar por pantalla', mock: true },
 ];
 
 const OPCIONES_OCUPADO_BASE: OpcionMenu[] = [
@@ -40,7 +39,7 @@ const OPCIONES_OCUPADO_BASE: OpcionMenu[] = [
 	{ id: 'sobreturno', label: 'Agregar sobreturno' },
 	{ id: 'cancelar', label: 'Cancelar turno' },
 	{ id: 'borrar', label: 'Borrar turno' },
-	{ id: 'llamar-pantalla', label: 'Llamar por pantalla', mock: true },
+	{ id: 'llamar-pantalla', label: 'Llamar por pantalla' },
 ];
 
 interface Props {

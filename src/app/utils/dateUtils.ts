@@ -359,6 +359,19 @@ export function fechaCalendarioArgentina(ref: Date = new Date()): string {
 	return ref.toLocaleDateString('en-CA', { timeZone: TZ_ARGENTINA });
 }
 
+/** Hora wall-clock Argentina (HH:MM o HH:MM:SS). Independiente del TZ del navegador. */
+export function horaWallArgentina(conSegundos = false, ref: Date = new Date()): string {
+	const parts = new Intl.DateTimeFormat('en-GB', {
+		timeZone: TZ_ARGENTINA,
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false,
+	}).formatToParts(ref);
+	const get = (t: string) => parts.find((p) => p.type === t)?.value || '00';
+	return conSegundos ? `${get('hour')}:${get('minute')}:${get('second')}` : `${get('hour')}:${get('minute')}`;
+}
+
 export function formatDiaMensajeArgentina(fecha: string | null | undefined): string {
 	const d = parseFechaArgentina(fecha);
 	if (!d) return '';

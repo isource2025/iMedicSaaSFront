@@ -1,0 +1,74 @@
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	padding: 0.65rem 1rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #fff;
+}
+
+.tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.45rem 0.85rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #f8fafc;
+	font-size: 0.88rem;
+	color: #475569;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.tab:hover {
+	background: #fff;
+	color: #1e293b;
+}
+
+.tabActive {
+	background: #ecfdf5;
+	border-color: #6ee7b7;
+	color: #047857;
+	font-weight: 600;
+}
+
+.horariosWrap {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.horariosToolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 1rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.horariosLabel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+	color: #475569;
+	font-weight: 500;
+}
+
+.horariosSelect {
+	min-width: 220px;
+	padding: 0.45rem 0.55rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	font-size: 0.88rem;
+}
+
+.horariosHint {
+	margin: 0;
+	font-size: 0.82rem;
+	color: #64748b;
+	flex: 1;
+	min-width: 200px;
+}

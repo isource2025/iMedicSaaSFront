@@ -1,0 +1,81 @@
+.link,
+.linkBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.4rem 0.75rem;
+	border-radius: 8px;
+	border: 1px solid #6ee7b7;
+	background: #ecfdf5;
+	color: #047857;
+	font-size: 0.82rem;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.link:hover,
+.linkBtn:hover {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+.icon {
+	font-size: 1rem;
+	line-height: 1;
+}
+
+.chevron {
+	font-size: 0.65rem;
+	opacity: 0.75;
+	margin-left: 0.1rem;
+}
+
+.wrap {
+	position: relative;
+	display: inline-block;
+}
+
+.menu {
+	position: absolute;
+	top: calc(100% + 4px);
+	right: 0;
+	min-width: 220px;
+	max-width: 320px;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+	z-index: 200;
+	overflow: hidden;
+}
+
+.menuItem {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	padding: 0.55rem 0.75rem;
+	text-decoration: none;
+	color: #1e293b;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.menuItem:last-child {
+	border-bottom: none;
+}
+
+.menuItem:hover {
+	background: #ecfdf5;
+}
+
+.menuNombre {
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.menuSector {
+	font-size: 0.72rem;
+	color: #64748b;
+}

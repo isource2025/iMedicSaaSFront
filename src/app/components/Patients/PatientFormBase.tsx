@@ -256,9 +256,13 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
 		try {
 			const endpoint = `/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`;
-			const { data } = await apiService.get<PersonaResponse>(endpoint);
+			const [renaperResult, afiliadoResult] = await Promise.allSettled([
+				apiService.get<PersonaResponse>(endpoint),
+				coberturaService.validarAfiliadoPorDocumento(NumeroDocumento),
+			]);
 
-			if (data?.persona) {
+			if (renaperResult.status === 'fulfilled' && renaperResult.value.data?.persona) {
+				const data = renaperResult.value.data;
 				const mapped = mapRenaperToPatientFields(
 					data.persona as Record<string, unknown>,
 				);
@@ -289,9 +293,23 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						Provincia: mapped.Provincia || prev.Provincia,
 					}));
 				}
+			} else if (renaperResult.status === 'rejected') {
+				console.error('Error Renaper:', renaperResult.reason);
+			}
+
+			// Paralelo a Renaper: OS con APIValidacionPaciente (ej. IOSCOR)
+			if (afiliadoResult.status === 'fulfilled' && afiliadoResult.value.primary) {
+				const match = afiliadoResult.value.primary;
+				setFormData((prev) => ({
+					...prev,
+					Cobertura: String(match.valor),
+					nAfiliado: match.nAfiliado || String(NumeroDocumento),
+				}));
+			} else if (afiliadoResult.status === 'rejected') {
+				console.warn('Validación afiliado (no bloquea Renaper):', afiliadoResult.reason);
 			}
 		} catch (err) {
-			console.error('Error Renaper:', err);
+			console.error('Error Renaper/afiliado:', err);
 		} finally {
 			setBuscandoRenaper(false);
 		}

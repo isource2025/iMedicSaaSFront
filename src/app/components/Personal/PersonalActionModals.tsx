@@ -671,11 +671,6 @@ export default function PersonalActionModals({
 								))}
 							</select>
 						</div>
-						<p className={styles.muted}>
-							El rol se persiste en <code>imPersonal.Rol</code> y viaja en el JWT al
-							iniciar sesión. Los permisos asociados al rol se aplican desde la matriz del
-							sistema.
-						</p>
 						<div className={styles.actions}>
 							<button type='button' className={styles.btn} onClick={onClose} disabled={saving}>
 								Cerrar
