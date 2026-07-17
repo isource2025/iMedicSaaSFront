@@ -52,6 +52,28 @@
 	gap: 0.75rem;
 }
 
+.cardHeaderActions {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	flex-wrap: wrap;
+}
+
+.btnSecondary {
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #0f172a;
+	border-radius: 8px;
+	padding: 0.45rem 0.85rem;
+	font: inherit;
+	font-size: 0.875rem;
+	cursor: pointer;
+}
+
+.btnSecondary:hover {
+	background: #f8fafc;
+}
+
 .vistaTabs {
 	display: flex;
 	gap: 0.35rem;

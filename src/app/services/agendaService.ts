@@ -305,6 +305,10 @@ export interface DetallePedidoEstudio {
 	estadoUrgencia: string | null;
 	notas: string | null;
 	fechaPedido: string | null;
+	cumplido?: boolean;
+	idProtocolo?: number;
+	textoResultado?: string | null;
+	fechaResultado?: string | null;
 }
 
 export interface TurnoAsignado {

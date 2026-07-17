@@ -13,6 +13,7 @@ export interface PedidoEstudio {
   MatriculaSolicitante?: number;
   MedicoSolicitanteNombre?: string;
   IdProtocolo?: number;
+  Cumplido?: boolean;
   EstadoUrgencia?: string;
   SectorSolicitante?: string;
   SectorSolicitanteNombre?: string;
@@ -21,6 +22,45 @@ export interface PedidoEstudio {
   ServicioCodigo?: string;
   ServicioDescripcion?: string;
   CategoriaPedido?: string;
+  TextoResultado?: string | null;
+  FechaResultado?: string | null;
+  PracticaFacturada?: number | null;
+  MatriculaRealizador?: number | null;
+  RealizadorNombre?: string | null;
+  Tomado?: boolean;
+  MatriculaToma?: number | null;
+  NombreToma?: string | null;
+  FechaToma?: string | null;
+  EstadoWorkflow?: 'PENDIENTE' | 'TOMADO' | 'CUMPLIDO' | string;
+}
+
+export interface SectorReceptorEstudio {
+  valor: string;
+  descripcion: string;
+  prefijos: string[];
+}
+
+export interface TipoPedidoEstudio {
+  idTipoPedido: number;
+  descripcion: string;
+  idPractica: number;
+}
+
+export interface CrearPedidoEstudioPayload {
+  idVisita: number;
+  sectorSolicitante: string;
+  idTipoPedido: number;
+  idSectorReceptor: string;
+  notas?: string;
+  estadoUrgencia?: 'Normal' | 'Medio' | 'Urgente';
+  matriculaSolicitante?: number;
+}
+
+export interface CumplirPedidoPayload {
+  textoInforme: string;
+  sectorServicio?: string;
+  codPractica?: number;
+  matriculaRealizador?: number;
 }
 
 export interface PedidosEstudiosResponse {

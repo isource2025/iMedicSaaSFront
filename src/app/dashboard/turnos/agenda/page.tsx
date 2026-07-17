@@ -22,6 +22,7 @@ import TurneroAgendaLink from '@/app/components/Turnero/TurneroAgendaLink';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
 import DetalleTurnoModal from '@/app/components/Agenda/DetalleTurnoModal';
+import AgendaPedidosEstudiosBandeja from '@/app/components/Agenda/AgendaPedidosEstudiosBandeja';
 import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import {
 	AgendaTurnoTablaHead,
@@ -216,6 +217,7 @@ export default function AgendaPage() {
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
+	const [bandejaEstudiosOpen, setBandejaEstudiosOpen] = useState(false);
 	const [confirmDialog, setConfirmDialog] = useState<{
 		title: string;
 		message: string;
@@ -706,7 +708,16 @@ export default function AgendaPage() {
 												: 'Vista administrativa'}
 									</p>
 								</div>
-								<TurneroAgendaLink />
+								<div className={styles.cardHeaderActions}>
+									<button
+										type="button"
+										className={styles.btnSecondary}
+										onClick={() => setBandejaEstudiosOpen(true)}
+									>
+										Pedidos de estudios
+									</button>
+									<TurneroAgendaLink />
+								</div>
 							</div>
 							<div className={styles.fechaSel}>📅 {formatFechaLarga(selectedDate)}</div>
 						</div>
@@ -1205,6 +1216,16 @@ export default function AgendaPage() {
 				open={detalleTurnoId != null}
 				idTurno={detalleTurnoId}
 				onClose={() => setDetalleTurnoId(null)}
+			/>
+
+			<AgendaPedidosEstudiosBandeja
+				open={bandejaEstudiosOpen}
+				onClose={() => setBandejaEstudiosOpen(false)}
+				sectorInicial={
+					profesionalAgenda?.sector ||
+					todosSlots.find((s) => s.sector)?.sector ||
+					null
+				}
 			/>
 
 			<AsignarTurnoModal

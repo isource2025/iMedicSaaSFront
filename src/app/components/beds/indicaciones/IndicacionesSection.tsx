@@ -94,7 +94,9 @@ export default function IndicacionesSection({
                 : [];
 
 
-        const rows = list.map((x) => ({
+        const rows = list
+            .filter((x) => !x.suspendida && x.estado !== 'S')
+            .map((x) => ({
             id: x.id,
             cantidad: x.cantidad,
             descripcion: x.descripcion,

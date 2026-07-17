@@ -1,0 +1,131 @@
+.error {
+	background: #fef2f2;
+	color: #b91c1c;
+	border: 1px solid #fecaca;
+	border-radius: 8px;
+	padding: 0.65rem 0.85rem;
+	margin-bottom: 0.85rem;
+	font-size: 0.9rem;
+}
+
+.label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-bottom: 0.9rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #475569;
+}
+
+.input,
+.textarea {
+	font: inherit;
+	font-weight: 400;
+	font-size: 0.95rem;
+	color: #0f172a;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	padding: 0.55rem 0.7rem;
+	background: #fff;
+}
+
+.textarea {
+	resize: vertical;
+	min-height: 6rem;
+}
+
+.hint {
+	font-size: 0.8rem;
+	font-weight: 400;
+	color: #64748b;
+	margin: 0 0 0.75rem;
+}
+
+.results {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	max-height: 180px;
+	overflow: auto;
+	background: #fff;
+}
+
+.results button {
+	width: 100%;
+	text-align: left;
+	border: none;
+	background: transparent;
+	padding: 0.55rem 0.7rem;
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	font: inherit;
+	color: #0f172a;
+}
+
+.results button:hover {
+	background: #f0f9fc;
+}
+
+.results span {
+	color: #64748b;
+	font-size: 0.85rem;
+}
+
+.selectedTipo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid #bae6fd;
+	background: #f0f9fc;
+	border-radius: 8px;
+	font-weight: 400;
+}
+
+.selectedTipo button {
+	border: none;
+	background: transparent;
+	color: #0284c7;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.85rem;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.65rem;
+	margin-top: 1rem;
+}
+
+.btnPrimary,
+.btnSecondary {
+	border-radius: 8px;
+	padding: 0.55rem 1rem;
+	font: inherit;
+	font-size: 0.9rem;
+	cursor: pointer;
+}
+
+.btnPrimary {
+	background: #0083a9;
+	color: #fff;
+	border: 1px solid #0083a9;
+}
+
+.btnPrimary:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.btnSecondary {
+	background: #fff;
+	color: #475569;
+	border: 1px solid #cbd5e1;
+}

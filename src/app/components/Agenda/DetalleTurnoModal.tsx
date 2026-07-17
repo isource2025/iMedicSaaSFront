@@ -365,10 +365,11 @@ export default function DetalleTurnoModal({ open, idTurno, onClose }: Props) {
 											<thead>
 												<tr>
 													<th>Estudio</th>
+													<th>Estado</th>
 													<th>Sector receptor</th>
 													<th>Urgencia</th>
 													<th>Fecha pedido</th>
-													<th>Observaciones</th>
+													<th>Observaciones / resultado</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -380,6 +381,7 @@ export default function DetalleTurnoModal({ open, idTurno, onClose }: Props) {
 																Cód. {pe.codigoPractica}
 															</div>
 														</td>
+														<td>{pe.cumplido ? 'Cumplido' : 'Pendiente'}</td>
 														<td>
 															{pe.sectorReceptorNombre || pe.sectorReceptor || '—'}
 															{pe.sectorReceptorNombre && pe.sectorReceptor
@@ -398,7 +400,17 @@ export default function DetalleTurnoModal({ open, idTurno, onClose }: Props) {
 																	})
 																: '—'}
 														</td>
-														<td>{val(pe.notas, '—')}</td>
+														<td>
+															{val(pe.notas, '—')}
+															{pe.cumplido && pe.textoResultado ? (
+																<div className={styles.listMeta}>
+																	Resultado:{' '}
+																	{pe.textoResultado.length > 160
+																		? `${pe.textoResultado.slice(0, 160)}…`
+																		: pe.textoResultado}
+																</div>
+															) : null}
+														</td>
 													</tr>
 												))}
 											</tbody>
