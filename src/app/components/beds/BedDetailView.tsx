@@ -21,6 +21,7 @@ import AdjuntosModal from './adjuntos/AdjuntosModal';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
 import LabResultsSection from './laboratorios/LabResultsSection';
 import EstudiosSection from './estudios/EstudiosSection';
+import ProtocolosSection from './protocolos/ProtocolosSection';
 import InterconsultaSection from './interconsulta/InterconsultaSection';
 import BedFloatingActions from './BedFloatingActions';
 import NursingReportModal from '../nursing/NursingReportModal';
@@ -180,23 +181,10 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							horaIngreso={bed?.horaIngresoSQL}
 						/>
 					) : activeSection === 'protocolos' ? (
-						<div className={styles.placeholderCard}>
-							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-								<div style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-									📋
-								</div>
-								<h3 style={{ margin: '0 0 0.5rem 0', color: '#0083A9' }}>
-									Protocolos
-								</h3>
-								<p style={{ color: '#666', margin: '0' }}>
-									Protocolos médicos aplicables al paciente.
-									<br />
-									<strong>Servicio:</strong> {bed.servicioMedicoDescripcion}
-									<br />
-									<strong>Estado:</strong> {bed.estadoDescripcion}
-								</p>
-							</div>
-						</div>
+						<ProtocolosSection
+							numeroVisita={bed?.NumeroVisita || null}
+							sector={bed?.sector || null}
+						/>
 					) : activeSection === 'epicrisis' ? (
 						<div className={styles.placeholderCard}>
 							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
