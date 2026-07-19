@@ -30,9 +30,9 @@ export interface TableCardProps {
 export interface TableHeaderProps {
   showCreateForm: boolean;
   setShowCreateForm: React.Dispatch<React.SetStateAction<boolean>>;
-  createDescripcion: string;
-  setCreateDescripcion: React.Dispatch<React.SetStateAction<string>>;
-  handleCreateOption: () => void;
+  createDescripcion?: string;
+  setCreateDescripcion?: React.Dispatch<React.SetStateAction<string>>;
+  handleCreateOption?: () => void;
 }
 
 // Props for CreateOptionForm component

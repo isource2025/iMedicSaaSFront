@@ -14,9 +14,10 @@ import { getEstadosCiviles, createEstadoCivil, updateEstadoCivil, deleteEstadoCi
 import DataTableModal from '../../admission/DataTableModal';
 import TableHeader from './TableHeader';
 import CreateOptionForm from './CreateOptionForm';
-import styles from './styles.module.css';
+import styles from '../../opcGrd/OpcGrdTables.module.css';
 import Loader from '../../Loader/Loader';
 import { getAdmissionTablesOptions, TableOption } from '../../../services/admissionService';
+import { getTablaIconSrc, getTablaIconFallback, getTablaIconColor } from '../../../utils/tablaIcons';
 import { getEstadosMilitares, createEstadoMilitar, updateEstadoMilitar, deleteEstadoMilitar } from '../../../services/estadoMilitar.service';
 import { getGruposEtnicos, createGrupoEtnico, updateGrupoEtnico, deleteGrupoEtnico } from '../../../services/grupoEtnico.service';
 import { getIdiomasISO, createIdiomaISO, updateIdiomaISO, deleteIdiomaISO } from '../../../services/idiomaISO.service';
@@ -71,9 +72,8 @@ const AdmissionTables: React.FC = () => {
 
   // Ya no necesitamos filtrar por nombres estáticos porque solo mostraremos las tarjetas de la API
 
-  // Función para manejar errores de carga de imágenes
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = '/images/ConfigGral.ico';
+    e.currentTarget.src = getTablaIconFallback();
   };
 
   // Funciones para manejar los modales de datos para cada tabla
@@ -1157,36 +1157,37 @@ const AdmissionTables: React.FC = () => {
       )}
 
       {loadingOptions ? (
-        <div style={{ position: 'relative', minHeight: '200px' }}>
+        <div className={styles.loaderWrap}>
           <Loader />
         </div>
       ) : apiError ? (
         <div className={styles.error}>
           Error al cargar las opciones: {apiError}
         </div>
-      ) : (
-        <div className={styles.optionsContainer}>
-          {/* Mostrar únicamente las tarjetas que vienen de la API */}
-          {dynamicOptions.length > 0 ? (
-            dynamicOptions.map((option) => (
-              <div 
-                key={`${option.descripcion}-${option.orden}`} 
-                className={styles.card} 
-                onClick={() => handleApiOptionClick(option)}
-              >
-                <img 
-                  src={`/images/${option.icono}`} 
-                  alt={option.descripcion} 
-                  className={styles.cardIcon} 
+      ) : dynamicOptions.length > 0 ? (
+        <div className={styles.optionsGrid}>
+          {dynamicOptions.map((option, index) => (
+            <button
+              type="button"
+              key={`${option.descripcion}-${option.orden}`}
+              className={styles.card}
+              style={{ ['--icon-tint' as string]: getTablaIconColor('ADMISION') }}
+              onClick={() => handleApiOptionClick(option)}
+            >
+              <span className={styles.iconWrap}>
+                <img
+                  src={getTablaIconSrc('ADMISION', index, dynamicOptions)}
+                  alt=""
+                  className={styles.icon}
                   onError={(e) => handleImageError(e as React.SyntheticEvent<HTMLImageElement>)}
                 />
-                <h3 className={styles.cardTitle}>{option.descripcion}</h3>
-              </div>
-            ))
-          ) : (
-            <div className={styles.noResults}>No se encontraron opciones de Admisión</div>
-          )}
+              </span>
+              <span className={styles.label}>{option.descripcion}</span>
+            </button>
+          ))}
         </div>
+      ) : (
+        <div className={styles.empty}>No se encontraron opciones de Admisión</div>
       )}
       
       
