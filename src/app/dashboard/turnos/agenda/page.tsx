@@ -232,7 +232,7 @@ export default function AgendaPage() {
 		if (sectorQ) qs.set('sector', sectorQ);
 		const pedidoQ = String(searchParams.get('pedido') || '').trim();
 		if (pedidoQ) qs.set('pedido', pedidoQ);
-		router.replace(`/dashboard/turnos/bandeja-pedidos?${qs.toString()}`);
+		router.replace(`/dashboard/bandeja-pedidos?${qs.toString()}`);
 	}, [searchParams, router]);
 
 	const [confirmDialog, setConfirmDialog] = useState<{
@@ -730,11 +730,6 @@ export default function AgendaPage() {
 						</div>
 
 						<div className={styles.cardBody}>
-					<div className={styles.bandejaLinkRow}>
-						<a className={styles.bandejaLink} href="/dashboard/turnos/bandeja-pedidos?tab=estudios">
-							Bandeja de pedidos
-						</a>
-					</div>
 					<AgendaPacienteBusqueda />
 
 					{error && <div className={styles.error}>{error}</div>}

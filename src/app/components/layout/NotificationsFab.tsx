@@ -166,7 +166,7 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
       const sector = String(datos.idSectorReceptor || '').trim();
       if (sector) qs.set('sector', sector);
       if (datos.idPedido) qs.set('pedido', String(datos.idPedido));
-      router.push(`/dashboard/turnos/bandeja-pedidos?${qs.toString()}`);
+      router.push(`/dashboard/bandeja-pedidos?${qs.toString()}`);
     }
   };
 
