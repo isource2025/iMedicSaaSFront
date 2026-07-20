@@ -39,7 +39,7 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 
 	useEffect(() => {
 		if (!open) return;
-		void estudiosService.listarSectoresReceptor().then((list) => {
+		void estudiosService.listarSectoresReceptor({ soloMios: true }).then((list) => {
 			setSectores(list);
 			const init = String(sectorInicial || '').trim();
 			const resolved = resolveSectorReceptor(
@@ -48,6 +48,7 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 			);
 			if (resolved) setSector(resolved);
 			else if (list[0]?.valor) setSector(list[0].valor);
+			else setSector('');
 		});
 	}, [open, sectorInicial, sectorSeleccionado]);
 

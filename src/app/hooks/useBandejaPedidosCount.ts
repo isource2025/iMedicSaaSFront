@@ -8,7 +8,7 @@ import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 
 const POLL_MS = 5000;
 
-/** Contador de pedidos libres (estudios + interconsultas) para el badge del menú. */
+/** Contador de pedidos libres (estudios + interconsultas) en los servicios del usuario. */
 export function useBandejaPedidosCount(enabled = true) {
 	const [count, setCount] = useState(0);
 	const { sectorSeleccionado } = useAppContext();
@@ -19,19 +19,31 @@ export function useBandejaPedidosCount(enabled = true) {
 			return;
 		}
 		try {
-			const sectores = await estudiosService.listarSectoresReceptor();
-			const sector = resolveSectorReceptor(sectorSeleccionado, sectores);
-			if (!sector) {
+			const sectores = await estudiosService.listarSectoresReceptor({ soloMios: true });
+			if (!sectores.length) {
 				setCount(0);
 				return;
 			}
-			const [estudios, ics] = await Promise.all([
-				estudiosService.listarPendientes(sector),
-				interconsultasService.listarPendientes(sector),
-			]);
-			const libres =
-				estudios.filter((r) => !r.Tomado).length + ics.filter((r) => !r.Tomado).length;
-			setCount(libres);
+			const preferred = resolveSectorReceptor(sectorSeleccionado, sectores);
+			const ordered = preferred
+				? [preferred, ...sectores.map((s) => s.valor).filter((v) => v !== preferred)]
+				: sectores.map((s) => s.valor);
+			const unique = Array.from(
+				new Set(ordered.map((v) => String(v || '').trim()).filter(Boolean)),
+			);
+
+			const counts = await Promise.all(
+				unique.map(async (sector) => {
+					const [estudios, ics] = await Promise.all([
+						estudiosService.listarPendientes(sector),
+						interconsultasService.listarPendientes(sector),
+					]);
+					return (
+						estudios.filter((r) => !r.Tomado).length + ics.filter((r) => !r.Tomado).length
+					);
+				}),
+			);
+			setCount(counts.reduce((a, b) => a + b, 0));
 		} catch {
 			setCount(0);
 		}

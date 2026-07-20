@@ -80,7 +80,7 @@ function BandejaPedidosContent() {
 	}, [searchParams]);
 
 	useEffect(() => {
-		void estudiosService.listarSectoresReceptor().then((list) => {
+		void estudiosService.listarSectoresReceptor({ soloMios: true }).then((list) => {
 			setSectores(list);
 			const qSector = String(searchParams.get('sector') || '').trim();
 			const resolved = resolveSectorReceptor(
@@ -91,6 +91,7 @@ function BandejaPedidosContent() {
 			);
 			if (resolved) setSector(resolved);
 			else if (list[0]?.valor) setSector(list[0].valor);
+			else setSector('');
 		});
 	}, [searchParams, sectorSeleccionado]);
 
@@ -322,7 +323,14 @@ function BandejaPedidosContent() {
 
 			{error ? <div className={styles.error}>{error}</div> : null}
 
-			{loading ? (
+			{!loading && sectores.length === 0 ? (
+				<div className={styles.emptyCard}>
+					<p className={styles.emptyTitle}>Sin servicios asignados</p>
+					<p className={styles.emptyHint}>
+						Tu usuario no tiene sectores vinculados a servicios de pedidos. Pedí a un administrador que te asigne el sector correspondiente.
+					</p>
+				</div>
+			) : loading ? (
 				<p className={styles.empty}>Cargando…</p>
 			) : tab === 'estudios' ? (
 				rowsEstudio.length === 0 ? (

@@ -147,8 +147,9 @@ const estudiosService = {
     return Array.isArray(json?.data) ? json.data : [];
   },
 
-  async listarSectoresReceptor(): Promise<SectorReceptorEstudio[]> {
-    const res = await apiFetch('/estudios/sectores-receptor', {
+  async listarSectoresReceptor(opts?: { soloMios?: boolean }): Promise<SectorReceptorEstudio[]> {
+    const qs = opts?.soloMios ? '?soloMios=1' : '';
+    const res = await apiFetch(`/estudios/sectores-receptor${qs}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
