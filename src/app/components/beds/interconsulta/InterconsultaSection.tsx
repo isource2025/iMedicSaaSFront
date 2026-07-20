@@ -1,15 +1,23 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { interconsultasService, InterconsultaRow } from '@/app/services/interconsultasService';
+import {
+	interconsultasService,
+	InterconsultaRow,
+	SectorDestinoInterconsulta,
+} from '@/app/services/interconsultasService';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import styles from './InterconsultaSection.module.css';
 
 type Props = {
 	numeroVisita: number | null;
+	sectorSolicitante?: string | null;
 };
+
+type Tab = 'visita' | 'pendientes';
 
 function urgenciaClass(estado?: string) {
 	const v = (estado || '').trim().toLowerCase();
@@ -31,46 +39,70 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 			{ label: 'Estado', value: row.Estado },
 			{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
 			{ label: 'Matrícula', value: row.MedicoSolicitante },
-			{ label: 'Origen', value: 'Registro web' },
+			{ label: 'Origen', value: 'Registro web (legado)' },
 		];
 	}
 
 	return [
 		{ label: 'Fecha / hora', value: formatFecha(row) },
-		{ label: 'Especialidad / destino', value: row.Especialidad || row.SectorReceptorNombre || row.ServicioDescripcion },
-		{ label: 'Urgencia', value: row.EstadoUrgencia || row.Estado },
+		{
+			label: 'Servicio destino',
+			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.Especialidad,
+		},
+		{ label: 'Estado', value: row.EstadoWorkflow || row.Estado },
+		{ label: 'Urgencia', value: row.EstadoUrgencia },
 		{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
 		{ label: 'Matrícula', value: row.MedicoSolicitante },
+		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
 		{ label: 'Sector solicitante', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
-		{ label: 'Servicio destino', value: row.ServicioDescripcion || row.SectorReceptorNombre },
 		{ label: 'Código práctica', value: row.CodigoPractica },
-		{ label: 'Nomenclador', value: row.NomencladorDescripcion },
-		{ label: 'Tipo pedido', value: row.TipoPedidoDescripcion || row.PracticaSolicitada },
-		{ label: 'Id protocolo', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
 		{ label: 'Id pedido', value: row.IdPedido || row.IdInterconsulta },
+		{ label: 'Id resultado', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
 	];
 }
 
-export default function InterconsultaSection({ numeroVisita }: Props) {
+export default function InterconsultaSection({ numeroVisita, sectorSolicitante }: Props) {
 	const { puede } = usePermiso();
-	const [rows, setRows] = useState<InterconsultaRow[]>([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [showForm, setShowForm] = useState(false);
-	const [especialidad, setEspecialidad] = useState('');
-	const [motivo, setMotivo] = useState('');
-	const [saving, setSaving] = useState(false);
-	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
-
+	const usuario = useUsuarioActual();
+	const matriculaSesion = usuario?.matricula ?? null;
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
+	const canAtender =
+		puede('INTERNACION.INTERCONSULTAS.CREAR') || puede('INTERNACION.INTERCONSULTAS.EDITAR');
 
-	const load = useCallback(async () => {
+	const [tab, setTab] = useState<Tab>('visita');
+	const [rows, setRows] = useState<InterconsultaRow[]>([]);
+	const [pendientes, setPendientes] = useState<InterconsultaRow[]>([]);
+	const [sectores, setSectores] = useState<SectorDestinoInterconsulta[]>([]);
+	const [sectorBandeja, setSectorBandeja] = useState('');
+	const [idSectorReceptor, setIdSectorReceptor] = useState('');
+	const [motivo, setMotivo] = useState('');
+	const [urgencia, setUrgencia] = useState('Normal');
+	const [showForm, setShowForm] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [saving, setSaving] = useState(false);
+	const [busyId, setBusyId] = useState<number | null>(null);
+	const [error, setError] = useState<string | null>(null);
+	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
+	const [cumplirRow, setCumplirRow] = useState<InterconsultaRow | null>(null);
+	const [respuesta, setRespuesta] = useState('');
+
+	useEffect(() => {
+		void interconsultasService
+			.listarSectoresDestino()
+			.then((list) => {
+				setSectores(list);
+				setSectorBandeja((prev) => prev || list.find((s) => s.valor === 'OFT')?.valor || list[0]?.valor || '');
+				setIdSectorReceptor((prev) => prev || list.find((s) => s.valor === 'OFT')?.valor || '');
+			})
+			.catch(() => setSectores([]));
+	}, []);
+
+	const loadVisita = useCallback(async () => {
 		if (!numeroVisita) return;
 		setLoading(true);
 		setError(null);
 		try {
-			const data = await interconsultasService.listarPorVisita(numeroVisita);
-			setRows(data);
+			setRows(await interconsultasService.listarPorVisita(numeroVisita));
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'Error al cargar');
 		} finally {
@@ -78,45 +110,120 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 		}
 	}, [numeroVisita]);
 
+	const loadPendientes = useCallback(async () => {
+		if (!sectorBandeja.trim()) {
+			setPendientes([]);
+			return;
+		}
+		setLoading(true);
+		setError(null);
+		try {
+			setPendientes(await interconsultasService.listarPendientes(sectorBandeja.trim()));
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'Error al cargar pendientes');
+		} finally {
+			setLoading(false);
+		}
+	}, [sectorBandeja]);
+
 	useEffect(() => {
-		load();
-	}, [load]);
+		if (tab === 'visita') void loadVisita();
+		else void loadPendientes();
+	}, [tab, loadVisita, loadPendientes]);
+
+	const refresh = async () => {
+		if (tab === 'pendientes') await loadPendientes();
+		await loadVisita();
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!numeroVisita || !motivo.trim()) return;
-		const now = new Date();
-		const fecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-		const hora = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+		if (!numeroVisita || !motivo.trim() || !idSectorReceptor.trim()) return;
 		setSaving(true);
+		setError(null);
 		try {
 			await interconsultasService.crear({
-				IdVisita: numeroVisita,
-				FechaSolicitud: fecha,
-				HoraSolicitud: hora,
-				Especialidad: especialidad.trim(),
-				Motivo: motivo.trim(),
+				idVisita: numeroVisita,
+				idSectorReceptor: idSectorReceptor.trim(),
+				sectorSolicitante: sectorSolicitante || undefined,
+				motivo: motivo.trim(),
+				estadoUrgencia: urgencia,
 			});
 			setMotivo('');
-			setEspecialidad('');
 			setShowForm(false);
-			await load();
+			await loadVisita();
 		} catch (err) {
-			alert(err instanceof Error ? err.message : 'Error al guardar');
+			setError(err instanceof Error ? err.message : 'Error al guardar');
 		} finally {
 			setSaving(false);
 		}
 	};
 
 	const handleRowClick = async (row: InterconsultaRow) => {
-		const id = row.Origen === 'WEB' ? row.IdInterconsulta : (row.IdPedido || row.IdInterconsulta);
+		const id = row.Origen === 'WEB' ? row.IdInterconsulta : row.IdPedido || row.IdInterconsulta;
 		const detail = await interconsultasService.obtenerPorId(id, row.Origen || 'LEGACY');
 		setSelected(detail || row);
+	};
+
+	const pedidoId = (r: InterconsultaRow) => r.IdPedido || r.IdInterconsulta;
+
+	const esMia = (r: InterconsultaRow) =>
+		matriculaSesion != null &&
+		r.MatriculaToma != null &&
+		Number(r.MatriculaToma) === Number(matriculaSesion);
+
+	const onTomar = async (row: InterconsultaRow, ev: React.MouseEvent) => {
+		ev.stopPropagation();
+		const id = pedidoId(row);
+		setBusyId(id);
+		setError(null);
+		try {
+			await interconsultasService.tomar(id);
+			await refresh();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo tomar');
+		} finally {
+			setBusyId(null);
+		}
+	};
+
+	const onLiberar = async (row: InterconsultaRow, ev: React.MouseEvent) => {
+		ev.stopPropagation();
+		const id = pedidoId(row);
+		setBusyId(id);
+		setError(null);
+		try {
+			await interconsultasService.liberar(id);
+			await refresh();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo liberar');
+		} finally {
+			setBusyId(null);
+		}
+	};
+
+	const onCumplir = async () => {
+		if (!cumplirRow || !respuesta.trim()) return;
+		const id = pedidoId(cumplirRow);
+		setBusyId(id);
+		setError(null);
+		try {
+			await interconsultasService.cumplir(id, respuesta.trim());
+			setCumplirRow(null);
+			setRespuesta('');
+			await refresh();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo cumplir');
+		} finally {
+			setBusyId(null);
+		}
 	};
 
 	if (!numeroVisita) {
 		return <div className={styles.empty}>No hay visita seleccionada</div>;
 	}
+
+	const list = tab === 'visita' ? rows : pendientes;
 
 	const selectedTextBlocks = selected
 		? [
@@ -131,27 +238,86 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 				<div>
 					<h2 className={styles.title}>Interconsultas</h2>
 					<p className={styles.subtitle}>
-						Solicitudes de interconsulta (imPedidosEstudios, tipo 33) — distinto de estudios de imagen y de laboratorio
+						Solicitud a un servicio destino (imPedidosEstudios, tipo 33). El servicio receptor
+						atiende desde la bandeja de pendientes.
 					</p>
 				</div>
-				{canCreate && (
+				{canCreate && tab === 'visita' && (
 					<button type="button" className={styles.primaryBtn} onClick={() => setShowForm((v) => !v)}>
 						{showForm ? 'Cancelar' : 'Nueva solicitud'}
 					</button>
 				)}
 			</div>
 
-			{showForm && canCreate && (
+			<div className={styles.tabs}>
+				<button
+					type="button"
+					className={tab === 'visita' ? styles.tabActive : styles.tab}
+					onClick={() => setTab('visita')}
+				>
+					De esta visita
+				</button>
+				<button
+					type="button"
+					className={tab === 'pendientes' ? styles.tabActive : styles.tab}
+					onClick={() => setTab('pendientes')}
+				>
+					Pendientes del servicio
+				</button>
+			</div>
+
+			{tab === 'pendientes' && (
+				<label className={styles.bandejaSelect}>
+					Servicio receptor
+					<select
+						value={sectorBandeja}
+						onChange={(e) => setSectorBandeja(e.target.value)}
+					>
+						{sectores.map((s) => (
+							<option key={s.valor} value={s.valor}>
+								{s.descripcion} ({s.valor})
+							</option>
+						))}
+					</select>
+				</label>
+			)}
+
+			{showForm && canCreate && tab === 'visita' && (
 				<form className={styles.form} onSubmit={handleSubmit}>
 					<label>
-						Especialidad solicitada
-						<input value={especialidad} onChange={(e) => setEspecialidad(e.target.value)} placeholder="Ej. Cardiología" />
+						Servicio destino *
+						<select
+							value={idSectorReceptor}
+							onChange={(e) => setIdSectorReceptor(e.target.value)}
+							required
+						>
+							<option value="">Seleccione…</option>
+							{sectores.map((s) => (
+								<option key={s.valor} value={s.valor}>
+									{s.descripcion} ({s.valor})
+								</option>
+							))}
+						</select>
 					</label>
 					<label>
-						Motivo / consulta
-						<textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={4} required />
+						Urgencia
+						<select value={urgencia} onChange={(e) => setUrgencia(e.target.value)}>
+							<option value="Normal">Normal</option>
+							<option value="Medio">Medio</option>
+							<option value="Urgente">Urgente</option>
+						</select>
 					</label>
-					<button type="submit" className={styles.primaryBtn} disabled={saving}>
+					<label>
+						Motivo / consulta *
+						<textarea
+							value={motivo}
+							onChange={(e) => setMotivo(e.target.value)}
+							rows={4}
+							required
+							placeholder="Motivo de la interconsulta…"
+						/>
+					</label>
+					<button type="submit" className={styles.primaryBtn} disabled={saving || !idSectorReceptor}>
 						{saving ? 'Guardando…' : 'Registrar interconsulta'}
 					</button>
 				</form>
@@ -159,9 +325,15 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 
 			{error && <div className={styles.error}>{error}</div>}
 			{loading ? (
-				<div style={{ position: 'relative', minHeight: 200 }}><Loader /></div>
-			) : rows.length === 0 ? (
-				<div className={styles.empty}>No hay interconsultas registradas para esta internación.</div>
+				<div style={{ position: 'relative', minHeight: 200 }}>
+					<Loader />
+				</div>
+			) : list.length === 0 ? (
+				<div className={styles.empty}>
+					{tab === 'visita'
+						? 'No hay interconsultas registradas para esta internación.'
+						: 'No hay interconsultas pendientes para este servicio.'}
+				</div>
 			) : (
 				<div className={styles.tableWrap}>
 					<table className={styles.table}>
@@ -169,43 +341,97 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 							<tr>
 								<th>Urg.</th>
 								<th>Fecha / hora</th>
-								<th>Especialidad / destino</th>
-								<th>Motivo / consulta</th>
+								<th>Destino</th>
+								<th>Motivo</th>
 								<th>Solicitado por</th>
-								<th>Protocolo</th>
+								<th>Estado</th>
+								{canAtender ? <th>Acciones</th> : null}
 							</tr>
 						</thead>
 						<tbody>
-							{rows.map((r) => (
-								<tr
-									key={`${r.Origen || 'LEGACY'}-${r.IdInterconsulta}`}
-									className={styles.clickableRow}
-									onClick={() => handleRowClick(r)}
-									title="Ver detalle de la interconsulta"
-								>
-									<td>
-										<span
-											className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
-											title={r.EstadoUrgencia || r.Estado || 'Sin urgencia'}
-										/>
-									</td>
-									<td className={styles.meta}>{formatFecha(r)}</td>
-									<td>
-										<div className={styles.destino}>
-											{r.Especialidad || r.SectorReceptorNombre || r.ServicioDescripcion || '—'}
-										</div>
-										{r.ServicioDescripcion && r.SectorReceptorNombre && (
-											<div className={styles.meta}>{r.ServicioDescripcion}</div>
-										)}
-										{r.Origen === 'WEB' && <div className={styles.meta}>Registro web</div>}
-									</td>
-									<td className={styles.motivo}>
-										{r.Motivo.length > 120 ? `${r.Motivo.slice(0, 120)}…` : r.Motivo}
-									</td>
-									<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
-									<td className={styles.meta}>{r.IdProtocolo && r.IdProtocolo > 0 ? r.IdProtocolo : '—'}</td>
-								</tr>
-							))}
+							{list.map((r) => {
+								const id = pedidoId(r);
+								const tomado = !!r.Tomado;
+								const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
+								return (
+									<tr
+										key={`${r.Origen || 'LEGACY'}-${id}`}
+										className={styles.clickableRow}
+										onClick={() => void handleRowClick(r)}
+										title="Ver detalle"
+									>
+										<td>
+											<span
+												className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
+												title={r.EstadoUrgencia || r.Estado || 'Sin urgencia'}
+											/>
+										</td>
+										<td className={styles.meta}>{formatFecha(r)}</td>
+										<td>
+											<div className={styles.destino}>
+												{r.ServicioDescripcion ||
+													r.SectorReceptorNombre ||
+													r.Especialidad ||
+													'—'}
+											</div>
+											{r.Origen === 'WEB' && (
+												<div className={styles.meta}>Registro web (legado)</div>
+											)}
+										</td>
+										<td className={styles.motivo}>
+											{(r.Motivo || '').length > 120
+												? `${r.Motivo.slice(0, 120)}…`
+												: r.Motivo || '—'}
+										</td>
+										<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
+										<td className={styles.meta}>
+											{r.EstadoWorkflow ||
+												(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
+											{tomado && r.NombreToma ? ` · ${r.NombreToma}` : ''}
+										</td>
+										{canAtender ? (
+											<td onClick={(e) => e.stopPropagation()}>
+												<div className={styles.actions}>
+													{!cumplido && !tomado && (
+														<button
+															type="button"
+															className={styles.actionBtn}
+															disabled={busyId === id}
+															onClick={(ev) => void onTomar(r, ev)}
+														>
+															Tomar
+														</button>
+													)}
+													{!cumplido && tomado && esMia(r) && (
+														<>
+															<button
+																type="button"
+																className={styles.actionBtn}
+																disabled={busyId === id}
+																onClick={(ev) => {
+																	ev.stopPropagation();
+																	setCumplirRow(r);
+																	setRespuesta('');
+																}}
+															>
+																Responder
+															</button>
+															<button
+																type="button"
+																className={styles.actionBtnSecondary}
+																disabled={busyId === id}
+																onClick={(ev) => void onLiberar(r, ev)}
+															>
+																Liberar
+															</button>
+														</>
+													)}
+												</div>
+											</td>
+										) : null}
+									</tr>
+								);
+							})}
 						</tbody>
 					</table>
 				</div>
@@ -213,12 +439,55 @@ export default function InterconsultaSection({ numeroVisita }: Props) {
 
 			{selected && (
 				<PedidoDetalleModal
-					title={selected.Especialidad || selected.PracticaSolicitada || 'Interconsulta'}
+					title={
+						selected.ServicioDescripcion ||
+						selected.Especialidad ||
+						selected.PracticaSolicitada ||
+						'Interconsulta'
+					}
 					urgencia={selected.EstadoUrgencia}
 					fields={buildInterconsultaFields(selected)}
 					textBlocks={selectedTextBlocks}
 					onClose={() => setSelected(null)}
 				/>
+			)}
+
+			{cumplirRow && (
+				<div className={styles.modalOverlay} onClick={() => setCumplirRow(null)}>
+					<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+						<h3>Responder interconsulta</h3>
+						<p className={styles.meta}>
+							{cumplirRow.ServicioDescripcion || cumplirRow.Especialidad} · Visita{' '}
+							{cumplirRow.IdVisita}
+						</p>
+						<label className={styles.formLabel}>
+							Respuesta / informe
+							<textarea
+								value={respuesta}
+								onChange={(e) => setRespuesta(e.target.value)}
+								rows={6}
+								placeholder="Informe de la interconsulta…"
+							/>
+						</label>
+						<div className={styles.modalActions}>
+							<button
+								type="button"
+								className={styles.actionBtnSecondary}
+								onClick={() => setCumplirRow(null)}
+							>
+								Cancelar
+							</button>
+							<button
+								type="button"
+								className={styles.primaryBtn}
+								disabled={!respuesta.trim() || busyId === pedidoId(cumplirRow)}
+								onClick={() => void onCumplir()}
+							>
+								Guardar respuesta
+							</button>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);

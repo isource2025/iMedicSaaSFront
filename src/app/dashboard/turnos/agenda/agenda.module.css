@@ -612,3 +612,26 @@
 		transform: rotate(360deg);
 	}
 }
+
+.bandejaLinkRow {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 0.65rem;
+}
+
+.bandejaLink {
+	border: none;
+	background: transparent;
+	color: #0284c7;
+	font: inherit;
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	padding: 0;
+}
+
+.bandejaLink:hover {
+	color: #0369a1;
+}

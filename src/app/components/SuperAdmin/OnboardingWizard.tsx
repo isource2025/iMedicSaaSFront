@@ -170,17 +170,21 @@ export default function OnboardingWizard({
     return det;
   }, [empresa.id, onEmpresaActualizada]);
 
-  const run = async (fn: () => Promise<void>) => {
-    setGuardando(true);
-    try {
-      onError(null);
-      await fn();
-    } catch (e) {
-      onError(e instanceof Error ? e.message : 'Error en la operación');
-    } finally {
-      setGuardando(false);
-    }
-  };
+	const run = async (fn: () => Promise<void>) => {
+		setGuardando(true);
+		try {
+			onError(null);
+			await fn();
+		} catch (e) {
+			const ax = e as { response?: { data?: { mensaje?: string }; status?: number }; message?: string };
+			const msg =
+				ax.response?.data?.mensaje ||
+				(e instanceof Error ? e.message : 'Error en la operación');
+			onError(msg);
+		} finally {
+			setGuardando(false);
+		}
+	};
 
   const guardarDatos = () =>
     run(async () => {
@@ -406,12 +410,12 @@ export default function OnboardingWizard({
           throw new Error('Apellido y nombres son obligatorios');
         }
         await superAdminService.crearUsuarioEmpresa(Number(empresa.id), {
-          nombreRed: form.nombreRed,
+          nombreRed: form.nombreRed.trim(),
           password: form.password,
-          apellido: form.apellido,
-          nombres: form.nombres,
+          apellido: form.apellido.trim(),
+          nombres: form.nombres.trim(),
           numeroDocumento: form.numeroDocumento,
-          idRol: idRol ?? 0,
+          idRol: idRol && idRol > 0 ? idRol : undefined,
           sectores: form.sectores,
         });
       } else {

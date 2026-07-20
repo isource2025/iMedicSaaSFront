@@ -150,11 +150,16 @@ export const superAdminService = {
   },
 
   async crearUsuarioEmpresa(idEmpresa: number, body: CrearUsuarioEmpresaBody): Promise<EmpresaUsuario> {
-    const res = await apiService.post<{ success: boolean; data: EmpresaUsuario }>(
-      `${BASE}/empresas/${idEmpresa}/usuarios/nuevo`,
-      body,
-    );
-    return res.data.data;
+    try {
+      const res = await apiService.post<{ success: boolean; data: EmpresaUsuario; mensaje?: string }>(
+        `${BASE}/empresas/${idEmpresa}/usuarios/nuevo`,
+        body,
+      );
+      return res.data.data;
+    } catch (error) {
+      const ax = error as { response?: { data?: { mensaje?: string } }; message?: string };
+      throw new Error(ax.response?.data?.mensaje || ax.message || 'Error al crear usuario');
+    }
   },
 
   async actualizarUsuarioEmpresa(

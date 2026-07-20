@@ -18,11 +18,10 @@ import SlotTurnoMenu, { type SlotMenuAction } from '@/app/components/Agenda/Slot
 import AgendaEmptyState from '@/app/components/Agenda/AgendaEmptyState';
 import AgendaResumenPanel from '@/app/components/Agenda/AgendaResumenPanel';
 import AgendaPacienteBusqueda from '@/app/components/Agenda/AgendaPacienteBusqueda';
-import TurneroAgendaLink from '@/app/components/Turnero/TurneroAgendaLink';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
 import DetalleTurnoModal from '@/app/components/Agenda/DetalleTurnoModal';
-import AgendaPedidosEstudiosBandeja from '@/app/components/Agenda/AgendaPedidosEstudiosBandeja';
+import AgendaInterconsultasBandeja from '@/app/components/Agenda/AgendaInterconsultasBandeja';
 import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import {
 	AgendaTurnoTablaHead,
@@ -217,7 +216,7 @@ export default function AgendaPage() {
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
-	const [bandejaEstudiosOpen, setBandejaEstudiosOpen] = useState(false);
+	const [bandejaInterconsultasOpen, setBandejaInterconsultasOpen] = useState(false);
 	const [confirmDialog, setConfirmDialog] = useState<{
 		title: string;
 		message: string;
@@ -708,21 +707,20 @@ export default function AgendaPage() {
 												: 'Vista administrativa'}
 									</p>
 								</div>
-								<div className={styles.cardHeaderActions}>
-									<button
-										type="button"
-										className={styles.btnSecondary}
-										onClick={() => setBandejaEstudiosOpen(true)}
-									>
-										Pedidos de estudios
-									</button>
-									<TurneroAgendaLink />
-								</div>
 							</div>
 							<div className={styles.fechaSel}>📅 {formatFechaLarga(selectedDate)}</div>
 						</div>
 
 						<div className={styles.cardBody}>
+					<div className={styles.bandejaLinkRow}>
+						<button
+							type="button"
+							className={styles.bandejaLink}
+							onClick={() => setBandejaInterconsultasOpen(true)}
+						>
+							Interconsultas pendientes
+						</button>
+					</div>
 					<AgendaPacienteBusqueda />
 
 					{error && <div className={styles.error}>{error}</div>}
@@ -1218,16 +1216,11 @@ export default function AgendaPage() {
 				onClose={() => setDetalleTurnoId(null)}
 			/>
 
-			<AgendaPedidosEstudiosBandeja
-				open={bandejaEstudiosOpen}
-				onClose={() => setBandejaEstudiosOpen(false)}
-				sectorInicial={
-					profesionalAgenda?.sector ||
-					todosSlots.find((s) => s.sector)?.sector ||
-					null
-				}
+			<AgendaInterconsultasBandeja
+				open={bandejaInterconsultasOpen}
+				onClose={() => setBandejaInterconsultasOpen(false)}
+				sectorInicial="OFT"
 			/>
-
 			<AsignarTurnoModal
 				open={!!modalSlot && !!matriculaMedicoActiva && !fechaPasada}
 				modo={modalModo}

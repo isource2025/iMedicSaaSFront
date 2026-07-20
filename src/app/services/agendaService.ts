@@ -36,6 +36,12 @@ export interface CierrePedidoEstudioPayload {
 	estadoUrgencia?: 'Normal' | 'Urgente' | 'Medio';
 }
 
+export interface CierrePedidoInterconsultaPayload {
+	idSectorReceptor: string;
+	motivo: string;
+	estadoUrgencia?: 'Normal' | 'Urgente' | 'Medio';
+}
+
 export interface SectorReceptorEstudio {
 	valor: string;
 	descripcion: string;
@@ -61,6 +67,7 @@ export interface CierreTurnoPayload {
 	hci?: CierreHciPayload;
 	procedimientos?: CierreProcedimientoPayload[];
 	pedidosEstudios?: CierrePedidoEstudioPayload[];
+	pedidosInterconsultas?: CierrePedidoInterconsultaPayload[];
 }
 
 export interface CierreTurnoResult {

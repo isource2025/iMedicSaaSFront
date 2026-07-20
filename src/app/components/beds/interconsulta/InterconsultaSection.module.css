@@ -48,11 +48,125 @@
 	color: #334155;
 }
 .form input,
-.form textarea {
+.form textarea,
+.form select {
 	border: 1px solid #cbd5e1;
 	border-radius: 8px;
 	padding: 0.5rem 0.65rem;
 	font: inherit;
+	background: #fff;
+}
+.tabs {
+	display: flex;
+	gap: 0.35rem;
+	margin-bottom: 0.85rem;
+	flex-wrap: wrap;
+}
+.tab,
+.tabActive {
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #475569;
+	border-radius: 999px;
+	padding: 0.35rem 0.85rem;
+	font: inherit;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+.tabActive {
+	background: #e0f2fe;
+	border-color: #7dd3fc;
+	color: #0369a1;
+	font-weight: 600;
+}
+.bandejaSelect {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-bottom: 0.85rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #475569;
+	max-width: 22rem;
+}
+.bandejaSelect select {
+	font: inherit;
+	font-weight: 400;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	padding: 0.45rem 0.65rem;
+	background: #fff;
+}
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+.actionBtn,
+.actionBtnSecondary {
+	border-radius: 6px;
+	padding: 0.3rem 0.55rem;
+	font: inherit;
+	font-size: 0.78rem;
+	cursor: pointer;
+}
+.actionBtn {
+	background: #0083a9;
+	color: #fff;
+	border: 1px solid #0083a9;
+}
+.actionBtnSecondary {
+	background: #fff;
+	color: #475569;
+	border: 1px solid #cbd5e1;
+}
+.actionBtn:disabled,
+.actionBtnSecondary:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+.modalOverlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 80;
+	padding: 1rem;
+}
+.modalContent {
+	background: #fff;
+	border-radius: 12px;
+	padding: 1.25rem 1.35rem;
+	width: min(520px, 96vw);
+	box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+}
+.modalContent h3 {
+	margin: 0 0 0.35rem;
+	color: #0083a9;
+}
+.formLabel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin: 0.85rem 0;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #475569;
+}
+.formLabel textarea {
+	font: inherit;
+	font-weight: 400;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	padding: 0.55rem 0.7rem;
+	resize: vertical;
+}
+.modalActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
 }
 .tableWrap {
 	overflow-x: auto;

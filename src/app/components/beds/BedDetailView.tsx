@@ -165,7 +165,10 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							/>
 						</>
 					) : activeSection === 'interconsulta' ? (
-						<InterconsultaSection numeroVisita={bed?.NumeroVisita || null} />
+						<InterconsultaSection
+							numeroVisita={bed?.NumeroVisita || null}
+							sectorSolicitante={bed?.sector || null}
+						/>
 					) : activeSection === 'solicitudEstudios' ? (
 						<EstudiosSection
 							numeroVisita={bed?.NumeroVisita || null}

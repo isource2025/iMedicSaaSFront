@@ -74,7 +74,7 @@ interface Props {
 	onCerrado: () => void;
 }
 
-type WizardStep = 'rac' | 'hc' | 'estudios' | 'procedimientos' | 'adjuntos';
+type WizardStep = 'rac' | 'hc' | 'estudios' | 'interconsultas' | 'procedimientos' | 'adjuntos';
 
 interface ProcedimientoItem {
 	key: string;
@@ -89,6 +89,13 @@ interface PedidoEstudioItem {
 	idSectorReceptor: string;
 }
 
+interface PedidoInterconsultaItem {
+	key: string;
+	idSectorReceptor: string;
+	motivo: string;
+	estadoUrgencia: 'Normal' | 'Urgente' | 'Medio';
+}
+
 let itemKeySeq = 0;
 function nextItemKey() {
 	itemKeySeq += 1;
@@ -100,6 +107,7 @@ const STEPS: { id: WizardStep; label: string; short: string }[] = [
 	{ id: 'hc', label: 'Historia clínica', short: 'HC' },
 	{ id: 'procedimientos', label: 'Procedimientos', short: 'Proc.' },
 	{ id: 'estudios', label: 'Solicitud de Estudios', short: 'Estudios' },
+	{ id: 'interconsultas', label: 'Interconsultas', short: 'Interc.' },
 	{ id: 'adjuntos', label: 'Adjuntos', short: 'Adj.' },
 ];
 
@@ -128,6 +136,10 @@ export default function AtencionTurnoModal({
 
 	const [procedimientos, setProcedimientos] = useState<ProcedimientoItem[]>([]);
 	const [pedidosEstudios, setPedidosEstudios] = useState<PedidoEstudioItem[]>([]);
+	const [pedidosInterconsultas, setPedidosInterconsultas] = useState<PedidoInterconsultaItem[]>([]);
+	const [icDestinoDraft, setIcDestinoDraft] = useState('');
+	const [icMotivoDraft, setIcMotivoDraft] = useState('');
+	const [icUrgenciaDraft, setIcUrgenciaDraft] = useState<'Normal' | 'Urgente' | 'Medio'>('Normal');
 	const [sectoresReceptor, setSectoresReceptor] = useState<SectorReceptorEstudio[]>([]);
 	const [loadingSectores, setLoadingSectores] = useState(false);
 
@@ -135,6 +147,7 @@ export default function AtencionTurnoModal({
 		rac: false,
 		hc: false,
 		estudios: false,
+		interconsultas: false,
 		procedimientos: false,
 		adjuntos: false,
 	});
@@ -179,11 +192,16 @@ export default function AtencionTurnoModal({
 		setDiagSel(null);
 		setProcedimientos([]);
 		setPedidosEstudios([]);
+		setPedidosInterconsultas([]);
+		setIcDestinoDraft('');
+		setIcMotivoDraft('');
+		setIcUrgenciaDraft('Normal');
 		setError(null);
 		setVisited({
 			rac: false,
 			hc: false,
 			estudios: false,
+			interconsultas: false,
 			procedimientos: false,
 			adjuntos: false,
 		});
@@ -277,6 +295,9 @@ export default function AtencionTurnoModal({
 	}, [pedidosEstudios, sectoresReceptor, loadingSectores]);
 
 	const pedidosEstudiosIncompletos = pedidosEstudios.some((p) => !p.idSectorReceptor.trim());
+	const pedidosInterconsultasIncompletos = pedidosInterconsultas.some(
+		(p) => !p.idSectorReceptor.trim() || !p.motivo.trim(),
+	);
 
 	const stepComplete = useMemo(() => {
 		const hcOk =
@@ -287,10 +308,18 @@ export default function AtencionTurnoModal({
 			rac: visited.rac,
 			hc: hcOk,
 			estudios: visited.estudios && !pedidosEstudiosIncompletos,
+			interconsultas: visited.interconsultas && !pedidosInterconsultasIncompletos,
 			procedimientos: visited.procedimientos,
 			adjuntos: visited.adjuntos,
 		};
-	}, [visited, motivo, enfermedadActual, diagSel, pedidosEstudiosIncompletos]);
+	}, [
+		visited,
+		motivo,
+		enfermedadActual,
+		diagSel,
+		pedidosEstudiosIncompletos,
+		pedidosInterconsultasIncompletos,
+	]);
 
 	const guardNav = useCallback(
 		(action: () => void, message = 'Hay un archivo subiéndose. Si continúa, la carga se interrumpirá.') => {
@@ -353,6 +382,11 @@ export default function AtencionTurnoModal({
 					notas: p.notas.trim() || undefined,
 					estadoUrgencia: p.estadoUrgencia,
 				})),
+				pedidosInterconsultas: pedidosInterconsultas.map((p) => ({
+					idSectorReceptor: p.idSectorReceptor.trim(),
+					motivo: p.motivo.trim(),
+					estadoUrgencia: p.estadoUrgencia,
+				})),
 			});
 			onCerrado();
 			onClose();
@@ -379,6 +413,11 @@ export default function AtencionTurnoModal({
 			errs.push({
 				step: 'estudios',
 				label: 'Sector receptor en la solicitud de estudios',
+			});
+		if (pedidosInterconsultasIncompletos)
+			errs.push({
+				step: 'interconsultas',
+				label: 'Servicio destino y motivo en interconsultas',
 			});
 		return errs;
 	};
@@ -705,6 +744,116 @@ export default function AtencionTurnoModal({
 									Seleccione el sector receptor de cada pedido de estudio.
 								</p>
 							) : null}
+						</div>
+					) : null}
+
+					{step === 'interconsultas' ? (
+						<div className={styles.hcForm}>
+							<p className={styles.sectionHint}>
+								Solicite interconsultas a un servicio destino (ej. Oftalmología). Se
+								registran al cerrar el turno (tipo 33) y aparecen en la bandeja del
+								servicio receptor.
+							</p>
+							<div className={styles.field}>
+								<label htmlFor='ic-destino'>Servicio destino</label>
+								<select
+									id='ic-destino'
+									value={icDestinoDraft}
+									onChange={(e) => setIcDestinoDraft(e.target.value)}
+									disabled={loadingSectores}
+								>
+									<option value=''>Seleccione…</option>
+									{sectoresReceptor.map((s) => (
+										<option key={s.valor} value={s.valor}>
+											{s.descripcion} ({s.valor})
+										</option>
+									))}
+								</select>
+							</div>
+							<div className={styles.field}>
+								<label htmlFor='ic-urg'>Urgencia</label>
+								<select
+									id='ic-urg'
+									value={icUrgenciaDraft}
+									onChange={(e) =>
+										setIcUrgenciaDraft(e.target.value as PedidoInterconsultaItem['estadoUrgencia'])
+									}
+								>
+									{URGENCIA_OPCIONES.map((o) => (
+										<option key={o.value} value={o.value}>
+											{o.label}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className={styles.field}>
+								<label htmlFor='ic-motivo'>Motivo</label>
+								<textarea
+									id='ic-motivo'
+									rows={3}
+									value={icMotivoDraft}
+									onChange={(e) => setIcMotivoDraft(e.target.value)}
+									placeholder='Motivo de la interconsulta…'
+								/>
+							</div>
+							<button
+								type='button'
+								className={styles.btnPrimary}
+								disabled={!icDestinoDraft.trim() || !icMotivoDraft.trim()}
+								onClick={() => {
+									setPedidosInterconsultas((prev) => [
+										...prev,
+										{
+											key: nextItemKey(),
+											idSectorReceptor: icDestinoDraft.trim(),
+											motivo: icMotivoDraft.trim(),
+											estadoUrgencia: icUrgenciaDraft,
+										},
+									]);
+									setIcMotivoDraft('');
+									setIcDestinoDraft('');
+									setIcUrgenciaDraft('Normal');
+								}}
+							>
+								Agregar interconsulta
+							</button>
+							{pedidosInterconsultas.length > 0 ? (
+								<div className={styles.itemList}>
+									{pedidosInterconsultas.map((p) => {
+										const dest = sectoresReceptor.find((s) => s.valor === p.idSectorReceptor);
+										return (
+											<article key={p.key} className={styles.itemCard}>
+												<div className={styles.itemCardHeader}>
+													<div>
+														<p className={styles.itemCardTitle}>
+															{dest?.descripcion || p.idSectorReceptor}
+														</p>
+														<p className={styles.itemCardMeta}>
+															{p.estadoUrgencia} · {p.motivo.slice(0, 80)}
+															{p.motivo.length > 80 ? '…' : ''}
+														</p>
+													</div>
+													<button
+														type='button'
+														className={styles.linkBtn}
+														onClick={() =>
+															setPedidosInterconsultas((prev) =>
+																prev.filter((x) => x.key !== p.key),
+															)
+														}
+													>
+														Quitar
+													</button>
+												</div>
+											</article>
+										);
+									})}
+								</div>
+							) : (
+								<p className={styles.empty}>
+									Sin interconsultas. Este paso es opcional.
+								</p>
+							)}
 						</div>
 					) : null}
 
