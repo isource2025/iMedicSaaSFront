@@ -47,10 +47,10 @@ const AddPredefinedOption: React.FC<AddPredefinedOptionProps> = ({
         className={styles.createButton}
       >
         <IoAdd size={20} />
-        Añadir opción "{optionType === 'dador-organos' ? 'Dadores de Órganos' : 
+        Añadir opción &quot;{optionType === 'dador-organos' ? 'Dadores de Órganos' : 
                         optionType === 'diagnosticos' ? 'Diagnósticos' : 
                         optionType === 'disposicion-egreso' ? 'Disposición de Egreso' : 
-                        optionType === 'estado-ambulatorio' ? 'Estado Ambulatorio' : ''}"
+                        optionType === 'estado-ambulatorio' ? 'Estado Ambulatorio' : ''}&quot;
       </button>
     </div>
   );

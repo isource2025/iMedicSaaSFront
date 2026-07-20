@@ -151,7 +151,7 @@ export default function LabResultsSection({ numeroVisita }: LabResultsSectionPro
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>🧪</div>
           <h3>No hay estudios de laboratorio</h3>
-          <p>Cargue un nuevo estudio haciendo clic en el botón "Cargar Laboratorio"</p>
+          <p>Cargue un nuevo estudio haciendo clic en el botón &quot;Cargar Laboratorio&quot;</p>
         </div>
       ) : activeTab === 'analisis' ? (
         <LabAnalysisView examenes={examenes} />

@@ -577,7 +577,7 @@ export default function OnboardingWizard({
     setSectoresSel(next);
   };
 
-  const usuarios = empresa.usuarios || [];
+  const usuarios = useMemo(() => empresa.usuarios || [], [empresa.usuarios]);
 
   const sectoresFiltrados = useMemo(() => {
     const q = busquedaSectores.trim().toLowerCase();

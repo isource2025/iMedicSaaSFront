@@ -97,8 +97,7 @@ function Collapse({
 		node.style.height = `${h}px`;
 		node.style.opacity = '1';
 		// reflow
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		node.offsetHeight;
+		void node.offsetHeight;
 	};
 
 	const onExiting = () => {

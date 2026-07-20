@@ -17,15 +17,15 @@ export function startSessionActivityMonitor() {
   const ping = () => {
     if (!localStorage.getItem('token')) return;
     if (pingInFlight) return;
-    pingInFlight = apiService
-      .get('/auth/me')
-      .then(() => undefined)
-      .catch(() => {
+    pingInFlight = (async () => {
+      try {
+        await apiService.get('/auth/me');
+      } catch {
         /* 401: el interceptor limpia y redirige al login */
-      })
-      .finally(() => {
+      } finally {
         pingInFlight = null;
-      });
+      }
+    })();
   };
 
   const events = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;

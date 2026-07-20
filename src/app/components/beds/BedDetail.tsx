@@ -63,6 +63,10 @@ const BedDetail = ({
   const handleViewAllIndicaciones = () => {
     setShowAllIndicaciones(!showAllIndicaciones);
   };
+
+  const { meds, studies, loading: loadingRelated, error: errorRelated } = useBedRelatedData(
+    selectedBed?.numeroVisita ?? null,
+  );
   
   if (!selectedBed) {
     return (
@@ -102,9 +106,6 @@ const BedDetail = ({
     const estado = bedStates.find(s => s.valor === estadoValue);
     return estado ? estado.descripcion : estadoValue;
   };
-
-  // Datos relacionados (medicación y estudios) por número de visita
-  const { meds, studies, loading: loadingRelated, error: errorRelated } = useBedRelatedData(selectedBed.numeroVisita ?? null);
 
   return (
     <div className={styles.container}>

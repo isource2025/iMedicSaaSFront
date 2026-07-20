@@ -168,7 +168,7 @@ export interface CrearUsuarioEmpresaBody {
   numeroDocumento?: string;
   legajo?: string;
   codOperador?: string;
-  idRol: number;
+  idRol?: number;
   sectores?: string[];
 }
 

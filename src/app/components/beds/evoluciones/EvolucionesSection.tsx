@@ -119,8 +119,6 @@ export default function EvolucionesSection({
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    if (activeSection !== "evoluciones") return null;
-
     // Filtrado por especialidad y texto
     const rows = useMemo(() => {
         let filtered = baseRows;
@@ -150,6 +148,8 @@ export default function EvolucionesSection({
         
         return filtered;
     }, [baseRows, query, especialidadFilter]);
+
+    if (activeSection !== "evoluciones") return null;
 
     const onAddEvolucion = () => {
         setModalOpen(true);

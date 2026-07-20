@@ -150,8 +150,6 @@ export default function IndicacionesSection({
     const [selectedForReindicar, setSelectedForReindicar] = useState<Set<string>>(new Set());
     const [reindicando, setReindicando] = useState(false);
 
-    if (activeSection !== "indicaciones") return null;
-    
     // Handlers para modo reindicar
     const handleToggleReindicar = (id: string) => {
         setSelectedForReindicar(prev => {
@@ -280,6 +278,8 @@ export default function IndicacionesSection({
             );
         });
     }, [baseRows, query]);
+
+    if (activeSection !== "indicaciones") return null;
 
     const tableMaxHeight = "calc(100vh - 15rem)";
 

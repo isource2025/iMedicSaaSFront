@@ -255,7 +255,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 		return (
 			<div className={styles.warning}>
 				Para configurar la agenda, este profesional debe tener cargada la
-				<strong> Matrícula Provincial</strong> en la solapa "Datos Profesionales".
+				<strong> Matrícula Provincial</strong> en la solapa &quot;Datos Profesionales&quot;.
 			</div>
 		);
 	}
