@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import estudiosService from '@/app/services/estudiosService';
 import {
@@ -42,7 +42,7 @@ function fingerprintIc(rows: InterconsultaRow[]) {
 		.join('|');
 }
 
-export default function BandejaPedidosPage() {
+function BandejaPedidosContent() {
 	const searchParams = useSearchParams();
 	const usuario = useUsuarioActual();
 	const { sectorSeleccionado } = useAppContext();
@@ -229,7 +229,7 @@ export default function BandejaPedidosPage() {
 		}
 	};
 
-	const cumplirIc = async () => {
+	const confirmarCumplirIc = async () => {
 		if (!cumplirIc || !respuestaIc.trim()) return;
 		const id = icId(cumplirIc);
 		setBusyId(id);
@@ -591,7 +591,7 @@ export default function BandejaPedidosPage() {
 								type="button"
 								className={styles.btnPrimary}
 								disabled={!respuestaIc.trim() || busyId === icId(cumplirIc)}
-								onClick={() => void cumplirIc()}
+								onClick={() => void confirmarCumplirIc()}
 							>
 								Enviar
 							</button>
@@ -600,5 +600,19 @@ export default function BandejaPedidosPage() {
 				</div>
 			) : null}
 		</div>
+	);
+}
+
+export default function BandejaPedidosPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className={styles.page}>
+					<p className={styles.empty}>Cargando bandeja…</p>
+				</div>
+			}
+		>
+			<BandejaPedidosContent />
+		</Suspense>
 	);
 }

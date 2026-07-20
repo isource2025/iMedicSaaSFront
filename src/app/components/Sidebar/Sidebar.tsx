@@ -327,18 +327,22 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const pathBase = (p: string) => p.split('?')[0]
 
   const getActiveModuleId = (): string | null => {
-    let best: { id: string; len: number } | null = null
+    let bestId: string | null = null
+    let bestLen = -1
     const consider = (id: string, base: string) => {
       if (!base) return
       if (pathname === base || pathname.startsWith(base + '/')) {
-        if (!best || base.length > best.len) best = { id, len: base.length }
+        if (base.length > bestLen) {
+          bestLen = base.length
+          bestId = id
+        }
       }
     }
     for (const item of visibleMenu) {
       if (item.path) consider(item.id, pathBase(item.path))
       for (const sub of item.subItems) consider(item.id, pathBase(sub.path))
     }
-    return best?.id ?? null
+    return bestId
   }
 
   const activeModuleId = getActiveModuleId()
@@ -401,7 +405,9 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
     if (typeof window === 'undefined') return pathname === base
     const want = new URLSearchParams(q)
     const have = new URLSearchParams(window.location.search)
-    for (const [k, v] of want.entries()) {
+    const pairs = Array.from(want.entries())
+    for (let i = 0; i < pairs.length; i++) {
+      const [k, v] = pairs[i]
       if (have.get(k) !== v) return false
     }
     return true

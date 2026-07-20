@@ -60,6 +60,7 @@ export type VisitDetailPayload = {
     PracticaDescripcion?: string;
     idProtocolo?: number | null;
     estadoUrgencia?: string;
+    EstadoUrgencia?: string;
     resultadoEstudio?: string;
     ResultadoEstudio?: string;
     nroProtocolo?: string;
@@ -67,6 +68,10 @@ export type VisitDetailPayload = {
     estadoResultado?: string;
     fechaResultado?: string | null;
     cantidadAdjuntos?: number;
+    medicoSolicitanteNombre?: string;
+    MedicoSolicitanteNombre?: string;
+    realizadorNombre?: string;
+    RealizadorNombre?: string;
   }>;
   /** Protocolos clínicos HCProtocolosPtes */
   protocolos?: Array<{

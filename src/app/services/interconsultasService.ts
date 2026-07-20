@@ -21,6 +21,7 @@ export type InterconsultaRow = {
 	MedicoSolicitante?: number;
 	MedicoSolicitanteNombre?: string;
 	Motivo: string;
+	NotasObservacion?: string;
 	Estado: string;
 	EstadoUrgencia?: string;
 	Respuesta?: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
 	agendaService,
@@ -108,7 +108,7 @@ function descEspecialidadCatalogo(
 	return catalogo.find((e) => e.valor === valor)?.descripcion?.trim() || undefined;
 }
 
-export default function AgendaPage() {
+function AgendaPageContent() {
 	const { rol, puedeSubmodulo, puede } = usePermiso();
 	const esMedico = String(rol?.nombre ?? '')
 		.trim()
@@ -1236,5 +1236,19 @@ export default function AgendaPage() {
 				onAssigned={refrescarAgenda}
 			/>
 		</div>
+	);
+}
+
+export default function AgendaPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className={styles.page}>
+					<div className={styles.loading}>Cargando agenda…</div>
+				</div>
+			}
+		>
+			<AgendaPageContent />
+		</Suspense>
 	);
 }
