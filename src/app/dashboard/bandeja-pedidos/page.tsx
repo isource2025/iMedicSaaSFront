@@ -58,11 +58,8 @@ function BandejaPedidosContent() {
 	const [estudios, setEstudios] = useState<PedidoEstudio[]>([]);
 	const [interconsultas, setInterconsultas] = useState<InterconsultaRow[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [refreshing, setRefreshing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [busyId, setBusyId] = useState<number | null>(null);
-	const [live, setLive] = useState(true);
-	const [lastTick, setLastTick] = useState<Date | null>(null);
 
 	const [selectedEstudio, setSelectedEstudio] = useState<PedidoEstudio | null>(null);
 	const [cumplirEstudio, setCumplirEstudio] = useState<PedidoEstudio | null>(null);
@@ -97,50 +94,44 @@ function BandejaPedidosContent() {
 		});
 	}, [searchParams, sectorSeleccionado]);
 
-	const load = useCallback(
-		async (opts?: { silent?: boolean }) => {
-			const sec = sectorRef.current.trim();
-			const currentTab = tabRef.current;
-			if (!sec) {
+	const load = useCallback(async (opts?: { silent?: boolean }) => {
+		const sec = sectorRef.current.trim();
+		const currentTab = tabRef.current;
+		if (!sec) {
+			setEstudios([]);
+			setInterconsultas([]);
+			setLoading(false);
+			return;
+		}
+		const silent = Boolean(opts?.silent);
+		if (!silent) setLoading(true);
+		setError(null);
+		try {
+			if (currentTab === 'estudios') {
+				const rows = await estudiosService.listarPendientes(sec);
+				const fp = fingerprintEstudios(rows);
+				if (fp !== fpRef.current || !silent) {
+					fpRef.current = fp;
+					setEstudios(rows);
+				}
+			} else {
+				const rows = await interconsultasService.listarPendientes(sec);
+				const fp = fingerprintIc(rows);
+				if (fp !== fpRef.current || !silent) {
+					fpRef.current = fp;
+					setInterconsultas(rows);
+				}
+			}
+		} catch (e) {
+			if (!silent) {
+				setError(e instanceof Error ? e.message : 'Error al cargar la bandeja');
 				setEstudios([]);
 				setInterconsultas([]);
-				setLoading(false);
-				return;
 			}
-			const silent = Boolean(opts?.silent);
-			if (!silent) setLoading(true);
-			else setRefreshing(true);
-			setError(null);
-			try {
-				if (currentTab === 'estudios') {
-					const rows = await estudiosService.listarPendientes(sec);
-					const fp = fingerprintEstudios(rows);
-					if (fp !== fpRef.current || !silent) {
-						fpRef.current = fp;
-						setEstudios(rows);
-					}
-				} else {
-					const rows = await interconsultasService.listarPendientes(sec);
-					const fp = fingerprintIc(rows);
-					if (fp !== fpRef.current || !silent) {
-						fpRef.current = fp;
-						setInterconsultas(rows);
-					}
-				}
-				setLastTick(new Date());
-			} catch (e) {
-				if (!silent) {
-					setError(e instanceof Error ? e.message : 'Error al cargar la bandeja');
-					setEstudios([]);
-					setInterconsultas([]);
-				}
-			} finally {
-				setLoading(false);
-				setRefreshing(false);
-			}
-		},
-		[],
-	);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
 	useEffect(() => {
 		fpRef.current = '';
@@ -148,7 +139,7 @@ function BandejaPedidosContent() {
 	}, [sector, tab, load]);
 
 	useEffect(() => {
-		if (!live || !sector.trim()) return;
+		if (!sector.trim()) return;
 		const id = window.setInterval(() => {
 			if (document.visibilityState !== 'visible') return;
 			void load({ silent: true });
@@ -161,7 +152,7 @@ function BandejaPedidosContent() {
 			window.clearInterval(id);
 			document.removeEventListener('visibilitychange', onVis);
 		};
-	}, [live, sector, tab, load]);
+	}, [sector, tab, load]);
 
 	const esMioEstudio = (r: PedidoEstudio) =>
 		matriculaSesion != null &&
@@ -251,38 +242,41 @@ function BandejaPedidosContent() {
 		tab === 'estudios'
 			? rowsEstudio.filter((r) => !r.Tomado).length
 			: rowsIc.filter((r) => !r.Tomado).length;
+	const mios =
+		tab === 'estudios'
+			? rowsEstudio.filter((r) => esMioEstudio(r)).length
+			: rowsIc.filter((r) => esMioIc(r)).length;
+	const total = tab === 'estudios' ? rowsEstudio.length : rowsIc.length;
 
 	return (
 		<div className={styles.page}>
-			<header className={styles.header}>
-				<div>
-					<h1 className={styles.title}>Bandeja de pedidos</h1>
+			<header className={styles.hero}>
+				<div className={styles.heroText}>
+					<p className={styles.eyebrow}>Recepción de pedidos</p>
+					<h1 className={styles.title}>Bandeja</h1>
 					<p className={styles.subtitle}>
-						Solicitudes de estudios e interconsultas para tu servicio. Un pedido solo puede
-						aceptarlo una persona; la lista se actualiza sola.
+						Estudios e interconsultas de tu servicio. Un pedido, una persona.
 					</p>
 				</div>
-				<div className={styles.liveBox}>
-					<span className={`${styles.liveDot} ${live ? styles.liveOn : styles.liveOff}`} />
-					<label className={styles.liveLabel}>
-						<input
-							type="checkbox"
-							checked={live}
-							onChange={(e) => setLive(e.target.checked)}
-						/>
-						Escucha en vivo
-					</label>
-					{lastTick ? (
-						<span className={styles.liveMeta}>
-							{refreshing ? 'Actualizando…' : `Act. ${lastTick.toLocaleTimeString('es-AR')}`}
-						</span>
-					) : null}
+				<div className={styles.stats}>
+					<div className={`${styles.stat} ${styles.statLibre}`}>
+						<span className={styles.statValue}>{libres}</span>
+						<span className={styles.statLabel}>Libres</span>
+					</div>
+					<div className={`${styles.stat} ${styles.statMio}`}>
+						<span className={styles.statValue}>{mios}</span>
+						<span className={styles.statLabel}>Tuyos</span>
+					</div>
+					<div className={styles.stat}>
+						<span className={styles.statValue}>{total}</span>
+						<span className={styles.statLabel}>Total</span>
+					</div>
 				</div>
 			</header>
 
 			<div className={styles.toolbar}>
 				<label className={styles.field}>
-					<span>Servicio receptor</span>
+					<span>Servicio</span>
 					<select
 						className={styles.select}
 						value={sector}
@@ -326,205 +320,173 @@ function BandejaPedidosContent() {
 				</button>
 			</div>
 
-			<p className={styles.metaLine}>
-				{sector
-					? `${libres} libre(s) · ${tab === 'estudios' ? rowsEstudio.length : rowsIc.length} pendiente(s)`
-					: 'Elegí el servicio para ver pedidos'}
-			</p>
-
 			{error ? <div className={styles.error}>{error}</div> : null}
 
 			{loading ? (
-				<p className={styles.empty}>Cargando bandeja…</p>
+				<p className={styles.empty}>Cargando…</p>
 			) : tab === 'estudios' ? (
 				rowsEstudio.length === 0 ? (
-					<p className={styles.empty}>No hay estudios pendientes para este servicio.</p>
+					<div className={styles.emptyCard}>
+						<p className={styles.emptyTitle}>Sin estudios pendientes</p>
+						<p className={styles.emptyHint}>Cuando llegue un pedido para este servicio, aparece acá.</p>
+					</div>
 				) : (
-					<div className={styles.tableWrap}>
-						<table className={styles.table}>
-							<thead>
-								<tr>
-									<th>Estado</th>
-									<th>Fecha</th>
-									<th>Visita</th>
-									<th>Estudio</th>
-									<th>Solicitante</th>
-									<th>Urgencia</th>
-									<th>Acción</th>
-								</tr>
-							</thead>
-							<tbody>
-								{rowsEstudio.map((r) => (
-									<tr
-										key={r.IdPedido}
-										className={
-											r.Tomado && !esMioEstudio(r) ? styles.rowTaken : undefined
+					<ul className={styles.cardList}>
+						{rowsEstudio.map((r) => (
+							<li
+								key={r.IdPedido}
+								className={`${styles.card} ${r.Tomado && !esMioEstudio(r) ? styles.cardTaken : ''} ${esMioEstudio(r) ? styles.cardMine : ''} ${!r.Tomado ? styles.cardLibre : ''}`}
+							>
+								<div className={styles.cardMain}>
+									<div className={styles.cardTop}>
+										{!r.Tomado ? (
+											<span className={styles.badgeLibre}>Libre</span>
+										) : esMioEstudio(r) ? (
+											<span className={styles.badgeMio}>Aceptado por vos</span>
+										) : (
+											<span className={styles.badgeOtro}>
+												Aceptado · {r.NombreToma || 'otro'}
+											</span>
+										)}
+										{r.EstadoUrgencia ? (
+											<span className={styles.urgencia}>{r.EstadoUrgencia}</span>
+										) : null}
+									</div>
+									<button
+										type="button"
+										className={styles.cardTitleBtn}
+										onClick={() =>
+											void estudiosService
+												.obtenerPorId(r.IdPedido)
+												.then((d) => setSelectedEstudio(d || r))
 										}
 									>
-										<td>
-											{!r.Tomado ? (
-												<span className={styles.badgeLibre}>Libre</span>
-											) : esMioEstudio(r) ? (
-												<span className={styles.badgeMio}>Aceptado por vos</span>
-											) : (
-												<span className={styles.badgeOtro}>
-													Aceptado · {r.NombreToma || 'otro'}
-												</span>
-											)}
-										</td>
-										<td>{formatFechaEstudio(r)}</td>
-										<td>{r.IdVisita}</td>
-										<td>
+										{r.PracticaSolicitada || `Pedido #${r.IdPedido}`}
+									</button>
+									<p className={styles.cardMeta}>
+										Visita {r.IdVisita}
+										{formatFechaEstudio(r) ? ` · ${formatFechaEstudio(r)}` : ''}
+										{r.MedicoSolicitanteNombre
+											? ` · ${r.MedicoSolicitanteNombre}`
+											: ''}
+									</p>
+								</div>
+								<div className={styles.cardActions}>
+									{!r.Tomado ? (
+										<button
+											type="button"
+											className={styles.btnPrimary}
+											disabled={busyId === r.IdPedido}
+											onClick={() => void aceptarEstudio(r)}
+										>
+											Aceptar
+										</button>
+									) : null}
+									{r.Tomado && esMioEstudio(r) ? (
+										<>
 											<button
 												type="button"
-												className={styles.linkBtn}
-												onClick={() =>
-													void estudiosService
-														.obtenerPorId(r.IdPedido)
-														.then((d) => setSelectedEstudio(d || r))
-												}
+												className={styles.btnPrimary}
+												disabled={busyId === r.IdPedido}
+												onClick={() => setCumplirEstudio(r)}
 											>
-												<div className={styles.practica}>{r.PracticaSolicitada}</div>
-												<div className={styles.hint}>Cód. {r.CodigoPractica}</div>
+												Completar
 											</button>
-										</td>
-										<td>{r.MedicoSolicitanteNombre || '—'}</td>
-										<td>{r.EstadoUrgencia || '—'}</td>
-										<td>
-											<div className={styles.actions}>
-												{!r.Tomado ? (
-													<button
-														type="button"
-														className={styles.btnPrimary}
-														disabled={busyId === r.IdPedido}
-														onClick={() => void aceptarEstudio(r)}
-													>
-														Aceptar
-													</button>
-												) : null}
-												{r.Tomado && esMioEstudio(r) ? (
-													<>
-														<button
-															type="button"
-															className={styles.btnPrimary}
-															disabled={busyId === r.IdPedido}
-															onClick={() => setCumplirEstudio(r)}
-														>
-															Cumplir
-														</button>
-														<button
-															type="button"
-															className={styles.btnSecondary}
-															disabled={busyId === r.IdPedido}
-															onClick={() => void liberarEstudio(r)}
-														>
-															Liberar
-														</button>
-													</>
-												) : null}
-												{r.Tomado && !esMioEstudio(r) ? (
-													<span className={styles.hint}>No disponible</span>
-												) : null}
-											</div>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+											<button
+												type="button"
+												className={styles.btnSecondary}
+												disabled={busyId === r.IdPedido}
+												onClick={() => void liberarEstudio(r)}
+											>
+												Liberar
+											</button>
+										</>
+									) : null}
+								</div>
+							</li>
+						))}
+					</ul>
 				)
 			) : rowsIc.length === 0 ? (
-				<p className={styles.empty}>No hay interconsultas pendientes para este servicio.</p>
+				<div className={styles.emptyCard}>
+					<p className={styles.emptyTitle}>Sin interconsultas pendientes</p>
+					<p className={styles.emptyHint}>Cuando llegue una solicitud para este servicio, aparece acá.</p>
+				</div>
 			) : (
-				<div className={styles.tableWrap}>
-					<table className={styles.table}>
-						<thead>
-							<tr>
-								<th>Estado</th>
-								<th>Fecha</th>
-								<th>Visita</th>
-								<th>Motivo</th>
-								<th>Solicitante</th>
-								<th>Acción</th>
-							</tr>
-						</thead>
-						<tbody>
-							{rowsIc.map((r) => {
-								const id = icId(r);
-								return (
-									<tr
-										key={id}
-										className={r.Tomado && !esMioIc(r) ? styles.rowTaken : undefined}
+				<ul className={styles.cardList}>
+					{rowsIc.map((r) => {
+						const id = icId(r);
+						return (
+							<li
+								key={id}
+								className={`${styles.card} ${r.Tomado && !esMioIc(r) ? styles.cardTaken : ''} ${esMioIc(r) ? styles.cardMine : ''} ${!r.Tomado ? styles.cardLibre : ''}`}
+							>
+								<div className={styles.cardMain}>
+									<div className={styles.cardTop}>
+										{!r.Tomado ? (
+											<span className={styles.badgeLibre}>Libre</span>
+										) : esMioIc(r) ? (
+											<span className={styles.badgeMio}>Aceptado por vos</span>
+										) : (
+											<span className={styles.badgeOtro}>
+												Aceptado · {r.NombreToma || 'otro'}
+											</span>
+										)}
+									</div>
+									<button
+										type="button"
+										className={styles.cardTitleBtn}
+										onClick={() => setSelectedIc(r)}
 									>
-										<td>
-											{!r.Tomado ? (
-												<span className={styles.badgeLibre}>Libre</span>
-											) : esMioIc(r) ? (
-												<span className={styles.badgeMio}>Aceptado por vos</span>
-											) : (
-												<span className={styles.badgeOtro}>
-													Aceptado · {r.NombreToma || 'otro'}
-												</span>
-											)}
-										</td>
-										<td>{formatFechaIc(r)}</td>
-										<td>{r.IdVisita || '—'}</td>
-										<td>
+										{(r.Motivo || r.NotasObservacion || 'Interconsulta').slice(0, 140)}
+									</button>
+									<p className={styles.cardMeta}>
+										Visita {r.IdVisita || '—'}
+										{formatFechaIc(r) ? ` · ${formatFechaIc(r)}` : ''}
+										{r.MedicoSolicitanteNombre
+											? ` · ${r.MedicoSolicitanteNombre}`
+											: ''}
+									</p>
+								</div>
+								<div className={styles.cardActions}>
+									{!r.Tomado ? (
+										<button
+											type="button"
+											className={styles.btnPrimary}
+											disabled={busyId === id}
+											onClick={() => void aceptarIc(r)}
+										>
+											Aceptar
+										</button>
+									) : null}
+									{r.Tomado && esMioIc(r) ? (
+										<>
 											<button
 												type="button"
-												className={styles.linkBtn}
-												onClick={() => setSelectedIc(r)}
+												className={styles.btnPrimary}
+												disabled={busyId === id}
+												onClick={() => {
+													setCumplirIc(r);
+													setRespuestaIc('');
+												}}
 											>
-												{(r.Motivo || r.NotasObservacion || 'Interconsulta').slice(0, 120)}
+												Responder
 											</button>
-										</td>
-										<td>{r.MedicoSolicitanteNombre || '—'}</td>
-										<td>
-											<div className={styles.actions}>
-												{!r.Tomado ? (
-													<button
-														type="button"
-														className={styles.btnPrimary}
-														disabled={busyId === id}
-														onClick={() => void aceptarIc(r)}
-													>
-														Aceptar
-													</button>
-												) : null}
-												{r.Tomado && esMioIc(r) ? (
-													<>
-														<button
-															type="button"
-															className={styles.btnPrimary}
-															disabled={busyId === id}
-															onClick={() => {
-																setCumplirIc(r);
-																setRespuestaIc('');
-															}}
-														>
-															Responder
-														</button>
-														<button
-															type="button"
-															className={styles.btnSecondary}
-															disabled={busyId === id}
-															onClick={() => void liberarIc(r)}
-														>
-															Liberar
-														</button>
-													</>
-												) : null}
-												{r.Tomado && !esMioIc(r) ? (
-													<span className={styles.hint}>No disponible</span>
-												) : null}
-											</div>
-										</td>
-									</tr>
-								);
-							})}
-						</tbody>
-					</table>
-				</div>
+											<button
+												type="button"
+												className={styles.btnSecondary}
+												disabled={busyId === id}
+												onClick={() => void liberarIc(r)}
+											>
+												Liberar
+											</button>
+										</>
+									) : null}
+								</div>
+							</li>
+						);
+					})}
+				</ul>
 			)}
 
 			{selectedEstudio ? (

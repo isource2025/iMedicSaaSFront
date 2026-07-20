@@ -58,7 +58,7 @@ export default function CumplirEstudioModal({
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<h3>Cumplir pedido · {pedido.PracticaSolicitada}</h3>
+					<h3>Aceptar pedido · {pedido.PracticaSolicitada}</h3>
 					<button type="button" className={styles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>
@@ -87,7 +87,7 @@ export default function CumplirEstudioModal({
 							Cancelar
 						</button>
 						<button type="button" className={formStyles.btnPrimary} onClick={() => void submit()} disabled={submitting}>
-							{submitting ? 'Guardando…' : 'Cumplir y facturar'}
+							{submitting ? 'Guardando…' : 'Aceptar'}
 						</button>
 					</div>
 				</div>

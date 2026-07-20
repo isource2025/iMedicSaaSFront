@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Home,
@@ -15,7 +14,6 @@ import {
   User,
   Shield,
   LogOut,
-  Inbox,
   ChevronRight,
   ChevronLeft,
   LucideIcon
@@ -24,13 +22,10 @@ import styles from './Sidebar.module.css'
 import { useAppContext } from '../../contexts/AppContext'
 import { usePermiso } from '@/app/hooks/usePermiso'
 import { useWhatsAppInboxUnread } from '@/app/hooks/useWhatsAppInboxUnread'
-import { useBandejaPedidosCount } from '@/app/hooks/useBandejaPedidosCount'
 import { authService } from '@/app/services/authService'
 import type { UserData } from '@/app/types/AuthInterface'
 
 const CHATS_PATH = '/dashboard/turnos/chats'
-const BANDEJA_PATH = '/dashboard/bandeja-pedidos'
-const BANDEJA_MENU_ID = 'bandeja-pedidos'
 
 interface SubItem {
   label: string
@@ -71,17 +66,6 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'ADMIN',  label: 'Gestión de turnos',   path: '/dashboard/turnos/admin' },
       { submoduloId: 'ADMIN',  label: 'Configuración',       path: '/dashboard/turnos/configuracion' },
     ]
-  },
-  {
-    id: BANDEJA_MENU_ID,
-    moduloId: 'TURNOS',
-    label: 'Bandeja',
-    icon: Inbox,
-    path: BANDEJA_PATH,
-    subItems: [
-      { submoduloId: 'AGENDA', label: 'Estudios', path: `${BANDEJA_PATH}?tab=estudios` },
-      { submoduloId: 'AGENDA', label: 'Interconsultas', path: `${BANDEJA_PATH}?tab=interconsultas` },
-    ],
   },
   {
     id: 'admision', moduloId: 'ADMISION', label: 'Admisión', icon: ClipboardList,
@@ -160,60 +144,16 @@ interface SidebarProps {
 export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<UserData | null>(null)
-  const [flyoutPos, setFlyoutPos] = useState<{ top: number; left: number } | null>(null)
-  const bandejaBtnRef = useRef<HTMLButtonElement | null>(null)
   const router = useRouter()
   const pathname = usePathname()
   const { empresaInfo, sectorSeleccionado } = useAppContext()
   const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
   const puedeVerChats = loaded && puedeSubmodulo('TURNOS', 'AGENDA')
-  const puedeVerBandeja = loaded && puedeSubmodulo('TURNOS', 'AGENDA')
   const { count: chatsUnread } = useWhatsAppInboxUnread(puedeVerChats)
-  const { count: bandejaLibres } = useBandejaPedidosCount(puedeVerBandeja)
 
   useEffect(() => {
     setCurrentUser(authService.getCurrentUser())
   }, [])
-
-  useLayoutEffect(() => {
-    if (openMenuId !== BANDEJA_MENU_ID) {
-      setFlyoutPos(null)
-      return
-    }
-    const update = () => {
-      const el = bandejaBtnRef.current
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const top = Math.min(r.top, window.innerHeight - 220)
-      setFlyoutPos({ top: Math.max(8, top), left: r.right + 10 })
-    }
-    update()
-    window.addEventListener('resize', update)
-    window.addEventListener('scroll', update, true)
-    return () => {
-      window.removeEventListener('resize', update)
-      window.removeEventListener('scroll', update, true)
-    }
-  }, [openMenuId, expanded])
-
-  useEffect(() => {
-    if (openMenuId !== BANDEJA_MENU_ID) return
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as HTMLElement | null
-      if (t?.closest(`[data-menu-id="${BANDEJA_MENU_ID}"]`)) return
-      if (t?.closest('[data-bandeja-flyout]')) return
-      setOpenMenuId(null)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpenMenuId(null)
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [openMenuId])
 
   const userDisplay = useMemo(() => {
     const nombre = String(currentUser?.nombre || '').trim()
@@ -280,20 +220,6 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
 
         const permisoModulo = (sub: SubItem) => sub.permisoModuloId || item.moduloId
 
-        // Bandeja: ítem de primer nivel para roles clínicos (no depende de submenú Turnos)
-        if (item.id === BANDEJA_MENU_ID) {
-          const nombre = String(rol?.nombre || '').toUpperCase()
-          const rolClinico = ['MEDICO', 'ENFERMERO', 'ADMIN', 'ADMINISTRATIVO', 'CARGA_HC'].includes(
-            nombre,
-          )
-          const ok =
-            rolClinico ||
-            puedeSubmodulo('TURNOS', 'AGENDA') ||
-            puedeSubmodulo('INTERNACION', 'ESTUDIOS') ||
-            puedeSubmodulo('INTERNACION', 'INTERCONSULTAS')
-          return ok ? item : null
-        }
-
         // Configuración: visible si el usuario tiene acceso a cualquier subítem
         // (incluye tablas cuyos permisos viven en otros módulos).
         if (item.id === 'configuracion') {
@@ -357,11 +283,6 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       })()
       return
     }
-    // Bandeja: popup flotante con menú cerrado o abierto (no fuerza expandir)
-    if (item.id === BANDEJA_MENU_ID) {
-      setOpenMenuId((prev) => (prev === BANDEJA_MENU_ID ? null : BANDEJA_MENU_ID))
-      return
-    }
     if (item.subItems.length === 0) {
       router.push(item.path || '/dashboard')
       onExpandedChange(false)
@@ -414,9 +335,6 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   }
 
   const isSelected = (item: MenuItem): boolean => {
-    if (item.id === BANDEJA_MENU_ID) {
-      return openMenuId === item.id || activeModuleId === item.id
-    }
     if (expanded) {
       return openMenuId === item.id
     }
@@ -478,7 +396,6 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
               data-menu-id={item.id}
             >
               <button
-                ref={item.id === BANDEJA_MENU_ID ? bandejaBtnRef : undefined}
                 className={`${styles.menuButton} ${isSelected(item) ? styles.selected : ''}`}
                 onClick={() => handleMenuClick(item)}
                 aria-expanded={item.subItems.length > 0 ? openMenuId === item.id : undefined}
@@ -488,14 +405,6 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
                   {item.id === 'turnos' && chatsUnread > 0 ? (
                     <span className={styles.menuBadge} aria-label={`${chatsUnread} mensajes sin leer`}>
                       {chatsUnread > 99 ? '99+' : chatsUnread}
-                    </span>
-                  ) : null}
-                  {item.id === BANDEJA_MENU_ID && bandejaLibres > 0 ? (
-                    <span
-                      className={styles.menuBadge}
-                      aria-label={`${bandejaLibres} pedidos libres`}
-                    >
-                      {bandejaLibres > 99 ? '99+' : bandejaLibres}
                     </span>
                   ) : null}
                 </span>
@@ -508,52 +417,8 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
                 )}
               </button>
 
-              {/* Bandeja: popup lateral (menú cerrado u abierto) */}
-              {item.id === BANDEJA_MENU_ID &&
-                openMenuId === item.id &&
-                flyoutPos &&
-                typeof document !== 'undefined' &&
-                createPortal(
-                  <div
-                    className={styles.flyoutMenu}
-                    role="menu"
-                    data-bandeja-flyout
-                    style={{ top: flyoutPos.top, left: flyoutPos.left }}
-                  >
-                    <div className={styles.flyoutTitle}>Bandeja de pedidos</div>
-                    <p className={styles.flyoutHint}>
-                      Estudios e interconsultas · un pedido, una persona
-                    </p>
-                    {item.subItems.map((subItem) => (
-                      <button
-                        key={`${item.id}-${subItem.label}-${subItem.path}`}
-                        type="button"
-                        role="menuitem"
-                        className={`${styles.flyoutItem} ${isSubActive(subItem.path) ? styles.flyoutItemActive : ''}`}
-                        onClick={() => handleSubItemClick(subItem.path)}
-                      >
-                        {subItem.label}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className={styles.flyoutPrimary}
-                      onClick={() => handleSubItemClick(BANDEJA_PATH)}
-                    >
-                      Abrir bandeja
-                      {bandejaLibres > 0 ? (
-                        <span className={styles.subMenuBadge}>
-                          {bandejaLibres > 99 ? '99+' : bandejaLibres}
-                        </span>
-                      ) : null}
-                    </button>
-                  </div>,
-                  document.body,
-                )}
-              
-              {/* Submenú acordeón (resto de módulos, solo expandido) */}
-              {item.id !== BANDEJA_MENU_ID &&
-                item.subItems.length > 0 &&
+              {/* Submenú acordeón (solo expandido) */}
+              {item.subItems.length > 0 &&
                 openMenuId === item.id &&
                 expanded && (
                 <div className={styles.subMenu}>
