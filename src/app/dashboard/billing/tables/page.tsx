@@ -6,8 +6,9 @@ export default function BillingTablesPage() {
 	return (
 		<ConfigOpcGrdTables
 			rubro="FACTURACION"
-			title="Tablas de Facturación"
-			description="Configuración de opciones del módulo de facturación"
+			eyebrow="Facturación"
+			title="Tablas maestras"
+			description="Catálogos y parámetros del circuito de facturación"
 		/>
 	);
 }

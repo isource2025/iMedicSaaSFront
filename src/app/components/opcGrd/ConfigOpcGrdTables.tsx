@@ -1,10 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FaEdit, FaTrash, FaPlus, FaSave } from 'react-icons/fa';
+import { Pencil, Trash2, Plus, Check } from 'lucide-react';
 import { OpcGrd } from '@/app/types/opcGrd.types';
 import { useOpcGrdManager } from '@/app/hooks/useOpcGrdManager';
-import { getTablaIconSrc, getTablaIconFallback, getTablaIconColor } from '@/app/utils/tablaIcons';
+import {
+	getTablaIconSrc,
+	getTablaIconFallback,
+	getTablaIconColor,
+	TablaIconRubro,
+} from '@/app/utils/tablaIcons';
 import Loader from '@/app/components/Loader/Loader';
 import styles from './OpcGrdTables.module.css';
 
@@ -12,9 +17,15 @@ type Props = {
 	rubro: TablaIconRubro;
 	title: string;
 	description: string;
+	eyebrow?: string;
 };
 
-export default function ConfigOpcGrdTables({ rubro, title, description }: Props) {
+export default function ConfigOpcGrdTables({
+	rubro,
+	title,
+	description,
+	eyebrow = 'Configuración',
+}: Props) {
 	const { opcionesAgrupadas, loading, error, createOpcGrd, updateOpcGrd, deleteOpcGrd } =
 		useOpcGrdManager();
 
@@ -81,8 +92,9 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.header}>
-				<div>
+			<header className={styles.header}>
+				<div className={styles.titleBlock}>
+					<span className={styles.eyebrow}>{eyebrow}</span>
 					<h1 className={styles.title}>{title}</h1>
 					{description ? <p className={styles.description}>{description}</p> : null}
 				</div>
@@ -95,10 +107,11 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 							setCreateDescripcion('');
 						}}
 					>
-						<FaPlus size={12} /> Nueva opción
+						<Plus size={16} strokeWidth={2.5} />
+						Nueva opción
 					</button>
 				)}
-			</div>
+			</header>
 
 			{showCreateForm && (
 				<div className={styles.panel}>
@@ -110,7 +123,8 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 							value={createDescripcion}
 							onChange={(e) => setCreateDescripcion(e.target.value)}
 							className={styles.formInput}
-							placeholder="Ingrese la descripción"
+							placeholder="Nombre de la opción"
+							autoFocus
 						/>
 					</div>
 					<div className={styles.formActions}>
@@ -152,7 +166,10 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 
 						if (isEditing) {
 							return (
-								<div key={`${opcion.descripcion}-${index}`} className={`${styles.card} ${styles.cardStatic}`}>
+								<div
+									key={`${opcion.descripcion}-${index}`}
+									className={`${styles.card} ${styles.cardStatic}`}
+								>
 									<div className={styles.formGroup} style={{ width: '100%' }}>
 										<label className={styles.formLabel}>Descripción</label>
 										<input
@@ -160,6 +177,7 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 											value={nuevaDescripcion}
 											onChange={(e) => setNuevaDescripcion(e.target.value)}
 											className={styles.formInput}
+											autoFocus
 										/>
 									</div>
 									<div className={styles.formActions} style={{ width: '100%' }}>
@@ -179,7 +197,8 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 											onClick={() => handleSaveEdit(opcion)}
 											disabled={!nuevaDescripcion.trim()}
 										>
-											<FaSave size={12} /> Guardar
+											<Check size={14} strokeWidth={2.5} />
+											Guardar
 										</button>
 									</div>
 								</div>
@@ -188,7 +207,10 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 
 						if (isDeleting) {
 							return (
-								<div key={`${opcion.descripcion}-${index}`} className={`${styles.card} ${styles.cardStatic}`}>
+								<div
+									key={`${opcion.descripcion}-${index}`}
+									className={`${styles.card} ${styles.cardStatic}`}
+								>
 									<p className={styles.deleteText}>¿Eliminar?</p>
 									<p className={styles.deleteHint}>{opcion.descripcion}</p>
 									<div className={styles.formActions} style={{ width: '100%' }}>
@@ -236,16 +258,18 @@ export default function ConfigOpcGrdTables({ rubro, title, description }: Props)
 												setNuevaDescripcion(opcion.descripcion);
 											}}
 											title="Editar"
+											aria-label="Editar"
 										>
-											<FaEdit size={13} />
+											<Pencil size={15} strokeWidth={2} />
 										</button>
 										<button
 											type="button"
 											className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
 											onClick={() => setDeletingOpcion(opcion.descripcion)}
 											title="Eliminar"
+											aria-label="Eliminar"
 										>
-											<FaTrash size={13} />
+											<Trash2 size={15} strokeWidth={2} />
 										</button>
 									</div>
 								)}

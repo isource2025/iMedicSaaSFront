@@ -1,5 +1,5 @@
 import React from 'react';
-import { IoSave, IoClose } from 'react-icons/io5';
+import { Check, X } from 'lucide-react';
 import styles from '../../opcGrd/OpcGrdTables.module.css';
 import { CreateOptionFormProps } from './types';
 
@@ -11,7 +11,7 @@ const CreateOptionForm: React.FC<CreateOptionFormProps> = ({
 }) => {
   return (
     <div className={styles.panel}>
-      <h2 className={styles.panelTitle}>Nueva opción para Admisión</h2>
+      <h2 className={styles.panelTitle}>Nueva opción</h2>
       <div className={styles.formGroup}>
         <label htmlFor="createDescripcion" className={styles.formLabel}>
           Descripción
@@ -22,7 +22,7 @@ const CreateOptionForm: React.FC<CreateOptionFormProps> = ({
           value={createDescripcion}
           onChange={(e) => setCreateDescripcion(e.target.value)}
           className={styles.formInput}
-          placeholder="Nombre de la opción..."
+          placeholder="Nombre de la opción"
           autoFocus
         />
       </div>
@@ -33,7 +33,8 @@ const CreateOptionForm: React.FC<CreateOptionFormProps> = ({
           onClick={handleCancelCreate}
           title="Cancelar"
         >
-          <IoClose size={16} /> Cancelar
+          <X size={15} strokeWidth={2.25} />
+          Cancelar
         </button>
         <button
           type="button"
@@ -42,7 +43,8 @@ const CreateOptionForm: React.FC<CreateOptionFormProps> = ({
           title="Guardar"
           disabled={!createDescripcion.trim()}
         >
-          <IoSave size={16} /> Guardar
+          <Check size={15} strokeWidth={2.5} />
+          Guardar
         </button>
       </div>
     </div>

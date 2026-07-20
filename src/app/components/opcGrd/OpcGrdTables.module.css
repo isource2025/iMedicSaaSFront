@@ -16,31 +16,53 @@
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-between;
+	align-items: flex-end;
+	gap: 16px 20px;
+	margin-bottom: 1.5rem;
+	padding-bottom: 1.15rem;
+	border-bottom: 1px solid #eef2f7;
+}
+
+.titleBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	min-width: 0;
+	flex: 1;
+}
+
+.eyebrow {
+	display: inline-flex;
 	align-items: center;
-	gap: 12px;
-	margin-bottom: 1.25rem;
+	margin: 0;
+	padding: 4px 10px;
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #0083a9;
+	background: #e0f7fa;
+	border-radius: 9999px;
+	line-height: 1.2;
 }
 
 .title {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
 	margin: 0;
-	font-size: 0.85rem;
-	font-weight: 600;
-	color: #0083a9;
-	background: #e0f7fa;
-	padding: 8px 16px;
-	border-radius: 6px;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
+	font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.15;
+	color: #0f172a;
 }
 
 .description {
-	width: 100%;
-	margin: 0 0 4px;
-	font-size: 0.82rem;
+	margin: 0;
+	max-width: 42rem;
+	font-size: 0.88rem;
+	line-height: 1.45;
 	color: #64748b;
+	font-weight: 400;
 }
 
 .addButton {
@@ -165,12 +187,21 @@
 	color: color-mix(in srgb, var(--icon-tint) 75%, #1e293b);
 }
 
-/* Acciones editar / eliminar (config) */
+/* Acciones editar / eliminar — estilo limpio (como lista pacientes) */
 .cardActions {
 	display: flex;
-	gap: 6px;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
 	margin-top: auto;
-	padding-top: 4px;
+	padding-top: 2px;
+	opacity: 0.55;
+	transition: opacity 0.18s ease;
+}
+
+.card:hover .cardActions,
+.card:focus-within .cardActions {
+	opacity: 1;
 }
 
 .iconBtn {
@@ -178,27 +209,31 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 32px;
-	height: 32px;
-	border: 1px solid #e2e8f0;
-	border-radius: 10px;
-	background: #f8fafc;
-	color: #64748b;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: none;
+	border-radius: 9px;
+	background: transparent;
+	color: #94a3b8;
 	cursor: pointer;
-	transition: all 0.15s ease;
+	transition: all 0.18s ease;
 }
 
 .iconBtn:hover {
-	transform: scale(1.06);
-	border-color: #00b5e2;
 	color: #0083a9;
-	background: #e0f7fa;
+	background: rgba(0, 131, 169, 0.1);
+	transform: scale(1.08);
+}
+
+.iconBtnDanger {
+	color: #cbd5e1;
 }
 
 .iconBtnDanger:hover {
-	border-color: #fca5a5;
-	color: #dc2626;
-	background: #fef2f2;
+	color: #ef4444;
+	background: rgba(239, 68, 68, 0.08);
+	transform: scale(1.08);
 }
 
 /* Form create / edit inline */
@@ -260,6 +295,10 @@
 
 .btnGhost {
 	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
 	padding: 8px 16px;
 	font-size: 0.82rem;
 	font-weight: 600;
@@ -278,6 +317,10 @@
 
 .btnPrimary {
 	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
 	padding: 8px 18px;
 	font-size: 0.82rem;
 	font-weight: 700;
@@ -396,6 +439,14 @@
 
 	.addButton {
 		width: 100%;
+	}
+
+	.title {
+		font-size: 1.3rem;
+	}
+
+	.cardActions {
+		opacity: 1;
 	}
 }
 

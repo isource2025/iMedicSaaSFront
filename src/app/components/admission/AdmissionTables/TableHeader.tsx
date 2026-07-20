@@ -1,5 +1,5 @@
 import React from 'react';
-import { IoAdd } from 'react-icons/io5';
+import { Plus } from 'lucide-react';
 import styles from '../../opcGrd/OpcGrdTables.module.css';
 import { TableHeaderProps } from './types';
 
@@ -8,22 +8,26 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   setShowCreateForm,
 }) => {
   return (
-    <div className={styles.header}>
-      <div>
-        <h1 className={styles.title}>Tablas de Admisión</h1>
-        <p className={styles.description}>Catálogo de tablas maestras del módulo de admisión</p>
+    <header className={styles.header}>
+      <div className={styles.titleBlock}>
+        <span className={styles.eyebrow}>Admisión</span>
+        <h1 className={styles.title}>Tablas maestras</h1>
+        <p className={styles.description}>
+          Catálogos y parámetros usados en el alta y admisión de pacientes
+        </p>
       </div>
       {!showCreateForm && (
         <button
           type="button"
           className={styles.addButton}
           onClick={() => setShowCreateForm(true)}
-          title="Agregar nueva opción"
+          title="Agregar opción"
         >
-          <IoAdd size={16} /> Agregar opción
+          <Plus size={16} strokeWidth={2.5} />
+          Nueva opción
         </button>
       )}
-    </div>
+    </header>
   );
 };
 

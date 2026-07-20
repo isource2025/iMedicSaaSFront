@@ -6,8 +6,9 @@ export default function BedsTablesPage() {
 	return (
 		<ConfigOpcGrdTables
 			rubro="INTERNACION"
-			title="Tablas de Internación"
-			description="Configuración de opciones del módulo de internación"
+			eyebrow="Internación"
+			title="Tablas maestras"
+			description="Catálogos y parámetros del circuito de internación"
 		/>
 	);
 }
