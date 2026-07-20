@@ -75,7 +75,7 @@ const menuItems: MenuItem[] = [
   {
     id: BANDEJA_MENU_ID,
     moduloId: 'TURNOS',
-    label: 'Bandeja de pedidos',
+    label: 'Bandeja',
     icon: Inbox,
     path: BANDEJA_PATH,
     subItems: [
@@ -279,6 +279,20 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
         if (item.alwaysVisible) return item
 
         const permisoModulo = (sub: SubItem) => sub.permisoModuloId || item.moduloId
+
+        // Bandeja: ítem de primer nivel para roles clínicos (no depende de submenú Turnos)
+        if (item.id === BANDEJA_MENU_ID) {
+          const nombre = String(rol?.nombre || '').toUpperCase()
+          const rolClinico = ['MEDICO', 'ENFERMERO', 'ADMIN', 'ADMINISTRATIVO', 'CARGA_HC'].includes(
+            nombre,
+          )
+          const ok =
+            rolClinico ||
+            puedeSubmodulo('TURNOS', 'AGENDA') ||
+            puedeSubmodulo('INTERNACION', 'ESTUDIOS') ||
+            puedeSubmodulo('INTERNACION', 'INTERCONSULTAS')
+          return ok ? item : null
+        }
 
         // Configuración: visible si el usuario tiene acceso a cualquier subítem
         // (incluye tablas cuyos permisos viven en otros módulos).
