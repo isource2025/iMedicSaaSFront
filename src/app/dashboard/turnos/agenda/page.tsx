@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
 	agendaService,
 	type AgendaJornada,
@@ -217,6 +218,18 @@ export default function AgendaPage() {
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
 	const [bandejaInterconsultasOpen, setBandejaInterconsultasOpen] = useState(false);
+	const [bandejaSectorInicial, setBandejaSectorInicial] = useState<string | null>('OFT');
+	const searchParams = useSearchParams();
+
+	useEffect(() => {
+		const bandeja = String(searchParams.get('bandeja') || '').toLowerCase();
+		if (bandeja === 'interconsultas' || bandeja === 'interconsulta') {
+			const sector = String(searchParams.get('sector') || '').trim();
+			if (sector) setBandejaSectorInicial(sector);
+			setBandejaInterconsultasOpen(true);
+		}
+	}, [searchParams]);
+
 	const [confirmDialog, setConfirmDialog] = useState<{
 		title: string;
 		message: string;
@@ -1219,7 +1232,7 @@ export default function AgendaPage() {
 			<AgendaInterconsultasBandeja
 				open={bandejaInterconsultasOpen}
 				onClose={() => setBandejaInterconsultasOpen(false)}
-				sectorInicial="OFT"
+				sectorInicial={bandejaSectorInicial}
 			/>
 			<AsignarTurnoModal
 				open={!!modalSlot && !!matriculaMedicoActiva && !fechaPasada}

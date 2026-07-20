@@ -27,6 +27,24 @@ function esNotificacionWhatsApp(n: NotificacionItem): boolean {
   return tipo === 'WHATSAPP_MENSAJE' || ent === 'BOT_CONVERSACION';
 }
 
+function esNotificacionPedido(n: NotificacionItem): boolean {
+  const tipo = String(n.TipoNotificacion || '').toUpperCase();
+  const ent = String(n.EntidadTipo || '').toUpperCase();
+  return (
+    tipo === 'PEDIDO_ESTUDIO' ||
+    tipo === 'INTERCONSULTA' ||
+    ent === 'PEDIDO_ESTUDIO' ||
+    ent === 'INTERCONSULTA'
+  );
+}
+
+function esInterconsultaNotif(n: NotificacionItem): boolean {
+  const tipo = String(n.TipoNotificacion || '').toUpperCase();
+  const ent = String(n.EntidadTipo || '').toUpperCase();
+  const cat = String((n.DatosJSON as { categoria?: string } | null)?.categoria || '').toUpperCase();
+  return tipo === 'INTERCONSULTA' || ent === 'INTERCONSULTA' || cat === 'INTERCONSULTA';
+}
+
 export default function NotificationsFab({ stack = false }: { stack?: boolean }) {
   const router = useRouter();
   const [userId, setUserId] = useState<number | null>(null);
@@ -134,6 +152,26 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
     if (esNotificacionWhatsApp(n)) {
       setOpen(false);
       router.push('/dashboard/turnos/chats');
+      return;
+    }
+    if (esNotificacionPedido(n)) {
+      setOpen(false);
+      const datos = (n.DatosJSON || {}) as {
+        idSectorReceptor?: string;
+        idVisita?: number;
+        idPedido?: number;
+      };
+      const sector = String(datos.idSectorReceptor || '').trim();
+      const qs = new URLSearchParams();
+      if (sector) qs.set('sector', sector);
+      if (datos.idPedido) qs.set('pedido', String(datos.idPedido));
+      if (datos.idVisita) qs.set('visita', String(datos.idVisita));
+      const q = qs.toString();
+      if (esInterconsultaNotif(n)) {
+        router.push(`/dashboard/turnos/agenda${q ? `?${q}&bandeja=interconsultas` : '?bandeja=interconsultas'}`);
+      } else {
+        router.push(`/dashboard/beds${q ? `?${q}&section=estudios` : '?section=estudios'}`);
+      }
     }
   };
 
@@ -209,6 +247,10 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
                       >
                         {esNotificacionWhatsApp(n) ? (
                           <span className={styles.itemTag}>WhatsApp</span>
+                        ) : esInterconsultaNotif(n) ? (
+                          <span className={styles.itemTag}>Interconsulta</span>
+                        ) : esNotificacionPedido(n) ? (
+                          <span className={styles.itemTag}>Estudio</span>
                         ) : null}
                         <p className={styles.itemText}>{n.DescNotificacion || n.TipoNotificacion || 'Aviso'}</p>
                       </button>
@@ -222,7 +264,11 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
                       ) : null}
                       {!leida ? (
                         <button type="button" className={styles.itemAction} onClick={() => marcarUna(n)}>
-                          {esNotificacionWhatsApp(n) ? 'Ver chat' : 'Marcar leída'}
+                          {esNotificacionWhatsApp(n)
+                            ? 'Ver chat'
+                            : esNotificacionPedido(n)
+                              ? 'Ver pedido'
+                              : 'Marcar leída'}
                         </button>
                       ) : null}
                     </li>
