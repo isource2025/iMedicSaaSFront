@@ -51,7 +51,7 @@ export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO' | 'S
 export const MODULOS: ReadonlyArray<ModuloDef> = [
 	{
 		id: 'DASHBOARD',
-		label: 'Dashboard',
+		label: 'Inicio',
 		path: '/dashboard',
 		submodulos: [
 			{ id: 'INICIO', label: 'Inicio', path: '/dashboard', acciones: [ACCIONES.VER] },
@@ -61,11 +61,11 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		id: 'TURNOS',
 		label: 'Turnos',
 		submodulos: [
-			{ id: 'AGENDA',        label: 'Agenda',          path: '/dashboard/turnos/agenda',        acciones: [...CRUD] },
-			{ id: 'ADMIN',         label: 'Admin de Turnos', path: '/dashboard/turnos/admin',         acciones: [...CRUD, ACCIONES.GESTIONAR] },
-			{ id: 'EXCEPCIONES',   label: 'Excepciones',     path: '/dashboard/turnos/excepciones',   acciones: [...CRUD] },
-			{ id: 'CONFIGURACION', label: 'Configuración',   path: '/dashboard/turnos/configuracion', acciones: [ACCIONES.VER, ACCIONES.EDITAR, ACCIONES.GESTIONAR] },
-			{ id: 'TABLA',         label: 'Tabla de Turnos', path: '/dashboard/turnos/tabla',         acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
+			{ id: 'AGENDA',        label: 'Agenda',            path: '/dashboard/turnos/agenda',        acciones: [...CRUD] },
+			{ id: 'ADMIN',         label: 'Gestión de turnos', path: '/dashboard/turnos/admin',         acciones: [...CRUD, ACCIONES.GESTIONAR] },
+			{ id: 'EXCEPCIONES',   label: 'Excepciones',       path: '/dashboard/turnos/excepciones',   acciones: [...CRUD] },
+			{ id: 'CONFIGURACION', label: 'Configuración',     path: '/dashboard/turnos/configuracion', acciones: [ACCIONES.VER, ACCIONES.EDITAR, ACCIONES.GESTIONAR] },
+			{ id: 'TABLA',         label: 'Tabla de Turnos',   path: '/dashboard/turnos/tabla',         acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
 		],
 	},
 	{
@@ -139,12 +139,12 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 	},
 	{
 		id: 'PLATAFORMA',
-		label: 'Super Admin',
+		label: 'Plataforma',
 		submodulos: [
 			{ id: 'PANEL', label: 'Panel', path: '/dashboard/super-admin', acciones: [ACCIONES.VER] },
 			{ id: 'EMPRESAS', label: 'Empresas', path: '/dashboard/super-admin/empresas', acciones: [...CRUD, ACCIONES.GESTIONAR] },
 			{ id: 'USUARIOS', label: 'Usuarios', path: '/dashboard/super-admin/usuarios', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
-			{ id: 'ONBOARDING', label: 'Onboarding', path: '/dashboard/super-admin/onboarding', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
+			{ id: 'ONBOARDING', label: 'Puesta en marcha', path: '/dashboard/super-admin/onboarding', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
 			{ id: 'COBRANZA', label: 'Cobranza', path: '/dashboard/super-admin/cobranza', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR, ACCIONES.EXPORTAR] },
 			{ id: 'CONFIG', label: 'Configuración', path: '/dashboard/super-admin/configuracion', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
 		],

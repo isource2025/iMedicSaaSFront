@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePermiso } from '@/app/hooks/usePermiso';
-import { authService } from '@/app/services/authService';
 import { superAdminService } from '@/app/services/superAdminService';
 import type {
   EmpresaAdmin,
@@ -20,7 +19,7 @@ import styles from './superAdmin.module.css';
 const TABS: { id: SuperAdminTab; label: string }[] = [
   { id: 'panel', label: 'Panel' },
   { id: 'empresas', label: 'Empresas' },
-  { id: 'onboarding', label: 'Onboarding' },
+  { id: 'onboarding', label: 'Puesta en marcha' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'configuracion', label: 'Config' },
   { id: 'seguridad', label: 'Seguridad' },
@@ -69,7 +68,6 @@ export default function SuperAdminPage() {
   const [busquedaUsuarios, setBusquedaUsuarios] = useState('');
   const [filtroRolUsuarios, setFiltroRolUsuarios] = useState('');
   const [filtroEmpresaUsuarios, setFiltroEmpresaUsuarios] = useState('');
-  const [cerrandoSesion, setCerrandoSesion] = useState(false);
 
   const [nuevaEmpresa, setNuevaEmpresa] = useState({
     descripcion: '',
@@ -153,15 +151,6 @@ export default function SuperAdminPage() {
     return list;
   }, [usuarios, filtroRolUsuarios, filtroEmpresaUsuarios]);
 
-  const handleLogout = async () => {
-    setCerrandoSesion(true);
-    try {
-      await authService.logout();
-    } finally {
-      router.replace('/');
-    }
-  };
-
   const abrirEmpresa = async (id: string) => {
     try {
       setError(null);
@@ -206,14 +195,6 @@ export default function SuperAdminPage() {
           <h1 className={styles.title}>Plataforma iMedic</h1>
           <p className={styles.subtitle}>Administración multi-empresa</p>
         </div>
-        <button
-          type="button"
-          className={styles.logoutBtn}
-          disabled={cerrandoSesion}
-          onClick={() => void handleLogout()}
-        >
-          {cerrandoSesion ? 'Saliendo…' : 'Cerrar sesión'}
-        </button>
       </header>
 
       <nav className={styles.nav} aria-label="Secciones">
@@ -254,7 +235,7 @@ export default function SuperAdminPage() {
               <span className={styles.statValue}>{dashboard.enPrueba}</span>
             </div>
             <div className={styles.statCard}>
-              <span className={styles.statLabel}>Onboarding</span>
+              <span className={styles.statLabel}>Puesta en marcha</span>
               <span className={styles.statValue}>{dashboard.onboardingPendiente}</span>
             </div>
           </div>

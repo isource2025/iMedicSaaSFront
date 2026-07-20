@@ -6,8 +6,11 @@ import { AppProvider } from './contexts/AppContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'iMedicWS - Medical Workspace',
-  description: 'A comprehensive medical workspace solution',
+  title: 'iMedic — Espacio de trabajo médico',
+  description: 'Plataforma hospitalaria iMedic (español)',
+  other: {
+    google: 'notranslate',
+  },
 };
 
 export default function RootLayout({
@@ -16,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="es-AR" translate="no">
+      <body className={`${inter.className} notranslate`} translate="no">
         <AppProvider>
           {children}
         </AppProvider>

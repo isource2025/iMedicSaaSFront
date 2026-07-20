@@ -44,7 +44,8 @@ export default function LoginForm() {
                 <input
                   id="username"
                   type="text"
-                  className={styles.inputField}
+                  className={`${styles.inputField} notranslate`}
+                  translate="no"
                   value={credentials.username}
                   onChange={handleInputChange}
                   placeholder="Ingrese su nombre de usuario"

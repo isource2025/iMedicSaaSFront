@@ -13,6 +13,7 @@ import {
   Settings,
   User,
   Shield,
+  LogOut,
   ChevronRight,
   ChevronLeft,
   LucideIcon
@@ -48,7 +49,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'dashboard', moduloId: 'DASHBOARD', label: 'Dashboard', icon: Home, path: '/dashboard', subItems: [] },
+  { id: 'dashboard', moduloId: 'DASHBOARD', label: 'Inicio', icon: Home, path: '/dashboard', subItems: [] },
   {
     id: 'consulta-hc',
     moduloId: 'ADMISION',
@@ -62,7 +63,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { submoduloId: 'AGENDA', label: 'Agenda',              path: '/dashboard/turnos/agenda' },
       { submoduloId: 'AGENDA', label: 'Conversaciones',      path: '/dashboard/turnos/chats' },
-      { submoduloId: 'ADMIN',  label: 'Admin de Turnos',     path: '/dashboard/turnos/admin' },
+      { submoduloId: 'ADMIN',  label: 'Gestión de turnos',   path: '/dashboard/turnos/admin' },
       { submoduloId: 'ADMIN',  label: 'Configuración',       path: '/dashboard/turnos/configuracion' },
     ]
   },
@@ -98,15 +99,15 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
-    id: 'plataforma', moduloId: 'PLATAFORMA', label: 'Super Admin', icon: Shield,
+    id: 'plataforma', moduloId: 'PLATAFORMA', label: 'Plataforma', icon: Shield,
     path: '/dashboard/super-admin',
     subItems: [
-      { submoduloId: 'PANEL',      label: 'Panel',         path: '/dashboard/super-admin' },
-      { submoduloId: 'EMPRESAS',   label: 'Empresas',      path: '/dashboard/super-admin' },
-      { submoduloId: 'USUARIOS',   label: 'Usuarios',      path: '/dashboard/super-admin' },
-      { submoduloId: 'ONBOARDING', label: 'Onboarding',    path: '/dashboard/super-admin' },
-      { submoduloId: 'COBRANZA',   label: 'Cobranza',      path: '/dashboard/super-admin' },
-      { submoduloId: 'CONFIG',     label: 'Configuración', path: '/dashboard/super-admin' },
+      { submoduloId: 'PANEL',      label: 'Panel',              path: '/dashboard/super-admin' },
+      { submoduloId: 'EMPRESAS',   label: 'Empresas',           path: '/dashboard/super-admin' },
+      { submoduloId: 'USUARIOS',   label: 'Usuarios',           path: '/dashboard/super-admin' },
+      { submoduloId: 'ONBOARDING', label: 'Puesta en marcha',   path: '/dashboard/super-admin' },
+      { submoduloId: 'COBRANZA',   label: 'Cobranza',           path: '/dashboard/super-admin' },
+      { submoduloId: 'CONFIG',     label: 'Configuración',      path: '/dashboard/super-admin' },
     ]
   },
   {
@@ -184,7 +185,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
     // SSR: no sabemos nada todavía — devolvemos vacío para no mostrar items incorrectos
     if (!loaded) return []
 
-    // SUPER_ADMIN: solo módulo Plataforma (sin agenda, admisión, internación, etc.)
+    // SUPER_ADMIN: solo módulo Plataforma + cerrar sesión (sin agenda, admisión, etc.)
     if (rol?.nombre === 'SUPER_ADMIN') {
       const plataforma = menuItems.find((item) => item.moduloId === 'PLATAFORMA')
       if (!plataforma) return []
@@ -193,6 +194,15 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
           ...plataforma,
           label: 'Plataforma',
           path: '/dashboard/super-admin',
+          subItems: [],
+        },
+        {
+          id: 'logout',
+          moduloId: 'USUARIO',
+          label: 'Cerrar sesión',
+          icon: LogOut,
+          path: '/',
+          alwaysVisible: true,
           subItems: [],
         },
       ]
@@ -251,6 +261,15 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const activeModuleId = getActiveModuleId()
 
   const handleMenuClick = (item: MenuItem) => {
+    if (item.id === 'logout' || (item.subItems.length === 0 && item.path === '/')) {
+      void (async () => {
+        await authService.logout()
+        router.replace('/')
+        onExpandedChange(false)
+        setOpenMenuId(null)
+      })()
+      return
+    }
     if (item.subItems.length === 0) {
       router.push(item.path || '/dashboard')
       onExpandedChange(false)
@@ -270,6 +289,15 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   }
 
   const handleSubItemClick = (path: string) => {
+    if (path === '/') {
+      void (async () => {
+        await authService.logout()
+        router.replace('/')
+        onExpandedChange(false)
+        setOpenMenuId(null)
+      })()
+      return
+    }
     router.push(path)
     setTimeout(() => {
       onExpandedChange(false)
@@ -298,8 +326,10 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
             height={48}
           />
           <div className={styles.companyInfo}>
-            <span className={styles.companyName}>{empresaInfo?.descripcion || ''}</span>
-            <span className={styles.sectorName}>
+            <span className={`${styles.companyName} notranslate`} translate="no">
+              {empresaInfo?.descripcion || ''}
+            </span>
+            <span className={`${styles.sectorName} notranslate`} translate="no">
               {sectorSeleccionado ? `Sector: ${sectorSeleccionado.descripcion}` : ''}
             </span>
           </div>
@@ -314,8 +344,13 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
 
       <div className={styles.userHeader}>
         <div className={styles.userHeaderText}>
-          <span className={styles.userFullName}>{userDisplay.full || 'Usuario'}</span>
-          <span className={rol ? styles.userRolPill : styles.userRolPillMuted}>
+          <span className={`${styles.userFullName} notranslate`} translate="no">
+            {userDisplay.full || 'Usuario'}
+          </span>
+          <span
+            className={`${rol ? styles.userRolPill : styles.userRolPillMuted} notranslate`}
+            translate="no"
+          >
             {!loaded ? '…' : rol ? rol.nombre : 'Sin rol'}
           </span>
         </div>

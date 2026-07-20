@@ -22,10 +22,10 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               className={styles.menuButton}
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              <span className={styles.srOnly}>Open sidebar</span>
+              <span className={styles.srOnly}>Abrir menú</span>
               <span className={styles.menuIcon}>☰</span>
             </button>
-            <div className={styles.infoScroller}>
+            <div className={`${styles.infoScroller} notranslate`} translate="no">
               {/* Mostrar la información de la empresa */}
               {empresaInfo && (
                 <div className={styles.empresaInfo}>
@@ -59,7 +59,7 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
                   <div className={styles.userAvatar}>
                     {usuario?.nombre?.charAt(0).toUpperCase()}
                   </div>
-                  <span className={styles.userName}>
+                  <span className={`${styles.userName} notranslate`} translate="no">
                     {usuario?.nombre}
                   </span>
                   <span className={styles.dropdownArrow}>▼</span>
