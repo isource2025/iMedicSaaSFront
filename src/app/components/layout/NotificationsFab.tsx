@@ -166,12 +166,8 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
       if (sector) qs.set('sector', sector);
       if (datos.idPedido) qs.set('pedido', String(datos.idPedido));
       if (datos.idVisita) qs.set('visita', String(datos.idVisita));
-      const q = qs.toString();
-      if (esInterconsultaNotif(n)) {
-        router.push(`/dashboard/turnos/agenda${q ? `?${q}&bandeja=interconsultas` : '?bandeja=interconsultas'}`);
-      } else {
-        router.push(`/dashboard/beds${q ? `?${q}&section=estudios` : '?section=estudios'}`);
-      }
+      qs.set('bandeja', esInterconsultaNotif(n) ? 'interconsultas' : 'estudios');
+      router.push(`/dashboard/turnos/agenda?${qs.toString()}`);
     }
   };
 

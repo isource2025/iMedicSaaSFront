@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import type { PedidoEstudio, SectorReceptorEstudio } from '@/app/types/estudios';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
+import { useAppContext } from '@/app/contexts/AppContext';
+import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
@@ -24,6 +26,7 @@ function formatFecha(row: PedidoEstudio) {
 
 export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInicial }: Props) {
 	const usuario = useUsuarioActual();
+	const { sectorSeleccionado } = useAppContext();
 	const matriculaSesion = usuario?.matricula ?? null;
 	const [sectores, setSectores] = useState<SectorReceptorEstudio[]>([]);
 	const [sector, setSector] = useState('');
@@ -39,10 +42,14 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 		void estudiosService.listarSectoresReceptor().then((list) => {
 			setSectores(list);
 			const init = String(sectorInicial || '').trim();
-			if (init) setSector(init);
+			const resolved = resolveSectorReceptor(
+				init ? { idSector: init, descripcion: sectorSeleccionado?.descripcion } : sectorSeleccionado,
+				list,
+			);
+			if (resolved) setSector(resolved);
 			else if (list[0]?.valor) setSector(list[0].valor);
 		});
-	}, [open, sectorInicial]);
+	}, [open, sectorInicial, sectorSeleccionado]);
 
 	const load = useCallback(async () => {
 		if (!sector.trim()) {

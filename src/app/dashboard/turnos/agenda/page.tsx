@@ -23,6 +23,8 @@ import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
 import DetalleTurnoModal from '@/app/components/Agenda/DetalleTurnoModal';
 import AgendaInterconsultasBandeja from '@/app/components/Agenda/AgendaInterconsultasBandeja';
+import AgendaPedidosEstudiosBandeja from '@/app/components/Agenda/AgendaPedidosEstudiosBandeja';
+import { useAppContext } from '@/app/contexts/AppContext';
 import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import {
 	AgendaTurnoTablaHead,
@@ -218,17 +220,25 @@ export default function AgendaPage() {
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
 	const [bandejaInterconsultasOpen, setBandejaInterconsultasOpen] = useState(false);
-	const [bandejaSectorInicial, setBandejaSectorInicial] = useState<string | null>('OFT');
+	const [bandejaEstudiosOpen, setBandejaEstudiosOpen] = useState(false);
+	const [bandejaSectorInicial, setBandejaSectorInicial] = useState<string | null>(null);
 	const searchParams = useSearchParams();
+	const { sectorSeleccionado } = useAppContext();
 
 	useEffect(() => {
 		const bandeja = String(searchParams.get('bandeja') || '').toLowerCase();
+		const sectorQ = String(searchParams.get('sector') || '').trim();
+		if (sectorQ) setBandejaSectorInicial(sectorQ);
+		else if (sectorSeleccionado?.idSector) {
+			setBandejaSectorInicial(String(sectorSeleccionado.idSector).trim());
+		}
 		if (bandeja === 'interconsultas' || bandeja === 'interconsulta') {
-			const sector = String(searchParams.get('sector') || '').trim();
-			if (sector) setBandejaSectorInicial(sector);
 			setBandejaInterconsultasOpen(true);
 		}
-	}, [searchParams]);
+		if (bandeja === 'estudios' || bandeja === 'estudio' || bandeja === 'pedidos') {
+			setBandejaEstudiosOpen(true);
+		}
+	}, [searchParams, sectorSeleccionado]);
 
 	const [confirmDialog, setConfirmDialog] = useState<{
 		title: string;
@@ -726,6 +736,13 @@ export default function AgendaPage() {
 
 						<div className={styles.cardBody}>
 					<div className={styles.bandejaLinkRow}>
+						<button
+							type="button"
+							className={styles.bandejaLink}
+							onClick={() => setBandejaEstudiosOpen(true)}
+						>
+							Estudios pendientes
+						</button>
 						<button
 							type="button"
 							className={styles.bandejaLink}
@@ -1229,6 +1246,11 @@ export default function AgendaPage() {
 				onClose={() => setDetalleTurnoId(null)}
 			/>
 
+			<AgendaPedidosEstudiosBandeja
+				open={bandejaEstudiosOpen}
+				onClose={() => setBandejaEstudiosOpen(false)}
+				sectorInicial={bandejaSectorInicial}
+			/>
 			<AgendaInterconsultasBandeja
 				open={bandejaInterconsultasOpen}
 				onClose={() => setBandejaInterconsultasOpen(false)}

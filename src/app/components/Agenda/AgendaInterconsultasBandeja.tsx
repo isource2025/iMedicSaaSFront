@@ -7,6 +7,8 @@ import {
 	type SectorDestinoInterconsulta,
 } from '@/app/services/interconsultasService';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
+import { useAppContext } from '@/app/contexts/AppContext';
+import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from '@/app/components/beds/estudios/EstudiosSection.module.css';
@@ -25,6 +27,7 @@ function formatFecha(row: InterconsultaRow) {
 
 export default function AgendaInterconsultasBandeja({ open, onClose, sectorInicial }: Props) {
 	const usuario = useUsuarioActual();
+	const { sectorSeleccionado } = useAppContext();
 	const matriculaSesion = usuario?.matricula ?? null;
 	const [sectores, setSectores] = useState<SectorDestinoInterconsulta[]>([]);
 	const [sector, setSector] = useState('');
@@ -41,11 +44,15 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 		void interconsultasService.listarSectoresDestino().then((list) => {
 			setSectores(list);
 			const init = String(sectorInicial || '').trim();
-			if (init && list.some((s) => s.valor === init)) setSector(init);
+			const resolved = resolveSectorReceptor(
+				init ? { idSector: init, descripcion: sectorSeleccionado?.descripcion } : sectorSeleccionado,
+				list,
+			);
+			if (resolved) setSector(resolved);
 			else if (list.find((s) => s.valor === 'OFT')) setSector('OFT');
 			else if (list[0]?.valor) setSector(list[0].valor);
 		});
-	}, [open, sectorInicial]);
+	}, [open, sectorInicial, sectorSeleccionado]);
 
 	const load = useCallback(async () => {
 		if (!sector.trim()) {

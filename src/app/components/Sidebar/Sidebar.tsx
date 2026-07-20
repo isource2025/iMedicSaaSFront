@@ -63,6 +63,18 @@ const menuItems: MenuItem[] = [
     subItems: [
       { submoduloId: 'AGENDA', label: 'Agenda',              path: '/dashboard/turnos/agenda' },
       { submoduloId: 'AGENDA', label: 'Conversaciones',      path: '/dashboard/turnos/chats' },
+      {
+        submoduloId: 'ESTUDIOS',
+        permisoModuloId: 'INTERNACION',
+        label: 'Estudios pendientes',
+        path: '/dashboard/turnos/agenda?bandeja=estudios',
+      },
+      {
+        submoduloId: 'INTERCONSULTAS',
+        permisoModuloId: 'INTERNACION',
+        label: 'Interconsultas pendientes',
+        path: '/dashboard/turnos/agenda?bandeja=interconsultas',
+      },
       { submoduloId: 'ADMIN',  label: 'Gestión de turnos',   path: '/dashboard/turnos/admin' },
       { submoduloId: 'ADMIN',  label: 'Configuración',       path: '/dashboard/turnos/configuracion' },
     ]
