@@ -621,17 +621,18 @@
 
 .bandejaLink {
 	border: none;
-	background: transparent;
-	color: #0284c7;
+	background: #0083a9;
+	color: #fff;
 	font: inherit;
 	font-size: 0.85rem;
 	font-weight: 600;
 	cursor: pointer;
-	text-decoration: underline;
-	text-underline-offset: 2px;
-	padding: 0;
+	text-decoration: none;
+	padding: 0.5rem 0.9rem;
+	border-radius: 8px;
 }
 
 .bandejaLink:hover {
-	color: #0369a1;
+	color: #fff;
+	background: #0369a1;
 }

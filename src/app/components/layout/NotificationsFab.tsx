@@ -161,13 +161,12 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
         idVisita?: number;
         idPedido?: number;
       };
-      const sector = String(datos.idSectorReceptor || '').trim();
       const qs = new URLSearchParams();
+      qs.set('tab', esInterconsultaNotif(n) ? 'interconsultas' : 'estudios');
+      const sector = String(datos.idSectorReceptor || '').trim();
       if (sector) qs.set('sector', sector);
       if (datos.idPedido) qs.set('pedido', String(datos.idPedido));
-      if (datos.idVisita) qs.set('visita', String(datos.idVisita));
-      qs.set('bandeja', esInterconsultaNotif(n) ? 'interconsultas' : 'estudios');
-      router.push(`/dashboard/turnos/agenda?${qs.toString()}`);
+      router.push(`/dashboard/turnos/bandeja-pedidos?${qs.toString()}`);
     }
   };
 

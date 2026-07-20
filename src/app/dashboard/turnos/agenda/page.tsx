@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
 	agendaService,
 	type AgendaJornada,
@@ -22,9 +22,6 @@ import AgendaPacienteBusqueda from '@/app/components/Agenda/AgendaPacienteBusque
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
 import DetalleTurnoModal from '@/app/components/Agenda/DetalleTurnoModal';
-import AgendaInterconsultasBandeja from '@/app/components/Agenda/AgendaInterconsultasBandeja';
-import AgendaPedidosEstudiosBandeja from '@/app/components/Agenda/AgendaPedidosEstudiosBandeja';
-import { useAppContext } from '@/app/contexts/AppContext';
 import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import {
 	AgendaTurnoTablaHead,
@@ -219,26 +216,24 @@ export default function AgendaPage() {
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
-	const [bandejaInterconsultasOpen, setBandejaInterconsultasOpen] = useState(false);
-	const [bandejaEstudiosOpen, setBandejaEstudiosOpen] = useState(false);
-	const [bandejaSectorInicial, setBandejaSectorInicial] = useState<string | null>(null);
 	const searchParams = useSearchParams();
-	const { sectorSeleccionado } = useAppContext();
+	const router = useRouter();
 
 	useEffect(() => {
 		const bandeja = String(searchParams.get('bandeja') || '').toLowerCase();
-		const sectorQ = String(searchParams.get('sector') || '').trim();
-		if (sectorQ) setBandejaSectorInicial(sectorQ);
-		else if (sectorSeleccionado?.idSector) {
-			setBandejaSectorInicial(String(sectorSeleccionado.idSector).trim());
-		}
+		if (!bandeja) return;
+		const qs = new URLSearchParams();
 		if (bandeja === 'interconsultas' || bandeja === 'interconsulta') {
-			setBandejaInterconsultasOpen(true);
+			qs.set('tab', 'interconsultas');
+		} else {
+			qs.set('tab', 'estudios');
 		}
-		if (bandeja === 'estudios' || bandeja === 'estudio' || bandeja === 'pedidos') {
-			setBandejaEstudiosOpen(true);
-		}
-	}, [searchParams, sectorSeleccionado]);
+		const sectorQ = String(searchParams.get('sector') || '').trim();
+		if (sectorQ) qs.set('sector', sectorQ);
+		const pedidoQ = String(searchParams.get('pedido') || '').trim();
+		if (pedidoQ) qs.set('pedido', pedidoQ);
+		router.replace(`/dashboard/turnos/bandeja-pedidos?${qs.toString()}`);
+	}, [searchParams, router]);
 
 	const [confirmDialog, setConfirmDialog] = useState<{
 		title: string;
@@ -736,20 +731,9 @@ export default function AgendaPage() {
 
 						<div className={styles.cardBody}>
 					<div className={styles.bandejaLinkRow}>
-						<button
-							type="button"
-							className={styles.bandejaLink}
-							onClick={() => setBandejaEstudiosOpen(true)}
-						>
-							Estudios pendientes
-						</button>
-						<button
-							type="button"
-							className={styles.bandejaLink}
-							onClick={() => setBandejaInterconsultasOpen(true)}
-						>
-							Interconsultas pendientes
-						</button>
+						<a className={styles.bandejaLink} href="/dashboard/turnos/bandeja-pedidos?tab=estudios">
+							Bandeja de pedidos
+						</a>
 					</div>
 					<AgendaPacienteBusqueda />
 
@@ -1246,16 +1230,6 @@ export default function AgendaPage() {
 				onClose={() => setDetalleTurnoId(null)}
 			/>
 
-			<AgendaPedidosEstudiosBandeja
-				open={bandejaEstudiosOpen}
-				onClose={() => setBandejaEstudiosOpen(false)}
-				sectorInicial={bandejaSectorInicial}
-			/>
-			<AgendaInterconsultasBandeja
-				open={bandejaInterconsultasOpen}
-				onClose={() => setBandejaInterconsultasOpen(false)}
-				sectorInicial={bandejaSectorInicial}
-			/>
 			<AsignarTurnoModal
 				open={!!modalSlot && !!matriculaMedicoActiva && !fechaPasada}
 				modo={modalModo}

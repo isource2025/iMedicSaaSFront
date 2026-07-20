@@ -1,0 +1,313 @@
+.page {
+	padding: 1rem 1.25rem 2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	max-width: 1200px;
+}
+
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.title {
+	margin: 0;
+	font-size: 1.35rem;
+	font-weight: 800;
+	color: #0f172a;
+}
+
+.subtitle {
+	margin: 0.25rem 0 0;
+	font-size: 0.875rem;
+	color: #64748b;
+	max-width: 42rem;
+	line-height: 1.4;
+}
+
+.liveBox {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.45rem 0.75rem;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	font-size: 0.8125rem;
+}
+
+.liveDot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.liveOn {
+	background: #16a34a;
+	box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.25);
+}
+
+.liveOff {
+	background: #94a3b8;
+}
+
+.liveLabel {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-weight: 600;
+	color: #334155;
+	cursor: pointer;
+}
+
+.liveMeta {
+	color: #64748b;
+	white-space: nowrap;
+}
+
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem;
+	align-items: flex-end;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #64748b;
+	min-width: 220px;
+	flex: 1;
+}
+
+.select {
+	padding: 0.5rem 0.65rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	color: #0f172a;
+	background: #fff;
+}
+
+.tabs {
+	display: flex;
+	gap: 0.25rem;
+	padding: 0.2rem;
+	background: #f1f5f9;
+	border-radius: 9px;
+}
+
+.tab {
+	border: none;
+	background: transparent;
+	padding: 0.45rem 0.85rem;
+	border-radius: 7px;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #64748b;
+	cursor: pointer;
+}
+
+.tabActive {
+	background: #fff;
+	color: #0f172a;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.refreshBtn {
+	padding: 0.5rem 0.85rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #fff;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #334155;
+	cursor: pointer;
+}
+
+.refreshBtn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.metaLine {
+	margin: 0;
+	font-size: 0.75rem;
+	color: #64748b;
+}
+
+.error {
+	padding: 0.65rem 0.85rem;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 8px;
+	color: #991b1b;
+	font-size: 0.875rem;
+}
+
+.empty {
+	margin: 1.5rem 0;
+	text-align: center;
+	color: #64748b;
+	font-size: 0.9375rem;
+}
+
+.tableWrap {
+	overflow-x: auto;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+}
+
+.table th {
+	text-align: left;
+	padding: 0.65rem 0.75rem;
+	background: #f8fafc;
+	color: #64748b;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.table td {
+	padding: 0.7rem 0.75rem;
+	border-bottom: 1px solid #f1f5f9;
+	vertical-align: middle;
+	color: #0f172a;
+}
+
+.rowTaken {
+	background: #f8fafc;
+	opacity: 0.88;
+}
+
+.badgeLibre,
+.badgeMio,
+.badgeOtro {
+	display: inline-block;
+	padding: 0.15rem 0.5rem;
+	border-radius: 999px;
+	font-size: 0.7rem;
+	font-weight: 700;
+}
+
+.badgeLibre {
+	background: #ecfdf5;
+	color: #047857;
+}
+
+.badgeMio {
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+
+.badgeOtro {
+	background: #f1f5f9;
+	color: #475569;
+}
+
+.practica {
+	font-weight: 600;
+}
+
+.hint {
+	font-size: 0.75rem;
+	color: #64748b;
+}
+
+.linkBtn {
+	border: none;
+	background: transparent;
+	padding: 0;
+	text-align: left;
+	cursor: pointer;
+	font: inherit;
+	color: inherit;
+}
+
+.linkBtn:hover .practica {
+	color: #0284c7;
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.btnPrimary,
+.btnSecondary {
+	padding: 0.4rem 0.75rem;
+	border-radius: 8px;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	cursor: pointer;
+	border: none;
+}
+
+.btnPrimary {
+	background: #0083a9;
+	color: #fff;
+}
+
+.btnPrimary:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.btnSecondary {
+	background: #fff;
+	color: #334155;
+	border: 1px solid #cbd5e1;
+}
+
+.modalOverlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 80;
+	padding: 1rem;
+}
+
+.modalCard {
+	background: #fff;
+	border-radius: 12px;
+	padding: 1.15rem;
+	width: min(480px, 100%);
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.modalTitle {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 700;
+}
+
+.textarea {
+	width: 100%;
+	padding: 0.65rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	font: inherit;
+	resize: vertical;
+}
