@@ -164,9 +164,8 @@ export default function AdmissionVisitDetailContent({
     const indicaciones = data?.indicaciones?.length ?? 0;
     const med = data?.medicamentos?.length ?? 0;
     const evo = data?.evolucionesMedicas?.length ?? 0;
-    const labs = data?.practicas?.laboratorios ?? [];
-    const estudios = labs.length;
-    const protocolos = labs.filter((ex) => str(ex.Protocolo).trim() !== '').length;
+    const estudios = data?.estudios?.length ?? 0;
+    const protocolos = data?.protocolos?.length ?? 0;
     const adj = data?.practicas?.adjuntos?.length ?? 0;
     return { hci, practicas, indicaciones, med, evo, estudios, protocolos, adj };
   }, [data]);
@@ -360,45 +359,115 @@ export default function AdmissionVisitDetailContent({
         );
 
       case 'estudios':
-        if (!data.practicas?.laboratorios?.length) {
-          return <EmptyState message="No hay estudios de laboratorio cargados para esta visita." />;
+        if (!data.estudios?.length) {
+          return <EmptyState message="No hay estudios solicitados (pedidos) para esta visita." />;
         }
-        return data.practicas.laboratorios.map((ex) => (
-          <div key={str(ex.IdExamen)} className={styles.listItem}>
-            <p className={styles.listItemTitle}>{str(ex.TipoEstudio) || 'Estudio'}</p>
-            <p className={styles.listItemMeta}>
-              {[str(ex.FechaExamen), str(ex.HoraExamen), ex.Protocolo ? `Protocolo ${str(ex.Protocolo)}` : '']
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
-            {!ex.detalles?.length ? (
-              <p className={styles.muted}>Sin detalle de parámetros.</p>
-            ) : (
-              ex.detalles.map((d, i) => {
-                const row = d as Record<string, unknown>;
-                return (
-                  <p key={i} className={styles.fieldLine}>
-                    <span className={styles.fieldLabel}>{str(row.NombreParametro)}:</span>{' '}
-                    {str(row.Resultado)}
-                    {str(row.ValorReferencia) ? ` (ref. ${str(row.ValorReferencia)})` : ''}
-                  </p>
-                );
-              })
-            )}
-          </div>
-        ));
+        return data.estudios.map((ex, i) => {
+          const id = ex.IdPedido ?? ex.id ?? i;
+          const titulo =
+            str(ex.PracticaDescripcion || ex.practicaDescripcion) ||
+            str(ex.PedidoEstudio || ex.pedidoEstudio) ||
+            `Pedido #${id}`;
+          const fecha = str(ex.FechaPedido || ex.fechaPedido).slice(0, 16);
+          const urg = str(ex.estadoUrgencia || ex.EstadoUrgencia);
+          const nroProt = str(ex.NroProtocolo || ex.nroProtocolo);
+          const resultado = str(ex.ResultadoEstudio || ex.resultadoEstudio);
+          const solicitante = str(ex.MedicoSolicitanteNombre || ex.medicoSolicitanteNombre);
+          const realizador = str(ex.RealizadorNombre || ex.realizadorNombre);
+          return (
+            <div key={String(id)} className={styles.listItem}>
+              <p className={styles.listItemTitle}>{titulo}</p>
+              <p className={styles.listItemMeta}>
+                {[
+                  fecha,
+                  urg ? `Urgencia: ${urg}` : '',
+                  solicitante ? `Solicita: ${solicitante}` : '',
+                  realizador ? `Realiza: ${realizador}` : '',
+                  nroProt ? `Protocolo resultado ${nroProt}` : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+              {str(ex.PedidoEstudio || ex.pedidoEstudio) &&
+              str(ex.PedidoEstudio || ex.pedidoEstudio) !== titulo ? (
+                <p className={styles.plainText}>{str(ex.PedidoEstudio || ex.pedidoEstudio)}</p>
+              ) : null}
+              {resultado ? (
+                <p className={styles.plainText}>
+                  <span className={styles.fieldLabel}>Resultado:</span> {resultado.slice(0, 500)}
+                  {resultado.length > 500 ? '…' : ''}
+                </p>
+              ) : (
+                <p className={styles.muted}>Sin resultado cargado.</p>
+              )}
+              {ex.cantidadAdjuntos ? (
+                <p className={styles.muted}>{ex.cantidadAdjuntos} adjunto(s)</p>
+              ) : null}
+            </div>
+          );
+        });
 
       case 'protocolos':
-        if (!data.practicas?.laboratorios?.length) {
-          return <EmptyState message="No hay estudios para listar protocolos." />;
+        if (!data.protocolos?.length) {
+          return <EmptyState message="No hay protocolos clínicos para esta visita." />;
         }
-        return data.practicas.laboratorios.map((ex, i) => (
-          <p key={str(ex.IdExamen) || i} className={styles.fieldLine}>
-            <span className={styles.fieldLabel}>Protocolo {str(ex.Protocolo) || '—'}:</span>{' '}
-            {str(ex.TipoEstudio)} — {str(ex.FechaExamen)} {str(ex.HoraExamen)}
-            {str(ex.Laboratorio) ? ` · ${str(ex.Laboratorio)}` : ''}
-          </p>
-        ));
+        return data.protocolos.map((p, i) => {
+          const id = p.idProtocolo ?? i;
+          const tipo = str(p.tipoDescripcion || p.tipoProtocolo) || 'Protocolo';
+          const nro = p.numeroProtocolo != null ? String(p.numeroProtocolo) : '—';
+          const fecha = str(p.fecha).slice(0, 16);
+          const practicas = Array.isArray(p.practicas) ? p.practicas : [];
+          const equipo = practicas.flatMap((x) => {
+            const pros = Array.isArray((x as { profesionales?: unknown[] }).profesionales)
+              ? ((x as { profesionales: Array<Record<string, unknown>> }).profesionales)
+              : [];
+            return pros.map((pr) => {
+              const nombre = str(pr.apellidoNombre);
+              const rol = str(pr.funcionNombre);
+              if (!nombre) return '';
+              return rol ? `${nombre} (${rol})` : nombre;
+            });
+          }).filter(Boolean);
+          return (
+            <div key={String(id)} className={styles.listItem}>
+              <p className={styles.listItemTitle}>
+                {tipo} · N° {nro}
+              </p>
+              <p className={styles.listItemMeta}>
+                {[fecha, str(p.operadorNombre), str(p.estado)].filter(Boolean).join(' · ')}
+              </p>
+              {equipo.length > 0 ? (
+                <p className={styles.fieldLine}>
+                  <span className={styles.fieldLabel}>Equipo:</span> {equipo.join(' · ')}
+                </p>
+              ) : null}
+              {str(p.diagnosticoPre) ? (
+                <p className={styles.fieldLine}>
+                  <span className={styles.fieldLabel}>Dx pre:</span> {str(p.diagnosticoPre)}
+                </p>
+              ) : null}
+              {str(p.diagnosticoPos) ? (
+                <p className={styles.fieldLine}>
+                  <span className={styles.fieldLabel}>Dx pos:</span> {str(p.diagnosticoPos)}
+                </p>
+              ) : null}
+              {str(p.tecnica) ? (
+                <p className={styles.fieldLine}>
+                  <span className={styles.fieldLabel}>Técnica:</span> {str(p.tecnica)}
+                </p>
+              ) : null}
+              {practicas.length > 0 ? (
+                <p className={styles.muted}>
+                  {practicas.length} práctica(s):{' '}
+                  {practicas
+                    .map((x) => str((x as Record<string, unknown>).descripcion || (x as Record<string, unknown>).codigoPractica))
+                    .filter(Boolean)
+                    .join(', ')}
+                </p>
+              ) : null}
+            </div>
+          );
+        });
 
       case 'adjuntos':
         if (!data.practicas?.adjuntos?.length) {

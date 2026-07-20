@@ -27,6 +27,9 @@ export interface AdmissionSearchRow {
   CntPracticas?: number;
   CntIndicaciones?: number;
   CntMedicacion?: number;
+  /** Pedidos imPedidosEstudios (paridad iMedicAD) */
+  CntEstudios?: number;
+  /** Legacy / labs opcionales */
   CntLaboratorios?: number;
   CntProtocolos?: number;
   CntAdjuntos?: number;

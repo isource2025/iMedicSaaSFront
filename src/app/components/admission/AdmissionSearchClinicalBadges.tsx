@@ -40,7 +40,7 @@ const BADGE_ITEMS: {
 	{ label: 'Ind', keys: ['CntIndicaciones', 'cntIndicaciones'], title: 'Indicaciones' },
 	{ label: 'Med', keys: ['CntMedicacion', 'cntMedicacion'], title: 'Medicación suministrada' },
 	{ label: 'Evo', keys: ['CntEvoluciones', 'cntEvoluciones'], title: 'Evoluciones' },
-	{ label: 'Est', keys: ['CntLaboratorios', 'cntLaboratorios'], title: 'Estudios solicitados' },
+	{ label: 'Est', keys: ['CntEstudios', 'cntEstudios', 'CntLaboratorios', 'cntLaboratorios'], title: 'Estudios solicitados' },
 	{ label: 'Prot', keys: ['CntProtocolos', 'cntProtocolos'], title: 'Protocolos' },
 	{ label: 'Adj', keys: ['CntAdjuntos', 'cntAdjuntos'], title: 'Adjuntos' },
 ];

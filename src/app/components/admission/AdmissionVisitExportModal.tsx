@@ -11,8 +11,8 @@ const SECTIONS: { id: ExportSectionKey; label: string }[] = [
   { id: 'indicaciones', label: 'Indicaciones' },
   { id: 'medicamentos', label: 'Medicamentos suministrados' },
   { id: 'evoluciones', label: 'Evoluciones' },
-  { id: 'estudios', label: 'Estudios solicitados (laboratorio con detalle)' },
-  { id: 'protocolos', label: 'Protocolos (resumen por estudio)' },
+  { id: 'estudios', label: 'Estudios solicitados (pedidos / resultados)' },
+  { id: 'protocolos', label: 'Protocolos clínicos' },
   { id: 'adjuntos', label: 'Adjuntos (solo metadatos; sin archivos binarios)' },
 ];
 

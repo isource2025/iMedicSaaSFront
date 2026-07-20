@@ -48,6 +48,41 @@ export type VisitDetailPayload = {
     }>;
     adjuntos?: Array<Record<string, unknown>>;
   };
+  /** Pedidos imPedidosEstudios (paridad iMedicAD) */
+  estudios?: Array<{
+    id?: number;
+    IdPedido?: number;
+    fechaPedido?: string | null;
+    FechaPedido?: string | null;
+    pedidoEstudio?: string;
+    PedidoEstudio?: string;
+    practicaDescripcion?: string;
+    PracticaDescripcion?: string;
+    idProtocolo?: number | null;
+    estadoUrgencia?: string;
+    resultadoEstudio?: string;
+    ResultadoEstudio?: string;
+    nroProtocolo?: string;
+    NroProtocolo?: string;
+    estadoResultado?: string;
+    fechaResultado?: string | null;
+    cantidadAdjuntos?: number;
+  }>;
+  /** Protocolos clínicos HCProtocolosPtes */
+  protocolos?: Array<{
+    idProtocolo?: number;
+    numeroProtocolo?: number;
+    fecha?: string | null;
+    tipoProtocolo?: string;
+    tipoDescripcion?: string | null;
+    diagnosticoPre?: string | null;
+    diagnosticoPos?: string | null;
+    tecnica?: string | null;
+    texto?: string;
+    estado?: string | null;
+    operadorNombre?: string | null;
+    practicas?: Array<Record<string, unknown>>;
+  }>;
   evolucionesMedicas?: Record<string, unknown>[];
 };
 
