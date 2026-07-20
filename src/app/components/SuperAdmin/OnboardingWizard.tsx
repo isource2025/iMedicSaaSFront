@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { superAdminService } from '@/app/services/superAdminService';
 import type {
@@ -113,6 +113,11 @@ export default function OnboardingWizard({
   const [nuevoSector, setNuevoSector] = useState({ valor: '', descripcion: '', ambInt: 'A' });
   const [editSector, setEditSector] = useState<string | null>(null);
   const [editSectorForm, setEditSectorForm] = useState({ descripcion: '', ambInt: 'A' });
+  const [busquedaSectores, setBusquedaSectores] = useState('');
+  const [filtroAmbSectores, setFiltroAmbSectores] = useState('');
+  const [filtroSelSectores, setFiltroSelSectores] = useState<'todos' | 'sel' | 'no'>('todos');
+  const [busquedaUsuariosEmpresa, setBusquedaUsuariosEmpresa] = useState('');
+  const [filtroRolUsuariosEmpresa, setFiltroRolUsuariosEmpresa] = useState('');
 
   const [usuarioModal, setUsuarioModal] = useState<UsuarioModal>(null);
 
@@ -573,6 +578,61 @@ export default function OnboardingWizard({
   };
 
   const usuarios = empresa.usuarios || [];
+
+  const sectoresFiltrados = useMemo(() => {
+    const q = busquedaSectores.trim().toLowerCase();
+    const amb = filtroAmbSectores.trim().toUpperCase();
+    return sectoresCatalogo.filter((s) => {
+      if (q) {
+        const hay =
+          String(s.id || '')
+            .toLowerCase()
+            .includes(q) ||
+          String(s.descripcion || '')
+            .toLowerCase()
+            .includes(q);
+        if (!hay) return false;
+      }
+      if (amb && String(s.ambInt || '').toUpperCase() !== amb) return false;
+      if (filtroSelSectores === 'sel' && !sectoresSel.has(s.id)) return false;
+      if (filtroSelSectores === 'no' && sectoresSel.has(s.id)) return false;
+      return true;
+    });
+  }, [sectoresCatalogo, busquedaSectores, filtroAmbSectores, filtroSelSectores, sectoresSel]);
+
+  const rolesUsuariosEmpresa = useMemo(() => {
+    const set = new Set<string>();
+    for (const u of usuarios) {
+      const r = String(u.rol || '').trim();
+      if (r) set.add(r);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [usuarios]);
+
+  const usuariosFiltrados = useMemo(() => {
+    const q = busquedaUsuariosEmpresa.trim().toLowerCase();
+    const rolF = filtroRolUsuariosEmpresa.trim().toLowerCase();
+    return usuarios.filter((u) => {
+      if (rolF && String(u.rol || '').trim().toLowerCase() !== rolF) return false;
+      if (!q) return true;
+      const sectoresTxt = (u.sectores || []).map((s) => s.id).join(' ').toLowerCase();
+      return (
+        String(u.usuario || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(u.nombre || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(u.apellido || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(u.rol || '')
+          .toLowerCase()
+          .includes(q) ||
+        sectoresTxt.includes(q)
+      );
+    });
+  }, [usuarios, busquedaUsuariosEmpresa, filtroRolUsuariosEmpresa]);
 
   const renderUsuarioFormFields = (form: UsuarioForm, mode: 'create' | 'edit') => (
     <>
@@ -1091,6 +1151,53 @@ export default function OnboardingWizard({
               </div>
             </div>
 
+            <div className={styles.filtersBar}>
+              <input
+                className={styles.input}
+                placeholder="Buscar por código o descripción…"
+                value={busquedaSectores}
+                onChange={(e) => setBusquedaSectores(e.target.value)}
+              />
+              <select
+                className={styles.select}
+                value={filtroAmbSectores}
+                onChange={(e) => setFiltroAmbSectores(e.target.value)}
+                title="Filtrar por ámbito"
+              >
+                <option value="">Todos los ámbitos</option>
+                <option value="A">Ambulatorio</option>
+                <option value="I">Internación</option>
+              </select>
+              <select
+                className={styles.select}
+                value={filtroSelSectores}
+                onChange={(e) => setFiltroSelSectores(e.target.value as 'todos' | 'sel' | 'no')}
+                title="Filtrar por selección"
+              >
+                <option value="todos">Todos</option>
+                <option value="sel">Solo seleccionados</option>
+                <option value="no">No seleccionados</option>
+              </select>
+              {(busquedaSectores || filtroAmbSectores || filtroSelSectores !== 'todos') && (
+                <button
+                  type="button"
+                  className={styles.btnGhost}
+                  onClick={() => {
+                    setBusquedaSectores('');
+                    setFiltroAmbSectores('');
+                    setFiltroSelSectores('todos');
+                  }}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            <p className={styles.filterMeta}>
+              {sectoresFiltrados.length} de {sectoresCatalogo.length} sector
+              {sectoresCatalogo.length === 1 ? '' : 'es'} · {sectoresSel.size} seleccionado
+              {sectoresSel.size === 1 ? '' : 's'}
+            </p>
+
             <div className={styles.tableWrap}>
               <table className={styles.table}>
                 <thead>
@@ -1103,86 +1210,94 @@ export default function OnboardingWizard({
                   </tr>
                 </thead>
                 <tbody>
-                  {sectoresCatalogo.map((s) => (
-                    <tr key={s.id}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={sectoresSel.has(s.id)}
-                          onChange={() => toggleSectorSel(s.id)}
-                        />
-                      </td>
-                      <td>{s.id}</td>
-                      <td>
-                        {editSector === s.id ? (
-                          <input
-                            className={styles.input}
-                            value={editSectorForm.descripcion}
-                            onChange={(e) =>
-                              setEditSectorForm({ ...editSectorForm, descripcion: e.target.value })
-                            }
-                          />
-                        ) : (
-                          s.descripcion
-                        )}
-                      </td>
-                      <td>
-                        {editSector === s.id ? (
-                          <select
-                            className={styles.select}
-                            value={editSectorForm.ambInt}
-                            onChange={(e) =>
-                              setEditSectorForm({ ...editSectorForm, ambInt: e.target.value })
-                            }
-                          >
-                            <option value="A">A</option>
-                            <option value="I">I</option>
-                          </select>
-                        ) : (
-                          s.ambInt || '—'
-                        )}
-                      </td>
-                      <td className={styles.actionsCell}>
-                        {editSector === s.id ? (
-                          <>
-                            <button type="button" className={styles.btnSm} onClick={guardarSectorEdit}>
-                              OK
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.btnSmSecondary}
-                              onClick={() => setEditSector(null)}
-                            >
-                              Cancelar
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              className={styles.btnSmSecondary}
-                              onClick={() => {
-                                setEditSector(s.id);
-                                setEditSectorForm({
-                                  descripcion: s.descripcion,
-                                  ambInt: s.ambInt || 'A',
-                                });
-                              }}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              className={`${styles.btnSm} ${styles.btnDanger}`}
-                              onClick={() => eliminarSector(s.id)}
-                            >
-                              Eliminar
-                            </button>
-                          </>
-                        )}
+                  {sectoresFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className={styles.emptyCell}>
+                        Sin sectores con esos filtros
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    sectoresFiltrados.map((s) => (
+                      <tr key={s.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={sectoresSel.has(s.id)}
+                            onChange={() => toggleSectorSel(s.id)}
+                          />
+                        </td>
+                        <td>{s.id}</td>
+                        <td>
+                          {editSector === s.id ? (
+                            <input
+                              className={styles.input}
+                              value={editSectorForm.descripcion}
+                              onChange={(e) =>
+                                setEditSectorForm({ ...editSectorForm, descripcion: e.target.value })
+                              }
+                            />
+                          ) : (
+                            s.descripcion
+                          )}
+                        </td>
+                        <td>
+                          {editSector === s.id ? (
+                            <select
+                              className={styles.select}
+                              value={editSectorForm.ambInt}
+                              onChange={(e) =>
+                                setEditSectorForm({ ...editSectorForm, ambInt: e.target.value })
+                              }
+                            >
+                              <option value="A">A</option>
+                              <option value="I">I</option>
+                            </select>
+                          ) : (
+                            s.ambInt || '—'
+                          )}
+                        </td>
+                        <td className={styles.actionsCell}>
+                          {editSector === s.id ? (
+                            <>
+                              <button type="button" className={styles.btnSm} onClick={guardarSectorEdit}>
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.btnSmSecondary}
+                                onClick={() => setEditSector(null)}
+                              >
+                                Cancelar
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className={styles.btnSmSecondary}
+                                onClick={() => {
+                                  setEditSector(s.id);
+                                  setEditSectorForm({
+                                    descripcion: s.descripcion,
+                                    ambInt: s.ambInt || 'A',
+                                  });
+                                }}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.btnSm} ${styles.btnDanger}`}
+                                onClick={() => eliminarSector(s.id)}
+                              >
+                                Eliminar
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1197,6 +1312,44 @@ export default function OnboardingWizard({
                 + Nuevo usuario
               </button>
             </div>
+
+            <div className={styles.filtersBar}>
+              <input
+                className={styles.input}
+                placeholder="Buscar por usuario, nombre, rol o sector…"
+                value={busquedaUsuariosEmpresa}
+                onChange={(e) => setBusquedaUsuariosEmpresa(e.target.value)}
+              />
+              <select
+                className={styles.select}
+                value={filtroRolUsuariosEmpresa}
+                onChange={(e) => setFiltroRolUsuariosEmpresa(e.target.value)}
+                title="Filtrar por rol"
+              >
+                <option value="">Todos los roles</option>
+                {rolesUsuariosEmpresa.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              {(busquedaUsuariosEmpresa || filtroRolUsuariosEmpresa) && (
+                <button
+                  type="button"
+                  className={styles.btnGhost}
+                  onClick={() => {
+                    setBusquedaUsuariosEmpresa('');
+                    setFiltroRolUsuariosEmpresa('');
+                  }}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            <p className={styles.filterMeta}>
+              {usuariosFiltrados.length} de {usuarios.length} usuario
+              {usuarios.length === 1 ? '' : 's'}
+            </p>
 
             <div className={styles.tableWrap}>
               <table className={styles.table}>
@@ -1216,8 +1369,14 @@ export default function OnboardingWizard({
                         Sin usuarios vinculados
                       </td>
                     </tr>
+                  ) : usuariosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className={styles.emptyCell}>
+                        Sin usuarios con esos filtros
+                      </td>
+                    </tr>
                   ) : (
-                    usuarios.map((u) => (
+                    usuariosFiltrados.map((u) => (
                       <tr key={u.idPersonal}>
                         <td>{u.usuario}</td>
                         <td>

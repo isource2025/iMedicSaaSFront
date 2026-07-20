@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { authService } from '@/app/services/authService';
 import { superAdminService } from '@/app/services/superAdminService';
 import type {
   EmpresaAdmin,
@@ -64,7 +65,11 @@ export default function SuperAdminPage() {
   const [usuarios, setUsuarios] = useState<UsuarioPlataforma[]>([]);
   const [usuariosLoading, setUsuariosLoading] = useState(false);
   const [selectedEmpresa, setSelectedEmpresa] = useState<EmpresaAdmin | null>(null);
-  const [busqueda, setBusqueda] = useState('');
+  const [busquedaEmpresas, setBusquedaEmpresas] = useState('');
+  const [busquedaUsuarios, setBusquedaUsuarios] = useState('');
+  const [filtroRolUsuarios, setFiltroRolUsuarios] = useState('');
+  const [filtroEmpresaUsuarios, setFiltroEmpresaUsuarios] = useState('');
+  const [cerrandoSesion, setCerrandoSesion] = useState(false);
 
   const [nuevaEmpresa, setNuevaEmpresa] = useState({
     descripcion: '',
@@ -121,9 +126,41 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     if (tab === 'usuarios' && puedeAcceder && !loading) {
-      cargarUsuarios();
+      cargarUsuarios(busquedaUsuarios);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al entrar al tab
   }, [tab, puedeAcceder, loading, cargarUsuarios]);
+
+  const rolesDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    for (const u of usuarios) {
+      const r = String(u.rol || '').trim();
+      if (r) set.add(r);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [usuarios]);
+
+  const usuariosFiltrados = useMemo(() => {
+    let list = usuarios;
+    const rolF = filtroRolUsuarios.trim().toLowerCase();
+    const empF = filtroEmpresaUsuarios.trim().toLowerCase();
+    if (rolF) {
+      list = list.filter((u) => String(u.rol || '').trim().toLowerCase() === rolF);
+    }
+    if (empF) {
+      list = list.filter((u) => String(u.empresas || '').toLowerCase().includes(empF));
+    }
+    return list;
+  }, [usuarios, filtroRolUsuarios, filtroEmpresaUsuarios]);
+
+  const handleLogout = async () => {
+    setCerrandoSesion(true);
+    try {
+      await authService.logout();
+    } finally {
+      router.replace('/');
+    }
+  };
 
   const abrirEmpresa = async (id: string) => {
     try {
@@ -169,6 +206,14 @@ export default function SuperAdminPage() {
           <h1 className={styles.title}>Plataforma iMedic</h1>
           <p className={styles.subtitle}>Administración multi-empresa</p>
         </div>
+        <button
+          type="button"
+          className={styles.logoutBtn}
+          disabled={cerrandoSesion}
+          onClick={() => void handleLogout()}
+        >
+          {cerrandoSesion ? 'Saliendo…' : 'Cerrar sesión'}
+        </button>
       </header>
 
       <nav className={styles.nav} aria-label="Secciones">
@@ -247,14 +292,16 @@ export default function SuperAdminPage() {
             <input
               className={styles.input}
               placeholder="Buscar…"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && superAdminService.listEmpresas(busqueda).then(setEmpresas)}
+              value={busquedaEmpresas}
+              onChange={(e) => setBusquedaEmpresas(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === 'Enter' && superAdminService.listEmpresas(busquedaEmpresas).then(setEmpresas)
+              }
             />
             <button
               type="button"
               className={`${styles.btn} ${styles.btnSecondary}`}
-              onClick={() => superAdminService.listEmpresas(busqueda).then(setEmpresas)}
+              onClick={() => superAdminService.listEmpresas(busquedaEmpresas).then(setEmpresas)}
             >
               Buscar
             </button>
@@ -363,23 +410,67 @@ export default function SuperAdminPage() {
 
       {tab === 'usuarios' && (
         <section className={styles.panel}>
-          <div className={styles.toolbar}>
+          <div className={styles.filtersBar}>
             <input
               className={styles.input}
-              placeholder="Buscar usuario…"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && cargarUsuarios(busqueda)}
+              placeholder="Buscar por usuario, nombre o apellido…"
+              value={busquedaUsuarios}
+              onChange={(e) => setBusquedaUsuarios(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && cargarUsuarios(busquedaUsuarios)}
             />
+            <select
+              className={styles.select}
+              value={filtroRolUsuarios}
+              onChange={(e) => setFiltroRolUsuarios(e.target.value)}
+              title="Filtrar por rol"
+            >
+              <option value="">Todos los roles</option>
+              {rolesDisponibles.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+            <select
+              className={styles.select}
+              value={filtroEmpresaUsuarios}
+              onChange={(e) => setFiltroEmpresaUsuarios(e.target.value)}
+              title="Filtrar por empresa"
+            >
+              <option value="">Todas las empresas</option>
+              {empresas.map((e) => (
+                <option key={e.id} value={e.descripcion}>
+                  {e.descripcion}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               className={`${styles.btn} ${styles.btnSecondary}`}
-              onClick={() => cargarUsuarios(busqueda)}
+              onClick={() => cargarUsuarios(busquedaUsuarios)}
               disabled={usuariosLoading}
             >
               {usuariosLoading ? 'Cargando…' : 'Buscar'}
             </button>
+            {(busquedaUsuarios || filtroRolUsuarios || filtroEmpresaUsuarios) && (
+              <button
+                type="button"
+                className={styles.btnGhost}
+                onClick={() => {
+                  setBusquedaUsuarios('');
+                  setFiltroRolUsuarios('');
+                  setFiltroEmpresaUsuarios('');
+                  void cargarUsuarios('');
+                }}
+              >
+                Limpiar
+              </button>
+            )}
           </div>
+          <p className={styles.filterMeta}>
+            {usuariosFiltrados.length} de {usuarios.length} usuario
+            {usuarios.length === 1 ? '' : 's'}
+          </p>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -391,14 +482,14 @@ export default function SuperAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {usuarios.length === 0 && !usuariosLoading ? (
+                {usuariosFiltrados.length === 0 && !usuariosLoading ? (
                   <tr>
                     <td colSpan={4} className={styles.emptyCell}>
-                      Sin usuarios o error al cargar
+                      Sin usuarios con esos filtros
                     </td>
                   </tr>
                 ) : (
-                  usuarios.map((u) => (
+                  usuariosFiltrados.map((u) => (
                     <tr key={u.idPersonal}>
                       <td>{u.usuario}</td>
                       <td>
