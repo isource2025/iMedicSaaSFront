@@ -24,6 +24,7 @@ export interface EmpresaSuscripcion {
 }
 
 export interface EmpresaConexion {
+  idEmpresa?: number;
   dbServer?: string;
   dbPort?: number | null;
   dbInstance?: string;

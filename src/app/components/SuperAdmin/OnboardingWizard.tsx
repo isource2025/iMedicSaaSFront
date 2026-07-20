@@ -226,6 +226,7 @@ export default function OnboardingWizard({
     run(async () => {
       setTestConexion(null);
       const r = await superAdminService.probarConexionDatos({
+        idEmpresa: Number(empresa.id) || undefined,
         dbServer: conexionForm.dbServer,
         dbPort: conexionForm.dbPort ? Number(conexionForm.dbPort) : null,
         dbInstance: conexionForm.dbInstance,
@@ -823,7 +824,9 @@ export default function OnboardingWizard({
                   </div>
                 </div>
                 <p className={styles.packDesc} style={{ marginBottom: '0.75rem' }}>
-                  La contraseña se guarda cifrada; dejar en blanco para no cambiarla.
+                  La contraseña se guarda cifrada. Para &quot;Probar (sin guardar)&quot; ingresá la contraseña
+                  o usá una ya guardada (dejar en blanco reutiliza la guardada). &quot;Guardar y probar&quot;
+                  persiste primero y después prueba.
                 </p>
                 {testConexion && (
                   <div
