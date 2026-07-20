@@ -3,16 +3,29 @@
 import { apiService } from '@/app/services/axios';
 
 let activityTimer: ReturnType<typeof setInterval> | null = null;
+let pingInFlight: Promise<void> | null = null;
 
-/** Renueva la sesión ante actividad del usuario (respeta timeout por inactividad en servidor). */
+/**
+ * Marca actividad de sesión (idle timeout en AuthSessions).
+ * Usa GET /auth/me (Bearer + cookies) — NO rota el refresh token.
+ * Rotar en cada ping cruzaba pestañas y, con SameSite mal configurado, tiraba 401 en loop.
+ */
 export function startSessionActivityMonitor() {
   if (typeof window === 'undefined') return;
   stopSessionActivityMonitor();
 
   const ping = () => {
-    apiService.post('/auth/refresh', {}).catch(() => {
-      /* sesión expirada: el interceptor 401 redirige al login */
-    });
+    if (!localStorage.getItem('token')) return;
+    if (pingInFlight) return;
+    pingInFlight = apiService
+      .get('/auth/me')
+      .then(() => undefined)
+      .catch(() => {
+        /* 401: el interceptor limpia y redirige al login */
+      })
+      .finally(() => {
+        pingInFlight = null;
+      });
   };
 
   const events = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;
