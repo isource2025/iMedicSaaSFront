@@ -371,9 +371,24 @@ export default function AdmissionVisitDetailContent({
           const fecha = str(ex.FechaPedido || ex.fechaPedido).slice(0, 16);
           const urg = str(ex.estadoUrgencia || ex.EstadoUrgencia);
           const nroProt = str(ex.NroProtocolo || ex.nroProtocolo);
-          const resultado = str(ex.ResultadoEstudio || ex.resultadoEstudio);
           const solicitante = str(ex.MedicoSolicitanteNombre || ex.medicoSolicitanteNombre);
           const realizador = str(ex.RealizadorNombre || ex.realizadorNombre);
+          const resultadoRaw = str(ex.ResultadoEstudio || ex.resultadoEstudio);
+          const resultado = resultadoRaw.includes('\\rtf')
+            ? resultadoRaw
+                .replace(/\\par[d]?/gi, '\n')
+                .replace(/\\'[0-9a-fA-F]{2}/g, (m) => {
+                  try {
+                    return String.fromCharCode(parseInt(m.slice(2), 16));
+                  } catch {
+                    return '';
+                  }
+                })
+                .replace(/\\[a-z]+\d* ?/gi, '')
+                .replace(/[{}]/g, '')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim()
+            : resultadoRaw;
           return (
             <div key={String(id)} className={styles.listItem}>
               <p className={styles.listItemTitle}>{titulo}</p>
@@ -382,7 +397,7 @@ export default function AdmissionVisitDetailContent({
                   fecha,
                   urg ? `Urgencia: ${urg}` : '',
                   solicitante ? `Solicita: ${solicitante}` : '',
-                  realizador ? `Realiza: ${realizador}` : '',
+                  realizador ? `Realizó: ${realizador}` : '',
                   nroProt ? `Protocolo resultado ${nroProt}` : '',
                 ]
                   .filter(Boolean)
@@ -400,6 +415,9 @@ export default function AdmissionVisitDetailContent({
               ) : (
                 <p className={styles.muted}>Sin resultado cargado.</p>
               )}
+              {!realizador && resultado ? (
+                <p className={styles.muted}>Sin profesional realizador registrado.</p>
+              ) : null}
               {ex.cantidadAdjuntos ? (
                 <p className={styles.muted}>{ex.cantidadAdjuntos} adjunto(s)</p>
               ) : null}
