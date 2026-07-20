@@ -254,11 +254,25 @@ export default function AdmissionVisitDetailContent({
                   str(row.HoraPracticaInicio) &&
                     `Hora: ${str(row.HoraPracticaInicio)}${row.HoraPracticaFin ? ` – ${str(row.HoraPracticaFin)}` : ''}`,
                   str(row.ValorSector) && `Sector: ${str(row.ValorSector)}`,
-                  str(row.Profesionales) && `Prof.: ${str(row.Profesionales)}`,
                 ]
                   .filter(Boolean)
                   .join(' · ')}
               </p>
+              {str(row.Profesionales) ? (
+                <p className={styles.listItemMeta}>{str(row.Profesionales)}</p>
+              ) : str(row.SolicitanteNombre) ||
+                (Array.isArray(row.Realizadores) && row.Realizadores.length > 0) ? (
+                <p className={styles.listItemMeta}>
+                  {[
+                    str(row.SolicitanteNombre) && `Solicita: ${str(row.SolicitanteNombre)}`,
+                    Array.isArray(row.Realizadores) &&
+                      row.Realizadores.length > 0 &&
+                      `Realizó: ${(row.Realizadores as string[]).join(', ')}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              ) : null}
             </div>
           );
         });
