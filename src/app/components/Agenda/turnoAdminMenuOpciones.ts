@@ -1,6 +1,13 @@
 import type { TurnoAdminRow } from '@/app/services/turnosAdminService';
 
-export type TurnoAdminAction = 'editar' | 'rac' | 'cancelar' | 'cerrar' | 'borrar' | 'detalle';
+export type TurnoAdminAction =
+	| 'editar'
+	| 'rac'
+	| 'cancelar'
+	| 'cerrar'
+	| 'editar-atencion'
+	| 'borrar'
+	| 'detalle';
 
 export type TurnoAdminOpcion = {
 	id: TurnoAdminAction;
@@ -52,7 +59,10 @@ export function opcionesMenuTurnoAdmin(
 		list.push({ id: 'cancelar', label: 'Cancelar turno', danger: true });
 	}
 	if (opts.puedeEditar && ocupado && conPac && !row.horaAtencion) {
-		list.push({ id: 'cerrar', label: 'Cerrar turno' });
+		list.push({ id: 'cerrar', label: 'Finalizar atención' });
+	}
+	if (opts.puedeEditar && atendido && conPac) {
+		list.push({ id: 'editar-atencion', label: 'Editar / agregar (24 h)' });
 	}
 	if (opts.puedeEliminar && !atendido) {
 		list.push({

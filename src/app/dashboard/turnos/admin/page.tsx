@@ -86,6 +86,7 @@ export default function TurnosAdminPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [turnoEditar, setTurnoEditar] = useState<TurnoAdminRow | null>(null);
 	const [turnoCerrar, setTurnoCerrar] = useState<TurnoAdminRow | null>(null);
+	const [turnoCerrarEdicion, setTurnoCerrarEdicion] = useState(false);
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [racFecha, setRacFecha] = useState<string>('');
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
@@ -189,6 +190,14 @@ export default function TurnosAdminPage() {
 
 		if (action === 'cerrar') {
 			setError(null);
+			setTurnoCerrarEdicion(false);
+			setTurnoCerrar(row);
+			return;
+		}
+
+		if (action === 'editar-atencion') {
+			setError(null);
+			setTurnoCerrarEdicion(true);
 			setTurnoCerrar(row);
 			return;
 		}
@@ -440,17 +449,29 @@ export default function TurnosAdminPage() {
 								}
 							: null
 					}
-					onClose={() => setTurnoCerrar(null)}
+					onClose={() => {
+						setTurnoCerrar(null);
+						setTurnoCerrarEdicion(false);
+					}}
 					onCerrado={() => {
 						setTurnoCerrar(null);
+						setTurnoCerrarEdicion(false);
 						cargar();
 					}}
+					modoEdicion={turnoCerrarEdicion}
 				/>
 
 				<DetalleTurnoModal
 					open={detalleTurnoId != null}
 					idTurno={detalleTurnoId}
 					onClose={() => setDetalleTurnoId(null)}
+					onEditar={(id) => {
+						const row = rows.find((r) => r.idTurno === id) || null;
+						setDetalleTurnoId(null);
+						if (!row) return;
+						setTurnoCerrarEdicion(true);
+						setTurnoCerrar(row);
+					}}
 				/>
 
 				<RacEnfermeriaModal

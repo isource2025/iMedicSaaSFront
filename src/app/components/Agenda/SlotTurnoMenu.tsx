@@ -15,6 +15,7 @@ export type SlotMenuAction =
 	| 'marcar-llegada'
 	| 'marcar-ingreso'
 	| 'atender'
+	| 'editar-atencion'
 	| 'ver-detalle'
 	| 'llamar-pantalla'
 	| 'cerrar';
@@ -34,7 +35,7 @@ const OPCIONES_LIBRE: OpcionMenu[] = [
 const OPCIONES_OCUPADO_BASE: OpcionMenu[] = [
 	{ id: 'marcar-llegada', label: 'Marcar llegada' },
 	{ id: 'marcar-ingreso', label: 'Ingresó a consultorio' },
-	{ id: 'atender', label: 'Atender / Cerrar turno' },
+	{ id: 'atender', label: 'Atender / Finalizar atención' },
 	{ id: 'cambiar', label: 'Cambiar turno', mock: true },
 	{ id: 'sobreturno', label: 'Agregar sobreturno' },
 	{ id: 'cancelar', label: 'Cancelar turno' },
@@ -133,7 +134,12 @@ export default function SlotTurnoMenu({
 			? [{ id: 'ver-detalle', label: 'Ver detalle de atención' }]
 			: [];
 
-		const merged: OpcionMenu[] = [...conDetalle, ...base];
+		const conEditar: OpcionMenu[] =
+			cerrado && puedeAtender && slot.idTurno
+				? [{ id: 'editar-atencion', label: 'Editar / agregar (24 h)' }]
+				: [];
+
+		const merged: OpcionMenu[] = [...conDetalle, ...conEditar, ...base];
 
 		// El RAC de enfermería solo se habilita si el paciente ya registró llegada
 		if (puedeRacEnfermeria && esOcupado(slot) && slot.idTurno && slot.horaLlegada) {

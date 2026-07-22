@@ -7,7 +7,6 @@ import {
 	SectorDestinoInterconsulta,
 } from '@/app/services/interconsultasService';
 import { usePermiso } from '@/app/hooks/usePermiso';
-import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import styles from './InterconsultaSection.module.css';
@@ -16,8 +15,6 @@ type Props = {
 	numeroVisita: number | null;
 	sectorSolicitante?: string | null;
 };
-
-type Tab = 'visita' | 'pendientes';
 
 function urgenciaClass(estado?: string) {
 	const v = (estado || '').trim().toLowerCase();
@@ -63,36 +60,27 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 
 export default function InterconsultaSection({ numeroVisita, sectorSolicitante }: Props) {
 	const { puede } = usePermiso();
-	const usuario = useUsuarioActual();
-	const matriculaSesion = usuario?.matricula ?? null;
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
-	const canAtender =
-		puede('INTERNACION.INTERCONSULTAS.CREAR') || puede('INTERNACION.INTERCONSULTAS.EDITAR');
 
-	const [tab, setTab] = useState<Tab>('visita');
 	const [rows, setRows] = useState<InterconsultaRow[]>([]);
-	const [pendientes, setPendientes] = useState<InterconsultaRow[]>([]);
 	const [sectores, setSectores] = useState<SectorDestinoInterconsulta[]>([]);
-	const [sectorBandeja, setSectorBandeja] = useState('');
 	const [idSectorReceptor, setIdSectorReceptor] = useState('');
 	const [motivo, setMotivo] = useState('');
 	const [urgencia, setUrgencia] = useState('Normal');
 	const [showForm, setShowForm] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
-	const [busyId, setBusyId] = useState<number | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
-	const [cumplirRow, setCumplirRow] = useState<InterconsultaRow | null>(null);
-	const [respuesta, setRespuesta] = useState('');
 
 	useEffect(() => {
 		void interconsultasService
 			.listarSectoresDestino()
 			.then((list) => {
 				setSectores(list);
-				setSectorBandeja((prev) => prev || list.find((s) => s.valor === 'OFT')?.valor || list[0]?.valor || '');
-				setIdSectorReceptor((prev) => prev || list.find((s) => s.valor === 'OFT')?.valor || '');
+				setIdSectorReceptor(
+					(prev) => prev || list.find((s) => s.valor === 'OFT')?.valor || list[0]?.valor || '',
+				);
 			})
 			.catch(() => setSectores([]));
 	}, []);
@@ -110,31 +98,9 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 		}
 	}, [numeroVisita]);
 
-	const loadPendientes = useCallback(async () => {
-		if (!sectorBandeja.trim()) {
-			setPendientes([]);
-			return;
-		}
-		setLoading(true);
-		setError(null);
-		try {
-			setPendientes(await interconsultasService.listarPendientes(sectorBandeja.trim()));
-		} catch (e) {
-			setError(e instanceof Error ? e.message : 'Error al cargar pendientes');
-		} finally {
-			setLoading(false);
-		}
-	}, [sectorBandeja]);
-
 	useEffect(() => {
-		if (tab === 'visita') void loadVisita();
-		else void loadPendientes();
-	}, [tab, loadVisita, loadPendientes]);
-
-	const refresh = async () => {
-		if (tab === 'pendientes') await loadPendientes();
-		await loadVisita();
-	};
+		void loadVisita();
+	}, [loadVisita]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -165,65 +131,9 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 		setSelected(detail || row);
 	};
 
-	const pedidoId = (r: InterconsultaRow) => r.IdPedido || r.IdInterconsulta;
-
-	const esMia = (r: InterconsultaRow) =>
-		matriculaSesion != null &&
-		r.MatriculaToma != null &&
-		Number(r.MatriculaToma) === Number(matriculaSesion);
-
-	const onTomar = async (row: InterconsultaRow, ev: React.MouseEvent) => {
-		ev.stopPropagation();
-		const id = pedidoId(row);
-		setBusyId(id);
-		setError(null);
-		try {
-			await interconsultasService.tomar(id);
-			await refresh();
-		} catch (e) {
-			setError(e instanceof Error ? e.message : 'No se pudo tomar');
-		} finally {
-			setBusyId(null);
-		}
-	};
-
-	const onLiberar = async (row: InterconsultaRow, ev: React.MouseEvent) => {
-		ev.stopPropagation();
-		const id = pedidoId(row);
-		setBusyId(id);
-		setError(null);
-		try {
-			await interconsultasService.liberar(id);
-			await refresh();
-		} catch (e) {
-			setError(e instanceof Error ? e.message : 'No se pudo liberar');
-		} finally {
-			setBusyId(null);
-		}
-	};
-
-	const onCumplir = async () => {
-		if (!cumplirRow || !respuesta.trim()) return;
-		const id = pedidoId(cumplirRow);
-		setBusyId(id);
-		setError(null);
-		try {
-			await interconsultasService.cumplir(id, respuesta.trim());
-			setCumplirRow(null);
-			setRespuesta('');
-			await refresh();
-		} catch (e) {
-			setError(e instanceof Error ? e.message : 'No se pudo cumplir');
-		} finally {
-			setBusyId(null);
-		}
-	};
-
 	if (!numeroVisita) {
 		return <div className={styles.empty}>No hay visita seleccionada</div>;
 	}
-
-	const list = tab === 'visita' ? rows : pendientes;
 
 	const selectedTextBlocks = selected
 		? [
@@ -238,51 +148,18 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 				<div>
 					<h2 className={styles.title}>Interconsultas</h2>
 					<p className={styles.subtitle}>
-						Solicitud a un servicio destino (imPedidosEstudios, tipo 33). El servicio receptor
-						atiende desde la bandeja de pendientes.
+						Interconsultas de este paciente. El servicio destino las atiende desde la bandeja
+						de pedidos.
 					</p>
 				</div>
-				{canCreate && tab === 'visita' && (
+				{canCreate && (
 					<button type="button" className={styles.primaryBtn} onClick={() => setShowForm((v) => !v)}>
 						{showForm ? 'Cancelar' : 'Nueva solicitud'}
 					</button>
 				)}
 			</div>
 
-			<div className={styles.tabs}>
-				<button
-					type="button"
-					className={tab === 'visita' ? styles.tabActive : styles.tab}
-					onClick={() => setTab('visita')}
-				>
-					De esta visita
-				</button>
-				<button
-					type="button"
-					className={tab === 'pendientes' ? styles.tabActive : styles.tab}
-					onClick={() => setTab('pendientes')}
-				>
-					Pendientes del servicio
-				</button>
-			</div>
-
-			{tab === 'pendientes' && (
-				<label className={styles.bandejaSelect}>
-					Servicio receptor
-					<select
-						value={sectorBandeja}
-						onChange={(e) => setSectorBandeja(e.target.value)}
-					>
-						{sectores.map((s) => (
-							<option key={s.valor} value={s.valor}>
-								{s.descripcion} ({s.valor})
-							</option>
-						))}
-					</select>
-				</label>
-			)}
-
-			{showForm && canCreate && tab === 'visita' && (
+			{showForm && canCreate && (
 				<form className={styles.form} onSubmit={handleSubmit}>
 					<label>
 						Servicio destino *
@@ -328,12 +205,8 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 				<div style={{ position: 'relative', minHeight: 200 }}>
 					<Loader />
 				</div>
-			) : list.length === 0 ? (
-				<div className={styles.empty}>
-					{tab === 'visita'
-						? 'No hay interconsultas registradas para esta internación.'
-						: 'No hay interconsultas pendientes para este servicio.'}
-				</div>
+			) : rows.length === 0 ? (
+				<div className={styles.empty}>No hay interconsultas registradas para esta internación.</div>
 			) : (
 				<div className={styles.tableWrap}>
 					<table className={styles.table}>
@@ -345,12 +218,11 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 								<th>Motivo</th>
 								<th>Solicitado por</th>
 								<th>Estado</th>
-								{canAtender ? <th>Acciones</th> : null}
 							</tr>
 						</thead>
 						<tbody>
-							{list.map((r) => {
-								const id = pedidoId(r);
+							{rows.map((r) => {
+								const id = r.IdPedido || r.IdInterconsulta;
 								const tomado = !!r.Tomado;
 								const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
 								return (
@@ -389,46 +261,6 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 												(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
 											{tomado && r.NombreToma ? ` · ${r.NombreToma}` : ''}
 										</td>
-										{canAtender ? (
-											<td onClick={(e) => e.stopPropagation()}>
-												<div className={styles.actions}>
-													{!cumplido && !tomado && (
-														<button
-															type="button"
-															className={styles.actionBtn}
-															disabled={busyId === id}
-															onClick={(ev) => void onTomar(r, ev)}
-														>
-															Tomar
-														</button>
-													)}
-													{!cumplido && tomado && esMia(r) && (
-														<>
-															<button
-																type="button"
-																className={styles.actionBtn}
-																disabled={busyId === id}
-																onClick={(ev) => {
-																	ev.stopPropagation();
-																	setCumplirRow(r);
-																	setRespuesta('');
-																}}
-															>
-																Responder
-															</button>
-															<button
-																type="button"
-																className={styles.actionBtnSecondary}
-																disabled={busyId === id}
-																onClick={(ev) => void onLiberar(r, ev)}
-															>
-																Liberar
-															</button>
-														</>
-													)}
-												</div>
-											</td>
-										) : null}
 									</tr>
 								);
 							})}
@@ -450,44 +282,6 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 					textBlocks={selectedTextBlocks}
 					onClose={() => setSelected(null)}
 				/>
-			)}
-
-			{cumplirRow && (
-				<div className={styles.modalOverlay} onClick={() => setCumplirRow(null)}>
-					<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-						<h3>Responder interconsulta</h3>
-						<p className={styles.meta}>
-							{cumplirRow.ServicioDescripcion || cumplirRow.Especialidad} · Visita{' '}
-							{cumplirRow.IdVisita}
-						</p>
-						<label className={styles.formLabel}>
-							Respuesta / informe
-							<textarea
-								value={respuesta}
-								onChange={(e) => setRespuesta(e.target.value)}
-								rows={6}
-								placeholder="Informe de la interconsulta…"
-							/>
-						</label>
-						<div className={styles.modalActions}>
-							<button
-								type="button"
-								className={styles.actionBtnSecondary}
-								onClick={() => setCumplirRow(null)}
-							>
-								Cancelar
-							</button>
-							<button
-								type="button"
-								className={styles.primaryBtn}
-								disabled={!respuesta.trim() || busyId === pedidoId(cumplirRow)}
-								onClick={() => void onCumplir()}
-							>
-								Guardar respuesta
-							</button>
-						</div>
-					</div>
-				</div>
 			)}
 		</div>
 	);

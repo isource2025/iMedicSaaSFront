@@ -215,6 +215,7 @@ function AgendaPageContent() {
 	const [modalModo, setModalModo] = useState<ModalAsignarModo>('asignar');
 	const [racSlot, setRacSlot] = useState<AgendaSlot | null>(null);
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
+	const [cerrarModoEdicion, setCerrarModoEdicion] = useState(false);
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
 	const searchParams = useSearchParams();
 	const router = useRouter();
@@ -535,6 +536,7 @@ function AgendaPageContent() {
 				const resp = await agendaService.marcarIngreso(mat, slot.idTurno);
 				patchSlot(slot.idTurno, { horaIngreso: resp.horaIngreso ?? slot.horaIngreso });
 				if (puedeAtender && slot.idTurno) {
+					setCerrarModoEdicion(false);
 					setCerrarSlot({
 						...slot,
 						horaIngreso: resp.horaIngreso ?? slot.horaIngreso,
@@ -571,9 +573,18 @@ function AgendaPageContent() {
 			return;
 		}
 
+		if (action === 'editar-atencion') {
+			if (!puedeAtender || !slot.idTurno) return;
+			setError(null);
+			setCerrarModoEdicion(true);
+			setCerrarSlot(slot);
+			return;
+		}
+
 		if (action === 'atender' || action === 'cerrar') {
 			if (!puedeAtender) return;
 			setError(null);
+			setCerrarModoEdicion(false);
 			setCerrarSlot(slot);
 			return;
 		}
@@ -1212,17 +1223,36 @@ function AgendaPageContent() {
 							}
 						: null
 				}
-				onClose={() => setCerrarSlot(null)}
+				onClose={() => {
+					setCerrarSlot(null);
+					setCerrarModoEdicion(false);
+				}}
 				onCerrado={() => {
 					setCerrarSlot(null);
+					setCerrarModoEdicion(false);
 					refrescarAgenda();
 				}}
+				modoEdicion={cerrarModoEdicion}
 			/>
 
 			<DetalleTurnoModal
 				open={detalleTurnoId != null}
 				idTurno={detalleTurnoId}
 				onClose={() => setDetalleTurnoId(null)}
+				onEditar={(id) => {
+					const slot =
+						todosSlots.find((s) => s.idTurno === id) ||
+						cerrarSlot ||
+						({
+							idTurno: id,
+							hora: '',
+							sector: '',
+							estado: 'ATENDIDO',
+						} as AgendaSlot);
+					setDetalleTurnoId(null);
+					setCerrarModoEdicion(true);
+					setCerrarSlot(slot);
+				}}
 			/>
 
 			<AsignarTurnoModal

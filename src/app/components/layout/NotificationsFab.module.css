@@ -46,16 +46,49 @@
 
 .fabIdle {
   background: linear-gradient(145deg, #94a3b8 0%, #64748b 100%);
+  color: #fff;
 }
 
 .fabAlert {
   background: linear-gradient(145deg, #f97316 0%, #ea580c 100%);
+  color: #fffbeb;
   animation: fabPulse 2.4s ease-in-out infinite;
 }
 
 .fabPedidos {
   background: linear-gradient(145deg, #0ea5e9 0%, #0284c7 100%);
+  color: #e0f2fe;
   animation: fabPulsePedidos 2.4s ease-in-out infinite;
+}
+
+.fabIcon {
+  display: block;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.fabIconAlert {
+  color: #fef08a;
+  animation: iconRing 1.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(254, 240, 138, 0.55));
+}
+
+@keyframes iconRing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  12% {
+    transform: rotate(12deg);
+  }
+  24% {
+    transform: rotate(-10deg);
+  }
+  36% {
+    transform: rotate(8deg);
+  }
+  48% {
+    transform: rotate(0deg);
+  }
 }
 
 @keyframes fabPulse {
@@ -94,10 +127,21 @@
   align-items: center;
   justify-content: center;
   border: 2px solid #fff;
+  animation: badgePop 1.4s ease-in-out infinite;
 }
 
 .badgePedidos {
   background: #0369a1;
+}
+
+@keyframes badgePop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
 }
 
 .panel {

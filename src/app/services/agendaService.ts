@@ -291,6 +291,13 @@ export interface DetalleAtencionTurno {
 	};
 	procedimientosRealizados?: DetalleProcedimientoRealizado[];
 	pedidosEstudios?: DetallePedidoEstudio[];
+	edicionPostCierre?: {
+		puedeEditar: boolean;
+		motivoBloqueo: string | null;
+		operadorEgreso: number | null;
+		cerradoEn: string | null;
+		venceEn: string | null;
+	};
 }
 
 export interface DetalleProcedimientoRealizado {
@@ -473,6 +480,17 @@ export const agendaService = {
 			`/agenda/${matricula}/turnos/${idTurno}/cerrar`,
 			payload || {},
 		);
+		return r.data.data;
+	},
+
+	async actualizarAtencionPostCierre(
+		matricula: number,
+		idTurno: number,
+		payload?: CierreTurnoPayload,
+	): Promise<CierreTurnoResult & { procedimientosAgregados?: number }> {
+		const r = await apiService.patch<
+			ApiResp<CierreTurnoResult & { procedimientosAgregados?: number }>
+		>(`/agenda/${matricula}/turnos/${idTurno}/atencion`, payload || {});
 		return r.data.data;
 	},
 

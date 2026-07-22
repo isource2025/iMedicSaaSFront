@@ -28,6 +28,7 @@ interface Props {
 	open: boolean;
 	idTurno: number | null;
 	onClose: () => void;
+	onEditar?: (idTurno: number) => void;
 }
 
 function val(v: unknown, fallback = '—'): string {
@@ -48,7 +49,7 @@ function fmtFecha(iso?: string | null): string {
 	return `${day}/${m}/${y}`;
 }
 
-export default function DetalleTurnoModal({ open, idTurno, onClose }: Props) {
+export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: Props) {
 	const mounted = useModalLayer(open);
 	const [data, setData] = useState<DetalleAtencionTurno | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -538,6 +539,15 @@ export default function DetalleTurnoModal({ open, idTurno, onClose }: Props) {
 				</div>
 
 				<footer className={styles.footer}>
+					{data?.edicionPostCierre?.puedeEditar && onEditar && idTurno ? (
+						<button
+							type='button'
+							className={styles.btnPrimary}
+							onClick={() => onEditar(idTurno)}
+						>
+							Editar / agregar (24 h)
+						</button>
+					) : null}
 					<button type='button' className={styles.btnSecondary} onClick={onClose}>
 						Cerrar
 					</button>

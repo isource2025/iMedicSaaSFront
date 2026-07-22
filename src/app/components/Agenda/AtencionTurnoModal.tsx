@@ -72,6 +72,8 @@ interface Props {
 	turno: TurnoAtencion | null;
 	onClose: () => void;
 	onCerrado: () => void;
+	/** Reabre atención finalizada para editar/agregar (solo quien cerró, 24 h). */
+	modoEdicion?: boolean;
 }
 
 type WizardStep = 'rac' | 'hc' | 'estudios' | 'interconsultas' | 'procedimientos' | 'adjuntos';
@@ -118,10 +120,17 @@ export default function AtencionTurnoModal({
 	turno,
 	onClose,
 	onCerrado,
+	modoEdicion = false,
 }: Props) {
 	const mounted = useModalLayer(open);
 	const [stepIndex, setStepIndex] = useState(0);
 	const [loadingRac, setLoadingRac] = useState(false);
+	const [loadingEdicion, setLoadingEdicion] = useState(false);
+	const [resumenExistente, setResumenExistente] = useState<{
+		procedimientos: number;
+		estudios: number;
+		venceEn: string | null;
+	} | null>(null);
 	const [racResumen, setRacResumen] = useState<{
 		triage?: number | null;
 		ultimoControl?: string | null;
@@ -197,6 +206,8 @@ export default function AtencionTurnoModal({
 		setIcMotivoDraft('');
 		setIcUrgenciaDraft('Normal');
 		setError(null);
+		setResumenExistente(null);
+		setValidacionErrores(null);
 		setVisited({
 			rac: false,
 			hc: false,
@@ -218,7 +229,68 @@ export default function AtencionTurnoModal({
 			})
 			.catch(() => setRacResumen(null))
 			.finally(() => setLoadingRac(false));
-	}, [open, turno?.idTurno]);
+
+		if (!modoEdicion) return;
+		let cancel = false;
+		setLoadingEdicion(true);
+		agendaService
+			.getDetalleAtencionTurno(turno.idTurno)
+			.then((det) => {
+				if (cancel) return;
+				const ed = det.edicionPostCierre;
+				if (!ed?.puedeEditar) {
+					setError(
+						ed?.motivoBloqueo ||
+							'Solo quien finalizó la atención puede editarla dentro de las 24 horas',
+					);
+					return;
+				}
+				if (det.hc) {
+					setMotivo(det.hc.motivoConsulta || '');
+					setEnfermedadActual(det.hc.enfermedadActual || '');
+				}
+				if (det.diagnostico?.codigo) {
+					setDiagSel({
+						codigo: det.diagnostico.codigo,
+						descripcion: det.diagnostico.descripcion || '',
+						valor: 0,
+					});
+					setDiagTerm(
+						`${det.diagnostico.codigo}${
+							det.diagnostico.descripcion ? ` — ${det.diagnostico.descripcion}` : ''
+						}`,
+					);
+				}
+				setResumenExistente({
+					procedimientos: det.procedimientosRealizados?.length || 0,
+					estudios: det.pedidosEstudios?.length || 0,
+					venceEn: ed.venceEn,
+				});
+				setVisited({
+					rac: true,
+					hc: true,
+					estudios: true,
+					interconsultas: true,
+					procedimientos: true,
+					adjuntos: true,
+				});
+			})
+			.catch((e: unknown) => {
+				if (cancel) return;
+				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
+				setError(
+					err?.response?.data?.mensaje ||
+						err?.message ||
+						'No se pudo cargar la atención para editar',
+				);
+			})
+			.finally(() => {
+				if (!cancel) setLoadingEdicion(false);
+			});
+		return () => {
+			cancel = true;
+		};
+	}, [open, turno?.idTurno, modoEdicion]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -366,28 +438,33 @@ export default function AtencionTurnoModal({
 		if (!turno?.idTurno || !diagSel) return;
 		setSubmitting(true);
 		setError(null);
+		const payload = {
+			diagnostico: diagSel.codigo.trim(),
+			hci: {
+				motivoConsulta: motivo.trim(),
+				enfermedadActual: enfermedadActual.trim(),
+			},
+			procedimientos: procedimientos.map((p) => ({
+				idTipoPedido: p.tipo.idTipoPedido,
+			})),
+			pedidosEstudios: pedidosEstudios.map((p) => ({
+				idTipoPedido: p.tipo.idTipoPedido,
+				idSectorReceptor: p.idSectorReceptor.trim(),
+				notas: p.notas.trim() || undefined,
+				estadoUrgencia: p.estadoUrgencia,
+			})),
+			pedidosInterconsultas: pedidosInterconsultas.map((p) => ({
+				idSectorReceptor: p.idSectorReceptor.trim(),
+				motivo: p.motivo.trim(),
+				estadoUrgencia: p.estadoUrgencia,
+			})),
+		};
 		try {
-			await agendaService.cerrarTurno(matricula, turno.idTurno, {
-				diagnostico: diagSel.codigo.trim(),
-				hci: {
-					motivoConsulta: motivo.trim(),
-					enfermedadActual: enfermedadActual.trim(),
-				},
-				procedimientos: procedimientos.map((p) => ({
-					idTipoPedido: p.tipo.idTipoPedido,
-				})),
-				pedidosEstudios: pedidosEstudios.map((p) => ({
-					idTipoPedido: p.tipo.idTipoPedido,
-					idSectorReceptor: p.idSectorReceptor.trim(),
-					notas: p.notas.trim() || undefined,
-					estadoUrgencia: p.estadoUrgencia,
-				})),
-				pedidosInterconsultas: pedidosInterconsultas.map((p) => ({
-					idSectorReceptor: p.idSectorReceptor.trim(),
-					motivo: p.motivo.trim(),
-					estadoUrgencia: p.estadoUrgencia,
-				})),
-			});
+			if (modoEdicion) {
+				await agendaService.actualizarAtencionPostCierre(matricula, turno.idTurno, payload);
+			} else {
+				await agendaService.cerrarTurno(matricula, turno.idTurno, payload);
+			}
 			onCerrado();
 			onClose();
 		} catch (e: unknown) {
@@ -396,7 +473,9 @@ export default function AtencionTurnoModal({
 				message?: string;
 			};
 			setError(
-				err?.response?.data?.mensaje || err?.message || 'Error al cerrar el turno',
+				err?.response?.data?.mensaje ||
+					err?.message ||
+					(modoEdicion ? 'Error al guardar la atención' : 'Error al finalizar la atención'),
 			);
 		} finally {
 			setSubmitting(false);
@@ -452,10 +531,21 @@ export default function AtencionTurnoModal({
 			>
 				<header className={styles.header}>
 					<div className={styles.headerMain}>
-						<h2 className={styles.title}>Atención del turno</h2>
+						<h2 className={styles.title}>
+							{modoEdicion ? 'Editar atención' : 'Atención del turno'}
+						</h2>
 						<p className={styles.subtitle}>
 							<strong>{paciente}</strong> · {subtitle}
 						</p>
+						{modoEdicion && resumenExistente?.venceEn ? (
+							<p className={styles.obsLine}>
+								Podés editar o agregar hasta{' '}
+								{new Date(resumenExistente.venceEn).toLocaleString('es-AR')}
+								{resumenExistente.procedimientos || resumenExistente.estudios
+									? ` · Ya registrados: ${resumenExistente.procedimientos} proc., ${resumenExistente.estudios} estudios`
+									: ''}
+							</p>
+						) : null}
 						{turno.observaciones ? (
 							<p className={styles.obsLine}>Motivo agenda: {turno.observaciones}</p>
 						) : null}
@@ -500,6 +590,15 @@ export default function AtencionTurnoModal({
 				</nav>
 
 				<div className={styles.body}>
+					{loadingEdicion ? (
+						<p className={styles.empty}>Cargando atención…</p>
+					) : null}
+					{modoEdicion && !loadingEdicion ? (
+						<p className={styles.sectionHint}>
+							Los ítems nuevos que agregues se suman a lo ya facturado/pedido. La HC se
+							actualiza al guardar.
+						</p>
+					) : null}
 					{step === 'rac' && racSlot ? (
 						<div className={styles.racEmbed}>
 							<RacEnfermeriaModal
@@ -606,7 +705,7 @@ export default function AtencionTurnoModal({
 						<div className={styles.hcForm}>
 							<p className={styles.sectionHint}>
 								Solicite estudios para realizar en otro sector. Puede agregar uno o
-								varios pedidos; se guardarán al cerrar el turno.
+								varios pedidos; se guardarán al finalizar la atención.
 							</p>
 							<TipoPedidoEstudioPicker
 								id='pedido-estudio-buscar'
@@ -751,7 +850,7 @@ export default function AtencionTurnoModal({
 						<div className={styles.hcForm}>
 							<p className={styles.sectionHint}>
 								Solicite interconsultas a un servicio destino (ej. Oftalmología). Se
-								registran al cerrar el turno (tipo 33) y aparecen en la bandeja del
+								registran al finalizar la atención (tipo 33) y aparecen en la bandeja del
 								servicio receptor.
 							</p>
 							<div className={styles.field}>
@@ -861,7 +960,7 @@ export default function AtencionTurnoModal({
 						<div className={styles.hcForm}>
 							<p className={styles.sectionHint}>
 								Registre los procedimientos realizados en consultorio durante la
-								atención. Cada uno se factura al cerrar el turno con el médico que
+								atención. Cada uno se factura al finalizar la atención con el médico que
 								lo realizó.
 							</p>
 							<TipoPedidoEstudioPicker
@@ -928,6 +1027,7 @@ export default function AtencionTurnoModal({
 								type='button'
 								className={styles.btnSecondary}
 								onClick={handlePrev}
+								disabled={loadingEdicion}
 							>
 								Anterior
 							</button>
@@ -937,19 +1037,25 @@ export default function AtencionTurnoModal({
 								type='button'
 								className={styles.btnPrimary}
 								onClick={handleNext}
+								disabled={loadingEdicion}
 							>
 								Siguiente
 							</button>
-						) : (
-							<button
-								type='button'
-								className={styles.btnPrimary}
-								disabled={submitting}
-								onClick={handleCerrar}
-							>
-								{submitting ? 'Cerrando…' : 'Cerrar turno'}
-							</button>
-						)}
+						) : null}
+						<button
+							type='button'
+							className={styles.btnFinalizar}
+							disabled={submitting || loadingEdicion}
+							onClick={handleCerrar}
+						>
+							{submitting
+								? modoEdicion
+									? 'Guardando…'
+									: 'Finalizando…'
+								: modoEdicion
+									? 'Guardar cambios'
+									: 'Finalizar atención'}
+						</button>
 					</div>
 				</footer>
 			</div>
@@ -968,7 +1074,7 @@ export default function AtencionTurnoModal({
 					>
 						<h3 className={styles.confirmTitle}>Faltan datos obligatorios</h3>
 						<p className={styles.confirmText}>
-							No se puede cerrar el turno todavía. Completá lo siguiente:
+							No se puede finalizar la atención todavía. Completá lo siguiente:
 						</p>
 						<ul className={styles.validacionList}>
 							{validacionErrores.map((v, i) => (
@@ -991,6 +1097,28 @@ export default function AtencionTurnoModal({
 								onClick={() => setValidacionErrores(null)}
 							>
 								Entendido
+							</button>
+							<button
+								type='button'
+								className={styles.btnFinalizar}
+								disabled={submitting}
+								onClick={() => {
+									const errs = validarCierre();
+									if (errs.length > 0) {
+										setValidacionErrores(errs);
+										return;
+									}
+									setValidacionErrores(null);
+									guardNav(() => void cerrarTurno());
+								}}
+							>
+								{submitting
+									? modoEdicion
+										? 'Guardando…'
+										: 'Finalizando…'
+									: modoEdicion
+										? 'Guardar cambios'
+										: 'Finalizar atención'}
 							</button>
 						</div>
 					</div>
