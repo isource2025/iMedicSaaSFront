@@ -34,28 +34,37 @@ function sexoIcon(sexo?: string | null, desc?: string | null) {
 	return '';
 }
 
-function pacienteLinea(r: {
+function pacienteNombre(r: {
 	PacienteNombre?: string | null;
-	PacienteDocumento?: string | null;
 	PacienteSexo?: string | null;
 	PacienteSexoDescripcion?: string | null;
-	ObraSocial?: string | null;
-	TipoAtencion?: string | null;
-	Ubicacion?: string | null;
 }) {
 	const sexo = sexoIcon(r.PacienteSexo, r.PacienteSexoDescripcion);
 	const nombre = r.PacienteNombre || 'Paciente sin datos';
+	return sexo ? `${sexo} ${nombre}` : nombre;
+}
+
+function ubicacionLinea(r: { TipoAtencion?: string | null; Ubicacion?: string | null }) {
+	if (r.TipoAtencion === 'INTERNADO') {
+		return r.Ubicacion ? `Internado · ${r.Ubicacion}` : 'Internado';
+	}
+	if (r.TipoAtencion === 'AMBULATORIO') return 'Ambulatorio';
+	return r.Ubicacion || null;
+}
+
+function pacienteSecundario(r: {
+	PacienteDocumento?: string | null;
+	ObraSocial?: string | null;
+}) {
 	const doc = r.PacienteDocumento ? `Doc. ${r.PacienteDocumento}` : null;
 	const os = r.ObraSocial || null;
-	const tipo =
-		r.TipoAtencion === 'INTERNADO'
-			? r.Ubicacion
-				? `Internado · ${r.Ubicacion}`
-				: 'Internado'
-			: r.TipoAtencion === 'AMBULATORIO'
-				? 'Ambulatorio'
-				: null;
-	return [sexo ? `${sexo} ${nombre}` : nombre, doc, os, tipo].filter(Boolean).join(' · ');
+	return [doc, os].filter(Boolean).join(' · ');
+}
+
+function tituloPracticaEstudio(r: PedidoEstudio) {
+	const nombre = r.PracticaSolicitada || `Pedido #${r.IdPedido}`;
+	const cod = r.CodigoPractica != null && Number(r.CodigoPractica) > 0 ? String(r.CodigoPractica) : '';
+	return cod ? `${cod} · ${nombre}` : nombre;
 }
 
 function origenLinea(r: {
@@ -69,6 +78,53 @@ function origenLinea(r: {
 	if (serv) return `Desde ${serv}`;
 	if (prof) return `Solicitó ${prof}`;
 	return null;
+}
+
+function OrigenEstudio({
+	r,
+}: {
+	r: {
+		SectorSolicitanteNombre?: string | null;
+		SectorSolicitante?: string | null;
+		MedicoSolicitanteNombre?: string | null;
+	};
+}) {
+	const serv = (r.SectorSolicitanteNombre || r.SectorSolicitante || '').trim();
+	const prof = (r.MedicoSolicitanteNombre || '').trim();
+	if (!serv && !prof) return null;
+	if (prof && serv) {
+		return (
+			<>
+				Solicitante <strong className={styles.cardEmph}>{prof}</strong> desde{' '}
+				<strong className={styles.cardEmph}>{serv}</strong>
+			</>
+		);
+	}
+	if (prof) {
+		return (
+			<>
+				Solicitante <strong className={styles.cardEmph}>{prof}</strong>
+			</>
+		);
+	}
+	return (
+		<>
+			Desde <strong className={styles.cardEmph}>{serv}</strong>
+		</>
+	);
+}
+
+function TituloPracticaEstudio({ r }: { r: PedidoEstudio }) {
+	const nombre = r.PracticaSolicitada || `Pedido #${r.IdPedido}`;
+	const cod = r.CodigoPractica != null && Number(r.CodigoPractica) > 0 ? String(r.CodigoPractica) : '';
+	if (!cod) return <>{nombre}</>;
+	return (
+		<>
+			<strong className={styles.practicaCod}>{cod}</strong>
+			<span className={styles.practicaSep}> · </span>
+			<strong className={styles.practicaNombre}>{nombre}</strong>
+		</>
+	);
 }
 
 function fingerprintEstudios(rows: PedidoEstudio[]) {
@@ -440,6 +496,21 @@ function BandejaPedidosContent() {
 				>
 					Buscar
 				</button>
+				<button
+					type="button"
+					className={styles.clearBtn}
+					disabled={loading || (!filtroPaciente && !filtroFechaDesde && !filtroFechaHasta)}
+					onClick={() => {
+						setFiltroPaciente('');
+						setFiltroFechaDesde('');
+						setFiltroFechaHasta('');
+						filtroRef.current = { paciente: '', fechaDesde: '', fechaHasta: '' };
+						fpRef.current = '';
+						void load({ silent: false });
+					}}
+				>
+					Limpiar filtros
+				</button>
 			</div>
 
 			{error ? <div className={styles.error}>{error}</div> : null}
@@ -490,12 +561,24 @@ function BandejaPedidosContent() {
 												.then((d) => setSelectedEstudio(d || r))
 										}
 									>
-										{r.PracticaSolicitada || `Pedido #${r.IdPedido}`}
+										<TituloPracticaEstudio r={r} />
 									</button>
-									<p className={styles.cardMeta}>{pacienteLinea(r)}</p>
+									<p className={styles.cardPatient}>{pacienteNombre(r)}</p>
+									{ubicacionLinea(r) ? (
+										<p className={styles.cardLocation}>{ubicacionLinea(r)}</p>
+									) : null}
+									{pacienteSecundario(r) ? (
+										<p className={styles.cardMeta}>{pacienteSecundario(r)}</p>
+									) : null}
+									{(r.MedicoSolicitanteNombre ||
+										r.SectorSolicitanteNombre ||
+										r.SectorSolicitante) && (
+										<p className={styles.cardOrigen}>
+											<OrigenEstudio r={r} />
+										</p>
+									)}
 									<p className={styles.cardMeta}>
 										{formatFechaEstudio(r) || 'Sin fecha'}
-										{origenLinea(r) ? ` · ${origenLinea(r)}` : ''}
 										{` · Visita ${r.IdVisita}`}
 									</p>
 								</div>
@@ -568,7 +651,13 @@ function BandejaPedidosContent() {
 									>
 										{(r.Motivo || r.NotasObservacion || 'Interconsulta').slice(0, 140)}
 									</button>
-									<p className={styles.cardMeta}>{pacienteLinea(r)}</p>
+									<p className={styles.cardPatient}>{pacienteNombre(r)}</p>
+									{ubicacionLinea(r) ? (
+										<p className={styles.cardLocation}>{ubicacionLinea(r)}</p>
+									) : null}
+									{pacienteSecundario(r) ? (
+										<p className={styles.cardMeta}>{pacienteSecundario(r)}</p>
+									) : null}
 									<p className={styles.cardMeta}>
 										{formatFechaIc(r) || 'Sin fecha'}
 										{origenLinea(r) ? ` · ${origenLinea(r)}` : ''}
@@ -618,9 +707,10 @@ function BandejaPedidosContent() {
 
 			{selectedEstudio ? (
 				<PedidoDetalleModal
-					title={selectedEstudio.PracticaSolicitada || 'Pedido'}
+					title={tituloPracticaEstudio(selectedEstudio)}
 					urgencia={selectedEstudio.EstadoUrgencia}
 					fields={[
+						{ label: 'Código práctica', value: selectedEstudio.CodigoPractica },
 						{ label: 'Paciente', value: selectedEstudio.PacienteNombre },
 						{ label: 'Documento', value: selectedEstudio.PacienteDocumento },
 						{
@@ -708,7 +798,13 @@ function BandejaPedidosContent() {
 				<div className={styles.modalOverlay} onClick={() => setCumplirIc(null)}>
 					<div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
 						<h3 className={styles.modalTitle}>Completar interconsulta</h3>
-						<p className={styles.cardMeta}>{pacienteLinea(cumplirIc)}</p>
+						<p className={styles.cardPatient}>{pacienteNombre(cumplirIc)}</p>
+						{ubicacionLinea(cumplirIc) ? (
+							<p className={styles.cardLocation}>{ubicacionLinea(cumplirIc)}</p>
+						) : null}
+						{pacienteSecundario(cumplirIc) ? (
+							<p className={styles.cardMeta}>{pacienteSecundario(cumplirIc)}</p>
+						) : null}
 						<textarea
 							className={styles.textarea}
 							rows={6}

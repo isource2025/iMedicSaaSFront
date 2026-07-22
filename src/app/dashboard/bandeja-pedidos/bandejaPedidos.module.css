@@ -151,6 +151,28 @@
 	cursor: not-allowed;
 }
 
+.clearBtn {
+	padding: 0.55rem 0.9rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #f8fafc;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #64748b;
+	cursor: pointer;
+}
+
+.clearBtn:hover:not(:disabled) {
+	color: #0f172a;
+	border-color: #cbd5e1;
+	background: #fff;
+}
+
+.clearBtn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
 .error {
 	padding: 0.7rem 0.9rem;
 	background: #fef2f2;
@@ -288,6 +310,51 @@
 
 .cardTitleBtn:hover {
 	color: #0284c7;
+}
+
+.cardPatient {
+	margin: 0.4rem 0 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: #0f172a;
+	line-height: 1.3;
+}
+
+.cardLocation {
+	margin: 0.2rem 0 0;
+	font-size: 0.84rem;
+	font-weight: 700;
+	color: #0369a1;
+	line-height: 1.35;
+}
+
+.cardOrigen {
+	margin: 0.35rem 0 0;
+	font-size: 0.82rem;
+	font-weight: 500;
+	color: #475569;
+	line-height: 1.4;
+}
+
+.cardEmph {
+	font-weight: 800;
+	color: #0f172a;
+}
+
+.practicaCod {
+	font-weight: 800;
+	color: #0369a1;
+	letter-spacing: 0.01em;
+}
+
+.practicaSep {
+	font-weight: 600;
+	color: #94a3b8;
+}
+
+.practicaNombre {
+	font-weight: 800;
+	color: #0f172a;
 }
 
 .cardMeta {
