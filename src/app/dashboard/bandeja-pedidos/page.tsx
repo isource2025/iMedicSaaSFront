@@ -67,20 +67,7 @@ function tituloPracticaEstudio(r: PedidoEstudio) {
 	return cod ? `${cod} · ${nombre}` : nombre;
 }
 
-function origenLinea(r: {
-	SectorSolicitanteNombre?: string | null;
-	SectorSolicitante?: string | null;
-	MedicoSolicitanteNombre?: string | null;
-}) {
-	const serv = r.SectorSolicitanteNombre || r.SectorSolicitante || null;
-	const prof = r.MedicoSolicitanteNombre || null;
-	if (serv && prof) return `Desde ${serv} · ${prof}`;
-	if (serv) return `Desde ${serv}`;
-	if (prof) return `Solicitó ${prof}`;
-	return null;
-}
-
-function OrigenEstudio({
+function OrigenPedido({
 	r,
 }: {
 	r: {
@@ -117,7 +104,7 @@ function OrigenEstudio({
 function TituloPracticaEstudio({ r }: { r: PedidoEstudio }) {
 	const nombre = r.PracticaSolicitada || `Pedido #${r.IdPedido}`;
 	const cod = r.CodigoPractica != null && Number(r.CodigoPractica) > 0 ? String(r.CodigoPractica) : '';
-	if (!cod) return <>{nombre}</>;
+	if (!cod) return <strong className={styles.practicaNombre}>{nombre}</strong>;
 	return (
 		<>
 			<strong className={styles.practicaCod}>{cod}</strong>
@@ -125,6 +112,11 @@ function TituloPracticaEstudio({ r }: { r: PedidoEstudio }) {
 			<strong className={styles.practicaNombre}>{nombre}</strong>
 		</>
 	);
+}
+
+function TituloInterconsulta({ r }: { r: InterconsultaRow }) {
+	const motivo = (r.Motivo || r.NotasObservacion || 'Interconsulta').trim();
+	return <strong className={styles.practicaNombre}>{motivo.slice(0, 140)}</strong>;
 }
 
 function fingerprintEstudios(rows: PedidoEstudio[]) {
@@ -574,7 +566,7 @@ function BandejaPedidosContent() {
 										r.SectorSolicitanteNombre ||
 										r.SectorSolicitante) && (
 										<p className={styles.cardOrigen}>
-											<OrigenEstudio r={r} />
+											<OrigenPedido r={r} />
 										</p>
 									)}
 									<p className={styles.cardMeta}>
@@ -643,13 +635,16 @@ function BandejaPedidosContent() {
 												Aceptado · {r.NombreToma || 'otro'}
 											</span>
 										)}
+										{r.EstadoUrgencia ? (
+											<span className={styles.urgencia}>{r.EstadoUrgencia}</span>
+										) : null}
 									</div>
 									<button
 										type="button"
 										className={styles.cardTitleBtn}
 										onClick={() => setSelectedIc(r)}
 									>
-										{(r.Motivo || r.NotasObservacion || 'Interconsulta').slice(0, 140)}
+										<TituloInterconsulta r={r} />
 									</button>
 									<p className={styles.cardPatient}>{pacienteNombre(r)}</p>
 									{ubicacionLinea(r) ? (
@@ -658,9 +653,15 @@ function BandejaPedidosContent() {
 									{pacienteSecundario(r) ? (
 										<p className={styles.cardMeta}>{pacienteSecundario(r)}</p>
 									) : null}
+									{(r.MedicoSolicitanteNombre ||
+										r.SectorSolicitanteNombre ||
+										r.SectorSolicitante) && (
+										<p className={styles.cardOrigen}>
+											<OrigenPedido r={r} />
+										</p>
+									)}
 									<p className={styles.cardMeta}>
 										{formatFechaIc(r) || 'Sin fecha'}
-										{origenLinea(r) ? ` · ${origenLinea(r)}` : ''}
 										{` · Visita ${r.IdVisita || '—'}`}
 									</p>
 								</div>
@@ -758,7 +759,8 @@ function BandejaPedidosContent() {
 
 			{selectedIc ? (
 				<PedidoDetalleModal
-					title="Interconsulta"
+					title={(selectedIc.Motivo || selectedIc.NotasObservacion || 'Interconsulta').slice(0, 120)}
+					urgencia={selectedIc.EstadoUrgencia}
 					fields={[
 						{ label: 'Paciente', value: selectedIc.PacienteNombre },
 						{ label: 'Documento', value: selectedIc.PacienteDocumento },
@@ -784,6 +786,10 @@ function BandejaPedidosContent() {
 						},
 						{ label: 'Profesional', value: selectedIc.MedicoSolicitanteNombre },
 						{ label: 'Aceptado por', value: selectedIc.NombreToma },
+						{
+							label: 'Destino',
+							value: selectedIc.ServicioDescripcion || selectedIc.SectorReceptor,
+						},
 						{
 							label: 'Motivo',
 							value: selectedIc.Motivo || selectedIc.NotasObservacion,
