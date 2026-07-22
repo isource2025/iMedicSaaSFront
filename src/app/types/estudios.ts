@@ -32,6 +32,14 @@ export interface PedidoEstudio {
   NombreToma?: string | null;
   FechaToma?: string | null;
   EstadoWorkflow?: 'PENDIENTE' | 'TOMADO' | 'CUMPLIDO' | string;
+  PacienteNombre?: string | null;
+  PacienteDocumento?: string | null;
+  PacienteSexo?: string | null;
+  PacienteSexoDescripcion?: string | null;
+  ObraSocial?: string | null;
+  TipoAtencion?: 'AMBULATORIO' | 'INTERNADO' | string | null;
+  Ubicacion?: string | null;
+  IdPaciente?: number | null;
 }
 
 export interface SectorReceptorEstudio {

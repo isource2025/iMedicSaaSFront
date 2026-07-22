@@ -39,6 +39,14 @@ export type InterconsultaRow = {
 	Cumplido?: boolean;
 	EstadoWorkflow?: string;
 	Origen?: 'LEGACY' | 'WEB';
+	PacienteNombre?: string | null;
+	PacienteDocumento?: string | null;
+	PacienteSexo?: string | null;
+	PacienteSexoDescripcion?: string | null;
+	ObraSocial?: string | null;
+	TipoAtencion?: string | null;
+	Ubicacion?: string | null;
+	IdPaciente?: number | null;
 };
 
 async function parseJson<T>(res: Response): Promise<T | null> {
@@ -70,11 +78,17 @@ export const interconsultasService = {
 		return Array.isArray(json.data) ? json.data : [];
 	},
 
-	async listarPendientes(sector: string, limit = 100): Promise<InterconsultaRow[]> {
+	async listarPendientes(
+		sector: string,
+		opts?: { limit?: number; paciente?: string; fechaDesde?: string; fechaHasta?: string },
+	): Promise<InterconsultaRow[]> {
 		const q = new URLSearchParams({
 			sector: sector.trim(),
-			limit: String(limit),
+			limit: String(opts?.limit ?? 100),
 		});
+		if (opts?.paciente?.trim()) q.set('paciente', opts.paciente.trim());
+		if (opts?.fechaDesde?.trim()) q.set('fechaDesde', opts.fechaDesde.trim());
+		if (opts?.fechaHasta?.trim()) q.set('fechaHasta', opts.fechaHasta.trim());
 		const res = await apiFetch(`/interconsultas/pendientes?${q}`);
 		const json = await parseJson<{
 			success?: boolean;

@@ -27,6 +27,50 @@ function formatFechaIc(row: InterconsultaRow) {
 	return [row.FechaSolicitud, row.HoraSolicitud].filter(Boolean).join(' ');
 }
 
+function sexoIcon(sexo?: string | null, desc?: string | null) {
+	const s = `${sexo || ''} ${desc || ''}`.trim().toUpperCase();
+	if (s.includes('F') && !s.includes('MASC')) return '♀';
+	if (s.startsWith('M') || s.includes('MASC')) return '♂';
+	return '';
+}
+
+function pacienteLinea(r: {
+	PacienteNombre?: string | null;
+	PacienteDocumento?: string | null;
+	PacienteSexo?: string | null;
+	PacienteSexoDescripcion?: string | null;
+	ObraSocial?: string | null;
+	TipoAtencion?: string | null;
+	Ubicacion?: string | null;
+}) {
+	const sexo = sexoIcon(r.PacienteSexo, r.PacienteSexoDescripcion);
+	const nombre = r.PacienteNombre || 'Paciente sin datos';
+	const doc = r.PacienteDocumento ? `Doc. ${r.PacienteDocumento}` : null;
+	const os = r.ObraSocial || null;
+	const tipo =
+		r.TipoAtencion === 'INTERNADO'
+			? r.Ubicacion
+				? `Internado · ${r.Ubicacion}`
+				: 'Internado'
+			: r.TipoAtencion === 'AMBULATORIO'
+				? 'Ambulatorio'
+				: null;
+	return [sexo ? `${sexo} ${nombre}` : nombre, doc, os, tipo].filter(Boolean).join(' · ');
+}
+
+function origenLinea(r: {
+	SectorSolicitanteNombre?: string | null;
+	SectorSolicitante?: string | null;
+	MedicoSolicitanteNombre?: string | null;
+}) {
+	const serv = r.SectorSolicitanteNombre || r.SectorSolicitante || null;
+	const prof = r.MedicoSolicitanteNombre || null;
+	if (serv && prof) return `Desde ${serv} · ${prof}`;
+	if (serv) return `Desde ${serv}`;
+	if (prof) return `Solicitó ${prof}`;
+	return null;
+}
+
 function fingerprintEstudios(rows: PedidoEstudio[]) {
 	return rows
 		.map((r) => `${r.IdPedido}:${r.Tomado ? 1 : 0}:${r.MatriculaToma || 0}:${r.NombreToma || ''}`)
@@ -66,12 +110,24 @@ function BandejaPedidosContent() {
 	const [selectedIc, setSelectedIc] = useState<InterconsultaRow | null>(null);
 	const [cumplirIc, setCumplirIc] = useState<InterconsultaRow | null>(null);
 	const [respuestaIc, setRespuestaIc] = useState('');
+	const [filtroPaciente, setFiltroPaciente] = useState('');
+	const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+	const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+	const [adjuntosIc, setAdjuntosIc] = useState<File[]>([]);
+	const [tiposAdj, setTiposAdj] = useState<{ TipoImagen: string; DescTipoImagen: string }[]>([]);
+	const [tipoAdjIc, setTipoAdjIc] = useState('');
 
 	const fpRef = useRef('');
 	const sectorRef = useRef(sector);
 	const tabRef = useRef(tab);
+	const filtroRef = useRef({ paciente: '', fechaDesde: '', fechaHasta: '' });
 	sectorRef.current = sector;
 	tabRef.current = tab;
+	filtroRef.current = {
+		paciente: filtroPaciente,
+		fechaDesde: filtroFechaDesde,
+		fechaHasta: filtroFechaHasta,
+	};
 
 	useEffect(() => {
 		const t = String(searchParams.get('tab') || '').toLowerCase();
@@ -108,15 +164,20 @@ function BandejaPedidosContent() {
 		if (!silent) setLoading(true);
 		setError(null);
 		try {
+			const filtros = {
+				paciente: filtroRef.current.paciente.trim() || undefined,
+				fechaDesde: filtroRef.current.fechaDesde.trim() || undefined,
+				fechaHasta: filtroRef.current.fechaHasta.trim() || undefined,
+			};
 			if (currentTab === 'estudios') {
-				const rows = await estudiosService.listarPendientes(sec);
+				const rows = await estudiosService.listarPendientes(sec, filtros);
 				const fp = fingerprintEstudios(rows);
 				if (fp !== fpRef.current || !silent) {
 					fpRef.current = fp;
 					setEstudios(rows);
 				}
 			} else {
-				const rows = await interconsultasService.listarPendientes(sec);
+				const rows = await interconsultasService.listarPendientes(sec, filtros);
 				const fp = fingerprintIc(rows);
 				if (fp !== fpRef.current || !silent) {
 					fpRef.current = fp;
@@ -133,6 +194,20 @@ function BandejaPedidosContent() {
 			setLoading(false);
 		}
 	}, []);
+
+	useEffect(() => {
+		if (!cumplirIc) return;
+		setAdjuntosIc([]);
+		void import('@/app/services/adjuntosService').then(({ adjuntosService }) =>
+			adjuntosService
+				.getTiposImagenes()
+				.then((list) => {
+					setTiposAdj(list);
+					setTipoAdjIc((prev) => prev || list[0]?.TipoImagen || '');
+				})
+				.catch(() => setTiposAdj([])),
+		);
+	}, [cumplirIc]);
 
 	useEffect(() => {
 		fpRef.current = '';
@@ -223,12 +298,21 @@ function BandejaPedidosContent() {
 
 	const confirmarCumplirIc = async () => {
 		if (!cumplirIc || !respuestaIc.trim()) return;
+		if (adjuntosIc.length > 0 && !tipoAdjIc.trim()) {
+			setError('Seleccioná el tipo de documento para los adjuntos');
+			return;
+		}
 		const id = icId(cumplirIc);
 		setBusyId(id);
 		try {
 			await interconsultasService.cumplir(id, respuestaIc.trim());
+			if (adjuntosIc.length > 0 && cumplirIc.IdVisita > 0) {
+				const { adjuntosService } = await import('@/app/services/adjuntosService');
+				await adjuntosService.subirArchivos(cumplirIc.IdVisita, adjuntosIc, tipoAdjIc.trim());
+			}
 			setCumplirIc(null);
 			setRespuestaIc('');
+			setAdjuntosIc([]);
 			await load({ silent: true });
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'No se pudo cumplir');
@@ -291,6 +375,40 @@ function BandejaPedidosContent() {
 						))}
 					</select>
 				</label>
+				<label className={styles.field}>
+					<span>Paciente</span>
+					<input
+						className={styles.select}
+						type="search"
+						placeholder="Nombre o documento…"
+						value={filtroPaciente}
+						onChange={(e) => setFiltroPaciente(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								fpRef.current = '';
+								void load({ silent: false });
+							}
+						}}
+					/>
+				</label>
+				<label className={styles.field}>
+					<span>Desde</span>
+					<input
+						className={styles.select}
+						type="date"
+						value={filtroFechaDesde}
+						onChange={(e) => setFiltroFechaDesde(e.target.value)}
+					/>
+				</label>
+				<label className={styles.field}>
+					<span>Hasta</span>
+					<input
+						className={styles.select}
+						type="date"
+						value={filtroFechaHasta}
+						onChange={(e) => setFiltroFechaHasta(e.target.value)}
+					/>
+				</label>
 				<div className={styles.tabs} role="tablist">
 					<button
 						type="button"
@@ -314,10 +432,13 @@ function BandejaPedidosContent() {
 				<button
 					type="button"
 					className={styles.refreshBtn}
-					onClick={() => void load({ silent: false })}
+					onClick={() => {
+						fpRef.current = '';
+						void load({ silent: false });
+					}}
 					disabled={loading}
 				>
-					Actualizar
+					Buscar
 				</button>
 			</div>
 
@@ -371,12 +492,11 @@ function BandejaPedidosContent() {
 									>
 										{r.PracticaSolicitada || `Pedido #${r.IdPedido}`}
 									</button>
+									<p className={styles.cardMeta}>{pacienteLinea(r)}</p>
 									<p className={styles.cardMeta}>
-										Visita {r.IdVisita}
-										{formatFechaEstudio(r) ? ` · ${formatFechaEstudio(r)}` : ''}
-										{r.MedicoSolicitanteNombre
-											? ` · ${r.MedicoSolicitanteNombre}`
-											: ''}
+										{formatFechaEstudio(r) || 'Sin fecha'}
+										{origenLinea(r) ? ` · ${origenLinea(r)}` : ''}
+										{` · Visita ${r.IdVisita}`}
 									</p>
 								</div>
 								<div className={styles.cardActions}>
@@ -448,12 +568,11 @@ function BandejaPedidosContent() {
 									>
 										{(r.Motivo || r.NotasObservacion || 'Interconsulta').slice(0, 140)}
 									</button>
+									<p className={styles.cardMeta}>{pacienteLinea(r)}</p>
 									<p className={styles.cardMeta}>
-										Visita {r.IdVisita || '—'}
-										{formatFechaIc(r) ? ` · ${formatFechaIc(r)}` : ''}
-										{r.MedicoSolicitanteNombre
-											? ` · ${r.MedicoSolicitanteNombre}`
-											: ''}
+										{formatFechaIc(r) || 'Sin fecha'}
+										{origenLinea(r) ? ` · ${origenLinea(r)}` : ''}
+										{` · Visita ${r.IdVisita || '—'}`}
 									</p>
 								</div>
 								<div className={styles.cardActions}>
@@ -502,9 +621,32 @@ function BandejaPedidosContent() {
 					title={selectedEstudio.PracticaSolicitada || 'Pedido'}
 					urgencia={selectedEstudio.EstadoUrgencia}
 					fields={[
+						{ label: 'Paciente', value: selectedEstudio.PacienteNombre },
+						{ label: 'Documento', value: selectedEstudio.PacienteDocumento },
+						{
+							label: 'Sexo',
+							value:
+								selectedEstudio.PacienteSexoDescripcion || selectedEstudio.PacienteSexo,
+						},
+						{ label: 'Obra social', value: selectedEstudio.ObraSocial },
+						{
+							label: 'Atención',
+							value:
+								selectedEstudio.TipoAtencion === 'INTERNADO'
+									? `Internado${selectedEstudio.Ubicacion ? ` · ${selectedEstudio.Ubicacion}` : ''}`
+									: selectedEstudio.TipoAtencion === 'AMBULATORIO'
+										? 'Ambulatorio'
+										: selectedEstudio.TipoAtencion,
+						},
 						{ label: 'Visita', value: selectedEstudio.IdVisita },
 						{ label: 'Fecha', value: formatFechaEstudio(selectedEstudio) },
-						{ label: 'Solicitante', value: selectedEstudio.MedicoSolicitanteNombre },
+						{
+							label: 'Servicio origen',
+							value:
+								selectedEstudio.SectorSolicitanteNombre ||
+								selectedEstudio.SectorSolicitante,
+						},
+						{ label: 'Profesional', value: selectedEstudio.MedicoSolicitanteNombre },
 						{ label: 'Aceptado por', value: selectedEstudio.NombreToma },
 						{
 							label: 'Destino',
@@ -528,9 +670,29 @@ function BandejaPedidosContent() {
 				<PedidoDetalleModal
 					title="Interconsulta"
 					fields={[
+						{ label: 'Paciente', value: selectedIc.PacienteNombre },
+						{ label: 'Documento', value: selectedIc.PacienteDocumento },
+						{
+							label: 'Sexo',
+							value: selectedIc.PacienteSexoDescripcion || selectedIc.PacienteSexo,
+						},
+						{ label: 'Obra social', value: selectedIc.ObraSocial },
+						{
+							label: 'Atención',
+							value:
+								selectedIc.TipoAtencion === 'INTERNADO'
+									? `Internado${selectedIc.Ubicacion ? ` · ${selectedIc.Ubicacion}` : ''}`
+									: selectedIc.TipoAtencion === 'AMBULATORIO'
+										? 'Ambulatorio'
+										: selectedIc.TipoAtencion,
+						},
 						{ label: 'Visita', value: selectedIc.IdVisita },
 						{ label: 'Fecha', value: formatFechaIc(selectedIc) },
-						{ label: 'Solicitante', value: selectedIc.MedicoSolicitanteNombre },
+						{
+							label: 'Servicio origen',
+							value: selectedIc.SectorSolicitanteNombre || selectedIc.SectorSolicitante,
+						},
+						{ label: 'Profesional', value: selectedIc.MedicoSolicitanteNombre },
 						{ label: 'Aceptado por', value: selectedIc.NombreToma },
 						{
 							label: 'Motivo',
@@ -545,7 +707,8 @@ function BandejaPedidosContent() {
 			{cumplirIc ? (
 				<div className={styles.modalOverlay} onClick={() => setCumplirIc(null)}>
 					<div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-						<h3 className={styles.modalTitle}>Responder interconsulta</h3>
+						<h3 className={styles.modalTitle}>Completar interconsulta</h3>
+						<p className={styles.cardMeta}>{pacienteLinea(cumplirIc)}</p>
 						<textarea
 							className={styles.textarea}
 							rows={6}
@@ -553,8 +716,37 @@ function BandejaPedidosContent() {
 							onChange={(e) => setRespuestaIc(e.target.value)}
 							placeholder="Respuesta / resultado…"
 						/>
+						<label className={styles.field} style={{ display: 'block', marginTop: '0.75rem' }}>
+							<span>Adjuntar archivo (documentos del paciente)</span>
+							{tiposAdj.length > 0 ? (
+								<select
+									className={styles.select}
+									value={tipoAdjIc}
+									onChange={(e) => setTipoAdjIc(e.target.value)}
+									style={{ marginTop: '0.35rem', marginBottom: '0.35rem' }}
+								>
+									{tiposAdj.map((t) => (
+										<option key={t.TipoImagen} value={t.TipoImagen}>
+											{t.DescTipoImagen || t.TipoImagen}
+										</option>
+									))}
+								</select>
+							) : null}
+							<input
+								type="file"
+								multiple
+								onChange={(e) => setAdjuntosIc(Array.from(e.target.files || []))}
+							/>
+						</label>
 						<div className={styles.actions}>
-							<button type="button" className={styles.btnSecondary} onClick={() => setCumplirIc(null)}>
+							<button
+								type="button"
+								className={styles.btnSecondary}
+								onClick={() => {
+									setCumplirIc(null);
+									setAdjuntosIc([]);
+								}}
+							>
 								Cancelar
 							</button>
 							<button
@@ -563,7 +755,7 @@ function BandejaPedidosContent() {
 								disabled={!respuestaIc.trim() || busyId === icId(cumplirIc)}
 								onClick={() => void confirmarCumplirIc()}
 							>
-								Enviar
+								Completar
 							</button>
 						</div>
 					</div>

@@ -128,12 +128,19 @@ const menuItems: MenuItem[] = [
     id: 'usuario', moduloId: 'USUARIO', label: 'Usuario', icon: User, alwaysVisible: true,
     subItems: [
       { submoduloId: 'PERFIL', label: 'Mi Perfil',     path: '/dashboard/profile' },
-      // Estos cuatro son utilitarios del usuario actual y siempre se muestran:
       { label: 'Configuración', path: '/settings' },
       { label: 'Ayuda',         path: '/help' },
-      { label: 'Cerrar Sesión', path: '/' }
     ]
-  }
+  },
+  {
+    id: 'logout',
+    moduloId: 'USUARIO',
+    label: 'Cerrar sesión',
+    icon: LogOut,
+    path: '/',
+    alwaysVisible: true,
+    subItems: [],
+  },
 ]
 
 interface SidebarProps {
@@ -185,27 +192,23 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
     // SSR: no sabemos nada todavía — devolvemos vacío para no mostrar items incorrectos
     if (!loaded) return []
 
-    // SUPER_ADMIN: solo módulo Plataforma + cerrar sesión (sin agenda, admisión, etc.)
+    // SUPER_ADMIN: Plataforma + perfil (Usuario) + cerrar sesión al mismo nivel
     if (rol?.nombre === 'SUPER_ADMIN') {
       const plataforma = menuItems.find((item) => item.moduloId === 'PLATAFORMA')
-      if (!plataforma) return []
-      return [
-        {
+      const usuario = menuItems.find((item) => item.id === 'usuario')
+      const logout = menuItems.find((item) => item.id === 'logout')
+      const out: MenuItem[] = []
+      if (plataforma) {
+        out.push({
           ...plataforma,
           label: 'Plataforma',
           path: '/dashboard/super-admin',
           subItems: [],
-        },
-        {
-          id: 'logout',
-          moduloId: 'USUARIO',
-          label: 'Cerrar sesión',
-          icon: LogOut,
-          path: '/',
-          alwaysVisible: true,
-          subItems: [],
-        },
-      ]
+        })
+      }
+      if (usuario) out.push(usuario)
+      if (logout) out.push(logout)
+      return out
     }
 
     // Sin rol asignado: sólo Dashboard y el menú de usuario (siempre visibles)

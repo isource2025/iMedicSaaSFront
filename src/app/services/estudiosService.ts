@@ -32,11 +32,17 @@ const estudiosService = {
     }
   },
 
-  async listarPendientes(sector: string, limit = 100): Promise<PedidoEstudio[]> {
+  async listarPendientes(
+    sector: string,
+    opts?: { limit?: number; paciente?: string; fechaDesde?: string; fechaHasta?: string },
+  ): Promise<PedidoEstudio[]> {
     const q = new URLSearchParams({
       sector: sector.trim(),
-      limit: String(limit),
+      limit: String(opts?.limit ?? 100),
     });
+    if (opts?.paciente?.trim()) q.set('paciente', opts.paciente.trim());
+    if (opts?.fechaDesde?.trim()) q.set('fechaDesde', opts.fechaDesde.trim());
+    if (opts?.fechaHasta?.trim()) q.set('fechaHasta', opts.fechaHasta.trim());
     const res = await apiFetch(`/estudios/pendientes?${q}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
