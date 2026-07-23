@@ -139,6 +139,9 @@ export interface AdmissionVisitDetailContentProps {
   singleSectionOnly?: Exclude<VisitDetailSectionId, 'resumen'>;
   hideToolbar?: boolean;
   hideResumen?: boolean;
+  /** Permite subir adjuntos aunque la visita esté cerrada / histórica. */
+  allowAdjuntosUpload?: boolean;
+  onReloadData?: () => void;
 }
 
 export default function AdmissionVisitDetailContent({
@@ -152,6 +155,8 @@ export default function AdmissionVisitDetailContent({
   singleSectionOnly,
   hideToolbar = false,
   hideResumen = false,
+  allowAdjuntosUpload = true,
+  onReloadData,
 }: AdmissionVisitDetailContentProps) {
   const baseId = useId();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
@@ -502,10 +507,14 @@ export default function AdmissionVisitDetailContent({
         });
 
       case 'adjuntos':
-        if (!data.practicas?.adjuntos?.length) {
-          return <EmptyState message="No hay adjuntos para esta visita." />;
-        }
-        return <AdmissionAdjuntosGrid items={data.practicas.adjuntos as Record<string, unknown>[]} />;
+        return (
+          <AdmissionAdjuntosGrid
+            items={(data.practicas?.adjuntos || []) as Record<string, unknown>[]}
+            numeroVisita={numeroVisita}
+            allowUpload={allowAdjuntosUpload && !!numeroVisita}
+            onUploaded={onReloadData}
+          />
+        );
 
       default:
         return null;

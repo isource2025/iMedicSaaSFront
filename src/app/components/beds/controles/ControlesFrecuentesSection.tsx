@@ -109,7 +109,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 			exportToPDF({
 				title: 'Controles Frecuentes',
 				subtitle: `Fecha: ${fechaISO}`,
-				headers: ['Fecha', 'Hora', 'Pulso', 'Presión', 'Temperatura', 'Frec. Resp.', 'Saturación'],
+				headers: ['Fecha', 'Hora', 'Pulso', 'Presión', 'Temperatura', 'Frec. Resp.', 'Saturación', 'Glucemia'],
 				data: controlsFiltrados.map((r) => [
 					formatearFecha(r.FechaControl),
 					formatearHora(r.HoraControl),
@@ -118,6 +118,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 					r.Axilar ? `${Number(r.Axilar).toFixed(1)}°C` : '-',
 					r.FrecuenciaRespiratoria || '-',
 					r.Saturometria ? `${r.Saturometria}%` : '-',
+					r.Hgt && String(r.Hgt) !== '0' ? `${r.Hgt} mg/dL` : '-',
 				]),
 				fileName: `controles_${fechaISO}.pdf`,
 				orientation: 'landscape',
@@ -201,6 +202,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 										<th>FR</th>
 										<th>T° Ax</th>
 										<th>Sat.</th>
+										<th>Glucemia</th>
 										<th>Origen</th>
 										<th>Operador</th>
 										<th>Observaciones</th>
@@ -218,6 +220,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 											<td>{c.FrecuenciaRespiratoria || '-'}</td>
 											<td>{c.Axilar ? `${Number(c.Axilar).toFixed(1)}°C` : '-'}</td>
 											<td>{c.Saturometria ? `${c.Saturometria}%` : '-'}</td>
+											<td>{c.Hgt && String(c.Hgt) !== '0' ? `${c.Hgt} mg/dL` : '-'}</td>
 											<td>
 												<span className={c.IdHci && c.IdHci > 0 ? tableStyles.badgeHC : tableStyles.badgeENF}>
 													{c.IdHci && c.IdHci > 0 ? 'HC' : 'ENF'}
@@ -265,7 +268,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 									['T° Axilar', selectedControl.Axilar ? `${Number(selectedControl.Axilar).toFixed(1)}°C` : '-'],
 									['T° Rectal', selectedControl.Rectal ? `${selectedControl.Rectal}°C` : '-'],
 									['Saturación', selectedControl.Saturometria ? `${selectedControl.Saturometria}%` : '-'],
-									['HGT', selectedControl.Hgt || '-'],
+									['Glucemia', selectedControl.Hgt && String(selectedControl.Hgt) !== '0' ? `${selectedControl.Hgt} mg/dL` : '-'],
 									['Peso', selectedControl.Peso ? `${selectedControl.Peso} kg` : '-'],
 									['Talla', selectedControl.Talla ? `${selectedControl.Talla} cm` : '-'],
 									['IMC', selectedControl.IMC

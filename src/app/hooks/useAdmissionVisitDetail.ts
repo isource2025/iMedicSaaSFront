@@ -39,6 +39,22 @@ export function useAdmissionVisitDetail() {
 		setDetailInitialTab(undefined);
 	}, []);
 
+	const reloadVisitDetail = useCallback(async () => {
+		if (selectedVisit == null) return;
+		try {
+			setLoadingDetail(true);
+			const data = await admissionSearchService.detalle(selectedVisit);
+			setDetailData(data as VisitDetailPayload);
+		} catch (e: unknown) {
+			const err = e as { response?: { data?: { message?: string } }; message?: string };
+			setDetailError(
+				err?.response?.data?.message || err?.message || 'No se pudo recargar el detalle',
+			);
+		} finally {
+			setLoadingDetail(false);
+		}
+	}, [selectedVisit]);
+
 	return {
 		selectedVisit,
 		detailData,
@@ -49,5 +65,6 @@ export function useAdmissionVisitDetail() {
 		setDetailError,
 		openVisitDetail,
 		closeVisitDetail,
+		reloadVisitDetail,
 	};
 }

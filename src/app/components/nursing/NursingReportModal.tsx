@@ -196,7 +196,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                           <th>Axilar</th>
                           <th>Rectal</th>
                           <th>Saturometría</th>
-                          <th>HGT</th>
+                          <th>Glucemia</th>
                           <th>Peso</th>
                           <th>Talla</th>
                           <th>IMC</th>
@@ -217,7 +217,11 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
                             <td>{control.Axilar ? control.Axilar.toFixed(1) : '-'}</td>
                             <td>{control.Rectal || '-'}</td>
                             <td>{control.Saturometria || '-'}</td>
-                            <td>{control.HGT || '-'}</td>
+                            <td>
+                              {(control as { HGT?: string | number; Hgt?: string | number }).HGT ||
+                                (control as { Hgt?: string | number }).Hgt ||
+                                '-'}
+                            </td>
                             <td>{control.Peso ? `${control.Peso} kg` : '-'}</td>
                             <td>{control.Talla ? `${control.Talla} cm` : '-'}</td>
                             <td>{formatIMC(control.Peso, control.Talla, control.IMC)}</td>

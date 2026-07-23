@@ -293,8 +293,16 @@ export default function AgendaWhatsAppInbox({
 			await cargarChat(selId, true);
 			await cargarLista();
 		} catch (e: unknown) {
-			const err = e as { message?: string };
-			setError(err.message || 'Error al enviar');
+			const err = e as {
+				message?: string;
+				response?: { data?: { mensaje?: string; metaError?: string } };
+			};
+			setError(
+				err?.response?.data?.mensaje ||
+					err?.response?.data?.metaError ||
+					err.message ||
+					'Error al enviar',
+			);
 		} finally {
 			setEnviando(false);
 		}

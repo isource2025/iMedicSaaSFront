@@ -5,6 +5,7 @@ import Modal from '@/app/components/UI/Modal';
 import { admissionSearchService } from '@/app/services/admissionSearchService';
 import type { AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import AdmissionVisitDetailContent from './AdmissionVisitDetailContent';
+import AdmissionVisitExportModal from './AdmissionVisitExportModal';
 import type { VisitDetailPayload, VisitDetailTabId } from './AdmissionVisitDetailModal';
 import {
 	VisitClinicalBadges,
@@ -62,6 +63,7 @@ export default function PatientFolderVisitsModal({
 	const [detailCache, setDetailCache] = useState<Record<number, VisitDetailPayload>>({});
 	const [loadingDetail, setLoadingDetail] = useState<number | null>(null);
 	const [detailError, setDetailError] = useState('');
+	const [exportVisita, setExportVisita] = useState<number | null>(null);
 
 	const resetState = useCallback(() => {
 		setMainTab('visitas');
@@ -72,6 +74,7 @@ export default function PatientFolderVisitsModal({
 		setDetailCache({});
 		setLoadingDetail(null);
 		setDetailError('');
+		setExportVisita(null);
 	}, []);
 
 	useEffect(() => {
@@ -149,6 +152,16 @@ export default function PatientFolderVisitsModal({
 		[expandedBadge, detailCache, ensureDetail],
 	);
 
+	const handleExportar = useCallback(
+		async (numeroVisita: number) => {
+			setDetailError('');
+			const data = detailCache[numeroVisita] || (await ensureDetail(numeroVisita));
+			if (!data) return;
+			setExportVisita(numeroVisita);
+		},
+		[detailCache, ensureDetail],
+	);
+
 	if (!patient) return null;
 
 	const title = `Carpeta — ${patient.ApellidoYNombre || 'Paciente'}`;
@@ -172,6 +185,7 @@ export default function PatientFolderVisitsModal({
 		: undefined;
 
 	return (
+		<>
 		<Modal isOpen={isOpen} onClose={onClose} title={title} size="large">
 			<div className={styles.meta}>
 				<span>
@@ -219,6 +233,14 @@ export default function PatientFolderVisitsModal({
 										<span className={styles.visitDate}>
 											{visit.FechaAdmision || '—'} {visit.HoraAdmision || ''}
 										</span>
+										<button
+											type="button"
+											className={styles.exportBtn}
+											onClick={() => void handleExportar(nv)}
+											disabled={loadingDetail === nv}
+										>
+											Exportar…
+										</button>
 									</div>
 									<div className={styles.visitMetaRow}>
 										<span className={`${styles.visitTypeBadge} ${tipoClass(visit)}`}>
@@ -242,6 +264,14 @@ export default function PatientFolderVisitsModal({
 												singleSectionOnly={expandedSection}
 												hideToolbar
 												hideResumen
+												onReloadData={() => {
+													setDetailCache((prev) => {
+														const next = { ...prev };
+														delete next[nv];
+														return next;
+													});
+													void ensureDetail(nv);
+												}}
 											/>
 										</div>
 									) : null}
@@ -293,5 +323,14 @@ export default function PatientFolderVisitsModal({
 				</div>
 			)}
 		</Modal>
+		{exportVisita != null ? (
+			<AdmissionVisitExportModal
+				isOpen
+				onClose={() => setExportVisita(null)}
+				numeroVisita={exportVisita}
+				evolucionesMedicas={detailCache[exportVisita]?.evolucionesMedicas}
+			/>
+		) : null}
+		</>
 	);
 }

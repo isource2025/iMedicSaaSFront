@@ -94,12 +94,27 @@ export const botConversacionService = {
 		idConversacion: string,
 		contenido: string,
 	): Promise<BotEnviarMensajeResult> {
-		const { data } = await apiService.post<ApiResp<BotEnviarMensajeResult>>(
-			`/admin/bot/conversaciones/${encodeURIComponent(idConversacion)}/mensajes`,
-			{ contenido },
-		);
-		if (!data.success) throw new Error(data.mensaje || 'Error al enviar mensaje');
-		return data.data;
+		const { data } = await apiService.post<
+			ApiResp<BotEnviarMensajeResult> & {
+				metaError?: string;
+				pendienteMeta?: boolean;
+				codigo?: string;
+			}
+		>(`/admin/bot/conversaciones/${encodeURIComponent(idConversacion)}/mensajes`, {
+			contenido,
+		});
+		if (!data.success) {
+			throw new Error(data.mensaje || data.metaError || 'Error al enviar mensaje');
+		}
+		const result = (data.data || {}) as BotEnviarMensajeResult;
+		if (data.pendienteMeta || result.pendienteMeta) {
+			throw new Error(
+				data.metaError ||
+					data.mensaje ||
+					'El mensaje no llegó a WhatsApp (pendiente de Meta). Revisá token o ventana de 24 h.',
+			);
+		}
+		return result;
 	},
 
 	async simularMensajeEntrante(payload: {

@@ -63,6 +63,7 @@ export default function AdmissionSearchPage() {
     detailInitialTab,
     openVisitDetail,
     closeVisitDetail,
+    reloadVisitDetail,
   } = useAdmissionVisitDetail();
 
   const runSearch = async (targetPage = 1) => {
@@ -430,6 +431,7 @@ export default function AdmissionSearchPage() {
         loading={loadingDetail}
         data={detailData}
         initialTab={detailInitialTab}
+        onReloadData={() => void reloadVisitDetail()}
       />
     </div>
   );

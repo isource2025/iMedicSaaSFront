@@ -104,6 +104,7 @@ export default function OnboardingWizard({
     dbName: empresa.conexion?.dbName || '',
     dbUser: empresa.conexion?.dbUser || '',
     dbPassword: '',
+    fileServerUrl: empresa.conexion?.fileServerUrl || '',
   });
 
   const [sectoresSel, setSectoresSel] = useState<Set<string>>(
@@ -143,6 +144,7 @@ export default function OnboardingWizard({
       dbName: empresa.conexion?.dbName || '',
       dbUser: empresa.conexion?.dbUser || '',
       dbPassword: '',
+      fileServerUrl: empresa.conexion?.fileServerUrl || '',
     });
     setSectoresSel(new Set(empresa.onboarding?.sectoresDefecto || []));
     setAvisoActivacion(null);
@@ -207,6 +209,7 @@ export default function OnboardingWizard({
         dbName: conexionForm.dbName,
         dbUser: conexionForm.dbUser,
         dbPassword: conexionForm.dbPassword || undefined,
+        fileServerUrl: conexionForm.fileServerUrl || '',
       });
       onEmpresaActualizada(det);
       setConexionForm((f) => ({ ...f, dbPassword: '' }));
@@ -221,6 +224,7 @@ export default function OnboardingWizard({
         dbName: conexionForm.dbName,
         dbUser: conexionForm.dbUser,
         dbPassword: conexionForm.dbPassword || undefined,
+        fileServerUrl: conexionForm.fileServerUrl || '',
       });
       const r = await superAdminService.probarConexion(empresa.id);
       if (!r.ok) throw new Error('No se pudo conectar a la base de datos');
@@ -956,6 +960,19 @@ export default function OnboardingWizard({
                       onChange={(e) => setConexionForm({ ...conexionForm, dbPassword: e.target.value })}
                       placeholder={empresa.conexion?.tienePassword ? '•••• (sin cambiar)' : ''}
                     />
+                  </div>
+                  <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                    <label>URL túnel / servidor de archivos (adjuntos)</label>
+                    <input
+                      className={styles.input}
+                      value={conexionForm.fileServerUrl}
+                      onChange={(e) => setConexionForm({ ...conexionForm, fileServerUrl: e.target.value })}
+                      placeholder="https://xxxx.trycloudflare.com o http://IP:9012"
+                    />
+                    <p className={styles.packDesc} style={{ marginTop: '0.35rem' }}>
+                      URL pública del file server on-prem (túnel Cloudflare). Se usa para ver y subir adjuntos de esta
+                      empresa. Si queda vacío, se usa el fallback global del backend.
+                    </p>
                   </div>
                 </div>
 

@@ -133,6 +133,28 @@
 	font-variant-numeric: tabular-nums;
 }
 
+.exportBtn {
+	margin-left: auto;
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #0f172a;
+	font-size: 0.75rem;
+	font-weight: 700;
+	padding: 0.35rem 0.7rem;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.exportBtn:hover:not(:disabled) {
+	border-color: #0284c7;
+	color: #0284c7;
+}
+
+.exportBtn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
 .visitMetaRow {
 	display: flex;
 	align-items: center;

@@ -114,9 +114,41 @@ function AdjuntoCard({
   );
 }
 
-export default function AdmissionAdjuntosGrid({ items }: { items: Record<string, unknown>[] }) {
+export default function AdmissionAdjuntosGrid({
+  items,
+  numeroVisita,
+  allowUpload = false,
+  onUploaded,
+}: {
+  items: Record<string, unknown>[];
+  numeroVisita?: number | null;
+  allowUpload?: boolean;
+  onUploaded?: () => void;
+}) {
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
+  const [tipos, setTipos] = useState<{ TipoImagen: string; DescTipoImagen: string }[]>([]);
+  const [tipoImagen, setTipoImagen] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!allowUpload) return;
+    let cancelled = false;
+    adjuntosService
+      .getTiposImagenes()
+      .then((list) => {
+        if (cancelled) return;
+        setTipos(list);
+        if (list[0]?.TipoImagen) setTipoImagen(list[0].TipoImagen);
+      })
+      .catch(() => {
+        /* ignore */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [allowUpload]);
 
   const parsedItems = useMemo(
     () =>
@@ -161,35 +193,87 @@ export default function AdmissionAdjuntosGrid({ items }: { items: Record<string,
     setViewer(null);
   };
 
-  if (!items.length) return null;
+  const handleUpload = async (files: FileList | null) => {
+    if (!allowUpload || !numeroVisita || !files?.length) return;
+    if (!tipoImagen.trim()) {
+      setUploadError('Seleccioná un tipo de imagen');
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      await adjuntosService.subirArchivos(numeroVisita, Array.from(files), tipoImagen.trim());
+      onUploaded?.();
+    } catch (e: unknown) {
+      setUploadError(e instanceof Error ? e.message : 'No se pudo subir el archivo');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <>
       <AdjuntoFileViewer viewer={viewer} loading={viewerLoading} onClose={closeViewer} />
-      <p className={styles.hint}>
-        Vista previa cargada al abrir esta pestaña. Clic en la tarjeta para ver el archivo.
-      </p>
-      <div className={styles.grid}>
-        {visibleItems.map((it) => (
-          <AdjuntoCard
-            key={it.id}
-            idAdjunto={it.id}
-            nombreArchivo={it.name}
-            onOpen={openAdjunto}
+      {allowUpload && numeroVisita ? (
+        <div className={styles.uploadBox}>
+          <p className={styles.uploadTitle}>Agregar adjunto a esta visita</p>
+          {tipos.length > 0 ? (
+            <select
+              className={styles.uploadSelect}
+              value={tipoImagen}
+              onChange={(e) => setTipoImagen(e.target.value)}
+              disabled={uploading}
+            >
+              {tipos.map((t) => (
+                <option key={t.TipoImagen} value={t.TipoImagen}>
+                  {t.DescTipoImagen || t.TipoImagen}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          <input
+            type="file"
+            multiple
+            disabled={uploading}
+            onChange={(e) => {
+              void handleUpload(e.target.files);
+              e.target.value = '';
+            }}
           />
-        ))}
-      </div>
-      {hasMore ? (
-        <div className={styles.moreRow}>
-          <button
-            type="button"
-            className={styles.moreBtn}
-            onClick={() => setVisibleCount((n) => n + PREVIEWS_PAGE_SIZE)}
-          >
-            Cargar más adjuntos ({parsedItems.length - visibleCount} restantes)
-          </button>
+          {uploading ? <p className={styles.hint}>Subiendo…</p> : null}
+          {uploadError ? <p className={styles.uploadError}>{uploadError}</p> : null}
         </div>
       ) : null}
+      {!parsedItems.length ? (
+        <p className={styles.hint}>No hay adjuntos cargados aún.</p>
+      ) : (
+        <>
+          <p className={styles.hint}>
+            Vista previa cargada al abrir esta pestaña. Clic en la tarjeta para ver el archivo.
+          </p>
+          <div className={styles.grid}>
+            {visibleItems.map((it) => (
+              <AdjuntoCard
+                key={it.id}
+                idAdjunto={it.id}
+                nombreArchivo={it.name}
+                onOpen={openAdjunto}
+              />
+            ))}
+          </div>
+          {hasMore ? (
+            <div className={styles.moreRow}>
+              <button
+                type="button"
+                className={styles.moreBtn}
+                onClick={() => setVisibleCount((n) => n + PREVIEWS_PAGE_SIZE)}
+              >
+                Cargar más adjuntos ({parsedItems.length - visibleCount} restantes)
+              </button>
+            </div>
+          ) : null}
+        </>
+      )}
     </>
   );
 }

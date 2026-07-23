@@ -31,6 +31,8 @@ export interface EmpresaConexion {
   dbName?: string;
   dbUser?: string;
   dbPassword?: string;
+  /** URL pública del file server / túnel Cloudflare para adjuntos */
+  fileServerUrl?: string;
   tienePassword?: boolean;
 }
 

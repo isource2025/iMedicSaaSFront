@@ -174,3 +174,35 @@
 .moreBtn:hover {
   background: #f8fafc;
 }
+
+.uploadBox {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.uploadTitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.uploadSelect {
+  max-width: 280px;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+}
+
+.uploadError {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
