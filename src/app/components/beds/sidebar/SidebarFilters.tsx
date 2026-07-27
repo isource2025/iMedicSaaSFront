@@ -171,13 +171,12 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 	/**
 	 * Visibilidad del GRUPO entero.
 	 *
-	 * Un grupo se muestra si el usuario puede ESCRIBIR (CREAR/EDITAR) en al
-	 * menos una de sus secciones propietarias. Así:
-	 *   - El enfermero ve SOLO "Gestión Enfermería" (puede crear evoluciones
-	 *     de enfermería, controles, etc.) y NO "Gestión Médica" (no puede
-	 *     crear HC, evoluciones médicas, etc.).
-	 *   - El médico ve SOLO "Gestión Médica" y NO "Gestión Enfermería".
-	 *   - ADMIN ve ambas.
+	 * Gestión Médica: se muestra si puede ESCRIBIR en HC / evoluciones / indicaciones
+	 * (enfermero con solo lectura clínica no ve el grupo médico).
+	 *
+	 * Gestión Enfermería: se muestra con VER o CREAR. El médico tiene lectura
+	 * de enfermería en la matriz; antes el grupo exigía CREAR y quedaba oculto.
+	 * Las acciones de escritura siguen gated dentro de cada sección.
 	 */
 	const puedeGestionMedica = !loaded
 		? true
@@ -187,9 +186,12 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 
 	const puedeGestionEnfermeria = !loaded
 		? true
-		: puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') ||
-		  puede('INTERNACION.SIGNOS_VITALES.CREAR') ||
-		  puede('INTERNACION.MEDICACION.CREAR');
+		: puedeSubmodulo('INTERNACION', 'EVOLUCION_ENFERMERIA') ||
+		  puedeSubmodulo('INTERNACION', 'SIGNOS_VITALES') ||
+		  puedeSubmodulo('INTERNACION', 'MEDICACION') ||
+		  puedeSubmodulo('INTERNACION', 'DIETA') ||
+		  puedeSubmodulo('INTERNACION', 'BALANCE_HIDRICO') ||
+		  puedeSubmodulo('INTERNACION', 'INSUMOS');
 
 	const puedeCargaDocumental =
 		loaded &&

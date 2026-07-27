@@ -366,9 +366,9 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 /**
  * Lista de permisos efectivos del usuario.
  *
- * El rol ADMIN siempre usa la plantilla completa (misma cobertura que un
- * administrativo para agenda, personal, etc.), aunque venga una lista desde
- * el login desactualizada respecto de imRolPermisos.
+ * ADMIN / SUPER_ADMIN / MEDICO usan la plantilla completa aunque `imRolPermisos`
+ * en BD venga desactualizado (p. ej. MEDICO sin INTERCONSULTAS o sin lectura
+ * de enfermería). El resto de roles sigue usando la lista de BD/login.
  */
 export function permisosDeRol(
 	rol: { nombre?: string } | string | null | undefined,
@@ -377,6 +377,7 @@ export function permisosDeRol(
 	const n = nombreRol(rol);
 	if (n === 'ADMIN') return [...PLANTILLAS.ADMIN];
 	if (n === 'SUPER_ADMIN') return [...PLANTILLAS.SUPER_ADMIN];
+	if (n === 'MEDICO') return [...PLANTILLAS.MEDICO];
 	if (permisosUsuario && permisosUsuario.length) return permisosUsuario;
 	if (!n) return [];
 	return PLANTILLAS[n];
