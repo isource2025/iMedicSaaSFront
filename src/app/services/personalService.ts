@@ -353,6 +353,56 @@ export const changePersonalCuentaPassword = async (
 	}
 };
 
+export type PersonalExportField = { id: string; label: string };
+
+export const getExportFields = async (): Promise<PersonalExportField[]> => {
+	const res = await apiService.get<ApiResponse<PersonalExportField[]>>(
+		'/personal/export-fields',
+	);
+	if (res.data.success && Array.isArray(res.data.data)) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al obtener campos de exportación');
+};
+
+export const getSyncFisicoEstado = async (): Promise<{ disponible: boolean }> => {
+	const res = await apiService.get<ApiResponse<{ disponible: boolean }>>(
+		'/personal/sync-fisico/estado',
+	);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al consultar sync físico');
+};
+
+export const syncDesdeFisico = async (): Promise<{
+	personal: number;
+	sectoresAsignaciones?: number;
+	vinculos?: number;
+}> => {
+	const res = await apiService.post<
+		ApiResponse<{
+			personal: number;
+			sectoresAsignaciones?: number;
+			vinculos?: number;
+		}>
+	>('/personal/sync-desde-fisico', {});
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al sincronizar desde base física');
+};
+
+export const exportarPersonal = async (
+	campos: string[],
+): Promise<{
+	columns: PersonalExportField[];
+	rows: Record<string, unknown>[];
+}> => {
+	const res = await apiService.post<
+		ApiResponse<{
+			columns: PersonalExportField[];
+			rows: Record<string, unknown>[];
+		}>
+	>('/personal/exportar', { campos });
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al exportar personal');
+};
+
 export const personalService = {
 	getPersonalList,
 	getNextId,
@@ -386,6 +436,10 @@ export const personalService = {
 	createPersonalCuenta,
 	updatePersonalCuenta,
 	changePersonalCuentaPassword,
+	getExportFields,
+	getSyncFisicoEstado,
+	syncDesdeFisico,
+	exportarPersonal,
 };
 
 export default personalService;

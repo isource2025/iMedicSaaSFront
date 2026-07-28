@@ -7,6 +7,9 @@ import PersonalList from '@/app/components/Personal/PersonalList';
 import PersonalActionModals, {
 	type PersonalExtraKind,
 } from '@/app/components/Personal/PersonalActionModals';
+import PersonalExportModal, {
+	type ExportFieldOption,
+} from '@/app/components/Personal/PersonalExportModal';
 import PersonalForm from '@/app/components/Personal/PersonalForm';
 import PersonalDetails from '@/app/components/Personal/PersonalDetails';
 import DeletePersonalConfirmation from '@/app/components/Personal/DeletePersonalConfirmation';
@@ -14,6 +17,7 @@ import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
 import Loader from '@/app/components/Loader/Loader';
 import { personalService } from '@/app/services/personalService';
+import { downloadPersonalExcel } from '@/app/utils/downloadPersonalExcel';
 import styles from './personal.module.css';
 
 export default function PersonalPage() {
@@ -53,10 +57,33 @@ export default function PersonalPage() {
 		personal: Personal;
 	} | null>(null);
 	const [loadingFull, setLoadingFull] = useState(false);
+	const [syncDisponible, setSyncDisponible] = useState(false);
+	const [syncing, setSyncing] = useState(false);
+	const [syncMsg, setSyncMsg] = useState<string | null>(null);
+	const [exportOpen, setExportOpen] = useState(false);
+	const [exportFields, setExportFields] = useState<ExportFieldOption[]>([]);
+	const [exporting, setExporting] = useState(false);
 
 	useEffect(() => {
 		if (!initialized) initialize();
 	}, [initialized, initialize]);
+
+	useEffect(() => {
+		(async () => {
+			try {
+				const estado = await personalService.getSyncFisicoEstado();
+				setSyncDisponible(!!estado.disponible);
+			} catch {
+				setSyncDisponible(false);
+			}
+			try {
+				const fields = await personalService.getExportFields();
+				setExportFields(fields);
+			} catch (e) {
+				console.error('export fields', e);
+			}
+		})();
+	}, []);
 
 	useEffect(() => {
 		(async () => {
@@ -75,6 +102,40 @@ export default function PersonalPage() {
 			}
 		})();
 	}, [isEditModalOpen, selected]);
+
+	const handleSyncFisico = async () => {
+		if (syncing) return;
+		setSyncing(true);
+		setSyncMsg(null);
+		try {
+			const resumen = await personalService.syncDesdeFisico();
+			setSyncMsg(
+				`Nube actualizada: ${resumen.personal} personal` +
+					(resumen.sectoresAsignaciones != null
+						? `, ${resumen.sectoresAsignaciones} sectores`
+						: ''),
+			);
+			await refreshList();
+		} catch (e) {
+			setSyncMsg(e instanceof Error ? e.message : 'Error al sincronizar');
+		} finally {
+			setSyncing(false);
+		}
+	};
+
+	const handleExport = async (campos: string[]) => {
+		setExporting(true);
+		try {
+			const data = await personalService.exportarPersonal(campos);
+			const stamp = new Date().toISOString().slice(0, 10);
+			downloadPersonalExcel(data.columns, data.rows, `personal_${stamp}.xlsx`);
+			setExportOpen(false);
+		} catch (e) {
+			alert(e instanceof Error ? e.message : 'Error al exportar');
+		} finally {
+			setExporting(false);
+		}
+	};
 
 	return (
 		<div className={styles.container}>
@@ -111,14 +172,42 @@ export default function PersonalPage() {
 							}
 						/>
 					</div>
-					<button
-						className={styles.addButton}
-						onClick={openAddModal}
-						aria-label='Agregar personal'
-					>
-						<span className={styles.addIcon}>+</span> Agregar personal
-					</button>
+					<div className={styles.toolbarActions}>
+						{syncDisponible && (
+							<button
+								type='button'
+								className={styles.secondaryButton}
+								onClick={handleSyncFisico}
+								disabled={syncing}
+							>
+								{syncing ? 'Actualizando…' : 'Actualizar desde base física'}
+							</button>
+						)}
+						<button
+							type='button'
+							className={styles.secondaryButton}
+							onClick={() => setExportOpen(true)}
+						>
+							Exportar a Excel
+						</button>
+						<button
+							className={styles.addButton}
+							onClick={openAddModal}
+							aria-label='Agregar personal'
+						>
+							<span className={styles.addIcon}>+</span> Agregar personal
+						</button>
+					</div>
 				</div>
+
+				{syncMsg && (
+					<div className={styles.syncBanner} role='status'>
+						{syncMsg}
+						<button type='button' onClick={() => setSyncMsg(null)} aria-label='Cerrar'>
+							×
+						</button>
+					</div>
+				)}
 
 				<PersonalList
 					personalList={personalList}
@@ -131,6 +220,14 @@ export default function PersonalPage() {
 					onDelete={openDeleteModal}
 					onView={openViewModal}
 					onOpenExtra={(p, kind) => setExtraModal({ personal: p, kind })}
+				/>
+
+				<PersonalExportModal
+					open={exportOpen}
+					fields={exportFields}
+					loading={exporting}
+					onClose={() => setExportOpen(false)}
+					onConfirm={handleExport}
 				/>
 
 				<PersonalActionModals
