@@ -59,7 +59,13 @@ export default function PersonalPage() {
 	const [loadingFull, setLoadingFull] = useState(false);
 	const [syncDisponible, setSyncDisponible] = useState(false);
 	const [syncing, setSyncing] = useState(false);
-	const [syncMsg, setSyncMsg] = useState<string | null>(null);
+	const [syncResult, setSyncResult] = useState<{
+		ok: boolean;
+		personal: number;
+		sectoresAsignaciones?: number;
+		vinculos?: number;
+		error?: string;
+	} | null>(null);
 	const [exportOpen, setExportOpen] = useState(false);
 	const [exportFields, setExportFields] = useState<ExportFieldOption[]>([]);
 	const [exporting, setExporting] = useState(false);
@@ -106,18 +112,22 @@ export default function PersonalPage() {
 	const handleSyncFisico = async () => {
 		if (syncing) return;
 		setSyncing(true);
-		setSyncMsg(null);
+		setSyncResult(null);
 		try {
 			const resumen = await personalService.syncDesdeFisico();
-			setSyncMsg(
-				`Nube actualizada: ${resumen.personal} personal` +
-					(resumen.sectoresAsignaciones != null
-						? `, ${resumen.sectoresAsignaciones} sectores`
-						: ''),
-			);
+			setSyncResult({
+				ok: true,
+				personal: Number(resumen.personal) || 0,
+				sectoresAsignaciones: resumen.sectoresAsignaciones,
+				vinculos: resumen.vinculos,
+			});
 			await refreshList();
 		} catch (e) {
-			setSyncMsg(e instanceof Error ? e.message : 'Error al sincronizar');
+			setSyncResult({
+				ok: false,
+				personal: 0,
+				error: e instanceof Error ? e.message : 'Error al sincronizar',
+			});
 		} finally {
 			setSyncing(false);
 		}
@@ -200,15 +210,6 @@ export default function PersonalPage() {
 					</div>
 				</div>
 
-				{syncMsg && (
-					<div className={styles.syncBanner} role='status'>
-						{syncMsg}
-						<button type='button' onClick={() => setSyncMsg(null)} aria-label='Cerrar'>
-							×
-						</button>
-					</div>
-				)}
-
 				<PersonalList
 					personalList={personalList}
 					loading={loading}
@@ -221,6 +222,56 @@ export default function PersonalPage() {
 					onView={openViewModal}
 					onOpenExtra={(p, kind) => setExtraModal({ personal: p, kind })}
 				/>
+
+				<Modal
+					isOpen={!!syncResult}
+					onClose={() => setSyncResult(null)}
+					title={
+						syncResult?.ok
+							? 'Actualización desde base física'
+							: 'Error al actualizar'
+					}
+					size='small'
+				>
+					<div className={styles.syncResultBody}>
+						{syncResult?.ok ? (
+							<>
+								<p className={styles.syncResultLead}>
+									La nube se actualizó correctamente.
+								</p>
+								<ul className={styles.syncResultList}>
+									<li>
+										<strong>{syncResult.personal}</strong> registros de personal
+										actualizados
+									</li>
+									{syncResult.sectoresAsignaciones != null && (
+										<li>
+											<strong>{syncResult.sectoresAsignaciones}</strong>{' '}
+											asignaciones de sectores
+										</li>
+									)}
+									{syncResult.vinculos != null && (
+										<li>
+											<strong>{syncResult.vinculos}</strong> vínculos
+											usuario-empresa
+										</li>
+									)}
+								</ul>
+							</>
+						) : (
+							<p className={styles.syncResultError}>
+								{syncResult?.error || 'No se pudo completar la actualización.'}
+							</p>
+						)}
+						<button
+							type='button'
+							className={styles.syncResultOk}
+							onClick={() => setSyncResult(null)}
+						>
+							Aceptar
+						</button>
+					</div>
+				</Modal>
 
 				<PersonalExportModal
 					open={exportOpen}
