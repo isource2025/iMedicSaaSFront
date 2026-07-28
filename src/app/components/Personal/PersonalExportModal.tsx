@@ -43,7 +43,7 @@ export default function PersonalExportModal({
 
 	const handleConfirm = async () => {
 		if (!selected.size || loading) return;
-		await onConfirm([...selected]);
+		await onConfirm(Array.from(selected));
 	};
 
 	return (
