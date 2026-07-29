@@ -20,7 +20,8 @@ const COLORS: Record<string, string> = {
   pam: "#41C8DC",          // Pantone 311C
   frecResp: "#FFB347",     // Naranja suave
   axilar: "#FF6F61",       // Rojo suave
-  saturometria: "#7ED957"  // Verde suave
+  saturometria: "#7ED957", // Verde suave
+  glucemia: "#9B59B6"      // Violeta
 };
 
 const LABELS: Record<string, string> = {
@@ -30,7 +31,8 @@ const LABELS: Record<string, string> = {
   pam: "PAMedia",
   frecResp: "Frec. Resp.",
   axilar: "Temp. Axilar",
-  saturometria: "Saturometría"
+  saturometria: "Saturometría",
+  glucemia: "Glucemia"
 };
 
 const PARAM_MAP: Record<string, keyof ControlFrecuente> = {
@@ -40,7 +42,8 @@ const PARAM_MAP: Record<string, keyof ControlFrecuente> = {
   pam: "PAMedia",
   frecResp: "FrecuenciaRespiratoria",
   axilar: "Axilar",
-  saturometria: "Saturometria"
+  saturometria: "Saturometria",
+  glucemia: "HGT"
 };
 
 const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartProps) => {
@@ -51,8 +54,15 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
     // HoraControl ya viene en formato HH:MM:SS del backend, solo extraer HH:MM
     const hora = ctrl.HoraControl ? ctrl.HoraControl.substring(0, 5) : '-';
     
-    // Obtener el valor del parámetro seleccionado
-    const valor = ctrl[PARAM_MAP[parametro]];
+    // Obtener el valor del parámetro seleccionado (Hgt/HGT para glucemia)
+    let valor: number | string | null | undefined =
+      parametro === 'glucemia'
+        ? (ctrl.HGT ?? ctrl.Hgt)
+        : ctrl[PARAM_MAP[parametro]];
+    if (typeof valor === 'string') {
+      const n = Number(String(valor).replace(',', '.'));
+      valor = Number.isFinite(n) ? n : null;
+    }
     
     // Solo incluir valores que no sean 0, nulos o undefined
     return {
@@ -123,7 +133,8 @@ export const CHART_PARAMS = [
   { value: "pam", label: "PAMedia" },
   { value: "frecResp", label: "Frec. Resp." },
   { value: "axilar", label: "Temp. Axilar" },
-  { value: "saturometria", label: "Saturometría" }
+  { value: "saturometria", label: "Saturometría" },
+  { value: "glucemia", label: "Glucemia" }
 ];
 
 export default ControlesFrecuentesChart;

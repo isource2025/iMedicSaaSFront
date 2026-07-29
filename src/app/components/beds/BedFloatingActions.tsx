@@ -23,7 +23,9 @@ export default function BedFloatingActions({
   const showAdjuntos = puede('INTERNACION.ADJUNTOS.VER') || puede('INTERNACION.ADJUNTOS.CREAR');
   const showLabs = puede('INTERNACION.ESTUDIOS.VER') || puede('INTERNACION.ESTUDIOS.CREAR');
   const showNursing =
+    puede('INTERNACION.EVOLUCION_ENFERMERIA.VER') ||
     puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') ||
+    puede('INTERNACION.SIGNOS_VITALES.VER') ||
     puede('INTERNACION.SIGNOS_VITALES.CREAR');
 
   if (!showAdjuntos && !showLabs && !showNursing) {

@@ -17,6 +17,8 @@ export interface ControlFrecuente {
   Rectal?: number;
   Saturometria?: number;
   HGT?: number;
+  /** Alias que devuelve el API (`cf.Hgt`). */
+  Hgt?: number;
   Observaciones?: string;
   Profesional?: string;
 }
@@ -47,4 +49,5 @@ export type ParametroControl =
   | 'pam'
   | 'frecResp'
   | 'axilar'
-  | 'saturometria';
+  | 'saturometria'
+  | 'glucemia';
