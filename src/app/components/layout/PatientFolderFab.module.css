@@ -1,7 +1,7 @@
 .wrap {
   position: fixed;
-  right: 24px;
-  bottom: 92px;
+  right: 20px;
+  bottom: 72px;
   z-index: 900;
   font-family: inherit;
   display: flex;
@@ -19,21 +19,21 @@
 
 @media (max-width: 768px) {
   .wrap:not(.wrapInStack) {
-    right: 16px;
-    bottom: 84px;
+    right: 14px;
+    bottom: 64px;
   }
 }
 
 .fab {
-  width: 56px;
-  height: 56px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   color: #fff;
   background: linear-gradient(145deg, #00b5e2 0%, #0083a9 100%);

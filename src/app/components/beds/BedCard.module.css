@@ -543,15 +543,16 @@
 
 .date, .time {
   display: flex;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: #4a5568;
 }
 
 .dateLabel {
-  font-size: 0.6rem;
-  color: #718096;
+  font-size: 0.78rem;
+  color: #64748b;
   margin: 0;
   padding: 0;
+  font-weight: 500;
 }
 
 .timeValue {
@@ -569,13 +570,14 @@
   display: flex;
   align-items: self-start;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 0.8rem;
 }
 
 .dateLabel {
-  font-size: 0.65rem;
-  color: #718096;
+  font-size: 0.78rem;
+  color: #64748b;
   margin-bottom: 0.15rem;
+  font-weight: 500;
 }
 
 .documentNumber {
@@ -622,11 +624,11 @@
   }
   
   .date {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
   
   .dateLabel {
-    font-size: 0.6rem;
+    font-size: 0.75rem;
   }
   
   .iconsContainer {

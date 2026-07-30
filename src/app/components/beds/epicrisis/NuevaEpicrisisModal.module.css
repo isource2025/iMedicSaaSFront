@@ -1,0 +1,245 @@
+/* Formulario epicrisis — layout propio para no romper evoluciones */
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 20px 24px;
+	background: #fff;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.formGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	width: 100%;
+}
+
+.formGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.formGroupFull {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+	width: 100%;
+}
+
+.label {
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.required {
+	color: #ef4444;
+}
+
+.input,
+.textarea {
+	width: 100%;
+	box-sizing: border-box;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	padding: 10px 12px;
+	font-size: 14px;
+	color: #111827;
+	background: #fff;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus {
+	outline: none;
+	border-color: #00b5e2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+	color: #9ca3af;
+}
+
+.textarea {
+	resize: vertical;
+	min-height: 280px;
+	font-family: ui-monospace, Consolas, monospace;
+	line-height: 1.55;
+	white-space: pre-wrap;
+	padding-top: 40px;
+	padding-right: 72px;
+}
+
+.charCount {
+	font-size: 12px;
+	color: #6b7280;
+	text-align: right;
+	margin-top: -2px;
+}
+
+/* Contenedor del textarea + botón IA */
+.epicrisisWrap {
+	position: relative;
+	width: 100%;
+	display: block;
+}
+
+.iaBtn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: 6px 11px;
+	border-radius: 999px;
+	border: 1px solid rgba(8, 145, 178, 0.35);
+	background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+	color: #0e7490;
+	font-weight: 700;
+	font-size: 0.75rem;
+	letter-spacing: 0.04em;
+	cursor: pointer;
+	box-shadow: 0 1px 4px rgba(14, 116, 144, 0.15);
+	transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.iaBtn:hover:not(:disabled) {
+	background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+}
+
+.iaBtn:disabled {
+	opacity: 0.75;
+	cursor: wait;
+}
+
+.iaBtnLoading {
+	background: #e2e8f0;
+	border-color: #cbd5e1;
+	color: #475569;
+}
+
+.spinner {
+	width: 14px;
+	height: 14px;
+	border: 2px solid rgba(14, 116, 144, 0.25);
+	border-top-color: #0e7490;
+	border-radius: 50%;
+	animation: epicrisisSpin 0.7s linear infinite;
+	flex-shrink: 0;
+}
+
+@keyframes epicrisisSpin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.diagInputWrap {
+	position: relative;
+	width: 100%;
+}
+
+.diagHint {
+	margin: 6px 0 0;
+	font-size: 0.85rem;
+	color: #334155;
+}
+
+.diagChange {
+	margin-left: 10px;
+	border: none;
+	background: transparent;
+	color: #0891b2;
+	cursor: pointer;
+	font-size: 0.8rem;
+	text-decoration: underline;
+}
+
+.diagResults {
+	margin-top: 4px;
+	max-height: 180px;
+	overflow-y: auto;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.diagResultBtn {
+	display: flex;
+	gap: 10px;
+	width: 100%;
+	text-align: left;
+	padding: 8px 12px;
+	border: none;
+	border-bottom: 1px solid #f1f5f9;
+	background: transparent;
+	cursor: pointer;
+	font-size: 0.85rem;
+}
+
+.diagResultBtn:hover {
+	background: #f8fafc;
+}
+
+.diagCode {
+	font-weight: 700;
+	color: #0e7490;
+	min-width: 56px;
+	flex-shrink: 0;
+}
+
+.diagDesc {
+	color: #475569;
+}
+
+.diagEmpty {
+	margin: 6px 0 0;
+	font-size: 0.8rem;
+	color: #94a3b8;
+}
+
+.alertIa {
+	margin-bottom: 4px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	border: 1px solid #f59e0b;
+	background: #fffbeb;
+	color: #92400e;
+	font-size: 0.85rem;
+	line-height: 1.45;
+}
+
+.notice {
+	margin-bottom: 4px;
+	padding: 8px 10px;
+	border-radius: 6px;
+	background: #ecfeff;
+	color: #0e7490;
+	font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+	.formGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.form {
+		padding: 16px;
+	}
+}

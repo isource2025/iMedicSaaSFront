@@ -268,13 +268,17 @@
   display: flex;
   flex-direction: column;
   gap: 4px;        /* reducido: el acordeón ya aporta separación visual */
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;   /* permite que overflow-y funcione dentro del flex */
   justify-content: flex-start;
   align-items: center;
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: calc(100vh - 300px);
   padding-top: 0;
+  padding-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  overscroll-behavior: contain;
 }
 
 .sidebar.expanded .nav {
@@ -402,7 +406,7 @@
    ============================================= */
 
 .menuLabel {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
   opacity: 0;

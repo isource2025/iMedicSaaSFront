@@ -1,10 +1,10 @@
 .container {
   min-height: 100vh;
   background-color: #f8f9fa;
-  padding: 20px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.1rem;
 }
 
 .titleContainer {
@@ -20,8 +20,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 32px;
-  gap: 24px;
+  padding: 16px 22px;
+  gap: 16px;
 }
 
 .titleLeft {

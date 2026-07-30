@@ -15,7 +15,7 @@ import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioMo
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
 import styles from './bandejaPedidos.module.css';
 
-const POLL_MS = 3000;
+const POLL_MS = 30_000;
 
 type Tab = 'estudios' | 'interconsultas';
 

@@ -29,6 +29,10 @@ export interface NursingReportModalProps {
   onClose: () => void;
   numeroVisita: number;
   nombrePaciente: string;
+  /** Snapshot de header desde la card/detalle (evita re-fetch) */
+  header?: import('../../utils/bedHeader').PatientHeaderSnapshot | null;
+  /** Sector de la cama — evita GET /beds solo para IdSector */
+  bedSector?: string;
 }
 
 /**

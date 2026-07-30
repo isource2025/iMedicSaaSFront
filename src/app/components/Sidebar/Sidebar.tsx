@@ -369,7 +369,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
           className={styles.collapseBtn}
           onClick={() => onExpandedChange(false)}
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={16} />
         </button>
       </div>
 
@@ -404,7 +404,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
                 aria-expanded={item.subItems.length > 0 ? openMenuId === item.id : undefined}
               >
                 <span className={styles.menuIconWrap}>
-                  <item.icon className={styles.menuIcon} size={22} strokeWidth={1.5} />
+                  <item.icon className={styles.menuIcon} size={18} strokeWidth={1.5} />
                   {item.id === 'turnos' && chatsUnread > 0 ? (
                     <span className={styles.menuBadge} aria-label={`${chatsUnread} mensajes sin leer`}>
                       {chatsUnread > 99 ? '99+' : chatsUnread}

@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { bedsService } from '../services/bedsService';
 import { Bed, BedState, BedTipoRecurso } from '../types/beds';
 import { useAppContext } from '../contexts/AppContext';
+import {
+	bedsListSignature,
+	getCachedBedMeta,
+	getCachedBedsList,
+	setCachedBedMeta,
+	setCachedBedsList,
+} from '../utils/bedsListCache';
 
 const ORDEN_TIPO_RECURSO: Record<BedTipoRecurso, number> = {
 	cama: 0,
@@ -11,186 +18,215 @@ const ORDEN_TIPO_RECURSO: Record<BedTipoRecurso, number> = {
 	insumos: 2,
 };
 
-export const useBedsManagement = () => {
-  const { sectorSeleccionado, idsector, isAuthenticated } = useAppContext();
-  const [beds, setBeds] = useState<Bed[]>([]);
-  const [bedStates, setBedStates] = useState<BedState[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string>('all');
-  const [sectorFilter, setSectorFilter] = useState<string>('all');
-  const [servicioFilter, setServicioFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [tipoRecursoFilter, setTipoRecursoFilter] = useState<'all' | BedTipoRecurso>('all');
-  const [sectors, setSectors] = useState<{id: string, valor: string, descripcion: string}[]>([]);
-  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
-  const [refreshInterval, setRefreshInterval] = useState<number>(30000); // 30 segundos por defecto
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const lastUpdateTimeRef = useRef<number>(Date.now());
+export type UseBedsManagementOptions = {
+	/**
+	 * Polling periódico de GET /beds.
+	 * Default false: la UI ya no expone auto-refresh; se actualiza al entrar / manual.
+	 */
+	enableAutoRefresh?: boolean;
+	/** Intervalo si enableAutoRefresh (default 60s). */
+	refreshIntervalMs?: number;
+};
 
-  // Definir fetchSectores antes de usarlo
-  const fetchSectores = useCallback(async () => {
-    try {
-      const sectoresData = await bedsService.getSectores();
-      setSectors(sectoresData);
-    } catch (err: any) {
-      console.error('Error al cargar sectores:', err);
-    }
-  }, []);
+export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
+	const {
+		enableAutoRefresh: enableAutoRefreshOpt = false,
+		refreshIntervalMs = 60_000,
+	} = options;
 
-  const fetchBedStates = useCallback(async () => {
-    try {
-      const states = await bedsService.getBedStates();
-      setBedStates(states);
-    } catch (err: any) {
-      console.error('Error al cargar estados de cama:', err);
-    }
-  }, []);
+	const { sectorSeleccionado, idsector, isAuthenticated } = useAppContext();
 
-  // Cargar sectores al iniciar (solo autenticado)
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    fetchSectores();
-  }, [fetchSectores, isAuthenticated]);
+	const cachedBeds = typeof window !== 'undefined' ? getCachedBedsList() : null;
+	const cachedMeta = typeof window !== 'undefined' ? getCachedBedMeta() : null;
 
-  // Cargar el sector del usuario desde el contexto global
-  useEffect(() => {
-    if (sectors.length === 0) return; // Esperar a que los sectores estén cargados
-    
-    // Función para verificar si un sector existe en la lista de sectores
-    const sectorExiste = (sectorId: string) => sectors.some(s => s.valor === sectorId);
-    
-    // Usar el idsector del contexto si está disponible Y existe
-    if (idsector && sectorExiste(idsector)) {
-      console.log('Estableciendo sector inicial desde contexto:', idsector);
-      setSectorFilter(idsector);
-    } 
-    // Alternativamente, usar el sectorSeleccionado si está disponible Y existe
-    else if (sectorSeleccionado && sectorSeleccionado.idSector && sectorExiste(sectorSeleccionado.idSector)) {
-      console.log('Estableciendo sector inicial desde sectorSeleccionado:', sectorSeleccionado.idSector);
-      setSectorFilter(sectorSeleccionado.idSector);
-    } else {
-      // Si el sector no existe o no hay sector asignado, mostrar todas las camas
-      console.log('El sector del usuario no existe en la lista de sectores o no tiene sector asignado, mostrando todas las camas');
-      setSectorFilter('all');
-    }
-  }, [sectors, sectorSeleccionado, idsector]);
+	const [beds, setBeds] = useState<Bed[]>(() => cachedBeds || []);
+	const [bedStates, setBedStates] = useState<BedState[]>(
+		() => (cachedMeta?.states as BedState[]) || [],
+	);
+	const [loading, setLoading] = useState(() => !cachedBeds);
+	const [error, setError] = useState<string | null>(null);
+	const [filter, setFilter] = useState<string>('all');
+	const [sectorFilter, setSectorFilter] = useState<string>('all');
+	const [servicioFilter, setServicioFilter] = useState<string>('all');
+	const [searchTerm, setSearchTerm] = useState('');
+	const [tipoRecursoFilter, setTipoRecursoFilter] = useState<'all' | BedTipoRecurso>('all');
+	const [sectors, setSectors] = useState<{ id: string; valor: string; descripcion: string }[]>(
+		() => cachedMeta?.sectores || [],
+	);
+	const [autoRefresh, setAutoRefresh] = useState<boolean>(enableAutoRefreshOpt);
+	const [refreshInterval, setRefreshInterval] = useState<number>(refreshIntervalMs);
+	const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const signatureRef = useRef<string>(cachedBeds ? bedsListSignature(cachedBeds) : '');
+	const inFlightRef = useRef(false);
 
-  const fetchBeds = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await bedsService.getAllBeds();
-      setBeds(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar camas');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+	const fetchSectores = useCallback(async () => {
+		try {
+			const sectoresData = await bedsService.getSectores();
+			setSectors(sectoresData);
+			setCachedBedMeta({ sectores: sectoresData });
+		} catch (err) {
+			console.error('Error al cargar sectores:', err);
+		}
+	}, []);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
-    fetchBeds();
-    fetchBedStates();
-    fetchSectores();
-  }, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated]);
+	const fetchBedStates = useCallback(async () => {
+		try {
+			const states = await bedsService.getBedStates();
+			setBedStates(states);
+			setCachedBedMeta({ states });
+		} catch (err) {
+			console.error('Error al cargar estados de cama:', err);
+		}
+	}, []);
 
-  useEffect(() => {
-    if (autoRefresh) {
-      pollingIntervalRef.current = setInterval(fetchBeds, refreshInterval);
-      lastUpdateTimeRef.current = Date.now();
-    } else if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, [autoRefresh, refreshInterval, fetchBeds]);
+	const fetchBeds = useCallback(async (opts?: { silent?: boolean }) => {
+		const silent = opts?.silent === true;
+		if (inFlightRef.current) return;
+		inFlightRef.current = true;
+		if (!silent) setLoading(true);
+		setError(null);
+		try {
+			const data = await bedsService.getAllBeds();
+			const nextSig = bedsListSignature(data);
+			if (nextSig !== signatureRef.current) {
+				signatureRef.current = nextSig;
+				setBeds(data);
+			}
+			setCachedBedsList(data);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Error al cargar camas';
+			setError(message);
+		} finally {
+			inFlightRef.current = false;
+			if (!silent) setLoading(false);
+		}
+	}, []);
 
-  // Obtener la lista de servicios médicos únicos
-  const serviciosMedicos = useMemo(() => {
-    const servicios = beds
-      .map(bed => bed.servicioMedicoDescripcion)
-      .filter(servicio => servicio && servicio.trim() !== '') // Filtrar valores vacíos
-      .filter((servicio, index, self) => self.indexOf(servicio) === index) // Eliminar duplicados
-      .sort(); // Ordenar alfabéticamente
-    
-    return servicios;
-  }, [beds]);
+	// Carga inicial (meta + camas). Si hay cache, revalida en silencio.
+	useEffect(() => {
+		if (!isAuthenticated) {
+			setLoading(false);
+			return;
+		}
+		const hasCache = Boolean(getCachedBedsList());
+		void fetchBeds({ silent: hasCache });
+		if (!getCachedBedMeta()?.states?.length) void fetchBedStates();
+		if (!getCachedBedMeta()?.sectores?.length) void fetchSectores();
+	}, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated]);
 
-  const filteredBeds = useMemo(() => {
-    return beds
-      .filter((bed) => {
-        const estadoMatch =
-          filter === 'all' || bed.valorEstadoOriginal === filter;
+	// Sector inicial del usuario
+	useEffect(() => {
+		if (sectors.length === 0) return;
+		const sectorExiste = (sectorId: string) => sectors.some((s) => s.valor === sectorId);
 
-        const sectorMatch =
-          sectorFilter === 'all' || bed.sector === sectorFilter;
+		if (idsector && sectorExiste(idsector)) {
+			setSectorFilter(idsector);
+		} else if (
+			sectorSeleccionado?.idSector &&
+			sectorExiste(sectorSeleccionado.idSector)
+		) {
+			setSectorFilter(sectorSeleccionado.idSector);
+		} else {
+			setSectorFilter('all');
+		}
+	}, [sectors, sectorSeleccionado, idsector]);
 
-        const servicioMatch =
-          servicioFilter === 'all' ||
-          bed.servicioMedicoDescripcion === servicioFilter;
+	// Polling opcional: solo con pestaña visible
+	useEffect(() => {
+		const clear = () => {
+			if (pollingIntervalRef.current) {
+				clearInterval(pollingIntervalRef.current);
+				pollingIntervalRef.current = null;
+			}
+		};
 
-        const searchMatch =
-          !searchTerm ||
-          (bed.NombrePaciente &&
-            bed.NombrePaciente.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (bed.documentoPaciente &&
-            bed.documentoPaciente.toString().includes(searchTerm)) ||
-          (bed.numeroVisita &&
-            bed.numeroVisita.toString().includes(searchTerm)) ||
-          (bed.mostrarNumeroVisita &&
-            bed.mostrarNumeroVisita.toString().includes(searchTerm));
+		const start = () => {
+			clear();
+			if (!autoRefresh || !isAuthenticated) return;
+			if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+				return;
+			}
+			pollingIntervalRef.current = setInterval(() => {
+				void fetchBeds({ silent: true });
+			}, refreshInterval);
+		};
 
-        const tipoMatch =
-          tipoRecursoFilter === 'all' ||
-          bed.tipoRecurso === tipoRecursoFilter;
+		start();
 
-        return estadoMatch && sectorMatch && servicioMatch && searchMatch && tipoMatch;
-      })
-      .sort(
-        (a, b) =>
-          (ORDEN_TIPO_RECURSO[a.tipoRecurso] ?? 9) -
-          (ORDEN_TIPO_RECURSO[b.tipoRecurso] ?? 9),
-      );
-  }, [
-    beds,
-    filter,
-    sectorFilter,
-    servicioFilter,
-    searchTerm,
-    tipoRecursoFilter,
-  ]);
+		const onVisibility = () => {
+			if (document.visibilityState === 'hidden') {
+				clear();
+			} else if (autoRefresh) {
+				void fetchBeds({ silent: true });
+				start();
+			}
+		};
 
-  return {
-    beds: filteredBeds,
-    allBeds: beds,
-    bedStates,
-    sectors,
-    serviciosMedicos,
-    loading,
-    error,
-    filter,
-    setFilter,
-    sectorFilter,
-    setSectorFilter,
-    servicioFilter,
-    setServicioFilter,
-    searchTerm,
-    setSearchTerm,
-    tipoRecursoFilter,
-    setTipoRecursoFilter,
-    refreshBeds: fetchBeds,
-    autoRefresh,
-    setAutoRefresh,
-    refreshInterval,
-    setRefreshInterval,
-  };
+		document.addEventListener('visibilitychange', onVisibility);
+		return () => {
+			clear();
+			document.removeEventListener('visibilitychange', onVisibility);
+		};
+	}, [autoRefresh, refreshInterval, fetchBeds, isAuthenticated]);
+
+	const serviciosMedicos = useMemo(() => {
+		return beds
+			.map((bed) => bed.servicioMedicoDescripcion)
+			.filter((servicio): servicio is string => Boolean(servicio && servicio.trim()))
+			.filter((servicio, index, self) => self.indexOf(servicio) === index)
+			.sort();
+	}, [beds]);
+
+	const filteredBeds = useMemo(() => {
+		return beds
+			.filter((bed) => {
+				const estadoMatch = filter === 'all' || bed.valorEstadoOriginal === filter;
+				const sectorMatch = sectorFilter === 'all' || bed.sector === sectorFilter;
+				const servicioMatch =
+					servicioFilter === 'all' ||
+					bed.servicioMedicoDescripcion === servicioFilter;
+				const searchMatch =
+					!searchTerm ||
+					(bed.NombrePaciente &&
+						bed.NombrePaciente.toLowerCase().includes(searchTerm.toLowerCase())) ||
+					(bed.documentoPaciente &&
+						bed.documentoPaciente.toString().includes(searchTerm)) ||
+					(bed.numeroVisita && bed.numeroVisita.toString().includes(searchTerm)) ||
+					(bed.mostrarNumeroVisita &&
+						bed.mostrarNumeroVisita.toString().includes(searchTerm));
+				const tipoMatch =
+					tipoRecursoFilter === 'all' || bed.tipoRecurso === tipoRecursoFilter;
+				return estadoMatch && sectorMatch && servicioMatch && searchMatch && tipoMatch;
+			})
+			.sort(
+				(a, b) =>
+					(ORDEN_TIPO_RECURSO[a.tipoRecurso] ?? 9) -
+					(ORDEN_TIPO_RECURSO[b.tipoRecurso] ?? 9),
+			);
+	}, [beds, filter, sectorFilter, servicioFilter, searchTerm, tipoRecursoFilter]);
+
+	return {
+		beds: filteredBeds,
+		allBeds: beds,
+		bedStates,
+		sectors,
+		serviciosMedicos,
+		loading,
+		error,
+		filter,
+		setFilter,
+		sectorFilter,
+		setSectorFilter,
+		servicioFilter,
+		setServicioFilter,
+		searchTerm,
+		setSearchTerm,
+		tipoRecursoFilter,
+		setTipoRecursoFilter,
+		refreshBeds: () => fetchBeds({ silent: false }),
+		autoRefresh,
+		setAutoRefresh,
+		refreshInterval,
+		setRefreshInterval,
+	};
 };

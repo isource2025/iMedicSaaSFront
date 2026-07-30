@@ -1,5 +1,6 @@
 'use client';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import type { Bed } from '../../../types/beds';
 
 export type SidebarSection =
 	| 'hcIngreso'
@@ -22,54 +23,58 @@ export type SidebarSection =
 	| 'adjuntos'
 	| 'laboratorios';
 
-interface BedDetailContextType {
-	// Estado de los desplegables
+export interface BedDetailContextType {
+	/** Cama/paciente actual — fuente de verdad para headers/modales */
+	bed: Bed | null;
+	setBed: (bed: Bed | null) => void;
+
 	openSections: { [key: string]: boolean };
 	setOpenSections: (sections: { [key: string]: boolean }) => void;
 
-	// Sección activa
 	activeSection: SidebarSection;
 	setActiveSection: (section: SidebarSection) => void;
 
-	// Fecha seleccionada
 	selectedDate: Date | null;
 	setSelectedDate: (date: Date | null) => void;
 
-	// Función para cambiar sección (maneja navegación)
 	navigateToSection: (section: SidebarSection) => void;
-
-	// Función para toggle de desplegables (uno abierto a la vez) y manejo de panel fijo "otras"
 	toggleSection: (sectionName: string, isCurrentlyOpen: boolean) => void;
 
-	/** Resumen de adjuntos para destacar el ítem del menú (no equivale a push como en otros sistemas) */
 	adjuntosTotalCount: number;
 	adjuntosRecientesCount: number;
 	setAdjuntosSidebarInfo: (total: number, recientes: number) => void;
 }
 
-const BedDetailContext = createContext<BedDetailContextType | undefined>(undefined);
+export const BedDetailContext = createContext<BedDetailContextType | undefined>(undefined);
 
 interface BedDetailProviderProps {
 	children: ReactNode;
 	initialSection?: SidebarSection;
 	initialDate?: Date | null;
+	initialBed?: Bed | null;
 }
 
 export function BedDetailProvider({
 	children,
 	initialSection = 'hcIngreso',
 	initialDate = new Date(),
+	initialBed = null,
 }: BedDetailProviderProps) {
+	const [bed, setBed] = useState<Bed | null>(initialBed);
 	const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({
-		medica: true, // Gestión médica abierta por defecto
+		medica: true,
 		enfermeria: false,
-		otras: true, // Panel "Otras Funciones" siempre visible (no es desplegable)
+		otras: true,
 	});
 
 	const [activeSection, setActiveSection] = useState<SidebarSection>(initialSection);
 	const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
 	const [adjuntosTotalCount, setAdjuntosTotalCount] = useState(0);
 	const [adjuntosRecientesCount, setAdjuntosRecientesCount] = useState(0);
+
+	useEffect(() => {
+		if (initialBed) setBed(initialBed);
+	}, [initialBed]);
 
 	const setAdjuntosSidebarInfo = (total: number, recientes: number) => {
 		setAdjuntosTotalCount(total);
@@ -78,42 +83,25 @@ export function BedDetailProvider({
 
 	const navigateToSection = (section: SidebarSection) => {
 		setActiveSection(section);
-		// Aquí se puede agregar lógica de navegación/routing si es necesario
-		console.log('Navegando a sección:', section);
 	};
 
 	const toggleSection = (sectionName: string, isCurrentlyOpen: boolean) => {
-		// El panel "Otras Funciones" es fijo y siempre visible, no permite toggle
-		if (sectionName === 'otras') {
-			return;
-		}
-		//cerrar todo primero luego abrir la sección seleccionada, si se hace click en la sección que ya está abierta no se hace nada y se deja abierta
+		if (sectionName === 'otras') return;
 
 		setOpenSections((prev) => {
+			if (isCurrentlyOpen) return prev;
 			const newState = { ...prev };
-
-			// Si se hace click en una sección que ya está abierta, no hacer nada
-			// (excepto "otras" que ya fue manejada arriba)
-			if (isCurrentlyOpen) {
-				return prev;
-			}
-
-			// Si se hace click en una sección cerrada:
-			// 1. Cerrar TODAS las secciones desplegables (manteniendo "otras" siempre abierta)
 			Object.keys(newState).forEach((key) => {
-				if (key !== 'otras') {
-					newState[key] = false;
-				}
+				if (key !== 'otras') newState[key] = false;
 			});
-
-			// 2. Abrir solo la sección clickeada
 			newState[sectionName] = true;
-
 			return newState;
 		});
 	};
 
 	const value: BedDetailContextType = {
+		bed,
+		setBed,
 		openSections,
 		setOpenSections,
 		activeSection,

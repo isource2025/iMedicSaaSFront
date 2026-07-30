@@ -73,6 +73,16 @@ body {
 	font-size: 16px;
 }
 
+/*
+ * Densidad desktop: solo tipografía / paddings en rem (sin zoom, sin tocar grids).
+ * Mobile (≤768) queda al 100%.
+ */
+@media (min-width: 769px) {
+	html {
+		font-size: 13px;
+	}
+}
+
 /* Asegurarse de que el #__next o app root tenga altura completa para posicionar correctamente los elementos */
 #__next,
 main,

@@ -15,7 +15,7 @@
 .main {
   flex: 1;
   margin-left: 72px;
-  padding: var(--space-6, 1.5rem) var(--space-8, 2rem);
+  padding: 1.15rem 1.5rem;
   background: var(--background, #F8FAFC);
   min-height: 100vh;
   transition: transform 300ms ease-out, filter 300ms ease-out;

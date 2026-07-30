@@ -24,7 +24,13 @@ const formatTime = (timeString: string) => {
   return timeString.includes(':') ? timeString.substring(0, 5) : timeString;
 };
 
-export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, onClose, numeroVisita }) => {
+export const NursingReportModal: React.FC<NursingReportModalProps> = ({
+  isOpen,
+  onClose,
+  numeroVisita,
+  header,
+  bedSector,
+}) => {
   const [loading, setLoading] = useState(true);
   const [controls, setControls] = useState<ControlFrecuente[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -32,27 +38,37 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
   const [activeTab, setActiveTab] = useState<'tabla' | 'grafico'>('tabla');
   const [parametro, setParametro] = useState('pulso');
   const [saving, setSaving] = useState(false);
-  const [idSector, setIdSector] = useState<string | null>(null);
+  const [idSector, setIdSector] = useState<string | null>(bedSector || null);
   const [periodFilter, setPeriodFilter] = useState<'0' | '7' | '30' | 'all'>('all');
+
+  useEffect(() => {
+    if (bedSector) setIdSector(bedSector);
+  }, [bedSector]);
 
   const fetchControlData = useCallback(async () => {
     if (!isOpen || !numeroVisita) return;
     try {
       setLoading(true);
       setError(null);
-      
-      // Obtener IdSector de los datos de la cama
-      const bedsResponse = await apiFetch('/beds');
-      if (bedsResponse.ok) {
-        const bedsData = await bedsResponse.json();
-        if (bedsData.success) {
-          const cama = bedsData.data.find((c: any) => String(c.NumeroVisita) === String(numeroVisita));
-          if (cama && cama.IdSector) {
-            setIdSector(String(cama.IdSector));
+
+      if (!bedSector) {
+        const bedsResponse = await apiFetch('/beds');
+        if (bedsResponse.ok) {
+          const bedsData = await bedsResponse.json();
+          if (bedsData.success) {
+            const cama = bedsData.data.find(
+              (c: { NumeroVisita?: number | string; IdSector?: string }) =>
+                String(c.NumeroVisita) === String(numeroVisita),
+            );
+            if (cama?.IdSector) {
+              setIdSector(String(cama.IdSector));
+            }
           }
         }
+      } else {
+        setIdSector(bedSector);
       }
-      
+
       const daysParam = periodFilter === 'all' ? '' : `?days=${periodFilter}`;
       const response = await apiFetch(`/beds/controles-frecuentes/${numeroVisita}${daysParam}`);
       if (!response.ok) throw new Error('Error al obtener los controles frecuentes');
@@ -71,7 +87,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
     } finally {
       setLoading(false);
     }
-  }, [isOpen, numeroVisita, periodFilter]);
+  }, [isOpen, numeroVisita, periodFilter, bedSector]);
 
   useEffect(() => {
     fetchControlData();
@@ -112,6 +128,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({ isOpen, 
         onClose={onClose}
         titulo="Reporte de Enfermería"
         numeroVisita={String(numeroVisita)}
+        header={header}
         footerButtons={
           <button className={styles.newIndicationButton} onClick={handleNewIndication}>
             Nueva Indicación

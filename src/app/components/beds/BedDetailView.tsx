@@ -23,9 +23,11 @@ import LabResultsSection from './laboratorios/LabResultsSection';
 import EstudiosSection from './estudios/EstudiosSection';
 import ProtocolosSection from './protocolos/ProtocolosSection';
 import InterconsultaSection from './interconsulta/InterconsultaSection';
+import EpicrisisSection from './epicrisis/EpicrisisSection';
 import BedFloatingActions from './BedFloatingActions';
 import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
+import { bedToHeaderSnapshot } from '../../utils/bedHeader';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -41,13 +43,16 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 
 	// Usar el context para filtros y navegación
 	const { activeSection, selectedDate, setSelectedDate, navigateToSection } = useBedDetail();
+	const headerSnapshot = bedToHeaderSnapshot(bed);
+	const numeroVisita = bed?.NumeroVisita ?? bed?.numeroVisita ?? '';
 
 	return (
 		<div className={styles.root}>
 			{/* ====== HEADER (arriba de todo) ====== */}
 			<header className={styles.header}>
 				<PatientMiniHeader
-					numeroVisita={bed?.NumeroVisita ?? bed?.numeroVisita ?? ''}
+					numeroVisita={numeroVisita}
+					header={headerSnapshot}
 					burgerButton={
 						<button
 							className={styles.burger}
@@ -189,24 +194,12 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							sector={bed?.sector || null}
 						/>
 					) : activeSection === 'epicrisis' ? (
-						<div className={styles.placeholderCard}>
-							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-								<div style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-									📄
-								</div>
-								<h3 style={{ margin: '0 0 0.5rem 0', color: '#0083A9' }}>
-									Epicrisis
-								</h3>
-								<p style={{ color: '#666', margin: '0' }}>
-									Resumen médico del episodio de hospitalización.
-									<br />
-									<strong>Paciente:</strong> {bed.NombrePaciente}
-									<br />
-									<strong>Fecha de ingreso:</strong>{' '}
-									{bed.fechaIngresoFormateada || 'No disponible'}
-								</p>
-							</div>
-						</div>
+						<EpicrisisSection
+							numeroVisita={bed?.NumeroVisita || null}
+							patientName={bed?.NombrePaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							bedSector={bed?.sector || undefined}
+						/>
 					) : activeSection === 'procedimientos' ? (
 						<div className={styles.placeholderCard}>
 							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
@@ -284,22 +277,25 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 				/>
 			)}
 
-			{bed?.NumeroVisita && (
+			{bed?.NumeroVisita || bed?.numeroVisita ? (
 				<NursingReportModal
 					isOpen={showNursingModal}
 					onClose={() => setShowNursingModal(false)}
-					numeroVisita={bed.NumeroVisita}
+					numeroVisita={Number(bed.NumeroVisita || bed.numeroVisita)}
 					nombrePaciente={bed.NombrePaciente || 'Paciente'}
+					header={headerSnapshot}
+					bedSector={bed.sector}
 				/>
-			)}
+			) : null}
 
-			{bed?.NumeroVisita && (
+			{bed?.NumeroVisita || bed?.numeroVisita ? (
 				<LabResultsModal
 					isOpen={showLabModal}
 					onClose={() => setShowLabModal(false)}
-					numeroVisita={bed.NumeroVisita}
+					numeroVisita={Number(bed.NumeroVisita || bed.numeroVisita)}
+					header={headerSnapshot}
 				/>
-			)}
+			) : null}
 
 			{/* Backdrop del drawer */}
 			{drawerOpen && (

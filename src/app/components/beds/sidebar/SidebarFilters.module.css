@@ -12,7 +12,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
-    scrollbar-color: #00B5E2 #ffffff;
+    scrollbar-color: #00B5E2 transparent;
 }
 
 /* Estilos personalizados del scrollbar para navegadores Webkit */
@@ -21,7 +21,7 @@
 }
 
 .wrapper::-webkit-scrollbar-track {
-    background: #ffffff;
+    background: transparent;
 }
 
 .wrapper::-webkit-scrollbar-thumb {
@@ -52,8 +52,8 @@
     border-radius: 8px;
     overflow: hidden;
     border: none;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    background: transparent;
+    box-shadow: none;
 }
 
 /* Summary - Encabezado de sección - Migración UI v1 */
@@ -112,7 +112,7 @@
 }
 
 .collapseBody {
-    background: #f8fafc;
+    background: transparent;
     border-left: none;
 }
 
@@ -121,7 +121,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    background: #f8fafc;
+    background: transparent;
 }
 
 /* Botones de navegación */
@@ -199,9 +199,9 @@
 .fixedPanel {
     border: none;
     border-radius: 8px;
-    background: #fff;
+    background: transparent;
     margin-top: 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -224,7 +224,7 @@
 .fixedNav {
     border: none;
     padding: 4px;
-    background: #f8fafc;
+    background: transparent;
     border-radius: 0;
 }
 

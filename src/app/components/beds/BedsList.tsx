@@ -13,6 +13,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
 import { Bed } from '../../types/beds';
 import { formatDate } from '../../utils/dateUtils';
+import { setBedSnapshot } from '../../utils/bedSnapshotCache';
+import { bedToHeaderSnapshot, type PatientHeaderSnapshot } from '../../utils/bedHeader';
 
 const BedsList = () => {
 	const router = useRouter();
@@ -41,7 +43,7 @@ const BedsList = () => {
 		setAutoRefresh,
 		refreshInterval,
 		setRefreshInterval,
-	} = useBedsManagement();
+	} = useBedsManagement({ enableAutoRefresh: false });
 
 	const [nursingModalOpen, setNursingModalOpen] = useState(false);
 	const [labModalOpen, setLabModalOpen] = useState(false);
@@ -52,6 +54,7 @@ const BedsList = () => {
 		nombrePaciente: string;
 		id: string;
 		sector: string;
+		header: PatientHeaderSnapshot | null;
 	} | null>(null);
 	const [selectedSector, setSelectedSector] = useState<{
 		id: string;
@@ -84,18 +87,20 @@ const BedsList = () => {
 		setLastUpdateTime(Date.now());
 	};
 
+	const pickSelected = (bed: Bed) => ({
+		numeroVisita: bed.numeroVisita || bed.NumeroVisita || 0,
+		nombrePaciente: bed.NombrePaciente || 'Paciente',
+		id: bed.numeroCama,
+		sector: bed.sector,
+		header: bedToHeaderSnapshot(bed),
+	});
+
 	const handleNursingReport = (bed: Bed) => {
-		// Validar que existan los datos mínimos requeridos
 		if (!bed.numeroVisita || !bed.NombrePaciente) {
 			console.warn('No hay datos suficientes para generar el parte de enfermería.');
 			return;
 		}
-		setSelectedBed({
-			numeroVisita: bed.numeroVisita!,
-			nombrePaciente: bed.NombrePaciente!,
-			id: bed.numeroCama,
-			sector: bed.sector,
-		});
+		setSelectedBed(pickSelected(bed));
 		setNursingModalOpen(true);
 	};
 
@@ -104,38 +109,22 @@ const BedsList = () => {
 	};
 
 	const handleChangeBed = (bedId: string, bedSector: string) => {
-		// Encontrar la cama seleccionada
-		const bed = beds.find((bed) => bed.id === bedId && bed.sector === bedSector);
-
-		// Encontrar la información completa del sector
+		const bed = beds.find((b) => b.id === bedId && b.sector === bedSector);
 		const sectorInfo = sectors.find((sector) => sector.valor === bedSector);
-		console.log('Sector encontrado:', sectorInfo);
 
-		// Abrir el modal solo si la cama está ocupada y tiene un número de visita
 		if (bed && bed.estado === 'ocupada' && bed.numeroVisita) {
-			setSelectedBed({
-				numeroVisita: bed.numeroVisita,
-				nombrePaciente: bed.NombrePaciente || 'Paciente',
-				id: bed.numeroCama,
-				sector: bed.sector,
-			});
-
-			// Guardar la información completa del sector
+			setSelectedBed(pickSelected(bed));
 			setSelectedSector(sectorInfo || null);
-
 			setCambiarCamaModalOpen(true);
 		} else {
-			// Opcionalmente mostrar algún mensaje de error o aviso
 			console.warn('No se puede cambiar de cama a un paciente que no está ingresado');
 		}
 	};
 
 	const handleBedClick = (bedId: string) => {
-		// Encontrar la cama seleccionada
-		const selectedBed = beds.find((bed) => bed.id === bedId);
-
-		// Solo navegar si la cama está ocupada
-		if (selectedBed && selectedBed.estado === 'ocupada') {
+		const selected = beds.find((bed) => bed.id === bedId);
+		if (selected && selected.estado === 'ocupada') {
+			setBedSnapshot(selected);
 			router.push(`/dashboard/beds/${bedId}`);
 		}
 	};
@@ -146,30 +135,16 @@ const BedsList = () => {
 			console.warn('No hay datos suficientes para abrir resultados de laboratorio.');
 			return;
 		}
-		setSelectedBed({
-			numeroVisita: bed.numeroVisita,
-			nombrePaciente: bed.NombrePaciente || 'Paciente',
-			id: bed.numeroCama,
-			sector: bed.sector,
-		});
+		setSelectedBed(pickSelected(bed));
 		setLabModalOpen(true);
 	};
 
 	const handleDischarge = (bedId: string) => {
-		// Encontrar la cama seleccionada
-		const bed = beds.find((bed) => bed.id === bedId);
-
-		// Abrir el modal solo si la cama está ocupada y tiene un número de visita
+		const bed = beds.find((b) => b.id === bedId);
 		if (bed && bed.estado === 'ocupada' && bed.numeroVisita) {
-			setSelectedBed({
-				numeroVisita: bed.numeroVisita,
-				nombrePaciente: bed.NombrePaciente || 'Paciente',
-				id: bed.numeroCama,
-				sector: bed.sector,
-			});
+			setSelectedBed(pickSelected(bed));
 			setEgresoModalOpen(true);
 		} else {
-			// Opcionalmente mostrar algún mensaje de error o aviso
 			console.warn('No se puede iniciar el egreso para esta cama');
 		}
 	};
@@ -232,6 +207,8 @@ const BedsList = () => {
 					onClose={() => setNursingModalOpen(false)}
 					numeroVisita={selectedBed.numeroVisita}
 					nombrePaciente={selectedBed.nombrePaciente}
+					header={selectedBed.header}
+					bedSector={selectedBed.sector}
 				/>
 			)}
 
@@ -240,6 +217,7 @@ const BedsList = () => {
 					isOpen={labModalOpen}
 					onClose={() => setLabModalOpen(false)}
 					numeroVisita={selectedBed.numeroVisita}
+					header={selectedBed.header}
 				/>
 			)}
 
@@ -249,6 +227,7 @@ const BedsList = () => {
 					onClose={() => setEgresoModalOpen(false)}
 					numeroVisita={selectedBed.numeroVisita}
 					bedId={selectedBed.id}
+					header={selectedBed.header}
 				/>
 			)}
 
@@ -260,6 +239,7 @@ const BedsList = () => {
 					bedId={selectedBed.id}
 					bedSector={selectedBed.sector}
 					sectorInfo={selectedSector}
+					header={selectedBed.header}
 				/>
 			)}
 		</div>

@@ -8,13 +8,14 @@
 	grid-template-rows: auto 1fr;
 	box-sizing: border-box;
 	overflow-x: hidden;
+	background: transparent;
 }
 
 /* Contenedor del header del paciente - arriba de todo */
 .header {
 	grid-column: 1 / -1;
 	padding: 16px 24px;
-	background: #fff;
+	background: transparent;
 	border-bottom: none;
 	z-index: 10;
 }
@@ -25,6 +26,7 @@
 	grid-template-columns: 19rem 1fr;
 	min-height: 0;
 	overflow: hidden;
+	background: transparent;
 }
 
 .right,
@@ -40,13 +42,13 @@
 .left {
 	height: 100%;
 	overflow: auto;
-	background: #fff;
+	background: transparent;
 	border-right: none;
 	min-width: 0;
 	box-sizing: border-box;
-	/* Scrollbar personalizado */
+	/* Scrollbar: sin track blanco */
 	scrollbar-width: thin;
-	scrollbar-color: #00B5E2 #ffffff;
+	scrollbar-color: #00B5E2 transparent;
 }
 
 /* Estilos personalizados del scrollbar para navegadores Webkit */
@@ -55,7 +57,7 @@
 }
 
 .left::-webkit-scrollbar-track {
-	background: #ffffff;
+	background: transparent;
 }
 
 .left::-webkit-scrollbar-thumb {
@@ -90,7 +92,7 @@
 	top: 8px;
 	margin-left: auto;
 	display: none;
-	background: #fff;
+	background: transparent;
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	padding: 6px 10px;
@@ -104,13 +106,14 @@
 	min-width: 0;
 	box-sizing: border-box;
 	overflow: hidden;
+	background: transparent;
 }
 .burger {
 	display: none;
 	align-items: center;
 	justify-content: center;
 	border: 1px solid #e2e8f0;
-	background: #fff;
+	background: transparent;
 	border-radius: 50%;
 	width: 36px;
 	height: 36px;
@@ -137,10 +140,31 @@
 	box-sizing: border-box;
 	flex: 1;
 	height: 0;
+	background: transparent;
+	scrollbar-width: thin;
+	scrollbar-color: #00B5E2 transparent;
 }
+
+.body::-webkit-scrollbar {
+	width: 8px;
+}
+
+.body::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.body::-webkit-scrollbar-thumb {
+	background: #00B5E2;
+	border-radius: 4px;
+}
+
+.body::-webkit-scrollbar-thumb:hover {
+	background: #0083A9;
+}
+
 .footer {
 	padding: 10px 16px;
-	background: #fff;
+	background: transparent;
 	border-top: 1px solid var(--border);
 	position: sticky;
 	bottom: 0;
@@ -148,7 +172,7 @@
 
 /* placeholder para otras secciones */
 .placeholderCard {
-	background: #fff;
+	background: transparent;
 	border: 1px solid var(--border);
 	border-radius: 12px;
 	padding: 16px;
@@ -200,7 +224,7 @@
 		display: none;
 	}
 
-	/* sidebar -> drawer desde la IZQUIERDA */
+	/* sidebar -> drawer: fondo gris del layout (legible sobre overlay) */
 	.left {
 		position: fixed;
 		z-index: 50;
@@ -210,6 +234,7 @@
 		transform: translateX(100%);
 		transition: transform 0.25s ease;
 		box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+		background: var(--background, #F8FAFC);
 	}
 	.leftOpen {
 		transform: translateX(0);
@@ -230,9 +255,9 @@
 	.header {
 		margin: 4px 8px 0 8px;
 		padding: 12px 12px;
-		background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+		background: transparent;
 		border-radius: 20px;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+		box-shadow: none;
 	}
 	.body {
 		padding: 8px 0 0 0;
@@ -244,4 +269,3 @@
 		padding: 4px 8px;
 	}
 }
-

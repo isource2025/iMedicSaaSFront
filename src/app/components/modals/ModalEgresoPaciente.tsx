@@ -13,12 +13,14 @@ import diagnosticosService from '../../services/diagnosticosService';
 import { DiagnosticoCie10 } from '../../types/diagnosticos';
 import { DisposicionEgreso } from '../../types/disposicionEgreso.types';
 import { useAppContext } from '../../contexts/AppContext';
+import type { PatientHeaderSnapshot } from '../../utils/bedHeader';
 
 interface ModalEgresoPacienteProps {
   isOpen: boolean;
   onClose: () => void;
   numeroVisita: number;
   bedId: string;
+  header?: PatientHeaderSnapshot | null;
 }
 
 // La interfaz DisposicionEgreso ahora se importa desde types
@@ -28,6 +30,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
   onClose,
   numeroVisita,
   bedId,
+  header,
 }) => {
   const router = useRouter();
   const { sectorSeleccionado } = useAppContext();
@@ -289,6 +292,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
         onClose={onClose}
         titulo="Egreso de Paciente"
         numeroVisita={numeroVisita.toString()}
+        header={header}
         footerButtons={<FooterButtons />}
       >
         <div className={styles.egresoForm}>

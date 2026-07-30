@@ -15,6 +15,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { useBedsManagement } from '../../hooks/useBedsManagement';
 import BedFilters from '../beds/BedFilters';
 import { formatDate, formatTime, dateToClarionDate, timeToClarionTime } from '../../utils/dateUtils';
+import type { PatientHeaderSnapshot } from '../../utils/bedHeader';
 
 interface ModalCambiarCamaProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface ModalCambiarCamaProps {
   bedId: string;
   bedSector: string;
   sectorInfo?: {id: string, valor: string, descripcion: string} | null;
+  header?: PatientHeaderSnapshot | null;
 }
 
 interface DisposicionEgreso {
@@ -42,7 +44,8 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   numeroVisita,
   bedId,
   bedSector,
-  sectorInfo
+  sectorInfo,
+  header,
 }) => {
   const router = useRouter();
   const { sectorSeleccionado } = useAppContext();
@@ -89,7 +92,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     searchTerm,
     setSearchTerm,
     refreshBeds
-  } = useBedsManagement();
+  } = useBedsManagement({ enableAutoRefresh: false });
   
   // Estado para la cama seleccionada
   const [camaSeleccionada, setCamaSeleccionada] = useState<string | null>(null);
@@ -551,6 +554,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
         onClose={onClose}
         titulo="Mover Paciente de Cama"
         numeroVisita={numeroVisita.toString()}
+        header={header}
         footerButtons={<FooterButtons />}
       >
         <div className={styles.cambiarCamaForm}>

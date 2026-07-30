@@ -74,7 +74,7 @@ export default function EvolucionesSection({
         params: {
             days: periodFilter
         },
-        cacheTimeMs: 0,
+        cacheTimeMs: 20000,
     });
 
     const baseRows: EvolucionRow[] = useMemo(() => {

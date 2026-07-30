@@ -6,7 +6,7 @@ import { interconsultasService } from '@/app/services/interconsultasService';
 import { useAppContext } from '@/app/contexts/AppContext';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 
-const POLL_MS = 5000;
+const POLL_MS = 45_000;
 
 /** Contador de pedidos libres (estudios + interconsultas) en los servicios del usuario. */
 export function useBandejaPedidosCount(enabled = true) {

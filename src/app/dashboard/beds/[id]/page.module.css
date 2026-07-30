@@ -9,6 +9,7 @@
 	bottom: 0;
 	z-index: 1;
 	overflow: hidden;
+	background: transparent;
 }
 
 @media (max-width: 768px) {

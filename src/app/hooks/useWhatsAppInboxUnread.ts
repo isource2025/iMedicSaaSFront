@@ -25,11 +25,29 @@ export function useWhatsAppInboxUnread(enabled = true) {
 		if (!enabled) return;
 		refresh();
 		const onChange = () => refresh();
-		const t = window.setInterval(refresh, 12000);
+		let t: number | null = null;
+		const start = () => {
+			if (t != null) window.clearInterval(t);
+			t = window.setInterval(() => {
+				if (document.visibilityState === 'visible') void refresh();
+			}, 45_000);
+		};
+		start();
+		const onVis = () => {
+			if (document.visibilityState === 'visible') {
+				void refresh();
+				start();
+			} else if (t != null) {
+				window.clearInterval(t);
+				t = null;
+			}
+		};
 		window.addEventListener(INBOX_UNREAD_EVENT, onChange);
+		document.addEventListener('visibilitychange', onVis);
 		return () => {
-			window.clearInterval(t);
+			if (t != null) window.clearInterval(t);
 			window.removeEventListener(INBOX_UNREAD_EVENT, onChange);
+			document.removeEventListener('visibilitychange', onVis);
 		};
 	}, [enabled, refresh]);
 

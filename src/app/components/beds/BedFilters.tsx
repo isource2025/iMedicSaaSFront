@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from './BedFilters.module.css';
-import { IoRefreshOutline } from 'react-icons/io5';
 import { SearchInput } from './SearchInput';
 import type { BedTipoRecurso } from '@/app/types/beds';
 
@@ -19,13 +18,14 @@ export interface BedFiltersProps {
   setSearchTerm: (term: string) => void;
   tipoRecursoFilter?: 'all' | BedTipoRecurso;
   setTipoRecursoFilter?: (v: 'all' | BedTipoRecurso) => void;
-  refreshBeds: () => void;
-  autoRefresh: boolean;
-  setAutoRefresh: (auto: boolean) => void;
-  refreshInterval: number;
-  setRefreshInterval: (interval: number) => void;
+  /** @deprecated Conservado por compat con callers; el botón de refresh se quitó de la UI */
+  refreshBeds?: () => void;
+  autoRefresh?: boolean;
+  setAutoRefresh?: (auto: boolean) => void;
+  refreshInterval?: number;
+  setRefreshInterval?: (interval: number) => void;
   lastUpdateTime?: number;
-  beds?: any[];
+  beds?: unknown[];
 }
 
 export const BedFilters: React.FC<BedFiltersProps> = ({
@@ -43,30 +43,10 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
   setSearchTerm,
   tipoRecursoFilter = 'all',
   setTipoRecursoFilter,
-  refreshBeds,
-  lastUpdateTime,
-  beds = []
 }) => {
-  const formatLastUpdate = () => {
-    if (!lastUpdateTime) return 'No disponible';
-    const now = Date.now();
-    const diff = now - lastUpdateTime;
-    if (diff < 60000) {
-      return 'Hace menos de un minuto';
-    } else if (diff < 3600000) {
-      const minutes = Math.floor(diff / 60000);
-      return `Hace ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
-    } else {
-      const hours = Math.floor(diff / 3600000);
-      return `Hace ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
-    }
-  };
-
   return (
     <div className={styles.filterModule}>
       <div className={styles.filtersContainer}>
-
-        
         <div className={styles.filterGroup}>
           <label className={styles.filterLabel}>Sectores</label>
           <select
@@ -132,38 +112,26 @@ export const BedFilters: React.FC<BedFiltersProps> = ({
             </select>
           </div>
         )}
-
-        
-
-        {/* <div className={styles.refreshGroup}>
-          <button
-            className={styles.refreshButton}
-            onClick={refreshBeds}
-            title="Actualizar ahora"
-          >
-            <IoRefreshOutline />
-          </button>
-        </div> */}
       </div>
       <div className={styles.searchWrapper}>
-          <SearchInput
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            placeholder={placeHolder}
-            tooltipContent={
-              <>
-                <p>Filtrar por:</p>
-                <ul className={styles.tooltipList}>
-                  <li>Nombre del paciente</li>
-                  <li>Número de documento (DNI)</li>
-                  <li>Número de historia clínica</li>
-                  <li>Número de admisión</li>
-                </ul>
-              </>
-            }
-            isSearching={searchTerm.length > 0}
-          />
-        </div>
+        <SearchInput
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          placeholder={placeHolder}
+          tooltipContent={
+            <>
+              <p>Filtrar por:</p>
+              <ul className={styles.tooltipList}>
+                <li>Nombre del paciente</li>
+                <li>Número de documento (DNI)</li>
+                <li>Número de historia clínica</li>
+                <li>Número de admisión</li>
+              </ul>
+            </>
+          }
+          isSearching={searchTerm.length > 0}
+        />
+      </div>
     </div>
   );
 };

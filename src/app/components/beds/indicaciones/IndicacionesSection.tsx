@@ -78,7 +78,7 @@ export default function IndicacionesSection({
         endpointOverride: indicacionesPath
             ? { indicaciones: indicacionesPath }
             : undefined,
-        cacheTimeMs: 0,
+        cacheTimeMs: 20000,
     });
 
 

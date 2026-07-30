@@ -6,7 +6,6 @@ import { NuevaEvolucionPayload } from "../../../types/evoluciones";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { evolucionesService } from "../../../services/evolucionesService";
 import { authService } from "../../../services/authService";
-import { apiFetch } from '@/app/utils/authFetch';
 
 interface NuevaEvolucionModalProps {
     onClose: () => void;
@@ -61,42 +60,17 @@ export default function NuevaEvolucionModal({
     refetch,
 }: NuevaEvolucionModalProps) {
     const { idsector, sectorSeleccionado } = useAppContext();
-    const [documentoReal, setDocumentoReal] = useState<string>('');
-    
-    // Obtener idPersonal del sectorSeleccionado
     const idPersonal = sectorSeleccionado?.idPersonal || '';
-    
-    // Obtener el documento del paciente desde el header
-    useEffect(() => {
-        const obtenerDocumento = async () => {
-            try {
-                const res = await apiFetch('/beds');
-                if (!res.ok) return;
-                const data = await res.json();
-                if (!data.success) return;
-                
-                const cama = data.data.find((c: any) => String(c.NumeroVisita) === String(defaultIdVisita));
-                if (cama && cama.DocumentoPaciente) {
-                    setDocumentoReal(cama.DocumentoPaciente);
-                }
-            } catch (err) {
-                console.error('Error obteniendo documento:', err);
-            }
-        };
-        
-        if (defaultIdVisita) {
-            obtenerDocumento();
-        }
-    }, [defaultIdVisita]);
-    
+    const documentoEfectivo = String(documentoPaciente || '').trim();
+
     const initial = useMemo(
         () => emptyPayload(
-            defaultIdVisita, 
-            documentoReal || documentoPaciente || '',
+            defaultIdVisita,
+            documentoEfectivo,
             idsector || '',
             idPersonal
         ),
-        [defaultIdVisita, documentoReal, documentoPaciente, idsector, idPersonal]
+        [defaultIdVisita, documentoEfectivo, idsector, idPersonal]
     );
     const [form, setForm] = useState<NuevaEvolucionPayload>(initial);
     const [loading, setLoading] = useState(false);
