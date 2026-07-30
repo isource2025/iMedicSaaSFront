@@ -35,6 +35,14 @@ export interface ActividadReciente {
   tipo: TipoActividad;
   prioridad?: 'alta' | 'media' | 'baja';
   sector?: string;
+  /** Nombre del paciente (línea propia en el feed) */
+  paciente?: string;
+  /** Número de cama */
+  cama?: string;
+  /** Id de cama para navegación: `{sector}-{cama}` */
+  bedId?: string;
+  /** Subtipo de movimiento para chips */
+  movimientoTipo?: 'ingreso' | 'egreso' | 'movimiento';
 }
 
 // Configuración de iconos por tipo de actividad

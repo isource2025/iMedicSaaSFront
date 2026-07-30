@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { bedsService } from '../services/bedsService';
 import { indicadoresService, ResumenPacientesHoy } from '../services/indicadoresService';
 import { obtenerActividadReciente, ActividadReciente } from '../services/dashboardService';
 import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
 import { useIndicadores } from '../hooks/useIndicadores';
+import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
 import styles from './DashboardPage.module.css';
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
@@ -26,6 +28,62 @@ const ICONS = {
   info: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'
 };
 
+function parseActivityDate(timeString: string): Date | null {
+  try {
+    if (timeString.includes('/') && timeString.includes(' ')) {
+      const [fechaPart, horaPart] = timeString.split(' ');
+      const [dia, mes, anio] = fechaPart.split('/');
+      const [hora, minuto] = horaPart.split(':');
+      const d = new Date(
+        parseInt(anio, 10),
+        parseInt(mes, 10) - 1,
+        parseInt(dia, 10),
+        parseInt(hora || '0', 10),
+        parseInt(minuto || '0', 10),
+      );
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function formatRelativeTime(timeString: string): string {
+  const date = parseActivityDate(timeString);
+  if (!date) return timeString;
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 0) return timeString;
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return 'Hace un momento';
+  if (mins < 60) return `Hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Ayer';
+  if (days < 7) return `Hace ${days} días`;
+  return timeString;
+}
+
+function chipClassForMovimiento(
+  tipo: ActividadReciente['movimientoTipo'],
+): string {
+  if (tipo === 'ingreso') return styles.chipIngreso;
+  if (tipo === 'egreso') return styles.chipEgreso;
+  if (tipo === 'movimiento') return styles.chipMovimiento;
+  return styles.chipMovimiento;
+}
+
+function chipLabelForMovimiento(
+  tipo: ActividadReciente['movimientoTipo'],
+  action: string,
+): string {
+  if (tipo === 'ingreso') return 'Ingreso';
+  if (tipo === 'egreso') return 'Alta';
+  if (tipo === 'movimiento') return 'Movimiento';
+  return action;
+}
+
 interface BedStats {
   totalCamas: number;
   camasDisponibles: number;
@@ -39,6 +97,8 @@ const initialPatientSummary: ResumenPacientesHoy = {
 };
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { count: pedidosPendientes } = useBandejaPedidosCount(true, { poll: false });
   const [bedStats, setBedStats] = useState<BedStats>({
     totalCamas: 0,
     camasDisponibles: 0,
@@ -99,7 +159,7 @@ export default function Dashboard() {
 
     const fetchActividadReciente = async () => {
       try {
-        const actividades = await obtenerActividadReciente(4);
+        const actividades = await obtenerActividadReciente(10);
         setActividadReciente(actividades);
       } catch (error) {
         console.error('Error fetching recent activity:', error);
@@ -267,29 +327,109 @@ export default function Dashboard() {
       
       {/* Activity Overview */}
       <div className={styles.activitySection}>
-        <h3 className={styles.activityTitle}>Actividad Reciente</h3>
+        <div className={styles.activityHeader}>
+          <h3 className={styles.activityTitle}>Actividad Reciente</h3>
+          <a className={styles.activityLink} href="/dashboard/beds">
+            Ver ocupación
+          </a>
+        </div>
         <div className={styles.activityList}>
           {loadingActividad ? (
             <div className={styles.loadingActivity}>
               <div className={styles.loadingActivitySpinner}></div>
               <p>Cargando actividad reciente...</p>
             </div>
+          ) : actividadReciente.length === 0 ? (
+            <div className={styles.activityEmpty}>
+              No hay movimientos recientes. Revisá la ocupación de camas para el estado actual.
+            </div>
           ) : (
-            actividadReciente.map((item, index) => (
-              <div key={index} className={styles.activityItem}>
-                <div className={styles.activityIconContainer}>
-                  <div className="w-8 h-8 rounded-full bg-pantone-311u bg-opacity-20 flex items-center justify-center">
+            actividadReciente.map((item, index) => {
+              const ubicacion = [item.sector, item.cama ? `Cama ${item.cama}` : null]
+                .filter(Boolean)
+                .join(' · ');
+              const relative = formatRelativeTime(item.time);
+              const goToBed = () => {
+                if (item.bedId) {
+                  router.push(`/dashboard/beds/${encodeURIComponent(item.bedId)}`);
+                } else {
+                  router.push('/dashboard/beds');
+                }
+              };
+              return (
+                <div
+                  key={`${item.bedId || item.details}-${item.time}-${index}`}
+                  className={styles.activityItem}
+                  onClick={goToBed}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      goToBed();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className={styles.activityIconContainer}>
                     <span>{item.icon}</span>
                   </div>
+                  <div className={styles.activityContent}>
+                    <div className={styles.activityActionRow}>
+                      <p className={styles.activityAction}>{item.action}</p>
+                      {item.movimientoTipo && (
+                        <span className={`${styles.activityChip} ${chipClassForMovimiento(item.movimientoTipo)}`}>
+                          {chipLabelForMovimiento(item.movimientoTipo, item.action)}
+                        </span>
+                      )}
+                    </div>
+                    {item.paciente ? (
+                      <p className={styles.activityPaciente}>{item.paciente}</p>
+                    ) : (
+                      <p className={styles.activityDetails}>{item.details}</p>
+                    )}
+                    {ubicacion ? (
+                      <p className={styles.activityUbicacion}>{ubicacion}</p>
+                    ) : null}
+                  </div>
+                  <div className={styles.activityTime} title={item.time}>
+                    {relative}
+                  </div>
                 </div>
-                <div className={styles.activityContent}>
-                  <p className={styles.activityAction}>{item.action}</p>
-                  <p className={styles.activityDetails}>{item.details}</p>
-                </div>
-                <div className={styles.activityTime}>{item.time}</div>
-              </div>
-            ))
+              );
+            })
           )}
+        </div>
+
+        <div className={styles.shortcutsRow}>
+          <button
+            type="button"
+            className={styles.shortcutCard}
+            onClick={() => router.push('/dashboard/bandeja-pedidos')}
+          >
+            <span className={styles.shortcutLabel}>Pedidos pendientes</span>
+            <span className={styles.shortcutValue}>{pedidosPendientes}</span>
+            <span className={styles.shortcutHint}>Ir a bandeja</span>
+          </button>
+          <button
+            type="button"
+            className={styles.shortcutCard}
+            onClick={() => router.push('/dashboard/beds')}
+          >
+            <span className={styles.shortcutLabel}>Camas libres</span>
+            <span className={styles.shortcutValue}>
+              {estadoActualCamas ? estadoActualCamas.disponibles : bedStats.camasDisponibles}
+            </span>
+            <span className={styles.shortcutHint}>Ver ocupación</span>
+          </button>
+          <button
+            type="button"
+            className={styles.shortcutCard}
+            onClick={() => router.push('/dashboard/turnos/agenda')}
+          >
+            <span className={styles.shortcutLabel}>Agenda del día</span>
+            <span className={styles.shortcutValue}>—</span>
+            <span className={styles.shortcutHint}>Abrir agenda</span>
+          </button>
         </div>
       </div>
     </div>

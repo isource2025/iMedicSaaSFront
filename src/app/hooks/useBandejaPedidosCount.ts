@@ -9,7 +9,11 @@ import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 const POLL_MS = 45_000;
 
 /** Contador de pedidos libres (estudios + interconsultas) en los servicios del usuario. */
-export function useBandejaPedidosCount(enabled = true) {
+export function useBandejaPedidosCount(
+	enabled = true,
+	options?: { poll?: boolean },
+) {
+	const poll = options?.poll !== false;
 	const [count, setCount] = useState(0);
 	const { sectorSeleccionado } = useAppContext();
 
@@ -52,6 +56,7 @@ export function useBandejaPedidosCount(enabled = true) {
 	useEffect(() => {
 		if (!enabled) return;
 		void refresh();
+		if (!poll) return;
 		const t = window.setInterval(() => {
 			if (document.visibilityState === 'visible') void refresh();
 		}, POLL_MS);
@@ -63,7 +68,7 @@ export function useBandejaPedidosCount(enabled = true) {
 			window.clearInterval(t);
 			document.removeEventListener('visibilitychange', onVis);
 		};
-	}, [enabled, refresh]);
+	}, [enabled, refresh, poll]);
 
 	return { count, refresh };
 }

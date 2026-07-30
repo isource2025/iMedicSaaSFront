@@ -180,26 +180,39 @@ export class InternacionActivityService extends ActivityService {
       // Determinar acción e icono según el tipo de movimiento
       let action: string;
       let iconType: string;
+      let movimientoTipo: 'ingreso' | 'egreso' | 'movimiento';
       
       if (movimiento.TipoMovimiento === 'Movimiento de cama') {
         action = 'Movimiento de cama';
         iconType = 'traslado';
+        movimientoTipo = 'movimiento';
       } else if (isIngreso) {
         action = 'Ingreso de paciente';
         iconType = 'ingreso';
+        movimientoTipo = 'ingreso';
       } else {
         action = 'Alta médica';
         iconType = 'egreso';
+        movimientoTipo = 'egreso';
       }
+
+      const sectorValor = String(movimiento.ValorSector || '').trim();
+      const camaValor = String(movimiento.ValorHabitacionCama || '').trim();
+      const sectorDesc = String(movimiento.SectorDescripcion || sectorValor || '').trim();
+      const paciente = String(movimiento.ApellidoyNombre || '').trim();
       
       return {
         time: fechaHoraCompleta,
         action,
-        details: `${movimiento.ApellidoyNombre} - CAMA ${movimiento.ValorHabitacionCama} (${movimiento.SectorDescripcion})`,
+        details: `${paciente} - CAMA ${camaValor} (${sectorDesc})`,
         icon: this.obtenerIcono('internacion', iconType),
         tipo: 'internacion' as const,
         prioridad: 'alta' as const,
-        sector: movimiento.SectorDescripcion
+        sector: sectorDesc,
+        paciente,
+        cama: camaValor,
+        bedId: sectorValor && camaValor ? `${sectorValor}-${camaValor}` : undefined,
+        movimientoTipo,
       };
     });
   }

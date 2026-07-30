@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Sparkles } from 'lucide-react';
 import styles from './NuevaEpicrisisModal.module.css';
 import { NuevaEpicrisisPayload } from '../../../types/epicrisis';
@@ -79,9 +80,12 @@ export default function NuevaEpicrisisModal({
 
 	const [form, setForm] = useState<NuevaEpicrisisPayload>(initial);
 	const [loading, setLoading] = useState(false);
+	const [saving, setSaving] = useState(false);
 	const [generating, setGenerating] = useState(false);
 	const [iaNotice, setIaNotice] = useState<string | null>(null);
 	const [generadoConIA, setGeneradoConIA] = useState(false);
+	const [showDisclaimerConfirm, setShowDisclaimerConfirm] = useState(false);
+	const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
 	const [diagTerm, setDiagTerm] = useState('');
 	const [diagResults, setDiagResults] = useState<DiagnosticoCie10[]>([]);
@@ -94,6 +98,8 @@ export default function NuevaEpicrisisModal({
 			setForm(initial);
 			setGeneradoConIA(false);
 			setIaNotice(null);
+			setShowDisclaimerConfirm(false);
+			setDisclaimerAccepted(false);
 			setDiagTerm('');
 			setDiagSel(null);
 			setDiagResults([]);
@@ -236,6 +242,28 @@ export default function NuevaEpicrisisModal({
 		}
 	};
 
+	const performSave = async () => {
+		setSaving(true);
+		try {
+			await onSave({
+				...form,
+				IdSector: sectorEfectivo,
+				NumeroDocumento: documentoEfectivo,
+				Diagnostico: diagSel?.codigo?.slice(0, 8) || form.Diagnostico || '',
+				DiagnosticoText: diagSel?.descripcion || form.DiagnosticoText || '',
+				GeneradoConIA: generadoConIA,
+			});
+			if (refetch) await refetch();
+			setShowDisclaimerConfirm(false);
+			setDisclaimerAccepted(false);
+			onClose();
+		} catch (err) {
+			if (err instanceof Error) alert(err.message || 'Error al guardar');
+		} finally {
+			setSaving(false);
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!form.Epicrisis?.trim()) {
@@ -252,26 +280,17 @@ export default function NuevaEpicrisisModal({
 		}
 
 		if (generadoConIA) {
-			const ok = window.confirm(
-				`DESLINDE DE RESPONSABILIDAD\n\n${DISCLAIMER_IA_UI}\n\n¿Confirma que revisó el contenido y desea guardar esta epicrisis?`,
-			);
-			if (!ok) return;
+			setDisclaimerAccepted(false);
+			setShowDisclaimerConfirm(true);
+			return;
 		}
 
-		try {
-			await onSave({
-				...form,
-				IdSector: sectorEfectivo,
-				NumeroDocumento: documentoEfectivo,
-				Diagnostico: diagSel?.codigo?.slice(0, 8) || form.Diagnostico || '',
-				DiagnosticoText: diagSel?.descripcion || form.DiagnosticoText || '',
-				GeneradoConIA: generadoConIA,
-			});
-			if (refetch) await refetch();
-			onClose();
-		} catch (err) {
-			if (err instanceof Error) alert(err.message || 'Error al guardar');
-		}
+		await performSave();
+	};
+
+	const handleConfirmDisclaimer = async () => {
+		if (!disclaimerAccepted || saving) return;
+		await performSave();
 	};
 
 	if (loading) {
@@ -279,139 +298,194 @@ export default function NuevaEpicrisisModal({
 	}
 
 	return (
-		<form id="nueva-epicrisis-form" onSubmit={handleSubmit} className={styles.form}>
-			{generadoConIA && (
-				<div className={styles.alertIa} role="alert">
-					<strong>Asistencia por IA.</strong> {DISCLAIMER_IA_UI}
-				</div>
-			)}
-
-			{iaNotice && <div className={styles.notice}>{iaNotice}</div>}
-
-			<div className={styles.formGrid}>
-				<div className={styles.formGroup}>
-					<label className={styles.label}>
-						Fecha <span className={styles.required}>*</span>
-					</label>
-					<input
-						type="date"
-						className={styles.input}
-						value={form.Fecha}
-						onChange={(e) => set('Fecha', e.target.value)}
-						required
-					/>
-				</div>
-
-				<div className={styles.formGroup}>
-					<label className={styles.label}>
-						Hora <span className={styles.required}>*</span>
-					</label>
-					<input
-						type="time"
-						className={styles.input}
-						value={form.Hora}
-						onChange={(e) => set('Hora', e.target.value)}
-						required
-					/>
-				</div>
-
-				<div className={styles.formGroupFull} ref={diagWrapRef}>
-					<label className={styles.label}>Diagnóstico CIE-10</label>
-					<div className={styles.diagInputWrap}>
-						<input
-							type="text"
-							className={styles.input}
-							value={diagTerm}
-							onChange={(e) => {
-								const v = e.target.value.slice(0, 8).toUpperCase();
-								setDiagTerm(v);
-								setDiagSel(null);
-								setForm((prev) => ({
-									...prev,
-									Diagnostico: v,
-									DiagnosticoText: '',
-								}));
-							}}
-							placeholder="Escriba código CIE-10…"
-							maxLength={8}
-							autoComplete="off"
-						/>
+		<>
+			<form id="nueva-epicrisis-form" onSubmit={handleSubmit} className={styles.form}>
+				{generadoConIA && (
+					<div className={styles.alertIa} role="alert">
+						<strong>Asistencia por IA.</strong> {DISCLAIMER_IA_UI}
 					</div>
+				)}
 
-					{diagSel ? (
-						<p className={styles.diagHint}>
-							<strong>{diagSel.codigo}</strong>
-							{diagSel.descripcion ? ` — ${diagSel.descripcion}` : ''}
-							<button
-								type="button"
-								onClick={limpiarDiagnostico}
-								className={styles.diagChange}
-							>
-								Cambiar
-							</button>
-						</p>
-					) : null}
+				{iaNotice && <div className={styles.notice}>{iaNotice}</div>}
 
-					{!diagSel && diagResults.length > 0 ? (
-						<div className={styles.diagResults}>
-							{diagResults.map((d) => (
-								<button
-									key={`${d.codigo}-${d.valor}`}
-									type="button"
-									onClick={() => seleccionarDiagnostico(d)}
-									className={styles.diagResultBtn}
-								>
-									<span className={styles.diagCode}>{d.codigo}</span>
-									<span className={styles.diagDesc}>{d.descripcion}</span>
-								</button>
-							))}
-						</div>
-					) : null}
-
-					{!diagSel &&
-					diagTerm.trim().length >= 1 &&
-					!diagLoading &&
-					diagResults.length === 0 ? (
-						<p className={styles.diagEmpty}>Sin resultados.</p>
-					) : null}
-				</div>
-
-				<div className={styles.formGroupFull}>
-					<label className={styles.label}>
-						Epicrisis <span className={styles.required}>*</span>
-					</label>
-					<div className={styles.epicrisisWrap}>
-						<textarea
-							className={styles.textarea}
-							value={form.Epicrisis || ''}
-							onChange={(e) => set('Epicrisis', e.target.value.slice(0, 8000))}
-							placeholder="Resumen del episodio de hospitalización, evolución, conducta y plan de alta…"
-							rows={16}
+				<div className={styles.formGrid}>
+					<div className={styles.formGroup}>
+						<label className={styles.label}>
+							Fecha <span className={styles.required}>*</span>
+						</label>
+						<input
+							type="date"
+							className={styles.input}
+							value={form.Fecha}
+							onChange={(e) => set('Fecha', e.target.value)}
 							required
 						/>
-						{!esEdicion && (
-							<button
-								type="button"
-								onClick={handleGenerarIA}
-								disabled={generating || !defaultIdVisita}
-								title="Generar borrador con IA"
-								aria-busy={generating}
-								className={`${styles.iaBtn} ${generating ? styles.iaBtnLoading : ''}`}
-							>
-								{generating ? (
-									<span className={styles.spinner} aria-hidden />
-								) : (
-									<Sparkles size={14} strokeWidth={2} />
-								)}
-								{generating ? 'Generando…' : 'IA'}
-							</button>
-						)}
 					</div>
-					<div className={styles.charCount}>
-						{(form.Epicrisis || '').length} / 8000 caracteres
+
+					<div className={styles.formGroup}>
+						<label className={styles.label}>
+							Hora <span className={styles.required}>*</span>
+						</label>
+						<input
+							type="time"
+							className={styles.input}
+							value={form.Hora}
+							onChange={(e) => set('Hora', e.target.value)}
+							required
+						/>
+					</div>
+
+					<div className={styles.formGroupFull} ref={diagWrapRef}>
+						<label className={styles.label}>Diagnóstico CIE-10</label>
+						<div className={styles.diagInputWrap}>
+							<input
+								type="text"
+								className={styles.input}
+								value={diagTerm}
+								onChange={(e) => {
+									const v = e.target.value.slice(0, 8).toUpperCase();
+									setDiagTerm(v);
+									setDiagSel(null);
+									setForm((prev) => ({
+										...prev,
+										Diagnostico: v,
+										DiagnosticoText: '',
+									}));
+								}}
+								placeholder="Escriba código CIE-10…"
+								maxLength={8}
+								autoComplete="off"
+							/>
+						</div>
+
+						{diagSel ? (
+							<p className={styles.diagHint}>
+								<strong>{diagSel.codigo}</strong>
+								{diagSel.descripcion ? ` — ${diagSel.descripcion}` : ''}
+								<button
+									type="button"
+									onClick={limpiarDiagnostico}
+									className={styles.diagChange}
+								>
+									Cambiar
+								</button>
+							</p>
+						) : null}
+
+						{!diagSel && diagResults.length > 0 ? (
+							<div className={styles.diagResults}>
+								{diagResults.map((d) => (
+									<button
+										key={`${d.codigo}-${d.valor}`}
+										type="button"
+										onClick={() => seleccionarDiagnostico(d)}
+										className={styles.diagResultBtn}
+									>
+										<span className={styles.diagCode}>{d.codigo}</span>
+										<span className={styles.diagDesc}>{d.descripcion}</span>
+									</button>
+								))}
+							</div>
+						) : null}
+
+						{!diagSel &&
+						diagTerm.trim().length >= 1 &&
+						!diagLoading &&
+						diagResults.length === 0 ? (
+							<p className={styles.diagEmpty}>Sin resultados.</p>
+						) : null}
+					</div>
+
+					<div className={styles.formGroupFull}>
+						<label className={styles.label}>
+							Epicrisis <span className={styles.required}>*</span>
+						</label>
+						<div className={styles.epicrisisWrap}>
+							<textarea
+								className={styles.textarea}
+								value={form.Epicrisis || ''}
+								onChange={(e) => set('Epicrisis', e.target.value.slice(0, 8000))}
+								placeholder="Resumen del episodio de hospitalización, evolución, conducta y plan de alta…"
+								rows={16}
+								required
+							/>
+							{!esEdicion && (
+								<button
+									type="button"
+									onClick={handleGenerarIA}
+									disabled={generating || !defaultIdVisita}
+									title="Generar borrador con IA"
+									aria-busy={generating}
+									className={`${styles.iaBtn} ${generating ? styles.iaBtnLoading : ''}`}
+								>
+									{generating ? (
+										<span className={styles.spinner} aria-hidden />
+									) : (
+										<Sparkles size={14} strokeWidth={2} />
+									)}
+									{generating ? 'Generando…' : 'IA'}
+								</button>
+							)}
+						</div>
+						<div className={styles.charCount}>
+							{(form.Epicrisis || '').length} / 8000 caracteres
+						</div>
 					</div>
 				</div>
-			</div>
-		</form>
+			</form>
+
+			{showDisclaimerConfirm &&
+				typeof document !== 'undefined' &&
+				createPortal(
+					<div
+						className={styles.confirmOverlay}
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="epicrisis-disclaimer-title"
+					>
+						<div className={styles.confirmModal}>
+							<h3 id="epicrisis-disclaimer-title" className={styles.confirmTitle}>
+								Deslinde de responsabilidad
+							</h3>
+							<p className={styles.confirmText}>{DISCLAIMER_IA_UI}</p>
+							<label className={styles.confirmCheck}>
+								<input
+									type="checkbox"
+									checked={disclaimerAccepted}
+									onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+									disabled={saving}
+								/>
+								<span>
+									Confirmo haber revisado y validado el contenido. Acepto que la
+									responsabilidad clínica y legal recae en el profesional firmante.
+								</span>
+							</label>
+							<div className={styles.confirmActions}>
+								<button
+									type="button"
+									className={styles.confirmCancel}
+									onClick={() => {
+										if (saving) return;
+										setShowDisclaimerConfirm(false);
+										setDisclaimerAccepted(false);
+									}}
+									disabled={saving}
+								>
+									Cancelar
+								</button>
+								<button
+									type="button"
+									className={styles.confirmAccept}
+									onClick={handleConfirmDisclaimer}
+									disabled={!disclaimerAccepted || saving}
+								>
+									{saving ? 'Guardando…' : 'Aceptar y guardar'}
+								</button>
+							</div>
+						</div>
+					</div>,
+					document.body,
+				)}
+		</>
 	);
 }
