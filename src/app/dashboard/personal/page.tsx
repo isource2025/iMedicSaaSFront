@@ -62,10 +62,15 @@ export default function PersonalPage() {
 	const [syncResult, setSyncResult] = useState<{
 		ok: boolean;
 		personal: number;
+		personalTotal?: number;
 		passwordsEscritos?: number;
+		passwordsTotal?: number;
 		passwordsErrores?: number;
 		sectoresAsignaciones?: number;
+		sectoresAsignacionesTotal?: number;
 		vinculos?: number;
+		vinculosTotal?: number;
+		sinCambios?: boolean;
 		error?: string;
 	} | null>(null);
 	const [exportOpen, setExportOpen] = useState(false);
@@ -120,10 +125,15 @@ export default function PersonalPage() {
 			setSyncResult({
 				ok: true,
 				personal: Number(resumen.personal) || 0,
+				personalTotal: resumen.personalTotal,
 				passwordsEscritos: resumen.passwordsEscritos,
+				passwordsTotal: resumen.passwordsTotal,
 				passwordsErrores: resumen.passwordsErrores,
 				sectoresAsignaciones: resumen.sectoresAsignaciones,
+				sectoresAsignacionesTotal: resumen.sectoresAsignacionesTotal,
 				vinculos: resumen.vinculos,
+				vinculosTotal: resumen.vinculosTotal,
+				sinCambios: !!resumen.sinCambios,
 			});
 			await refreshList();
 		} catch (e) {
@@ -241,39 +251,65 @@ export default function PersonalPage() {
 						{syncResult?.ok ? (
 							<>
 								<p className={styles.syncResultLead}>
-									La nube se actualizó para login y personal SaaS.
+									{syncResult.sinCambios
+										? 'La nube ya estaba al día. No hubo cambios respecto a la base física.'
+										: 'Se aplicaron cambios desde la base física a la nube.'}
 								</p>
 								<ul className={styles.syncResultList}>
 									<li>
-										<strong>{syncResult.personal}</strong> registros de personal
-										actualizados
+										<strong>{syncResult.personal}</strong> personal con cambios
+										{syncResult.personalTotal != null && (
+											<>
+												{' '}
+												<span style={{ opacity: 0.7 }}>
+													(de {syncResult.personalTotal} revisados)
+												</span>
+											</>
+										)}
 									</li>
-									{syncResult.passwordsEscritos != null && (
-										<li>
-											<strong>{syncResult.passwordsEscritos}</strong> cuentas de
-											acceso (usuario/contraseña) listas
-										</li>
-									)}
+									<li>
+										<strong>{syncResult.passwordsEscritos ?? 0}</strong> cuentas de
+										acceso con cambios
+										{syncResult.passwordsTotal != null && (
+											<>
+												{' '}
+												<span style={{ opacity: 0.7 }}>
+													(de {syncResult.passwordsTotal} revisadas)
+												</span>
+											</>
+										)}
+									</li>
 									{syncResult.passwordsErrores != null &&
 										syncResult.passwordsErrores > 0 && (
 											<li className={styles.syncResultError}>
 												<strong>{syncResult.passwordsErrores}</strong> cuentas
-												no copiadas (revisar claves duplicadas u otros
-												conflictos)
+												no copiadas (claves duplicadas u otros conflictos)
 											</li>
 										)}
-									{syncResult.sectoresAsignaciones != null && (
-										<li>
-											<strong>{syncResult.sectoresAsignaciones}</strong>{' '}
-											asignaciones de sectores
-										</li>
-									)}
-									{syncResult.vinculos != null && (
-										<li>
-											<strong>{syncResult.vinculos}</strong> vínculos
-											usuario-empresa
-										</li>
-									)}
+									<li>
+										<strong>{syncResult.sectoresAsignaciones ?? 0}</strong>{' '}
+										asignaciones de sectores con cambios
+										{syncResult.sectoresAsignacionesTotal != null && (
+											<>
+												{' '}
+												<span style={{ opacity: 0.7 }}>
+													(total físico {syncResult.sectoresAsignacionesTotal})
+												</span>
+											</>
+										)}
+									</li>
+									<li>
+										<strong>{syncResult.vinculos ?? 0}</strong> vínculos usuario-empresa
+										nuevos
+										{syncResult.vinculosTotal != null && (
+											<>
+												{' '}
+												<span style={{ opacity: 0.7 }}>
+													(total {syncResult.vinculosTotal})
+												</span>
+											</>
+										)}
+									</li>
 								</ul>
 							</>
 						) : (

@@ -373,13 +373,17 @@ export const getSyncFisicoEstado = async (): Promise<{ disponible: boolean }> =>
 
 export type SyncFisicoResumen = {
 	personal: number;
+	personalTotal?: number;
 	passwords?: number;
 	passwordsEscritos?: number;
 	passwordsErrores?: number;
+	passwordsTotal?: number;
 	sectoresAsignaciones?: number;
+	sectoresAsignacionesTotal?: number;
 	vinculos?: number;
-	vinculosMysql?: number;
-	vinculosFisico?: number;
+	vinculosTotal?: number;
+	sinCambios?: boolean;
+	totalCambios?: number;
 };
 
 export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {
