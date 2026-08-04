@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronRight,
   ChevronLeft,
+  Warehouse,
   LucideIcon
 } from 'lucide-react'
 import styles from './Sidebar.module.css'
@@ -89,6 +90,14 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'RENDICIONES',   label: 'Rendiciones',   path: '/dashboard/billing/rendiciones' },
       { submoduloId: 'LIQUIDACIONES', label: 'Liquidaciones', path: '/dashboard/billing/liquidaciones' },
     ]
+  },
+  {
+    id: 'almacen',
+    moduloId: 'ALMACEN',
+    label: 'Almacén',
+    icon: Warehouse,
+    path: '/dashboard/almacen',
+    subItems: [],
   },
   {
     id: 'reportes', moduloId: 'REPORTES', label: 'Reportes', icon: BarChart3,

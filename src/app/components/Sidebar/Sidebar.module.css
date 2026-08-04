@@ -67,6 +67,7 @@
   gap: 2px;
   min-width: 0;
   width: 100%;
+  padding: 0 0 0 16px;
 }
 
 .userFullName {
@@ -267,7 +268,6 @@
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;        /* reducido: el acordeón ya aporta separación visual */
   flex: 1 1 auto;
   min-height: 0;   /* permite que overflow-y funcione dentro del flex */
   justify-content: flex-start;

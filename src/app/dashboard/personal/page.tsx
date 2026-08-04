@@ -62,6 +62,8 @@ export default function PersonalPage() {
 	const [syncResult, setSyncResult] = useState<{
 		ok: boolean;
 		personal: number;
+		passwordsEscritos?: number;
+		passwordsErrores?: number;
 		sectoresAsignaciones?: number;
 		vinculos?: number;
 		error?: string;
@@ -118,6 +120,8 @@ export default function PersonalPage() {
 			setSyncResult({
 				ok: true,
 				personal: Number(resumen.personal) || 0,
+				passwordsEscritos: resumen.passwordsEscritos,
+				passwordsErrores: resumen.passwordsErrores,
 				sectoresAsignaciones: resumen.sectoresAsignaciones,
 				vinculos: resumen.vinculos,
 			});
@@ -237,13 +241,27 @@ export default function PersonalPage() {
 						{syncResult?.ok ? (
 							<>
 								<p className={styles.syncResultLead}>
-									La nube se actualizó correctamente.
+									La nube se actualizó para login y personal SaaS.
 								</p>
 								<ul className={styles.syncResultList}>
 									<li>
 										<strong>{syncResult.personal}</strong> registros de personal
 										actualizados
 									</li>
+									{syncResult.passwordsEscritos != null && (
+										<li>
+											<strong>{syncResult.passwordsEscritos}</strong> cuentas de
+											acceso (usuario/contraseña) listas
+										</li>
+									)}
+									{syncResult.passwordsErrores != null &&
+										syncResult.passwordsErrores > 0 && (
+											<li className={styles.syncResultError}>
+												<strong>{syncResult.passwordsErrores}</strong> cuentas
+												no copiadas (revisar claves duplicadas u otros
+												conflictos)
+											</li>
+										)}
 									{syncResult.sectoresAsignaciones != null && (
 										<li>
 											<strong>{syncResult.sectoresAsignaciones}</strong>{' '}

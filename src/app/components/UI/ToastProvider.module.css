@@ -1,0 +1,128 @@
+/* Toasts globales — esquina superior derecha (no competir con FABs abajo) */
+
+.host {
+	position: fixed;
+	top: 1.15rem;
+	right: 1.15rem;
+	z-index: 12000;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.45rem;
+	pointer-events: none;
+	max-width: min(340px, calc(100vw - 1.5rem));
+}
+
+.toast {
+	pointer-events: auto;
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	padding: 0.55rem 0.65rem 0.55rem 0.7rem;
+	background: #0f172a;
+	color: #f8fafc;
+	border-radius: 10px;
+	box-shadow:
+		0 10px 28px rgba(15, 23, 42, 0.28),
+		0 0 0 1px rgba(255, 255, 255, 0.06);
+	font-size: 0.82rem;
+	font-weight: 500;
+	line-height: 1.35;
+	animation: toastIn 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+	max-width: 100%;
+}
+
+.dot {
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 50%;
+	margin-top: 0.4rem;
+	flex-shrink: 0;
+	background: #38bdf8;
+}
+
+.success .dot {
+	background: #22c55e;
+}
+.warning .dot {
+	background: #f59e0b;
+}
+.error .dot {
+	background: #f87171;
+}
+.info .dot {
+	background: #38bdf8;
+}
+
+.body {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+
+.title {
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	opacity: 0.85;
+}
+
+.message {
+	word-break: break-word;
+}
+
+.action {
+	border: none;
+	background: rgba(255, 255, 255, 0.12);
+	color: #fff;
+	font-size: 0.75rem;
+	font-weight: 600;
+	padding: 0.25rem 0.5rem;
+	border-radius: 6px;
+	cursor: pointer;
+	flex-shrink: 0;
+	align-self: center;
+}
+
+.action:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.close {
+	border: none;
+	background: transparent;
+	color: rgba(248, 250, 252, 0.65);
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+	padding: 0 0.15rem;
+	flex-shrink: 0;
+}
+
+.close:hover {
+	color: #fff;
+}
+
+@keyframes toastIn {
+	from {
+		opacity: 0;
+		transform: translateX(18px) translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0) translateY(0);
+	}
+}
+
+@media (max-width: 640px) {
+	.host {
+		top: 0.75rem;
+		right: 0.75rem;
+		left: 0.75rem;
+		align-items: stretch;
+		max-width: none;
+	}
+}

@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useToast } from '@/app/components/UI/ToastProvider';
 import { useAppContext } from '@/app/contexts/AppContext';
 import { authService } from '@/app/services/authService';
 import {
@@ -139,6 +139,7 @@ const MED_INICIAL = {
 
 export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = false, onClose }: Props) {
 	const { sectorSeleccionado } = useAppContext();
+	const { success: toastSuccess } = useToast();
 	const user = authService.getCurrentUser() as {
 		codigoOperador?: number | string;
 		idCodOperador?: number | string;
@@ -156,8 +157,6 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
-	const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
-	const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const [showControlForm, setShowControlForm] = useState(false);
 	const [controlForm, setControlForm] = useState(CONTROL_INICIAL);
@@ -246,17 +245,8 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = 
 			.slice(0, 25);
 	}, [medTerm, vademecum]);
 
-	useEffect(() => {
-		return () => {
-			if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-		};
-	}, []);
-
 	const flash = (msg: string) => {
-		if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-		const id = Date.now();
-		setToast({ id, message: msg });
-		toastTimerRef.current = setTimeout(() => setToast(null), 2800);
+		toastSuccess(msg, { duration: 2800 });
 	};
 
 	const guardarControl = async (e?: React.FormEvent) => {
@@ -406,24 +396,6 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = 
 			const v = e.target.value;
 			setCF(k, (v === '' ? '' : Number(v)) as never);
 		};
-
-	const toastNode =
-		toast && typeof document !== 'undefined'
-			? createPortal(
-					<div
-						key={toast.id}
-						className={styles.toast}
-						role='status'
-						aria-live='polite'
-					>
-						<span className={styles.toastIcon} aria-hidden>
-							âœ“
-						</span>
-						<span className={styles.toastText}>{toast.message}</span>
-					</div>,
-					document.body,
-				)
-			: null;
 
 	const modalBody = (
 		<div
@@ -1034,20 +1006,12 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = 
 	);
 
 	if (embedded) {
-		return (
-			<>
-				{toastNode}
-				{modalBody}
-			</>
-		);
+		return modalBody;
 	}
 
 	return (
-		<>
-			{toastNode}
-			<div className={styles.overlay} onClick={onClose}>
-				{modalBody}
-			</div>
-		</>
+		<div className={styles.overlay} onClick={onClose}>
+			{modalBody}
+		</div>
 	);
 }

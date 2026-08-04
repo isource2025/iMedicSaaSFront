@@ -371,18 +371,19 @@ export const getSyncFisicoEstado = async (): Promise<{ disponible: boolean }> =>
 	throw new Error(res.data.mensaje || 'Error al consultar sync físico');
 };
 
-export const syncDesdeFisico = async (): Promise<{
+export type SyncFisicoResumen = {
 	personal: number;
+	passwords?: number;
+	passwordsEscritos?: number;
+	passwordsErrores?: number;
 	sectoresAsignaciones?: number;
 	vinculos?: number;
-}> => {
-	const res = await apiService.post<
-		ApiResponse<{
-			personal: number;
-			sectoresAsignaciones?: number;
-			vinculos?: number;
-		}>
-	>('/personal/sync-desde-fisico', {});
+	vinculosMysql?: number;
+	vinculosFisico?: number;
+};
+
+export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {
+	const res = await apiService.post<ApiResponse<SyncFisicoResumen>>('/personal/sync-desde-fisico', {});
 	if (res.data.success && res.data.data) return res.data.data;
 	throw new Error(res.data.mensaje || 'Error al sincronizar desde base física');
 };
