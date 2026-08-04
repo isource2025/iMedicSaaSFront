@@ -383,7 +383,12 @@ export type SyncFisicoResumen = {
 };
 
 export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {
-	const res = await apiService.post<ApiResponse<SyncFisicoResumen>>('/personal/sync-desde-fisico', {});
+	// Copy de ~1000 cuentas + personal: más allá del timeout global 15s
+	const res = await apiService.post<ApiResponse<SyncFisicoResumen>>(
+		'/personal/sync-desde-fisico',
+		{},
+		{ timeout: 300000 },
+	);
 	if (res.data.success && res.data.data) return res.data.data;
 	throw new Error(res.data.mensaje || 'Error al sincronizar desde base física');
 };
