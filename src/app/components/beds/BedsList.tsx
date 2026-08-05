@@ -262,6 +262,7 @@ const BedsList = () => {
 					bedId={selectedBed.id}
 					bedSector={selectedBed.sector}
 					numeroCama={selectedBed.numeroCama || selectedBed.id}
+					clasePacienteDefault="I"
 				/>
 			)}
 		</div>

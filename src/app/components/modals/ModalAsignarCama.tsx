@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import styles from './ModalAsignarCama.module.css';
 import Loader from '../Loader/Loader';
 import visitaMovimientoService, { InternadoSinCama } from '../../services/visitaMovimientoService';
-import estadoAmbulatorioService from '../../services/estadoAmbulatorioService';
-import { EstadoAmbulatorio } from '../../types/estadoAmbulatorio.types';
+import { getClasesPaciente } from '../../services/clasePacienteService';
+import { ClasePaciente } from '../../types/clasePaciente.types';
 import { dateToClarionDate, timeToClarionTime } from '../../utils/dateUtils';
 
 interface ModalAsignarCamaProps {
@@ -15,7 +15,11 @@ interface ModalAsignarCamaProps {
   bedId: string;
   bedSector: string;
   numeroCama: string;
+  /** Valor de imClasePaciente por defecto al abrir desde internación (ej. "I"). */
+  clasePacienteDefault?: string;
 }
+
+const CLASE_INTERNADO = 'I';
 
 const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
   isOpen,
@@ -24,6 +28,7 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
   bedId,
   bedSector,
   numeroCama,
+  clasePacienteDefault = CLASE_INTERNADO,
 }) => {
   const [loading, setLoading] = useState(false);
   const [buscando, setBuscando] = useState(false);
@@ -36,8 +41,8 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
 
   const [fechaIngreso, setFechaIngreso] = useState('');
   const [horaIngreso, setHoraIngreso] = useState('');
-  const [estadoAmbulatorio, setEstadoAmbulatorio] = useState('');
-  const [estadosAmbulatorios, setEstadosAmbulatorios] = useState<EstadoAmbulatorio[]>([]);
+  const [clasePaciente, setClasePaciente] = useState(clasePacienteDefault);
+  const [clasesPaciente, setClasesPaciente] = useState<ClasePaciente[]>([]);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedRef = useRef(false);
@@ -50,23 +55,33 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
       setSeleccionado(null);
       setError(null);
       setSuccess(false);
-      setEstadoAmbulatorio('');
+      setClasePaciente(clasePacienteDefault || CLASE_INTERNADO);
       return;
     }
 
     const now = new Date();
     setFechaIngreso(now.toISOString().split('T')[0]);
     setHoraIngreso(now.toTimeString().substring(0, 5));
+    setClasePaciente(clasePacienteDefault || CLASE_INTERNADO);
 
     if (!loadedRef.current) {
       loadedRef.current = true;
-      estadoAmbulatorioService
-        .getEstadosAmbulatorios()
-        .then(setEstadosAmbulatorios)
-        .catch(() => setError('No se pudieron cargar los estados ambulatorios'));
-      buscar('');
+      getClasesPaciente()
+        .then((rows) => {
+          const list = Array.isArray(rows) ? rows : [];
+          setClasesPaciente(list);
+          const def = (clasePacienteDefault || CLASE_INTERNADO).trim().toUpperCase();
+          const match =
+            list.find((c) => String(c.Valor || '').trim().toUpperCase() === def) ||
+            list.find((c) => /INTERN/i.test(String(c.Descripcion || '')));
+          if (match?.Valor != null) {
+            setClasePaciente(String(match.Valor).trim());
+          }
+        })
+        .catch(() => setError('No se pudieron cargar las clases de paciente'));
+      void buscar('');
     }
-  }, [isOpen]);
+  }, [isOpen, clasePacienteDefault]);
 
   const buscar = async (q: string) => {
     setBuscando(true);
@@ -86,7 +101,7 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
     setTermino(value);
     setSeleccionado(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => buscar(value), 300);
+    debounceRef.current = setTimeout(() => void buscar(value), 300);
   };
 
   const handleSubmit = async () => {
@@ -98,8 +113,8 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
       setError('Fecha y hora son obligatorias');
       return;
     }
-    if (!estadoAmbulatorio) {
-      setError('Seleccione un estado ambulatorio');
+    if (!clasePaciente) {
+      setError('Seleccione la clase de paciente');
       return;
     }
 
@@ -116,7 +131,7 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
       await visitaMovimientoService.asignarPacienteACama(seleccionado.numeroVisita, {
         FechaAdmision: clarionDate,
         HoraAdmision: clarionTime,
-        EstadoAmbulatorio: estadoAmbulatorio,
+        ClasePaciente: clasePaciente,
         Diagnostico: seleccionado.diagnostico || '',
         bedId: numeroCamaSolo,
         ValorSector: bedSector,
@@ -258,20 +273,20 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
                     />
                   </div>
                   <div className={styles.formGroupFull}>
-                    <label className={styles.label} htmlFor="estadoAmb">
-                      Estado ambulatorio
+                    <label className={styles.label} htmlFor="clasePaciente">
+                      Clase paciente
                     </label>
                     <select
-                      id="estadoAmb"
+                      id="clasePaciente"
                       className={styles.select}
-                      value={estadoAmbulatorio}
-                      onChange={(e) => setEstadoAmbulatorio(e.target.value)}
+                      value={clasePaciente}
+                      onChange={(e) => setClasePaciente(e.target.value)}
                       disabled={loading}
                     >
-                      <option value="">Seleccione un estado</option>
-                      {estadosAmbulatorios.map((e) => (
-                        <option key={e.Valor} value={e.Valor || ''}>
-                          {e.Descripcion}
+                      <option value="">Seleccione una clase</option>
+                      {clasesPaciente.map((c) => (
+                        <option key={c.Valor} value={String(c.Valor || '').trim()}>
+                          {c.Descripcion}
                         </option>
                       ))}
                     </select>
@@ -289,7 +304,7 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
           <button
             type="button"
             className={styles.submitBtn}
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             disabled={loading || success || !seleccionado}
           >
             {loading ? 'Asignando...' : 'Asignar cama'}

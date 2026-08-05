@@ -137,7 +137,10 @@ const visitaMovimientoService = {
     datos: {
       FechaAdmision: number;
       HoraAdmision: number;
-      EstadoAmbulatorio: string;
+      /** Código de imClasePaciente (ej. I = INTERNADO) */
+      ClasePaciente: string;
+      /** Opcional: se conserva el de la visita si no se envía */
+      EstadoAmbulatorio?: string;
       Diagnostico?: string;
       bedId: string;
       ValorSector: string;
@@ -157,6 +160,38 @@ const visitaMovimientoService = {
       console.error('Error al asignar cama:', error);
       throw error;
     }
+  },
+
+  getMovimientosVisita: async (numeroVisita: string | number): Promise<any[]> => {
+    try {
+      const response = await apiService.get<ApiResponse>(
+        `${BASE_URL}/visita-movimientos/visita/${numeroVisita}`,
+      );
+      if (!response.data?.success) {
+        return [];
+      }
+      const data = response.data.data;
+      if (Array.isArray(data)) return data;
+      return data ? [data] : [];
+    } catch (error: any) {
+      console.error('Error al obtener movimientos de visita:', error);
+      throw error;
+    }
+  },
+
+  intercambiarCamas: async (
+    numeroVisita1: string | number,
+    numeroVisita2: string | number,
+    datos: Record<string, unknown>,
+  ): Promise<any> => {
+    const response = await apiService.post<ApiResponse>(
+      `${BASE_URL}/visita-movimientos/intercambiar/${numeroVisita1}/${numeroVisita2}`,
+      datos,
+    );
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || response.data?.mensaje || 'Error al intercambiar camas');
+    }
+    return response.data;
   },
 };
 
