@@ -1115,6 +1115,7 @@ export default function AlmacenClient() {
 														precioUnitario: '',
 														observaciones: '',
 														idArticulo: null,
+														unidadMedida: 'UNIDAD',
 													},
 												],
 											});

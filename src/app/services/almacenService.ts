@@ -21,7 +21,7 @@ import type {
 
 const base = '/almacen';
 
-async function unwrap<T>(promise: Promise<{ data: ApiResp<T> }>): Promise<T> {
+async function unwrap<T>(promise: PromiseLike<{ data: ApiResp<T> }>): Promise<T> {
 	const res = await promise;
 	if (!res.data?.success) {
 		throw new Error(res.data?.mensaje || res.data?.message || 'Error en almacén');
@@ -256,8 +256,12 @@ export const almacenService = {
 			}),
 		),
 
-	guardarRubro: (body: Partial<AlmacenRubro> & { codigo?: string; nombre?: string; idRubro?: number }) =>
-		unwrap(apiService.post<ApiResp<AlmacenRubro>>(`${base}/config/rubros`, body)),
+	guardarRubro: (body: {
+		idRubro?: number;
+		codigo?: string;
+		nombre?: string;
+		activo?: boolean;
+	}) => unwrap(apiService.post<ApiResp<AlmacenRubro>>(`${base}/config/rubros`, body)),
 
 	eliminarRubro: (id: number) =>
 		unwrap(apiService.delete<ApiResp<null>>(`${base}/config/rubros/${id}`)),

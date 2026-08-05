@@ -11,7 +11,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@types/axios": "^0.9.36",
     "@types/react-transition-group": "^4.4.12",
     "autoprefixer": "^10.4.16",
     "axion": "^0.1.0",

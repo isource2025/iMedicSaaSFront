@@ -159,7 +159,7 @@ export interface AlmacenStockRow {
 	Lote: string;
 	Cantidad: number;
 	FechaVencimiento?: string | null;
-	BajoMinimo: number;
+	BajoMinimo: number | boolean;
 	TipoCodigo?: string | null;
 	TipoNombre?: string | null;
 	Origen?: string | null;
