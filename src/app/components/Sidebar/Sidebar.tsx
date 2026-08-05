@@ -176,6 +176,8 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
     const apellido = String(currentUser?.apellido || '').trim()
     const full = [nombre, apellido].filter(Boolean).join(' ').trim()
     const nombreRed = String(currentUser?.nombreRed || '').trim()
+    // Evitar mostrar "11" (Grupo u otros códigos) como nombre
+    const fullOk = full && !/^\d+$/.test(full) ? full : ''
     const cod =
       currentUser?.idCodOperador != null && currentUser?.idCodOperador !== ''
         ? String(currentUser.idCodOperador)
@@ -184,7 +186,12 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       currentUser?.idValorpersonal != null && currentUser?.idValorpersonal !== ''
         ? String(currentUser.idValorpersonal)
         : ''
-    return { full, nombreRed, cod, vp }
+    return {
+      full: fullOk || nombreRed || (full ? full : ''),
+      nombreRed,
+      cod,
+      vp,
+    }
   }, [currentUser])
 
   /**
