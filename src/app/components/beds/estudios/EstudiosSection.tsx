@@ -7,6 +7,9 @@ import { usePermiso } from '@/app/hooks/usePermiso';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import SolicitarEstudioModal from './SolicitarEstudioModal';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './EstudiosSection.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
 
@@ -86,6 +89,29 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 		setSelected(detail || row);
 	};
 
+	const handleExport = async (option: ExportOption) => {
+		if (option === 'pdf') {
+			const empresaInfo = await obtenerInfoEmpresa();
+			exportToPDF({
+				title: 'Pedidos de estudios',
+				subtitle: `Visita: ${numeroVisita}`,
+				headers: ['Estado', 'Fecha / hora', 'Código', 'Práctica', 'Notas', 'Solicitado por'],
+				data: rows.map((r) => [
+					r.Cumplido ? 'Cumplido' : r.Tomado ? 'Tomado' : 'Pendiente',
+					formatFecha(r),
+					r.CodigoPractica ?? '—',
+					r.PracticaSolicitada || '—',
+					r.NotasObservacion || '—',
+					r.MedicoSolicitanteNombre || '—',
+				]),
+				fileName: `estudios_${numeroVisita}.pdf`,
+				orientation: 'landscape',
+				empresaInfo,
+				patientInfo: { numeroVisita: numeroVisita || undefined },
+			});
+		}
+	};
+
 	if (!numeroVisita) {
 		return <div className={styles.empty}>No hay visita seleccionada</div>;
 	}
@@ -112,6 +138,12 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 							Solicitar estudio
 						</button>
 					)}
+					<ExportButton
+						data={rows}
+						fileName={`estudios_${numeroVisita}.pdf`}
+						onExport={handleExport}
+						options={['pdf']}
+					/>
 				</div>
 			</div>
 

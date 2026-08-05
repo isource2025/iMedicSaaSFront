@@ -9,6 +9,9 @@ import {
 import { usePermiso } from '@/app/hooks/usePermiso';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
 
 type Props = {
@@ -142,6 +145,32 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 			]
 		: [];
 
+	const handleExport = async (option: ExportOption) => {
+		if (option === 'pdf') {
+			const empresaInfo = await obtenerInfoEmpresa();
+			exportToPDF({
+				title: 'Interconsultas',
+				subtitle: `Visita: ${numeroVisita}`,
+				headers: ['Fecha / hora', 'Destino', 'Motivo', 'Solicitado por', 'Estado'],
+				data: rows.map((r) => {
+					const tomado = !!r.Tomado;
+					const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
+					return [
+						formatFecha(r),
+						r.ServicioDescripcion || r.SectorReceptorNombre || r.Especialidad || '—',
+						r.Motivo || '—',
+						r.MedicoSolicitanteNombre || '—',
+						r.EstadoWorkflow || (cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente'),
+					];
+				}),
+				fileName: `interconsultas_${numeroVisita}.pdf`,
+				orientation: 'landscape',
+				empresaInfo,
+				patientInfo: { numeroVisita: numeroVisita || undefined },
+			});
+		}
+	};
+
 	return (
 		<div className={styles.wrap}>
 			<div className={styles.header}>
@@ -152,11 +181,19 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 						de pedidos.
 					</p>
 				</div>
-				{canCreate && (
-					<button type="button" className={styles.primaryBtn} onClick={() => setShowForm((v) => !v)}>
-						{showForm ? 'Cancelar' : 'Nueva solicitud'}
-					</button>
-				)}
+				<div className={styles.headerActions}>
+					{canCreate && (
+						<button type="button" className={styles.primaryBtn} onClick={() => setShowForm((v) => !v)}>
+							{showForm ? 'Cancelar' : 'Nueva solicitud'}
+						</button>
+					)}
+					<ExportButton
+						data={rows}
+						fileName={`interconsultas_${numeroVisita}.pdf`}
+						onExport={handleExport}
+						options={['pdf']}
+					/>
+				</div>
 			</div>
 
 			{showForm && canCreate && (

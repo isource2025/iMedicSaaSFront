@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import s from './PatientMiniHeader.module.css';
 import Loader from '../../Loader/Loader';
 import { FiCalendar, FiClock } from 'react-icons/fi';
@@ -51,6 +51,10 @@ function snapshotToData(
 	};
 }
 
+/**
+ * Cabecera compacta del paciente.
+ * Una sola carga por visita (ref) para no saturar /beds + /visitas.
+ */
 export default function PatientMiniHeader({
 	numeroVisita,
 	burgerButton,
@@ -63,6 +67,7 @@ export default function PatientMiniHeader({
 
 	const [pacienteData, setPacienteData] = useState<PacienteData | null>(fromProps);
 	const [loading, setLoading] = useState(!fromProps);
+	const cargadoRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (fromProps) {
@@ -73,43 +78,93 @@ export default function PatientMiniHeader({
 
 	const cargarDatosPaciente = useCallback(async () => {
 		if (!numeroVisita || fromProps) return;
+		const key = String(numeroVisita);
+		if (cargadoRef.current === key) return;
+		cargadoRef.current = key;
 
 		setLoading(true);
 		try {
-			const res = await apiFetch('/beds');
-			if (!res.ok) throw new Error('Error al obtener información del paciente');
-
-			const data = await res.json();
-			if (!data.success) throw new Error(data.message || 'Error al obtener datos');
-
-			const cama = (data.data || []).find(
-				(c: { NumeroVisita?: number | string }) =>
-					String(c.NumeroVisita) === String(numeroVisita),
-			);
-
-			if (cama) {
-				setPacienteData({
-					numeroVisita: String(numeroVisita),
-					apellidoYNombre: cama.NombrePaciente || 'N/A',
-					numeroDocumento: cama.DocumentoPaciente || 'N/A',
-					sexo: cama.SexoPaciente || '',
-					valorSector: cama.ValorSector || 'N/A',
-					valorHabitacionCama: cama.ValorHabitacionCama || 'N/A',
-					coberturaSocial: cama.RazonSocialCliente || 'N/A',
-					fechaAdmisionS: '',
-					fechaIngresoSQL: String(cama.fechaIngresoSQL || ''),
-					horaIngresoSQL: String(cama.horaIngresoSQL || ''),
-				});
+			const visitaResponse = await apiFetch(`/patients/visitas/${numeroVisita}`);
+			let visitaData: any = null;
+			if (visitaResponse.ok) {
+				const visitaResult = await visitaResponse.json();
+				if (visitaResult.success) {
+					visitaData = visitaResult.data;
+				}
 			}
-		} catch (err) {
+
+			const res = await apiFetch('/beds');
+			let cama: any = null;
+			if (res.ok) {
+				const data = await res.json();
+				if (data.success) {
+					cama = data.data.find(
+						(c: any) => String(c.NumeroVisita) === String(numeroVisita),
+					);
+				}
+			}
+
+			const pd: PacienteData = {
+				numeroVisita: key,
+				apellidoYNombre:
+					cama?.NombrePaciente ||
+					visitaData?.nombrePaciente ||
+					visitaData?.apellidoYNombre ||
+					visitaData?.ApellidoYNombre ||
+					'Paciente',
+				numeroDocumento:
+					cama?.DocumentoPaciente ||
+					visitaData?.numeroDocumento ||
+					visitaData?.NumeroDocumento ||
+					'N/A',
+				sexo: cama?.SexoPaciente || visitaData?.sexo || visitaData?.Sexo || '',
+				valorSector:
+					cama?.ValorSector ||
+					visitaData?.valorSector ||
+					visitaData?.VALORSECTOR ||
+					'N/A',
+				valorHabitacionCama:
+					cama?.ValorHabitacionCama ||
+					visitaData?.habitacionCama ||
+					visitaData?.valorHabitacionCama ||
+					visitaData?.VALORHABITACIONCAMA ||
+					'N/A',
+				coberturaSocial:
+					cama?.RazonSocialCliente ||
+					visitaData?.coberturaSocial ||
+					'N/A',
+				fechaAdmisionS:
+					visitaData?.fechaAdmisionS ||
+					visitaData?.FECHAADMISIONS ||
+					'',
+				fechaIngresoSQL: String(cama?.fechaIngresoSQL || visitaData?.fechaIngresoSQL || ''),
+				horaIngresoSQL: String(cama?.horaIngresoSQL || visitaData?.horaIngresoSQL || ''),
+			};
+
+			setPacienteData(pd);
+		} catch (err: any) {
 			console.error('Error cargando datos del paciente:', err);
+			setPacienteData({
+				numeroVisita: key,
+				apellidoYNombre: 'Paciente',
+				numeroDocumento: 'N/A',
+				sexo: '',
+				valorSector: 'N/A',
+				valorHabitacionCama: 'N/A',
+				coberturaSocial: 'N/A',
+				fechaAdmisionS: '',
+				fechaIngresoSQL: '',
+				horaIngresoSQL: '',
+			});
 		} finally {
 			setLoading(false);
 		}
 	}, [numeroVisita, fromProps]);
 
 	useEffect(() => {
-		if (!fromProps) cargarDatosPaciente();
+		if (fromProps) return;
+		cargadoRef.current = null;
+		cargarDatosPaciente();
 	}, [cargarDatosPaciente, fromProps]);
 
 	const renderGenderIcon = () => {

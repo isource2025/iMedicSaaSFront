@@ -28,6 +28,7 @@ import BedFloatingActions from './BedFloatingActions';
 import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
 import { bedToHeaderSnapshot } from '../../utils/bedHeader';
+import AdmissionVisitExportModal from '../admission/AdmissionVisitExportModal';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -40,29 +41,41 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
 	const [showNursingModal, setShowNursingModal] = useState(false);
 	const [showLabModal, setShowLabModal] = useState(false);
+	const [showExportAll, setShowExportAll] = useState(false);
 
 	// Usar el context para filtros y navegación
 	const { activeSection, selectedDate, setSelectedDate, navigateToSection } = useBedDetail();
 	const headerSnapshot = bedToHeaderSnapshot(bed);
-	const numeroVisita = bed?.NumeroVisita ?? bed?.numeroVisita ?? '';
+	const numeroVisita = bed?.NumeroVisita ?? bed?.numeroVisita ?? null;
 
 	return (
 		<div className={styles.root}>
 			{/* ====== HEADER (arriba de todo) ====== */}
 			<header className={styles.header}>
-				<PatientMiniHeader
-					numeroVisita={numeroVisita}
-					header={headerSnapshot}
-					burgerButton={
+				<div className={styles.headerRow}>
+					<PatientMiniHeader
+						numeroVisita={numeroVisita ?? ''}
+						header={headerSnapshot}
+						burgerButton={
+							<button
+								className={styles.burger}
+								onClick={() => setDrawerOpen(true)}
+								aria-label='Abrir menú'
+							>
+								<span className={styles.chevronIcon}>›</span>
+							</button>
+						}
+					/>
+					{numeroVisita ? (
 						<button
-							className={styles.burger}
-							onClick={() => setDrawerOpen(true)}
-							aria-label='Abrir menú'
+							type="button"
+							className={styles.exportDetailBtn}
+							onClick={() => setShowExportAll(true)}
 						>
-							<span className={styles.chevronIcon}>›</span>
+							Exportar detalle…
 						</button>
-					}
-				/>
+					) : null}
+				</div>
 			</header>
 
 			{/* ====== MAIN CONTENT (sidebar + body) ====== */}
@@ -294,6 +307,14 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					onClose={() => setShowLabModal(false)}
 					numeroVisita={Number(bed.NumeroVisita || bed.numeroVisita)}
 					header={headerSnapshot}
+				/>
+			) : null}
+
+			{numeroVisita ? (
+				<AdmissionVisitExportModal
+					isOpen={showExportAll}
+					onClose={() => setShowExportAll(false)}
+					numeroVisita={numeroVisita}
 				/>
 			) : null}
 

@@ -1,0 +1,140 @@
+.page {
+	padding: 1.25rem 1.5rem 2rem;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.25rem;
+}
+
+.header h1 {
+	margin: 0;
+	font-size: 1.45rem;
+	color: #0f172a;
+}
+
+.header p {
+	margin: 0.25rem 0 0;
+	color: #64748b;
+	font-size: 0.92rem;
+}
+
+.search,
+.input {
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	padding: 0.5rem 0.7rem;
+	font: inherit;
+	min-width: 0;
+	background: #fff;
+}
+
+.search {
+	min-width: 240px;
+}
+
+.formCard {
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 1rem;
+	margin-bottom: 1.25rem;
+	background: #f8fafc;
+}
+
+.formCard h2 {
+	margin: 0 0 0.75rem;
+	font-size: 1rem;
+	color: #0f172a;
+}
+
+.formRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+}
+
+.formRow .input {
+	flex: 1 1 160px;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.table th,
+.table td {
+	padding: 0.65rem 0.75rem;
+	border-bottom: 1px solid #e2e8f0;
+	text-align: left;
+	font-size: 0.9rem;
+}
+
+.table th {
+	background: #f1f5f9;
+	color: #334155;
+	font-weight: 600;
+}
+
+.table code {
+	font-size: 0.85rem;
+	background: #f1f5f9;
+	padding: 0.1rem 0.35rem;
+	border-radius: 4px;
+}
+
+.actions {
+	display: flex;
+	gap: 0.4rem;
+	justify-content: flex-end;
+	white-space: nowrap;
+}
+
+.btnPrimary,
+.btnGhost {
+	border-radius: 8px;
+	padding: 0.4rem 0.75rem;
+	font: inherit;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.btnPrimary {
+	background: #0083a9;
+	color: #fff;
+	border: 1px solid #0083a9;
+}
+
+.btnPrimary:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.btnGhost {
+	background: transparent;
+	border: 1px solid #cbd5e1;
+	color: #334155;
+}
+
+.error {
+	color: #b91c1c;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 8px;
+	padding: 0.6rem 0.8rem;
+	margin-bottom: 1rem;
+}
+
+.muted {
+	color: #64748b;
+}

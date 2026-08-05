@@ -83,16 +83,21 @@ function getEvolucionService(raw: Record<string, unknown>): { key: string; label
 interface AdmissionVisitExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  numeroVisita: number | null;
+  /** Export individual de una visita. */
+  numeroVisita?: number | null;
+  /** Export general de carpeta (todas las visitas del paciente). */
+  idPaciente?: number | null;
   evolucionesMedicas?: Record<string, unknown>[];
 }
 
 export default function AdmissionVisitExportModal({
   isOpen,
   onClose,
-  numeroVisita,
+  numeroVisita = null,
+  idPaciente = null,
   evolucionesMedicas,
 }: AdmissionVisitExportModalProps) {
+  const modeGeneral = idPaciente != null && Number(idPaciente) > 0 && !(numeroVisita != null && Number(numeroVisita) > 0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<Record<ExportSectionKey, boolean>>(defaultSelection);
   const [exportAll, setExportAll] = useState(true);
@@ -203,7 +208,10 @@ export default function AdmissionVisitExportModal({
   };
 
   const runExport = async () => {
-    if (!numeroVisita) return;
+    const nv = numeroVisita != null ? Number(numeroVisita) : 0;
+    const idp = idPaciente != null ? Number(idPaciente) : 0;
+    if (!modeGeneral && !(nv > 0)) return;
+    if (modeGeneral && !(idp > 0)) return;
     if (selectedList.length === 0) {
       setError('Marcá al menos un tipo de dato.');
       return;
@@ -233,11 +241,15 @@ export default function AdmissionVisitExportModal({
         fechaFin: exportAll ? '' : fechaFin.trim(),
         ...(selection.evoluciones && subsetServices ? { evolucionServicioIds: picked } : {}),
       };
-      const blob = await admissionSearchService.exportSelectivo(numeroVisita, body);
+      const blob = modeGeneral
+        ? await admissionSearchService.exportGeneralPaciente(idp, body)
+        : await admissionSearchService.exportSelectivo(nv, body);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `visita_${numeroVisita}_export.pdf`;
+      a.download = modeGeneral
+        ? `paciente_${idp}_carpeta.pdf`
+        : `visita_${nv}_export.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -260,7 +272,9 @@ export default function AdmissionVisitExportModal({
       <div className={styles.dialog} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="export-visita-title">
         <div className={styles.header}>
           <h2 id="export-visita-title" className={styles.title}>
-            Exportar visita {numeroVisita != null ? `#${numeroVisita}` : ''}
+            {modeGeneral
+              ? 'Exportar carpeta (todas las visitas)'
+              : `Exportar visita ${numeroVisita != null ? `#${numeroVisita}` : ''}`}
           </h2>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
             ✕
@@ -397,7 +411,7 @@ export default function AdmissionVisitExportModal({
               type="button"
               className={styles.btnPrimary}
               onClick={() => void runExport()}
-              disabled={busy || !numeroVisita}
+              disabled={busy || (!modeGeneral && !(numeroVisita != null && Number(numeroVisita) > 0))}
             >
               {busy ? 'Generando…' : 'Descargar PDF'}
             </button>

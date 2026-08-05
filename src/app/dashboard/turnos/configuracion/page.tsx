@@ -6,15 +6,17 @@ import { usePermiso } from '@/app/hooks/usePermiso';
 import TurneroConfigPanel from '@/app/components/Turnero/TurneroConfigPanel';
 import BotConfigPanel from '@/app/components/Bot/BotConfigPanel';
 import AgendaTab from '@/app/components/Personal/AgendaTab/AgendaTab';
+import AgendaRecursoTab from '@/app/components/Agenda/AgendaRecursoTab';
 import { agendaService } from '@/app/services/agendaService';
 import styles from '../agenda/agenda.module.css';
 import tabStyles from './configuracion.module.css';
 
-type TabId = 'turnero' | 'horarios' | 'bot';
+type TabId = 'turnero' | 'horarios' | 'recursos' | 'bot';
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
 	{ id: 'turnero', label: 'Pantalla turnero', icon: '📺' },
 	{ id: 'horarios', label: 'Horarios agenda', icon: '📅' },
+	{ id: 'recursos', label: 'Sector / servicio', icon: '🏥' },
 	{ id: 'bot', label: 'Bot WhatsApp', icon: '💬' },
 ];
 
@@ -34,6 +36,11 @@ function ConfiguracionTurnosContent() {
 		{ matricula: number; nombre: string }[]
 	>([]);
 	const [matriculaSel, setMatriculaSel] = useState<number | null>(null);
+	const [recursoTipo, setRecursoTipo] = useState<'SECTOR' | 'SERVICIO'>('SECTOR');
+	const [recursoValor, setRecursoValor] = useState('');
+	const [recursosExistentes, setRecursosExistentes] = useState<
+		{ tipo: string; valor: string; nombre: string }[]
+	>([]);
 
 	const setTabAndUrl = (next: TabId) => {
 		setTab(next);
@@ -56,6 +63,12 @@ function ConfiguracionTurnosContent() {
 
 	useEffect(() => {
 		if (tab === 'horarios') void cargarProfesionales();
+		if (tab === 'recursos') {
+			void agendaService
+				.getRecursosAgenda({ todos: true })
+				.then(setRecursosExistentes)
+				.catch(() => setRecursosExistentes([]));
+		}
 	}, [tab, cargarProfesionales]);
 
 	useEffect(() => {
@@ -133,6 +146,48 @@ function ConfiguracionTurnosContent() {
 										</p>
 									</div>
 									<AgendaTab matricula={matriculaSel} />
+								</div>
+							)}
+							{tab === 'recursos' && (
+								<div className={tabStyles.horariosWrap}>
+									<div className={tabStyles.horariosToolbar}>
+										<label className={tabStyles.horariosLabel}>
+											Tipo
+											<select
+												className={tabStyles.horariosSelect}
+												value={recursoTipo}
+												onChange={(e) =>
+													setRecursoTipo(e.target.value as 'SECTOR' | 'SERVICIO')
+												}
+											>
+												<option value="SECTOR">Sector</option>
+												<option value="SERVICIO">Servicio</option>
+											</select>
+										</label>
+										<label className={tabStyles.horariosLabel}>
+											Código
+											<input
+												className={tabStyles.horariosSelect}
+												value={recursoValor}
+												onChange={(e) => setRecursoValor(e.target.value)}
+												placeholder="Ej. UTI / CAR"
+												list="recursos-existentes"
+											/>
+											<datalist id="recursos-existentes">
+												{recursosExistentes.map((r) => (
+													<option
+														key={`${r.tipo}-${r.valor}`}
+														value={r.valor}
+													>{`${r.nombre}`}</option>
+												))}
+											</datalist>
+										</label>
+										<p className={tabStyles.horariosHint}>
+											Misma mecánica que la agenda del profesional. Los médicos con ese
+											sector/servicio asignado la ven automáticamente y pueden atender turnos.
+										</p>
+									</div>
+									<AgendaRecursoTab tipo={recursoTipo} valor={recursoValor} />
 								</div>
 							)}
 						</div>

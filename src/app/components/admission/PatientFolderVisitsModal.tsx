@@ -64,6 +64,7 @@ export default function PatientFolderVisitsModal({
 	const [loadingDetail, setLoadingDetail] = useState<number | null>(null);
 	const [detailError, setDetailError] = useState('');
 	const [exportVisita, setExportVisita] = useState<number | null>(null);
+	const [exportGeneral, setExportGeneral] = useState(false);
 
 	const resetState = useCallback(() => {
 		setMainTab('visitas');
@@ -75,6 +76,7 @@ export default function PatientFolderVisitsModal({
 		setLoadingDetail(null);
 		setDetailError('');
 		setExportVisita(null);
+		setExportGeneral(false);
 	}, []);
 
 	useEffect(() => {
@@ -191,6 +193,15 @@ export default function PatientFolderVisitsModal({
 				<span>
 					DNI {patient.NumeroDocumento || '—'} · HC {patient.NumeroHC || '—'}
 				</span>
+				{mainTab === 'visitas' && visits.length > 0 ? (
+					<button
+						type="button"
+						className={styles.exportGeneralBtn}
+						onClick={() => setExportGeneral(true)}
+					>
+						Exportar carpeta…
+					</button>
+				) : null}
 			</div>
 
 			<div className={styles.mainTabs} role="tablist" aria-label="Secciones de carpeta">
@@ -247,6 +258,39 @@ export default function PatientFolderVisitsModal({
 											{tipoAtencion(visit)}
 										</span>
 									</div>
+									{(visit.DiagnosticoDescripcion ||
+										visit.Diagnostico ||
+										visit.ServicioEgresoDescripcion ||
+										(visit.DiasInternacion != null && Number(visit.DiasInternacion) > 0)) && (
+										<div className={styles.visitPrincipalInfo}>
+											{visit.DiagnosticoDescripcion || visit.Diagnostico ? (
+												<p className={styles.visitDx}>
+													<span className={styles.visitInfoLabel}>Diagnóstico</span>
+													{visit.DiagnosticoDescripcion || visit.Diagnostico}
+												</p>
+											) : null}
+											{visit.ServicioEgresoDescripcion &&
+											String(visit.ServicioEgresoDescripcion).trim() !== '0' ? (
+												<p className={styles.visitSvc}>
+													<span className={styles.visitInfoLabel}>
+														{tipoAtencion(visit) === 'Internado'
+															? 'Servicio / sector'
+															: 'Servicio al egreso'}
+													</span>
+													{visit.ServicioEgresoDescripcion}
+												</p>
+											) : null}
+											{tipoAtencion(visit) === 'Internado' &&
+											visit.DiasInternacion != null &&
+											Number(visit.DiasInternacion) > 0 ? (
+												<p className={styles.visitSvc}>
+													<span className={styles.visitInfoLabel}>Días de internación</span>
+													{Number(visit.DiasInternacion)}{' '}
+													{Number(visit.DiasInternacion) === 1 ? 'día' : 'días'}
+												</p>
+											) : null}
+										</div>
+									)}
 									<VisitClinicalBadges
 										row={visit}
 										activeKind={isExpandedHere ? expandedBadge?.kind : undefined}
@@ -329,6 +373,13 @@ export default function PatientFolderVisitsModal({
 				onClose={() => setExportVisita(null)}
 				numeroVisita={exportVisita}
 				evolucionesMedicas={detailCache[exportVisita]?.evolucionesMedicas}
+			/>
+		) : null}
+		{exportGeneral ? (
+			<AdmissionVisitExportModal
+				isOpen
+				onClose={() => setExportGeneral(false)}
+				idPaciente={patient.IdPaciente}
 			/>
 		) : null}
 		</>

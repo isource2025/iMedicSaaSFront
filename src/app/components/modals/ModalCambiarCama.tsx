@@ -75,7 +75,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   } | null>(null);
   const [loadingUbicacion, setLoadingUbicacion] = useState(false);
   
-  // Usar el hook de gestión de camas
+  // Sin auto-refresh: el grid padre ya hace polling; otro intervalo satura /api/beds
   const {
     allBeds,
     bedStates,
@@ -97,10 +97,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   // Estado para la cama seleccionada
   const [camaSeleccionada, setCamaSeleccionada] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
-  
-  // Estado para la fecha y hora actual
-  const [fechaActual, setFechaActual] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [horaActual, setHoraActual] = useState<string>(new Date().toTimeString().substring(0, 5));
+  const ubicacionCargadaRef = useRef<number | null>(null);
   
   // Estado para la información completa del traslado
   const [infoTraslado, setInfoTraslado] = useState<{
@@ -148,59 +145,78 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     diagnostico?: string;
   }>({});
 
-  // Inicializar fecha y hora cuando se abre el modal o cuando se monta el componente
-  useEffect(() => {
-    const setCurrentDateTime = () => {
-      const now = new Date();
-      const formattedDate = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-      const formattedTime = now.toTimeString().substring(0, 5); // Formato HH:MM
-      setFechaEgreso(formattedDate);
-      setHoraEgreso(formattedTime);
-      
-      // Actualizar la información de traslado con fecha y hora
-      setInfoTraslado(prev => ({
-        ...prev,
-        fechaTraslado: formattedDate,
-        horaTraslado: formattedTime
-      }));
-    };
+  // Ubicación desde props de la cama (siempre disponible; no depende de la API)
+  const aplicarUbicacionDesdeProps = () => {
+    setUbicacionActual({
+      numeroVisita,
+      bedId,
+      sector: bedSector || sectorInfo?.valor || 'No disponible',
+      numeroCama: bedId || 'No disponible',
+    });
+  };
 
-    // Establecer fecha y hora actual al abrir el modal
-    if (isOpen) {
-      setCurrentDateTime();
-      refreshBeds(); // Actualizar las camas cuando se abre el modal
-      setLastUpdateTime(Date.now());
-      
-      // Cargar datos de ubicación actual
-      if (numeroVisita) {
-        cargarUbicacionActual(numeroVisita);
-      }
-    }
-  }, [isOpen, refreshBeds, numeroVisita]);
-
-  // Función para cargar la ubicación actual del paciente
-  const cargarUbicacionActual = async (numeroVisita: number) => {
+  const cargarUbicacionActual = async (nv: number) => {
+    if (ubicacionCargadaRef.current === nv) return;
+    ubicacionCargadaRef.current = nv;
     setLoadingUbicacion(true);
     try {
-      const movimiento = await visitaMovimientoService.getUltimoMovimiento(numeroVisita);
-      console.log('Movimiento actual:', movimiento);
+      const movimiento = await visitaMovimientoService.getUltimoMovimiento(nv);
       if (movimiento) {
-        // Buscar la cama en allBeds para obtener el sector y número
-        const camaActual = movimiento.bedId ? allBeds.find(bed => bed.id === movimiento.bedId) : null;
-        
+        const bedKey = movimiento.bedId || movimiento.ValorHabitacionCama || bedId;
+        const camaActual = bedKey
+          ? allBeds.find(
+              (bed) =>
+                bed.id === bedKey ||
+                bed.numeroCama === bedKey ||
+                bed.id === `${movimiento.ValorSector || bedSector}-${bedKey}`,
+            )
+          : null;
+
         setUbicacionActual({
           ...movimiento,
-          sector: camaActual?.sector || 'No disponible',
-          numeroCama: camaActual?.numeroCama || 'No disponible'
+          bedId: bedKey,
+          sector: camaActual?.sector || movimiento.ValorSector || bedSector || 'No disponible',
+          numeroCama: camaActual?.numeroCama || bedKey || bedId || 'No disponible',
         });
+      } else {
+        aplicarUbicacionDesdeProps();
       }
-      console.log('Ubicación actual:', ubicacionActual);
     } catch (error) {
       console.error('Error al cargar ubicación actual:', error);
+      aplicarUbicacionDesdeProps();
     } finally {
       setLoadingUbicacion(false);
     }
   };
+
+  // Inicializar al abrir (una sola carga de camas + ubicación)
+  useEffect(() => {
+    if (!isOpen) {
+      ubicacionCargadaRef.current = null;
+      return;
+    }
+
+    const now = new Date();
+    const formattedDate = now.toISOString().split('T')[0];
+    const formattedTime = now.toTimeString().substring(0, 5);
+    setFechaEgreso(formattedDate);
+    setHoraEgreso(formattedTime);
+    setInfoTraslado((prev) => ({
+      ...prev,
+      numeroVisita,
+      camaOrigen: bedId,
+      sectorOrigen: bedSector,
+      fechaTraslado: formattedDate,
+      horaTraslado: formattedTime,
+    }));
+    aplicarUbicacionDesdeProps();
+    refreshBeds();
+    setLastUpdateTime(Date.now());
+    if (numeroVisita) {
+      cargarUbicacionActual(numeroVisita);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, numeroVisita, bedId, bedSector]);
 
   
   

@@ -290,8 +290,10 @@ export default function AdmissionVisitDetailContent({
           const ind = raw as Record<string, unknown>;
           const nro = str(ind.nroIndicacion ?? ind.NroIndicacion ?? idx);
           const desc = str(ind.descripcion ?? ind.DescripcionIndicacion);
-          const med = str(ind.medicamento ?? ind.AliasMedicamento);
+          const med = str(ind.medicamento ?? ind.AliasMedicamento ?? ind.descripcion);
           const obs = str(ind.observaciones ?? ind.Observaciones);
+          const ultima = str(ind.ultimaAplicacion ?? ind.UltimaAplicacion);
+          const proxima = str(ind.proximaAplicacion ?? ind.ProximaAplicacion);
           return (
             <div key={nro} className={styles.listItem}>
               <p className={styles.listItemTitle}>
@@ -299,7 +301,14 @@ export default function AdmissionVisitDetailContent({
                 {desc ? ` — ${desc}` : ''}
               </p>
               <p className={styles.plainText}>
-                {[med && `Medicamento: ${med}`, str(ind.frecuencia ?? ind.Frecuencia) && `Frecuencia: ${str(ind.frecuencia ?? ind.Frecuencia)}`, obs && `Obs.: ${obs}`]
+                {[
+                  med && `Medicamento: ${med}`,
+                  ultima && `Aplicación: ${ultima}`,
+                  proxima && `Próxima: ${proxima}`,
+                  str(ind.frecuencia ?? ind.Frecuencia) &&
+                    `Frecuencia: ${str(ind.frecuencia ?? ind.Frecuencia)}`,
+                  obs && `Obs.: ${obs}`,
+                ]
                   .filter(Boolean)
                   .join(' · ')}
               </p>

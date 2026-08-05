@@ -112,47 +112,53 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
     };
   }, []);
 
-  // Buscar diagnósticos al escribir
+  // Buscar diagnósticos al escribir (debounce 300ms)
   useEffect(() => {
-    const buscarDiagnosticosAutomatico = async () => {
-      if (busquedaDiagnostico.length >= 1) {
-        setBuscandoDiagnostico(true);
-        setErrorDiagnostico(null);
-        
-        try {
-          const resultados: DiagnosticoCie10[] = await diagnosticosService.buscarDiagnosticosCie10(busquedaDiagnostico);
-          
-          // Verificar que cada diagnóstico tenga el código OMS
-          const resultadosValidos = resultados.map(diag => {
-            // Si no tiene CodigoOMS pero tiene otro campo que podría contenerlo
+    if (diagnosticoSeleccionado) return;
+
+    const termino = busquedaDiagnostico.trim();
+    if (termino.length < 1) {
+      setDiagnosticosEncontrados([]);
+      setMostrarResultados(false);
+      setBuscandoDiagnostico(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = setTimeout(async () => {
+      setBuscandoDiagnostico(true);
+      setErrorDiagnostico(null);
+      setMostrarResultados(true);
+
+      try {
+        const resultados = await diagnosticosService.buscarDiagnosticosCie10(termino);
+        if (cancelled) return;
+
+        const resultadosValidos = resultados
+          .map((diag) => {
             if (!diag.CodigoOMS && (diag as any).codigoCie10) {
-              return {
-                ...diag,
-                CodigoOMS: (diag as any).codigoCie10
-              };
+              return { ...diag, CodigoOMS: (diag as any).codigoCie10 };
             }
             return diag;
-          }).filter(diag => diag.CodigoOMS || diag.idDiagnostico);
-          
-          console.log('Diagnósticos encontrados:', resultadosValidos);
-          setDiagnosticosEncontrados(resultadosValidos);
-          setMostrarResultados(resultadosValidos.length > 0);
-          
-        } catch (err) {
-          console.error('Error al buscar diagnósticos:', err);
-          setErrorDiagnostico('Error al buscar diagnósticos');
-        } finally {
-          setBuscandoDiagnostico(false);
-        }
-      } else {
+          })
+          .filter((diag) => diag.CodigoOMS || diag.idDiagnostico);
+
+        setDiagnosticosEncontrados(resultadosValidos);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Error al buscar diagnósticos:', err);
+        setErrorDiagnostico('Error al buscar diagnósticos');
         setDiagnosticosEncontrados([]);
-        setMostrarResultados(false);
+      } finally {
+        if (!cancelled) setBuscandoDiagnostico(false);
       }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
     };
-    
-    const timeoutId = setTimeout(buscarDiagnosticosAutomatico, 300);
-    return () => clearTimeout(timeoutId);
-  }, [busquedaDiagnostico]);
+  }, [busquedaDiagnostico, diagnosticoSeleccionado]);
 
   // Funciones para manejo de diagnósticos
   const abrirModalBusqueda = () => {
@@ -164,7 +170,6 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
   };
 
   const seleccionarDiagnostico = (diagnostico: DiagnosticoCie10) => {
-    // Verificar que el diagnóstico tenga todos los datos necesarios
     if (!diagnostico.CodigoOMS) {
       console.error("Error: El diagnóstico seleccionado no tiene código OMS", diagnostico);
       setErrorDiagnostico("El diagnóstico seleccionado no tiene un código válido");
@@ -172,23 +177,36 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
     }
     
     setDiagnosticoSeleccionado(diagnostico);
-    console.log("Diagnostico seleccionado", diagnostico);
-    
-    // Mostrar código y descripción en el campo de búsqueda
     setBusquedaDiagnostico(`${diagnostico.CodigoOMS} - ${diagnostico.descripcion}`);
     setMostrarResultados(false);
-    setModalBusquedaAbierto(false); // Cerrar el modal de búsqueda si está abierto
+    setModalBusquedaAbierto(false);
   };
 
   const eliminarDiagnosticoSeleccionado = () => {
     setDiagnosticoSeleccionado(null);
     setBusquedaDiagnostico('');
+    setDiagnosticosEncontrados([]);
+    setMostrarResultados(false);
+  };
+
+  const handleBusquedaChange = (value: string) => {
+    if (diagnosticoSeleccionado) {
+      setDiagnosticoSeleccionado(null);
+    }
+    setBusquedaDiagnostico(value);
   };
 
   const handleBusquedaKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      abrirModalBusqueda();
+      if (diagnosticosEncontrados.length === 1) {
+        seleccionarDiagnostico(diagnosticosEncontrados[0]);
+      } else {
+        abrirModalBusqueda();
+      }
+    }
+    if (e.key === 'Escape') {
+      setMostrarResultados(false);
     }
   };
 
@@ -383,12 +401,18 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                       id="diagnosticoEgreso"
                       type="text"
                       value={busquedaDiagnostico}
-                      onChange={(e) => setBusquedaDiagnostico(e.target.value)}
+                      onChange={(e) => handleBusquedaChange(e.target.value)}
                       onKeyDown={handleBusquedaKeyDown}
-                      disabled={loading || success || !!diagnosticoSeleccionado}
+                      onFocus={() => {
+                        if (!diagnosticoSeleccionado && busquedaDiagnostico.trim().length >= 1) {
+                          setMostrarResultados(true);
+                        }
+                      }}
+                      disabled={loading || success}
                       placeholder="Buscar por código o descripción"
                       className={styles.input}
                       ref={busquedaInputRef}
+                      autoComplete="off"
                     />
                     <button
                       type="button"
@@ -408,20 +432,27 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                     <span className={styles.fieldError}>{errorDiagnostico}</span>
                   )}
                   
-                  {mostrarResultados && diagnosticosEncontrados.length > 0 && !diagnosticoSeleccionado && (
-                    <div className={styles.resultadosDiagnosticosUp} ref={resultadosRef}>
+                  {mostrarResultados && !diagnosticoSeleccionado && (
+                    <div className={styles.resultadosDiagnosticos} ref={resultadosRef}>
                       {buscandoDiagnostico ? (
                         <div className={styles.loadingResults}>Buscando...</div>
-                      ) : (
+                      ) : diagnosticosEncontrados.length > 0 ? (
                         diagnosticosEncontrados.map((diag) => (
                           <div 
-                            key={diag.idDiagnostico} 
+                            key={diag.idDiagnostico || diag.CodigoOMS} 
                             className={styles.resultadoDiagnostico}
-                            onClick={() => seleccionarDiagnostico(diag)}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              seleccionarDiagnostico(diag);
+                            }}
                           >
                             <span className={styles.diagnosticoCode}>{diag.CodigoOMS}</span> - {diag.descripcion}
                           </div>
                         ))
+                      ) : (
+                        <div className={styles.loadingResults}>
+                          Sin resultados para &quot;{busquedaDiagnostico.trim()}&quot;
+                        </div>
                       )}
                     </div>
                   )}
@@ -444,7 +475,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                   
                   {!diagnosticoSeleccionado && (
                     <span className={styles.fieldInfo}>
-                      Busque por código o descripción del diagnóstico CIE-10
+                      Escriba para buscar automáticamente por código o descripción CIE-10
                     </span>
                   )}
                 </div>

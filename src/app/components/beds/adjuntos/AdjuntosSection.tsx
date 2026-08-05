@@ -7,6 +7,9 @@ import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './AdjuntosSection.module.css';
 import Loader from '../../Loader/Loader';
 import { useBedDetail } from '../contexts/BedDetailContext';
@@ -153,6 +156,41 @@ export default function AdjuntosSection({
     }
   };
 
+  const handleExport = async (option: ExportOption) => {
+    if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
+      exportToPDF({
+        title: 'Archivos Adjuntos',
+        subtitle: `Visita: ${numeroVisita}`,
+        headers: ['Nombre', 'Tipo', 'Fecha'],
+        data: adjuntos.map((a) => [
+          a.NombreArchivo || '—',
+          a.TipoImagenNombre || a.TipoArchivo || a.TipoImagen || '—',
+          a.FechaCarga
+            ? new Date(a.FechaCarga).toLocaleString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '—',
+        ]),
+        fileName: `adjuntos_${numeroVisita}.pdf`,
+        orientation: 'portrait',
+        empresaInfo,
+        patientInfo: {
+          numeroVisita: numeroVisita || undefined,
+          nombre: patientName,
+          numeroDocumento: documentoPaciente,
+          ubicacion: patientLocation,
+          fechaIngreso,
+          horaIngreso,
+        },
+      });
+    }
+  };
+
   if (!numeroVisita) {
     return (
       <div className={styles.container}>
@@ -185,6 +223,12 @@ export default function AdjuntosSection({
             )}
           </div>
         </div>
+        <ExportButton
+          data={adjuntos}
+          fileName={`adjuntos_${numeroVisita}.pdf`}
+          onExport={handleExport}
+          options={['pdf']}
+        />
       </div>
 
       {/* Error */}

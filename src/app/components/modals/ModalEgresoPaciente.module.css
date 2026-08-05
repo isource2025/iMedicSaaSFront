@@ -5,6 +5,7 @@
   height: 100%;
   position: relative;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: calc(100vh - 240px);
 }
 
@@ -167,13 +168,14 @@
 /* Estilos para diagnósticos CIE10 */
 .diagnosticoContainer {
   position: relative;
+  z-index: 5;
 }
 
 .diagnosticoInputContainer {
   display: flex;
   gap: 0.5rem;
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.35rem;
   position: relative;
 }
 
@@ -191,6 +193,7 @@
   align-items: center;
   justify-content: center;
   min-width: 40px;
+  flex-shrink: 0;
 }
 
 .buscarDiagnosticoBtn:hover {
@@ -204,17 +207,16 @@
 
 .resultadosDiagnosticos {
   position: absolute;
-  top: 100%;
+  top: calc(100% - 0.15rem);
   left: 0;
   right: 0;
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
   background-color: white;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
-  z-index: 10;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  margin-top: 0.25rem;
+  z-index: 40;
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.08);
 }
 
 .resultadosDiagnosticosUp {
@@ -227,7 +229,7 @@
   background-color: white;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
-  z-index: 10;
+  z-index: 40;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
   margin-bottom: 0.25rem;
 }

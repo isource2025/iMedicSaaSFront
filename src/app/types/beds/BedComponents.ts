@@ -8,9 +8,11 @@ export interface BedCardProps {
   onNursingReport: (bed: Bed) => void;
   onRecentIndications: (bedId: string) => void;
   onChangeBed: (bedId: string) => void;
-  onBedClick?: (bedId: string) => void; // Nuevo manejador para navegar al detalle de la cama
-  onLabResults?: (bedId: string) => void; // Manejador para resultados de laboratorio
-  onDischarge?: (bedId: string) => void; // Manejador para egreso del paciente
+  onBedClick?: (bedId: string) => void;
+  onLabResults?: (bedId: string) => void;
+  onDischarge?: (bedId: string) => void;
+  /** Asignar internado sin cama a esta cama libre */
+  onAssignPatient?: (bed: Bed) => void;
 }
 
 /**

@@ -8,6 +8,9 @@ import LabUploadModal from './LabUploadModal';
 import LabFormModal from './LabFormModal';
 import LabResultsTable from './LabResultsTable';
 import LabAnalysisView from './LabAnalysisView';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './LabResultsSection.module.css';
 
 interface LabResultsSectionProps {
@@ -20,7 +23,14 @@ interface LabResultsSectionProps {
 }
 
 /** Los datos de paciente/cama van en el encabezado global; aquí solo gestión de exámenes. */
-export default function LabResultsSection({ numeroVisita }: LabResultsSectionProps) {
+export default function LabResultsSection({
+  numeroVisita,
+  patientName,
+  patientLocation,
+  documentoPaciente,
+  fechaIngreso,
+  horaIngreso,
+}: LabResultsSectionProps) {
   const [examenes, setExamenes] = useState<ExamenLabCompleto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +98,36 @@ export default function LabResultsSection({ numeroVisita }: LabResultsSectionPro
     }
   };
 
+  const handleExport = async (option: ExportOption) => {
+    if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
+      exportToPDF({
+        title: 'Resultados de Laboratorio',
+        subtitle: `Visita: ${numeroVisita}`,
+        headers: ['Fecha', 'Tipo', 'Laboratorio', 'Protocolo', 'Parámetros', 'Fuera de rango'],
+        data: examenes.map((e) => [
+          laboratoriosService.formatDate(e.FechaExamen),
+          laboratoriosService.getTipoEstudioNombre(e.TipoEstudio),
+          e.Laboratorio || '—',
+          e.Protocolo || '—',
+          String(e.totalParametros || 0),
+          String(e.parametrosFueraDeRango || 0),
+        ]),
+        fileName: `laboratorios_${numeroVisita}.pdf`,
+        orientation: 'landscape',
+        empresaInfo,
+        patientInfo: {
+          numeroVisita: numeroVisita || undefined,
+          nombre: patientName,
+          numeroDocumento: documentoPaciente,
+          ubicacion: patientLocation,
+          fechaIngreso,
+          horaIngreso,
+        },
+      });
+    }
+  };
+
   if (!numeroVisita) {
     return (
       <div className={styles.container}>
@@ -121,18 +161,26 @@ export default function LabResultsSection({ numeroVisita }: LabResultsSectionPro
             </button>
           </div>
         </div>
-        <button
-          type="button"
-          className={styles.uploadCompact}
-          onClick={() => setShowUploadModal(true)}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
-          </svg>
-          Cargar laboratorio
-        </button>
+        <div className={styles.topBarActions}>
+          <ExportButton
+            data={examenes}
+            fileName={`laboratorios_${numeroVisita}.pdf`}
+            onExport={handleExport}
+            options={['pdf']}
+          />
+          <button
+            type="button"
+            className={styles.uploadCompact}
+            onClick={() => setShowUploadModal(true)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Cargar laboratorio
+          </button>
+        </div>
       </div>
 
       {/* Error */}

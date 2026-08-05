@@ -13,6 +13,7 @@ import {
 	IoFlaskOutline,
 	IoExitOutline,
 	IoTimeOutline,
+	IoAddOutline,
 } from 'react-icons/io5';
 import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft } from 'lucide-react';
 
@@ -35,6 +36,7 @@ const BedCard: React.FC<BedCardProps> = ({
 	onBedClick,
 	onLabResults,
 	onDischarge,
+	onAssignPatient,
 }) => {
 	const recurso = bed.tipoRecurso ?? 'cama';
 
@@ -60,6 +62,7 @@ const BedCard: React.FC<BedCardProps> = ({
 				onBedClick={onBedClick}
 				onLabResults={onLabResults}
 				onDischarge={onDischarge}
+				onAssignPatient={onAssignPatient}
 			/>
 		);
 	}
@@ -74,6 +77,7 @@ const BedCard: React.FC<BedCardProps> = ({
 			onBedClick={onBedClick}
 			onLabResults={onLabResults}
 			onDischarge={onDischarge}
+			onAssignPatient={onAssignPatient}
 		/>
 	);
 };
@@ -88,6 +92,7 @@ function CamaOConsultorioCard({
 	onBedClick,
 	onLabResults,
 	onDischarge,
+	onAssignPatient,
 }: BedCardProps & { variant: 'cama' | 'consultorio' }) {
 	const renderGenderIcon = () => {
 		const sexoValue = bed.SexoPaciente ? bed.SexoPaciente.toLowerCase() : '';
@@ -130,9 +135,11 @@ function CamaOConsultorioCard({
 	const wrapperMod =
 		variant === 'consultorio' ? styles.tipoConsultorio : styles.tipoCamaInternacion;
 
+	const puedeAsignar = variant === 'cama' && isLibre && !!onAssignPatient;
+
 	return (
 		<div
-			className={`${styles.bedCard} ${wrapperMod} ${estadoClass}`}
+			className={`${styles.bedCard} ${wrapperMod} ${estadoClass} ${puedeAsignar ? styles.bedCardAssignable : ''}`}
 			onClick={() => onBedClick && onBedClick(bed.id)}
 		>
 			<div className={styles.cardHeader}>
@@ -262,6 +269,20 @@ function CamaOConsultorioCard({
 				) : (
 					<div className={styles.freeBodyContent}>
 						<span className={styles.statusBadge}>{bed.estadoDescripcion || 'Sin estado'}</span>
+						{puedeAsignar && (
+							<button
+								type="button"
+								className={styles.assignPlusBtn}
+								title="Asignar internado sin cama"
+								aria-label="Asignar paciente a esta cama"
+								onClick={(e) => {
+									e.stopPropagation();
+									onAssignPatient?.(bed);
+								}}
+							>
+								<IoAddOutline size={28} />
+							</button>
+						)}
 					</div>
 				)}
 			</div>

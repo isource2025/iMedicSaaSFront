@@ -5,24 +5,21 @@ import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
 import ModalEgresoPaciente from '../modals/ModalEgresoPaciente';
 import ModalCambiarCama from '../modals/ModalCambiarCama';
+import ModalAsignarCama from '../modals/ModalAsignarCama';
 import BedCard from './BedCard';
 import BedFilters from './BedFilters';
 import styles from './Bedslist.module.css';
 import Loader from '../Loader/Loader';
 import { useRouter, useSearchParams } from 'next/navigation';
-import visitaMovimientoService from '../../services/visitaMovimientoService';
 import { Bed } from '../../types/beds';
-import { formatDate } from '../../utils/dateUtils';
 import { setBedSnapshot } from '../../utils/bedSnapshotCache';
 import { bedToHeaderSnapshot, type PatientHeaderSnapshot } from '../../utils/bedHeader';
 
 const BedsList = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const selectedBedId = searchParams.get('id');
 	const {
 		beds,
-		allBeds,
 		bedStates,
 		sectors,
 		serviciosMedicos,
@@ -49,12 +46,14 @@ const BedsList = () => {
 	const [labModalOpen, setLabModalOpen] = useState(false);
 	const [egresoModalOpen, setEgresoModalOpen] = useState(false);
 	const [cambiarCamaModalOpen, setCambiarCamaModalOpen] = useState(false);
+	const [asignarCamaModalOpen, setAsignarCamaModalOpen] = useState(false);
 	const [selectedBed, setSelectedBed] = useState<{
 		numeroVisita: number;
 		nombrePaciente: string;
 		id: string;
 		sector: string;
 		header: PatientHeaderSnapshot | null;
+		numeroCama?: string;
 	} | null>(null);
 	const [selectedSector, setSelectedSector] = useState<{
 		id: string;
@@ -64,9 +63,7 @@ const BedsList = () => {
 	const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
 	const prevBedsSignatureRef = useRef<string | null>(null);
 
-	// Actualizar el tiempo de última actualización cuando cambian las camas (evitando bucles por nuevas referencias)
 	useEffect(() => {
-		// Crear una firma estable basada en el contenido relevante de las camas
 		const signature = JSON.stringify(
 			(beds || []).map((b) => ({
 				id: b.id,
@@ -81,7 +78,6 @@ const BedsList = () => {
 		}
 	}, [beds]);
 
-	// Función para actualizar manualmente las camas
 	const handleRefreshBeds = () => {
 		refreshBeds();
 		setLastUpdateTime(Date.now());
@@ -93,6 +89,7 @@ const BedsList = () => {
 		id: bed.numeroCama,
 		sector: bed.sector,
 		header: bedToHeaderSnapshot(bed),
+		numeroCama: bed.numeroCama,
 	});
 
 	const handleNursingReport = (bed: Bed) => {
@@ -104,9 +101,7 @@ const BedsList = () => {
 		setNursingModalOpen(true);
 	};
 
-	const handleRecentIndications = (bedId: string) => {
-		// Implementa la lógica de indicaciones recientes aquí
-	};
+	const handleRecentIndications = (_bedId: string) => {};
 
 	const handleChangeBed = (bedId: string, bedSector: string) => {
 		const bed = beds.find((b) => b.id === bedId && b.sector === bedSector);
@@ -119,6 +114,21 @@ const BedsList = () => {
 		} else {
 			console.warn('No se puede cambiar de cama a un paciente que no está ingresado');
 		}
+	};
+
+	const handleAssignPatient = (bed: Bed) => {
+		const isLibre = bed.estado === 'desocupada' || bed.estado === 'disponible';
+		if (!isLibre || bed.tipoRecurso === 'insumos') return;
+
+		setSelectedBed({
+			numeroVisita: 0,
+			nombrePaciente: '',
+			id: bed.id,
+			sector: bed.sector,
+			header: null,
+			numeroCama: bed.numeroCama,
+		});
+		setAsignarCamaModalOpen(true);
 	};
 
 	const handleBedClick = (bedId: string) => {
@@ -152,7 +162,7 @@ const BedsList = () => {
 	return (
 		<div className={styles.container}>
 			<BedFilters
-				placeHolder='Buscar por nombre, DNI, HC o admisión...'
+				placeHolder="Buscar por nombre, DNI, HC o admisión..."
 				sectors={sectors}
 				bedStates={bedStates}
 				filter={filter}
@@ -197,6 +207,7 @@ const BedsList = () => {
 							onBedClick={() => handleBedClick(bed.id)}
 							onLabResults={() => handleLabResults(bed.id)}
 							onDischarge={() => handleDischarge(bed.id)}
+							onAssignPatient={handleAssignPatient}
 						/>
 					))}
 				</div>
@@ -240,6 +251,17 @@ const BedsList = () => {
 					bedSector={selectedBed.sector}
 					sectorInfo={selectedSector}
 					header={selectedBed.header}
+				/>
+			)}
+
+			{asignarCamaModalOpen && selectedBed && (
+				<ModalAsignarCama
+					isOpen={asignarCamaModalOpen}
+					onClose={() => setAsignarCamaModalOpen(false)}
+					onSuccess={handleRefreshBeds}
+					bedId={selectedBed.id}
+					bedSector={selectedBed.sector}
+					numeroCama={selectedBed.numeroCama || selectedBed.id}
 				/>
 			)}
 		</div>

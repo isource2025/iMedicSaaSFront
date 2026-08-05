@@ -173,6 +173,12 @@ function AgendaPageContent() {
 	const [medicos, setMedicos] = useState<MedicoDisponible[]>([]);
 	const [statsDia, setStatsDia] = useState<Map<number, MedicoDisponible>>(new Map());
 	const [matriculaSel, setMatriculaSel] = useState<number | null>(null);
+	const [recursoSel, setRecursoSel] = useState<{ tipo: string; valor: string; nombre: string } | null>(
+		null,
+	);
+	const [recursosAgenda, setRecursosAgenda] = useState<
+		{ tipo: string; valor: string; nombre: string; esRecurso: true }[]
+	>([]);
 	const [todosSlots, setTodosSlots] = useState<AgendaSlot[]>([]);
 	const [jornadas, setJornadas] = useState<AgendaJornada[]>([]);
 	const [jornadaSel, setJornadaSel] = useState(0);
@@ -250,7 +256,11 @@ function AgendaPageContent() {
 		setSlotMenu({ slot, x: e.clientX, y: e.clientY });
 	};
 
-	const matriculaMedicoActiva = esMedico ? matriculaPropia : matriculaSel;
+	const matriculaMedicoActiva = esMedico
+		? matriculaPropia
+		: recursoSel
+			? matriculaPropia || matriculaSel
+			: matriculaSel;
 
 	const hayFiltroCatalogo = Boolean(servicioSel || especialidadSel);
 
@@ -312,27 +322,35 @@ function AgendaPageContent() {
 		};
 	}, [esMedico, puedeVer]);
 
-	// Carga: profesionales con agenda (independiente de la fecha seleccionada)
+	// Carga: profesionales + recursos sector/servicio
 	useEffect(() => {
-		if (esMedico || !puedeVer) return;
+		if (!puedeVer) return;
 		let cancel = false;
-		setLoadingMedicos(true);
-		setError(null);
-		agendaService
-			.getProfesionales({
-				servicio: servicioParam || undefined,
-				especialidad: especialidadSel !== '' ? Number(especialidadSel) : undefined,
-			})
-			.then((rows) => {
-				if (!cancel) setMedicos(rows);
+		if (!esMedico) {
+			setLoadingMedicos(true);
+			setError(null);
+		}
+		const loadProfs = esMedico
+			? Promise.resolve([] as MedicoDisponible[])
+			: agendaService.getProfesionales({
+					servicio: servicioParam || undefined,
+					especialidad: especialidadSel !== '' ? Number(especialidadSel) : undefined,
+				});
+		Promise.all([loadProfs, agendaService.getRecursosAgenda().catch(() => [])])
+			.then(([rows, recursos]) => {
+				if (cancel) return;
+				if (!esMedico) setMedicos(rows);
+				setRecursosAgenda(recursos || []);
 			})
 			.catch((e) => {
-				if (!cancel)
+				if (!cancel && !esMedico)
 					setError(
 						e?.response?.data?.mensaje || e?.message || 'Error cargando médicos',
 					);
 			})
-			.finally(() => !cancel && setLoadingMedicos(false));
+			.finally(() => {
+				if (!cancel && !esMedico) setLoadingMedicos(false);
+			});
 		return () => {
 			cancel = true;
 		};
@@ -358,8 +376,38 @@ function AgendaPageContent() {
 		};
 	}, [fechaIso, esMedico, puedeVer, servicioParam, especialidadSel]);
 
-	// Carga: grilla completa (libres + ocupados) del profesional activo
+	// Carga: grilla del profesional o del recurso sector/servicio
 	const cargarSlots = useCallback(async () => {
+		if (recursoSel) {
+			setLoadingSlots(true);
+			try {
+				const r = await agendaService.getSlotsRecurso(
+					recursoSel.tipo,
+					recursoSel.valor,
+					fechaIso,
+					fechaIso,
+				);
+				const dia = r.dias[0];
+				setDiaMotivo(dia?.motivo ?? null);
+				setTodosSlots(dia?.slots ?? []);
+				setJornadas([]);
+				setJornadaSel(0);
+				setProfesionalAgenda({
+					matricula: 0,
+					nombre: recursoSel.nombre,
+				} as AgendaProfesionalMeta);
+			} catch (e: unknown) {
+				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
+				setError(err?.response?.data?.mensaje || err?.message || 'Error cargando slots');
+				setTodosSlots([]);
+				setJornadas([]);
+				setDiaMotivo(null);
+			} finally {
+				setLoadingSlots(false);
+			}
+			return;
+		}
+
 		const mat = esMedico ? matriculaPropia : matriculaSel;
 		if (!mat) {
 			setTodosSlots([]);
@@ -397,7 +445,7 @@ function AgendaPageContent() {
 		} finally {
 			setLoadingSlots(false);
 		}
-	}, [esMedico, matriculaPropia, matriculaSel, fechaIso]);
+	}, [esMedico, matriculaPropia, matriculaSel, fechaIso, recursoSel]);
 
 	useEffect(() => {
 		cargarSlots();
@@ -738,6 +786,45 @@ function AgendaPageContent() {
 								</div>
 							</div>
 							<div className={styles.fechaSel}>📅 {formatFechaLarga(selectedDate)}</div>
+							{esMedico && recursosAgenda.length > 0 && (
+								<div style={{ marginTop: 8, maxWidth: 320 }}>
+									<CustomSelect
+										label='Ver agenda'
+										name='recursoAgendaMedico'
+										value={
+											recursoSel
+												? `${recursoSel.tipo}:${recursoSel.valor}`
+												: ''
+										}
+										isLoading={false}
+										onChange={(v) => {
+											if (v === '' || v == null) {
+												setRecursoSel(null);
+												return;
+											}
+											const [tipo, ...rest] = String(v).split(':');
+											const valor = rest.join(':');
+											const found = recursosAgenda.find(
+												(r) => r.tipo === tipo && r.valor === valor,
+											);
+											setRecursoSel(
+												found || {
+													tipo,
+													valor,
+													nombre: `${tipo} ${valor}`,
+												},
+											);
+										}}
+										options={[
+											{ value: '', label: 'Mi agenda profesional' },
+											...recursosAgenda.map((r) => ({
+												value: `${r.tipo}:${r.valor}`,
+												label: r.nombre,
+											})),
+										]}
+									/>
+								</div>
+							)}
 						</div>
 
 						<div className={styles.cardBody}>
@@ -980,14 +1067,53 @@ function AgendaPageContent() {
 									value={matriculaSel ?? ''}
 									isLoading={loadingMedicos}
 									onChange={(v) => {
+										setRecursoSel(null);
 										if (v === '' || v == null) setMatriculaSel(null);
 										else setMatriculaSel(Number(v));
 									}}
 									options={opcionesMedicos}
 								/>
+								{recursosAgenda.length > 0 && (
+									<CustomSelect
+										label='Agenda sector / servicio'
+										name='recursoAgenda'
+										value={
+											recursoSel
+												? `${recursoSel.tipo}:${recursoSel.valor}`
+												: ''
+										}
+										isLoading={false}
+										onChange={(v) => {
+											if (v === '' || v == null) {
+												setRecursoSel(null);
+												return;
+											}
+											const [tipo, ...rest] = String(v).split(':');
+											const valor = rest.join(':');
+											const found = recursosAgenda.find(
+												(r) => r.tipo === tipo && r.valor === valor,
+											);
+											setMatriculaSel(null);
+											setRecursoSel(
+												found || {
+													tipo,
+													valor,
+													nombre: `${tipo} ${valor}`,
+												},
+											);
+										}}
+										options={[
+											{ value: '', label: '— Usar profesional —' },
+											...recursosAgenda.map((r) => ({
+												value: `${r.tipo}:${r.valor}`,
+												label: r.nombre,
+											})),
+										]}
+									/>
+								)}
 							</div>
 
-							{matriculaSel && (
+							{(matriculaSel || recursoSel) && (
 								<div className={styles.kpis}>
 									<button
 										type='button'
@@ -1025,9 +1151,11 @@ function AgendaPageContent() {
 							<div className={styles.agendaSection}>
 								<div
 									key={
-										matriculaSel
-											? `${matriculaSel}-${fechaIso}-${filtroSlots}-${jornadaSel}`
-											: 'sin-profesional'
+										recursoSel
+											? `R-${recursoSel.tipo}-${recursoSel.valor}-${fechaIso}-${filtroSlots}`
+											: matriculaSel
+												? `${matriculaSel}-${fechaIso}-${filtroSlots}-${jornadaSel}`
+												: 'sin-profesional'
 									}
 									className={`${styles.tableWrap} ${!loadingSlots ? styles.tableWrapEnter : ''}`}
 								>
@@ -1070,7 +1198,7 @@ function AgendaPageContent() {
 											</div>
 										)}
 									</header>
-									{!matriculaSel ? (
+									{!(matriculaSel || recursoSel) ? (
 										<AgendaEmptyState
 											icon="👨‍⚕️"
 											title="Seleccioná un profesional"

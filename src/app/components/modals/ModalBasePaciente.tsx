@@ -21,6 +21,11 @@ interface ModalBasePacienteProps {
 	header?: PatientHeaderSnapshot | null;
 }
 
+/**
+ * Shell de modal con cabecera de paciente.
+ * Evita golpear /beds + /movimientos/ultimo (eso lo hace PatientMiniHeader / el modal hijo).
+ * Antes, reintentos en error + PatientMiniHeader duplicado causaban ERR_INSUFFICIENT_RESOURCES.
+ */
 const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 	isOpen,
 	onClose,

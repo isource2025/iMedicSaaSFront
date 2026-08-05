@@ -22,6 +22,13 @@ export interface AdmissionSearchRow {
   EstadoAmbulatorio?: string;
   EstadoAmbulatorioDescripcion?: string;
   TipoAtencion?: string;
+  Diagnostico?: string;
+  DiagnosticoDescripcion?: string;
+  ServicioHospital?: string;
+  LocalizacionEgresado?: string;
+  ServicioEgresoDescripcion?: string;
+  /** Días de internación (solo visitas internadas) */
+  DiasInternacion?: number | null;
   /** Conteos por tipo de información (desde el listado de búsqueda) */
   CntHistoriaClinica?: number;
   CntPracticas?: number;
@@ -138,6 +145,24 @@ export const admissionSearchService = {
         `/admission-search/${numeroVisita}/export-selective`,
         body,
         { responseType: 'blob', timeout: 120000 }
+      );
+      return response.data as Blob;
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: Blob } };
+      const blob = err.response?.data;
+      if (blob instanceof Blob) {
+        throw new Error(await parseBlobError(blob));
+      }
+      throw e instanceof Error ? e : new Error('Error al exportar');
+    }
+  },
+
+  async exportGeneralPaciente(idPaciente: number, body: ExportSelectivoBody): Promise<Blob> {
+    try {
+      const response = await apiService.post<Blob>(
+        `/admission-search/paciente/${idPaciente}/export-general`,
+        body,
+        { responseType: 'blob', timeout: 300000 }
       );
       return response.data as Blob;
     } catch (e: unknown) {

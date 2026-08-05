@@ -7,6 +7,9 @@ import { usePermiso } from '@/app/hooks/usePermiso';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import CargarProtocoloModal from './CargarProtocoloModal';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
 import formStyles from '../estudios/PedidoEstudioForms.module.css';
 import localStyles from './ProtocolosSection.module.css';
@@ -83,6 +86,31 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 		void load();
 	}, [load]);
 
+	const handleExport = async (option: ExportOption) => {
+		if (option === 'pdf') {
+			const empresaInfo = await obtenerInfoEmpresa();
+			exportToPDF({
+				title: 'Protocolos',
+				subtitle: `Visita: ${numeroVisita}`,
+				headers: ['Fecha', 'Tipo', 'Práctica', 'Equipo', 'Cargado por'],
+				data: rows.map((r) => {
+					const prac = r.practicas?.[0];
+					return [
+						formatFecha(r.fecha),
+						r.tipoDescripcion || r.tipoProtocolo || '—',
+						prac?.descripcion || prac?.codigoPractica || '—',
+						resumenEquipo(r),
+						r.operadorNombre || '—',
+					];
+				}),
+				fileName: `protocolos_${numeroVisita}.pdf`,
+				orientation: 'landscape',
+				empresaInfo,
+				patientInfo: { numeroVisita: numeroVisita || undefined },
+			});
+		}
+	};
+
 	if (!numeroVisita) {
 		return <div className={styles.empty}>No hay visita seleccionada</div>;
 	}
@@ -106,6 +134,12 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 							Cargar protocolo
 						</button>
 					)}
+					<ExportButton
+						data={rows}
+						fileName={`protocolos_${numeroVisita}.pdf`}
+						onExport={handleExport}
+						options={['pdf']}
+					/>
 				</div>
 			</div>
 

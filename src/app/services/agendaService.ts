@@ -405,6 +405,72 @@ export const agendaService = {
 		return r.data.data;
 	},
 
+	async getRecursosAgenda(opts?: { todos?: boolean }): Promise<
+		{
+			tipo: string;
+			valor: string;
+			nombre: string;
+			esRecurso: true;
+		}[]
+	> {
+		const qs = new URLSearchParams();
+		if (opts?.todos) qs.set('todos', '1');
+		const r = await apiService.get<
+			ApiResp<{ tipo: string; valor: string; nombre: string; esRecurso: true }[]>
+		>(`/agenda/recursos?${qs.toString()}`);
+		return r.data.data || [];
+	},
+
+	async getSlotsRecurso(
+		tipo: string,
+		valor: string,
+		desde: string,
+		hasta: string,
+	): Promise<{
+		tipo: string;
+		valor: string;
+		dias: {
+			fecha: string;
+			dia?: string;
+			motivo?: string | null;
+			slots: AgendaSlot[];
+			jornadas?: AgendaJornada[];
+		}[];
+	}> {
+		const qs = new URLSearchParams({ desde, hasta });
+		const r = await apiService.get<
+			ApiResp<{
+				tipo: string;
+				valor: string;
+				dias: {
+					fecha: string;
+					dia?: string;
+					motivo?: string | null;
+					slots: AgendaSlot[];
+					jornadas?: AgendaJornada[];
+				}[];
+			}>
+		>(
+			`/agenda/recurso/${encodeURIComponent(tipo)}/${encodeURIComponent(valor)}/slots?${qs.toString()}`,
+		);
+		return r.data.data;
+	},
+
+	async getHorariosRecurso(tipo: string, valor: string) {
+		const r = await apiService.get(
+			`/agenda/recurso/${encodeURIComponent(tipo)}/${encodeURIComponent(valor)}/horarios`,
+		);
+		return (r.data as { data: unknown }).data;
+	},
+
+	async putHorariosRecurso(tipo: string, valor: string, payload: unknown) {
+		const r = await apiService.put(
+			`/agenda/recurso/${encodeURIComponent(tipo)}/${encodeURIComponent(valor)}/horarios`,
+			payload,
+		);
+		return (r.data as { data: unknown }).data;
+	},
+
 	async getDisponibilidad(
 		fecha: string,
 		filtros?: { servicio?: string; especialidad?: number },
