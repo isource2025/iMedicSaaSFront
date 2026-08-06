@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   buildHCIPhysicalExamSections,
   HCI_CAMPOS_TEXTO_LIBRE,
@@ -532,6 +533,20 @@ export default function AdmissionVisitDetailContent({
 
   return (
     <div className={styles.contentRoot}>
+      {numeroVisita ? (
+        <div className={styles.clinicalContinueBar}>
+          <Link
+            href={`/dashboard/visita/${numeroVisita}`}
+            className={styles.clinicalContinueBtn}
+          >
+            Continuar carga clínica
+          </Link>
+          <span className={styles.muted}>
+            Alta de registros (también post-egreso). Modificar solo lo propio.
+          </span>
+        </div>
+      ) : null}
+
       {!hideToolbar && (onBack || exportButton) && (
         <div className={styles.toolbarRow}>
           {onBack ? (

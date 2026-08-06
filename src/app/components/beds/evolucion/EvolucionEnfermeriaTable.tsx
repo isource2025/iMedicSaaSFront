@@ -121,7 +121,7 @@ export default function EvolucionEnfermeriaTable({
                                                 >
                                                     <IoEyeOutline color="#5BC0DE" size="18px" />
                                                 </button>
-                                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) !== false && (
+                                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) === true && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Eliminar evolución"

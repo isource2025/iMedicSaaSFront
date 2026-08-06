@@ -19,13 +19,13 @@ import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft } from 'luci
 
 /**
  * Tarjeta de recurso hospitalario (cama / consultorio / insumos).
- * El tipo sale de imHabitacionCamas.Tipo (texto: cama, consultorio, insumos).
+ * El tipo sale de imHabitacionCamas.Tipo (texto plano).
  */
-/** Texto mostrado bajo el círculo (viene de imHabitacionCamas.Tipo, ej. insumos). */
-function tituloTipoRecurso(bed: Pick<Bed, 'tipoRaw'>): string {
+/** Texto del badge / etiqueta desde imHabitacionCamas.Tipo */
+function etiquetaTipoRecurso(bed: Pick<Bed, 'tipoRaw'>, fallback = 'Cama'): string {
 	const raw = (bed.tipoRaw ?? '').trim();
-	if (!raw) return 'Insumos';
-	return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+	if (!raw) return fallback;
+	return raw;
 }
 
 const BedCard: React.FC<BedCardProps> = ({
@@ -145,14 +145,14 @@ function CamaOConsultorioCard({
 			<div className={styles.cardHeader}>
 				<div className={styles.bedInfo}>
 					{variant === 'consultorio' && (
-						<span className={styles.tipoBadgeConsultorio} title="Consultorio">
+						<span className={styles.tipoBadgeConsultorio} title={etiquetaTipoRecurso(bed, 'Consultorio')}>
 							<Stethoscope size={14} strokeWidth={2.2} aria-hidden />
-							Consultorio
+							{etiquetaTipoRecurso(bed, 'Consultorio')}
 						</span>
 					)}
 					{variant === 'cama' && (
-						<span className={styles.tipoBadgeCama} title="Cama de internación">
-							Cama
+						<span className={styles.tipoBadgeCama} title={etiquetaTipoRecurso(bed, 'Cama')}>
+							{etiquetaTipoRecurso(bed, 'Cama')}
 						</span>
 					)}
 					<span className={styles.sectorLabel}>{bed.sector}</span>
@@ -309,7 +309,7 @@ function InsumoCard({
 	else if (isLibre) estadoClass = styles['estado-libre'];
 	else if (bed.estado) estadoClass = styles[`estado-${bed.estado}`] || '';
 
-	const tipoLabel = tituloTipoRecurso(bed);
+	const tipoLabel = etiquetaTipoRecurso(bed, 'Insumos');
 	const tituloStockMovimiento =
 		'Disponible solo con ubicación ocupada y número de visita';
 	const stockMock = 68;

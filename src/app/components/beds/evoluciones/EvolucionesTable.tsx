@@ -46,7 +46,7 @@ export default function EvolucionesTable({
 	const usuarioActual = useUsuarioActual();
 	const esAdmin = esAdminClinico();
 	const puedeModificarEvolucion = (row: EvolucionRow) =>
-		esAdmin || esRegistroPropio(row as unknown as Record<string, unknown>, usuarioActual) !== false;
+		esAdmin || esRegistroPropio(row as unknown as Record<string, unknown>, usuarioActual) === true;
 
     const handleDelete = async (id: number) => {
         try {

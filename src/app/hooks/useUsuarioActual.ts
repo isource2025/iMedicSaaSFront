@@ -83,9 +83,12 @@ export function esRegistroPropio(
 		registro.operadorCarga ??
 		registro.IdOperador ??
 		registro.idOperador ??
+		registro.IdProfecional ??
+		registro.idProfecional ??
 		registro.CodOperador ??
 		registro.codOperador ??
 		registro.profesional ??
+		registro.Profecional ??
 		null;
 
 	if (autorRaw == null) return null; // no se puede determinar

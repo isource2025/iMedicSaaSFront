@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import Modal from '@/app/components/UI/Modal';
 import { admissionSearchService } from '@/app/services/admissionSearchService';
 import type { AdmissionSearchRow } from '@/app/services/admissionSearchService';
@@ -252,6 +253,12 @@ export default function PatientFolderVisitsModal({
 										>
 											Exportar…
 										</button>
+										<Link
+											href={`/dashboard/visita/${nv}`}
+											className={styles.clinicalLink}
+										>
+											Carga clínica
+										</Link>
 									</div>
 									<div className={styles.visitMetaRow}>
 										<span className={`${styles.visitTypeBadge} ${tipoClass(visit)}`}>

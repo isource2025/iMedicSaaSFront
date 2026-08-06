@@ -36,7 +36,7 @@ export default function EpicrisisTable({
 	const esAdmin = esAdminClinico();
 	const puedeModificar = (row: EpicrisisRow) =>
 		esAdmin ||
-		esRegistroPropio(row as unknown as Record<string, unknown>, usuarioActual) !== false;
+		esRegistroPropio(row as unknown as Record<string, unknown>, usuarioActual) === true;
 
 	const handleDelete = async (id: number) => {
 		try {

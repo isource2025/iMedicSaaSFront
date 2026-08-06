@@ -192,6 +192,34 @@
   gap: 12px;
 }
 
+.clinicalContinueBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  background: #e6f7fb;
+  border: 1px solid #61d6eb;
+  border-radius: 8px;
+}
+
+.clinicalContinueBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  background: #00b5e2;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.clinicalContinueBtn:hover {
+  background: #0083a9;
+}
+
 .backBtn {
   padding: 0.5rem 1rem;
   border: 1px solid #cbd5e1;

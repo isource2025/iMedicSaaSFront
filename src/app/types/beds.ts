@@ -42,6 +42,8 @@ export interface Bed {
 	tipoRaw?: string;
 	/** Tipo de recurso normalizado para UI y permisos de acciones */
 	tipoRecurso: BedTipoRecurso;
+	/** Visita con FechaEgreso > 0 (sigue permitiendo altas clínicas) */
+	egresada?: boolean;
 }
 
 export interface BedState {

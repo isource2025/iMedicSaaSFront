@@ -155,6 +155,22 @@
 	cursor: not-allowed;
 }
 
+.clinicalLink {
+	border: 1px solid #00b5e2;
+	background: #00b5e2;
+	color: #fff;
+	font-size: 0.75rem;
+	font-weight: 700;
+	padding: 0.35rem 0.7rem;
+	border-radius: 8px;
+	text-decoration: none;
+}
+
+.clinicalLink:hover {
+	background: #0083a9;
+	border-color: #0083a9;
+}
+
 .exportGeneralBtn {
 	border: 1px solid #cbd5e1;
 	background: #fff;

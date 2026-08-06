@@ -54,6 +54,7 @@ function mapBedItem(item: Record<string, unknown>): Bed {
 		ubicacionPaciente: String(item.ubicacionPaciente || item.UbicacionPaciente || ''),
 		tipoRaw: String(tipoRaw),
 		tipoRecurso: normalizarTipoRecurso(tipoRaw || item.tipoRecurso),
+		egresada: Boolean(item.egresada),
 	};
 }
 

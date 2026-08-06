@@ -8,6 +8,7 @@ type Pais = { CodigoISO: string; Nombre: string; Activo: number | boolean };
 
 export default function SuperAdminSeguridadPanel() {
   const [idleMinutes, setIdleMinutes] = useState(30);
+  const [geoBlockEnabled, setGeoBlockEnabled] = useState(false);
   const [paises, setPaises] = useState<Pais[]>([]);
   const [nuevoCodigo, setNuevoCodigo] = useState('');
   const [nuevoNombre, setNuevoNombre] = useState('');
@@ -21,6 +22,7 @@ export default function SuperAdminSeguridadPanel() {
     try {
       const cfg = await superAdminService.getSeguridadConfig();
       setIdleMinutes(cfg.idleTimeoutMinutes ?? 30);
+      setGeoBlockEnabled(Boolean(cfg.geoBlockEnabled));
       setPaises(cfg.paises || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar seguridad');
@@ -41,6 +43,20 @@ export default function SuperAdminSeguridadPanel() {
       await cargar();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleGeoBlock = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const next = !geoBlockEnabled;
+      await superAdminService.saveSeguridadConfig({ geoBlockEnabled: next });
+      setGeoBlockEnabled(next);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al actualizar geo-blocking');
     } finally {
       setSaving(false);
     }
@@ -101,10 +117,27 @@ export default function SuperAdminSeguridadPanel() {
       </p>
 
       <h4 className={styles.sectionTitle} style={{ marginTop: '1.5rem' }}>
+        Geo-blocking por IP
+      </h4>
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+        <span>
+          Estado: <strong>{geoBlockEnabled ? 'Activo' : 'Desactivado'}</strong>
+        </span>
+        <button type="button" className={styles.btn} disabled={saving} onClick={toggleGeoBlock}>
+          {geoBlockEnabled ? 'Desactivar geo-blocking' : 'Activar geo-blocking'}
+        </button>
+      </div>
+      <p className={styles.wizardHint}>
+        Desactivado por defecto (Starlink / VPN suelen resolver fuera de AR). Si lo activás, solo
+        países de la lista pueden iniciar sesión. Env GEO_BLOCK_ENABLED=1 fuerza el bloqueo en el
+        servidor.
+      </p>
+
+      <h4 className={styles.sectionTitle} style={{ marginTop: '1.5rem' }}>
         Países permitidos (geo-blocking)
       </h4>
       <p className={styles.wizardHint}>
-        Solo usuarios desde países activos pueden iniciar sesión. Por defecto: Argentina (AR).
+        Solo aplica si el geo-blocking está activo. Por defecto el catálogo incluye Argentina (AR).
       </p>
 
       <table className={styles.table}>
@@ -126,7 +159,7 @@ export default function SuperAdminSeguridadPanel() {
                 <button
                   type="button"
                   className={styles.btnSm}
-                  disabled={saving}
+                  disabled={saving || !geoBlockEnabled}
                   onClick={() => togglePais(p.CodigoISO, !p.Activo)}
                 >
                   {p.Activo ? 'Desactivar' : 'Activar'}
@@ -152,7 +185,12 @@ export default function SuperAdminSeguridadPanel() {
           onChange={(e) => setNuevoNombre(e.target.value)}
           className={styles.input}
         />
-        <button type="button" className={styles.btn} disabled={saving} onClick={agregarPais}>
+        <button
+          type="button"
+          className={styles.btn}
+          disabled={saving || !geoBlockEnabled}
+          onClick={agregarPais}
+        >
           Agregar país
         </button>
       </div>

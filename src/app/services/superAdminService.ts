@@ -243,15 +243,23 @@ export const superAdminService = {
   async getSeguridadConfig(): Promise<{
     idleTimeoutMinutes: number;
     paises: { CodigoISO: string; Nombre: string; Activo: boolean | number }[];
+    geoBlockEnabled?: boolean;
   }> {
     const res = await apiService.get<{
       success: boolean;
-      data: { idleTimeoutMinutes: number; paises: { CodigoISO: string; Nombre: string; Activo: boolean | number }[] };
+      data: {
+        idleTimeoutMinutes: number;
+        paises: { CodigoISO: string; Nombre: string; Activo: boolean | number }[];
+        geoBlockEnabled?: boolean;
+      };
     }>('/auth/seguridad/config');
     return res.data.data;
   },
 
-  async saveSeguridadConfig(body: { idleTimeoutMinutes: number }) {
+  async saveSeguridadConfig(body: {
+    idleTimeoutMinutes?: number;
+    geoBlockEnabled?: boolean;
+  }) {
     await apiService.put('/auth/seguridad/config', body);
   },
 
