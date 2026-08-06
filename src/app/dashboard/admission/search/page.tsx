@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { admissionSearchService, AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import AdmissionVisitDetailModal from '@/app/components/admission/AdmissionVisitDetailModal';
+import AdmissionDatosPrincipalesModal from '@/app/components/admission/AdmissionDatosPrincipalesModal';
+import AdmissionUbicacionMovimientosModal from '@/app/components/admission/AdmissionUbicacionMovimientosModal';
 import PatientFolderVisitsModal from '@/app/components/admission/PatientFolderVisitsModal';
 import {
 	VisitClinicalBadges,
@@ -26,18 +28,30 @@ const initialFilters = {
   fechaFin: '',
 };
 
-function tipoAtencion(row: AdmissionSearchRow): string {
-  const s = String(row.TipoAtencion || '').trim();
-  if (s) return s;
-  const d = String(row.TipoPacienteDescripcion || row.EstadoAmbulatorioDescripcion || '').trim();
-  return d || 'Sin clasificar';
+function formatDocumento(raw: string | number | null | undefined): string {
+  const digits = String(raw ?? '').replace(/\D+/g, '');
+  if (!digits) return '—';
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-function tipoAtencionClass(row: AdmissionSearchRow): string {
-  const t = tipoAtencion(row).toLowerCase();
-  if (t.includes('ambul')) return styles.typeAmbulatorio;
-  if (t.includes('intern')) return styles.typeInternado;
-  return styles.typeUnknown;
+function iaLabel(row: AdmissionSearchRow): string {
+  const c = String(row.ClasePaciente || '').trim().toUpperCase();
+  if (c === 'I' || c === 'A') return c;
+  const t = String(row.TipoAtencion || '').toLowerCase();
+  if (t.includes('intern')) return 'I';
+  if (t.includes('ambul')) return 'A';
+  return c || '—';
+}
+
+function ingresoLabel(row: AdmissionSearchRow): string {
+  if (row.FechaAdmisionDMY) return row.FechaAdmisionDMY;
+  return formatDMY(row.FechaAdmision || '') || row.FechaAdmision || '—';
+}
+
+function diagnosticoLabel(row: AdmissionSearchRow): string {
+  const desc = String(row.DiagnosticoDescripcion || '').trim();
+  if (desc) return desc;
+  return String(row.Diagnostico || '').trim() || '—';
 }
 
 export default function AdmissionSearchPage() {
@@ -54,6 +68,9 @@ export default function AdmissionSearchPage() {
     patient: AdmissionSearchRow;
     visits: AdmissionSearchRow[];
   } | null>(null);
+
+  const [editVisita, setEditVisita] = useState<number | null>(null);
+  const [ubicacionVisita, setUbicacionVisita] = useState<number | null>(null);
 
   const {
     selectedVisit,
@@ -117,6 +134,8 @@ export default function AdmissionSearchPage() {
     setError('');
     closeVisitDetail();
     setFolderModal(null);
+    setEditVisita(null);
+    setUbicacionVisita(null);
     await runSearch(1);
   };
 
@@ -281,42 +300,66 @@ export default function AdmissionSearchPage() {
             <table className={sharedStyles.table}>
               <thead>
                 <tr>
-                  <th>Numero visita</th>
-                  <th>Paciente</th>
-                  <th>Tipo</th>
-                  <th>DNI</th>
-                  <th>HC</th>
-                  <th>Información clínica</th>
-                  <th>Fecha admision</th>
-                  <th>Hora</th>
+                  <th>I/A</th>
+                  <th>Nº Admisión</th>
+                  <th>Centro de Salud</th>
+                  <th>Nº Internación</th>
+                  <th>Paciente - Documento</th>
+                  <th>Paciente - Apellido y Nombre</th>
+                  <th>Cobertura (OS)</th>
+                  <th>Número SSN</th>
+                  <th>Ingreso</th>
+                  <th>Sector</th>
+                  <th>Hab</th>
+                  <th>Diagnóstico</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className={styles.empty}>
+                    <td colSpan={13} className={styles.empty}>
                       {loading ? 'Buscando...' : 'Sin resultados'}
                     </td>
                   </tr>
                 ) : (
                   rows.map((row) => (
                     <tr key={row.NumeroVisita}>
+                      <td>{iaLabel(row)}</td>
                       <td>
-                        <button type="button" className={styles.linkButton} onClick={() => openVisitDetail(row.NumeroVisita)}>
+                        <button
+                          type="button"
+                          className={styles.linkButton}
+                          onClick={() => openVisitDetail(row.NumeroVisita)}
+                          title="Ver historia clínica"
+                        >
                           {row.NumeroVisita}
                         </button>
                       </td>
-                      <td>{row.ApellidoYNombre}</td>
-                      <td>
-                        <span className={`${styles.typeBadge} ${tipoAtencionClass(row)}`}>{tipoAtencion(row)}</span>
+                      <td>{String(row.CentroSalud || '').trim() || '—'}</td>
+                      <td>{String(row.NumeroInternacion || '').trim() || '—'}</td>
+                      <td>{formatDocumento(row.NumeroDocumento)}</td>
+                      <td>{String(row.ApellidoYNombre || '').trim() || '—'}</td>
+                      <td>{String(row.CoberturaOS || '').trim() || '—'}</td>
+                      <td>{String(row.NumeroSSN || '').trim() || '—'}</td>
+                      <td>{ingresoLabel(row)}</td>
+                      <td>{String(row.Sector || '').trim() || '—'}</td>
+                      <td>{String(row.Habitacion || '').trim() || '—'}</td>
+                      <td className={styles.diagCell} title={diagnosticoLabel(row)}>
+                        {diagnosticoLabel(row)}
                       </td>
-                      <td>{row.NumeroDocumento || '-'}</td>
-                      <td>{row.NumeroHC || '-'}</td>
                       <td>
-                        <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
+                        <div className={styles.rowActions}>
+                          <button
+                            type="button"
+                            className={styles.modifyBtn}
+                            onClick={() => setEditVisita(row.NumeroVisita)}
+                          >
+                            Modificar
+                          </button>
+                          <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
+                        </div>
                       </td>
-                      <td>{row.FechaAdmision || '-'}</td>
-                      <td>{row.HoraAdmision || '-'}</td>
                     </tr>
                   ))
                 )}
@@ -336,20 +379,29 @@ export default function AdmissionSearchPage() {
                         className={styles.linkButton}
                         onClick={() => openVisitDetail(row.NumeroVisita)}
                       >
-                        Visita #{row.NumeroVisita}
+                        Admisión #{row.NumeroVisita}
                       </button>
-                      <span className={styles.admissionCardDate}>
-                        {row.FechaAdmision || '-'} {row.HoraAdmision || '-'}
-                      </span>
+                      <span className={styles.admissionCardDate}>{ingresoLabel(row)}</span>
                     </div>
                     <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
                     <p className={styles.admissionCardMeta}>
-                      DNI {row.NumeroDocumento || '—'} · HC {row.NumeroHC || '—'}
+                      I/A {iaLabel(row)} · DNI {formatDocumento(row.NumeroDocumento)} ·{' '}
+                      {String(row.CoberturaOS || '').trim() || 'Sin OS'}
                     </p>
                     <p className={styles.admissionCardMeta}>
-                      <span className={`${styles.typeBadge} ${tipoAtencionClass(row)}`}>{tipoAtencion(row)}</span>
+                      {String(row.Sector || '').trim() || '—'} / {String(row.Habitacion || '').trim() || '—'} ·{' '}
+                      {diagnosticoLabel(row)}
                     </p>
-                    <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
+                    <div className={styles.rowActions}>
+                      <button
+                        type="button"
+                        className={styles.modifyBtn}
+                        onClick={() => setEditVisita(row.NumeroVisita)}
+                      >
+                        Modificar
+                      </button>
+                      <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
+                    </div>
                   </article>
                 ))
               )}
@@ -384,11 +436,11 @@ export default function AdmissionSearchPage() {
                       <div className={styles.folderTitleBlock}>
                         <span className={styles.folderPatientName}>{patient.ApellidoYNombre}</span>
                         <span className={styles.folderPatientDni}>
-                          DNI {patient.NumeroDocumento || '—'} · HC {patient.NumeroHC || '—'}
+                          DNI {formatDocumento(patient.NumeroDocumento)} · HC {patient.NumeroHC || '—'}
                         </span>
                         {visits[0] ? (
                           <span className={styles.folderLastVisit}>
-                            Última visita: {visits[0].FechaAdmision || '—'} {visits[0].HoraAdmision || ''}
+                            Última visita: {ingresoLabel(visits[0])} {visits[0].HoraAdmision || ''}
                           </span>
                         ) : null}
                       </div>
@@ -432,6 +484,23 @@ export default function AdmissionSearchPage() {
         data={detailData}
         initialTab={detailInitialTab}
         onReloadData={() => void reloadVisitDetail()}
+      />
+
+      <AdmissionDatosPrincipalesModal
+        isOpen={editVisita != null}
+        numeroVisita={editVisita}
+        onClose={() => setEditVisita(null)}
+        onSaved={() => void runSearch(page)}
+        onOpenUbicacion={(nv) => {
+          setEditVisita(null);
+          setUbicacionVisita(nv);
+        }}
+      />
+
+      <AdmissionUbicacionMovimientosModal
+        isOpen={ubicacionVisita != null}
+        numeroVisita={ubicacionVisita}
+        onClose={() => setUbicacionVisita(null)}
       />
     </div>
   );

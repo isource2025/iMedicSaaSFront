@@ -1,33 +1,54 @@
 import { DisposicionEgreso } from '../types/disposicionEgreso.types';
 import { apiFetch } from '@/app/utils/authFetch';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+function normalizeDisposiciones(payload: unknown): DisposicionEgreso[] {
+  const rows = Array.isArray(payload)
+    ? payload
+    : Array.isArray((payload as { data?: unknown })?.data)
+      ? ((payload as { data: unknown[] }).data)
+      : [];
+
+  return rows
+    .map((item) => {
+      const row = item as Record<string, unknown>;
+      const valorRaw = row.Valor ?? row.valor;
+      const descripcion = String(row.Descripcion ?? row.descripcion ?? '').trim();
+      const valor = Number(valorRaw);
+      if (!Number.isFinite(valor) || !descripcion) return null;
+      return { Valor: valor, Descripcion: descripcion };
+    })
+    .filter((item): item is DisposicionEgreso => item != null);
+}
 
 /**
- * Obtiene todas las disposiciones de egreso
- * @returns Promise con el array de DisposicionEgreso
+ * Obtiene todas las disposiciones de egreso desde imDisposicionEgreso
  */
 export const getDisposicionesEgreso = async (): Promise<DisposicionEgreso[]> => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
-    
-    const response = await apiFetch(`${API_URL}/disposiciones-egreso`, {
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    // Preferimos el catálogo montado; fallback a la ruta CRUD dedicada
+    let response = await apiFetch('/catalogs/disposiciones-egreso', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal
+      signal: controller.signal,
     });
-    
+
+    if (!response.ok) {
+      response = await apiFetch('/disposiciones-egreso', {
+        method: 'GET',
+        signal: controller.signal,
+      });
+    }
+
     clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
-    return data;
+    return normalizeDisposiciones(data);
   } catch (error) {
     console.error('Error al obtener disposiciones de egreso:', error);
     return [];
@@ -36,30 +57,21 @@ export const getDisposicionesEgreso = async (): Promise<DisposicionEgreso[]> => 
 
 /**
  * Crea una nueva disposición de egreso
- * @param disposicionEgreso Datos de la nueva disposición
- * @returns Promise con los datos de la disposición creada
  */
-export const createDisposicionEgreso = async (disposicionEgreso: DisposicionEgreso): Promise<DisposicionEgreso | null> => {
+export const createDisposicionEgreso = async (
+  disposicionEgreso: DisposicionEgreso,
+): Promise<DisposicionEgreso | null> => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
-    
-    const response = await apiFetch(`${API_URL}/disposiciones-egreso`, {
+    const response = await apiFetch('/disposiciones-egreso', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(disposicionEgreso),
-      signal: controller.signal
     });
-    
-    clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data.data as DisposicionEgreso;
   } catch (error) {
@@ -70,31 +82,22 @@ export const createDisposicionEgreso = async (disposicionEgreso: DisposicionEgre
 
 /**
  * Actualiza una disposición de egreso existente
- * @param valor Valor (clave primaria) de la disposición
- * @param descripcion Nueva descripción
- * @returns Promise con los datos actualizados
  */
-export const updateDisposicionEgreso = async (valor: number, descripcion: string): Promise<DisposicionEgreso | null> => {
+export const updateDisposicionEgreso = async (
+  valor: number,
+  descripcion: string,
+): Promise<DisposicionEgreso | null> => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
-    
-    const response = await apiFetch(`${API_URL}/disposiciones-egreso/${valor}`, {
+    const response = await apiFetch(`/disposiciones-egreso/${valor}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ Descripcion: descripcion }),
-      signal: controller.signal
     });
-    
-    clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data.data as DisposicionEgreso;
   } catch (error) {
@@ -105,26 +108,15 @@ export const updateDisposicionEgreso = async (valor: number, descripcion: string
 
 /**
  * Elimina una disposición de egreso existente
- * @param valor Valor (clave primaria) de la disposición a eliminar
- * @returns Promise que resuelve cuando la eliminación se completa
  */
 export const deleteDisposicionEgreso = async (valor: number): Promise<void> => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
-    
-    const response = await apiFetch(`${API_URL}/disposiciones-egreso/${valor}`, {
+    const response = await apiFetch(`/disposiciones-egreso/${valor}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal
     });
-    
-    clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
     }
   } catch (error) {
@@ -133,12 +125,11 @@ export const deleteDisposicionEgreso = async (valor: number): Promise<void> => {
   }
 };
 
-// Exportar un objeto con todos los métodos para soportar importación por defecto
 const disposicionEgresoService = {
   getDisposicionesEgreso,
   createDisposicionEgreso,
   updateDisposicionEgreso,
-  deleteDisposicionEgreso
+  deleteDisposicionEgreso,
 };
 
 export default disposicionEgresoService;

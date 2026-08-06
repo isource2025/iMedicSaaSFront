@@ -15,10 +15,18 @@ export interface AdmissionSearchRow {
   ApellidoYNombre: string;
   NumeroDocumento: string;
   NumeroHC: string;
+  NumeroSSN?: string;
+  NumeroInternacion?: string;
+  CentroSalud?: string;
+  CoberturaOS?: string;
+  Sector?: string;
+  Habitacion?: string;
   FechaAdmision: string;
+  FechaAdmisionDMY?: string;
   HoraAdmision: string;
   TipoPaciente?: string;
   TipoPacienteDescripcion?: string;
+  ClasePaciente?: string;
   EstadoAmbulatorio?: string;
   EstadoAmbulatorioDescripcion?: string;
   TipoAtencion?: string;
@@ -41,6 +49,90 @@ export interface AdmissionSearchRow {
   CntProtocolos?: number;
   CntAdjuntos?: number;
   CntEvoluciones?: number;
+}
+
+export interface AdmissionCatalogOption {
+  Valor: string | number;
+  Descripcion?: string | null;
+}
+
+export interface AdmissionDatosPrincipalesVisita {
+  NumeroVisita: number;
+  IdPaciente: number;
+  ApellidoYNombre?: string;
+  NumeroDocumento?: string | number;
+  NumeroHC?: string;
+  NumeroSSN?: string;
+  FechaAdmision?: string;
+  HoraAdmision?: string;
+  FechaAdmisionDMY?: string;
+  ClasePaciente?: string;
+  ClasePacienteDescripcion?: string;
+  NumeroInternacion?: string;
+  TipoAdmision?: string;
+  TipoAdmisionDescripcion?: string;
+  IdLugarEpisodio?: number | null;
+  LugarEpisodioDescripcion?: string;
+  OrigenAdmision?: number | null;
+  OrigenAdmisionDescripcion?: string;
+  Diagnostico?: string;
+  DiagnosticoDescripcion?: string;
+  EstadoAmbulatorio?: string;
+  EstadoAmbulatorioDescripcion?: string;
+  DoctorAdmisor?: number | null;
+  DoctorAdmisorNombre?: string;
+  Cliente?: number | null;
+  CoberturaOS?: string;
+  Contrato?: number | null;
+  ContratoDescripcion?: string;
+  DoctorAsistiendo?: number | null;
+  DoctorAsistiendoNombre?: string;
+  TipoPaciente?: string;
+  TipoPacienteDescripcion?: string;
+  DoctorCabecera?: number | null;
+  DoctorCabeceraNombre?: string;
+  Sector?: string;
+  Habitacion?: string;
+  SectorDescripcion?: string;
+  ServicioHospital?: string;
+  ServicioHospitalDescripcion?: string;
+  FechaEgreso?: string | null;
+  HoraEgreso?: string | null;
+  DisposicionEgreso?: number | null;
+  DiagnosticoEgreso?: string;
+  OperadorEgreso?: number | null;
+  CentroSalud?: string;
+}
+
+export interface AdmissionDatosPrincipalesPayload {
+  visita: AdmissionDatosPrincipalesVisita;
+  catalogos: {
+    clasesPaciente: AdmissionCatalogOption[];
+    tiposAdmision: AdmissionCatalogOption[];
+    tiposPaciente: AdmissionCatalogOption[];
+    estadosAmbulatorios: AdmissionCatalogOption[];
+    lugaresEpisodio: AdmissionCatalogOption[];
+    origenesAdmision: AdmissionCatalogOption[];
+    convenios: AdmissionCatalogOption[];
+  };
+}
+
+export interface AdmissionDatosPrincipalesUpdate {
+  fechaAdmision?: string;
+  horaAdmision?: string;
+  clasePaciente?: string;
+  numeroInternacion?: string;
+  tipoAdmision?: string;
+  idLugarEpisodio?: number | null;
+  origenAdmision?: number | null;
+  diagnostico?: string;
+  estadoAmbulatorio?: string;
+  doctorAdmisor?: number | null;
+  cliente?: number | null;
+  contrato?: number | null;
+  doctorAsistiendo?: number | null;
+  tipoPaciente?: string;
+  doctorCabecera?: number | null;
 }
 
 interface AdmissionSearchResponse {
@@ -109,6 +201,33 @@ export const admissionSearchService = {
     return response.data?.data;
   },
 
+  async getDatosPrincipales(numeroVisita: number): Promise<AdmissionDatosPrincipalesPayload> {
+    const response = await apiService.get<{ success: boolean; data: AdmissionDatosPrincipalesPayload }>(
+      `/admission-search/${numeroVisita}/datos-principales`,
+    );
+    return response.data.data;
+  },
+
+  async updateDatosPrincipales(
+    numeroVisita: number,
+    body: AdmissionDatosPrincipalesUpdate,
+  ): Promise<AdmissionDatosPrincipalesPayload> {
+    const response = await apiService.put<{ success: boolean; data: AdmissionDatosPrincipalesPayload }>(
+      `/admission-search/${numeroVisita}/datos-principales`,
+      body,
+    );
+    return response.data.data;
+  },
+
+  async getCatalogos(cliente?: number | null): Promise<AdmissionDatosPrincipalesPayload['catalogos']> {
+    const q = cliente != null && Number(cliente) > 0 ? `?cliente=${Number(cliente)}` : '';
+    const response = await apiService.get<{
+      success: boolean;
+      data: AdmissionDatosPrincipalesPayload['catalogos'];
+    }>(`/admission-search/catalogos${q}`);
+    return response.data.data;
+  },
+
   async getTurnosActivos(idPaciente: number): Promise<
     {
       idTurno: number;
@@ -144,7 +263,7 @@ export const admissionSearchService = {
       const response = await apiService.post<Blob>(
         `/admission-search/${numeroVisita}/export-selective`,
         body,
-        { responseType: 'blob', timeout: 120000 }
+        { responseType: 'blob', timeout: 120000 },
       );
       return response.data as Blob;
     } catch (e: unknown) {
@@ -162,7 +281,7 @@ export const admissionSearchService = {
       const response = await apiService.post<Blob>(
         `/admission-search/paciente/${idPaciente}/export-general`,
         body,
-        { responseType: 'blob', timeout: 300000 }
+        { responseType: 'blob', timeout: 300000 },
       );
       return response.data as Blob;
     } catch (e: unknown) {

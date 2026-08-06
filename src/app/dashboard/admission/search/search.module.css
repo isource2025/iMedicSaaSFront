@@ -370,6 +370,37 @@
   text-decoration: underline;
 }
 
+.modifyBtn {
+  border: 1px solid #7dd3fc;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.modifyBtn:hover {
+  background: #bae6fd;
+}
+
+.rowActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 110px;
+}
+
+.diagCell {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .admisionesResult {
   display: flex;
   flex-direction: column;

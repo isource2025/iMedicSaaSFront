@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import ModalBasePaciente from './ModalBasePaciente';
 import ModalBusquedaDiagnosticos from './ModalBusquedaDiagnosticos';
 import styles from './ModalEgresoPaciente.module.css';
 import Loader from '../Loader/Loader';
-import visitaService from '../../services/visitaService';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
 import { getDisposicionesEgreso } from '../../services/disposicionEgresoService';
 import diagnosticosService from '../../services/diagnosticosService';
@@ -56,6 +56,9 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
   // Referencias para manejo del DOM
   const resultadosRef = useRef<HTMLDivElement>(null);
   const busquedaInputRef = useRef<HTMLInputElement>(null);
+  const diagnosticoContainerRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
+  const [dropdownReady, setDropdownReady] = useState(false);
 
   // Validación de formulario
   const [formErrors, setFormErrors] = useState<{
@@ -83,11 +86,14 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
   // Cargar disposiciones de egreso cuando se abre el modal
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const fetchDisposiciones = async () => {
       try {
         const data = await getDisposicionesEgreso();
-        setDisposiciones(data as DisposicionEgreso[]);
+        setDisposiciones(data);
+        if (!data.length) {
+          setError('No se pudieron cargar las disposiciones de egreso (imDisposicionEgreso)');
+        }
       } catch (err) {
         console.error('Error cargando disposiciones:', err);
         setError('No se pudieron cargar las disposiciones de egreso');
@@ -97,11 +103,59 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
     fetchDisposiciones();
   }, [isOpen]);
 
+  const updateDropdownPosition = useCallback(() => {
+    const anchor = diagnosticoContainerRef.current;
+    if (!anchor) return;
+
+    const rect = anchor.getBoundingClientRect();
+    const gap = 6;
+    const maxH = 280;
+    const spaceBelow = window.innerHeight - rect.bottom - gap;
+    const spaceAbove = rect.top - gap;
+    const openUp = spaceBelow < 160 && spaceAbove > spaceBelow;
+    const available = openUp ? spaceAbove : spaceBelow;
+    const height = Math.max(120, Math.min(maxH, available));
+
+    setDropdownStyle({
+      position: 'fixed',
+      left: rect.left,
+      width: rect.width,
+      maxHeight: height,
+      zIndex: 10050,
+      ...(openUp
+        ? { bottom: window.innerHeight - rect.top + gap, top: 'auto' }
+        : { top: rect.bottom + gap, bottom: 'auto' }),
+    });
+    setDropdownReady(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!mostrarResultados || diagnosticoSeleccionado) {
+      setDropdownReady(false);
+      return;
+    }
+    updateDropdownPosition();
+    window.addEventListener('resize', updateDropdownPosition);
+    window.addEventListener('scroll', updateDropdownPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateDropdownPosition);
+      window.removeEventListener('scroll', updateDropdownPosition, true);
+    };
+  }, [
+    mostrarResultados,
+    diagnosticoSeleccionado,
+    diagnosticosEncontrados,
+    busquedaDiagnostico,
+    updateDropdownPosition,
+  ]);
+
   // Cerrar el dropdown de resultados cuando se hace clic fuera de él
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (resultadosRef.current && !resultadosRef.current.contains(event.target as Node) && 
-          busquedaInputRef.current && !busquedaInputRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideResults = resultadosRef.current?.contains(target);
+      const insideAnchor = diagnosticoContainerRef.current?.contains(target);
+      if (!insideResults && !insideAnchor) {
         setMostrarResultados(false);
       }
     };
@@ -249,22 +303,9 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
         bedId: bedId
       };
       console.log('Datos de egreso:', datosEgreso);
-      // Actualizamos el movimiento con los datos de egreso
+      // Actualiza movimiento, visita y libera la cama en una sola transacción
       await visitaMovimientoService.actualizarUltimoMovimiento(numeroVisita, datosEgreso);
-      
-      // Actualizamos el estado de la visita para liberar la cama
-      await visitaService.registrarEgreso({
-        numeroVisita,
-        fechaAdmision: '', // Estos campos son requeridos por la interfaz pero no se usan para el egreso
-        horaAdmision: '',  // Estos campos son requeridos por la interfaz pero no se usan para el egreso
-        fechaEgreso: fechaEgreso,
-        horaEgreso: horaEgreso,
-        disposicionEgreso: disposicionEgreso,
-        diagnostico: diagnosticoSeleccionado?.CodigoOMS || null,
-        bedId: bedId
-      });
-      
-      // Mostrar mensaje de éxito
+
       setSuccess(true);
       
       // Guardar el sector actual para redirigir después
@@ -379,8 +420,8 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                   disabled={loading || success}
                 >
                   <option value="">Seleccione una disposición</option>
-                  {disposiciones.map((disp, index) => (
-                    <option key={index} value={disp.Valor?.toString() || ''}>
+                  {disposiciones.map((disp) => (
+                    <option key={disp.Valor} value={String(disp.Valor)}>
                       {disp.Descripcion}
                     </option>
                   ))}
@@ -395,7 +436,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
               
               <div className={styles.formGroup}>
                 <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico CIE-10</label>
-                <div className={styles.diagnosticoContainer}>
+                <div className={styles.diagnosticoContainer} ref={diagnosticoContainerRef}>
                   <div className={styles.diagnosticoInputContainer}>
                     <input
                       id="diagnosticoEgreso"
@@ -431,31 +472,39 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                   {errorDiagnostico && !diagnosticoSeleccionado && (
                     <span className={styles.fieldError}>{errorDiagnostico}</span>
                   )}
-                  
-                  {mostrarResultados && !diagnosticoSeleccionado && (
-                    <div className={styles.resultadosDiagnosticos} ref={resultadosRef}>
-                      {buscandoDiagnostico ? (
-                        <div className={styles.loadingResults}>Buscando...</div>
-                      ) : diagnosticosEncontrados.length > 0 ? (
-                        diagnosticosEncontrados.map((diag) => (
-                          <div 
-                            key={diag.idDiagnostico || diag.CodigoOMS} 
-                            className={styles.resultadoDiagnostico}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              seleccionarDiagnostico(diag);
-                            }}
-                          >
-                            <span className={styles.diagnosticoCode}>{diag.CodigoOMS}</span> - {diag.descripcion}
+
+                  {mostrarResultados && !diagnosticoSeleccionado && dropdownReady && typeof document !== 'undefined' &&
+                    createPortal(
+                      <div
+                        className={styles.resultadosDiagnosticosPortal}
+                        ref={resultadosRef}
+                        style={dropdownStyle}
+                        role="listbox"
+                      >
+                        {buscandoDiagnostico ? (
+                          <div className={styles.loadingResults}>Buscando...</div>
+                        ) : diagnosticosEncontrados.length > 0 ? (
+                          diagnosticosEncontrados.map((diag) => (
+                            <div
+                              key={diag.idDiagnostico || diag.CodigoOMS}
+                              className={styles.resultadoDiagnostico}
+                              role="option"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                seleccionarDiagnostico(diag);
+                              }}
+                            >
+                              <span className={styles.diagnosticoCode}>{diag.CodigoOMS}</span> - {diag.descripcion}
+                            </div>
+                          ))
+                        ) : (
+                          <div className={styles.loadingResults}>
+                            Sin resultados para &quot;{busquedaDiagnostico.trim()}&quot;
                           </div>
-                        ))
-                      ) : (
-                        <div className={styles.loadingResults}>
-                          Sin resultados para &quot;{busquedaDiagnostico.trim()}&quot;
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>,
+                      document.body,
+                    )}
                   
                   {diagnosticoSeleccionado && (
                     <div className={styles.selectedDiagnostico}>
