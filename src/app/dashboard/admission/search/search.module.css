@@ -401,6 +401,25 @@
   white-space: nowrap;
 }
 
+.cellStack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.cellPrimary {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cellSub {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
 .admisionesResult {
   display: flex;
   flex-direction: column;

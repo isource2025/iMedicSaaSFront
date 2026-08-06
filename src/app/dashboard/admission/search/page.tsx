@@ -302,15 +302,10 @@ export default function AdmissionSearchPage() {
                 <tr>
                   <th>I/A</th>
                   <th>Nº Admisión</th>
-                  <th>Centro de Salud</th>
-                  <th>Nº Internación</th>
-                  <th>Paciente - Documento</th>
-                  <th>Paciente - Apellido y Nombre</th>
-                  <th>Cobertura (OS)</th>
-                  <th>Número SSN</th>
+                  <th>Paciente</th>
+                  <th>Cobertura</th>
                   <th>Ingreso</th>
-                  <th>Sector</th>
-                  <th>Hab</th>
+                  <th>Ubicación</th>
                   <th>Diagnóstico</th>
                   <th>Acciones</th>
                 </tr>
@@ -318,7 +313,7 @@ export default function AdmissionSearchPage() {
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={13} className={styles.empty}>
+                    <td colSpan={8} className={styles.empty}>
                       {loading ? 'Buscando...' : 'Sin resultados'}
                     </td>
                   </tr>
@@ -327,24 +322,51 @@ export default function AdmissionSearchPage() {
                     <tr key={row.NumeroVisita}>
                       <td>{iaLabel(row)}</td>
                       <td>
-                        <button
-                          type="button"
-                          className={styles.linkButton}
-                          onClick={() => openVisitDetail(row.NumeroVisita)}
-                          title="Ver historia clínica"
-                        >
-                          {row.NumeroVisita}
-                        </button>
+                        <div className={styles.cellStack}>
+                          <button
+                            type="button"
+                            className={styles.linkButton}
+                            onClick={() => openVisitDetail(row.NumeroVisita)}
+                            title="Ver historia clínica"
+                          >
+                            {row.NumeroVisita}
+                          </button>
+                          <span className={styles.cellSub}>
+                            Int. {String(row.NumeroInternacion || '').trim() || '—'}
+                          </span>
+                        </div>
                       </td>
-                      <td>{String(row.CentroSalud || '').trim() || '—'}</td>
-                      <td>{String(row.NumeroInternacion || '').trim() || '—'}</td>
-                      <td>{formatDocumento(row.NumeroDocumento)}</td>
-                      <td>{String(row.ApellidoYNombre || '').trim() || '—'}</td>
-                      <td>{String(row.CoberturaOS || '').trim() || '—'}</td>
-                      <td>{String(row.NumeroSSN || '').trim() || '—'}</td>
+                      <td>
+                        <div className={styles.cellStack}>
+                          <span className={styles.cellPrimary}>
+                            {String(row.ApellidoYNombre || '').trim() || '—'}
+                          </span>
+                          <span className={styles.cellSub}>
+                            DNI {formatDocumento(row.NumeroDocumento)}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.cellStack}>
+                          <span className={styles.cellPrimary}>
+                            {String(row.CoberturaOS || '').trim() || '—'}
+                          </span>
+                          <span className={styles.cellSub}>
+                            SSN {String(row.NumeroSSN || '').trim() || '—'}
+                          </span>
+                        </div>
+                      </td>
                       <td>{ingresoLabel(row)}</td>
-                      <td>{String(row.Sector || '').trim() || '—'}</td>
-                      <td>{String(row.Habitacion || '').trim() || '—'}</td>
+                      <td>
+                        <div className={styles.cellStack}>
+                          <span className={styles.cellPrimary}>
+                            {String(row.Sector || '').trim() || '—'}
+                          </span>
+                          <span className={styles.cellSub}>
+                            Hab. {String(row.Habitacion || '').trim() || '—'}
+                          </span>
+                        </div>
+                      </td>
                       <td className={styles.diagCell} title={diagnosticoLabel(row)}>
                         {diagnosticoLabel(row)}
                       </td>
@@ -383,14 +405,20 @@ export default function AdmissionSearchPage() {
                       </button>
                       <span className={styles.admissionCardDate}>{ingresoLabel(row)}</span>
                     </div>
+                    <p className={styles.admissionCardMeta}>
+                      Int. {String(row.NumeroInternacion || '').trim() || '—'}
+                    </p>
                     <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
                     <p className={styles.admissionCardMeta}>
-                      I/A {iaLabel(row)} · DNI {formatDocumento(row.NumeroDocumento)} ·{' '}
-                      {String(row.CoberturaOS || '').trim() || 'Sin OS'}
+                      I/A {iaLabel(row)} · DNI {formatDocumento(row.NumeroDocumento)}
                     </p>
                     <p className={styles.admissionCardMeta}>
-                      {String(row.Sector || '').trim() || '—'} / {String(row.Habitacion || '').trim() || '—'} ·{' '}
-                      {diagnosticoLabel(row)}
+                      {String(row.CoberturaOS || '').trim() || 'Sin OS'} · SSN{' '}
+                      {String(row.NumeroSSN || '').trim() || '—'}
+                    </p>
+                    <p className={styles.admissionCardMeta}>
+                      {String(row.Sector || '').trim() || '—'} / Hab.{' '}
+                      {String(row.Habitacion || '').trim() || '—'} · {diagnosticoLabel(row)}
                     </p>
                     <div className={styles.rowActions}>
                       <button

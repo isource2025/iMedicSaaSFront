@@ -164,9 +164,15 @@ const visitaMovimientoService = {
 
   getMovimientosVisita: async (numeroVisita: string | number): Promise<any[]> => {
     try {
-      const response = await apiService.get<ApiResponse>(
-        `${BASE_URL}/visita-movimientos/visita/${numeroVisita}`,
+      // Misma ruta que el resto de movimientos (patients), con fallback al router dedicado
+      let response = await apiService.get<ApiResponse>(
+        `${BASE_URL}/patients/visitas/${numeroVisita}/movimientos`,
       );
+      if (!response.data?.success) {
+        response = await apiService.get<ApiResponse>(
+          `${BASE_URL}/visita-movimientos/visita/${numeroVisita}`,
+        );
+      }
       if (!response.data?.success) {
         return [];
       }
@@ -175,7 +181,17 @@ const visitaMovimientoService = {
       return data ? [data] : [];
     } catch (error: any) {
       console.error('Error al obtener movimientos de visita:', error);
-      throw error;
+      try {
+        const fallback = await apiService.get<ApiResponse>(
+          `${BASE_URL}/visita-movimientos/visita/${numeroVisita}`,
+        );
+        if (!fallback.data?.success) return [];
+        const data = fallback.data.data;
+        if (Array.isArray(data)) return data;
+        return data ? [data] : [];
+      } catch {
+        throw error;
+      }
     }
   },
 

@@ -371,18 +371,14 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       estadoAmbulatorio?: string;
     } = {};
     
-    // Validar campos obligatorios
+    // Validar campos obligatorios (estado ambulatorio y diagnóstico NO son obligatorios)
     if (!fechaEgreso) errores.fechaEgreso = "La fecha es obligatoria";
     if (!horaEgreso) errores.horaEgreso = "La hora es obligatoria";
-    if (!camaSeleccionada) errores.camaSeleccionada = "Debe seleccionar una cama destino"
-    if (!estadoAmbulatorio) errores.estadoAmbulatorio = "El estado ambulatorio es obligatorio";
-    
-    // Validar formato de fecha y hora
-    const fechaActual = new Date();
+    if (!camaSeleccionada) errores.camaSeleccionada = "Debe seleccionar una cama destino";
+
     const fechaSeleccionada = new Date(`${fechaEgreso}T${horaEgreso}:00`);
-    
-    
-    // Validar que la hora de nueva ubicación sea al menos un minuto después que la hora de ubicación actual
+
+    // Validar que la hora de nueva ubicación sea posterior a la ubicación actual
     if (ubicacionActual && ubicacionActual.FechaAdmision && ubicacionActual.HoraAdmision) {
       // Obtener la fecha y hora de ingreso de la ubicación actual
       let fechaIngresoStr = '';
@@ -401,8 +397,6 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       } else {
         horaIngresoStr = String(ubicacionActual.HoraAdmision);
       }
-      console.log('Fecha de ingreso actual:', fechaIngresoStr);
-      console.log('Hora de ingreso actual:', horaIngresoStr);
       // Crear objeto Date para la fecha y hora de ingreso de la ubicación actual
       const fechaIngresoActual = new Date(`${fechaIngresoStr}T${horaIngresoStr}:00`);
       
@@ -536,7 +530,19 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       
     } catch (err: any) {
       console.error('Error en el cambio de cama:', err);
-      setError(err.message || 'Ocurrió un error durante el cambio de cama');
+      const status = err?.response?.status;
+      const apiMsg =
+        err?.response?.data?.mensaje ||
+        err?.response?.data?.message ||
+        err?.message;
+      if (status === 403) {
+        setError(
+          apiMsg ||
+            'No tiene permiso para mover camas (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)',
+        );
+      } else {
+        setError(apiMsg || 'Ocurrió un error durante el cambio de cama');
+      }
       setSuccess(false);
     } finally {
       setLoading(false);
@@ -696,39 +702,54 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     )}
                   </div>
 
-                  {/* Estado Ambulatorio */}
+                  {/* Estado Ambulatorio (opcional) */}
                   <div className={styles.formGroup}>
-                    <label htmlFor="estadoAmbulatorio" className={styles.label}>Estado Ambulatorio</label>
+                    <label htmlFor="estadoAmbulatorio" className={styles.label}>
+                      Estado Ambulatorio (opcional)
+                    </label>
                     <select
                       id="estadoAmbulatorio"
                       value={estadoAmbulatorio}
                       onChange={(e) => setEstadoAmbulatorio(e.target.value)}
-                      className={`${styles.select} ${formErrors.estadoAmbulatorio ? styles.inputError : ''}`}
+                      className={styles.select}
                       disabled={loading || success}
                     >
-                      <option value="">Seleccione un estado ambulatorio</option>
+                      <option value="">— Sin cambiar —</option>
                       {estadosAmbulatorios.map((estado) => (
                         <option key={estado.Valor} value={estado.Valor || ''}>
                           {estado.Descripcion}
                         </option>
                       ))}
                     </select>
-                    {formErrors.estadoAmbulatorio && (
-                      <span className={styles.fieldError}>{formErrors.estadoAmbulatorio}</span>
-                    )}
                   </div>
 
-                  {/* Diagnóstico */}
+                  {/* Diagnóstico (opcional) */}
                   <div className={styles.formGroup}>
-                <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico CIE-10</label>
+                <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico CIE-10 (opcional)</label>
                 <div className={styles.diagnosticoContainer}>
+                  {diagnosticoSeleccionado ? (
+                    <div className={styles.selectedDiagnostico}>
+                      <span className={styles.diagnosticoCode}>{diagnosticoSeleccionado.CodigoOMS}</span>
+                      <span className={styles.diagnosticoDesc}>{diagnosticoSeleccionado.descripcion}</span>
+                      <button
+                        type="button"
+                        onClick={eliminarDiagnosticoSeleccionado}
+                        className={styles.eliminarDiagnosticoBtn}
+                        aria-label="Eliminar diagnóstico"
+                        disabled={loading || success}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <>
                   <div className={styles.diagnosticoInputContainer}>
                     <input
                       id="diagnosticoEgreso"
                       type="text"
                       value={busquedaDiagnostico}
                       onChange={(e) => setBusquedaDiagnostico(e.target.value)}
-                      disabled={loading || success || !!diagnosticoSeleccionado}
+                      disabled={loading || success}
                       placeholder="Buscar por código o descripción"
                       className={styles.input}
                       ref={busquedaInputRef}
@@ -747,11 +768,11 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     </button>
                   </div>
                   
-                  {errorDiagnostico && !diagnosticoSeleccionado && (
+                  {errorDiagnostico && (
                     <span className={styles.fieldError}>{errorDiagnostico}</span>
                   )}
                   
-                  {mostrarResultados && diagnosticosEncontrados.length > 0 && !diagnosticoSeleccionado && (
+                  {mostrarResultados && diagnosticosEncontrados.length > 0 && (
                     <div className={styles.resultadosDiagnosticosUp} ref={resultadosRef}>
                       {buscandoDiagnostico ? (
                         <div className={styles.loadingResults}>Buscando...</div>
@@ -769,26 +790,10 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                     </div>
                   )}
                   
-                  {diagnosticoSeleccionado && (
-                    <div className={styles.selectedDiagnostico}>
-                      <span className={styles.diagnosticoCode}>{diagnosticoSeleccionado.CodigoOMS}</span>
-                      <span className={styles.diagnosticoDesc}>{diagnosticoSeleccionado.descripcion}</span>
-                      <button
-                        type="button"
-                        onClick={eliminarDiagnosticoSeleccionado}
-                        className={styles.eliminarDiagnosticoBtn}
-                        aria-label="Eliminar diagnóstico"
-                        disabled={loading || success}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                  
-                  {!diagnosticoSeleccionado && (
                     <span className={styles.fieldInfo}>
                       Busque por código o descripción del diagnóstico CIE-10
                     </span>
+                    </>
                   )}
                 </div>
                   </div>

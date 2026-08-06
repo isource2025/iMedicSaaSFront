@@ -8,7 +8,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    /* Por encima de Gestión de visita (1100) y Ubicación overlay (1200) */
+    z-index: 1300;
     backdrop-filter: blur(3px);
     will-change: opacity; /* Optimización para el navegador */
     backface-visibility: hidden; /* Reducir parpadeos en transiciones */

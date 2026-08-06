@@ -231,9 +231,10 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
     }
     
     setDiagnosticoSeleccionado(diagnostico);
-    setBusquedaDiagnostico(`${diagnostico.CodigoOMS} - ${diagnostico.descripcion}`);
+    setBusquedaDiagnostico('');
     setMostrarResultados(false);
     setModalBusquedaAbierto(false);
+    setErrorDiagnostico(null);
   };
 
   const eliminarDiagnosticoSeleccionado = () => {
@@ -324,7 +325,19 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
       }, 2000);
     } catch (err: any) {
       console.error('Error al procesar el egreso:', err);
-      setError(err.message || 'Error al procesar el egreso');
+      const status = err?.response?.status;
+      const apiMsg =
+        err?.response?.data?.mensaje ||
+        err?.response?.data?.message ||
+        err?.message;
+      if (status === 403) {
+        setError(
+          apiMsg ||
+            'No tiene permiso para registrar egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)',
+        );
+      } else {
+        setError(apiMsg || 'Error al procesar el egreso');
+      }
     } finally {
       setLoading(false);
     }
@@ -435,8 +448,24 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
             <div className={styles.formSection}>
               
               <div className={styles.formGroup}>
-                <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico CIE-10</label>
+                <label htmlFor="diagnosticoEgreso" className={styles.label}>Diagnóstico CIE-10 (opcional)</label>
                 <div className={styles.diagnosticoContainer} ref={diagnosticoContainerRef}>
+                  {diagnosticoSeleccionado ? (
+                    <div className={styles.selectedDiagnostico}>
+                      <span className={styles.diagnosticoCode}>{diagnosticoSeleccionado.CodigoOMS}</span>
+                      <span className={styles.diagnosticoDesc}>{diagnosticoSeleccionado.descripcion}</span>
+                      <button
+                        type="button"
+                        onClick={eliminarDiagnosticoSeleccionado}
+                        className={styles.eliminarDiagnosticoBtn}
+                        aria-label="Eliminar diagnóstico"
+                        disabled={loading || success}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <>
                   <div className={styles.diagnosticoInputContainer}>
                     <input
                       id="diagnosticoEgreso"
@@ -469,11 +498,11 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                     </button>
                   </div>
                   
-                  {errorDiagnostico && !diagnosticoSeleccionado && (
+                  {errorDiagnostico && (
                     <span className={styles.fieldError}>{errorDiagnostico}</span>
                   )}
 
-                  {mostrarResultados && !diagnosticoSeleccionado && dropdownReady && typeof document !== 'undefined' &&
+                  {mostrarResultados && dropdownReady && typeof document !== 'undefined' &&
                     createPortal(
                       <div
                         className={styles.resultadosDiagnosticosPortal}
@@ -506,26 +535,10 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
                       document.body,
                     )}
                   
-                  {diagnosticoSeleccionado && (
-                    <div className={styles.selectedDiagnostico}>
-                      <span className={styles.diagnosticoCode}>{diagnosticoSeleccionado.CodigoOMS}</span>
-                      <span className={styles.diagnosticoDesc}>{diagnosticoSeleccionado.descripcion}</span>
-                      <button
-                        type="button"
-                        onClick={eliminarDiagnosticoSeleccionado}
-                        className={styles.eliminarDiagnosticoBtn}
-                        aria-label="Eliminar diagnóstico"
-                        disabled={loading || success}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                  
-                  {!diagnosticoSeleccionado && (
                     <span className={styles.fieldInfo}>
                       Escriba para buscar automáticamente por código o descripción CIE-10
                     </span>
+                    </>
                   )}
                 </div>
               </div>

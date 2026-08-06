@@ -19,6 +19,10 @@ type Props = {
   isOpen: boolean;
   numeroVisita: number | null;
   onClose: () => void;
+  /** Sin overlay propio: se embebe en el modal de gestión de visita */
+  embedded?: boolean;
+  /** Qué bloque mostrar (para menú lateral) */
+  focusSection?: 'ubicacion' | 'movimientos' | 'egreso' | 'all' | 'ubicacion_movimientos';
 };
 
 type MovimientoRow = {
@@ -48,7 +52,13 @@ function dmy(iso?: string | null) {
   return iso;
 }
 
-export default function AdmissionUbicacionMovimientosModal({ isOpen, numeroVisita, onClose }: Props) {
+export default function AdmissionUbicacionMovimientosModal({
+  isOpen,
+  numeroVisita,
+  onClose,
+  embedded = false,
+  focusSection = 'all',
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [visita, setVisita] = useState<AdmissionDatosPrincipalesVisita | null>(null);
@@ -72,13 +82,32 @@ export default function AdmissionUbicacionMovimientosModal({ isOpen, numeroVisit
     try {
       setLoading(true);
       setError('');
-      const [payload, movs, disp] = await Promise.all([
+      const [payload, movs, disp, ultimo] = await Promise.all([
         admissionSearchService.getDatosPrincipales(numeroVisita),
-        visitaMovimientoService.getMovimientosVisita(numeroVisita),
+        visitaMovimientoService.getMovimientosVisita(numeroVisita).catch(() => [] as MovimientoRow[]),
         getDisposicionesEgreso().catch(() => [] as DisposicionEgreso[]),
+        visitaMovimientoService.getUltimoMovimiento(numeroVisita).catch(() => null),
       ]);
       setVisita(payload.visita);
-      setMovimientos(movs || []);
+      let list = (movs || []) as MovimientoRow[];
+      // Si el listado viene vacío pero hay último movimiento, usarlo para cama/sector e historial mínimo
+      if (list.length === 0 && ultimo) {
+        const bed =
+          String((ultimo as { ValorHabitacionCama?: string; bedId?: string }).ValorHabitacionCama ||
+            (ultimo as { bedId?: string }).bedId ||
+            '').trim();
+        const sec = String((ultimo as { ValorSector?: string }).ValorSector || '').trim();
+        if (bed || sec) {
+          list = [
+            {
+              ValorHabitacionCama: bed,
+              ValorSector: sec,
+              NombreCama: bed,
+            },
+          ];
+        }
+      }
+      setMovimientos(list);
       setSelectedIdx(0);
       setDisposiciones(disp || []);
       setFechaEgreso(String(payload.visita.FechaEgreso || '').slice(0, 10));
@@ -193,201 +222,203 @@ export default function AdmissionUbicacionMovimientosModal({ isOpen, numeroVisit
 
   if (!isOpen) return null;
 
-  return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.dialog} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        <div className={styles.header}>
-          <h2 className={styles.title}>Ubicación · Movimientos · Egreso</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
-            ×
-          </button>
-        </div>
+  const showUbicacion =
+    focusSection === 'all' ||
+    focusSection === 'ubicacion' ||
+    focusSection === 'ubicacion_movimientos';
+  const showMovimientos =
+    focusSection === 'all' ||
+    focusSection === 'movimientos' ||
+    focusSection === 'ubicacion_movimientos';
+  const showEgreso = focusSection === 'all' || focusSection === 'egreso';
 
-        <div className={styles.body}>
-          {visita ? (
-            <p className={styles.patientLine}>
-              Visita #{visita.NumeroVisita} · {String(visita.ApellidoYNombre || '').trim()} · DNI{' '}
-              {visita.NumeroDocumento || '—'}
-            </p>
+  const body = (
+    <div className={embedded ? styles.embeddedBody : styles.body}>
+      {!embedded && visita ? (
+        <p className={styles.patientLine}>
+          Visita #{visita.NumeroVisita} · {String(visita.ApellidoYNombre || '').trim()} · DNI{' '}
+          {visita.NumeroDocumento || '—'}
+        </p>
+      ) : null}
+
+      {error ? <div className={styles.error}>{error}</div> : null}
+
+      {loading && !visita ? (
+        <div className={styles.loadingWrap}>
+          <Loader />
+        </div>
+      ) : (
+        <>
+          {showUbicacion ? (
+            <section className={embedded ? styles.sectionFlat : styles.section}>
+              {!embedded ? <h3 className={styles.sectionTitle}>Ubicación actual</h3> : null}
+              <div className={styles.ubicacionGrid}>
+                <label className={styles.field}>
+                  <span>Sector</span>
+                  <input className={styles.readonly} value={sector || '—'} readOnly />
+                </label>
+                <label className={styles.field}>
+                  <span>Hab-Cama</span>
+                  <input className={styles.readonly} value={hab || '—'} readOnly />
+                </label>
+                <label className={styles.field}>
+                  <span>Descripción</span>
+                  <input className={styles.readonly} value={sectorDesc || '—'} readOnly />
+                </label>
+                <label className={styles.field}>
+                  <span>Servicio</span>
+                  <input className={styles.readonly} value={servicio || '—'} readOnly />
+                </label>
+              </div>
+            </section>
           ) : null}
 
-          {error ? <div className={styles.error}>{error}</div> : null}
-
-          {loading && !visita ? (
-            <div className={styles.loadingWrap}>
-              <Loader />
-            </div>
-          ) : (
-            <>
-              <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Ubicación actual</h3>
-                <div className={styles.ubicacionGrid}>
-                  <label className={styles.field}>
-                    <span>Sector</span>
-                    <input className={styles.readonly} value={sector || '—'} readOnly />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Hab-Cama</span>
-                    <input className={styles.readonly} value={hab || '—'} readOnly />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Descripción</span>
-                    <input className={styles.readonly} value={sectorDesc || '—'} readOnly />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Servicio</span>
-                    <input className={styles.readonly} value={servicio || '—'} readOnly />
-                  </label>
-                </div>
-              </section>
-
-              <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Historial de movimientos</h3>
-                <div className={styles.tableWrap}>
-                  {movimientos.length === 0 ? (
-                    <div className={styles.empty}>Sin movimientos registrados</div>
-                  ) : (
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>Ingreso / Hora</th>
-                          <th>Sector</th>
-                          <th>Habitación</th>
-                          <th>Diagnóstico / Servicio</th>
-                          <th>Egreso / Hora</th>
-                          <th>Pase por</th>
-                          <th>Fecha</th>
-                          <th>Hora</th>
+          {showMovimientos ? (
+            <section className={embedded ? styles.sectionFlat : styles.section}>
+              <h3 className={styles.sectionTitle}>Historial de movimientos</h3>
+              <div className={styles.tableWrap}>
+                {movimientos.length === 0 ? (
+                  <div className={styles.empty}>Sin movimientos registrados</div>
+                ) : (
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Ingreso / Hora</th>
+                        <th>Sector</th>
+                        <th>Habitación</th>
+                        <th>Diagnóstico / Servicio</th>
+                        <th>Egreso / Hora</th>
+                        <th>Pase por</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {movimientos.map((m, idx) => (
+                        <tr
+                          key={`${m.FechaAdmisionISO}-${m.HoraAdmisionISO}-${idx}`}
+                          className={idx === selectedIdx ? styles.rowSelected : undefined}
+                          onClick={() => setSelectedIdx(idx)}
+                        >
+                          <td>
+                            {dmy(m.FechaAdmisionISO)} {m.HoraAdmisionISO || ''}
+                          </td>
+                          <td>{m.ValorSector || '—'}</td>
+                          <td>{m.ValorHabitacionCama || m.NombreCama || '—'}</td>
+                          <td>{m.NombreServicio || m.Diagnostico || m.ServicioHospital || '—'}</td>
+                          <td>
+                            {m.FechaEgresoISO ? `${dmy(m.FechaEgresoISO)} ${m.HoraEgresoISO || ''}` : '—'}
+                          </td>
+                          <td>{m.Operador || '—'}</td>
+                          <td>{dmy(m.FechaCargaISO)}</td>
+                          <td>{m.HoraCargaISO || '—'}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {movimientos.map((m, idx) => (
-                          <tr
-                            key={`${m.FechaAdmisionISO}-${m.HoraAdmisionISO}-${idx}`}
-                            className={idx === selectedIdx ? styles.rowSelected : undefined}
-                            onClick={() => setSelectedIdx(idx)}
-                          >
-                            <td>
-                              {dmy(m.FechaAdmisionISO)} {m.HoraAdmisionISO || ''}
-                            </td>
-                            <td>{m.ValorSector || '—'}</td>
-                            <td>{m.ValorHabitacionCama || m.NombreCama || '—'}</td>
-                            <td>{m.NombreServicio || m.Diagnostico || m.ServicioHospital || '—'}</td>
-                            <td>
-                              {m.FechaEgresoISO ? `${dmy(m.FechaEgresoISO)} ${m.HoraEgresoISO || ''}` : '—'}
-                            </td>
-                            <td>{m.Operador || '—'}</td>
-                            <td>{dmy(m.FechaCargaISO)}</td>
-                            <td>{m.HoraCargaISO || '—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
 
-                <div className={styles.actions} style={{ marginTop: 10 }}>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnPrimary}`}
-                    disabled={!canMove}
-                    onClick={() => setCambiarOpen(true)}
-                    title={canMove ? 'Agregar movimiento / cambiar cama' : 'La visita no tiene cama asignada'}
-                  >
-                    Agregar movimiento
-                  </button>
+              <div className={styles.actions} style={{ marginTop: 10 }}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  disabled={!canMove}
+                  onClick={() => setCambiarOpen(true)}
+                  title={canMove ? 'Agregar movimiento / cambiar cama' : 'La visita no tiene cama asignada'}
+                >
+                  Agregar movimiento
+                </button>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  disabled={!canMove}
+                  onClick={() => setCambiarOpen(true)}
+                >
+                  Modificar movimiento
+                </button>
+                <div className={styles.actions}>
+                  <input
+                    style={{ width: 120, border: '1px solid #cbd5e1', borderRadius: 4, padding: '6px 8px' }}
+                    placeholder="Nº visita"
+                    value={swapVisita}
+                    onChange={(e) => setSwapVisita(e.target.value)}
+                  />
                   <button
                     type="button"
                     className={styles.btn}
-                    disabled={!canMove}
-                    onClick={() => setCambiarOpen(true)}
+                    disabled={!canMove || swapBusy}
+                    onClick={() => void onIntercambiar()}
                   >
-                    Modificar movimiento
-                  </button>
-                  <div className={styles.actions}>
-                    <input
-                      style={{ width: 120, border: '1px solid #cbd5e1', borderRadius: 4, padding: '6px 8px' }}
-                      placeholder="Nº visita"
-                      value={swapVisita}
-                      onChange={(e) => setSwapVisita(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className={styles.btn}
-                      disabled={!canMove || swapBusy}
-                      onClick={() => void onIntercambiar()}
-                    >
-                      Intercambiar cama
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnDanger}`}
-                    disabled={!canEgreso}
-                    onClick={() => setEgresoOpen(true)}
-                  >
-                    Egreso (asistido)
+                    Intercambiar cama
                   </button>
                 </div>
-              </section>
+              </div>
+            </section>
+          ) : null}
 
-              <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Egreso</h3>
-                <div className={styles.egresoGrid}>
-                  <label className={styles.field}>
-                    <span>Fecha de egreso</span>
-                    <input type="date" value={fechaEgreso} onChange={(e) => setFechaEgreso(e.target.value)} />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Hora de egreso</span>
-                    <input type="time" value={horaEgreso} onChange={(e) => setHoraEgreso(e.target.value)} />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Condición de egreso</span>
-                    <select value={disposicionEgreso} onChange={(e) => setDisposicionEgreso(e.target.value)}>
-                      <option value="">—</option>
-                      {disposiciones.map((d) => (
-                        <option key={String(d.Valor)} value={String(d.Valor)}>
-                          {d.Descripcion || d.Valor}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={styles.field}>
-                    <span>Diagnóstico egreso</span>
-                    <input
-                      value={diagnosticoEgreso}
-                      onChange={(e) => setDiagnosticoEgreso(e.target.value)}
-                      placeholder="Código CIE"
-                    />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Operador egreso</span>
-                    <input value={operadorEgreso} onChange={(e) => setOperadorEgreso(e.target.value)} />
-                  </label>
-                </div>
-                <div className={styles.actions} style={{ marginTop: 10 }}>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnPrimary}`}
-                    disabled={loading || !canEgreso}
-                    onClick={() => void onEgresoRapido()}
-                  >
-                    Registrar egreso
-                  </button>
-                  <button type="button" className={styles.btn} onClick={onClose}>
-                    Cerrar
-                  </button>
-                </div>
-              </section>
-            </>
-          )}
-        </div>
-      </div>
+          {showEgreso ? (
+            <section className={embedded ? styles.sectionFlat : styles.section}>
+              {!embedded ? <h3 className={styles.sectionTitle}>Egreso</h3> : null}
+              <div className={styles.egresoGrid}>
+                <label className={styles.field}>
+                  <span>Fecha de egreso</span>
+                  <input type="date" value={fechaEgreso} onChange={(e) => setFechaEgreso(e.target.value)} />
+                </label>
+                <label className={styles.field}>
+                  <span>Hora de egreso</span>
+                  <input type="time" value={horaEgreso} onChange={(e) => setHoraEgreso(e.target.value)} />
+                </label>
+                <label className={styles.field}>
+                  <span>Condición de egreso</span>
+                  <select value={disposicionEgreso} onChange={(e) => setDisposicionEgreso(e.target.value)}>
+                    <option value="">—</option>
+                    {disposiciones.map((d) => (
+                      <option key={String(d.Valor)} value={String(d.Valor)}>
+                        {d.Descripcion || d.Valor}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={styles.field}>
+                  <span>Diagnóstico egreso</span>
+                  <input
+                    value={diagnosticoEgreso}
+                    onChange={(e) => setDiagnosticoEgreso(e.target.value)}
+                    placeholder="Código CIE"
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span>Operador egreso</span>
+                  <input value={operadorEgreso} onChange={(e) => setOperadorEgreso(e.target.value)} />
+                </label>
+              </div>
+              <div className={styles.actions} style={{ marginTop: 10 }}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  disabled={loading || !canEgreso}
+                  onClick={() => void onEgresoRapido()}
+                >
+                  Registrar egreso
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                  disabled={!canEgreso}
+                  onClick={() => setEgresoOpen(true)}
+                >
+                  Egreso (asistido)
+                </button>
+              </div>
+            </section>
+          ) : null}
+        </>
+      )}
 
-      {numeroVisita && canMove ? (
+      {numeroVisita ? (
         <ModalCambiarCama
-          isOpen={cambiarOpen}
+          isOpen={cambiarOpen && Boolean(bedId)}
           onClose={() => {
             setCambiarOpen(false);
             void load();
@@ -399,9 +430,9 @@ export default function AdmissionUbicacionMovimientosModal({ isOpen, numeroVisit
         />
       ) : null}
 
-      {numeroVisita && canEgreso ? (
+      {numeroVisita ? (
         <ModalEgresoPaciente
-          isOpen={egresoOpen}
+          isOpen={egresoOpen && Boolean(bedId)}
           onClose={() => {
             setEgresoOpen(false);
             void load();
@@ -411,6 +442,34 @@ export default function AdmissionUbicacionMovimientosModal({ isOpen, numeroVisit
           header={headerSnapshot}
         />
       ) : null}
+    </div>
+  );
+
+  if (embedded) {
+    return body;
+  }
+
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.dialog} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        <div className={styles.header}>
+          <h2 className={styles.title}>
+            {focusSection === 'ubicacion'
+              ? 'Ubicación'
+              : focusSection === 'movimientos'
+                ? 'Movimientos'
+                : focusSection === 'ubicacion_movimientos'
+                  ? 'Ubicación y movimientos'
+                  : focusSection === 'egreso'
+                    ? 'Egreso'
+                    : 'Ubicación · Movimientos · Egreso'}
+          </h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
+            ×
+          </button>
+        </div>
+        {body}
+      </div>
     </div>
   );
 }

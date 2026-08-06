@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import ModalBusquedaDiagnosticos from '@/app/components/modals/ModalBusquedaDiagnosticos';
 import Loader from '@/app/components/Loader/Loader';
+import AdmissionUbicacionMovimientosModal from './AdmissionUbicacionMovimientosModal';
 import {
   admissionSearchService,
   type AdmissionCatalogOption,
@@ -15,12 +16,32 @@ import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import type { Personal } from '@/app/types/personal';
 import styles from './AdmissionDatosPrincipalesModal.module.css';
 
+type NavSection = 'datos' | 'ubicacion_movimientos' | 'egreso';
+
+const NAV_ITEMS: { id: NavSection; label: string }[] = [
+  { id: 'datos', label: 'Datos principales' },
+  { id: 'ubicacion_movimientos', label: 'Ubicación y movimientos' },
+  { id: 'egreso', label: 'Egreso' },
+];
+
+/** Compat: callers antiguos podían abrir en ubicacion/movimientos por separado */
+function normalizeSection(section: string | undefined): NavSection {
+  if (section === 'ubicacion' || section === 'movimientos' || section === 'ubicacion_movimientos') {
+    return 'ubicacion_movimientos';
+  }
+  if (section === 'egreso') return 'egreso';
+  return 'datos';
+}
+
 type Props = {
   isOpen: boolean;
   numeroVisita: number | null;
   onClose: () => void;
   onSaved?: () => void;
+  /** @deprecated La navegación ahora es interna (sidebar) */
   onOpenUbicacion?: (numeroVisita: number) => void;
+  /** También acepta 'ubicacion' | 'movimientos' (legacy → ubicacion_movimientos) */
+  initialSection?: NavSection | 'ubicacion' | 'movimientos';
 };
 
 type FormState = {
@@ -84,8 +105,9 @@ export default function AdmissionDatosPrincipalesModal({
   numeroVisita,
   onClose,
   onSaved,
-  onOpenUbicacion,
+  initialSection = 'datos',
 }: Props) {
+  const [section, setSection] = useState<NavSection>(() => normalizeSection(initialSection));
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -153,8 +175,9 @@ export default function AdmissionDatosPrincipalesModal({
 
   useEffect(() => {
     if (!isOpen || !numeroVisita) return;
+    setSection(normalizeSection(initialSection));
     void load();
-  }, [isOpen, numeroVisita, load]);
+  }, [isOpen, numeroVisita, load, initialSection]);
 
   useEffect(() => {
     if (!profTarget) return;
@@ -262,358 +285,442 @@ export default function AdmissionDatosPrincipalesModal({
     return c.label.toLowerCase().includes(q) || c.value.toLowerCase().includes(q);
   });
 
+  const sectionTitle =
+    section === 'datos'
+      ? 'Datos principales'
+      : section === 'ubicacion_movimientos'
+        ? 'Ubicación y movimientos'
+        : 'Egreso';
+
+  const sectionSubtitle =
+    section === 'ubicacion_movimientos'
+      ? 'Sector, habitación e historial de cambios de cama'
+      : section === 'egreso'
+        ? 'Registrar o asistir el egreso de la visita'
+        : '';
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.dialog} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className={styles.header}>
-          <h2 className={styles.title}>Datos Principales</h2>
+          <div className={styles.headerText}>
+            <h2 className={styles.title}>Gestión de visita</h2>
+            <p className={styles.subtitle}>{patientLabel || `Visita #${numeroVisita ?? '—'}`}</p>
+          </div>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
             ×
           </button>
         </div>
 
-        <div className={styles.body}>
-          {loading ? (
-            <div className={styles.loadingWrap}>
-              <Loader />
+        <div className={styles.shell}>
+          <aside className={styles.sidebar} aria-label="Secciones de la visita">
+            <p className={styles.navLabel}>Menú</p>
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`${styles.navItem} ${section === item.id ? styles.navItemActive : ''}`}
+                onClick={() => setSection(item.id)}
+              >
+                <span className={styles.navDot} aria-hidden />
+                {item.label}
+              </button>
+            ))}
+            <p className={styles.navHint}>Más opciones de admisión se agregarán en este menú.</p>
+          </aside>
+
+          <div className={styles.main}>
+            <div className={styles.mainScroll}>
+              {section === 'datos' ? (
+                loading ? (
+                  <div className={styles.loadingWrap}>
+                    <Loader />
+                  </div>
+                ) : (
+                  <div className={styles.panelCard}>
+                    <div className={styles.panelHeader}>
+                      <h3 className={styles.panelTitle}>{sectionTitle}</h3>
+                      <p className={styles.panelSubtitle}>Datos de admisión y cobertura de la visita</p>
+                    </div>
+                    <div className={styles.panelBody}>
+                      {error ? <div className={styles.error}>{error}</div> : null}
+                      {success ? <div className={styles.success}>{success}</div> : null}
+
+                      <div className={styles.formGrid}>
+                        <div className={`${styles.field} ${styles.fieldFull}`}>
+                          <span className={styles.label}>Fecha y hora de admisión</span>
+                          <div className={styles.fechaHora}>
+                            <input
+                              type="date"
+                              className={styles.input}
+                              value={form.fechaAdmision}
+                              onChange={(e) => setField('fechaAdmision', e.target.value)}
+                            />
+                            <input
+                              type="time"
+                              className={styles.input}
+                              value={form.horaAdmision}
+                              onChange={(e) => setField('horaAdmision', e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Clase de paciente</span>
+                          <select
+                            className={styles.select}
+                            value={form.clasePaciente}
+                            onChange={(e) => setField('clasePaciente', e.target.value)}
+                          >
+                            <option value="">—</option>
+                            {(catalogos?.clasesPaciente || []).map((o) => (
+                              <option key={optVal(o)} value={optVal(o)}>
+                                {optLabel(o)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Nº internación</span>
+                          <input
+                            className={styles.input}
+                            value={form.numeroInternacion}
+                            onChange={(e) => setField('numeroInternacion', e.target.value)}
+                          />
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Tipo de admisión</span>
+                          <select
+                            className={styles.select}
+                            value={form.tipoAdmision}
+                            onChange={(e) => setField('tipoAdmision', e.target.value)}
+                          >
+                            <option value="">—</option>
+                            {(catalogos?.tiposAdmision || []).map((o) => (
+                              <option key={optVal(o)} value={optVal(o)}>
+                                {optLabel(o)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Lugar del episodio</span>
+                          <select
+                            className={styles.select}
+                            value={form.idLugarEpisodio}
+                            onChange={(e) => setField('idLugarEpisodio', e.target.value)}
+                          >
+                            <option value="">—</option>
+                            {(catalogos?.lugaresEpisodio || []).map((o) => (
+                              <option key={optVal(o)} value={optVal(o)}>
+                                {optLabel(o)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Derivado de</span>
+                          <select
+                            className={styles.select}
+                            value={form.origenAdmision}
+                            onChange={(e) => setField('origenAdmision', e.target.value)}
+                          >
+                            <option value="">—</option>
+                            {(catalogos?.origenesAdmision || []).map((o) => (
+                              <option key={optVal(o)} value={optVal(o)}>
+                                {optLabel(o)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Estado ambulatorio</span>
+                          <select
+                            className={styles.select}
+                            value={form.estadoAmbulatorio}
+                            onChange={(e) => setField('estadoAmbulatorio', e.target.value)}
+                          >
+                            <option value="">—</option>
+                            {(catalogos?.estadosAmbulatorios || []).map((o) => (
+                              <option key={optVal(o)} value={optVal(o)}>
+                                {optLabel(o)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={`${styles.field} ${styles.fieldFull}`}>
+                          <span className={styles.label}>Diagnóstico</span>
+                          <div className={styles.fieldRow}>
+                            <input
+                              className={styles.inputSm}
+                              value={form.diagnostico}
+                              onChange={(e) => setField('diagnostico', e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className={styles.lookupBtn}
+                              onClick={() => setDiagModalOpen(true)}
+                              title="Buscar diagnóstico"
+                              aria-label="Buscar diagnóstico"
+                            >
+                              🔍
+                            </button>
+                            <input className={styles.inputGrow} value={form.diagnosticoDescripcion} readOnly />
+                          </div>
+                        </div>
+
+                        <div className={`${styles.field} ${styles.fieldFull}`}>
+                          <span className={styles.label}>Profesional que interna</span>
+                          <div className={styles.lookupWrap}>
+                            <input
+                              className={styles.inputSm}
+                              value={form.doctorAdmisor}
+                              onChange={(e) => setField('doctorAdmisor', e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className={styles.lookupBtn}
+                              onClick={() => {
+                                setProfTarget('admisor');
+                                setProfQuery(form.doctorAdmisorNombre || form.doctorAdmisor);
+                              }}
+                              title="Buscar profesional"
+                            >
+                              🔍
+                            </button>
+                            <input className={styles.inputGrow} value={form.doctorAdmisorNombre} readOnly />
+                            {profTarget === 'admisor' ? (
+                              <div className={styles.lookupPanel}>
+                                <input
+                                  className={styles.input}
+                                  placeholder="Buscar profesional…"
+                                  value={profQuery}
+                                  onChange={(e) => setProfQuery(e.target.value)}
+                                  autoFocus
+                                />
+                                {profLoading ? <div className={styles.lookupItem}>Buscando…</div> : null}
+                                {profResults.map((p) => (
+                                  <button
+                                    key={p.Valor}
+                                    type="button"
+                                    className={styles.lookupItem}
+                                    onClick={() => pickProf(p)}
+                                  >
+                                    {p.Valor} — {p.ApellidoNombre}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className={`${styles.field} ${styles.fieldFull}`}>
+                          <span className={styles.label}>Cobertura (OS)</span>
+                          <div className={styles.lookupWrap}>
+                            <input
+                              className={styles.inputSm}
+                              value={form.cliente}
+                              onChange={(e) => setField('cliente', e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className={styles.lookupBtn}
+                              onClick={() => setOsOpen((v) => !v)}
+                              title="Buscar cobertura"
+                            >
+                              🔍
+                            </button>
+                            <input className={styles.inputGrow} value={form.coberturaOS} readOnly />
+                            {osOpen ? (
+                              <div className={styles.lookupPanel}>
+                                <input
+                                  className={styles.input}
+                                  placeholder="Buscar cobertura…"
+                                  value={osQuery}
+                                  onChange={(e) => setOsQuery(e.target.value)}
+                                  autoFocus
+                                />
+                                {cobFiltered.slice(0, 40).map((c) => (
+                                  <button
+                                    key={c.value}
+                                    type="button"
+                                    className={styles.lookupItem}
+                                    onClick={() => pickCobertura(c)}
+                                  >
+                                    {c.value} — {c.label}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Convenio / Plan</span>
+                          <select
+                            className={styles.select}
+                            value={form.contrato}
+                            onChange={(e) => setField('contrato', e.target.value)}
+                          >
+                            <option value="0">0</option>
+                            {(catalogos?.convenios || []).map((o) => (
+                              <option key={optVal(o)} value={optVal(o)}>
+                                {optVal(o)} — {optLabel(o)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Tipo de paciente</span>
+                          <select
+                            className={styles.select}
+                            value={form.tipoPaciente}
+                            onChange={(e) => setField('tipoPaciente', e.target.value)}
+                          >
+                            <option value="">—</option>
+                            {(catalogos?.tiposPaciente || []).map((o) => (
+                              <option key={optVal(o)} value={optVal(o)}>
+                                {optLabel(o)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className={`${styles.field} ${styles.fieldFull}`}>
+                          <span className={styles.label}>Profesional que asiste</span>
+                          <div className={styles.lookupWrap}>
+                            <input
+                              className={styles.inputSm}
+                              value={form.doctorAsistiendo}
+                              onChange={(e) => setField('doctorAsistiendo', e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className={styles.lookupBtn}
+                              onClick={() => {
+                                setProfTarget('asistiendo');
+                                setProfQuery(form.doctorAsistiendoNombre || form.doctorAsistiendo);
+                              }}
+                              title="Buscar profesional"
+                            >
+                              🔍
+                            </button>
+                            <input className={styles.inputGrow} value={form.doctorAsistiendoNombre} readOnly />
+                            {profTarget === 'asistiendo' ? (
+                              <div className={styles.lookupPanel}>
+                                <input
+                                  className={styles.input}
+                                  placeholder="Buscar profesional…"
+                                  value={profQuery}
+                                  onChange={(e) => setProfQuery(e.target.value)}
+                                  autoFocus
+                                />
+                                {profLoading ? <div className={styles.lookupItem}>Buscando…</div> : null}
+                                {profResults.map((p) => (
+                                  <button
+                                    key={p.Valor}
+                                    type="button"
+                                    className={styles.lookupItem}
+                                    onClick={() => pickProf(p)}
+                                  >
+                                    {p.Valor} — {p.ApellidoNombre}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className={`${styles.field} ${styles.fieldFull}`}>
+                          <span className={styles.label}>Profesional cabecera</span>
+                          <div className={styles.lookupWrap}>
+                            <input
+                              className={styles.inputSm}
+                              value={form.doctorCabecera}
+                              onChange={(e) => setField('doctorCabecera', e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className={styles.lookupBtn}
+                              onClick={() => {
+                                setProfTarget('cabecera');
+                                setProfQuery(form.doctorCabeceraNombre || form.doctorCabecera);
+                              }}
+                              title="Buscar profesional"
+                            >
+                              🔍
+                            </button>
+                            <input className={styles.inputGrow} value={form.doctorCabeceraNombre} readOnly />
+                            {profTarget === 'cabecera' ? (
+                              <div className={styles.lookupPanel}>
+                                <input
+                                  className={styles.input}
+                                  placeholder="Buscar profesional…"
+                                  value={profQuery}
+                                  onChange={(e) => setProfQuery(e.target.value)}
+                                  autoFocus
+                                />
+                                {profLoading ? <div className={styles.lookupItem}>Buscando…</div> : null}
+                                {profResults.map((p) => (
+                                  <button
+                                    key={p.Valor}
+                                    type="button"
+                                    className={styles.lookupItem}
+                                    onClick={() => pickProf(p)}
+                                  >
+                                    {p.Valor} — {p.ApellidoNombre}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className={styles.panelCard}>
+                  <div className={styles.panelHeader}>
+                    <h3 className={styles.panelTitle}>{sectionTitle}</h3>
+                    {sectionSubtitle ? <p className={styles.panelSubtitle}>{sectionSubtitle}</p> : null}
+                  </div>
+                  <div className={`${styles.panelBody} ${styles.embeddedHost}`}>
+                    <AdmissionUbicacionMovimientosModal
+                      isOpen={Boolean(numeroVisita)}
+                      numeroVisita={numeroVisita}
+                      onClose={onClose}
+                      embedded
+                      focusSection={section === 'egreso' ? 'egreso' : 'ubicacion_movimientos'}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <>
-              {patientLabel ? <p className={styles.patientLine}>{patientLabel}</p> : null}
-              {error ? <div className={styles.error}>{error}</div> : null}
-              {success ? <div className={styles.success}>{success}</div> : null}
-
-              <div className={styles.formGrid}>
-                <label className={styles.label}>Fecha de Admisión</label>
-                <div className={styles.fechaHora}>
-                  <input
-                    type="date"
-                    className={styles.input}
-                    value={form.fechaAdmision}
-                    onChange={(e) => setField('fechaAdmision', e.target.value)}
-                  />
-                  <span className={styles.label} style={{ textAlign: 'left' }}>
-                    Hora
-                  </span>
-                  <input
-                    type="time"
-                    className={styles.input}
-                    value={form.horaAdmision}
-                    onChange={(e) => setField('horaAdmision', e.target.value)}
-                  />
-                </div>
-
-                <label className={styles.label}>Clase de Paciente</label>
-                <select
-                  className={styles.select}
-                  value={form.clasePaciente}
-                  onChange={(e) => setField('clasePaciente', e.target.value)}
-                >
-                  <option value="">—</option>
-                  {(catalogos?.clasesPaciente || []).map((o) => (
-                    <option key={optVal(o)} value={optVal(o)}>
-                      {optLabel(o)}
-                    </option>
-                  ))}
-                </select>
-
-                <label className={styles.label}>Nº Internación</label>
-                <input
-                  className={styles.input}
-                  value={form.numeroInternacion}
-                  onChange={(e) => setField('numeroInternacion', e.target.value)}
-                />
-
-                <label className={styles.label}>Tipo de Admisión</label>
-                <select
-                  className={styles.select}
-                  value={form.tipoAdmision}
-                  onChange={(e) => setField('tipoAdmision', e.target.value)}
-                >
-                  <option value="">—</option>
-                  {(catalogos?.tiposAdmision || []).map((o) => (
-                    <option key={optVal(o)} value={optVal(o)}>
-                      {optLabel(o)}
-                    </option>
-                  ))}
-                </select>
-
-                <label className={styles.label}>Lugar del Episodio</label>
-                <select
-                  className={styles.select}
-                  value={form.idLugarEpisodio}
-                  onChange={(e) => setField('idLugarEpisodio', e.target.value)}
-                >
-                  <option value="">—</option>
-                  {(catalogos?.lugaresEpisodio || []).map((o) => (
-                    <option key={optVal(o)} value={optVal(o)}>
-                      {optLabel(o)}
-                    </option>
-                  ))}
-                </select>
-
-                <label className={styles.label}>Derivado de</label>
-                <select
-                  className={styles.select}
-                  value={form.origenAdmision}
-                  onChange={(e) => setField('origenAdmision', e.target.value)}
-                >
-                  <option value="">—</option>
-                  {(catalogos?.origenesAdmision || []).map((o) => (
-                    <option key={optVal(o)} value={optVal(o)}>
-                      {optLabel(o)}
-                    </option>
-                  ))}
-                </select>
-
-                <label className={styles.label}>Diagnóstico</label>
-                <div className={styles.fieldRow}>
-                  <input
-                    className={styles.inputSm}
-                    value={form.diagnostico}
-                    onChange={(e) => setField('diagnostico', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.lookupBtn}
-                    onClick={() => setDiagModalOpen(true)}
-                    title="Buscar diagnóstico"
-                    aria-label="Buscar diagnóstico"
-                  >
-                    🔍
-                  </button>
-                  <input className={styles.inputGrow} value={form.diagnosticoDescripcion} readOnly />
-                </div>
-
-                <label className={styles.label}>Estado Ambulatorio</label>
-                <select
-                  className={styles.select}
-                  value={form.estadoAmbulatorio}
-                  onChange={(e) => setField('estadoAmbulatorio', e.target.value)}
-                >
-                  <option value="">—</option>
-                  {(catalogos?.estadosAmbulatorios || []).map((o) => (
-                    <option key={optVal(o)} value={optVal(o)}>
-                      {optLabel(o)}
-                    </option>
-                  ))}
-                </select>
-
-                <label className={styles.label}>Profesional que Interna</label>
-                <div className={styles.lookupWrap}>
-                  <input
-                    className={styles.inputSm}
-                    value={form.doctorAdmisor}
-                    onChange={(e) => setField('doctorAdmisor', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.lookupBtn}
-                    onClick={() => {
-                      setProfTarget('admisor');
-                      setProfQuery(form.doctorAdmisorNombre || form.doctorAdmisor);
-                    }}
-                    title="Buscar profesional"
-                  >
-                    🔍
-                  </button>
-                  <input className={styles.inputGrow} value={form.doctorAdmisorNombre} readOnly />
-                  {profTarget === 'admisor' ? (
-                    <div className={styles.lookupPanel}>
-                      <input
-                        className={styles.input}
-                        placeholder="Buscar profesional…"
-                        value={profQuery}
-                        onChange={(e) => setProfQuery(e.target.value)}
-                        autoFocus
-                      />
-                      {profLoading ? <div className={styles.lookupItem}>Buscando…</div> : null}
-                      {profResults.map((p) => (
-                        <button
-                          key={p.Valor}
-                          type="button"
-                          className={styles.lookupItem}
-                          onClick={() => pickProf(p)}
-                        >
-                          {p.Valor} — {p.ApellidoNombre}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                <label className={styles.label}>Cobertura (OS)</label>
-                <div className={styles.lookupWrap}>
-                  <input
-                    className={styles.inputSm}
-                    value={form.cliente}
-                    onChange={(e) => setField('cliente', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.lookupBtn}
-                    onClick={() => setOsOpen((v) => !v)}
-                    title="Buscar cobertura"
-                  >
-                    🔍
-                  </button>
-                  <input className={styles.inputGrow} value={form.coberturaOS} readOnly />
-                  {osOpen ? (
-                    <div className={styles.lookupPanel}>
-                      <input
-                        className={styles.input}
-                        placeholder="Buscar cobertura…"
-                        value={osQuery}
-                        onChange={(e) => setOsQuery(e.target.value)}
-                        autoFocus
-                      />
-                      {cobFiltered.slice(0, 40).map((c) => (
-                        <button
-                          key={c.value}
-                          type="button"
-                          className={styles.lookupItem}
-                          onClick={() => pickCobertura(c)}
-                        >
-                          {c.value} — {c.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                <label className={styles.label}>Convenio / Plan</label>
-                <select
-                  className={styles.select}
-                  value={form.contrato}
-                  onChange={(e) => setField('contrato', e.target.value)}
-                >
-                  <option value="0">0</option>
-                  {(catalogos?.convenios || []).map((o) => (
-                    <option key={optVal(o)} value={optVal(o)}>
-                      {optVal(o)} — {optLabel(o)}
-                    </option>
-                  ))}
-                </select>
-
-                <label className={styles.label}>Profesional que Asiste</label>
-                <div className={styles.lookupWrap}>
-                  <input
-                    className={styles.inputSm}
-                    value={form.doctorAsistiendo}
-                    onChange={(e) => setField('doctorAsistiendo', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.lookupBtn}
-                    onClick={() => {
-                      setProfTarget('asistiendo');
-                      setProfQuery(form.doctorAsistiendoNombre || form.doctorAsistiendo);
-                    }}
-                    title="Buscar profesional"
-                  >
-                    🔍
-                  </button>
-                  <input className={styles.inputGrow} value={form.doctorAsistiendoNombre} readOnly />
-                  {profTarget === 'asistiendo' ? (
-                    <div className={styles.lookupPanel}>
-                      <input
-                        className={styles.input}
-                        placeholder="Buscar profesional…"
-                        value={profQuery}
-                        onChange={(e) => setProfQuery(e.target.value)}
-                        autoFocus
-                      />
-                      {profLoading ? <div className={styles.lookupItem}>Buscando…</div> : null}
-                      {profResults.map((p) => (
-                        <button
-                          key={p.Valor}
-                          type="button"
-                          className={styles.lookupItem}
-                          onClick={() => pickProf(p)}
-                        >
-                          {p.Valor} — {p.ApellidoNombre}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                <label className={styles.label}>Tipo de Paciente</label>
-                <select
-                  className={styles.select}
-                  value={form.tipoPaciente}
-                  onChange={(e) => setField('tipoPaciente', e.target.value)}
-                >
-                  <option value="">—</option>
-                  {(catalogos?.tiposPaciente || []).map((o) => (
-                    <option key={optVal(o)} value={optVal(o)}>
-                      {optLabel(o)}
-                    </option>
-                  ))}
-                </select>
-
-                <label className={styles.label}>Profesional Cabecera</label>
-                <div className={styles.lookupWrap}>
-                  <input
-                    className={styles.inputSm}
-                    value={form.doctorCabecera}
-                    onChange={(e) => setField('doctorCabecera', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.lookupBtn}
-                    onClick={() => {
-                      setProfTarget('cabecera');
-                      setProfQuery(form.doctorCabeceraNombre || form.doctorCabecera);
-                    }}
-                    title="Buscar profesional"
-                  >
-                    🔍
-                  </button>
-                  <input className={styles.inputGrow} value={form.doctorCabeceraNombre} readOnly />
-                  {profTarget === 'cabecera' ? (
-                    <div className={styles.lookupPanel}>
-                      <input
-                        className={styles.input}
-                        placeholder="Buscar profesional…"
-                        value={profQuery}
-                        onChange={(e) => setProfQuery(e.target.value)}
-                        autoFocus
-                      />
-                      {profLoading ? <div className={styles.lookupItem}>Buscando…</div> : null}
-                      {profResults.map((p) => (
-                        <button
-                          key={p.Valor}
-                          type="button"
-                          className={styles.lookupItem}
-                          onClick={() => pickProf(p)}
-                        >
-                          {p.Valor} — {p.ApellidoNombre}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </>
-          )}
+          </div>
         </div>
 
         <div className={styles.footer}>
-          <button
-            type="button"
-            className={styles.btnGhost}
-            disabled={!numeroVisita || loading}
-            onClick={() => numeroVisita && onOpenUbicacion?.(numeroVisita)}
-          >
-            Ubicación · Movimientos · Egreso
-          </button>
           <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={saving}>
             Cerrar
           </button>
-          <button type="button" className={styles.btnPrimary} onClick={() => void onSave()} disabled={saving || loading}>
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
+          {section === 'datos' ? (
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              onClick={() => void onSave()}
+              disabled={saving || loading}
+            >
+              {saving ? 'Guardando…' : 'Guardar'}
+            </button>
+          ) : null}
         </div>
       </div>
 

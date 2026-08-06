@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './ModalBasePaciente.module.css';
 import PatientMiniHeader from '../beds/patient/PatientMiniHeader';
 import {
@@ -25,6 +26,7 @@ interface ModalBasePacienteProps {
  * Shell de modal con cabecera de paciente.
  * Evita golpear /beds + /movimientos/ultimo (eso lo hace PatientMiniHeader / el modal hijo).
  * Antes, reintentos en error + PatientMiniHeader duplicado causaban ERR_INSUFFICIENT_RESOURCES.
+ * Se renderiza en portal a document.body para no quedar recortado por overflow/z-index de modales padre.
  */
 const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 	isOpen,
@@ -41,9 +43,9 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 	const effectiveHeader =
 		hasUsableHeader(header) ? header : hasUsableHeader(headerFromBed) ? headerFromBed : null;
 
-	if (!isOpen) return null;
+	if (!isOpen || typeof document === 'undefined') return null;
 
-	return (
+	return createPortal(
 		<div className={styles.modalOverlay}>
 			<div className={styles.modalContainer} ref={modalRef}>
 				<div className={styles.modalHeader}>
@@ -71,7 +73,8 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 					{footerButtons}
 				</div>
 			</div>
-		</div>
+		</div>,
+		document.body,
 	);
 };
 
