@@ -4,18 +4,21 @@ import { useState, useMemo } from 'react';
 import { Adjunto } from '@/app/types/adjuntos';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import AdjuntoFileViewer, { AdjuntoViewerState } from './AdjuntoFileViewer';
+import ConfirmationModal from '../shared/ConfirmationModal';
 import styles from './FileList.module.css';
 
 interface FileListProps {
   adjuntos: Adjunto[];
   onDelete?: (idAdjunto: number) => void;
+  onError?: (message: string) => void;
   readOnly?: boolean;
 }
 
-export default function FileList({ adjuntos, onDelete, readOnly = false }: FileListProps) {
+export default function FileList({ adjuntos, onDelete, onError, readOnly = false }: FileListProps) {
   const [accionId, setAccionId] = useState<number | null>(null);
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
   const getFileIcon = (tipoArchivo: string, nombreArchivo: string) => {
     if (tipoArchivo.includes('pdf')) {
@@ -79,7 +82,7 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
       });
     } catch (err) {
       console.error('Error al visualizar adjunto:', err);
-      alert(err instanceof Error ? err.message : 'No se pudo abrir el archivo');
+      onError?.(err instanceof Error ? err.message : 'No se pudo abrir el archivo');
     } finally {
       setViewerLoading(false);
       setAccionId(null);
@@ -98,18 +101,21 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
       await adjuntosService.descargarArchivo(adjunto.IdAdjunto, adjunto.NombreArchivo);
     } catch (err) {
       console.error('Error al descargar adjunto:', err);
-      alert(err instanceof Error ? err.message : 'No se pudo descargar el archivo');
+      onError?.(err instanceof Error ? err.message : 'No se pudo descargar el archivo');
     } finally {
       setAccionId(null);
     }
   };
 
-  const handleDelete = async (idAdjunto: number) => {
-    if (!confirm('¿Está seguro de eliminar este archivo?')) return;
-    
-    if (onDelete) {
-      onDelete(idAdjunto);
+  const handleDelete = (idAdjunto: number) => {
+    setPendingDeleteId(idAdjunto);
+  };
+
+  const confirmDelete = () => {
+    if (pendingDeleteId != null && onDelete) {
+      onDelete(pendingDeleteId);
     }
+    setPendingDeleteId(null);
   };
 
   const formatearFecha = (fecha: string): string => {
@@ -271,6 +277,15 @@ export default function FileList({ adjuntos, onDelete, readOnly = false }: FileL
         </div>
       ))}
     </div>
+    <ConfirmationModal
+      isOpen={pendingDeleteId != null}
+      title="Eliminar adjunto"
+      message="¿Está seguro de eliminar este archivo?"
+      confirmText="Eliminar"
+      cancelText="Cancelar"
+      onClose={() => setPendingDeleteId(null)}
+      onConfirm={confirmDelete}
+    />
     </>
   );
 }

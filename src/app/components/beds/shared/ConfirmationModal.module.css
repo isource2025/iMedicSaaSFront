@@ -8,7 +8,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1800;
     opacity: 0;
     animation: fadeIn 0.2s ease-out forwards;
 }
@@ -20,7 +20,7 @@
     padding: 24px;
     width: 90%;
     max-width: 400px;
-    z-index: 1001;
+    z-index: 1801;
     transform: scale(0.95);
     animation: scaleIn 0.2s ease-out forwards;
 }

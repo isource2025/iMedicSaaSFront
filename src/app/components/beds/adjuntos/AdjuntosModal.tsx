@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import { authService } from '@/app/services/authService';
 import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
+import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import styles from './AdjuntosModal.module.css';
 
 function etiquetaUsuarioActual(): string {
@@ -16,6 +17,12 @@ function etiquetaUsuarioActual(): string {
   if (nom) return nom;
   return String(u.username || u.user || u.LoginUsuario || 'Usuario');
 }
+
+type Feedback = {
+  title: string;
+  message: string;
+  tone: MessageModalTone;
+};
 
 interface AdjuntosModalProps {
   numeroVisita: number;
@@ -28,12 +35,16 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
   const [dicomImporterOpen, setDicomImporterOpen] = useState(false);
   const fileUploadRef = useRef<FileUploadRef>(null);
+
+  const showMessage = useCallback((title: string, message: string, tone: MessageModalTone = 'info') => {
+    setFeedback({ title, message, tone });
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +75,6 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       const response = await adjuntosService.getAdjuntosPorVisita(numeroVisita);
       setAdjuntos(response.data);
     } catch (err) {
-      // Solo mostrar error si es un error real, no cuando simplemente no hay adjuntos
       console.error('Error al cargar adjuntos:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar adjuntos');
     } finally {
@@ -78,11 +88,11 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
-      alert('Selecciona al menos un archivo');
+      showMessage('Falta archivo', 'Selecciona al menos un archivo', 'warning');
       return;
     }
     if (!tipoImagenCodigo.trim()) {
-      alert('Seleccione el tipo de estudio');
+      showMessage('Falta tipo de estudio', 'Seleccione el tipo de estudio', 'warning');
       return;
     }
 
@@ -91,7 +101,6 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
     try {
       setUploading(true);
       setError(null);
-      setSuccess(null);
 
       if (selectedFiles.length === 1) {
         await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0], tipoImagenCodigo);
@@ -102,10 +111,16 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       setSelectedFiles([]);
       fileUploadRef.current?.clearFiles();
       setUploading(false);
-      setSuccess(`${cantidadSubida} archivo(s) subido(s) correctamente`);
+      showMessage(
+        'Adjunto subido',
+        `${cantidadSubida} archivo(s) subido(s) correctamente`,
+        'success',
+      );
       await loadAdjuntos();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al subir archivos');
+      const msg = err instanceof Error ? err.message : 'Error al subir archivos';
+      setError(msg);
+      showMessage('Error al subir', msg, 'error');
     } finally {
       setUploading(false);
     }
@@ -117,8 +132,11 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       setError(null);
       await adjuntosService.eliminarAdjunto(idAdjunto);
       await loadAdjuntos();
+      showMessage('Adjunto eliminado', 'El archivo se eliminó correctamente', 'success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al eliminar adjunto');
+      const msg = err instanceof Error ? err.message : 'Error al eliminar adjunto';
+      setError(msg);
+      showMessage('Error al eliminar', msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -138,11 +156,6 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
           {error && (
             <div className={styles.error}>
               {error}
-            </div>
-          )}
-          {success && (
-            <div className={styles.success}>
-              {success}
             </div>
           )}
 
@@ -176,6 +189,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
             <FileUpload
               ref={fileUploadRef}
               onFilesSelected={handleFilesSelected}
+              onValidationError={(msg) => showMessage('Archivo no válido', msg, 'warning')}
               disabled={uploading}
               maxFiles={5}
             />
@@ -185,7 +199,11 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
               disabled={uploading}
               onClick={() => {
                 if (!tipoImagenCodigo.trim()) {
-                  alert('Seleccione el tipo de estudio antes de importar la serie DICOM.');
+                  showMessage(
+                    'Falta tipo de estudio',
+                    'Seleccione el tipo de estudio antes de importar la serie DICOM.',
+                    'warning',
+                  );
                   return;
                 }
                 setDicomImporterOpen(true);
@@ -199,7 +217,11 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
               numeroVisita={numeroVisita}
               tipoImagenCodigo={tipoImagenCodigo}
               onUploaded={async () => {
-                setSuccess('Video generado y guardado como adjunto.');
+                showMessage(
+                  'Adjunto subido',
+                  'Video generado y guardado como adjunto.',
+                  'success',
+                );
                 await loadAdjuntos();
               }}
             />
@@ -221,12 +243,21 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
               <FileList
                 adjuntos={adjuntos}
                 onDelete={handleDelete}
+                onError={(msg) => showMessage('Error', msg, 'error')}
                 readOnly={false}
               />
             )}
           </div>
         </div>
       </div>
+
+      <MessageModal
+        open={!!feedback}
+        title={feedback?.title || ''}
+        message={feedback?.message || ''}
+        tone={feedback?.tone || 'info'}
+        onClose={() => setFeedback(null)}
+      />
     </div>
   );
 }

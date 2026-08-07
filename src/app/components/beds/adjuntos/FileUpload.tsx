@@ -5,6 +5,7 @@ import styles from './FileUpload.module.css';
 
 interface FileUploadProps {
   onFilesSelected: (files: File[]) => void;
+  onValidationError?: (message: string) => void;
   disabled?: boolean;
   maxFiles?: number;
 }
@@ -13,7 +14,7 @@ export interface FileUploadRef {
   clearFiles: () => void;
 }
 
-const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected, disabled = false, maxFiles = 5 }, ref) => {
+const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected, onValidationError, disabled = false, maxFiles = 5 }, ref) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +51,9 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
     });
 
     if (errors.length > 0) {
-      alert(errors.join('\n'));
+      const msg = errors.join('\n');
+      if (onValidationError) onValidationError(msg);
+      else console.warn('[FileUpload]', msg);
     }
 
     return validFiles.slice(0, maxFiles);
