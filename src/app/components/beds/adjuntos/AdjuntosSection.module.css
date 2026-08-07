@@ -57,6 +57,16 @@
   margin-bottom: 24px;
 }
 
+.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
 .adjuntosNotaRecientes {
   margin: 0 0 16px;
   padding: 12px 14px;

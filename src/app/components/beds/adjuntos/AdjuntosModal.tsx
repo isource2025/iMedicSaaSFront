@@ -28,6 +28,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
@@ -90,6 +91,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
     try {
       setUploading(true);
       setError(null);
+      setSuccess(null);
 
       if (selectedFiles.length === 1) {
         await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0], tipoImagenCodigo);
@@ -97,12 +99,11 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
         await adjuntosService.subirArchivos(numeroVisita, selectedFiles, tipoImagenCodigo);
       }
 
-      // Limpiar archivos seleccionados
       setSelectedFiles([]);
       fileUploadRef.current?.clearFiles();
-      
+      setUploading(false);
+      setSuccess(`${cantidadSubida} archivo(s) subido(s) correctamente`);
       await loadAdjuntos();
-      alert(`${cantidadSubida} archivo(s) subido(s) correctamente`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al subir archivos');
     } finally {
@@ -137,6 +138,11 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
           {error && (
             <div className={styles.error}>
               {error}
+            </div>
+          )}
+          {success && (
+            <div className={styles.success}>
+              {success}
             </div>
           )}
 
@@ -193,8 +199,8 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
               numeroVisita={numeroVisita}
               tipoImagenCodigo={tipoImagenCodigo}
               onUploaded={async () => {
+                setSuccess('Video generado y guardado como adjunto.');
                 await loadAdjuntos();
-                alert('Video generado y guardado como adjunto.');
               }}
             />
             {selectedFiles.length > 0 && (
