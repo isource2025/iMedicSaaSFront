@@ -243,7 +243,12 @@ export default function PatientFolderVisitsModal({
 									<div className={styles.visitHead}>
 										<span className={styles.visitTitle}>Visita #{nv}</span>
 										<span className={styles.visitDate}>
-											{visit.FechaAdmision || '—'} {visit.HoraAdmision || ''}
+											Ing. {visit.FechaAdmision || '—'} {visit.HoraAdmision || ''}
+											{' · '}
+											Egr.{' '}
+											{visit.FechaEgreso
+												? `${visit.FechaEgreso}${visit.HoraEgreso ? ` ${visit.HoraEgreso}` : ''}`
+												: '—'}
 										</span>
 										<button
 											type="button"

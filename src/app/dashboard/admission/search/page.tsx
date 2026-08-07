@@ -48,6 +48,12 @@ function ingresoLabel(row: AdmissionSearchRow): string {
   return formatDMY(row.FechaAdmision || '') || row.FechaAdmision || '—';
 }
 
+function egresoLabel(row: AdmissionSearchRow): string {
+  if (row.FechaEgresoDMY) return row.FechaEgresoDMY;
+  if (row.FechaEgreso) return formatDMY(row.FechaEgreso) || row.FechaEgreso;
+  return '';
+}
+
 function diagnosticoLabel(row: AdmissionSearchRow): string {
   const desc = String(row.DiagnosticoDescripcion || '').trim();
   if (desc) return desc;
@@ -304,7 +310,7 @@ export default function AdmissionSearchPage() {
                   <th>Nº Admisión</th>
                   <th>Paciente</th>
                   <th>Cobertura</th>
-                  <th>Ingreso</th>
+                  <th>Ingreso / Egreso</th>
                   <th>Ubicación</th>
                   <th>Diagnóstico</th>
                   <th>Acciones</th>
@@ -356,7 +362,21 @@ export default function AdmissionSearchPage() {
                           </span>
                         </div>
                       </td>
-                      <td>{ingresoLabel(row)}</td>
+                      <td>
+                        <div className={styles.cellStack}>
+                          <span className={styles.cellPrimary}>
+                            {ingresoLabel(row)}
+                            {row.HoraAdmision ? ` ${String(row.HoraAdmision).slice(0, 5)}` : ''}
+                          </span>
+                          <span className={styles.cellSub}>
+                            {egresoLabel(row)
+                              ? `Egr. ${egresoLabel(row)}${
+                                  row.HoraEgreso ? ` ${String(row.HoraEgreso).slice(0, 5)}` : ''
+                                }`
+                              : 'Egr. —'}
+                          </span>
+                        </div>
+                      </td>
                       <td>
                         <div className={styles.cellStack}>
                           <span className={styles.cellPrimary}>

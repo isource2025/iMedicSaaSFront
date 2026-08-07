@@ -24,6 +24,9 @@ export interface AdmissionSearchRow {
   FechaAdmision: string;
   FechaAdmisionDMY?: string;
   HoraAdmision: string;
+  FechaEgreso?: string | null;
+  FechaEgresoDMY?: string | null;
+  HoraEgreso?: string | null;
   TipoPaciente?: string;
   TipoPacienteDescripcion?: string;
   ClasePaciente?: string;
@@ -101,6 +104,7 @@ export interface AdmissionDatosPrincipalesVisita {
   DisposicionEgreso?: number | null;
   DiagnosticoEgreso?: string;
   OperadorEgreso?: number | null;
+  OperadorEgresoNombre?: string | null;
   CentroSalud?: string;
 }
 

@@ -13,6 +13,7 @@ import { getDisposicionesEgreso } from '@/app/services/disposicionEgresoService'
 import { dateToClarionDate, timeToClarionTime } from '@/app/utils/dateUtils';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { PatientHeaderSnapshot } from '@/app/utils/bedHeader';
+import { authService } from '@/app/services/authService';
 import styles from './AdmissionUbicacionMovimientosModal.module.css';
 
 type Props = {
@@ -50,6 +51,31 @@ function dmy(iso?: string | null) {
     return `${d}/${m}/${y}`;
   }
   return iso;
+}
+
+function etiquetaOperadorSesion(): { codigo: string; label: string } {
+  const u = authService.getCurrentUser() as Record<string, unknown> | null;
+  const codigoRaw = u?.codOperador ?? u?.CodOperador ?? u?.idCodOperador ?? '';
+  const codigo = codigoRaw != null && String(codigoRaw).trim() !== '' ? String(codigoRaw).trim() : '';
+  const nom = [u?.apellido, u?.nombre].filter(Boolean).join(', ').trim()
+    || [u?.nombre, u?.apellido].filter(Boolean).join(' ').trim()
+    || String(u?.username || u?.user || '').trim();
+  if (nom && codigo) return { codigo, label: `${nom} (${codigo})` };
+  if (nom) return { codigo, label: nom };
+  if (codigo) return { codigo, label: `Operador ${codigo}` };
+  return { codigo: '', label: 'Sesión sin CodOperador' };
+}
+
+function etiquetaOperadorGuardado(visita: AdmissionDatosPrincipalesVisita | null): string {
+  const codigo =
+    visita?.OperadorEgreso != null && Number(visita.OperadorEgreso) > 0
+      ? String(visita.OperadorEgreso)
+      : '';
+  const nombre = String(visita?.OperadorEgresoNombre || '').trim();
+  if (nombre && codigo) return `${nombre} (${codigo})`;
+  if (nombre) return nombre;
+  if (codigo) return `Operador ${codigo}`;
+  return '';
 }
 
 export default function AdmissionUbicacionMovimientosModal({
@@ -116,11 +142,12 @@ export default function AdmissionUbicacionMovimientosModal({
         payload.visita.DisposicionEgreso != null ? String(payload.visita.DisposicionEgreso) : '',
       );
       setDiagnosticoEgreso(String(payload.visita.DiagnosticoEgreso || '').trim());
-      setOperadorEgreso(
-        payload.visita.OperadorEgreso != null && Number(payload.visita.OperadorEgreso) > 0
-          ? String(payload.visita.OperadorEgreso)
-          : '0',
-      );
+      const guardado = etiquetaOperadorGuardado(payload.visita);
+      if (guardado) {
+        setOperadorEgreso(guardado);
+      } else {
+        setOperadorEgreso(etiquetaOperadorSesion().label);
+      }
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       setError(err?.response?.data?.message || err?.message || 'Error al cargar ubicación / movimientos');
@@ -390,7 +417,11 @@ export default function AdmissionUbicacionMovimientosModal({
                 </label>
                 <label className={styles.field}>
                   <span>Operador egreso</span>
-                  <input value={operadorEgreso} onChange={(e) => setOperadorEgreso(e.target.value)} />
+                  <input
+                    value={operadorEgreso}
+                    readOnly
+                    title="Se registra automáticamente con el usuario de la sesión (nombre y código)"
+                  />
                 </label>
               </div>
               <div className={styles.actions} style={{ marginTop: 10 }}>
