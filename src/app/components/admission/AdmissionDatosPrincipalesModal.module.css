@@ -224,6 +224,17 @@
   letter-spacing: 0.03em;
 }
 
+.fieldHint {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.input[readonly] {
+  background: #f8fafc;
+  color: #475569;
+}
+
 .fieldRow {
   display: flex;
   align-items: center;

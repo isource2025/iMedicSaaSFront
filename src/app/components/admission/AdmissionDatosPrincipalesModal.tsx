@@ -113,6 +113,9 @@ export default function AdmissionDatosPrincipalesModal({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [fechaEgreso, setFechaEgreso] = useState('');
+  const [horaEgreso, setHoraEgreso] = useState('');
+  const [operadorEgresoLabel, setOperadorEgresoLabel] = useState('');
   const [patientLabel, setPatientLabel] = useState('');
   const [catalogos, setCatalogos] = useState<AdmissionDatosPrincipalesPayload['catalogos'] | null>(null);
   const [coberturas, setCoberturas] = useState<CoberturaOption[]>([]);
@@ -141,6 +144,14 @@ export default function AdmissionDatosPrincipalesModal({
       setCoberturas(cobList);
       setPatientLabel(
         `Visita #${v.NumeroVisita} · ${String(v.ApellidoYNombre || '').trim()} · DNI ${v.NumeroDocumento || '—'}`,
+      );
+      setFechaEgreso(String(v.FechaEgreso || '').slice(0, 10));
+      setHoraEgreso(String(v.HoraEgreso || '').slice(0, 5));
+      const opCod =
+        v.OperadorEgreso != null && Number(v.OperadorEgreso) > 0 ? String(v.OperadorEgreso) : '';
+      const opNombre = String(v.OperadorEgresoNombre || '').trim();
+      setOperadorEgresoLabel(
+        opNombre && opCod ? `${opNombre} (${opCod})` : opNombre || (opCod ? `Operador ${opCod}` : ''),
       );
       setForm({
         fechaAdmision: String(v.FechaAdmision || '').slice(0, 10),
@@ -277,6 +288,11 @@ export default function AdmissionDatosPrincipalesModal({
     }
   };
 
+  const goSection = (id: NavSection) => {
+    setSection(id);
+    if (id === 'datos' && numeroVisita) void load();
+  };
+
   if (!isOpen) return null;
 
   const cobFiltered = coberturas.filter((c) => {
@@ -320,7 +336,7 @@ export default function AdmissionDatosPrincipalesModal({
                 key={item.id}
                 type="button"
                 className={`${styles.navItem} ${section === item.id ? styles.navItemActive : ''}`}
-                onClick={() => setSection(item.id)}
+                onClick={() => goSection(item.id)}
               >
                 <span className={styles.navDot} aria-hidden />
                 {item.label}
@@ -347,7 +363,7 @@ export default function AdmissionDatosPrincipalesModal({
                       {success ? <div className={styles.success}>{success}</div> : null}
 
                       <div className={styles.formGrid}>
-                        <div className={`${styles.field} ${styles.fieldFull}`}>
+                        <div className={styles.field}>
                           <span className={styles.label}>Fecha y hora de admisión</span>
                           <div className={styles.fechaHora}>
                             <input
@@ -363,6 +379,29 @@ export default function AdmissionDatosPrincipalesModal({
                               onChange={(e) => setField('horaAdmision', e.target.value)}
                             />
                           </div>
+                        </div>
+
+                        <div className={styles.field}>
+                          <span className={styles.label}>Fecha y hora de egreso</span>
+                          <div className={styles.fechaHora}>
+                            <input
+                              type="date"
+                              className={styles.input}
+                              value={fechaEgreso}
+                              readOnly
+                              title="Se gestiona en la sección Egreso"
+                            />
+                            <input
+                              type="time"
+                              className={styles.input}
+                              value={horaEgreso}
+                              readOnly
+                              title="Se gestiona en la sección Egreso"
+                            />
+                          </div>
+                          {operadorEgresoLabel ? (
+                            <span className={styles.fieldHint}>Operador: {operadorEgresoLabel}</span>
+                          ) : null}
                         </div>
 
                         <div className={styles.field}>

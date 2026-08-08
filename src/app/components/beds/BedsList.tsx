@@ -86,7 +86,7 @@ const BedsList = () => {
 	const pickSelected = (bed: Bed) => ({
 		numeroVisita: bed.numeroVisita || bed.NumeroVisita || 0,
 		nombrePaciente: bed.NombrePaciente || 'Paciente',
-		id: bed.numeroCama,
+		id: bed.id || `${bed.sector}-${bed.numeroCama}`,
 		sector: bed.sector,
 		header: bedToHeaderSnapshot(bed),
 		numeroCama: bed.numeroCama,

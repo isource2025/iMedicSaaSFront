@@ -254,7 +254,11 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                          cama.numeroCama.toLowerCase().includes(searchTerm.toLowerCase());
       
       // Excluir la cama actual
-      const notCurrentBed = cama.id !== bedId;
+      const notCurrentBed = !(
+        (cama.sector === bedSector && (cama.numeroCama === bedId || cama.id === bedId)) ||
+        cama.id === bedId ||
+        (bedSector && cama.id === `${bedSector}-${bedId}`)
+      );
       
       return estadoMatch && sectorMatch && servicioMatch && searchMatch && notCurrentBed;
     })
