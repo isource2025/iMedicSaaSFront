@@ -8,7 +8,8 @@
  * `iMedicWSBack/src/utils/permisos.js`. Mantener ambos en sync.
  *
  * Roles definidos en imRoles (IDs fijos):
- *   1 = ADMIN, 2 = MEDICO, 3 = ENFERMERO, 4 = ADMINISTRATIVO, 5 = SUPER_ADMIN
+ *   1 = ADMIN, 2 = MEDICO, 3 = ENFERMERO, 4 = ADMINISTRATIVO,
+ *   5 = SUPER_ADMIN, 6 = CARGA_HC
  */
 
 // ============================================================================
@@ -380,16 +381,22 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'USUARIO.PERFIL.EDITAR',
 	],
 
+	/** Solo adjuntos en admisiones (con/sin egreso). CRUD de los propios. */
 	CARGA_HC: [
 		'DASHBOARD.INICIO.VER',
+
+		'ADMISION.PACIENTES.VER',
+		'ADMISION.BUSQUEDA.VER',
+		'ADMISION.VIGENTES.VER',
+		'ADMISION.TABLA.VER',
+
 		'INTERNACION.CAMAS.VER',
 		'INTERNACION.CAMAS.GESTIONAR',
-		'INTERNACION.ESTUDIOS.VER',
-		'INTERNACION.ESTUDIOS.CREAR',
 		'INTERNACION.ADJUNTOS.VER',
 		'INTERNACION.ADJUNTOS.CREAR',
 		'INTERNACION.ADJUNTOS.EDITAR',
 		'INTERNACION.ADJUNTOS.ELIMINAR',
+
 		'USUARIO.PERFIL.VER',
 		'USUARIO.PERFIL.EDITAR',
 	],

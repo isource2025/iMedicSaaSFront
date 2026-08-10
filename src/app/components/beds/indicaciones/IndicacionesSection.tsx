@@ -120,6 +120,7 @@ export default function IndicacionesSection({
             estado: x.estado,
             suspendida: x.suspendida,
             unicaVez: x.unicaVez,
+            OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
             indicacionesHijas: (x as any).indicacionesHijas || [],
         }));
 

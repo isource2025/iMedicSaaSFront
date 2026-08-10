@@ -88,6 +88,9 @@ export default function IndicacionesTable({
     const puedeEditar    = puede('INTERNACION.INDICACIONES.EDITAR');
     const puedeEliminar  = puede('INTERNACION.INDICACIONES.ELIMINAR');
     const rolNombre      = (rol?.nombre || '').toUpperCase();
+    const puedeDejarSinEfecto =
+        (rolNombre === 'MEDICO' || rolNombre === 'ADMIN' || rolNombre === 'SUPER_ADMIN') &&
+        puedeEditar;
 
     /**
      * ¿Puede este usuario editar/eliminar esta indicación específica?
@@ -110,6 +113,8 @@ export default function IndicacionesTable({
         nroIndicacion: null,
         tipo: null,
     });
+    const [sinEfectoId, setSinEfectoId] = useState<string | null>(null);
+    const [sinEfectoLoading, setSinEfectoLoading] = useState(false);
 
     const handleDelete = async (id: number) => {
         try {
@@ -130,6 +135,21 @@ export default function IndicacionesTable({
 
     const handleCloseModal = () => {
         setDeletingId(null);
+    };
+
+    const handleConfirmSinEfecto = async () => {
+        if (!sinEfectoId) return;
+        setSinEfectoLoading(true);
+        try {
+            await indicacionesService.dejarSinEfecto(Number(sinEfectoId));
+            setSinEfectoId(null);
+            await refetch();
+        } catch (error) {
+            console.error('Error al dejar sin efecto:', error);
+            alert(error instanceof Error ? error.message : 'No se pudo dejar sin efecto');
+        } finally {
+            setSinEfectoLoading(false);
+        }
     };
 
     // ✅ Handler para abrir el modal de aplicar indicación
@@ -430,6 +450,16 @@ export default function IndicacionesTable({
                                                     <IoPencilOutline color="#5BC0DE" size="18px" />
                                                 </button>)}
 
+                                                {/* Dejar sin efecto: solo médicos */}
+                                                {puedeDejarSinEfecto && !r.suspendida && (
+                                                <button
+                                                    className={`${styles.btnAction} ${styles.btnSinEfecto}`}
+                                                    title="Dejar sin efecto"
+                                                    onClick={(e) => { e.stopPropagation(); setSinEfectoId(r.id); }}
+                                                >
+                                                    <IoCloseCircleOutline color="#e11d48" size="18px" />
+                                                </button>)}
+
                                                 {/* Eliminar: médico dueño o admin */}
                                                 {puedeModificarFila(r) && (
                                                 <button
@@ -441,7 +471,7 @@ export default function IndicacionesTable({
                                                 </button>)}
 
                                                 {/* Sin acciones disponibles */}
-                                                {!puedeAplicar && !puedeModificarFila(r) && (
+                                                {!puedeAplicar && !puedeModificarFila(r) && !puedeDejarSinEfecto && (
                                                 <span className={styles.noActions}>—</span>
                                                 )}
                                             </div>
@@ -519,6 +549,14 @@ export default function IndicacionesTable({
                             >
                                 <IoPencilOutline />
                             </button>)}
+                            {puedeDejarSinEfecto && !r.suspendida && (
+                            <button
+                                className={`${styles.btnAction} ${styles.btnSinEfecto}`}
+                                title="Dejar sin efecto"
+                                onClick={() => setSinEfectoId(r.id)}
+                            >
+                                <IoCloseCircleOutline color="#e11d48" />
+                            </button>)}
                             {puedeModificarFila(r) && (
                             <button
                                 className={`${styles.btnAction} ${styles.btnDelete}`}
@@ -540,6 +578,16 @@ export default function IndicacionesTable({
                 title="Confirmar Eliminación"
                 message="¿Está seguro que desea eliminar esta indicación?"
                 confirmText="Eliminar"
+                cancelText="Cancelar"
+            />
+
+            <ConfirmationModal
+                isOpen={sinEfectoId !== null}
+                onClose={() => !sinEfectoLoading && setSinEfectoId(null)}
+                onConfirm={handleConfirmSinEfecto}
+                title="Dejar sin efecto"
+                message="¿Confirma dejar esta indicación sin efecto? Quedará registrado quién realizó la acción."
+                confirmText={sinEfectoLoading ? 'Procesando…' : 'Dejar sin efecto'}
                 cancelText="Cancelar"
             />
 

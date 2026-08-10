@@ -11,7 +11,8 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './EstudiosSection.module.css';
-import formStyles from './PedidoEstudioForms.module.css';
+import btnStyles from '../indicaciones/IndicacionesSection.module.css';
+import { IoEyeOutline } from 'react-icons/io5';
 
 type Props = {
 	numeroVisita: number | null;
@@ -130,12 +131,13 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 					{puedeCrear && (
 						<button
 							type="button"
-							className={formStyles.btnPrimary}
+							className={`${btnStyles.btn} ${btnStyles.btnPrimary} ${btnStyles.btnAddDate}`}
 							onClick={() => setShowSolicitar(true)}
 							disabled={!sectorSolicitante}
 							title={!sectorSolicitante ? 'Sin sector de la cama' : undefined}
 						>
-							Solicitar estudio
+							<span className={btnStyles.addIcon} aria-hidden>+</span>
+							Estudio
 						</button>
 					)}
 					<ExportButton
@@ -166,16 +168,12 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 								<th>Práctica solicitada</th>
 								<th>Notas</th>
 								<th>Solicitado por</th>
+								<th>Acciones</th>
 							</tr>
 						</thead>
 						<tbody>
 							{rows.map((r) => (
-								<tr
-									key={r.IdPedido}
-									className={styles.clickableRow}
-									onClick={() => void handleRowClick(r)}
-									title="Ver detalle"
-								>
+								<tr key={r.IdPedido}>
 									<td>
 										<span
 											className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia)}`}
@@ -207,6 +205,16 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 											: '—'}
 									</td>
 									<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
+									<td>
+										<button
+											type="button"
+											className={styles.btnAction}
+											title="Ver detalle"
+											onClick={() => void handleRowClick(r)}
+										>
+											<IoEyeOutline color="#5BC0DE" size={18} />
+										</button>
+									</td>
 								</tr>
 							))}
 						</tbody>

@@ -160,6 +160,25 @@ export const crearControl = async (data: CrearControlData): Promise<{ Valor: num
 };
 
 /**
+ * Actualizar un control frecuente propio
+ */
+export const actualizarControl = async (
+  valor: number,
+  data: Partial<CrearControlData>,
+): Promise<ControlFrecuente> => {
+  const response = await fetchWithTimeout(`${BASE_URL}/controles-frecuentes/${valor}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.success) {
+    throw new Error(result.mensaje || `Error HTTP: ${response.status}`);
+  }
+  return result.data;
+};
+
+/**
  * Eliminar un control frecuente
  */
 export const eliminarControl = async (

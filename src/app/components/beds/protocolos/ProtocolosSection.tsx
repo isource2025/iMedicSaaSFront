@@ -11,7 +11,7 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
-import formStyles from '../estudios/PedidoEstudioForms.module.css';
+import btnStyles from '../indicaciones/IndicacionesSection.module.css';
 import localStyles from './ProtocolosSection.module.css';
 
 type Props = {
@@ -128,10 +128,11 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 					{puedeCrear && (
 						<button
 							type="button"
-							className={formStyles.btnPrimary}
+							className={`${btnStyles.btn} ${btnStyles.btnPrimary} ${btnStyles.btnAddDate}`}
 							onClick={() => setShowCargar(true)}
 						>
-							Cargar protocolo
+							<span className={btnStyles.addIcon} aria-hidden>+</span>
+							Protocolo
 						</button>
 					)}
 					<ExportButton
@@ -143,7 +144,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 				</div>
 			</div>
 
-			{error && <div className={formStyles.error}>{error}</div>}
+			{error && <div className={styles.error}>{error}</div>}
 
 			{loading ? (
 				<Loader />

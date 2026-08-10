@@ -131,6 +131,21 @@
 	opacity: 0.55;
 	cursor: not-allowed;
 }
+.btnAction {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: none;
+	background: transparent;
+	border-radius: 8px;
+	cursor: pointer;
+	padding: 0;
+}
+.btnAction:hover {
+	background: #e0f7ff;
+}
 .modalOverlay {
 	position: fixed;
 	inset: 0;

@@ -230,6 +230,18 @@ export const indicacionesService = {
         return json?.data;
     },
 
+    dejarSinEfecto: async (id: number) => {
+        const resp = await apiFetch(`${BASE_URL}/indicaciones/${id}/sin-efecto`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+        const json = await resp.json();
+        if (!resp.ok || json?.success === false) {
+            throw new Error(json?.mensaje || json?.message || "No se pudo dejar sin efecto");
+        }
+        return json?.data;
+    },
+
     aplicarIndicacion: async (payload: Payload) => {
         const resp = await apiFetch(
             `${BASE_URL}/indicaciones/${payload.nroIndicacion}/aplicar`,

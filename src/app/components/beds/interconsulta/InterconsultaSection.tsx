@@ -14,6 +14,8 @@ import { exportToPDF } from '../../../utils/pdfExport';
 import { generarPDFInterconsulta } from '../../../utils/pdfInterconsulta';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
+import btnStyles from '../indicaciones/IndicacionesSection.module.css';
+import { IoEyeOutline } from 'react-icons/io5';
 
 type Props = {
 	numeroVisita: number | null;
@@ -229,8 +231,13 @@ export default function InterconsultaSection({
 				</div>
 				<div className={styles.headerActions}>
 					{canCreate && (
-						<button type="button" className={styles.primaryBtn} onClick={() => setShowForm((v) => !v)}>
-							{showForm ? 'Cancelar' : 'Nueva solicitud'}
+						<button
+							type="button"
+							className={`${btnStyles.btn} ${btnStyles.btnPrimary} ${btnStyles.btnAddDate}`}
+							onClick={() => setShowForm((v) => !v)}
+						>
+							{!showForm && <span className={btnStyles.addIcon} aria-hidden>+</span>}
+							{showForm ? 'Cancelar' : 'Interconsulta'}
 						</button>
 					)}
 					<ExportButton
@@ -301,6 +308,7 @@ export default function InterconsultaSection({
 								<th>Motivo</th>
 								<th>Solicitado por</th>
 								<th>Estado</th>
+								<th>Acciones</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -309,12 +317,7 @@ export default function InterconsultaSection({
 								const tomado = !!r.Tomado;
 								const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
 								return (
-									<tr
-										key={`${r.Origen || 'LEGACY'}-${id}`}
-										className={styles.clickableRow}
-										onClick={() => void handleRowClick(r)}
-										title="Ver detalle"
-									>
+									<tr key={`${r.Origen || 'LEGACY'}-${id}`}>
 										<td>
 											<span
 												className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
@@ -343,6 +346,16 @@ export default function InterconsultaSection({
 											{r.EstadoWorkflow ||
 												(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
 											{tomado && r.NombreToma ? ` · ${r.NombreToma}` : ''}
+										</td>
+										<td>
+											<button
+												type="button"
+												className={styles.btnAction}
+												title="Ver detalle"
+												onClick={() => void handleRowClick(r)}
+											>
+												<IoEyeOutline color="#5BC0DE" size={18} />
+											</button>
 										</td>
 									</tr>
 								);

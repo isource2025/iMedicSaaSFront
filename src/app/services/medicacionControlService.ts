@@ -197,3 +197,29 @@ export const eliminarMedicacion = async (
     throw error;
   }
 };
+
+export type ActualizarMedicacionData = {
+  cantidad?: number;
+  cantidadIndicada?: number;
+  tipoUnidad?: string;
+  observaciones?: string;
+};
+
+export const actualizarMedicacion = async (
+  idCtrlMedica: number,
+  data: ActualizarMedicacionData,
+): Promise<MedicacionControl> => {
+  const response = await fetchWithTimeout(
+    `${BASE_URL}/medicacion-control/${idCtrlMedica}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    },
+  );
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok || !json.success) {
+    throw new Error(json.mensaje || `Error HTTP: ${response.status}`);
+  }
+  return json.data;
+};

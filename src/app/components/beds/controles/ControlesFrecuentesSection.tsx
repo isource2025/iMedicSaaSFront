@@ -18,9 +18,11 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import EmptyState from '../shared/EmptyState';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
-import { IoEyeOutline, IoTrashOutline } from 'react-icons/io5';
+import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import NuevoControlModal from './NuevoControlModal';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
+import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '../../../hooks/useUsuarioActual';
+import { usePermiso } from '../../../hooks/usePermiso';
 
 interface Props {
 	numeroVisita: number | null;
@@ -47,7 +49,22 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 	const { activeSection, selectedDate } = useBedDetail();
 	const [selectedControl, setSelectedControl] = useState<ControlFrecuente | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
+	const [editingControl, setEditingControl] = useState<ControlFrecuente | null>(null);
 	const [query, setQuery] = useState('');
+	const usuarioActual = useUsuarioActual();
+	const { puede } = usePermiso();
+	const puedeEditar = puede('INTERNACION.SIGNOS_VITALES.EDITAR');
+	const puedeEliminar = puede('INTERNACION.SIGNOS_VITALES.ELIMINAR');
+
+	const puedeGestionarFila = (c: ControlFrecuente) => {
+		if (esAdminClinico()) return true;
+		return (
+			esRegistroPropio(
+				{ OperadorCarga: c.OperadorCarga, CargadoPor: c.OperadorCarga } as Record<string, unknown>,
+				usuarioActual,
+			) === true
+		);
+	};
 
 	const fechaISO = useMemo(() => toISODate(selectedDate), [selectedDate]);
 
@@ -143,7 +160,10 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 					<div className={styles.dateActions}>
 						<button
 							className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-							onClick={() => setModalOpen(true)}
+							onClick={() => {
+								setEditingControl(null);
+								setModalOpen(true);
+							}}
 						>
 							<span className={styles.addIcon} aria-hidden>+</span>
 							Control
@@ -233,9 +253,23 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 													<button className={tableStyles.btnAction} onClick={() => setSelectedControl(c)} title="Ver detalle">
 														<IoEyeOutline color="#5BC0DE" size={18} />
 													</button>
+													{puedeEditar && puedeGestionarFila(c) && (
+													<button
+														className={tableStyles.btnAction}
+														onClick={() => {
+															setEditingControl(c);
+															setModalOpen(true);
+														}}
+														title="Editar control"
+													>
+														<IoPencilOutline color="#5BC0DE" size={18} />
+													</button>
+													)}
+													{puedeEliminar && puedeGestionarFila(c) && (
 													<button className={tableStyles.btnAction} onClick={() => handleEliminar(c)} title="Eliminar">
 														<IoTrashOutline color="#5BC0DE" size={18} />
 													</button>
+													)}
 												</div>
 											</td>
 										</tr>
@@ -294,12 +328,15 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 				</div>
 			)}
 
-			{/* Modal nuevo control */}
+			{/* Modal nuevo / editar control */}
 			<ModalBasePaciente
 				numeroVisita={numeroVisita ? String(numeroVisita) : ''}
-				onClose={() => setModalOpen(false)}
+				onClose={() => {
+					setModalOpen(false);
+					setEditingControl(null);
+				}}
 				isOpen={modalOpen}
-				titulo="Agregar Control Frecuente"
+				titulo={editingControl ? 'Editar Control Frecuente' : 'Agregar Control Frecuente'}
 				footerButtons={
 					<button type="submit" form="nuevo-control-form" className={`${styles.btn} ${styles.btnPrimary}`}>
 						Guardar
@@ -309,7 +346,11 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 				<NuevoControlModal
 					defaultNumeroVisita={numeroVisita}
 					refetch={refetch}
-					onClose={() => setModalOpen(false)}
+					controlToEdit={editingControl}
+					onClose={() => {
+						setModalOpen(false);
+						setEditingControl(null);
+					}}
 				/>
 			</ModalBasePaciente>
 		</div>

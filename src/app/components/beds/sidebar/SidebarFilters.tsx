@@ -199,10 +199,14 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 		!puedeGestionMedica &&
 		!puedeGestionEnfermeria;
 
+	const esCargaHc = loaded && String(rol?.nombre || '').toUpperCase() === 'CARGA_HC';
+	/** CARGA_HC: solo panel Otras Funciones (adjuntos + cerrar). */
+	const mostrarSoloOtrasFunciones = esCargaHc;
+
 	return (
 		<div className={styles.wrapper}>
 			{/* ======= Gestión Médica ======= */}
-			{puedeGestionMedica && (
+			{!mostrarSoloOtrasFunciones && puedeGestionMedica && (
 			<div className={styles.section}>
 				<button
 					type='button'
@@ -298,7 +302,7 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 			)}
 
 			{/* ======= Gestión Enfermería ======= */}
-			{puedeGestionEnfermeria && (
+			{!mostrarSoloOtrasFunciones && puedeGestionEnfermeria && (
 			<div className={styles.section}>
 				<button
 					type='button'
@@ -391,8 +395,8 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 			</div>
 			)}
 
-			{/* Carga documental (rol CARGA_HC): laboratorios y adjuntos — estudios de imagen van en Gestión Médica */}
-			{puedeCargaDocumental && (
+			{/* Carga documental: laboratorios — no se muestra para CARGA_HC (va en Otras Funciones) */}
+			{!mostrarSoloOtrasFunciones && puedeCargaDocumental && (
 			<div className={styles.section}>
 				<div className={styles.panelHeader}>
 					<span>Carga documental</span>
@@ -428,7 +432,20 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 					<span>Otras Funciones</span>
 				</div>
 				<nav className={styles.fixedNav}>
-					{puedeVerSeccion('movimientos') && (
+					{(mostrarSoloOtrasFunciones || (!puedeGestionMedica && !puedeGestionEnfermeria && puedeVerSeccion('adjuntos'))) && puedeVerSeccion('adjuntos') && (
+					<button
+						className={`${styles.navButton} ${adjuntosTotalCount > 0 ? styles.navButtonFlex : ''} ${isActive('adjuntos') ? styles.active : ''}`}
+						onClick={() => clickItem('adjuntos')}
+						type="button"
+					>
+						<span className={styles.adjuntosNavLabel}>Archivos adjuntos</span>
+						{adjuntosTotalCount > 0 && (
+							<span className={styles.adjuntosMenuBadge} aria-label={`${adjuntosTotalCount} archivo(s)`}>
+								{adjuntosTotalCount}
+							</span>
+						)}
+					</button>)}
+					{!mostrarSoloOtrasFunciones && puedeVerSeccion('movimientos') && (
 					<button
 						className={`${styles.navButton} ${isActive('movimientos') ? styles.active : ''
 							}`}
@@ -436,6 +453,7 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 					>
 						Movimientos
 					</button>)}
+					{!mostrarSoloOtrasFunciones && (
 					<button
 						className={`${styles.navButton} ${isActive('informe_evo') ? styles.active : ''
 							}`}
@@ -443,6 +461,8 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 					>
 						Informe de Evolución
 					</button>
+					)}
+					{!mostrarSoloOtrasFunciones && (
 					<button
 						type="button"
 						className={styles.navButton}
@@ -450,6 +470,7 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 					>
 						Notificaciones
 					</button>
+					)}
 					<button
 						className={styles.closeButton}
 						onClick={() => router.replace('/dashboard/beds')}
