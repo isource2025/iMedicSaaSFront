@@ -215,6 +215,19 @@ export const getPersonalFirmaByMatricula = async (
 	throw new Error(res.data.mensaje || 'Error al obtener firma');
 };
 
+/** Firma por ID de personal (Valor) — endpoint clínico sin permiso de configuración. */
+export const getPersonalFirmaByIdPublic = async (
+	id: number | string,
+): Promise<PersonalFirmaResponse> => {
+	const n = Number(id);
+	if (!Number.isFinite(n) || n <= 0) return { hasFirma: false };
+	const res = await apiService.get<ApiResponse<PersonalFirmaResponse>>(
+		`/personal/firma/por-id/${n}`,
+	);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al obtener firma');
+};
+
 export const uploadPersonalFirma = async (id: number, file: File): Promise<void> => {
 	const fd = new FormData();
 	fd.append('archivo', file);
@@ -446,6 +459,7 @@ export const personalService = {
 	removePersonalEmpresa,
 	getPersonalFirma,
 	getPersonalFirmaByMatricula,
+	getPersonalFirmaByIdPublic,
 	uploadPersonalFirma,
 	deletePersonalFirma,
 	getPersonalSectores,

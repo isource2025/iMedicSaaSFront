@@ -105,6 +105,7 @@ export default function EvolucionesSection({
             profesionalApellido: x.ProfesionalApellido || x.profesionalApellido,
             profesionalNombreCompleto: x.ProfesionalNombreCompleto || x.profesionalNombreCompleto,
             matricula: x.Matricula ?? x.matricula ?? x.Profecional ?? x.profesional ?? null,
+            idPersonal: x.IdPersonal ?? x.idPersonal ?? null,
             valorEspecialidad: x.ValorEspecialidad || x.valorEspecialidad,
             especialidadDescripcion: x.EspecialidadDescripcion || x.especialidadDescripcion,
         }));
@@ -222,6 +223,7 @@ export default function EvolucionesSection({
                 profesional: {
                     nombre: row.profesionalNombreCompleto || 'PROFESIONAL',
                     matricula: row.matricula ?? row.profesional ?? undefined,
+                    idPersonal: row.idPersonal ?? undefined,
                     especialidad: row.especialidadDescripcion || undefined,
                 },
             }));

@@ -1,11 +1,16 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '../services/empresaService';
-import { getPersonalFirmaByMatricula } from '../services/personalService';
+import {
+	getPersonalFirmaByIdPublic,
+	getPersonalFirmaByMatricula,
+} from '../services/personalService';
 
 export type ProfesionalFirmaInfo = {
 	nombre?: string;
 	matricula?: string | number | null;
+	/** Valor (ID) en imPersonal — preferido para buscar firma. */
+	idPersonal?: string | number | null;
 	especialidad?: string;
 	firmaDigital?: string;
 };
@@ -57,11 +62,13 @@ export function normalizeProfesionalFirma(
 	let nombre = String(info.nombre || '').trim();
 	if (nombre === '-') nombre = '';
 	const matricula = formatMatricula(info.matricula);
+	const idPersonal = formatMatricula(info.idPersonal);
 	const especialidad = String(info.especialidad || '').trim() || undefined;
-	if (!nombre && !matricula) return null;
+	if (!nombre && !matricula && !idPersonal) return null;
 	return {
 		nombre: nombre || (matricula ? `Mat. ${matricula}` : undefined),
 		matricula: matricula || undefined,
+		idPersonal: idPersonal || undefined,
 		especialidad,
 		firmaDigital: info.firmaDigital,
 	};
@@ -85,32 +92,164 @@ async function loadSignatureDataUrl(source: string): Promise<string | null> {
 	}
 }
 
-function jsPdfImageFormat(dataUrl: string): 'PNG' | 'JPEG' | 'WEBP' {
-	if (dataUrl.startsWith('data:image/jpeg') || dataUrl.startsWith('data:image/jpg')) return 'JPEG';
-	if (dataUrl.startsWith('data:image/webp')) return 'WEBP';
-	return 'PNG';
+/**
+ * Convierte la firma a JPEG opaco (fondo blanco) y recorta márgenes
+ * para que jsPDF la incruste bien y el trazo se vea a tamaño útil.
+ */
+async function prepareFirmaForJsPdf(
+	source: string,
+): Promise<{ dataUrl: string; format: 'JPEG' } | null> {
+	const raw = await loadSignatureDataUrl(source);
+	if (!raw) return null;
+	if (typeof window === 'undefined') {
+		return { dataUrl: raw, format: 'JPEG' };
+	}
+
+	return new Promise((resolve) => {
+		const img = new Image();
+		img.onload = () => {
+			try {
+				const w = img.naturalWidth || img.width;
+				const h = img.naturalHeight || img.height;
+				if (!w || !h) {
+					resolve(null);
+					return;
+				}
+
+				const src = document.createElement('canvas');
+				src.width = w;
+				src.height = h;
+				const sctx = src.getContext('2d');
+				if (!sctx) {
+					resolve(null);
+					return;
+				}
+				sctx.fillStyle = '#ffffff';
+				sctx.fillRect(0, 0, w, h);
+				sctx.drawImage(img, 0, 0);
+
+				const pixels = sctx.getImageData(0, 0, w, h).data;
+				let minX = w;
+				let minY = h;
+				let maxX = 0;
+				let maxY = 0;
+				const threshold = 245;
+				for (let y = 0; y < h; y++) {
+					for (let x = 0; x < w; x++) {
+						const i = (y * w + x) * 4;
+						if (pixels[i] < threshold || pixels[i + 1] < threshold || pixels[i + 2] < threshold) {
+							if (x < minX) minX = x;
+							if (y < minY) minY = y;
+							if (x > maxX) maxX = x;
+							if (y > maxY) maxY = y;
+						}
+					}
+				}
+
+				const pad = 8;
+				if (maxX <= minX || maxY <= minY) {
+					minX = 0;
+					minY = 0;
+					maxX = w - 1;
+					maxY = h - 1;
+				} else {
+					minX = Math.max(0, minX - pad);
+					minY = Math.max(0, minY - pad);
+					maxX = Math.min(w - 1, maxX + pad);
+					maxY = Math.min(h - 1, maxY + pad);
+				}
+
+				const cw = Math.max(1, maxX - minX + 1);
+				const ch = Math.max(1, maxY - minY + 1);
+				const out = document.createElement('canvas');
+				out.width = cw;
+				out.height = ch;
+				const octx = out.getContext('2d');
+				if (!octx) {
+					resolve(null);
+					return;
+				}
+				octx.fillStyle = '#ffffff';
+				octx.fillRect(0, 0, cw, ch);
+				octx.drawImage(src, minX, minY, cw, ch, 0, 0, cw, ch);
+				resolve({ dataUrl: out.toDataURL('image/jpeg', 0.92), format: 'JPEG' });
+			} catch {
+				resolve(null);
+			}
+		};
+		img.onerror = () => resolve(null);
+		img.src = raw;
+	});
 }
 
-/** Completa firmaDigital desde Personal (imPersonal.Firma) usando matrícula. */
+async function fetchFirmaDataUrl(keys: {
+	idPersonal?: string | null;
+	matricula?: string | null;
+}): Promise<string | null> {
+	const tried = new Set<string>();
+	const tryMat = async (key: string) => {
+		if (!key || tried.has(`m:${key}`)) return null;
+		tried.add(`m:${key}`);
+		try {
+			const f = await getPersonalFirmaByMatricula(key);
+			if (f?.hasFirma && f.dataUrl) return f.dataUrl;
+		} catch {
+			/* ignore */
+		}
+		return null;
+	};
+	const tryId = async (key: string) => {
+		if (!key || tried.has(`id:${key}`)) return null;
+		tried.add(`id:${key}`);
+		const n = Number(key);
+		if (!Number.isFinite(n) || n <= 0) return null;
+		try {
+			const f = await getPersonalFirmaByIdPublic(n);
+			if (f?.hasFirma && f.dataUrl) return f.dataUrl;
+		} catch {
+			/* ignore */
+		}
+		return null;
+	};
+
+	if (keys.idPersonal) {
+		const byMatAsId = await tryMat(keys.idPersonal);
+		if (byMatAsId) return byMatAsId;
+		const byId = await tryId(keys.idPersonal);
+		if (byId) return byId;
+	}
+	if (keys.matricula) {
+		const byMat = await tryMat(keys.matricula);
+		if (byMat) return byMat;
+		const byId = await tryId(keys.matricula);
+		if (byId) return byId;
+	}
+	return null;
+}
+
+/** Completa firmaDigital desde Personal (imPersonal.Firma). */
 async function resolveFirmasFromPersonal(
 	items: Array<ProfesionalFirmaInfo | null | undefined>,
 ): Promise<Map<string, string>> {
 	const map = new Map<string, string>();
-	const need = [
-		...new Set(
-			items
-				.filter((p) => p && formatMatricula(p.matricula) && !p.firmaDigital)
-				.map((p) => formatMatricula(p!.matricula) as string),
-		),
-	];
+	const keys: Array<{ idPersonal: string | null; matricula: string | null; cacheKey: string }> = [];
+	const seen = new Set<string>();
+	for (const p of items) {
+		if (!p || p.firmaDigital) continue;
+		const idPersonal = formatMatricula(p.idPersonal);
+		const matricula = formatMatricula(p.matricula);
+		const cacheKey = idPersonal || matricula;
+		if (!cacheKey || seen.has(cacheKey)) continue;
+		seen.add(cacheKey);
+		keys.push({ idPersonal, matricula, cacheKey });
+	}
 	await Promise.all(
-		need.map(async (m) => {
-			try {
-				const f = await getPersonalFirmaByMatricula(m);
-				if (f?.hasFirma && f.dataUrl) map.set(m, f.dataUrl);
-			} catch {
-				/* sin firma o error de red */
-			}
+		keys.map(async ({ idPersonal, matricula, cacheKey }) => {
+			const url = await fetchFirmaDataUrl({ idPersonal, matricula });
+			if (!url) return;
+			map.set(cacheKey, url);
+			if (matricula) map.set(matricula, url);
+			if (idPersonal) map.set(idPersonal, url);
 		}),
 	);
 	return map;
@@ -122,13 +261,16 @@ function attachFirma(
 ): ProfesionalFirmaInfo | null | undefined {
 	if (!info) return info;
 	if (info.firmaDigital) return info;
-	const m = formatMatricula(info.matricula);
-	if (!m) return info;
-	const url = firmas.get(m);
+	const idPersonal = formatMatricula(info.idPersonal);
+	const matricula = formatMatricula(info.matricula);
+	const url =
+		(idPersonal && firmas.get(idPersonal)) ||
+		(matricula && firmas.get(matricula)) ||
+		undefined;
 	return url ? { ...info, firmaDigital: url } : info;
 }
 
-/** Resuelve la imagen de firma desde Personal para un profesional (por matrícula). */
+/** Resuelve la imagen de firma desde Personal para un profesional (por matrícula / id). */
 export async function withPersonalFirma(
 	info?: ProfesionalFirmaInfo | null,
 ): Promise<ProfesionalFirmaInfo | null | undefined> {
@@ -146,7 +288,7 @@ function ensureSpace(doc: jsPDF, y: number, needed: number, bottom = 18): number
 }
 
 /**
- * Dibuja línea de firma + nombre completo + matrícula (+ especialidad / imagen).
+ * Dibuja imagen de firma + línea + nombre completo + matrícula.
  * Devuelve la Y siguiente.
  */
 export async function drawProfesionalFirmaBlock(
@@ -160,27 +302,31 @@ export async function drawProfesionalFirmaBlock(
 
 	const pageWidth = doc.internal.pageSize.getWidth();
 	const align = opts?.align || 'center';
-	let y = ensureSpace(doc, startY, 32);
+	const imgH = 18;
+	const imgW = 52;
+	let y = ensureSpace(doc, startY, imgH + 28);
 
 	const lineW = 60;
 	const centerX = pageWidth / 2;
 	const leftX = opts?.left ?? 14;
 	const lineX = align === 'center' ? centerX - lineW / 2 : leftX;
 	const textX = align === 'center' ? centerX : leftX + lineW / 2;
-	const textAlign = align === 'center' ? 'center' : 'center';
+	const textAlign = 'center' as const;
+
+	const prepared = info.firmaDigital ? await prepareFirmaForJsPdf(info.firmaDigital) : null;
+	if (prepared) {
+		try {
+			const imgX = align === 'center' ? centerX - imgW / 2 : lineX;
+			doc.addImage(prepared.dataUrl, prepared.format, imgX, y, imgW, imgH);
+			y += imgH + 1;
+		} catch (err) {
+			console.warn('[pdf] No se pudo incrustar la firma digital:', err);
+		}
+	}
 
 	doc.setDrawColor(0, 0, 0);
 	doc.setLineWidth(0.3);
 	doc.line(lineX, y, lineX + lineW, y);
-
-	const firmaDataUrl = info.firmaDigital ? await loadSignatureDataUrl(info.firmaDigital) : null;
-	if (firmaDataUrl) {
-		try {
-			doc.addImage(firmaDataUrl, jsPdfImageFormat(firmaDataUrl), lineX + 6, y - 16, 48, 14);
-		} catch {
-			// ignore image errors
-		}
-	}
 
 	y += 5;
 	doc.setFontSize(9);
