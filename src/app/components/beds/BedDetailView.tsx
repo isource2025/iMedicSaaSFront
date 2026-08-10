@@ -186,6 +186,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<InterconsultaSection
 							numeroVisita={bed?.NumeroVisita || null}
 							sectorSolicitante={bed?.sector || null}
+							patientName={bed?.NombrePaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'solicitudEstudios' ? (
 						<EstudiosSection
@@ -212,6 +215,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientName={bed?.NombrePaciente}
 							documentoPaciente={bed?.documentoPaciente}
 							bedSector={bed?.sector || undefined}
+							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'procedimientos' ? (
 						<div className={styles.placeholderCard}>

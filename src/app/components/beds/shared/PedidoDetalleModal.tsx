@@ -14,6 +14,9 @@ type Props = {
 	textBlocks?: { label: string; value?: string | null }[];
 	urgencia?: string;
 	onClose: () => void;
+	/** Si se pasa, muestra botón para exportar PDF del detalle */
+	onExportPdf?: () => void | Promise<void>;
+	exporting?: boolean;
 };
 
 function urgenciaClass(estado?: string) {
@@ -29,7 +32,15 @@ function displayValue(value?: string | number | null) {
 	return String(value);
 }
 
-export default function PedidoDetalleModal({ title, fields, textBlocks, urgencia, onClose }: Props) {
+export default function PedidoDetalleModal({
+	title,
+	fields,
+	textBlocks,
+	urgencia,
+	onClose,
+	onExportPdf,
+	exporting = false,
+}: Props) {
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -68,6 +79,21 @@ export default function PedidoDetalleModal({ title, fields, textBlocks, urgencia
 						</div>
 					))}
 				</div>
+				{onExportPdf ? (
+					<div className={styles.modalFooter}>
+						<button
+							type="button"
+							className={styles.btnExport}
+							disabled={exporting}
+							onClick={() => void onExportPdf()}
+						>
+							{exporting ? 'Generando…' : 'Exportar PDF'}
+						</button>
+						<button type="button" className={styles.btnSecondary} onClick={onClose}>
+							Cerrar
+						</button>
+					</div>
+				) : null}
 			</div>
 		</div>
 	);

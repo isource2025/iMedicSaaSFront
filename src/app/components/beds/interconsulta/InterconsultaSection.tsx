@@ -11,12 +11,16 @@ import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
+import { generarPDFInterconsulta } from '../../../utils/pdfInterconsulta';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
 
 type Props = {
 	numeroVisita: number | null;
 	sectorSolicitante?: string | null;
+	patientName?: string;
+	documentoPaciente?: string;
+	patientLocation?: string;
 };
 
 function urgenciaClass(estado?: string) {
@@ -61,7 +65,13 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 	];
 }
 
-export default function InterconsultaSection({ numeroVisita, sectorSolicitante }: Props) {
+export default function InterconsultaSection({
+	numeroVisita,
+	sectorSolicitante,
+	patientName,
+	documentoPaciente,
+	patientLocation,
+}: Props) {
 	const { puede } = usePermiso();
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
 
@@ -73,6 +83,7 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 	const [showForm, setShowForm] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [exportingDetail, setExportingDetail] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
 
@@ -145,7 +156,15 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 			]
 		: [];
 
-	const handleExport = async (option: ExportOption) => {
+	const patientInfo = {
+		numeroVisita: numeroVisita || undefined,
+		nombre: patientName,
+		numeroDocumento: documentoPaciente,
+		documento: documentoPaciente,
+		ubicacion: patientLocation,
+	};
+
+	const handleExport = async (option: ExportOption, _data?: InterconsultaRow[]) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
 			exportToPDF({
@@ -166,8 +185,35 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 				fileName: `interconsultas_${numeroVisita}.pdf`,
 				orientation: 'landscape',
 				empresaInfo,
-				patientInfo: { numeroVisita: numeroVisita || undefined },
+				patientInfo,
 			});
+		}
+	};
+
+	const handleExportDetail = async () => {
+		if (!selected) return;
+		setExportingDetail(true);
+		try {
+			const empresaInfo = await obtenerInfoEmpresa();
+			const title =
+				selected.ServicioDescripcion ||
+				selected.Especialidad ||
+				selected.PracticaSolicitada ||
+				'Interconsulta';
+			generarPDFInterconsulta({
+				title,
+				fields: buildInterconsultaFields(selected),
+				textBlocks: selectedTextBlocks,
+				urgencia: selected.EstadoUrgencia,
+				patient: patientInfo,
+				empresaInfo,
+				fileName: `interconsulta_${numeroVisita}_${selected.IdPedido || selected.IdInterconsulta || 'detalle'}.pdf`,
+			});
+		} catch (err) {
+			console.error(err);
+			setError(err instanceof Error ? err.message : 'No se pudo generar el PDF');
+		} finally {
+			setExportingDetail(false);
 		}
 	};
 
@@ -318,6 +364,8 @@ export default function InterconsultaSection({ numeroVisita, sectorSolicitante }
 					fields={buildInterconsultaFields(selected)}
 					textBlocks={selectedTextBlocks}
 					onClose={() => setSelected(null)}
+					onExportPdf={handleExportDetail}
+					exporting={exportingDetail}
 				/>
 			)}
 		</div>

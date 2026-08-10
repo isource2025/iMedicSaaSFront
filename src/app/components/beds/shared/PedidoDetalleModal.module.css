@@ -103,6 +103,50 @@
 .urgenciaNormal { background: #dcfce7; color: #15803d; }
 .urgenciaNone { background: #f1f5f9; color: #475569; }
 
+.modalFooter {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	padding: 0.85rem 1.25rem 1.1rem;
+	border-top: 1px solid #e2e8f0;
+	background: #f8fafc;
+}
+
+.btnExport {
+	border: 1px solid #0083a9;
+	background: #0083a9;
+	color: #fff;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.btnExport:hover:not(:disabled) {
+	background: #006d8c;
+}
+
+.btnExport:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.btnSecondary {
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #334155;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.btnSecondary:hover {
+	background: #f1f5f9;
+}
+
 @media (max-width: 640px) {
 	.detailGrid {
 		grid-template-columns: 1fr;

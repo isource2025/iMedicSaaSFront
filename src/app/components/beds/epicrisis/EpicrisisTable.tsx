@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import styles from '../evoluciones/EvolucionesTable.module.css';
 import EmptyState from '../shared/EmptyState';
-import { IoPencilOutline, IoTrashOutline, IoEyeOutline } from 'react-icons/io5';
+import { IoPencilOutline, IoTrashOutline, IoEyeOutline, IoPrintOutline } from 'react-icons/io5';
 import { epicrisisService } from '../../../services/epicrisisService';
 import ConfirmationModal from '../shared/ConfirmationModal';
 import { formatSqlDate } from '../../../utils/dateUtils';
@@ -21,6 +21,9 @@ type Props = {
 	onSelectRow?: (id: number) => void;
 	selectedId?: number | null;
 	refetch: () => Promise<void>;
+	canPrint?: boolean;
+	onPrint?: (row: EpicrisisRow) => void | Promise<void>;
+	printing?: boolean;
 };
 
 export default function EpicrisisTable({
@@ -28,6 +31,9 @@ export default function EpicrisisTable({
 	onSelectRow,
 	selectedId,
 	refetch,
+	canPrint = false,
+	onPrint,
+	printing = false,
 }: Props) {
 	const hasRows = rows && rows.length > 0;
 	const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -116,6 +122,19 @@ export default function EpicrisisTable({
 													>
 														<IoEyeOutline color="#5BC0DE" size="18px" />
 													</button>
+													{canPrint && onPrint && (
+														<button
+															className={styles.btnAction}
+															title="Imprimir PDF"
+															disabled={printing}
+															onClick={(e) => {
+																e.stopPropagation();
+																void onPrint(r);
+															}}
+														>
+															<IoPrintOutline color="#5BC0DE" size="18px" />
+														</button>
+													)}
 													{puedeModificar(r) && (
 														<>
 															<button
@@ -197,6 +216,18 @@ export default function EpicrisisTable({
 							)}
 							<div className={styles.evolucionFull}>{viewing.epicrisis}</div>
 						</div>
+						{canPrint && onPrint && (
+							<div className={styles.modalFooter}>
+								<button
+									type="button"
+									className={styles.btnPrint}
+									disabled={printing}
+									onClick={() => void onPrint(viewing)}
+								>
+									{printing ? 'Generando…' : 'Imprimir PDF'}
+								</button>
+							</div>
+						)}
 					</div>
 				</div>
 			)}

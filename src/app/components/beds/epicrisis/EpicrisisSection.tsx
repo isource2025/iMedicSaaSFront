@@ -8,6 +8,12 @@ import { NuevaEpicrisisPayload } from '../../../types/epicrisis';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { epicrisisService } from '../../../services/epicrisisService';
 import EpicrisisTable, { EpicrisisRow } from './EpicrisisTable';
+import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { exportToPDF } from '../../../utils/pdfExport';
+import { generarPDFEpicrisis } from '../../../utils/pdfEpicrisis';
+import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { usePermiso } from '@/app/hooks/usePermiso';
+import { formatSqlDate } from '../../../utils/dateUtils';
 import styles from '../evoluciones/EvolucionesSection.module.css';
 import Loader from '../../Loader/Loader';
 
@@ -16,16 +22,22 @@ export default function EpicrisisSection({
 	patientName,
 	documentoPaciente,
 	bedSector,
+	patientLocation,
 }: {
 	numeroVisita: number | null;
 	patientName?: string;
 	documentoPaciente?: string;
 	bedSector?: string;
+	patientLocation?: string;
 }) {
 	const { activeSection } = useBedDetail();
+	const { puede } = usePermiso();
+	const canPrint =
+		puede('INTERNACION.EPICRISIS.IMPRIMIR') || puede('INTERNACION.EPICRISIS.VER');
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [printing, setPrinting] = useState(false);
 	const [query, setQuery] = useState('');
 
 	const epicrisisPath = useMemo(
@@ -81,6 +93,78 @@ export default function EpicrisisSection({
 		});
 	}, [baseRows, query]);
 
+	const patientInfo = useMemo(
+		() => ({
+			nombre: patientName,
+			documento: documentoPaciente,
+			numeroVisita: numeroVisita ?? undefined,
+			ubicacion: patientLocation,
+		}),
+		[patientName, documentoPaciente, numeroVisita, patientLocation],
+	);
+
+	const selectedRow = useMemo(
+		() => (selectedId != null ? baseRows.find((r) => r.id === selectedId) ?? null : null),
+		[baseRows, selectedId],
+	);
+
+	const printEpicrisis = async (row: EpicrisisRow) => {
+		setPrinting(true);
+		try {
+			const empresaInfo = await obtenerInfoEmpresa();
+			generarPDFEpicrisis(row, patientInfo, empresaInfo);
+		} catch (err) {
+			console.error(err);
+			alert(err instanceof Error ? err.message : 'No se pudo generar el PDF');
+		} finally {
+			setPrinting(false);
+		}
+	};
+
+	const handleExport = async (option: ExportOption, _data: EpicrisisRow[]) => {
+		if (option !== 'pdf') return;
+		const empresaInfo = await obtenerInfoEmpresa();
+		const pdfData = rows.map((row) => [
+			row.fecha
+				? formatSqlDate(row.fecha, { showTime: false, showDate: true, showYear: true })
+				: '—',
+			row.hora || '—',
+			[row.diagnostico, row.diagnosticoText].filter(Boolean).join(' — ') || '—',
+			row.epicrisis
+				? row.epicrisis.length > 200
+					? `${row.epicrisis.slice(0, 200)}…`
+					: row.epicrisis
+				: '—',
+			row.profesionalNombreCompleto ||
+				(row.profesional != null ? `Prof. ${row.profesional}` : '—'),
+			row.sectorDescripcion || row.idSector || '—',
+		]);
+
+		await exportToPDF({
+			title: 'Epicrisis',
+			subtitle: numeroVisita ? `Visita: ${numeroVisita}` : undefined,
+			headers: ['Fecha', 'Hora', 'Diagnóstico', 'Epicrisis', 'Profesional', 'Sector'],
+			data: pdfData,
+			fileName: `epicrisis_${numeroVisita || 'visita'}.pdf`,
+			orientation: 'landscape',
+			empresaInfo,
+			patientInfo: {
+				numeroVisita: numeroVisita || undefined,
+				nombre: patientName,
+				numeroDocumento: documentoPaciente,
+				ubicacion: patientLocation,
+			},
+			columnStyles: {
+				0: { cellWidth: 22, minCellWidth: 18 },
+				1: { cellWidth: 16, minCellWidth: 14 },
+				2: { cellWidth: 40, minCellWidth: 32 },
+				3: { cellWidth: 80, minCellWidth: 60 },
+				4: { cellWidth: 40, minCellWidth: 32 },
+				5: { cellWidth: 22, minCellWidth: 18 },
+			},
+		});
+	};
+
 	if (activeSection !== 'epicrisis') return null;
 
 	const closeModal = () => {
@@ -129,6 +213,14 @@ export default function EpicrisisSection({
 						</span>
 						Epicrisis
 					</button>
+					{canPrint && (
+						<ExportButton
+							data={rows}
+							fileName={`epicrisis_${numeroVisita || 'visita'}.pdf`}
+							onExport={handleExport}
+							options={['pdf']}
+						/>
+					)}
 				</div>
 			</div>
 
@@ -163,6 +255,9 @@ export default function EpicrisisSection({
 							onSelectRow={setSelectedId}
 							selectedId={selectedId}
 							refetch={refetch}
+							canPrint={canPrint}
+							onPrint={printEpicrisis}
+							printing={printing}
 						/>
 					)}
 				</div>
@@ -175,6 +270,16 @@ export default function EpicrisisSection({
 				titulo={selectedId != null ? 'Editando Epicrisis' : 'Nueva Epicrisis'}
 				footerButtons={
 					<>
+						{canPrint && selectedRow && (
+							<button
+								type="button"
+								className={`${styles.btn}`}
+								disabled={printing}
+								onClick={() => void printEpicrisis(selectedRow)}
+							>
+								{printing ? 'Generando…' : 'Imprimir PDF'}
+							</button>
+						)}
 						<button
 							className={`${styles.btn} ${styles.btnPrimary}`}
 							type="submit"

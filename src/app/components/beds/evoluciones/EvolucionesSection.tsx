@@ -91,7 +91,13 @@ export default function EvolucionesSection({
             fechaEv: x.FechaEv || x.fechaEv,
             horaEv: x.HoraEv || x.horaEv,
             idSector: x.IdSector || x.idSector,
-            profesional: x.Profesional || x.profesional,
+            // API/BD: columna typo legacy "Profecional" (no "Profesional")
+            profesional:
+                x.Profecional ??
+                x.profecional ??
+                x.Profesional ??
+                x.profesional ??
+                null,
             evolucion: x.Evolucion || x.evolucion,
             numeroDocumento: x.NumeroDocumento || x.numeroDocumento,
             glucemia: x.Glucemia ?? x.glucemia ?? null,
