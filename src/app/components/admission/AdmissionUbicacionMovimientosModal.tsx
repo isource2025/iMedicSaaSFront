@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Loader from '@/app/components/Loader/Loader';
 import ModalCambiarCama from '@/app/components/modals/ModalCambiarCama';
-import ModalEgresoPaciente from '@/app/components/modals/ModalEgresoPaciente';
 import {
   admissionSearchService,
   type AdmissionDatosPrincipalesVisita,
 } from '@/app/services/admissionSearchService';
 import visitaMovimientoService from '@/app/services/visitaMovimientoService';
 import { getDisposicionesEgreso } from '@/app/services/disposicionEgresoService';
+import diagnosticosService from '@/app/services/diagnosticosService';
 import { dateToClarionDate, timeToClarionTime } from '@/app/utils/dateUtils';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
+import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import type { PatientHeaderSnapshot } from '@/app/utils/bedHeader';
 import { authService } from '@/app/services/authService';
 import styles from './AdmissionUbicacionMovimientosModal.module.css';
@@ -96,10 +97,14 @@ export default function AdmissionUbicacionMovimientosModal({
   const [horaEgreso, setHoraEgreso] = useState('');
   const [disposicionEgreso, setDisposicionEgreso] = useState('');
   const [diagnosticoEgreso, setDiagnosticoEgreso] = useState('');
+  const [diagnosticoEgresoDesc, setDiagnosticoEgresoDesc] = useState('');
+  const [diagQuery, setDiagQuery] = useState('');
+  const [diagOpen, setDiagOpen] = useState(false);
+  const [diagResults, setDiagResults] = useState<DiagnosticoCie10[]>([]);
+  const [diagLoading, setDiagLoading] = useState(false);
   const [operadorEgreso, setOperadorEgreso] = useState('');
 
   const [cambiarOpen, setCambiarOpen] = useState(false);
-  const [egresoOpen, setEgresoOpen] = useState(false);
   const [swapVisita, setSwapVisita] = useState('');
   const [swapBusy, setSwapBusy] = useState(false);
 
@@ -142,6 +147,10 @@ export default function AdmissionUbicacionMovimientosModal({
         payload.visita.DisposicionEgreso != null ? String(payload.visita.DisposicionEgreso) : '',
       );
       setDiagnosticoEgreso(String(payload.visita.DiagnosticoEgreso || '').trim());
+      setDiagnosticoEgresoDesc('');
+      setDiagOpen(false);
+      setDiagQuery('');
+      setDiagResults([]);
       const guardado = etiquetaOperadorGuardado(payload.visita);
       if (guardado) {
         setOperadorEgreso(guardado);
@@ -160,6 +169,39 @@ export default function AdmissionUbicacionMovimientosModal({
     if (!isOpen || !numeroVisita) return;
     void load();
   }, [isOpen, numeroVisita, load]);
+
+  useEffect(() => {
+    if (!diagOpen) return;
+    const q = diagQuery.trim();
+    if (q.length < 1) {
+      setDiagResults([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        setDiagLoading(true);
+        const rows = await diagnosticosService.buscarDiagnosticosCie10(q);
+        if (!cancelled) setDiagResults(rows.slice(0, 25));
+      } catch {
+        if (!cancelled) setDiagResults([]);
+      } finally {
+        if (!cancelled) setDiagLoading(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [diagQuery, diagOpen]);
+
+  const pickDiagnosticoEgreso = (d: DiagnosticoCie10) => {
+    setDiagnosticoEgreso(String(d.CodigoOMS || '').trim());
+    setDiagnosticoEgresoDesc(String(d.descripcion || '').trim());
+    setDiagOpen(false);
+    setDiagQuery('');
+    setDiagResults([]);
+  };
 
   const actual = movimientos[0] || null;
   const sector = String(actual?.ValorSector || visita?.Sector || '').trim();
@@ -407,13 +449,56 @@ export default function AdmissionUbicacionMovimientosModal({
                     ))}
                   </select>
                 </label>
-                <label className={styles.field}>
+                <label className={`${styles.field} ${styles.fieldDiag}`}>
                   <span>Diagnóstico egreso</span>
-                  <input
-                    value={diagnosticoEgreso}
-                    onChange={(e) => setDiagnosticoEgreso(e.target.value)}
-                    placeholder="Código CIE"
-                  />
+                  <div className={styles.diagLookup}>
+                    <input
+                      value={diagnosticoEgreso}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setDiagnosticoEgreso(v);
+                        setDiagnosticoEgresoDesc('');
+                        setDiagQuery(v);
+                        setDiagOpen(true);
+                      }}
+                      onFocus={() => {
+                        setDiagQuery(diagnosticoEgreso || diagnosticoEgresoDesc);
+                        setDiagOpen(true);
+                      }}
+                      placeholder="Código o descripción CIE"
+                    />
+                    {diagnosticoEgresoDesc ? (
+                      <small className={styles.diagHint}>{diagnosticoEgresoDesc}</small>
+                    ) : null}
+                    {diagOpen ? (
+                      <div className={styles.diagPanel}>
+                        {diagLoading ? <div className={styles.diagItem}>Buscando…</div> : null}
+                        {!diagLoading && diagQuery.trim() && diagResults.length === 0 ? (
+                          <div className={styles.diagItem}>Sin coincidencias</div>
+                        ) : null}
+                        {diagResults.map((d) => (
+                          <button
+                            key={`${d.idDiagnostico}-${d.CodigoOMS}`}
+                            type="button"
+                            className={styles.diagItem}
+                            onClick={() => pickDiagnosticoEgreso(d)}
+                          >
+                            {d.CodigoOMS} — {d.descripcion}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className={styles.diagItem}
+                          onClick={() => {
+                            setDiagOpen(false);
+                            setDiagResults([]);
+                          }}
+                        >
+                          Cerrar
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </label>
                 <label className={styles.field}>
                   <span>Operador egreso</span>
@@ -433,14 +518,6 @@ export default function AdmissionUbicacionMovimientosModal({
                 >
                   Registrar egreso
                 </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  disabled={!canEgreso}
-                  onClick={() => setEgresoOpen(true)}
-                >
-                  Egreso (asistido)
-                </button>
               </div>
             </section>
           ) : null}
@@ -457,19 +534,6 @@ export default function AdmissionUbicacionMovimientosModal({
           numeroVisita={numeroVisita}
           bedId={bedId}
           bedSector={sector}
-          header={headerSnapshot}
-        />
-      ) : null}
-
-      {numeroVisita ? (
-        <ModalEgresoPaciente
-          isOpen={egresoOpen && Boolean(bedId)}
-          onClose={() => {
-            setEgresoOpen(false);
-            void load();
-          }}
-          numeroVisita={numeroVisita}
-          bedId={bedId}
           header={headerSnapshot}
         />
       ) : null}

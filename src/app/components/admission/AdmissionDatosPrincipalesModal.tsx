@@ -12,6 +12,7 @@ import {
 } from '@/app/services/admissionSearchService';
 import coberturaService, { type CoberturaOption } from '@/app/services/coberturaService';
 import { getPersonalList } from '@/app/services/personalService';
+import diagnosticosService from '@/app/services/diagnosticosService';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import type { Personal } from '@/app/types/personal';
 import styles from './AdmissionDatosPrincipalesModal.module.css';
@@ -120,6 +121,10 @@ export default function AdmissionDatosPrincipalesModal({
   const [catalogos, setCatalogos] = useState<AdmissionDatosPrincipalesPayload['catalogos'] | null>(null);
   const [coberturas, setCoberturas] = useState<CoberturaOption[]>([]);
   const [diagModalOpen, setDiagModalOpen] = useState(false);
+  const [diagQuery, setDiagQuery] = useState('');
+  const [diagOpen, setDiagOpen] = useState(false);
+  const [diagResults, setDiagResults] = useState<DiagnosticoCie10[]>([]);
+  const [diagLoading, setDiagLoading] = useState(false);
 
   const [profTarget, setProfTarget] = useState<'admisor' | 'asistiendo' | 'cabecera' | null>(null);
   const [profQuery, setProfQuery] = useState('');
@@ -215,6 +220,31 @@ export default function AdmissionDatosPrincipalesModal({
     };
   }, [profQuery, profTarget]);
 
+  useEffect(() => {
+    if (!diagOpen) return;
+    const q = diagQuery.trim();
+    if (q.length < 1) {
+      setDiagResults([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        setDiagLoading(true);
+        const rows = await diagnosticosService.buscarDiagnosticosCie10(q);
+        if (!cancelled) setDiagResults(rows.slice(0, 25));
+      } catch {
+        if (!cancelled) setDiagResults([]);
+      } finally {
+        if (!cancelled) setDiagLoading(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [diagQuery, diagOpen]);
+
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
   };
@@ -252,6 +282,9 @@ export default function AdmissionDatosPrincipalesModal({
     setField('diagnostico', String(d.CodigoOMS || '').trim());
     setField('diagnosticoDescripcion', String(d.descripcion || '').trim());
     setDiagModalOpen(false);
+    setDiagOpen(false);
+    setDiagQuery('');
+    setDiagResults([]);
   };
 
   const onSave = async () => {
@@ -495,22 +528,86 @@ export default function AdmissionDatosPrincipalesModal({
 
                         <div className={`${styles.field} ${styles.fieldFull}`}>
                           <span className={styles.label}>Diagnóstico</span>
-                          <div className={styles.fieldRow}>
-                            <input
-                              className={styles.inputSm}
-                              value={form.diagnostico}
-                              onChange={(e) => setField('diagnostico', e.target.value)}
-                            />
-                            <button
-                              type="button"
-                              className={styles.lookupBtn}
-                              onClick={() => setDiagModalOpen(true)}
-                              title="Buscar diagnóstico"
-                              aria-label="Buscar diagnóstico"
-                            >
-                              🔍
-                            </button>
-                            <input className={styles.inputGrow} value={form.diagnosticoDescripcion} readOnly />
+                          <div className={styles.lookupWrap}>
+                            <div className={styles.fieldRow}>
+                              <input
+                                className={styles.inputSm}
+                                value={form.diagnostico}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setField('diagnostico', v);
+                                  setField('diagnosticoDescripcion', '');
+                                  setDiagQuery(v);
+                                  setDiagOpen(true);
+                                }}
+                                onFocus={() => {
+                                  setDiagQuery(form.diagnostico || form.diagnosticoDescripcion);
+                                  setDiagOpen(true);
+                                }}
+                                placeholder="Código"
+                              />
+                              <button
+                                type="button"
+                                className={styles.lookupBtn}
+                                onClick={() => setDiagModalOpen(true)}
+                                title="Búsqueda avanzada de diagnóstico"
+                                aria-label="Buscar diagnóstico"
+                              >
+                                🔍
+                              </button>
+                              <input
+                                className={styles.inputGrow}
+                                value={form.diagnosticoDescripcion}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setField('diagnosticoDescripcion', v);
+                                  setField('diagnostico', '');
+                                  setDiagQuery(v);
+                                  setDiagOpen(true);
+                                }}
+                                onFocus={() => {
+                                  setDiagQuery(form.diagnosticoDescripcion || form.diagnostico);
+                                  setDiagOpen(true);
+                                }}
+                                placeholder="Buscar por descripción…"
+                              />
+                            </div>
+                            {diagOpen ? (
+                              <div className={styles.lookupPanel}>
+                                <input
+                                  className={styles.input}
+                                  placeholder="Buscar diagnóstico por código o descripción…"
+                                  value={diagQuery}
+                                  onChange={(e) => setDiagQuery(e.target.value)}
+                                  autoFocus
+                                />
+                                {diagLoading ? <div className={styles.lookupItem}>Buscando…</div> : null}
+                                {!diagLoading && diagQuery.trim() && diagResults.length === 0 ? (
+                                  <div className={styles.lookupItem}>Sin coincidencias</div>
+                                ) : null}
+                                {diagResults.map((d) => (
+                                  <button
+                                    key={`${d.idDiagnostico}-${d.CodigoOMS}`}
+                                    type="button"
+                                    className={styles.lookupItem}
+                                    onClick={() => onSelectDiagnostico(d)}
+                                  >
+                                    {d.CodigoOMS} — {d.descripcion}
+                                  </button>
+                                ))}
+                                <button
+                                  type="button"
+                                  className={styles.lookupItem}
+                                  onClick={() => {
+                                    setDiagOpen(false);
+                                    setDiagQuery('');
+                                    setDiagResults([]);
+                                  }}
+                                >
+                                  Cerrar búsqueda
+                                </button>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
 
