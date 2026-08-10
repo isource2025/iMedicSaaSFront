@@ -5,6 +5,12 @@ import { Adjunto } from '@/app/types/adjuntos';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import AdjuntoFileViewer, { AdjuntoViewerState } from './AdjuntoFileViewer';
 import ConfirmationModal from '../shared/ConfirmationModal';
+import { usePermiso } from '@/app/hooks/usePermiso';
+import {
+  useUsuarioActual,
+  esAdminClinico,
+  esRegistroPropio,
+} from '@/app/hooks/useUsuarioActual';
 import styles from './FileList.module.css';
 
 interface FileListProps {
@@ -19,6 +25,27 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const usuarioActual = useUsuarioActual();
+  const { puede } = usePermiso();
+
+  const puedeIntentarEliminar =
+    !readOnly &&
+    !!onDelete &&
+    (puede('INTERNACION.ADJUNTOS.ELIMINAR') || puede('INTERNACION.ADJUNTOS.CREAR'));
+
+  const puedeEliminarAdjunto = (adjunto: Adjunto): boolean => {
+    if (!puedeIntentarEliminar) return false;
+    if (esAdminClinico()) return true;
+    return (
+      esRegistroPropio(
+        {
+          IdOperador: adjunto.IdOperador ?? adjunto.CargadoPor,
+          CargadoPor: adjunto.CargadoPor,
+        },
+        usuarioActual,
+      ) === true
+    );
+  };
 
   const getFileIcon = (tipoArchivo: string, nombreArchivo: string) => {
     if (tipoArchivo.includes('pdf')) {
@@ -253,7 +280,7 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
                   <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
               </button>
-              {!readOnly && onDelete && (
+              {puedeEliminarAdjunto(adjunto) && (
                 <button
                   type="button"
                   onClick={() => handleDelete(adjunto.IdAdjunto)}

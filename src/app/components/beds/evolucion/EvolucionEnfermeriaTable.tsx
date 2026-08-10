@@ -1,72 +1,79 @@
-"use client";
+'use client';
 import styles from "./EvolucionEnfermeriaTable.module.css";
 import EmptyState from "../shared/EmptyState";
 import { IoPencilOutline, IoTrashOutline, IoEyeOutline } from "react-icons/io5";
-import { evolucionesService } from "../../../services/evolucionesService";
 import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import { formatSqlDate } from "../../../utils/dateUtils";
 import { useUsuarioActual, esRegistroPropio } from "../../../hooks/useUsuarioActual";
+import { eliminarEvolucion } from "../../../services/evolucionEnfermeriaService";
+import type { EvolucionEnfermeria } from "../../../types/evolucionEnfermeria";
 
-export type EvolucionEnfermeriaRow = {
-    NumeroVisita: number;
-    FechaControl: string;
-    HoraControl: string;
-    Observaciones: string | null;
-    Profesional?: number | null;
-    ProfesionalApellido?: string | null;
-    ProfesionalNombres?: string | null;
-    OperadorApellido?: string | null;
-    OperadorNombres?: string | null;
-    FechaHoraCarga?: string | null;
-    /** CodOperador del enfermero que cargó la evolución (control de propiedad). */
-    OperadorCarga?: number | null;
-};
+export type EvolucionEnfermeriaRow = EvolucionEnfermeria;
 
 type Props = {
     rows: EvolucionEnfermeriaRow[];
     refetch: () => Promise<void>;
+    onEdit?: (row: EvolucionEnfermeriaRow) => void;
 };
 
-export default function EvolucionEnfermeriaTable({
-    rows,
-    refetch,
-}: Props) {
+function nombreProfesional(r: EvolucionEnfermeriaRow): string {
+    const apellido = String(r.ProfesionalApellido || "").trim();
+    const nombres = String(r.ProfesionalNombres || "").trim();
+    if (apellido && nombres) return `${apellido}, ${nombres}`;
+    if (apellido) return apellido;
+    if (nombres) return nombres;
+    return "—";
+}
+
+function puedeGestionar(
+    r: EvolucionEnfermeriaRow,
+    usuario: ReturnType<typeof useUsuarioActual>,
+): boolean {
+    if (esRegistroPropio(r as unknown as Record<string, unknown>, usuario) === true) {
+        return true;
+    }
+    if (!usuario) return false;
+    const prof = Number(r.Profesional);
+    const op = Number(r.OperadorCarga);
+    if (usuario.codOperador != null && op === usuario.codOperador) return true;
+    if (usuario.valorPersonal != null && (prof === usuario.valorPersonal || op === usuario.valorPersonal)) {
+        return true;
+    }
+    if (usuario.matricula != null && (prof === usuario.matricula || op === usuario.matricula)) {
+        return true;
+    }
+    return false;
+}
+
+export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Props) {
     const hasRows = rows && rows.length > 0;
     const [deletingEvolucion, setDeletingEvolucion] = useState<EvolucionEnfermeriaRow | null>(null);
     const [viewingEvolucion, setViewingEvolucion] = useState<EvolucionEnfermeriaRow | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const [error, setError] = useState("");
     const usuarioActual = useUsuarioActual();
 
-    const handleDelete = async (evolucion: EvolucionEnfermeriaRow) => {
-        try {
-            // Implementar eliminación cuando esté disponible
-            await refetch();
-        } catch (error) {
-            console.error("Error deleting evolución:", error);
-        }
-    };
-
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (!deletingEvolucion) return;
-        handleDelete(deletingEvolucion);
-        setDeletingEvolucion(null);
-    };
-
-    const handleCloseModal = () => {
-        setDeletingEvolucion(null);
-    };
-
-    const handleCloseView = () => {
-        setViewingEvolucion(null);
-    };
-
-    const getNombreCompleto = (apellido?: string | null, nombres?: string | null) => {
-        if (apellido && nombres) {
-            return `${apellido}, ${nombres}`;
+        const fechaClarion = Number(deletingEvolucion.FechaControlClarion);
+        const horaClarion = Number(deletingEvolucion.HoraControlClarion);
+        if (!Number.isFinite(fechaClarion) || !Number.isFinite(horaClarion)) {
+            setError("No se pudo identificar la evolución a eliminar");
+            return;
         }
-        if (apellido) return apellido;
-        if (nombres) return nombres;
-        return "-";
+        try {
+            setDeleting(true);
+            setError("");
+            await eliminarEvolucion(deletingEvolucion.NumeroVisita, fechaClarion, horaClarion);
+            setDeletingEvolucion(null);
+            await refetch();
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            setError(err?.message || "Error al eliminar la evolución");
+        } finally {
+            setDeleting(false);
+        }
     };
 
     return (
@@ -86,56 +93,80 @@ export default function EvolucionEnfermeriaTable({
 
                         <tbody className={styles.tbody}>
                             {hasRows
-                                ? rows.map((r, index) => (
-                                    <tr
-                                        key={`evolucion-${r.NumeroVisita}-${r.FechaControl}-${r.HoraControl}-${index}`}
-                                        className={styles.row}
-                                    >
-                                        <td className={styles.cellFecha}>
-                                            {r.FechaControl ? formatSqlDate(r.FechaControl, { showTime: false, showDate: true, showYear: true }) : "-"}
-                                        </td>
+                                ? rows.map((r, index) => {
+                                      const propio = puedeGestionar(r, usuarioActual);
+                                      return (
+                                          <tr
+                                              key={`evolucion-${r.NumeroVisita}-${r.FechaControlClarion}-${r.HoraControlClarion}-${index}`}
+                                              className={styles.row}
+                                          >
+                                              <td className={styles.cellFecha}>
+                                                  {r.FechaControl
+                                                      ? formatSqlDate(r.FechaControl, {
+                                                            showTime: false,
+                                                            showDate: true,
+                                                            showYear: true,
+                                                        })
+                                                      : "—"}
+                                              </td>
 
-                                        <td className={styles.cellHora}>
-                                            {r.HoraControl || "-"}
-                                        </td>
+                                              <td className={styles.cellHora}>{r.HoraControl || "—"}</td>
 
-                                        <td className={styles.cellProfesional}>
-                                            {getNombreCompleto(r.ProfesionalApellido, r.ProfesionalNombres)}
-                                        </td>
+                                              <td className={styles.cellProfesional}>
+                                                  {nombreProfesional(r)}
+                                              </td>
 
-                                        <td className={styles.cellEvolucion}>
-                                            <div className={styles.evolucionPreview}>
-                                                {r.Observaciones ? r.Observaciones.substring(0, 100) + (r.Observaciones.length > 100 ? "..." : "") : "-"}
-                                            </div>
-                                        </td>
+                                              <td className={styles.cellEvolucion}>
+                                                  <div className={styles.evolucionPreview}>
+                                                      {r.Observaciones
+                                                          ? r.Observaciones.substring(0, 100) +
+                                                            (r.Observaciones.length > 100 ? "..." : "")
+                                                          : "—"}
+                                                  </div>
+                                              </td>
 
-                                        <td className={styles.cellAccion}>
-                                            <div className={styles.actionBtns}>
-                                                <button
-                                                    className={`${styles.btnAction}`}
-                                                    title="Ver evolución completa"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setViewingEvolucion(r);
-                                                    }}
-                                                >
-                                                    <IoEyeOutline color="#5BC0DE" size="18px" />
-                                                </button>
-                                                {esRegistroPropio(r as unknown as Record<string, unknown>, usuarioActual) === true && (
-                                                <button
-                                                    className={`${styles.btnAction}`}
-                                                    title="Eliminar evolución"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDeletingEvolucion(r);
-                                                    }}
-                                                >
-                                                    <IoTrashOutline color="#5BC0DE" size="18px" />
-                                                </button>)}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                              <td className={styles.cellAccion}>
+                                                  <div className={styles.actionBtns}>
+                                                      <button
+                                                          className={styles.btnAction}
+                                                          title="Ver evolución completa"
+                                                          onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              setViewingEvolucion(r);
+                                                          }}
+                                                      >
+                                                          <IoEyeOutline color="#5BC0DE" size="18px" />
+                                                      </button>
+                                                      {propio && (
+                                                          <>
+                                                              <button
+                                                                  className={styles.btnAction}
+                                                                  title="Editar evolución"
+                                                                  onClick={(e) => {
+                                                                      e.stopPropagation();
+                                                                      onEdit?.(r);
+                                                                  }}
+                                                              >
+                                                                  <IoPencilOutline color="#5BC0DE" size="18px" />
+                                                              </button>
+                                                              <button
+                                                                  className={styles.btnAction}
+                                                                  title="Eliminar evolución"
+                                                                  onClick={(e) => {
+                                                                      e.stopPropagation();
+                                                                      setError("");
+                                                                      setDeletingEvolucion(r);
+                                                                  }}
+                                                              >
+                                                                  <IoTrashOutline color="#5BC0DE" size="18px" />
+                                                              </button>
+                                                          </>
+                                                      )}
+                                                  </div>
+                                              </td>
+                                          </tr>
+                                      );
+                                  })
                                 : null}
                         </tbody>
                     </table>
@@ -148,24 +179,28 @@ export default function EvolucionEnfermeriaTable({
                 </div>
             </div>
 
-            {/* Modal de confirmación de eliminación */}
             <ConfirmationModal
                 isOpen={deletingEvolucion !== null}
-                onClose={handleCloseModal}
-                onConfirm={handleConfirmDelete}
+                onClose={() => {
+                    if (!deleting) setDeletingEvolucion(null);
+                }}
+                onConfirm={() => void handleConfirmDelete()}
                 title="Confirmar Eliminación"
-                message="¿Está seguro que desea eliminar esta evolución de enfermería?"
-                confirmText="Eliminar"
+                message={
+                    error
+                        ? error
+                        : "¿Está seguro que desea eliminar esta evolución de enfermería?"
+                }
+                confirmText={deleting ? "Eliminando…" : "Eliminar"}
                 cancelText="Cancelar"
             />
 
-            {/* Modal de vista completa de evolución */}
             {viewingEvolucion && (
-                <div className={styles.modalOverlay} onClick={handleCloseView}>
+                <div className={styles.modalOverlay} onClick={() => setViewingEvolucion(null)}>
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <h3>Evolución de Enfermería</h3>
-                            <button className={styles.btnClose} onClick={handleCloseView}>
+                            <button className={styles.btnClose} onClick={() => setViewingEvolucion(null)}>
                                 ×
                             </button>
                         </div>
@@ -174,25 +209,31 @@ export default function EvolucionEnfermeriaTable({
                                 <div className={styles.detailItem}>
                                     <span className={styles.detailLabel}>Fecha:</span>
                                     <span className={styles.detailValue}>
-                                        {viewingEvolucion.FechaControl ? formatSqlDate(viewingEvolucion.FechaControl, { showTime: false, showDate: true, showYear: true }) : "-"}
+                                        {viewingEvolucion.FechaControl
+                                            ? formatSqlDate(viewingEvolucion.FechaControl, {
+                                                  showTime: false,
+                                                  showDate: true,
+                                                  showYear: true,
+                                              })
+                                            : "—"}
                                     </span>
                                 </div>
                                 <div className={styles.detailItem}>
                                     <span className={styles.detailLabel}>Hora:</span>
-                                    <span className={styles.detailValue}>{viewingEvolucion.HoraControl || "-"}</span>
+                                    <span className={styles.detailValue}>
+                                        {viewingEvolucion.HoraControl || "—"}
+                                    </span>
                                 </div>
                                 <div className={styles.detailItem}>
                                     <span className={styles.detailLabel}>Profesional:</span>
-                                    <span className={styles.detailValue}>{getNombreCompleto(viewingEvolucion.ProfesionalApellido, viewingEvolucion.ProfesionalNombres)}</span>
+                                    <span className={styles.detailValue}>
+                                        {nombreProfesional(viewingEvolucion)}
+                                    </span>
                                 </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Operador Carga:</span>
-                                    <span className={styles.detailValue}>{getNombreCompleto(viewingEvolucion.OperadorApellido, viewingEvolucion.OperadorNombres)}</span>
-                                </div>
-                                <div className={styles.detailItem} style={{ gridColumn: '1 / -1' }}>
+                                <div className={styles.detailItem} style={{ gridColumn: "1 / -1" }}>
                                     <span className={styles.detailLabel}>Observaciones:</span>
                                     <div className={styles.evolucionFull}>
-                                        {viewingEvolucion.Observaciones || "-"}
+                                        {viewingEvolucion.Observaciones || "—"}
                                     </div>
                                 </div>
                             </div>

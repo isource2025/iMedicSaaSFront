@@ -99,7 +99,8 @@ export async function eliminarEvolucion(
     );
 
     if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
+      const errBody = await response.json().catch(() => null);
+      throw new Error(errBody?.mensaje || `Error HTTP: ${response.status}`);
     }
 
     const data = await response.json();
@@ -111,6 +112,38 @@ export async function eliminarEvolucion(
     console.error('Error al eliminar evolución de enfermería:', error);
     throw error;
   }
+}
+
+/**
+ * Actualizar observaciones de una evolución de enfermería
+ */
+export async function actualizarEvolucion(
+  numeroVisita: number,
+  fechaControlClarion: number,
+  horaControlClarion: number,
+  observaciones: string,
+): Promise<EvolucionEnfermeria | null> {
+  const response = await apiFetch(
+    `${API_URL}/evolucion-enfermeria/?numeroVisita=${numeroVisita}&fechaControl=${fechaControlClarion}&horaControl=${horaControlClarion}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ Observaciones: observaciones }),
+    },
+  );
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => null);
+    throw new Error(errBody?.mensaje || `Error HTTP: ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.mensaje || 'Error al actualizar evolución de enfermería');
+  }
+  return data.data || null;
 }
 
 /**

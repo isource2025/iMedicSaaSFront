@@ -11,6 +11,8 @@ export interface Adjunto {
   RutaArchivo: string;
   TipoArchivo: string;
   TamanioBytes: number;
+  /** CodOperador que subió el archivo (imPedidosEstudiosAdjuntos.IdOperador). */
+  IdOperador?: number | null;
   CargadoPor: number;
   NombreUsuario: string;
   FechaCarga: string;

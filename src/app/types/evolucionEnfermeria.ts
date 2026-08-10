@@ -9,6 +9,9 @@ export interface EvolucionEnfermeria {
   ProfesionalNombres: string | null;
   FechaControl: string; // YYYY-MM-DD desde backend
   HoraControl: string; // HH:mm:ss desde backend
+  /** Clave Clarion para update/delete */
+  FechaControlClarion?: number | null;
+  HoraControlClarion?: number | null;
   Observaciones: string | null;
   FechaHoraCarga: string | null; // datetime desde backend
   OperadorCarga: number | null;

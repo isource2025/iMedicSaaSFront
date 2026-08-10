@@ -83,10 +83,13 @@ export function esRegistroPropio(
 		registro.operadorCarga ??
 		registro.IdOperador ??
 		registro.idOperador ??
+		registro.CargadoPor ??
+		registro.cargadoPor ??
 		registro.IdProfecional ??
 		registro.idProfecional ??
 		registro.CodOperador ??
 		registro.codOperador ??
+		registro.Profesional ??
 		registro.profesional ??
 		registro.Profecional ??
 		null;

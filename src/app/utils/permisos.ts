@@ -242,6 +242,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.INSUMOS.VER',
 		'INTERNACION.ADJUNTOS.VER',
 		'INTERNACION.ADJUNTOS.CREAR',
+		'INTERNACION.ADJUNTOS.EDITAR',
+		'INTERNACION.ADJUNTOS.ELIMINAR',
 
 		'FACTURACION.PRACTICAS.VER',
 		'FACTURACION.PRACTICAS.CREAR',
@@ -285,6 +287,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		..._todas('INTERNACION', 'INSUMOS'),
 		'INTERNACION.ADJUNTOS.VER',
 		'INTERNACION.ADJUNTOS.CREAR',
+		'INTERNACION.ADJUNTOS.EDITAR',
+		'INTERNACION.ADJUNTOS.ELIMINAR',
 
 		'REPORTES.OCUPACION.VER',
 
@@ -384,6 +388,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.ESTUDIOS.CREAR',
 		'INTERNACION.ADJUNTOS.VER',
 		'INTERNACION.ADJUNTOS.CREAR',
+		'INTERNACION.ADJUNTOS.EDITAR',
+		'INTERNACION.ADJUNTOS.ELIMINAR',
 		'USUARIO.PERFIL.VER',
 		'USUARIO.PERFIL.EDITAR',
 	],
@@ -406,9 +412,8 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 /**
  * Lista de permisos efectivos del usuario.
  *
- * ADMIN / SUPER_ADMIN / MEDICO usan la plantilla completa aunque `imRolPermisos`
- * en BD venga desactualizado (p. ej. MEDICO sin INTERCONSULTAS o sin lectura
- * de enfermería). El resto de roles sigue usando la lista de BD/login.
+ * ADMIN / SUPER_ADMIN / MEDICO / ENFERMERO / CARGA_HC / ADMINISTRATIVO usan la plantilla
+ * completa aunque `imRolPermisos` en BD venga desactualizado.
  */
 export function permisosDeRol(
 	rol: { nombre?: string } | string | null | undefined,
@@ -418,6 +423,9 @@ export function permisosDeRol(
 	if (n === 'ADMIN') return [...PLANTILLAS.ADMIN];
 	if (n === 'SUPER_ADMIN') return [...PLANTILLAS.SUPER_ADMIN];
 	if (n === 'MEDICO') return [...PLANTILLAS.MEDICO];
+	if (n === 'ENFERMERO') return [...PLANTILLAS.ENFERMERO];
+	if (n === 'CARGA_HC') return [...PLANTILLAS.CARGA_HC];
+	if (n === 'ADMINISTRATIVO') return [...PLANTILLAS.ADMINISTRATIVO];
 	if (permisosUsuario && permisosUsuario.length) return permisosUsuario;
 	if (!n) return [];
 	return PLANTILLAS[n];

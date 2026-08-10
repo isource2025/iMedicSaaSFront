@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { EvolucionEnfermeria } from '../../../types/evolucionEnfermeria';
 import {
   crearEvolucion,
+  actualizarEvolucion,
 } from '../../../services/evolucionEnfermeriaService';
 import NuevaEvolucionEnfermeriaModal from './NuevaEvolucionEnfermeriaModal';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
@@ -45,6 +46,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
 }) => {
   const { activeSection, selectedDate } = useBedDetail();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingEvolucion, setEditingEvolucion] = useState<EvolucionEnfermeria | null>(null);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -94,6 +96,25 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   const handleSave = async (data: any) => {
     setSaving(true);
     try {
+      if (editingEvolucion) {
+        const fechaClarion = Number(
+          data.FechaControlClarion ?? editingEvolucion.FechaControlClarion,
+        );
+        const horaClarion = Number(
+          data.HoraControlClarion ?? editingEvolucion.HoraControlClarion,
+        );
+        if (!Number.isFinite(fechaClarion) || !Number.isFinite(horaClarion)) {
+          throw new Error('No se pudo identificar la evolución a editar');
+        }
+        await actualizarEvolucion(
+          editingEvolucion.NumeroVisita,
+          fechaClarion,
+          horaClarion,
+          data.Observaciones,
+        );
+        return data;
+      }
+
       const finalPayload = {
         ...data,
         NumeroVisita: data.NumeroVisita ?? numeroVisita ?? 0,
@@ -111,7 +132,18 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   };
 
   const onAddEvolucion = () => {
+    setEditingEvolucion(null);
     setModalOpen(true);
+  };
+
+  const onEditEvolucion = (row: EvolucionEnfermeria) => {
+    setEditingEvolucion(row);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingEvolucion(null);
   };
 
   // Formatear fecha seleccionada para mostrar
@@ -139,8 +171,8 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
       } : undefined;
 
       const pdfData = filteredEvoluciones.map((ev: any) => [
-        ev.FechaEv || '-',
-        ev.HoraEv || '-',
+        ev.FechaControl || ev.FechaEv || '-',
+        ev.HoraControl || ev.HoraEv || '-',
         `${ev.ProfesionalApellido || ''} ${ev.ProfesionalNombres || ''}`.trim() || '-',
         ev.Observaciones || '-'
       ]);
@@ -239,17 +271,22 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
             <EvolucionEnfermeriaTable
               rows={filteredEvoluciones}
               refetch={refetch}
+              onEdit={onEditEvolucion}
             />
           )}
         </div>
       </div>
 
-      {/* Modal de nueva evolución */}
+      {/* Modal de nueva / editar evolución */}
       <ModalBasePaciente
         numeroVisita={numeroVisita ? String(numeroVisita) : ""}
-        onClose={() => setModalOpen(false)}
+        onClose={closeModal}
         isOpen={modalOpen}
-        titulo="Agregando nueva Evolución de Enfermería"
+        titulo={
+          editingEvolucion
+            ? "Editando Evolución de Enfermería"
+            : "Agregando nueva Evolución de Enfermería"
+        }
         footerButtons={
           <>
             <button
@@ -264,10 +301,11 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
         }
       >
         <NuevaEvolucionEnfermeriaModal
-          onClose={() => setModalOpen(false)}
+          onClose={closeModal}
           onSave={handleSave}
           defaultNumeroVisita={numeroVisita}
           refetch={refetch}
+          initialEvolucion={editingEvolucion}
         />
       </ModalBasePaciente>
     </div>
