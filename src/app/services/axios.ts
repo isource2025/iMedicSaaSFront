@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getEnvApiBaseUrl, normalizeApiRequestPath } from '@/app/config/apiBaseUrl';
+import { clearTenantUiCaches } from '@/app/utils/sessionCaches';
 
 const envApiBase = getEnvApiBaseUrl();
 
@@ -95,6 +96,7 @@ axiosInstance.interceptors.response.use(
 					localStorage.removeItem('empresaSeleccionada');
 					localStorage.removeItem('empresaInfo');
 					localStorage.removeItem('empresaModulos');
+					clearTenantUiCaches();
 
 					if (window.location.pathname !== '/') {
 						window.location.href = '/';

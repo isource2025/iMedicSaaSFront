@@ -2,10 +2,11 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '@/app/services/empresaService';
 import { HCI_CAMPOS_TEXTO_LIBRE, buildHCIPhysicalExamSections } from './hciIngresoDisplay';
+import { drawProfesionalFirmaBlock, withPersonalFirma } from './pdfExport';
 
 type HCIngresoData = Record<string, any>;
 
-export const generarPDFHistoriaClinica = (
+export const generarPDFHistoriaClinica = async (
     data: HCIngresoData,
     pacienteNombre: string,
     pacienteDNI: string,
@@ -315,23 +316,15 @@ export const generarPDFHistoriaClinica = (
         yPosition = 20;
     }
     yPosition += 10;
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    doc.line(pageWidth / 2 - 30, yPosition, pageWidth / 2 + 30, yPosition);
-    yPosition += 5;
     const profNombre = data.ProfesionalNombre || (data.IdProfecional ? `Prof. ${data.IdProfecional}` : '');
-    if (profNombre) {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(String(profNombre).toUpperCase(), pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 4;
-    }
-    if (data.IdProfecional) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.text(`Mat. ${data.IdProfecional}`, pageWidth / 2, yPosition, { align: 'center' });
-    }
+    yPosition = await drawProfesionalFirmaBlock(
+        doc,
+        await withPersonalFirma({
+            nombre: profNombre || undefined,
+            matricula: data.IdProfecional,
+        }),
+        yPosition,
+    );
     
     // ===== PIE DE PÁGINA =====
     const totalPages = doc.getNumberOfPages();

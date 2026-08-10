@@ -202,6 +202,19 @@ export const getPersonalFirma = async (id: number): Promise<PersonalFirmaRespons
 	throw new Error(res.data.mensaje || 'Error al obtener firma');
 };
 
+/** Firma del personal por matrícula (para PDFs; no requiere permiso de configuración). */
+export const getPersonalFirmaByMatricula = async (
+	matricula: number | string,
+): Promise<PersonalFirmaResponse> => {
+	const m = Number(matricula);
+	if (!Number.isFinite(m) || m <= 0) return { hasFirma: false };
+	const res = await apiService.get<ApiResponse<PersonalFirmaResponse>>(
+		`/personal/firma/por-matricula/${m}`,
+	);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al obtener firma');
+};
+
 export const uploadPersonalFirma = async (id: number, file: File): Promise<void> => {
 	const fd = new FormData();
 	fd.append('archivo', file);
@@ -432,6 +445,7 @@ export const personalService = {
 	addPersonalEmpresa,
 	removePersonalEmpresa,
 	getPersonalFirma,
+	getPersonalFirmaByMatricula,
 	uploadPersonalFirma,
 	deletePersonalFirma,
 	getPersonalSectores,

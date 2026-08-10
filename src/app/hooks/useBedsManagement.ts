@@ -34,10 +34,13 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		refreshIntervalMs = 60_000,
 	} = options;
 
-	const { sectorSeleccionado, idsector, isAuthenticated } = useAppContext();
+	const { sectorSeleccionado, idsector, isAuthenticated, empresaInfo } = useAppContext();
+	const idEmpresa = empresaInfo?.id ?? null;
 
-	const cachedBeds = typeof window !== 'undefined' ? getCachedBedsList() : null;
-	const cachedMeta = typeof window !== 'undefined' ? getCachedBedMeta() : null;
+	const cachedBeds =
+		typeof window !== 'undefined' ? getCachedBedsList(undefined, idEmpresa) : null;
+	const cachedMeta =
+		typeof window !== 'undefined' ? getCachedBedMeta(undefined, idEmpresa) : null;
 
 	const [beds, setBeds] = useState<Bed[]>(() => cachedBeds || []);
 	const [bedStates, setBedStates] = useState<BedState[]>(
@@ -58,61 +61,88 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 	const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const signatureRef = useRef<string>(cachedBeds ? bedsListSignature(cachedBeds) : '');
 	const inFlightRef = useRef(false);
+	const lastEmpresaRef = useRef<string | null>(idEmpresa != null ? String(idEmpresa) : null);
 
 	const fetchSectores = useCallback(async () => {
 		try {
 			const sectoresData = await bedsService.getSectores();
 			setSectors(sectoresData);
-			setCachedBedMeta({ sectores: sectoresData });
+			setCachedBedMeta({ sectores: sectoresData }, idEmpresa);
 		} catch (err) {
 			console.error('Error al cargar sectores:', err);
 		}
-	}, []);
+	}, [idEmpresa]);
 
 	const fetchBedStates = useCallback(async () => {
 		try {
 			const states = await bedsService.getBedStates();
 			setBedStates(states);
-			setCachedBedMeta({ states });
+			setCachedBedMeta({ states }, idEmpresa);
 		} catch (err) {
 			console.error('Error al cargar estados de cama:', err);
 		}
-	}, []);
+	}, [idEmpresa]);
 
-	const fetchBeds = useCallback(async (opts?: { silent?: boolean }) => {
-		const silent = opts?.silent === true;
-		if (inFlightRef.current) return;
-		inFlightRef.current = true;
-		if (!silent) setLoading(true);
-		setError(null);
-		try {
-			const data = await bedsService.getAllBeds();
-			const nextSig = bedsListSignature(data);
-			if (nextSig !== signatureRef.current) {
-				signatureRef.current = nextSig;
-				setBeds(data);
+	const fetchBeds = useCallback(
+		async (opts?: { silent?: boolean }) => {
+			const silent = opts?.silent === true;
+			if (inFlightRef.current) return;
+			inFlightRef.current = true;
+			if (!silent) setLoading(true);
+			setError(null);
+			try {
+				const data = await bedsService.getAllBeds();
+				const nextSig = bedsListSignature(data);
+				if (nextSig !== signatureRef.current) {
+					signatureRef.current = nextSig;
+					setBeds(data);
+				}
+				setCachedBedsList(data, undefined, idEmpresa);
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Error al cargar camas';
+				setError(message);
+			} finally {
+				inFlightRef.current = false;
+				if (!silent) setLoading(false);
 			}
-			setCachedBedsList(data);
-		} catch (err: unknown) {
-			const message = err instanceof Error ? err.message : 'Error al cargar camas';
-			setError(message);
-		} finally {
-			inFlightRef.current = false;
-			if (!silent) setLoading(false);
-		}
-	}, []);
+		},
+		[idEmpresa],
+	);
 
-	// Carga inicial (meta + camas). Si hay cache, revalida en silencio.
+	// Carga inicial / cambio de empresa: invalidar UI si el tenant cambió
 	useEffect(() => {
 		if (!isAuthenticated) {
 			setLoading(false);
 			return;
 		}
-		const hasCache = Boolean(getCachedBedsList());
+
+		const empresaKey = idEmpresa != null ? String(idEmpresa) : null;
+		const empresaChanged =
+			lastEmpresaRef.current != null &&
+			empresaKey != null &&
+			lastEmpresaRef.current !== empresaKey;
+		lastEmpresaRef.current = empresaKey;
+
+		if (empresaChanged) {
+			signatureRef.current = '';
+			setBeds([]);
+			setSectors([]);
+			setBedStates([]);
+			setSectorFilter('all');
+			setFilter('all');
+			setServicioFilter('all');
+			void fetchBeds({ silent: false });
+			void fetchBedStates();
+			void fetchSectores();
+			return;
+		}
+
+		const hasCache = Boolean(getCachedBedsList(undefined, idEmpresa));
+		const meta = getCachedBedMeta(undefined, idEmpresa);
 		void fetchBeds({ silent: hasCache });
-		if (!getCachedBedMeta()?.states?.length) void fetchBedStates();
-		if (!getCachedBedMeta()?.sectores?.length) void fetchSectores();
-	}, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated]);
+		if (!meta?.states?.length) void fetchBedStates();
+		if (!meta?.sectores?.length) void fetchSectores();
+	}, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated, idEmpresa]);
 
 	// Sector inicial del usuario
 	useEffect(() => {

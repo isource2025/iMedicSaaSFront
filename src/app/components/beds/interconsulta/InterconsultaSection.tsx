@@ -218,7 +218,7 @@ export default function InterconsultaSection({
 				selected.Especialidad ||
 				selected.PracticaSolicitada ||
 				'Interconsulta';
-			generarPDFInterconsulta({
+			await generarPDFInterconsulta({
 				title,
 				fields: buildInterconsultaFields(selected),
 				textBlocks: selectedTextBlocks,

@@ -546,7 +546,7 @@ export default function HCIngresoSection({
         if (option === 'pdf' && selectedRecord) {
             const empresaInfo = await obtenerInfoEmpresa();
             
-            generarPDFHistoriaClinica(
+            await generarPDFHistoriaClinica(
                 selectedRecord,
                 patientName || 'N/A',
                 documentoPaciente || 'N/A',

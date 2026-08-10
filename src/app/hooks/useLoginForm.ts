@@ -8,6 +8,7 @@ import { useAppContext } from '../contexts/AppContext';
 import { guardarInfoEmpresaLocal, EmpresaInfo } from '../services/empresaService';
 import type { ModulosEmpresa } from '../types/superAdmin';
 import { startSessionActivityMonitor } from '../utils/sessionActivity';
+import { clearTenantUiCaches } from '../utils/sessionCaches';
 
 type CredentialsState = {
   username: string;
@@ -41,6 +42,9 @@ export function useLoginForm() {
 
   const persistLoginSuccess = useCallback(
     (data: LoginResponse) => {
+      // Evitar sectores/camas de otra empresa al reingresar
+      clearTenantUiCaches();
+
       if (data.token) {
         localStorage.setItem('token', data.token);
       } else {
@@ -67,6 +71,8 @@ export function useLoginForm() {
 
       if (data.sectorSeleccionado) {
         setSectorSeleccionado(data.sectorSeleccionado);
+      } else {
+        setSectorSeleccionado(null);
       }
 
       if (data.empresaSeleccionada) {

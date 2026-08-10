@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '@/app/services/empresaService';
+import { drawProfesionalFirmaBlock, withPersonalFirma } from '@/app/utils/pdfExport';
 
 export type InterconsultaPdfField = {
 	label: string;
@@ -36,7 +37,7 @@ function ensureSpace(doc: jsPDF, y: number, needed: number): number {
 /**
  * PDF de una interconsulta / pedido (metadatos + motivo/respuesta).
  */
-export function generarPDFInterconsulta(opts: {
+export async function generarPDFInterconsulta(opts: {
 	title: string;
 	fields: InterconsultaPdfField[];
 	textBlocks?: InterconsultaPdfBlock[];
@@ -201,22 +202,14 @@ export function generarPDFInterconsulta(opts: {
 	const matFirma = displayValue(matriculaField?.value);
 	y = ensureSpace(doc, y, 32);
 	y += 6;
-	doc.setDrawColor(0, 0, 0);
-	doc.setLineWidth(0.3);
-	doc.line(pageWidth / 2 - 30, y, pageWidth / 2 + 30, y);
-	y += 5;
-	doc.setFontSize(9);
-	doc.setFont('helvetica', 'bold');
-	doc.setTextColor(0, 0, 0);
-	if (nombreFirma !== '—') {
-		doc.text(nombreFirma.toUpperCase(), pageWidth / 2, y, { align: 'center' });
-		y += 4;
-	}
-	doc.setFont('helvetica', 'normal');
-	doc.setFontSize(8);
-	if (matFirma !== '—') {
-		doc.text(`Mat. ${matFirma}`, pageWidth / 2, y, { align: 'center' });
-	}
+	y = await drawProfesionalFirmaBlock(
+		doc,
+		await withPersonalFirma({
+			nombre: nombreFirma !== '—' ? nombreFirma : undefined,
+			matricula: matFirma !== '—' ? matFirma : undefined,
+		}),
+		y,
+	);
 
 	const totalPages = doc.getNumberOfPages();
 	for (let i = 1; i <= totalPages; i++) {

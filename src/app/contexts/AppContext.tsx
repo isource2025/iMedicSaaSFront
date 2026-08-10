@@ -9,6 +9,7 @@ import {
   obtenerInfoEmpresa,
 } from '../services/empresaService';
 import { getIdEmpresaFromToken } from '../utils/jwtSession';
+import { clearTenantUiCaches } from '../utils/sessionCaches';
 import type { ModulosEmpresa } from '../types/superAdmin';
 
 interface AppContextState {
@@ -197,6 +198,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     localStorage.removeItem('empresaSeleccionada');
     localStorage.removeItem('empresaModulos');
     localStorage.removeItem('rememberUser');
+    clearTenantUiCaches();
   };
 
   return (

@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '@/app/services/empresaService';
 import { formatSqlDate } from '@/app/utils/dateUtils';
+import { drawProfesionalFirmaBlock, withPersonalFirma } from '@/app/utils/pdfExport';
 
 export type EpicrisisPdfData = {
 	idVisita?: number | string | null;
@@ -45,7 +46,7 @@ function ensureSpace(doc: jsPDF, y: number, needed: number): number {
 /**
  * PDF narrativo de una epicrisis (estilo HC de ingreso).
  */
-export function generarPDFEpicrisis(
+export async function generarPDFEpicrisis(
 	data: EpicrisisPdfData,
 	patient: EpicrisisPatientInfo,
 	empresaInfo?: EmpresaInfo | null,
@@ -204,21 +205,14 @@ export function generarPDFEpicrisis(
 
 	y = ensureSpace(doc, y, 36);
 	y += 8;
-	doc.setDrawColor(0, 0, 0);
-	doc.setLineWidth(0.3);
-	const pageW = doc.internal.pageSize.getWidth();
-	doc.line(pageW / 2 - 30, y, pageW / 2 + 30, y);
-	y += 5;
-	doc.setFontSize(9);
-	doc.setFont('helvetica', 'bold');
-	doc.setTextColor(0, 0, 0);
-	doc.text(String(profesional).toUpperCase(), pageW / 2, y, { align: 'center' });
-	y += 4;
-	doc.setFont('helvetica', 'normal');
-	doc.setFontSize(8);
-	if (data.profesional != null && String(data.profesional).trim()) {
-		doc.text(`Mat. ${data.profesional}`, pageW / 2, y, { align: 'center' });
-	}
+	y = await drawProfesionalFirmaBlock(
+		doc,
+		await withPersonalFirma({
+			nombre: String(profesional),
+			matricula: data.profesional,
+		}),
+		y,
+	);
 
 	const totalPages = doc.getNumberOfPages();
 	for (let i = 1; i <= totalPages; i++) {

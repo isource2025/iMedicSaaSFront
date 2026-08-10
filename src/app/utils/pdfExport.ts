@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '../services/empresaService';
+import { getPersonalFirmaByMatricula } from '../services/personalService';
 
 export type ProfesionalFirmaInfo = {
 	nombre?: string;
@@ -84,6 +85,57 @@ async function loadSignatureDataUrl(source: string): Promise<string | null> {
 	}
 }
 
+function jsPdfImageFormat(dataUrl: string): 'PNG' | 'JPEG' | 'WEBP' {
+	if (dataUrl.startsWith('data:image/jpeg') || dataUrl.startsWith('data:image/jpg')) return 'JPEG';
+	if (dataUrl.startsWith('data:image/webp')) return 'WEBP';
+	return 'PNG';
+}
+
+/** Completa firmaDigital desde Personal (imPersonal.Firma) usando matrícula. */
+async function resolveFirmasFromPersonal(
+	items: Array<ProfesionalFirmaInfo | null | undefined>,
+): Promise<Map<string, string>> {
+	const map = new Map<string, string>();
+	const need = [
+		...new Set(
+			items
+				.filter((p) => p && formatMatricula(p.matricula) && !p.firmaDigital)
+				.map((p) => formatMatricula(p!.matricula) as string),
+		),
+	];
+	await Promise.all(
+		need.map(async (m) => {
+			try {
+				const f = await getPersonalFirmaByMatricula(m);
+				if (f?.hasFirma && f.dataUrl) map.set(m, f.dataUrl);
+			} catch {
+				/* sin firma o error de red */
+			}
+		}),
+	);
+	return map;
+}
+
+function attachFirma(
+	info: ProfesionalFirmaInfo | null | undefined,
+	firmas: Map<string, string>,
+): ProfesionalFirmaInfo | null | undefined {
+	if (!info) return info;
+	if (info.firmaDigital) return info;
+	const m = formatMatricula(info.matricula);
+	if (!m) return info;
+	const url = firmas.get(m);
+	return url ? { ...info, firmaDigital: url } : info;
+}
+
+/** Resuelve la imagen de firma desde Personal para un profesional (por matrícula). */
+export async function withPersonalFirma(
+	info?: ProfesionalFirmaInfo | null,
+): Promise<ProfesionalFirmaInfo | null | undefined> {
+	const firmas = await resolveFirmasFromPersonal([info]);
+	return attachFirma(info, firmas);
+}
+
 function ensureSpace(doc: jsPDF, y: number, needed: number, bottom = 18): number {
 	const pageH = doc.internal.pageSize.getHeight();
 	if (y + needed > pageH - bottom) {
@@ -124,7 +176,7 @@ export async function drawProfesionalFirmaBlock(
 	const firmaDataUrl = info.firmaDigital ? await loadSignatureDataUrl(info.firmaDigital) : null;
 	if (firmaDataUrl) {
 		try {
-			doc.addImage(firmaDataUrl, 'PNG', lineX + 6, y - 16, 48, 14);
+			doc.addImage(firmaDataUrl, jsPdfImageFormat(firmaDataUrl), lineX + 6, y - 16, 48, 14);
 		} catch {
 			// ignore image errors
 		}
@@ -418,8 +470,19 @@ export const exportToPDF = async ({
 		doc.setTextColor(0, 0, 0);
 	}
 
-	if (parts && parts.length > 0) {
-		await drawParts(doc, parts, currentY);
+	const firmas = await resolveFirmasFromPersonal([
+		...(parts || []).map((p) => p.profesional),
+		profesionalInfo,
+	]);
+
+	const partsWithFirma = parts?.map((p) => ({
+		...p,
+		profesional: attachFirma(p.profesional, firmas),
+	}));
+	const profesionalWithFirma = attachFirma(profesionalInfo, firmas);
+
+	if (partsWithFirma && partsWithFirma.length > 0) {
+		await drawParts(doc, partsWithFirma, currentY);
 	} else {
 		autoTable(doc, {
 			head: [headers],
@@ -449,9 +512,9 @@ export const exportToPDF = async ({
 			margin: { top: 10, right: 10, bottom: 30, left: 10 },
 		});
 
-		if (profesionalInfo?.nombre) {
+		if (profesionalWithFirma?.nombre) {
 			const finalY = (doc as any).lastAutoTable?.finalY || currentY + 50;
-			await drawProfesionalFirmaBlock(doc, profesionalInfo, finalY + 16);
+			await drawProfesionalFirmaBlock(doc, profesionalWithFirma, finalY + 16);
 		}
 	}
 

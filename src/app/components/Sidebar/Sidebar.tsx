@@ -163,7 +163,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const [currentUser, setCurrentUser] = useState<UserData | null>(null)
   const router = useRouter()
   const pathname = usePathname()
-  const { empresaInfo, sectorSeleccionado } = useAppContext()
+  const { empresaInfo, sectorSeleccionado, logout: clearAppSession } = useAppContext()
   const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
   const puedeVerChats = loaded && puedeSubmodulo('TURNOS', 'AGENDA')
   const { count: chatsUnread } = useWhatsAppInboxUnread(puedeVerChats)
@@ -297,6 +297,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
     if (item.id === 'logout' || (item.subItems.length === 0 && item.path === '/')) {
       void (async () => {
         await authService.logout()
+        clearAppSession()
         router.replace('/')
         onExpandedChange(false)
         setOpenMenuId(null)
@@ -325,6 +326,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
     if (path === '/') {
       void (async () => {
         await authService.logout()
+        clearAppSession()
         router.replace('/')
         onExpandedChange(false)
         setOpenMenuId(null)

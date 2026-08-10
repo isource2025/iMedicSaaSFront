@@ -2,6 +2,7 @@ import { LoginCredentials, LoginResponse } from '../types/AuthInterface';
 import { apiService } from './axios';
 import { apiFetch } from '@/app/utils/authFetch';
 import { stopSessionActivityMonitor } from '@/app/utils/sessionActivity';
+import { clearTenantUiCaches } from '@/app/utils/sessionCaches';
 
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
@@ -36,6 +37,7 @@ export const authService = {
     localStorage.removeItem('empresaInfo');
     localStorage.removeItem('empresaSeleccionada');
     localStorage.removeItem('empresaModulos');
+    clearTenantUiCaches();
   },
 
   /** Sesión actual (cookie httpOnly + validación servidor). */

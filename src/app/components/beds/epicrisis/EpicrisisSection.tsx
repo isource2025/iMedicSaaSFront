@@ -112,7 +112,7 @@ export default function EpicrisisSection({
 		setPrinting(true);
 		try {
 			const empresaInfo = await obtenerInfoEmpresa();
-			generarPDFEpicrisis(row, patientInfo, empresaInfo);
+			await generarPDFEpicrisis(row, patientInfo, empresaInfo);
 		} catch (err) {
 			console.error(err);
 			alert(err instanceof Error ? err.message : 'No se pudo generar el PDF');
