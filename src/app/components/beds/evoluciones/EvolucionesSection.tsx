@@ -104,6 +104,7 @@ export default function EvolucionesSection({
             profesionalNombre: x.ProfesionalNombre || x.profesionalNombre,
             profesionalApellido: x.ProfesionalApellido || x.profesionalApellido,
             profesionalNombreCompleto: x.ProfesionalNombreCompleto || x.profesionalNombreCompleto,
+            matricula: x.Matricula ?? x.matricula ?? x.Profecional ?? x.profesional ?? null,
             valorEspecialidad: x.ValorEspecialidad || x.valorEspecialidad,
             especialidadDescripcion: x.EspecialidadDescripcion || x.especialidadDescripcion,
         }));
@@ -206,32 +207,31 @@ export default function EvolucionesSection({
 
     const handleExport = async (option: ExportOption, data: any[]) => {
         if (option === 'pdf') {
-            // Obtener información de la empresa
             const empresaInfo = await obtenerInfoEmpresa();
 
-            // Obtener información del profesional de la primera evolución (si existe)
-            const primeraEvolucion = rows[0];
-            const profesionalInfo = primeraEvolucion ? {
-                nombre: String(primeraEvolucion.profesional || 'PROFESIONAL'),
-                matricula: undefined,
-                especialidad: undefined
-            } : undefined;
-
-            const pdfData = rows.map(row => [
-                row.fechaEv || '-',
-                row.horaEv || '-',
-                row.profesionalNombreCompleto || '-',
-                row.evolucion || '-',
-                row.idSector || '-'
-            ]);
+            const parts = rows.map((row, idx) => ({
+                title: `Evolución ${idx + 1}`,
+                fields: [
+                    { label: 'Fecha', value: row.fechaEv || '—' },
+                    { label: 'Hora', value: row.horaEv || '—' },
+                    { label: 'Sector', value: row.idSector || '—' },
+                    { label: 'Especialidad', value: row.especialidadDescripcion || '—' },
+                ],
+                textLabel: 'Evolución',
+                text: row.evolucion || '—',
+                profesional: {
+                    nombre: row.profesionalNombreCompleto || 'PROFESIONAL',
+                    matricula: row.matricula ?? row.profesional ?? undefined,
+                    especialidad: row.especialidadDescripcion || undefined,
+                },
+            }));
 
             await exportToPDF({
                 title: 'Evoluciones Médicas',
                 subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                headers: ['Fecha', 'Hora', 'Profesional', 'Evolución', 'Sector'],
-                data: pdfData,
+                parts,
                 fileName: `evoluciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-                orientation: 'landscape',
+                orientation: 'portrait',
                 empresaInfo,
                 patientInfo: {
                     numeroVisita: numeroVisita || undefined,
@@ -241,14 +241,6 @@ export default function EvolucionesSection({
                     fechaIngreso: fechaIngreso,
                     horaIngreso: horaIngreso
                 },
-                profesionalInfo,
-                columnStyles: {
-                    0: { cellWidth: 22, minCellWidth: 20 },
-                    1: { cellWidth: 16, minCellWidth: 14 },
-                    2: { cellWidth: 42, minCellWidth: 36 },
-                    3: { cellWidth: 92, minCellWidth: 84 },
-                    4: { cellWidth: 18, minCellWidth: 16 },
-                }
             });
         }
     };

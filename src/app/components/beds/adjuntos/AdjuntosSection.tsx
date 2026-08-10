@@ -179,23 +179,34 @@ export default function AdjuntosSection({
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      exportToPDF({
+      const parts = adjuntos.map((a, idx) => ({
+        title: `Adjunto ${idx + 1}`,
+        fields: [
+          { label: 'Nombre', value: a.NombreArchivo || '—' },
+          { label: 'Tipo', value: a.TipoImagenNombre || a.TipoArchivo || a.TipoImagen || '—' },
+          {
+            label: 'Fecha',
+            value: a.FechaCarga
+              ? new Date(a.FechaCarga).toLocaleString('es-AR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '—',
+          },
+        ],
+        profesional: {
+          nombre: (a as any).NombreUsuario || (a as any).CargadoPorNombre || 'OPERADOR',
+          matricula: a.IdOperador ?? a.CargadoPor ?? undefined,
+        },
+      }));
+
+      await exportToPDF({
         title: 'Archivos Adjuntos',
         subtitle: `Visita: ${numeroVisita}`,
-        headers: ['Nombre', 'Tipo', 'Fecha'],
-        data: adjuntos.map((a) => [
-          a.NombreArchivo || '—',
-          a.TipoImagenNombre || a.TipoArchivo || a.TipoImagen || '—',
-          a.FechaCarga
-            ? new Date(a.FechaCarga).toLocaleString('es-AR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            : '—',
-        ]),
+        parts,
         fileName: `adjuntos_${numeroVisita}.pdf`,
         orientation: 'portrait',
         empresaInfo,

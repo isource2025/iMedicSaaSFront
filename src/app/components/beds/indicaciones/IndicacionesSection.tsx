@@ -121,6 +121,7 @@ export default function IndicacionesSection({
             suspendida: x.suspendida,
             unicaVez: x.unicaVez,
             OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
+            matricula: (x as any).matricula ?? (x as any).Matricula ?? null,
             indicacionesHijas: (x as any).indicacionesHijas || [],
         }));
 
@@ -359,28 +360,29 @@ export default function IndicacionesSection({
     const handleExport = async (option: ExportOption, data: any[]) => {
         if (option === 'pdf') {
             const empresaInfo = await obtenerInfoEmpresa();
-            const primeraIndicacion = rows[0];
-            const profesionalInfo = primeraIndicacion ? {
-                nombre: String(primeraIndicacion.fullName || 'PROFESIONAL'),
-                matricula: undefined,
-                especialidad: undefined
-            } : undefined;
 
-            const pdfData = rows.map(row => [
-                row.descripcion || '-',
-                row.cantidad || '-',
-                row.frecuencia || '-',
-                row.fullName || '-',
-                row.tipo || '-'
-            ]);
+            const parts = rows.map((row, idx) => ({
+                title: `Indicación ${idx + 1}${row.nro != null ? ` · N° ${row.nro}` : ''}`,
+                fields: [
+                    { label: 'Tipo', value: row.tipo || '—' },
+                    { label: 'Descripción', value: row.descripcion || '—' },
+                    { label: 'Cantidad', value: row.cantidad ?? '—' },
+                    { label: 'Frecuencia', value: row.frecuencia || '—' },
+                    { label: 'Observaciones', value: row.observaciones || '—' },
+                    { label: 'Sector', value: row.idSector || '—' },
+                ],
+                profesional: {
+                    nombre: row.fullName || 'PROFESIONAL',
+                    matricula: (row as any).matricula ?? undefined,
+                },
+            }));
 
-            exportToPDF({
+            await exportToPDF({
                 title: 'Indicaciones Médicas',
                 subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                headers: ['Descripción', 'Cantidad', 'Frecuencia', 'Profesional', 'Tipo'],
-                data: pdfData,
+                parts,
                 fileName: `indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-                orientation: 'landscape',
+                orientation: 'portrait',
                 empresaInfo,
                 patientInfo: {
                     numeroVisita: numeroVisita || undefined,
@@ -390,7 +392,6 @@ export default function IndicacionesSection({
                     fechaIngreso: fechaIngreso,
                     horaIngreso: horaIngreso
                 },
-                profesionalInfo
             });
         }
     };

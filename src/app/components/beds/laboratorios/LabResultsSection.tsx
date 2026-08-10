@@ -101,20 +101,28 @@ export default function LabResultsSection({
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      exportToPDF({
+      const parts = examenes.map((e, idx) => ({
+        title: `Laboratorio ${idx + 1}`,
+        fields: [
+          { label: 'Fecha', value: laboratoriosService.formatDate(e.FechaExamen) },
+          { label: 'Tipo', value: laboratoriosService.getTipoEstudioNombre(e.TipoEstudio) },
+          { label: 'Laboratorio', value: e.Laboratorio || '—' },
+          { label: 'Protocolo', value: e.Protocolo || '—' },
+          { label: 'Parámetros', value: String(e.totalParametros || 0) },
+          { label: 'Fuera de rango', value: String(e.parametrosFueraDeRango || 0) },
+        ],
+        profesional: {
+          nombre: (e as any).NombreUsuario || (e as any).CargadoPorNombre || 'OPERADOR',
+          matricula: (e as any).IdOperador ?? (e as any).CargadoPor ?? undefined,
+        },
+      }));
+
+      await exportToPDF({
         title: 'Resultados de Laboratorio',
         subtitle: `Visita: ${numeroVisita}`,
-        headers: ['Fecha', 'Tipo', 'Laboratorio', 'Protocolo', 'Parámetros', 'Fuera de rango'],
-        data: examenes.map((e) => [
-          laboratoriosService.formatDate(e.FechaExamen),
-          laboratoriosService.getTipoEstudioNombre(e.TipoEstudio),
-          e.Laboratorio || '—',
-          e.Protocolo || '—',
-          String(e.totalParametros || 0),
-          String(e.parametrosFueraDeRango || 0),
-        ]),
+        parts,
         fileName: `laboratorios_${numeroVisita}.pdf`,
-        orientation: 'landscape',
+        orientation: 'portrait',
         empresaInfo,
         patientInfo: {
           numeroVisita: numeroVisita || undefined,

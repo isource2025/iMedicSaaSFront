@@ -123,24 +123,44 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			exportToPDF({
+			const parts = controlsFiltrados.map((r, idx) => ({
+				title: `Control ${idx + 1}`,
+				fields: [
+					{ label: 'Fecha', value: formatearFecha(r.FechaControl) },
+					{ label: 'Hora', value: formatearHora(r.HoraControl) },
+					{ label: 'Pulso', value: r.Pulso || '—' },
+					{ label: 'Presión', value: `${r.Maximo || '—'}/${r.Minimo || '—'}` },
+					{ label: 'Temperatura', value: r.Axilar ? `${Number(r.Axilar).toFixed(1)}°C` : '—' },
+					{ label: 'Frec. Resp.', value: r.FrecuenciaRespiratoria || '—' },
+					{ label: 'Saturación', value: r.Saturometria ? `${r.Saturometria}%` : '—' },
+					{ label: 'Glucemia', value: r.Hgt && String(r.Hgt) !== '0' ? `${r.Hgt} mg/dL` : '—' },
+					{ label: 'Observaciones', value: r.Observaciones || '—' },
+				],
+				profesional: {
+					nombre:
+						obtenerNombreCompleto(r.OperadorApellido, r.OperadorNombres) !== '-'
+							? obtenerNombreCompleto(r.OperadorApellido, r.OperadorNombres)
+							: obtenerNombreCompleto(r.ProfesionalApellido, r.ProfesionalNombres),
+					matricula: (r as any).Matricula ?? undefined,
+					especialidad: 'Enfermería',
+				},
+			}));
+
+			await exportToPDF({
 				title: 'Controles Frecuentes',
 				subtitle: `Fecha: ${fechaISO}`,
-				headers: ['Fecha', 'Hora', 'Pulso', 'Presión', 'Temperatura', 'Frec. Resp.', 'Saturación', 'Glucemia'],
-				data: controlsFiltrados.map((r) => [
-					formatearFecha(r.FechaControl),
-					formatearHora(r.HoraControl),
-					r.Pulso || '-',
-					`${r.Maximo || '-'}/${r.Minimo || '-'}`,
-					r.Axilar ? `${Number(r.Axilar).toFixed(1)}°C` : '-',
-					r.FrecuenciaRespiratoria || '-',
-					r.Saturometria ? `${r.Saturometria}%` : '-',
-					r.Hgt && String(r.Hgt) !== '0' ? `${r.Hgt} mg/dL` : '-',
-				]),
+				parts,
 				fileName: `controles_${fechaISO}.pdf`,
-				orientation: 'landscape',
+				orientation: 'portrait',
 				empresaInfo,
-				patientInfo: { numeroVisita: numeroVisita || undefined, nombre: patientName, numeroDocumento: documentoPaciente, ubicacion: patientLocation, fechaIngreso, horaIngreso },
+				patientInfo: {
+					numeroVisita: numeroVisita || undefined,
+					nombre: patientName,
+					numeroDocumento: documentoPaciente,
+					ubicacion: patientLocation,
+					fechaIngreso,
+					horaIngreso,
+				},
 			});
 		}
 	};

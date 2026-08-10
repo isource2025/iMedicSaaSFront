@@ -89,22 +89,31 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			exportToPDF({
+			const parts = rows.map((r, idx) => {
+				const prac = r.practicas?.[0];
+				return {
+					title: `Protocolo ${idx + 1}${r.numeroProtocolo ? ` · N° ${r.numeroProtocolo}` : ''}`,
+					fields: [
+						{ label: 'Fecha', value: formatFecha(r.fecha) },
+						{ label: 'Tipo', value: r.tipoDescripcion || r.tipoProtocolo || '—' },
+						{ label: 'Práctica', value: prac?.descripcion || prac?.codigoPractica || '—' },
+						{ label: 'Equipo', value: resumenEquipo(r) },
+						{ label: 'Técnica', value: r.tecnica || '—' },
+						{ label: 'Estado', value: r.estado || '—' },
+					],
+					profesional: {
+						nombre: r.operadorNombre || 'PROFESIONAL',
+						matricula: r.operadorMatricula ?? r.idOperador ?? undefined,
+					},
+				};
+			});
+
+			await exportToPDF({
 				title: 'Protocolos',
 				subtitle: `Visita: ${numeroVisita}`,
-				headers: ['Fecha', 'Tipo', 'Práctica', 'Equipo', 'Cargado por'],
-				data: rows.map((r) => {
-					const prac = r.practicas?.[0];
-					return [
-						formatFecha(r.fecha),
-						r.tipoDescripcion || r.tipoProtocolo || '—',
-						prac?.descripcion || prac?.codigoPractica || '—',
-						resumenEquipo(r),
-						r.operadorNombre || '—',
-					];
-				}),
+				parts,
 				fileName: `protocolos_${numeroVisita}.pdf`,
-				orientation: 'landscape',
+				orientation: 'portrait',
 				empresaInfo,
 				patientInfo: { numeroVisita: numeroVisita || undefined },
 			});

@@ -93,22 +93,48 @@ export default function MovimientosSection({
 	const handleExport = async (option: ExportOption) => {
 		if (option === "pdf") {
 			const empresaInfo = await obtenerInfoEmpresa();
-			exportToPDF({
+			const parts = movimientos.map((m, idx) => ({
+				title: `Movimiento ${idx + 1}`,
+				fields: [
+					{ label: "Cama", value: m.NombreCama || m.ValorHabitacionCama || "—" },
+					{ label: "Sector", value: m.NombreSector || m.ValorSector || "—" },
+					{
+						label: "Ingreso",
+						value: `${m.FechaAdmisionISO || formatClarionDate(m.FechaAdmision) || "—"} ${m.HoraAdmisionISO || ""}`.trim(),
+					},
+					{
+						label: "Egreso",
+						value: `${m.FechaEgresoISO || formatClarionDate(m.FechaEgreso) || "—"} ${m.HoraEgresoISO || ""}`.trim(),
+					},
+					{
+						label: "Disposición",
+						value:
+							m.DisposicionEgreso && Number(m.DisposicionEgreso) > 0
+								? String(m.DisposicionEgreso)
+								: "—",
+					},
+					{ label: "Diagnóstico", value: m.Diagnostico || "—" },
+				],
+				profesional: {
+					nombre:
+						(m as any).OperadorNombre ||
+						(m as any).NombreOperador ||
+						(m as any).OperadorEgresoNombre ||
+						undefined,
+					matricula:
+						(m as any).OperadorEgreso ??
+						(m as any).OperadorAdmision ??
+						(m as any).Matricula ??
+						undefined,
+				},
+			}));
+
+			await exportToPDF({
 				title: "Movimientos / Traslados",
 				subtitle: `Visita: ${numeroVisita}`,
-				headers: ["Cama", "Sector", "Ingreso", "Egreso", "Disposición", "Diagnóstico"],
-				data: movimientos.map((m) => [
-					m.NombreCama || m.ValorHabitacionCama || "—",
-					m.NombreSector || m.ValorSector || "—",
-					m.FechaAdmisionISO || formatClarionDate(m.FechaAdmision),
-					m.HoraAdmisionISO || "—",
-					m.FechaEgresoISO || formatClarionDate(m.FechaEgreso),
-					m.HoraEgresoISO || "—",
-					m.DisposicionEgreso && Number(m.DisposicionEgreso) > 0 ? String(m.DisposicionEgreso) : "—",
-					m.Diagnostico || "—",
-				]),
+				parts,
 				fileName: `movimientos_${numeroVisita}.pdf`,
-				orientation: "landscape",
+				orientation: "portrait",
 				empresaInfo,
 				patientInfo: {
 					numeroVisita: numeroVisita || undefined,

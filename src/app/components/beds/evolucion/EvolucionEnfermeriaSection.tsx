@@ -163,27 +163,34 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   const handleExport = async (option: ExportOption, data: any[]) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const primeraEvolucion = data[0];
-      const profesionalInfo = primeraEvolucion ? {
-        nombre: String(primeraEvolucion.profesional || 'PROFESIONAL'),
-        matricula: undefined,
-        especialidad: 'Enfermería'
-      } : undefined;
 
-      const pdfData = filteredEvoluciones.map((ev: any) => [
-        ev.FechaControl || ev.FechaEv || '-',
-        ev.HoraControl || ev.HoraEv || '-',
-        `${ev.ProfesionalApellido || ''} ${ev.ProfesionalNombres || ''}`.trim() || '-',
-        ev.Observaciones || '-'
-      ]);
+      const parts = filteredEvoluciones.map((ev: any, idx: number) => {
+        const nombre =
+          `${ev.ProfesionalApellido || ''} ${ev.ProfesionalNombres || ''}`.trim() ||
+          `${ev.OperadorApellido || ''} ${ev.OperadorNombres || ''}`.trim() ||
+          'PROFESIONAL';
+        return {
+          title: `Evolución de enfermería ${idx + 1}`,
+          fields: [
+            { label: 'Fecha', value: ev.FechaControl || ev.FechaEv || '—' },
+            { label: 'Hora', value: ev.HoraControl || ev.HoraEv || '—' },
+          ],
+          textLabel: 'Observaciones',
+          text: ev.Observaciones || '—',
+          profesional: {
+            nombre,
+            matricula: ev.Matricula ?? ev.Profesional ?? undefined,
+            especialidad: 'Enfermería',
+          },
+        };
+      });
 
-      exportToPDF({
+      await exportToPDF({
         title: 'Evolución de Enfermería',
         subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-        headers: ['Fecha', 'Hora', 'Profesional', 'Observaciones'],
-        data: pdfData,
+        parts,
         fileName: `evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-        orientation: 'landscape',
+        orientation: 'portrait',
         empresaInfo,
         patientInfo: {
           numeroVisita: numeroVisita || undefined,
@@ -193,7 +200,6 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
           fechaIngreso: fechaIngreso,
           horaIngreso: horaIngreso
         },
-        profesionalInfo
       });
     }
   };

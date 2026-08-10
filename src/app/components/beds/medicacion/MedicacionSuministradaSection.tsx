@@ -172,32 +172,39 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   const handleExport = async (option: ExportOption, data: any[]) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const primeraMedicacion = medicacionesAgrupadas[0];
-      const profesionalInfo = primeraMedicacion ? {
-        nombre: obtenerNombreCompleto(primeraMedicacion.ProfesionalApellido, primeraMedicacion.ProfesionalNombres),
-        matricula: undefined,
-        especialidad: undefined
-      } : undefined;
-
       const fd = fechaFormateada;
-      const pdfData = medicacionesAgrupadas.map((row: any) => [
-        formatearFecha(row.FechaControl),
-        formatearHora(row.HoraControl),
-        row.Sector || '-',
-        row.NombreMedicamento || row.DescripcionMedicamento || '-',
-        row.CantidadIndicada || '-',
-        row.TipoUnidad || '-',
-        obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres) || obtenerNombreCompleto(row.OperadorApellido, row.OperadorNombres) || '-',
-        row.Cantidad || '-'
-      ]);
 
-      exportToPDF({
+      const parts = medicacionesAgrupadas.map((row: any, idx: number) => ({
+        title: `Medicación ${idx + 1}`,
+        fields: [
+          { label: 'Fecha', value: formatearFecha(row.FechaControl) },
+          { label: 'Hora', value: formatearHora(row.HoraControl) },
+          { label: 'Sector', value: row.Sector || '—' },
+          {
+            label: 'Medicamento',
+            value: row.NombreMedicamento || row.DescripcionMedicamento || '—',
+          },
+          { label: 'Aplicado', value: row.CantidadIndicada ?? '—' },
+          { label: 'Unidad', value: row.TipoUnidad || '—' },
+          { label: 'Cantidad total', value: row.Cantidad ?? '—' },
+          { label: 'Observaciones', value: row.Observaciones || '—' },
+        ],
+        profesional: {
+          nombre:
+            obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres) !== '-'
+              ? obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres)
+              : obtenerNombreCompleto(row.OperadorApellido, row.OperadorNombres),
+          matricula: row.Matricula ?? undefined,
+          especialidad: 'Enfermería',
+        },
+      }));
+
+      await exportToPDF({
         title: 'Medicación Suministrada',
         subtitle: `Fecha: ${fd?.diaSemana} ${fd?.diaMes}, ${fd?.mes}`,
-        headers: ['Fecha', 'Hora', 'Sector', 'Medicamento', 'Aplicado', 'Unidad', 'Profesional', 'Cantidad Total'],
-        data: pdfData,
+        parts,
         fileName: `medicacion_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-        orientation: 'landscape',
+        orientation: 'portrait',
         empresaInfo,
         patientInfo: {
           numeroVisita: numeroVisita || undefined,
@@ -207,7 +214,6 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
           fechaIngreso: fechaIngreso,
           horaIngreso: horaIngreso
         },
-        profesionalInfo
       });
     }
   };

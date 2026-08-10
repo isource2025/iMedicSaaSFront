@@ -93,20 +93,34 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			exportToPDF({
+			const parts = rows.map((r, idx) => ({
+				title: `Estudio ${idx + 1}`,
+				fields: [
+					{
+						label: 'Estado',
+						value: r.Cumplido ? 'Cumplido' : r.Tomado ? 'Tomado' : 'Pendiente',
+					},
+					{ label: 'Fecha / hora', value: formatFecha(r) },
+					{ label: 'Código', value: r.CodigoPractica ?? '—' },
+					{ label: 'Práctica', value: r.PracticaSolicitada || '—' },
+					{ label: 'Notas', value: r.NotasObservacion || '—' },
+					{
+						label: 'Destino',
+						value: r.ServicioDescripcion || r.SectorReceptorNombre || '—',
+					},
+				],
+				profesional: {
+					nombre: r.MedicoSolicitanteNombre || 'PROFESIONAL',
+					matricula: r.MatriculaSolicitante ?? undefined,
+				},
+			}));
+
+			await exportToPDF({
 				title: 'Pedidos de estudios',
 				subtitle: `Visita: ${numeroVisita}`,
-				headers: ['Estado', 'Fecha / hora', 'Código', 'Práctica', 'Notas', 'Solicitado por'],
-				data: rows.map((r) => [
-					r.Cumplido ? 'Cumplido' : r.Tomado ? 'Tomado' : 'Pendiente',
-					formatFecha(r),
-					r.CodigoPractica ?? '—',
-					r.PracticaSolicitada || '—',
-					r.NotasObservacion || '—',
-					r.MedicoSolicitanteNombre || '—',
-				]),
+				parts,
 				fileName: `estudios_${numeroVisita}.pdf`,
-				orientation: 'landscape',
+				orientation: 'portrait',
 				empresaInfo,
 				patientInfo: { numeroVisita: numeroVisita || undefined },
 			});

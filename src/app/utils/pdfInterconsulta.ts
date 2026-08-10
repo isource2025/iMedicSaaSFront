@@ -195,6 +195,29 @@ export function generarPDFInterconsulta(opts: {
 		y += 4;
 	}
 
+	const medicoField = fields.find((f) => /médico|medico|solicitante/i.test(f.label));
+	const matriculaField = fields.find((f) => /matr[ií]cula/i.test(f.label));
+	const nombreFirma = displayValue(medicoField?.value);
+	const matFirma = displayValue(matriculaField?.value);
+	y = ensureSpace(doc, y, 32);
+	y += 6;
+	doc.setDrawColor(0, 0, 0);
+	doc.setLineWidth(0.3);
+	doc.line(pageWidth / 2 - 30, y, pageWidth / 2 + 30, y);
+	y += 5;
+	doc.setFontSize(9);
+	doc.setFont('helvetica', 'bold');
+	doc.setTextColor(0, 0, 0);
+	if (nombreFirma !== '—') {
+		doc.text(nombreFirma.toUpperCase(), pageWidth / 2, y, { align: 'center' });
+		y += 4;
+	}
+	doc.setFont('helvetica', 'normal');
+	doc.setFontSize(8);
+	if (matFirma !== '—') {
+		doc.text(`Mat. ${matFirma}`, pageWidth / 2, y, { align: 'center' });
+	}
+
 	const totalPages = doc.getNumberOfPages();
 	for (let i = 1; i <= totalPages; i++) {
 		doc.setPage(i);

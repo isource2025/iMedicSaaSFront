@@ -85,21 +85,26 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     const handleExport = async (option: ExportOption, data: any[]) => {
         if (option === 'pdf') {
             const empresaInfo = await obtenerInfoEmpresa();
-            const pdfData = insumosFiltered.map((row: any) => [
-                row.fecha || '-',
-                row.hora || '-',
-                row.descripcion || '-',
-                row.cantidad || '-',
-                row.profesional || '-'
-            ]);
+            const parts = insumosFiltered.map((row: any, idx: number) => ({
+                title: `Insumo ${idx + 1}`,
+                fields: [
+                    { label: 'Fecha', value: row.fecha || '—' },
+                    { label: 'Hora', value: row.hora || '—' },
+                    { label: 'Descripción', value: row.descripcion || '—' },
+                    { label: 'Cantidad', value: row.cantidad ?? '—' },
+                ],
+                profesional: {
+                    nombre: row.fullName || row.profesional || 'PROFESIONAL',
+                    matricula: row.matricula ?? row.profesional ?? undefined,
+                },
+            }));
 
-            exportToPDF({
+            await exportToPDF({
                 title: 'Insumos',
                 subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                headers: ['Fecha', 'Hora', 'Descripción', 'Cantidad', 'Profesional'],
-                data: pdfData,
+                parts,
                 fileName: `insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-                orientation: 'landscape',
+                orientation: 'portrait',
                 empresaInfo,
                 patientInfo: {
                     numeroVisita: numeroVisita || undefined,

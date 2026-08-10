@@ -307,6 +307,31 @@ export const generarPDFHistoriaClinica = (
         
         yPosition = (doc as any).lastAutoTable.finalY + 5;
     });
+
+    // Firma del profesional que cargó la HC
+    const pageHeight = doc.internal.pageSize.getHeight();
+    if (yPosition + 36 > pageHeight - 20) {
+        doc.addPage();
+        yPosition = 20;
+    }
+    yPosition += 10;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.3);
+    doc.line(pageWidth / 2 - 30, yPosition, pageWidth / 2 + 30, yPosition);
+    yPosition += 5;
+    const profNombre = data.ProfesionalNombre || (data.IdProfecional ? `Prof. ${data.IdProfecional}` : '');
+    if (profNombre) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(String(profNombre).toUpperCase(), pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 4;
+    }
+    if (data.IdProfecional) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`Mat. ${data.IdProfecional}`, pageWidth / 2, yPosition, { align: 'center' });
+    }
     
     // ===== PIE DE PÁGINA =====
     const totalPages = doc.getNumberOfPages();

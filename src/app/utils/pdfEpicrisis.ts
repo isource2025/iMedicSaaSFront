@@ -202,6 +202,24 @@ export function generarPDFEpicrisis(
 		y += lineHeight;
 	}
 
+	y = ensureSpace(doc, y, 36);
+	y += 8;
+	doc.setDrawColor(0, 0, 0);
+	doc.setLineWidth(0.3);
+	const pageW = doc.internal.pageSize.getWidth();
+	doc.line(pageW / 2 - 30, y, pageW / 2 + 30, y);
+	y += 5;
+	doc.setFontSize(9);
+	doc.setFont('helvetica', 'bold');
+	doc.setTextColor(0, 0, 0);
+	doc.text(String(profesional).toUpperCase(), pageW / 2, y, { align: 'center' });
+	y += 4;
+	doc.setFont('helvetica', 'normal');
+	doc.setFontSize(8);
+	if (data.profesional != null && String(data.profesional).trim()) {
+		doc.text(`Mat. ${data.profesional}`, pageW / 2, y, { align: 'center' });
+	}
+
 	const totalPages = doc.getNumberOfPages();
 	for (let i = 1; i <= totalPages; i++) {
 		doc.setPage(i);

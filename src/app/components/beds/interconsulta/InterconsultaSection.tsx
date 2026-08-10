@@ -169,23 +169,39 @@ export default function InterconsultaSection({
 	const handleExport = async (option: ExportOption, _data?: InterconsultaRow[]) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			exportToPDF({
+			const parts = rows.map((r, idx) => {
+				const tomado = !!r.Tomado;
+				const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
+				return {
+					title: `Interconsulta ${idx + 1}`,
+					fields: [
+						{ label: 'Fecha / hora', value: formatFecha(r) },
+						{
+							label: 'Destino',
+							value: r.ServicioDescripcion || r.SectorReceptorNombre || r.Especialidad || '—',
+						},
+						{
+							label: 'Estado',
+							value:
+								r.EstadoWorkflow ||
+								(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente'),
+						},
+					],
+					textLabel: 'Motivo',
+					text: r.Motivo || '—',
+					profesional: {
+						nombre: r.MedicoSolicitanteNombre || 'PROFESIONAL',
+						matricula: r.MedicoSolicitante ?? undefined,
+					},
+				};
+			});
+
+			await exportToPDF({
 				title: 'Interconsultas',
 				subtitle: `Visita: ${numeroVisita}`,
-				headers: ['Fecha / hora', 'Destino', 'Motivo', 'Solicitado por', 'Estado'],
-				data: rows.map((r) => {
-					const tomado = !!r.Tomado;
-					const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
-					return [
-						formatFecha(r),
-						r.ServicioDescripcion || r.SectorReceptorNombre || r.Especialidad || '—',
-						r.Motivo || '—',
-						r.MedicoSolicitanteNombre || '—',
-						r.EstadoWorkflow || (cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente'),
-					];
-				}),
+				parts,
 				fileName: `interconsultas_${numeroVisita}.pdf`,
-				orientation: 'landscape',
+				orientation: 'portrait',
 				empresaInfo,
 				patientInfo,
 			});

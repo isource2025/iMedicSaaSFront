@@ -124,43 +124,44 @@ export default function EpicrisisSection({
 	const handleExport = async (option: ExportOption, _data: EpicrisisRow[]) => {
 		if (option !== 'pdf') return;
 		const empresaInfo = await obtenerInfoEmpresa();
-		const pdfData = rows.map((row) => [
-			row.fecha
-				? formatSqlDate(row.fecha, { showTime: false, showDate: true, showYear: true })
-				: '—',
-			row.hora || '—',
-			[row.diagnostico, row.diagnosticoText].filter(Boolean).join(' — ') || '—',
-			row.epicrisis
-				? row.epicrisis.length > 200
-					? `${row.epicrisis.slice(0, 200)}…`
-					: row.epicrisis
-				: '—',
-			row.profesionalNombreCompleto ||
-				(row.profesional != null ? `Prof. ${row.profesional}` : '—'),
-			row.sectorDescripcion || row.idSector || '—',
-		]);
+		const parts = rows.map((row, idx) => ({
+			title: `Epicrisis ${idx + 1}`,
+			fields: [
+				{
+					label: 'Fecha',
+					value: row.fecha
+						? formatSqlDate(row.fecha, { showTime: false, showDate: true, showYear: true })
+						: '—',
+				},
+				{ label: 'Hora', value: row.hora || '—' },
+				{
+					label: 'Diagnóstico',
+					value: [row.diagnostico, row.diagnosticoText].filter(Boolean).join(' — ') || '—',
+				},
+				{ label: 'Sector', value: row.sectorDescripcion || row.idSector || '—' },
+			],
+			textLabel: 'Epicrisis',
+			text: row.epicrisis || '—',
+			profesional: {
+				nombre:
+					row.profesionalNombreCompleto ||
+					(row.profesional != null ? `Prof. ${row.profesional}` : 'PROFESIONAL'),
+				matricula: row.profesional ?? undefined,
+			},
+		}));
 
 		await exportToPDF({
 			title: 'Epicrisis',
 			subtitle: numeroVisita ? `Visita: ${numeroVisita}` : undefined,
-			headers: ['Fecha', 'Hora', 'Diagnóstico', 'Epicrisis', 'Profesional', 'Sector'],
-			data: pdfData,
+			parts,
 			fileName: `epicrisis_${numeroVisita || 'visita'}.pdf`,
-			orientation: 'landscape',
+			orientation: 'portrait',
 			empresaInfo,
 			patientInfo: {
 				numeroVisita: numeroVisita || undefined,
 				nombre: patientName,
 				numeroDocumento: documentoPaciente,
 				ubicacion: patientLocation,
-			},
-			columnStyles: {
-				0: { cellWidth: 22, minCellWidth: 18 },
-				1: { cellWidth: 16, minCellWidth: 14 },
-				2: { cellWidth: 40, minCellWidth: 32 },
-				3: { cellWidth: 80, minCellWidth: 60 },
-				4: { cellWidth: 40, minCellWidth: 32 },
-				5: { cellWidth: 22, minCellWidth: 18 },
 			},
 		});
 	};
