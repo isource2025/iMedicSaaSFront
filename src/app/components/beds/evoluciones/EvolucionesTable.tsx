@@ -24,6 +24,7 @@ export type EvolucionRow = {
     profesionalApellido?: string;
     profesionalNombreCompleto?: string;
     matricula?: number | string | null;
+    idPersonal?: number | string | null;
     valorEspecialidad?: number;
     especialidadDescripcion?: string;
 };
