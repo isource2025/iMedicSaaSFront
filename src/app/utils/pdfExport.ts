@@ -2,6 +2,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '../services/empresaService';
 import {
+	getFirmaParaPdf,
+	getPersonalFirma,
 	getPersonalFirmaByIdPublic,
 	getPersonalFirmaByMatricula,
 } from '../services/personalService';
@@ -93,91 +95,60 @@ async function loadSignatureDataUrl(source: string): Promise<string | null> {
 }
 
 /**
- * Convierte la firma a JPEG opaco (fondo blanco) y recorta márgenes
- * para que jsPDF la incruste bien y el trazo se vea a tamaño útil.
+ * Convierte la firma a JPEG opaco (fondo blanco) para jsPDF.
+ * Evita getImageData (puede fallar) y recorta solo vía re-encode.
  */
 async function prepareFirmaForJsPdf(
 	source: string,
-): Promise<{ dataUrl: string; format: 'JPEG' } | null> {
+): Promise<{ dataUrl: string; format: 'JPEG' | 'PNG' } | null> {
 	const raw = await loadSignatureDataUrl(source);
 	if (!raw) return null;
-	if (typeof window === 'undefined') {
-		return { dataUrl: raw, format: 'JPEG' };
+
+	if (typeof window === 'undefined' || typeof Image === 'undefined') {
+		const format = raw.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG';
+		return { dataUrl: raw, format };
 	}
 
 	return new Promise((resolve) => {
 		const img = new Image();
 		img.onload = () => {
 			try {
-				const w = img.naturalWidth || img.width;
-				const h = img.naturalHeight || img.height;
+				const w = img.naturalWidth || img.width || 0;
+				const h = img.naturalHeight || img.height || 0;
 				if (!w || !h) {
-					resolve(null);
+					resolve({
+						dataUrl: raw,
+						format: raw.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG',
+					});
 					return;
 				}
-
-				const src = document.createElement('canvas');
-				src.width = w;
-				src.height = h;
-				const sctx = src.getContext('2d');
-				if (!sctx) {
-					resolve(null);
+				const canvas = document.createElement('canvas');
+				canvas.width = w;
+				canvas.height = h;
+				const ctx = canvas.getContext('2d');
+				if (!ctx) {
+					resolve({
+						dataUrl: raw,
+						format: raw.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG',
+					});
 					return;
 				}
-				sctx.fillStyle = '#ffffff';
-				sctx.fillRect(0, 0, w, h);
-				sctx.drawImage(img, 0, 0);
-
-				const pixels = sctx.getImageData(0, 0, w, h).data;
-				let minX = w;
-				let minY = h;
-				let maxX = 0;
-				let maxY = 0;
-				const threshold = 245;
-				for (let y = 0; y < h; y++) {
-					for (let x = 0; x < w; x++) {
-						const i = (y * w + x) * 4;
-						if (pixels[i] < threshold || pixels[i + 1] < threshold || pixels[i + 2] < threshold) {
-							if (x < minX) minX = x;
-							if (y < minY) minY = y;
-							if (x > maxX) maxX = x;
-							if (y > maxY) maxY = y;
-						}
-					}
-				}
-
-				const pad = 8;
-				if (maxX <= minX || maxY <= minY) {
-					minX = 0;
-					minY = 0;
-					maxX = w - 1;
-					maxY = h - 1;
-				} else {
-					minX = Math.max(0, minX - pad);
-					minY = Math.max(0, minY - pad);
-					maxX = Math.min(w - 1, maxX + pad);
-					maxY = Math.min(h - 1, maxY + pad);
-				}
-
-				const cw = Math.max(1, maxX - minX + 1);
-				const ch = Math.max(1, maxY - minY + 1);
-				const out = document.createElement('canvas');
-				out.width = cw;
-				out.height = ch;
-				const octx = out.getContext('2d');
-				if (!octx) {
-					resolve(null);
-					return;
-				}
-				octx.fillStyle = '#ffffff';
-				octx.fillRect(0, 0, cw, ch);
-				octx.drawImage(src, minX, minY, cw, ch, 0, 0, cw, ch);
-				resolve({ dataUrl: out.toDataURL('image/jpeg', 0.92), format: 'JPEG' });
-			} catch {
-				resolve(null);
+				ctx.fillStyle = '#ffffff';
+				ctx.fillRect(0, 0, w, h);
+				ctx.drawImage(img, 0, 0);
+				resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.92), format: 'JPEG' });
+			} catch (err) {
+				console.warn('[pdf] prepareFirma fallback raw:', err);
+				resolve({
+					dataUrl: raw,
+					format: raw.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG',
+				});
 			}
 		};
-		img.onerror = () => resolve(null);
+		img.onerror = () => {
+			console.warn('[pdf] No se pudo decodificar la imagen de firma');
+			resolve(null);
+		};
 		img.src = raw;
 	});
 }
@@ -186,43 +157,42 @@ async function fetchFirmaDataUrl(keys: {
 	idPersonal?: string | null;
 	matricula?: string | null;
 }): Promise<string | null> {
-	const tried = new Set<string>();
-	const tryMat = async (key: string) => {
-		if (!key || tried.has(`m:${key}`)) return null;
-		tried.add(`m:${key}`);
+	const candidates = Array.from(
+		new Set([keys.idPersonal, keys.matricula].filter((k): k is string => Boolean(k))),
+	);
+	if (!candidates.length) return null;
+
+	for (const key of candidates) {
+		// 1) Endpoint clínico dedicado (preferido)
+		try {
+			const f = await getFirmaParaPdf(key);
+			if (f?.hasFirma && f.dataUrl) return f.dataUrl;
+		} catch (err) {
+			console.warn('[pdf] /firmas/personal falló', key, err);
+		}
+		// 2) Rutas personal públicas
+		try {
+			const f = await getPersonalFirmaByIdPublic(key);
+			if (f?.hasFirma && f.dataUrl) return f.dataUrl;
+		} catch {
+			/* ignore */
+		}
 		try {
 			const f = await getPersonalFirmaByMatricula(key);
 			if (f?.hasFirma && f.dataUrl) return f.dataUrl;
 		} catch {
 			/* ignore */
 		}
-		return null;
-	};
-	const tryId = async (key: string) => {
-		if (!key || tried.has(`id:${key}`)) return null;
-		tried.add(`id:${key}`);
-		const n = Number(key);
-		if (!Number.isFinite(n) || n <= 0) return null;
+		// 3) Misma ruta que el modal de Personal (requiere CONFIGURACION.PERSONAL.VER)
 		try {
-			const f = await getPersonalFirmaByIdPublic(n);
-			if (f?.hasFirma && f.dataUrl) return f.dataUrl;
+			const n = Number(key);
+			if (Number.isFinite(n) && n > 0) {
+				const f = await getPersonalFirma(n);
+				if (f?.hasFirma && f.dataUrl) return f.dataUrl;
+			}
 		} catch {
 			/* ignore */
 		}
-		return null;
-	};
-
-	if (keys.idPersonal) {
-		const byMatAsId = await tryMat(keys.idPersonal);
-		if (byMatAsId) return byMatAsId;
-		const byId = await tryId(keys.idPersonal);
-		if (byId) return byId;
-	}
-	if (keys.matricula) {
-		const byMat = await tryMat(keys.matricula);
-		if (byMat) return byMat;
-		const byId = await tryId(keys.matricula);
-		if (byId) return byId;
 	}
 	return null;
 }
@@ -313,15 +283,39 @@ export async function drawProfesionalFirmaBlock(
 	const textX = align === 'center' ? centerX : leftX + lineW / 2;
 	const textAlign = 'center' as const;
 
-	const prepared = info.firmaDigital ? await prepareFirmaForJsPdf(info.firmaDigital) : null;
-	if (prepared) {
-		try {
-			const imgX = align === 'center' ? centerX - imgW / 2 : lineX;
-			doc.addImage(prepared.dataUrl, prepared.format, imgX, y, imgW, imgH);
-			y += imgH + 1;
-		} catch (err) {
-			console.warn('[pdf] No se pudo incrustar la firma digital:', err);
+	const firmaSrc = info.firmaDigital;
+	if (firmaSrc) {
+		const prepared = await prepareFirmaForJsPdf(firmaSrc);
+		const imgX = align === 'center' ? centerX - imgW / 2 : lineX;
+		const attempts: Array<{ dataUrl: string; format: 'JPEG' | 'PNG' }> = [];
+		if (prepared) attempts.push(prepared);
+		if (firmaSrc.startsWith('data:image/')) {
+			attempts.push({
+				dataUrl: firmaSrc,
+				format: firmaSrc.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG',
+			});
 		}
+		let drawn = false;
+		for (const attempt of attempts) {
+			try {
+				doc.addImage(attempt.dataUrl, attempt.format, imgX, y, imgW, imgH);
+				drawn = true;
+				break;
+			} catch (err) {
+				console.warn('[pdf] addImage firma falló:', attempt.format, err);
+			}
+		}
+		if (drawn) y += imgH + 1;
+		else console.warn('[pdf] Firma digital presente pero no se pudo incrustar en el PDF');
+	} else {
+		console.warn(
+			'[pdf] Sin imagen de firma para',
+			info.nombre,
+			'mat=',
+			info.matricula,
+			'id=',
+			info.idPersonal,
+		);
 	}
 
 	doc.setDrawColor(0, 0, 0);

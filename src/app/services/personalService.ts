@@ -228,6 +228,23 @@ export const getPersonalFirmaByIdPublic = async (
 	throw new Error(res.data.mensaje || 'Error al obtener firma');
 };
 
+/**
+ * Endpoint clínico dedicado a PDFs (auth+tenant, sin permiso de configuración).
+ * Acepta matrícula o ID (Valor) de imPersonal.
+ */
+export const getFirmaParaPdf = async (
+	key: number | string,
+): Promise<PersonalFirmaResponse> => {
+	const n = Number(key);
+	if (!Number.isFinite(n) || n <= 0) return { hasFirma: false };
+	const res = await apiService.get<ApiResponse<PersonalFirmaResponse>>(
+		`/firmas/personal/${n}`,
+		{ timeout: 60000 },
+	);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al obtener firma');
+};
+
 export const uploadPersonalFirma = async (id: number, file: File): Promise<void> => {
 	const fd = new FormData();
 	fd.append('archivo', file);
@@ -460,6 +477,7 @@ export const personalService = {
 	getPersonalFirma,
 	getPersonalFirmaByMatricula,
 	getPersonalFirmaByIdPublic,
+	getFirmaParaPdf,
 	uploadPersonalFirma,
 	deletePersonalFirma,
 	getPersonalSectores,
