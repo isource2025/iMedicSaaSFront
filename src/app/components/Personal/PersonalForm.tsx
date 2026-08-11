@@ -179,11 +179,14 @@ export default function PersonalForm({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const { puedeSubmodulo, rol } = usePermiso();
+	const { puede, rol } = usePermiso();
 	const esAdmin = String(rol?.nombre ?? '')
 		.trim()
 		.toUpperCase() === 'ADMIN';
-	const puedeConfigurarAgenda = puedeSubmodulo('TURNOS', 'CONFIGURACION');
+	const puedeConfigurarAgenda =
+		puede('TURNOS.CONFIGURACION.EDITAR') ||
+		puede('TURNOS.CONFIGURACION.GESTIONAR') ||
+		esAdmin;
 	const showAgendaTab =
 		isEditing && (puedeConfigurarAgenda || esAdmin);
 	const showCuentaTab = isEditing && !!formData.Valor;

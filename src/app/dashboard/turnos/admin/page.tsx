@@ -59,13 +59,9 @@ export default function TurnosAdminPage() {
 		puedeSubmodulo('TURNOS', 'ADMIN') ||
 		puede('TURNOS.AGENDA.VER');
 	const puedeEditar =
-		puede('TURNOS.ADMIN.EDITAR') ||
-		puede('TURNOS.AGENDA.EDITAR') ||
-		puedeSubmodulo('TURNOS', 'ADMIN');
+		puede('TURNOS.ADMIN.EDITAR') || puede('TURNOS.AGENDA.EDITAR');
 	const puedeEliminar =
-		puede('TURNOS.ADMIN.ELIMINAR') ||
-		puede('TURNOS.AGENDA.ELIMINAR') ||
-		puedeSubmodulo('TURNOS', 'ADMIN');
+		puede('TURNOS.ADMIN.ELIMINAR') || puede('TURNOS.AGENDA.ELIMINAR');
 	const rolNombre = String(rol?.nombre ?? '')
 		.trim()
 		.toUpperCase();

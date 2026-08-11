@@ -122,12 +122,9 @@ function AgendaPageContent() {
 	const puedeVer = puedeSubmodulo('TURNOS', 'AGENDA');
 	const puedeRacEnfermeria = esAdmin || esEnfermero || esMedico;
 	const puedeAtender =
-		(esMedico || puede('TURNOS.AGENDA.EDITAR') || puedeSubmodulo('TURNOS', 'AGENDA')) &&
-		!esEnfermero;
-	const puedeBorrarTurno =
-		!esMedico && (puede('TURNOS.AGENDA.ELIMINAR') || puedeSubmodulo('TURNOS', 'AGENDA'));
-	const puedeCancelarTurno =
-		puede('TURNOS.AGENDA.EDITAR') || puedeSubmodulo('TURNOS', 'AGENDA');
+		(esMedico || puede('TURNOS.AGENDA.EDITAR')) && !esEnfermero;
+	const puedeBorrarTurno = !esMedico && puede('TURNOS.AGENDA.ELIMINAR');
+	const puedeCancelarTurno = puede('TURNOS.AGENDA.EDITAR');
 
 	const [user, setUser] = useState<{
 		matricula?: number | null;
