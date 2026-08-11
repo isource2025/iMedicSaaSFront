@@ -30,7 +30,7 @@ const OPCIONES_EXTRA: OpcionMenu[] = [
 	{ id: 'firma', label: 'Firma' },
 	{ id: 'sectores', label: 'Sectores' },
 	{ id: 'codigosFacturacion', label: 'Códigos de facturación' },
-	{ id: 'rol', label: 'Rol del usuario' },
+	{ id: 'rol', label: 'Roles del usuario' },
 ];
 
 interface Props {

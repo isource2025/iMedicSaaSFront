@@ -92,6 +92,7 @@ axiosInstance.interceptors.response.use(
 					localStorage.removeItem('user');
 					localStorage.removeItem('userData');
 					localStorage.removeItem('rol');
+					localStorage.removeItem('roles');
 					localStorage.removeItem('permisos');
 					localStorage.removeItem('empresaSeleccionada');
 					localStorage.removeItem('empresaInfo');

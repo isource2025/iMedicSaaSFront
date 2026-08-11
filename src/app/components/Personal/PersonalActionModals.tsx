@@ -77,10 +77,11 @@ export default function PersonalActionModals({
 	const [nuevoFac, setNuevoFac] = useState('');
 	const [facEdits, setFacEdits] = useState<Record<string, string>>({});
 
-	// rol
+	// rol (multi)
 	const [roles, setRoles] = useState<Rol[]>([]);
-	const [rolActual, setRolActual] = useState<Rol | null>(null);
-	const [rolSel, setRolSel] = useState<string>('');
+	const [rolesAsignados, setRolesAsignados] = useState<number[]>([]);
+	const [rolPrincipal, setRolPrincipal] = useState<string>('');
+	const [rolActualLabel, setRolActualLabel] = useState('');
 
 	useEffect(() => {
 		if (!open || !id || !kind) return;
@@ -133,14 +134,25 @@ export default function PersonalActionModals({
 						setNuevoFac('');
 					}
 				} else if (kind === 'rol') {
-					const [cat, actual] = await Promise.all([
+					const [cat, pack] = await Promise.all([
 						rolesService.listar(),
-						rolesService.getRolDePersonal(id),
+						rolesService.getRolesDePersonal(id),
 					]);
 					if (!cancelled) {
 						setRoles(cat);
-						setRolActual(actual);
-						setRolSel(actual ? String(actual.IdRol) : '');
+						const ids = (pack.roles || []).map((r) => r.IdRol);
+						setRolesAsignados(ids);
+						const principal =
+							pack.principal?.IdRol ??
+							pack.roles?.find((r) => r.EsPrincipal)?.IdRol ??
+							ids[0] ??
+							null;
+						setRolPrincipal(principal != null ? String(principal) : '');
+						setRolActualLabel(
+							pack.roles?.length
+								? pack.roles.map((r) => r.Descripcion || r.Nombre).join(', ')
+								: 'Sin rol asignado',
+						);
 					}
 				}
 			} catch (e: any) {
@@ -166,23 +178,47 @@ export default function PersonalActionModals({
 			: kind === 'codigosFacturacion'
 			? 'Códigos de facturación'
 			: kind === 'rol'
-			? 'Rol del usuario'
+			? 'Roles del usuario'
 			: kind === 'cuenta'
 			? 'Cuenta de acceso'
 			: '';
+
+	const toggleRol = (idRol: number) => {
+		setRolesAsignados((prev) => {
+			const has = prev.includes(idRol);
+			const next = has ? prev.filter((x) => x !== idRol) : [...prev, idRol];
+			setRolPrincipal((p) => {
+				const cur = p === '' ? null : Number(p);
+				if (has && cur === idRol) {
+					return next.length ? String(next[0]) : '';
+				}
+				if (!has && (p === '' || cur == null)) return String(idRol);
+				return p;
+			});
+			return next;
+		});
+	};
 
 	const guardarRol = async () => {
 		if (!id) return;
 		setSaving(true);
 		try {
-			const idRol = rolSel === '' ? null : Number(rolSel);
-			const result = await rolesService.asignarRolAPersonal(id, idRol);
-			setRolActual(result);
-			setRolSel(result ? String(result.IdRol) : '');
+			const principal =
+				rolPrincipal === '' ? null : Number(rolPrincipal);
+			const pack = await rolesService.asignarRolesAPersonal(
+				id,
+				rolesAsignados,
+				principal,
+			);
+			setRolActualLabel(
+				pack.roles?.length
+					? pack.roles.map((r) => r.Descripcion || r.Nombre).join(', ')
+					: 'Sin rol asignado',
+			);
 			await onSaved();
 			onClose();
 		} catch (e: unknown) {
-			const msg = e instanceof Error ? e.message : 'Error al asignar el rol';
+			const msg = e instanceof Error ? e.message : 'Error al asignar roles';
 			alert(msg);
 		} finally {
 			setSaving(false);
@@ -651,26 +687,50 @@ export default function PersonalActionModals({
 				) : kind === 'rol' ? (
 					<div className={styles.row}>
 						<p className={styles.muted}>
-							Rol actual:{' '}
-							<strong>{rolActual ? rolActual.Nombre : 'Sin rol asignado'}</strong>
-							{rolActual?.Descripcion ? ` — ${rolActual.Descripcion}` : ''}
+							Roles actuales: <strong>{rolActualLabel || 'Sin rol asignado'}</strong>
+						</p>
+						<p className={styles.muted}>
+							Podés marcar varios. Los permisos se unen. El principal se usa en el JWT y
+							como referencia.
 						</p>
 						<div>
-							<div className={styles.label}>Asignar rol</div>
-							<select
-								className={styles.select}
-								value={rolSel}
-								onChange={(e) => setRolSel(e.target.value)}
-							>
-								<option value=''>— Sin rol —</option>
-								{roles.map((r) => (
-									<option key={r.IdRol} value={String(r.IdRol)}>
-										{r.Nombre}
-										{r.Descripcion ? ` · ${r.Descripcion}` : ''}
-									</option>
-								))}
-							</select>
+							<div className={styles.label}>Roles</div>
+							<div className={styles.list}>
+								{roles.map((r) => {
+									const checked = rolesAsignados.includes(r.IdRol);
+									return (
+										<label key={r.IdRol} className={styles.checkRow}>
+											<input
+												type='checkbox'
+												checked={checked}
+												onChange={() => toggleRol(r.IdRol)}
+											/>
+											<span>
+												{r.Descripcion || r.Nombre}
+											</span>
+										</label>
+									);
+								})}
+							</div>
 						</div>
+						{rolesAsignados.length > 0 ? (
+							<div>
+								<div className={styles.label}>Rol principal</div>
+								<select
+									className={styles.select}
+									value={rolPrincipal}
+									onChange={(e) => setRolPrincipal(e.target.value)}
+								>
+									{roles
+										.filter((r) => rolesAsignados.includes(r.IdRol))
+										.map((r) => (
+											<option key={r.IdRol} value={String(r.IdRol)}>
+												{r.Descripcion || r.Nombre}
+											</option>
+										))}
+								</select>
+							</div>
+						) : null}
 						<div className={styles.actions}>
 							<button type='button' className={styles.btn} onClick={onClose} disabled={saving}>
 								Cerrar

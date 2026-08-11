@@ -109,3 +109,20 @@
 	color: #64748b;
 	font-size: 0.85rem;
 }
+
+.checkRow {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.55rem;
+	padding: 0.45rem 0.6rem;
+	background: #f8fafc;
+	border-radius: 8px;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.checkRow input {
+	margin-top: 0.15rem;
+	flex-shrink: 0;
+}
+

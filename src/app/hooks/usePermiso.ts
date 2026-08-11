@@ -32,9 +32,25 @@ function leerLocal(): PermisosState {
 	if (typeof window === 'undefined') {
 		return { rol: null, permisos: [], loaded: false };
 	}
+	const rol = authService.getCurrentRol();
+	const permisos = authService.getCurrentPermisos();
+	// Expandir plantillas de todos los roles (multi-rol) además de la lista guardada
+	let extras: string[] = [];
+	try {
+		const raw = localStorage.getItem('roles');
+		const arr = raw ? JSON.parse(raw) : [];
+		if (Array.isArray(arr)) {
+			for (const r of arr) {
+				extras = extras.concat([...permisosDeRol(r?.nombre || r)]);
+			}
+		}
+	} catch {
+		/* ignore */
+	}
+	const merged = [...new Set([...permisos, ...extras])];
 	return {
-		rol: authService.getCurrentRol(),
-		permisos: authService.getCurrentPermisos(),
+		rol,
+		permisos: merged,
 		loaded: true,
 	};
 }
@@ -59,7 +75,7 @@ export function usePermiso() {
 		setState(leerLocal());
 
 		const onStorage = (e: StorageEvent) => {
-			if (e.key === 'rol' || e.key === 'permisos') setState(leerLocal());
+			if (e.key === 'rol' || e.key === 'roles' || e.key === 'permisos') setState(leerLocal());
 		};
 		const onRefresh = () => setState(leerLocal());
 		window.addEventListener('storage', onStorage);

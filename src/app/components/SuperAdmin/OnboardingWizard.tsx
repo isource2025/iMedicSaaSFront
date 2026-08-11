@@ -709,7 +709,7 @@ export default function OnboardingWizard({
             <option value={0}>— Sin rol (asignar después) —</option>
             {rolesCatalogo.map((r) => (
               <option key={r.idRol} value={r.idRol}>
-                {r.nombre}
+                {r.descripcion || r.nombre}
               </option>
             ))}
           </select>

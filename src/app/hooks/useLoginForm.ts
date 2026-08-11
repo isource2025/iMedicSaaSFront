@@ -63,6 +63,12 @@ export function useLoginForm() {
         localStorage.removeItem('rol');
       }
 
+      if (Array.isArray(data.roles)) {
+        localStorage.setItem('roles', JSON.stringify(data.roles));
+      } else {
+        localStorage.removeItem('roles');
+      }
+
       if (Array.isArray(data.permisos)) {
         localStorage.setItem('permisos', JSON.stringify(data.permisos));
       } else {

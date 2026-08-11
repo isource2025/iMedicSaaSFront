@@ -10,8 +10,11 @@
  * Roles definidos en imRoles (IDs fijos):
  *   1 = ADMIN (administrador del sistema),
  *   2 = MEDICO, 3 = ENFERMERO,
- *   4 = ADMINISTRATIVO (solo lectura / VER — no confundir con ADMIN),
+ *   4 = ADMINISTRATIVO (ver todo; gestiona pacientes; sin escritura clínica),
  *   5 = SUPER_ADMIN, 6 = CARGA_HC
+ *
+ * Un usuario puede tener varios roles: los permisos efectivos son la unión
+ * de las plantillas (el login envía la lista en `permisos`).
  */
 
 // ============================================================================
@@ -184,6 +187,15 @@ function _todas(modId: string, subId: string): string[] {
 	return sub.acciones.map((a) => `${modId}.${subId}.${a}`);
 }
 
+/** Solo VER en todos los submódulos del módulo que lo exponen. */
+function _soloVer(modId: string): string[] {
+	const mod = MODULOS.find((m) => m.id === modId);
+	if (!mod) return [];
+	return mod.submodulos
+		.filter((s) => s.acciones.includes(ACCIONES.VER))
+		.map((s) => `${modId}.${s.id}.${ACCIONES.VER}`);
+}
+
 // ============================================================================
 // Plantillas por rol
 // ============================================================================
@@ -300,53 +312,45 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	],
 
 	/**
-	 * ADMINISTRATIVO — solo lectura (equivalente a personal con permiso VER).
-	 * Distinto de ADMIN (administrador del sistema).
+	 * ADMINISTRATIVO — ve todo (incl. clínica), gestiona pacientes/admisiones/camas/agenda.
+	 * No crea ni edita lo médico ni de enfermería. Distinto de ADMIN.
 	 */
 	ADMINISTRATIVO: [
-		'DASHBOARD.INICIO.VER',
-
-		'TURNOS.AGENDA.VER',
-		'TURNOS.EXCEPCIONES.VER',
-		'TURNOS.CONFIGURACION.VER',
-		'TURNOS.TABLA.VER',
-		'TURNOS.ADMIN.VER',
-
-		'ADMISION.PACIENTES.VER',
-		'ADMISION.BUSQUEDA.VER',
-		'ADMISION.VIGENTES.VER',
-		'ADMISION.TABLA.VER',
-
-		'INTERNACION.CAMAS.VER',
-		'INTERNACION.OCUPACION.VER',
-		'INTERNACION.TABLA.VER',
-		'INTERNACION.MOVIMIENTOS.VER',
-
-		'FACTURACION.CONVENIOS.VER',
-		'FACTURACION.RENDICIONES.VER',
-		'FACTURACION.LIQUIDACIONES.VER',
-		'FACTURACION.PRACTICAS.VER',
-		'FACTURACION.TABLA.VER',
-
-		'ALMACEN.STOCK.VER',
-		'ALMACEN.ARTICULOS.VER',
-		'ALMACEN.PROVEEDORES.VER',
-		'ALMACEN.SOLICITUDES.VER',
-		'ALMACEN.ORDENES.VER',
-		'ALMACEN.ACTAS.VER',
-		'ALMACEN.MOVIMIENTOS.VER',
-		'ALMACEN.CONFIG.VER',
-
-		'REPORTES.FACTURACION.VER',
-		'REPORTES.OCUPACION.VER',
-
+		..._soloVer('DASHBOARD'),
+		..._soloVer('TURNOS'),
+		..._soloVer('ADMISION'),
+		..._soloVer('INTERNACION'),
+		..._soloVer('FACTURACION'),
+		..._soloVer('ALMACEN'),
+		..._soloVer('REPORTES'),
 		'CONFIGURACION.PERSONAL.VER',
+
+		// Gestión de pacientes / admisión
+		..._todas('ADMISION', 'PACIENTES'),
+		'ADMISION.NUEVA.CREAR',
+		..._todas('ADMISION', 'VIGENTES'),
+		'ADMISION.TABLA.EXPORTAR',
+
+		// Flujo de internación (cama / traslado), no clínica
+		'INTERNACION.CAMAS.CREAR',
+		'INTERNACION.CAMAS.EDITAR',
+		'INTERNACION.CAMAS.ELIMINAR',
+		'INTERNACION.CAMAS.GESTIONAR',
+		'INTERNACION.MOVIMIENTOS.GESTIONAR',
+		'INTERNACION.TABLA.EXPORTAR',
+
+		// Agenda de turnos (citas del paciente)
+		'TURNOS.AGENDA.CREAR',
+		'TURNOS.AGENDA.EDITAR',
+		'TURNOS.AGENDA.ELIMINAR',
+		'TURNOS.TABLA.EXPORTAR',
 
 		'USUARIO.PERFIL.VER',
 		'USUARIO.PERFIL.EDITAR',
 	],
 
 	/** Solo adjuntos en admisiones (con/sin egreso). CRUD de los propios. */
+	/** Código interno: CARGA_HC — en catálogo se muestra como "Carga de adjuntos". */
 	CARGA_HC: [
 		'DASHBOARD.INICIO.VER',
 
@@ -384,23 +388,23 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 /**
  * Lista de permisos efectivos del usuario.
  *
- * ADMIN / SUPER_ADMIN / MEDICO / ENFERMERO / CARGA_HC / ADMINISTRATIVO usan la plantilla
- * completa aunque `imRolPermisos` en BD venga desactualizado.
+ * Une la plantilla del rol principal (siempre al día) con la lista del login
+ * (unión multi-rol). Así un ADMINISTRATIVO solo usa la matriz actual, y un
+ * usuario multi-rol conserva los extras de los demás roles.
  */
 export function permisosDeRol(
 	rol: { nombre?: string } | string | null | undefined,
 	permisosUsuario?: ReadonlyArray<string> | null,
 ): ReadonlyArray<string> {
 	const n = nombreRol(rol);
-	if (n === 'ADMIN') return [...PLANTILLAS.ADMIN];
-	if (n === 'SUPER_ADMIN') return [...PLANTILLAS.SUPER_ADMIN];
-	if (n === 'MEDICO') return [...PLANTILLAS.MEDICO];
-	if (n === 'ENFERMERO') return [...PLANTILLAS.ENFERMERO];
-	if (n === 'CARGA_HC') return [...PLANTILLAS.CARGA_HC];
-	if (n === 'ADMINISTRATIVO') return [...PLANTILLAS.ADMINISTRATIVO];
-	if (permisosUsuario && permisosUsuario.length) return permisosUsuario;
-	if (!n) return [];
-	return PLANTILLAS[n];
+	const lista =
+		Array.isArray(permisosUsuario) && permisosUsuario.length > 0
+			? [...permisosUsuario]
+			: [];
+	if (n) {
+		return [...new Set([...PLANTILLAS[n], ...lista])];
+	}
+	return lista;
 }
 
 /** ¿Tiene el rol/permisos el código indicado? Acepta verificación parcial. */

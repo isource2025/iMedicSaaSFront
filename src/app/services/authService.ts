@@ -32,6 +32,7 @@ export const authService = {
     localStorage.removeItem('user');
     localStorage.removeItem('userData');
     localStorage.removeItem('rol');
+    localStorage.removeItem('roles');
     localStorage.removeItem('permisos');
     localStorage.removeItem('rememberUser');
     localStorage.removeItem('empresaInfo');
@@ -87,6 +88,12 @@ export const authService = {
       const json = await res.json();
       const permisos: string[] = Array.isArray(json?.data?.permisos) ? json.data.permisos : [];
       localStorage.setItem('permisos', JSON.stringify(permisos));
+      if (json?.data?.rol) {
+        localStorage.setItem('rol', JSON.stringify(json.data.rol));
+      }
+      if (Array.isArray(json?.data?.roles)) {
+        localStorage.setItem('roles', JSON.stringify(json.data.roles));
+      }
       window.dispatchEvent(new Event('imedic:permisos-refresh'));
       return permisos;
     } catch {

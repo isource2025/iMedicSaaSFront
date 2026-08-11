@@ -192,6 +192,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     localStorage.removeItem('userData');
     localStorage.removeItem('token');
     localStorage.removeItem('rol');
+    localStorage.removeItem('roles');
     localStorage.removeItem('permisos');
     localStorage.removeItem('sectorSeleccionado');
     localStorage.removeItem('empresaInfo');

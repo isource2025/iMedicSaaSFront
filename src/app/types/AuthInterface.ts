@@ -18,8 +18,9 @@ export interface LoginResponse {
   empresas?: EmpresaLogin[];
   token?: string;
   usuario?: UserData;  // Cambiado de user a usuario para coincidir con el backend
-  rol?: RolInfo | null; // Rol resuelto en el backend (Fase 1)
-  permisos?: string[]; // Códigos 'MODULO.SUB.ACC' (Fase 2 con BD)
+  rol?: RolInfo | null; // Rol principal resuelto en el backend
+  roles?: Array<RolInfo & { esPrincipal?: boolean }>; // Multi-rol (unión de permisos)
+  permisos?: string[]; // Códigos 'MODULO.SUB.ACC' (unión de roles)
   message?: string;    // Mantener por compatibilidad
   mensaje?: string;    // Añadido para coincidir con el backend
   fuente?: string;     // Origen de la autenticación (base de datos o temporal)
