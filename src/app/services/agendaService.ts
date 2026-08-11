@@ -25,8 +25,19 @@ export interface TipoPedidoEstudio {
 	idPractica: number;
 }
 
+/** Práctica de nomenclador/moduladas para procedimientos realizados en consultorio. */
+export interface PracticaFacturacion {
+	idPractica: number;
+	tipoPractica: string;
+	descripcion: string;
+}
+
 export interface CierreProcedimientoPayload {
-	idTipoPedido: number;
+	/** Preferido: práctica del nomenclador/moduladas. */
+	idPractica?: number;
+	tipoPractica?: string;
+	/** Legacy: tipo de pedido de estudio (ya no se usa en el wizard). */
+	idTipoPedido?: number;
 }
 
 export interface CierrePedidoEstudioPayload {
@@ -572,6 +583,15 @@ export const agendaService = {
 		const qs = new URLSearchParams({ q, limit: String(limit) });
 		const r = await apiService.get<ApiResp<TipoPedidoEstudio[]>>(
 			`/agenda/tipos-pedidos-estudios/buscar?${qs.toString()}`,
+		);
+		return r.data.data;
+	},
+
+	/** Nomenclador + moduladas (procedimientos a facturar en cierre de atención). */
+	async buscarPracticasFacturacion(q: string, limit = 30): Promise<PracticaFacturacion[]> {
+		const qs = new URLSearchParams({ q, limit: String(limit) });
+		const r = await apiService.get<ApiResp<PracticaFacturacion[]>>(
+			`/agenda/practicas/buscar?${qs.toString()}`,
 		);
 		return r.data.data;
 	},

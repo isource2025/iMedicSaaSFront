@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { agendaService, type AgendaSlot, type DiagnosticoCie10, type SectorReceptorEstudio, type TipoPedidoEstudio } from '@/app/services/agendaService';
+import { agendaService, type AgendaSlot, type DiagnosticoCie10, type PracticaFacturacion, type SectorReceptorEstudio, type TipoPedidoEstudio } from '@/app/services/agendaService';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AgendaAdjuntosTab from '@/app/components/Agenda/AgendaAdjuntosTab';
 import TipoPedidoEstudioPicker from '@/app/components/Agenda/TipoPedidoEstudioPicker';
+import PracticaFacturacionPicker from '@/app/components/Agenda/PracticaFacturacionPicker';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { useModalLayer } from '@/app/hooks/useModalLayer';
 import styles from './AtencionTurnoModal.module.css';
@@ -80,7 +81,7 @@ type WizardStep = 'rac' | 'hc' | 'estudios' | 'interconsultas' | 'procedimientos
 
 interface ProcedimientoItem {
 	key: string;
-	tipo: TipoPedidoEstudio;
+	practica: PracticaFacturacion;
 }
 
 interface PedidoEstudioItem {
@@ -445,7 +446,8 @@ export default function AtencionTurnoModal({
 				enfermedadActual: enfermedadActual.trim(),
 			},
 			procedimientos: procedimientos.map((p) => ({
-				idTipoPedido: p.tipo.idTipoPedido,
+				idPractica: p.practica.idPractica,
+				tipoPractica: p.practica.tipoPractica,
 			})),
 			pedidosEstudios: pedidosEstudios.map((p) => ({
 				idTipoPedido: p.tipo.idTipoPedido,
@@ -963,13 +965,14 @@ export default function AtencionTurnoModal({
 								atención. Cada uno se factura al finalizar la atención con el médico que
 								lo realizó.
 							</p>
-							<TipoPedidoEstudioPicker
+							<PracticaFacturacionPicker
 								id='procedimiento-buscar'
 								label='Agregar procedimiento realizado'
-								onSelect={(tipo) =>
+								excluirIds={procedimientos.map((p) => p.practica.idPractica)}
+								onSelect={(practica) =>
 									setProcedimientos((prev) => [
 										...prev,
-										{ key: nextItemKey(), tipo },
+										{ key: nextItemKey(), practica },
 									])
 								}
 							/>
@@ -979,9 +982,9 @@ export default function AtencionTurnoModal({
 										<article key={p.key} className={styles.itemCard}>
 											<div className={styles.itemCardHeader}>
 												<div>
-													<p className={styles.itemCardTitle}>{p.tipo.descripcion}</p>
+													<p className={styles.itemCardTitle}>{p.practica.descripcion}</p>
 													<p className={styles.itemCardMeta}>
-														Código {p.tipo.idPractica}
+														Código {p.practica.idPractica}
 													</p>
 												</div>
 												<button
