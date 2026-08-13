@@ -257,6 +257,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
             />
           )}
           {!isLoading && !error && medicacionesAgrupadas.length > 0 && (
+      <>
       <div className={tableStyles.tableContainer}>
         <table className={tableStyles.table}>
           <thead>
@@ -375,6 +376,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
           </article>
         ))}
       </div>
+      </>
       )}
 
       {/* Modal de detalle */}

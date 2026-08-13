@@ -21,7 +21,7 @@ import type {
 
 const base = '/almacen';
 
-async function unwrap<T>(promise: PromiseLike<{ data: ApiResp<T> }>): Promise<T> {
+async function unwrap<T>(promise: Promise<{ data?: ApiResp<T> }>): Promise<T> {
 	const res = await promise;
 	if (!res.data?.success) {
 		throw new Error(res.data?.mensaje || res.data?.message || 'Error en almacén');

@@ -230,6 +230,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 							onAction={() => setModalOpen(true)}
 						/>
 					) : !isLoading && !error ? (
+						<>
 						<div className={tableStyles.tableContainer}>
 							<table className={tableStyles.table}>
 								<thead>
@@ -341,6 +342,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 								</article>
 							))}
 						</div>
+						</>
 					) : null}
 				</div>
 			</div>

@@ -402,7 +402,7 @@ export function permisosDeRol(
 			? [...permisosUsuario]
 			: [];
 	if (n) {
-		return [...new Set([...PLANTILLAS[n], ...lista])];
+		return Array.from(new Set(PLANTILLAS[n].concat(lista)));
 	}
 	return lista;
 }

@@ -47,7 +47,7 @@ function leerLocal(): PermisosState {
 	} catch {
 		/* ignore */
 	}
-	const merged = [...new Set([...permisos, ...extras])];
+	const merged = Array.from(new Set(permisos.concat(extras)));
 	return {
 		rol,
 		permisos: merged,

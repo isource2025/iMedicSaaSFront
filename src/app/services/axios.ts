@@ -125,17 +125,20 @@ axiosInstance.interceptors.response.use(
 
 // Helper functions for common API calls
 export const apiService = {
-	get: <T>(url: string, config?: any) => axiosInstance.get<T>(url, config),
+	get: <T>(url: string, config?: any): Promise<{ data: T }> =>
+		axiosInstance.get<T>(url, config) as Promise<{ data: T }>,
 
-	post: <T>(url: string, data?: any, config?: any) =>
-		axiosInstance.post<T>(url, data, config),
+	post: <T>(url: string, data?: any, config?: any): Promise<{ data: T }> =>
+		axiosInstance.post<T>(url, data, config) as Promise<{ data: T }>,
 
-	put: <T>(url: string, data?: any, config?: any) => axiosInstance.put<T>(url, data, config),
+	put: <T>(url: string, data?: any, config?: any): Promise<{ data: T }> =>
+		axiosInstance.put<T>(url, data, config) as Promise<{ data: T }>,
 
-	delete: <T>(url: string, config?: any) => axiosInstance.delete<T>(url, config),
+	delete: <T>(url: string, config?: any): Promise<{ data: T }> =>
+		axiosInstance.delete<T>(url, config) as Promise<{ data: T }>,
 
-	patch: <T>(url: string, data?: any, config?: any) =>
-		axiosInstance.patch<T>(url, data, config),
+	patch: <T>(url: string, data?: any, config?: any): Promise<{ data: T }> =>
+		axiosInstance.patch<T>(url, data, config) as Promise<{ data: T }>,
 };
 
 export default axiosInstance;
