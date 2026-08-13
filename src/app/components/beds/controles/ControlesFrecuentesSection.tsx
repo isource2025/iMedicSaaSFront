@@ -297,6 +297,50 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 								</tbody>
 							</table>
 						</div>
+						<div className={tableStyles.mobileCards}>
+							{controlsFiltrados.map((c) => (
+								<article key={`ctrl-m-${c.Valor}`} className={tableStyles.mobileCard}>
+									<div className={tableStyles.mobileCardHeader}>
+										<span>{formatearFecha(c.FechaControl)} {formatearHora(c.HoraControl)}</span>
+										<span className={c.IdHci && c.IdHci > 0 ? tableStyles.badgeHC : tableStyles.badgeENF}>
+											{c.IdHci && c.IdHci > 0 ? 'HC' : 'ENF'}
+										</span>
+									</div>
+									<p className={tableStyles.mobileMeta}>
+										Pulso {c.Pulso || '—'} · TA {c.Maximo || '—'}/{c.Minimo || '—'} · Sat {c.Saturometria ? `${c.Saturometria}%` : '—'}
+									</p>
+									<p className={tableStyles.mobileProfesional}>
+										{obtenerNombreCompleto(c.OperadorApellido, c.OperadorNombres)}
+									</p>
+									<div className={tableStyles.actionBtns}>
+										<button className={tableStyles.btnAction} onClick={() => setSelectedControl(c)} title="Ver detalle">
+											<IoEyeOutline color="#5BC0DE" size={18} />
+										</button>
+										{puedeEditar && puedeGestionarFila(c) && (
+											<button
+												className={tableStyles.btnAction}
+												onClick={() => {
+													setEditingControl(c);
+													setModalOpen(true);
+												}}
+												title="Editar"
+											>
+												<IoPencilOutline color="#5BC0DE" size={18} />
+											</button>
+										)}
+										{puedeEliminar && puedeGestionarFila(c) && (
+											<button
+												className={tableStyles.btnAction}
+												title="Eliminar"
+												onClick={() => handleEliminar(c)}
+											>
+												<IoTrashOutline color="#5BC0DE" size={18} />
+											</button>
+										)}
+									</div>
+								</article>
+							))}
+						</div>
 					) : null}
 				</div>
 			</div>

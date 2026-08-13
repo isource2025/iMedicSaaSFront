@@ -27,15 +27,6 @@ interface EvolucionEnfermeriaSectionProps {
   horaIngreso?: string;
 }
 
-// Helper para convertir Date a YYYY-MM-DD
-function toISODate(d: Date | null | undefined): string | null {
-  if (!d) return null;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   numeroVisita,
   patientName,
@@ -45,13 +36,11 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   horaIngreso
 }) => {
   const { activeSection, selectedDate } = useBedDetail();
+  const [periodFilter, setPeriodFilter] = useState<'0' | '7' | '30' | 'all'>('0');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvolucion, setEditingEvolucion] = useState<EvolucionEnfermeria | null>(null);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
-
-  // Convertir fecha seleccionada a formato ISO
-  const fechaISO = useMemo(() => toISODate(selectedDate), [selectedDate]);
 
   // Construir el path del endpoint
   const evolucionPath = useMemo(
@@ -65,6 +54,9 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
     endpointOverride: evolucionPath
       ? { 'evolucion-enfermeria': evolucionPath }
       : undefined,
+    params: {
+      days: periodFilter,
+    },
     cacheTimeMs: 15000,
   });
 
@@ -179,7 +171,8 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
           text: ev.Observaciones || '—',
           profesional: {
             nombre,
-            matricula: ev.Matricula ?? ev.Profesional ?? undefined,
+            matricula: ev.Matricula ?? undefined,
+            idPersonal: ev.Profesional ?? undefined,
             especialidad: 'Enfermería',
           },
         };
@@ -237,7 +230,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
         </div>
       )}
 
-      {/* Buscador */}
+      {/* Buscador y filtros de período */}
       <div className={styles.toolbar}>
         <div className={styles.searchWrap}>
           <span className={styles.searchIcon}>🔍</span>
@@ -248,6 +241,36 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+        </div>
+        <div className={styles.periodFilters}>
+          <button
+            type="button"
+            className={`${styles.periodTag} ${periodFilter === '0' ? styles.periodTagActive : ''}`}
+            onClick={() => setPeriodFilter('0')}
+          >
+            Hoy
+          </button>
+          <button
+            type="button"
+            className={`${styles.periodTag} ${periodFilter === '7' ? styles.periodTagActive : ''}`}
+            onClick={() => setPeriodFilter('7')}
+          >
+            7 días
+          </button>
+          <button
+            type="button"
+            className={`${styles.periodTag} ${periodFilter === '30' ? styles.periodTagActive : ''}`}
+            onClick={() => setPeriodFilter('30')}
+          >
+            1 mes
+          </button>
+          <button
+            type="button"
+            className={`${styles.periodTag} ${periodFilter === 'all' ? styles.periodTagActive : ''}`}
+            onClick={() => setPeriodFilter('all')}
+          >
+            Todas
+          </button>
         </div>
       </div>
 

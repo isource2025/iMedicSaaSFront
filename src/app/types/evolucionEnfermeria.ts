@@ -13,10 +13,11 @@ export interface EvolucionEnfermeria {
   FechaControlClarion?: number | null;
   HoraControlClarion?: number | null;
   Observaciones: string | null;
-  FechaHoraCarga: string | null; // datetime desde backend
+  FechaHoraCarga: string | null;
   OperadorCarga: number | null;
   OperadorApellido: string | null;
   OperadorNombres: string | null;
+  Matricula?: number | string | null;
 }
 
 export interface EvolucionEnfermeriaResponse {

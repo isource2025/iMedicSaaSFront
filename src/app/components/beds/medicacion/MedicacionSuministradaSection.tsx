@@ -341,6 +341,40 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
           </tbody>
         </table>
       </div>
+      <div className={tableStyles.mobileCards}>
+        {medicacionesAgrupadas.map((medicacion: any) => (
+          <article key={`med-m-${medicacion.IDCtrlMedica}`} className={tableStyles.mobileCard}>
+            <div className={tableStyles.mobileCardHeader}>
+              <span>{formatearFecha(medicacion.FechaControl)} {formatearHora(medicacion.HoraControl)}</span>
+              <span className={tableStyles.mobileBadge}>{medicacion.Sector || '—'}</span>
+            </div>
+            <p className={tableStyles.mobileTitle}>
+              {medicacion.NombreMedicamento || medicacion.DescripcionMedicamento || '—'}
+            </p>
+            <p className={tableStyles.mobileMeta}>
+              Aplicado {medicacion.CantidadIndicada || '—'} {medicacion.TipoUnidad || ''} · Total {medicacion.Cantidad || '—'}
+            </p>
+            <p className={tableStyles.mobileProfesional}>
+              {medicacion.ProfesionalFullName || medicacion.OperadorFullName || medicacion.Profesional || '—'}
+            </p>
+            <div className={tableStyles.actionBtns}>
+              <button className={tableStyles.btnAction} onClick={() => handleVerDetalle(medicacion)} title="Ver detalle">
+                <IoEyeOutline color="#5BC0DE" size="18px" />
+              </button>
+              {puedeEditar && puedeGestionarFila(medicacion) && (
+                <button className={tableStyles.btnAction} onClick={() => openEdit(medicacion)} title="Editar">
+                  <IoPencilOutline color="#5BC0DE" size="18px" />
+                </button>
+              )}
+              {puedeEliminar && puedeGestionarFila(medicacion) && (
+                <button className={tableStyles.btnAction} onClick={() => handleEliminar(medicacion)} title="Eliminar">
+                  <IoTrashOutline color="#5BC0DE" size="18px" />
+                </button>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
       )}
 
       {/* Modal de detalle */}

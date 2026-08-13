@@ -61,16 +61,14 @@ export default function PersonalPage() {
 	const [syncing, setSyncing] = useState(false);
 	const [syncResult, setSyncResult] = useState<{
 		ok: boolean;
-		personal: number;
-		personalTotal?: number;
-		passwordsEscritos?: number;
-		passwordsTotal?: number;
-		passwordsErrores?: number;
-		sectoresAsignaciones?: number;
-		sectoresAsignacionesTotal?: number;
-		vinculos?: number;
-		vinculosTotal?: number;
 		sinCambios?: boolean;
+		mensaje?: string;
+		items?: Array<{
+			cantidad: number;
+			texto: string;
+			extra?: string | null;
+			error?: boolean;
+		}>;
 		error?: string;
 	} | null>(null);
 	const [exportOpen, setExportOpen] = useState(false);
@@ -122,24 +120,17 @@ export default function PersonalPage() {
 		setSyncResult(null);
 		try {
 			const resumen = await personalService.syncDesdeFisico();
+			const informe = resumen.informe;
 			setSyncResult({
 				ok: true,
-				personal: Number(resumen.personal) || 0,
-				personalTotal: resumen.personalTotal,
-				passwordsEscritos: resumen.passwordsEscritos,
-				passwordsTotal: resumen.passwordsTotal,
-				passwordsErrores: resumen.passwordsErrores,
-				sectoresAsignaciones: resumen.sectoresAsignaciones,
-				sectoresAsignacionesTotal: resumen.sectoresAsignacionesTotal,
-				vinculos: resumen.vinculos,
-				vinculosTotal: resumen.vinculosTotal,
-				sinCambios: !!resumen.sinCambios,
+				sinCambios: informe ? informe.sinCambios : !!resumen.sinCambios,
+				mensaje: informe?.mensaje,
+				items: informe?.items || [],
 			});
 			await refreshList();
 		} catch (e) {
 			setSyncResult({
 				ok: false,
-				personal: 0,
 				error: e instanceof Error ? e.message : 'Error al sincronizar',
 			});
 		} finally {
@@ -251,66 +242,29 @@ export default function PersonalPage() {
 						{syncResult?.ok ? (
 							<>
 								<p className={styles.syncResultLead}>
-									{syncResult.sinCambios
-										? 'La nube ya estaba al día. No hubo cambios respecto a la base física.'
-										: 'Se aplicaron cambios desde la base física a la nube.'}
+									{syncResult.mensaje ||
+										(syncResult.sinCambios
+											? 'La nube ya estaba al día. No hubo cambios respecto a la base física.'
+											: 'Se aplicaron cambios desde la base física.')}
 								</p>
-								<ul className={styles.syncResultList}>
-									<li>
-										<strong>{syncResult.personal}</strong> personal con cambios
-										{syncResult.personalTotal != null && (
-											<>
-												{' '}
-												<span style={{ opacity: 0.7 }}>
-													(de {syncResult.personalTotal} revisados)
-												</span>
-											</>
-										)}
-									</li>
-									<li>
-										<strong>{syncResult.passwordsEscritos ?? 0}</strong> cuentas de
-										acceso con cambios
-										{syncResult.passwordsTotal != null && (
-											<>
-												{' '}
-												<span style={{ opacity: 0.7 }}>
-													(de {syncResult.passwordsTotal} revisadas)
-												</span>
-											</>
-										)}
-									</li>
-									{syncResult.passwordsErrores != null &&
-										syncResult.passwordsErrores > 0 && (
-											<li className={styles.syncResultError}>
-												<strong>{syncResult.passwordsErrores}</strong> cuentas
-												no copiadas (claves duplicadas u otros conflictos)
+								{syncResult.items && syncResult.items.length > 0 ? (
+									<ul className={styles.syncResultList}>
+										{syncResult.items.map((item, idx) => (
+											<li
+												key={`${item.texto}-${idx}`}
+												className={item.error ? styles.syncResultError : undefined}
+											>
+												<strong>{item.cantidad}</strong> {item.texto}
+												{item.extra ? (
+													<>
+														{' '}
+														<span style={{ opacity: 0.7 }}>({item.extra})</span>
+													</>
+												) : null}
 											</li>
-										)}
-									<li>
-										<strong>{syncResult.sectoresAsignaciones ?? 0}</strong>{' '}
-										asignaciones de sectores con cambios
-										{syncResult.sectoresAsignacionesTotal != null && (
-											<>
-												{' '}
-												<span style={{ opacity: 0.7 }}>
-													(total físico {syncResult.sectoresAsignacionesTotal})
-												</span>
-											</>
-										)}
-									</li>
-									<li>
-										<strong>{syncResult.vinculos ?? 0}</strong> vínculos usuario-empresa
-										nuevos
-										{syncResult.vinculosTotal != null && (
-											<>
-												{' '}
-												<span style={{ opacity: 0.7 }}>
-													(total {syncResult.vinculosTotal})
-												</span>
-											</>
-										)}
-									</li>
-								</ul>
+										))}
+									</ul>
+								) : null}
 							</>
 						) : (
 							<p className={styles.syncResultError}>

@@ -7,6 +7,8 @@ export interface HCIngresoRecord {
     EnfermedadActual: string;
     IdProfecional: number;
     ProfesionalNombre?: string;
+    IdPersonal?: number | null;
+    Matricula?: number | string | null;
     Fecha?: string;
     FechaFormateada?: string;
     HoraFormateada?: string;

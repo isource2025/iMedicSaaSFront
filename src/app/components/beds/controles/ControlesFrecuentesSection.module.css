@@ -501,3 +501,53 @@
 	color: #ef4444;
 	font-weight: 500;
 }
+
+.mobileCards {
+	display: none;
+}
+
+.mobileCard {
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	padding: 12px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.mobileCardHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: #111827;
+}
+
+.mobileMeta,
+.mobileProfesional {
+	margin: 0 0 6px 0;
+	font-size: 0.82rem;
+	color: #374151;
+}
+
+.mobileProfesional {
+	font-weight: 600;
+}
+
+@media (max-width: 768px) {
+	.searchWrap {
+		min-width: 0;
+	}
+
+	.tableContainer {
+		display: none;
+	}
+
+	.mobileCards {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+}

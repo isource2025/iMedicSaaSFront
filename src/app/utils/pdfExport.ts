@@ -622,7 +622,11 @@ export const exportToPDF = async ({
 	const profesionalWithFirma = attachFirma(profesionalInfo, firmas);
 
 	if (partsWithFirma && partsWithFirma.length > 0) {
-		await drawParts(doc, partsWithFirma, currentY);
+		const afterPartsY = await drawParts(doc, partsWithFirma, currentY);
+		const partsAlreadySigned = partsWithFirma.some((p) => p.profesional);
+		if (profesionalWithFirma?.nombre && !partsAlreadySigned) {
+			await drawProfesionalFirmaBlock(doc, profesionalWithFirma, afterPartsY + 8);
+		}
 	} else {
 		autoTable(doc, {
 			head: [headers],

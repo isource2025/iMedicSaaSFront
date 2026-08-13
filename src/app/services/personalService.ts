@@ -414,19 +414,40 @@ export const getSyncFisicoEstado = async (): Promise<{ disponible: boolean }> =>
 	throw new Error(res.data.mensaje || 'Error al consultar sync físico');
 };
 
+export type SyncFisicoInformeItem = {
+	cantidad: number;
+	texto: string;
+	extra?: string | null;
+	error?: boolean;
+};
+
 export type SyncFisicoResumen = {
 	personal: number;
 	personalTotal?: number;
+	personalNuevos?: number;
+	personalActualizados?: number;
 	passwords?: number;
 	passwordsEscritos?: number;
 	passwordsErrores?: number;
 	passwordsTotal?: number;
+	passwordsNuevos?: number;
+	passwordsActualizados?: number;
 	sectoresAsignaciones?: number;
 	sectoresAsignacionesTotal?: number;
+	sectoresCatalogoCambios?: number;
 	vinculos?: number;
 	vinculosTotal?: number;
+	rolesAsignados?: number;
+	rolesYaTenia?: number;
+	rolesSinAsignar?: number;
+	rolesPorTipo?: Record<string, number>;
 	sinCambios?: boolean;
 	totalCambios?: number;
+	informe?: {
+		mensaje: string;
+		sinCambios: boolean;
+		items: SyncFisicoInformeItem[];
+	};
 };
 
 export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {

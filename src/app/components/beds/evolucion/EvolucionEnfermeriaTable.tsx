@@ -178,6 +178,70 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                     )}
                 </div>
             </div>
+            <div className={styles.mobileList}>
+                {hasRows ? (
+                    rows.map((r, index) => {
+                        const propio = puedeGestionar(r, usuarioActual);
+                        return (
+                            <article
+                                key={`evolucion-enf-mobile-${r.NumeroVisita}-${r.FechaControlClarion}-${r.HoraControlClarion}-${index}`}
+                                className={styles.mobileCard}
+                            >
+                                <div className={styles.mobileCardHeader}>
+                                    <span className={styles.mobileDate}>
+                                        {r.FechaControl
+                                            ? formatSqlDate(r.FechaControl, {
+                                                  showTime: false,
+                                                  showDate: true,
+                                                  showYear: true,
+                                              })
+                                            : '—'}
+                                    </span>
+                                    <span className={styles.mobileHour}>{r.HoraControl || '—'}</span>
+                                </div>
+                                <p className={styles.mobileEvolucion}>
+                                    {r.Observaciones || '—'}
+                                </p>
+                                <p className={styles.mobileProfesional}>{nombreProfesional(r)}</p>
+                                <div className={styles.mobileActions}>
+                                    <button
+                                        className={styles.btnAction}
+                                        title="Ver evolución completa"
+                                        onClick={() => setViewingEvolucion(r)}
+                                    >
+                                        <IoEyeOutline color="#5BC0DE" size="18px" />
+                                    </button>
+                                    {propio && (
+                                        <>
+                                            <button
+                                                className={styles.btnAction}
+                                                title="Editar evolución"
+                                                onClick={() => onEdit?.(r)}
+                                            >
+                                                <IoPencilOutline color="#5BC0DE" size="18px" />
+                                            </button>
+                                            <button
+                                                className={styles.btnAction}
+                                                title="Eliminar evolución"
+                                                onClick={() => {
+                                                    setError('');
+                                                    setDeletingEvolucion(r);
+                                                }}
+                                            >
+                                                <IoTrashOutline color="#5BC0DE" size="18px" />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </article>
+                        );
+                    })
+                ) : (
+                    <div className={styles.mobileEmpty}>
+                        <EmptyState text="No hay evoluciones registradas para esta visita." />
+                    </div>
+                )}
+            </div>
 
             <ConfirmationModal
                 isOpen={deletingEvolucion !== null}
