@@ -421,6 +421,63 @@ export type SyncFisicoInformeItem = {
 	error?: boolean;
 };
 
+export type SyncCampoCambio = {
+	campo: string;
+	de: string;
+	a: string;
+};
+
+export type SyncPermisoModulo = {
+	modulo: string;
+	items: Array<{ nombre: string; acciones: string[] }>;
+};
+
+export type SyncRolTipo = {
+	idRol: number;
+	nombre: string;
+	etiqueta: string;
+	permisos: number;
+	usuarios: number;
+	modulos: SyncPermisoModulo[];
+};
+
+export type SyncCambioUsuario = {
+	tipo: 'ficha' | 'cuenta' | 'rol' | 'sector' | 'vinculo';
+	accion: string;
+	titulo: string;
+	campos?: SyncCampoCambio[];
+	idRol?: number;
+	usuarioRed?: string | null;
+	error?: string | null;
+	agregados?: string[];
+	quitados?: string[];
+};
+
+export type SyncUsuarioInforme = {
+	valor: number;
+	nombre: string;
+	cambios: SyncCambioUsuario[];
+};
+
+export type SyncFisicoInforme = {
+	mensaje: string;
+	sinCambios: boolean;
+	items: SyncFisicoInformeItem[];
+	usuarios?: SyncUsuarioInforme[];
+	catalogoSectores?: Array<{
+		valor: string;
+		descripcion: string;
+		accion: string;
+		de?: string;
+	}>;
+	roles?: {
+		asignados: number;
+		yaTenia: number;
+		sinRol: number;
+		porTipo: SyncRolTipo[];
+	};
+};
+
 export type SyncFisicoResumen = {
 	personal: number;
 	personalTotal?: number;
@@ -443,11 +500,7 @@ export type SyncFisicoResumen = {
 	rolesPorTipo?: Record<string, number>;
 	sinCambios?: boolean;
 	totalCambios?: number;
-	informe?: {
-		mensaje: string;
-		sinCambios: boolean;
-		items: SyncFisicoInformeItem[];
-	};
+	informe?: SyncFisicoInforme;
 };
 
 export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {

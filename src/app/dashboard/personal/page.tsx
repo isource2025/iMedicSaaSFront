@@ -13,10 +13,12 @@ import PersonalExportModal, {
 import PersonalForm from '@/app/components/Personal/PersonalForm';
 import PersonalDetails from '@/app/components/Personal/PersonalDetails';
 import DeletePersonalConfirmation from '@/app/components/Personal/DeletePersonalConfirmation';
+import SyncFisicoInforme from '@/app/components/Personal/SyncFisicoInforme';
 import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
 import Loader from '@/app/components/Loader/Loader';
 import { personalService } from '@/app/services/personalService';
+import type { SyncFisicoInforme as SyncFisicoInformeData } from '@/app/services/personalService';
 import { downloadPersonalExcel } from '@/app/utils/downloadPersonalExcel';
 import styles from './personal.module.css';
 
@@ -61,14 +63,7 @@ export default function PersonalPage() {
 	const [syncing, setSyncing] = useState(false);
 	const [syncResult, setSyncResult] = useState<{
 		ok: boolean;
-		sinCambios?: boolean;
-		mensaje?: string;
-		items?: Array<{
-			cantidad: number;
-			texto: string;
-			extra?: string | null;
-			error?: boolean;
-		}>;
+		informe?: SyncFisicoInformeData;
 		error?: string;
 	} | null>(null);
 	const [exportOpen, setExportOpen] = useState(false);
@@ -120,13 +115,15 @@ export default function PersonalPage() {
 		setSyncResult(null);
 		try {
 			const resumen = await personalService.syncDesdeFisico();
-			const informe = resumen.informe;
-			setSyncResult({
-				ok: true,
-				sinCambios: informe ? informe.sinCambios : !!resumen.sinCambios,
-				mensaje: informe?.mensaje,
-				items: informe?.items || [],
-			});
+			const informe = resumen.informe || {
+				mensaje: resumen.sinCambios
+					? 'La nube ya estaba al día. No hubo cambios respecto a la base física.'
+					: 'Se aplicaron cambios desde la base física.',
+				sinCambios: !!resumen.sinCambios,
+				items: [],
+				usuarios: [],
+			};
+			setSyncResult({ ok: true, informe });
 			await refreshList();
 		} catch (e) {
 			setSyncResult({
@@ -236,49 +233,27 @@ export default function PersonalPage() {
 							? 'Actualización desde base física'
 							: 'Error al actualizar'
 					}
-					size='small'
+					size={syncResult?.ok ? 'large' : 'small'}
 				>
-					<div className={styles.syncResultBody}>
-						{syncResult?.ok ? (
-							<>
-								<p className={styles.syncResultLead}>
-									{syncResult.mensaje ||
-										(syncResult.sinCambios
-											? 'La nube ya estaba al día. No hubo cambios respecto a la base física.'
-											: 'Se aplicaron cambios desde la base física.')}
-								</p>
-								{syncResult.items && syncResult.items.length > 0 ? (
-									<ul className={styles.syncResultList}>
-										{syncResult.items.map((item, idx) => (
-											<li
-												key={`${item.texto}-${idx}`}
-												className={item.error ? styles.syncResultError : undefined}
-											>
-												<strong>{item.cantidad}</strong> {item.texto}
-												{item.extra ? (
-													<>
-														{' '}
-														<span style={{ opacity: 0.7 }}>({item.extra})</span>
-													</>
-												) : null}
-											</li>
-										))}
-									</ul>
-								) : null}
-							</>
-						) : (
+					{syncResult?.ok && syncResult.informe ? (
+						<SyncFisicoInforme
+							informe={syncResult.informe}
+							onClose={() => setSyncResult(null)}
+						/>
+					) : (
+						<div className={styles.syncResultBody}>
 							<p className={styles.syncResultError}>
 								{syncResult?.error || 'No se pudo completar la actualización.'}
 							</p>
-						)}
-						<button
-							type='button'
-							className={styles.syncResultOk}
-							onClick={() => setSyncResult(null)}
-						>
-							Aceptar
-						</button>
-					</div>
+							<button
+								type='button'
+								className={styles.syncResultOk}
+								onClick={() => setSyncResult(null)}
+							>
+								Aceptar
+							</button>
+						</div>
+					)}
 				</Modal>
 
 				<PersonalExportModal
