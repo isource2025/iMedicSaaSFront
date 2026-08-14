@@ -92,11 +92,8 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 			setError(null);
 			try {
 				const data = await bedsService.getAllBeds();
-				const nextSig = bedsListSignature(data);
-				if (nextSig !== signatureRef.current) {
-					signatureRef.current = nextSig;
-					setBeds(data);
-				}
+				signatureRef.current = bedsListSignature(data);
+				setBeds(data);
 				setCachedBedsList(data, undefined, idEmpresa);
 			} catch (err: unknown) {
 				const message = err instanceof Error ? err.message : 'Error al cargar camas';

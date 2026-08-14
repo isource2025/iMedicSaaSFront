@@ -10,7 +10,7 @@ import {
 import visitaMovimientoService from '@/app/services/visitaMovimientoService';
 import { getDisposicionesEgreso } from '@/app/services/disposicionEgresoService';
 import diagnosticosService from '@/app/services/diagnosticosService';
-import { dateToClarionDate, timeToClarionTime } from '@/app/utils/dateUtils';
+import { dateToClarionDate, timeToClarionTime, fechaLocalISO, horaLocalHHMM } from '@/app/utils/dateUtils';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import type { PatientHeaderSnapshot } from '@/app/utils/bedHeader';
@@ -141,8 +141,15 @@ export default function AdmissionUbicacionMovimientosModal({
       setMovimientos(list);
       setSelectedIdx(0);
       setDisposiciones(disp || []);
-      setFechaEgreso(String(payload.visita.FechaEgreso || '').slice(0, 10));
-      setHoraEgreso(String(payload.visita.HoraEgreso || '').slice(0, 5));
+      const fe = String(payload.visita.FechaEgreso || '').slice(0, 10);
+      const he = String(payload.visita.HoraEgreso || '').slice(0, 5);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fe)) {
+        setFechaEgreso(fe);
+        setHoraEgreso(/^\d{2}:\d{2}/.test(he) ? he.slice(0, 5) : horaLocalHHMM());
+      } else {
+        setFechaEgreso(fechaLocalISO());
+        setHoraEgreso(horaLocalHHMM());
+      }
       setDisposicionEgreso(
         payload.visita.DisposicionEgreso != null ? String(payload.visita.DisposicionEgreso) : '',
       );
@@ -268,9 +275,7 @@ export default function AdmissionUbicacionMovimientosModal({
         HoraEgreso: timeToClarionTime(now),
         FechaAdmision: dateToClarionDate(now),
         HoraAdmision: timeToClarionTime(now),
-        EstadoAmbulatorio: '1',
         Diagnostico: visita?.Diagnostico || '',
-        Operador: 'SISTEMA',
         FechaCarga: dateToClarionDate(now),
         HoraCarga: timeToClarionTime(now),
       });

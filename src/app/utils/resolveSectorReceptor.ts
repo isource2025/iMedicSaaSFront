@@ -1,6 +1,7 @@
 /**
  * Resuelve el código de servicio receptor (imServicios.Valor) a partir del
- * sector de login (imSectores) y el catálogo de receptores.
+ * sector de login (imSectores). Los códigos no siempre coinciden
+ * (ECO vs ECOG, ECOGRAFÍA vs ECOGRAFIA).
  */
 export type SectorLoginLike = {
 	idSector?: string | null;
@@ -13,43 +14,77 @@ export type ReceptorLike = {
 	descripcion?: string;
 };
 
+function fold(v: unknown): string {
+	return String(v || '')
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^A-Z0-9]+/gi, ' ')
+		.trim()
+		.toUpperCase()
+		.replace(/\s+/g, ' ');
+}
+
+const STEMS: { keys: string[]; stem: string }[] = [
+	{ keys: ['ECOGRAF', 'ULTRASON', 'ECOG', 'ECHO', 'ECOCARDIO'], stem: 'ECO' },
+	{ keys: ['OFTAL', 'OFTALMO'], stem: 'OFTAL' },
+	{ keys: ['CARDIO'], stem: 'CARDIO' },
+	{ keys: ['LABORATOR'], stem: 'LAB' },
+	{ keys: ['RADIOLOG', 'RAYOS'], stem: 'RX' },
+	{ keys: ['TOMOGRAF'], stem: 'TOMO' },
+	{ keys: ['RESONAN'], stem: 'RMN' },
+	{ keys: ['ENDOSCOP'], stem: 'ENDOS' },
+	{ keys: ['KINESIO', 'FISIOTER', 'REHABILIT'], stem: 'KINE' },
+	{ keys: ['NUTRIC'], stem: 'NUTRI' },
+	{ keys: ['HEMOTER'], stem: 'HEMO' },
+	{ keys: ['GUARDIA', 'EMERGENC'], stem: 'GUARDIA' },
+	{ keys: ['CUIDADOS INTENS', 'TERAPIA INTENS'], stem: 'UTI' },
+];
+
+function clinicalStem(valor: unknown, descripcion: unknown): string {
+	const blob = `${fold(valor)} ${fold(descripcion)}`.trim();
+	if (!blob) return '';
+	for (const { keys, stem } of STEMS) {
+		if (keys.some((k) => blob.includes(k))) return stem;
+	}
+	const code = fold(valor).replace(/\s+/g, '');
+	return code.length >= 3 ? code : '';
+}
+
+function codesRelated(a: unknown, b: unknown): boolean {
+	const x = fold(a).replace(/\s+/g, '');
+	const y = fold(b).replace(/\s+/g, '');
+	if (!x || !y) return false;
+	if (x === y) return true;
+	const min = Math.min(x.length, y.length);
+	if (min < 3) return false;
+	return x.startsWith(y) || y.startsWith(x);
+}
+
+export function sectorCoincideServicio(
+	sectorLogin: SectorLoginLike,
+	srv: ReceptorLike,
+): boolean {
+	const id = fold(sectorLogin?.idSector).replace(/\s+/g, '');
+	const desc = fold(sectorLogin?.descripcion || sectorLogin?.descripcionSector);
+	const v = fold(srv?.valor).replace(/\s+/g, '');
+	const d = fold(srv?.descripcion);
+	if (!v && !d) return false;
+	if (id && v && id === v) return true;
+	if (desc && d && desc === d) return true;
+	if (desc && d && desc.length >= 4 && d.length >= 4 && (desc.includes(d) || d.includes(desc))) {
+		return true;
+	}
+	if (codesRelated(id, v)) return true;
+	const s1 = clinicalStem(sectorLogin?.idSector, sectorLogin?.descripcion || sectorLogin?.descripcionSector);
+	const s2 = clinicalStem(srv?.valor, srv?.descripcion);
+	return Boolean(s1 && s2 && s1 === s2);
+}
+
 export function resolveSectorReceptor(
 	sectorLogin: SectorLoginLike,
 	list: ReceptorLike[],
 ): string {
 	if (!list?.length) return '';
-	const id = String(sectorLogin?.idSector || '')
-		.trim()
-		.toUpperCase();
-	const desc = String(sectorLogin?.descripcion || sectorLogin?.descripcionSector || '')
-		.trim()
-		.toUpperCase();
-
-	const byValor = list.find((s) => String(s.valor || '').trim().toUpperCase() === id);
-	if (byValor) return String(byValor.valor).trim();
-
-	if (desc) {
-		const byDescExact = list.find(
-			(s) => String(s.descripcion || '').trim().toUpperCase() === desc,
-		);
-		if (byDescExact) return String(byDescExact.valor).trim();
-
-		const byDescPartial = list.find((s) => {
-			const d = String(s.descripcion || '').trim().toUpperCase();
-			return d && (desc.includes(d) || d.includes(desc));
-		});
-		if (byDescPartial) return String(byDescPartial.valor).trim();
-	}
-
-	const looksOftal = /OFTAL|OFT\b|^OFT/.test(`${id} ${desc}`);
-	if (looksOftal) {
-		const oft = list.find((s) => {
-			const v = String(s.valor || '').trim().toUpperCase();
-			const d = String(s.descripcion || '').trim().toUpperCase();
-			return v.startsWith('OFT') || d.includes('OFTAL');
-		});
-		if (oft) return String(oft.valor).trim();
-	}
-
-	return String(list[0]?.valor || '').trim();
+	const hit = list.find((s) => sectorCoincideServicio(sectorLogin, s));
+	return hit ? String(hit.valor || '').trim() : '';
 }

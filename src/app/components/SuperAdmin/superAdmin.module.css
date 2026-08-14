@@ -525,6 +525,54 @@
   line-height: 1.35;
 }
 
+.editorMode {
+  margin: 0 0 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0083a9;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.editorHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.editorBlock {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  background: #fafbfc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.saveStatus {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  align-self: center;
+}
+
+.saveStatusOk {
+  color: #166534;
+}
+
+.saveStatusError {
+  color: #991b1b;
+}
+
 .stepToolbar {
   display: flex;
   flex-wrap: wrap;

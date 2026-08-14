@@ -89,7 +89,7 @@ const visitaMovimientoService = {
     Diagnostico?: string;
     bedId: string;
     ValorSector: string;
-    Operador: string;
+    Operador?: string;
     FechaCarga: number;
     HoraCarga: number;
   }): Promise<any> => {
@@ -144,7 +144,7 @@ const visitaMovimientoService = {
       Diagnostico?: string;
       bedId: string;
       ValorSector: string;
-      Operador: string;
+      Operador?: string;
       FechaCarga: number;
       HoraCarga: number;
     },

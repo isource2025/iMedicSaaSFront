@@ -193,39 +193,50 @@ export default function OnboardingWizard({
 		}
 	};
 
+  const payloadConexion = (soloFileServer = false) =>
+    soloFileServer
+      ? { fileServerUrl: conexionForm.fileServerUrl || '' }
+      : {
+          dbServer: conexionForm.dbServer,
+          dbPort: conexionForm.dbPort ? Number(conexionForm.dbPort) : null,
+          dbInstance: conexionForm.dbInstance,
+          dbName: conexionForm.dbName,
+          dbUser: conexionForm.dbUser,
+          dbPassword: conexionForm.dbPassword || undefined,
+          fileServerUrl: conexionForm.fileServerUrl || '',
+        };
+
+  const persistirConexion = async (soloFileServer = esNube) => {
+    const det = await superAdminService.updateConexion(empresa.id, payloadConexion(soloFileServer));
+    onEmpresaActualizada(det);
+    if (!soloFileServer) setConexionForm((f) => ({ ...f, dbPassword: '' }));
+    return det;
+  };
+
   const guardarDatos = () =>
     run(async () => {
       if (!datosForm.descripcion.trim()) throw new Error('Razón social obligatoria');
-      const det = await superAdminService.updateEmpresa(empresa.id, datosForm);
+      const det = await superAdminService.updateEmpresa(empresa.id, {
+        ...datosForm,
+        conexion: payloadConexion(esNube),
+      });
       onEmpresaActualizada(det);
+      if (!esNube) setConexionForm((f) => ({ ...f, dbPassword: '' }));
     });
 
   const guardarConexion = () =>
     run(async () => {
-      const det = await superAdminService.updateConexion(empresa.id, {
-        dbServer: conexionForm.dbServer,
-        dbPort: conexionForm.dbPort ? Number(conexionForm.dbPort) : null,
-        dbInstance: conexionForm.dbInstance,
-        dbName: conexionForm.dbName,
-        dbUser: conexionForm.dbUser,
-        dbPassword: conexionForm.dbPassword || undefined,
-        fileServerUrl: conexionForm.fileServerUrl || '',
-      });
-      onEmpresaActualizada(det);
-      setConexionForm((f) => ({ ...f, dbPassword: '' }));
+      await persistirConexion(false);
+    });
+
+  const guardarFileServerUrl = () =>
+    run(async () => {
+      await persistirConexion(true);
     });
 
   const probarConexion = () =>
     run(async () => {
-      await superAdminService.updateConexion(empresa.id, {
-        dbServer: conexionForm.dbServer,
-        dbPort: conexionForm.dbPort ? Number(conexionForm.dbPort) : null,
-        dbInstance: conexionForm.dbInstance,
-        dbName: conexionForm.dbName,
-        dbUser: conexionForm.dbUser,
-        dbPassword: conexionForm.dbPassword || undefined,
-        fileServerUrl: conexionForm.fileServerUrl || '',
-      });
+      await persistirConexion(false);
       const r = await superAdminService.probarConexion(empresa.id);
       if (!r.ok) throw new Error('No se pudo conectar a la base de datos');
       await refrescarEmpresa();
@@ -255,14 +266,7 @@ export default function OnboardingWizard({
       setImportResult(null);
       // Guardar la conexión antes de detectar: la lectura de tablas usa la conexión
       // persistida de la empresa (no las credenciales tipeadas del test).
-      await superAdminService.updateConexion(empresa.id, {
-        dbServer: conexionForm.dbServer,
-        dbPort: conexionForm.dbPort ? Number(conexionForm.dbPort) : null,
-        dbInstance: conexionForm.dbInstance,
-        dbName: conexionForm.dbName,
-        dbUser: conexionForm.dbUser,
-        dbPassword: conexionForm.dbPassword || undefined,
-      });
+      await persistirConexion(false);
       await refrescarEmpresa();
       setConexionForm((f) => ({ ...f, dbPassword: '' }));
       const tablas = await superAdminService.getTablasImportables(empresa.id);
@@ -517,7 +521,10 @@ export default function OnboardingWizard({
     switch (pasoActual) {
       case 'DATOS':
         if (!datosForm.descripcion.trim()) throw new Error('Razón social obligatoria');
-        await superAdminService.updateEmpresa(empresa.id, datosForm);
+        await superAdminService.updateEmpresa(empresa.id, {
+          ...datosForm,
+          conexion: payloadConexion(esNube),
+        });
         await refrescarEmpresa();
         break;
       case 'MODULOS':
@@ -864,6 +871,37 @@ export default function OnboardingWizard({
               Guardá los datos para aplicar el tipo de infraestructura elegido.
             </p>
 
+            <div className={styles.stepToolbar} style={{ marginTop: '1.25rem' }}>
+              <span className={styles.stepTitle}>Túnel de adjuntos</span>
+              <button
+                type="button"
+                className={styles.btn}
+                disabled={guardando}
+                onClick={guardarFileServerUrl}
+              >
+                Guardar URL
+              </button>
+            </div>
+            <div className={styles.formGroup}>
+              <label>URL túnel / servidor de archivos</label>
+              <input
+                className={styles.input}
+                value={conexionForm.fileServerUrl}
+                onChange={(e) => setConexionForm({ ...conexionForm, fileServerUrl: e.target.value })}
+                onBlur={() => {
+                  if ((conexionForm.fileServerUrl || '') !== (empresa.conexion?.fileServerUrl || '')) {
+                    guardarFileServerUrl();
+                  }
+                }}
+                placeholder="https://xxxx.trycloudflare.com"
+              />
+              <p className={styles.packDesc} style={{ marginTop: '0.35rem' }}>
+                URL pública del file server on-prem (túnel Cloudflare). Sin barra final. Al guardar o
+                continuar se aplica de inmediato en los servidores. Si queda vacío, se usa el fallback
+                global del backend.
+              </p>
+            </div>
+
             {esNube ? (
               <div className={styles.wizardAlert} style={{ marginTop: '1.25rem' }}>
                 <span>
@@ -960,19 +998,6 @@ export default function OnboardingWizard({
                       onChange={(e) => setConexionForm({ ...conexionForm, dbPassword: e.target.value })}
                       placeholder={empresa.conexion?.tienePassword ? '•••• (sin cambiar)' : ''}
                     />
-                  </div>
-                  <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                    <label>URL túnel / servidor de archivos (adjuntos)</label>
-                    <input
-                      className={styles.input}
-                      value={conexionForm.fileServerUrl}
-                      onChange={(e) => setConexionForm({ ...conexionForm, fileServerUrl: e.target.value })}
-                      placeholder="https://xxxx.trycloudflare.com o http://IP:9012"
-                    />
-                    <p className={styles.packDesc} style={{ marginTop: '0.35rem' }}>
-                      URL pública del file server on-prem (túnel Cloudflare). Se usa para ver y subir adjuntos de esta
-                      empresa. Si queda vacío, se usa el fallback global del backend.
-                    </p>
                   </div>
                 </div>
 

@@ -6,7 +6,8 @@ import Loader from '../Loader/Loader';
 import visitaMovimientoService, { InternadoSinCama } from '../../services/visitaMovimientoService';
 import { getClasesPaciente } from '../../services/clasePacienteService';
 import { ClasePaciente } from '../../types/clasePaciente.types';
-import { dateToClarionDate, timeToClarionTime } from '../../utils/dateUtils';
+import { dateToClarionDate, timeToClarionTime, fechaLocalISO, horaLocalHHMM, codigoCamaDesdeId } from '../../utils/dateUtils';
+import { getSessionUser, getUserCodOperador } from '../../utils/sessionUser';
 
 interface ModalAsignarCamaProps {
   isOpen: boolean;
@@ -60,8 +61,8 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
     }
 
     const now = new Date();
-    setFechaIngreso(now.toISOString().split('T')[0]);
-    setHoraIngreso(now.toTimeString().substring(0, 5));
+    setFechaIngreso(fechaLocalISO(now));
+    setHoraIngreso(horaLocalHHMM(now));
     setClasePaciente(clasePacienteDefault || CLASE_INTERNADO);
 
     if (!loadedRef.current) {
@@ -125,8 +126,12 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
       const fechaObj = new Date(`${fechaIngreso}T${horaIngreso}:00`);
       const clarionDate = dateToClarionDate(fechaObj);
       const clarionTime = timeToClarionTime(fechaObj);
+      const operador = getUserCodOperador(getSessionUser());
+      if (!operador) {
+        throw new Error('Sesión sin CodOperador — no se puede asignar la cama');
+      }
 
-      const numeroCamaSolo = bedId.includes('-') ? bedId.split('-').slice(1).join('-') : numeroCama || bedId;
+      const numeroCamaSolo = codigoCamaDesdeId(bedId, bedSector, numeroCama || bedId);
 
       await visitaMovimientoService.asignarPacienteACama(seleccionado.numeroVisita, {
         FechaAdmision: clarionDate,
@@ -135,7 +140,7 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
         Diagnostico: seleccionado.diagnostico || '',
         bedId: numeroCamaSolo,
         ValorSector: bedSector,
-        Operador: '738',
+        Operador: String(operador),
         FechaCarga: clarionDate,
         HoraCarga: clarionTime,
       });

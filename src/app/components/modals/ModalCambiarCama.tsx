@@ -14,12 +14,14 @@ import { EstadoAmbulatorio } from '../../types/estadoAmbulatorio.types';
 import { useAppContext } from '../../contexts/AppContext';
 import { useBedsManagement } from '../../hooks/useBedsManagement';
 import BedFilters from '../beds/BedFilters';
-import { formatDate, formatTime, dateToClarionDate, timeToClarionTime } from '../../utils/dateUtils';
+import { formatDate, formatTime, dateToClarionDate, timeToClarionTime, fechaLocalISO, horaLocalHHMM, codigoCamaDesdeId, clarionDateToISO } from '../../utils/dateUtils';
 import type { PatientHeaderSnapshot } from '../../utils/bedHeader';
+import { getSessionUser, getUserCodOperador } from '../../utils/sessionUser';
 
 interface ModalCambiarCamaProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   numeroVisita: number;
   bedId: string;
   bedSector: string;
@@ -38,9 +40,22 @@ interface CamaDisponible {
   numeroCama: string;
 }
 
+function fechaHoraMovimientoActual(ubicacion: {
+  FechaAdmision?: number;
+  HoraAdmision?: number;
+} | null): Date | null {
+  if (!ubicacion?.FechaAdmision) return null;
+  const fechaISO = clarionDateToISO(ubicacion.FechaAdmision);
+  const hora = formatTime(ubicacion.HoraAdmision);
+  if (!fechaISO || !hora || hora === '-') return null;
+  const d = new Date(`${fechaISO}T${hora}:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   isOpen,
   onClose,
+  onSuccess,
   numeroVisita,
   bedId,
   bedSector,
@@ -197,8 +212,8 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     }
 
     const now = new Date();
-    const formattedDate = now.toISOString().split('T')[0];
-    const formattedTime = now.toTimeString().substring(0, 5);
+    const formattedDate = fechaLocalISO(now);
+    const formattedTime = horaLocalHHMM(now);
     setFechaEgreso(formattedDate);
     setHoraEgreso(formattedTime);
     setInfoTraslado((prev) => ({
@@ -381,38 +396,15 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
     if (!camaSeleccionada) errores.camaSeleccionada = "Debe seleccionar una cama destino";
 
     const fechaSeleccionada = new Date(`${fechaEgreso}T${horaEgreso}:00`);
+    const fechaIngresoActual = fechaHoraMovimientoActual(ubicacionActual);
 
-    // Validar que la hora de nueva ubicación sea posterior a la ubicación actual
-    if (ubicacionActual && ubicacionActual.FechaAdmision && ubicacionActual.HoraAdmision) {
-      // Obtener la fecha y hora de ingreso de la ubicación actual
-      let fechaIngresoStr = '';
-      let horaIngresoStr = '';
-      
-      // Convertir fecha de Clarion a formato legible si es necesario
-      if (typeof ubicacionActual.FechaAdmision === 'number') {
-        fechaIngresoStr = formatDate(ubicacionActual.FechaAdmision, { isClarionDate: true });
+    if (fechaIngresoActual && fechaSeleccionada <= fechaIngresoActual) {
+      const fechaIngresoStr = clarionDateToISO(ubicacionActual?.FechaAdmision) || '';
+      const horaIngresoStr = formatTime(ubicacionActual?.HoraAdmision);
+      if (fechaEgreso === fechaIngresoStr) {
+        errores.horaEgreso = `La hora de la nueva ubicación debe ser mayor a la hora de ingreso actual (${horaIngresoStr})`;
       } else {
-        fechaIngresoStr = String(ubicacionActual.FechaAdmision);
-      }
-      
-      // Convertir hora de Clarion a formato legible si es necesario
-      if (typeof ubicacionActual.HoraAdmision === 'number') {
-        horaIngresoStr = formatTime(String(ubicacionActual.HoraAdmision));
-      } else {
-        horaIngresoStr = String(ubicacionActual.HoraAdmision);
-      }
-      // Crear objeto Date para la fecha y hora de ingreso de la ubicación actual
-      const fechaIngresoActual = new Date(`${fechaIngresoStr}T${horaIngresoStr}:00`);
-      
-      // Verificar que la fecha/hora seleccionada sea posterior a la fecha de ingreso actual
-      if (fechaSeleccionada <= fechaIngresoActual) {
-        // Si las fechas son iguales, el error es en la hora
-        if (fechaEgreso === fechaIngresoStr) {
-          errores.horaEgreso = `La hora de la nueva ubicación debe ser mayor a la hora de ingreso actual (${horaIngresoStr})`;
-        } else {
-          // Si la fecha es diferente pero anterior o igual, es un error
-          errores.fechaEgreso = `La fecha y hora de la nueva ubicación deben ser mayores a las del movimiento actual (${fechaIngresoStr} ${horaIngresoStr})`;
-        }
+        errores.fechaEgreso = `La fecha y hora de la nueva ubicación deben ser mayores a las del movimiento actual (${fechaIngresoStr} ${horaIngresoStr})`;
       }
     }
     
@@ -432,32 +424,12 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       return;
     }
     
-    // Verificar explícitamente la validación de fecha/hora con la ubicación actual
-    if (ubicacionActual && ubicacionActual.FechaAdmision && ubicacionActual.HoraAdmision) {
-      // Obtener la fecha y hora de ingreso de la ubicación actual
-      let fechaIngresoStr = '';
-      let horaIngresoStr = '';
-      
-      // Convertir fecha de Clarion a formato legible si es necesario
-      if (typeof ubicacionActual.FechaAdmision === 'number') {
-        fechaIngresoStr = formatDate(ubicacionActual.FechaAdmision, { isClarionDate: true });
-      } else {
-        fechaIngresoStr = String(ubicacionActual.FechaAdmision);
-      }
-      
-      // Convertir hora de Clarion a formato legible si es necesario
-      if (typeof ubicacionActual.HoraAdmision === 'number') {
-        horaIngresoStr = formatTime(String(ubicacionActual.HoraAdmision));
-      } else {
-        horaIngresoStr = String(ubicacionActual.HoraAdmision);
-      }
-      
-      // Crear objeto Date para comparación
-      const fechaIngresoActual = new Date(`${fechaIngresoStr}T${horaIngresoStr}:00`);
+    const fechaIngresoActual = fechaHoraMovimientoActual(ubicacionActual);
+    if (fechaIngresoActual) {
       const fechaSeleccionada = new Date(`${fechaEgreso}T${horaEgreso}:00`);
-      
-      // Verificar que la fecha/hora seleccionada sea posterior a la fecha de ingreso actual
       if (fechaSeleccionada <= fechaIngresoActual) {
+        const fechaIngresoStr = clarionDateToISO(ubicacionActual?.FechaAdmision) || '';
+        const horaIngresoStr = formatTime(ubicacionActual?.HoraAdmision);
         setError(`La fecha y hora deben ser mayores a las del movimiento actual (${fechaIngresoStr} ${horaIngresoStr})`);
         return;
       }
@@ -479,43 +451,33 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
         throw new Error('La cama seleccionada ya no está disponible');
       }
       
-      // Convertir fecha y hora a formato Clarion
       const fechaActualObj = new Date(`${fechaEgreso}T${horaEgreso}:00`);
-      
-      // Usar las funciones de utilidad para convertir a formato Clarion
       const clarionDate = dateToClarionDate(fechaActualObj);
       const clarionTime = timeToClarionTime(fechaActualObj);
-      
-      console.log('Fecha JS:', fechaActualObj);
-      console.log('Fecha Clarion:', clarionDate);
-      console.log('Hora Clarion:', clarionTime);
-      
-      // Extraer solo el número de cama sin el sector (formato esperado: "S2-11B" -> "11B")
-      const numeroCamaSinSector = camaSeleccionada.includes('-') 
-        ? camaSeleccionada.split('-')[1] 
-        : camaSeleccionada;
-      
-      console.log('Cama seleccionada completa:', camaSeleccionada);
-      console.log('Número de cama sin sector:', numeroCamaSinSector);
-      
-      // Preparar los datos para el servicio moverPacienteACamaVacia
+      const numeroCamaSinSector = codigoCamaDesdeId(
+        camaSeleccionada,
+        camaDestino.sector,
+        camaDestino.numeroCama,
+      );
+      const operador = getUserCodOperador(getSessionUser());
+      if (!operador) {
+        throw new Error('Sesión sin CodOperador — no se puede registrar el traslado');
+      }
+
       const datosCambio = {
-        FechaAdmision: clarionDate, // Fecha en formato Clarion
-        HoraAdmision: clarionTime, // Hora en formato Clarion
-        FechaEgreso: clarionDate, // Misma fecha para egreso (es el mismo día)
-        HoraEgreso: clarionTime, // Misma hora para egreso (es inmediato)
+        FechaAdmision: clarionDate,
+        HoraAdmision: clarionTime,
+        FechaEgreso: clarionDate,
+        HoraEgreso: clarionTime,
         EstadoAmbulatorio: estadoAmbulatorio,
         Diagnostico: diagnosticoSeleccionado?.CodigoOMS || '',
-        bedId: numeroCamaSinSector, // Solo el número de cama sin el sector
-        ValorSector: camaDestino.sector, // Sector de la cama destino
-        Operador: "738", // Código del operador (hardcodeado por ahora)
-        FechaCarga: clarionDate, // Fecha actual en formato Clarion
-        HoraCarga: clarionTime // Hora actual en formato Clarion
+        bedId: numeroCamaSinSector,
+        ValorSector: camaDestino.sector,
+        Operador: String(operador),
+        FechaCarga: clarionDate,
+        HoraCarga: clarionTime
       };
       
-      console.log('Datos de traslado a enviar al backend:', datosCambio);
-      
-      // Llamar al servicio para mover al paciente
       const response = await visitaMovimientoService.moverPacienteACamaVacia(
         numeroVisita,
         datosCambio
@@ -524,13 +486,11 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       console.log('Respuesta del backend:', response);
       
       setSuccess(true);
-      
-      // Esperar un momento y cerrar el modal
+      onSuccess?.();
       setTimeout(() => {
         onClose();
-        // Recargar la página para mostrar los cambios
         router.refresh();
-      }, 2000);
+      }, 800);
       
     } catch (err: any) {
       console.error('Error en el cambio de cama:', err);
@@ -832,7 +792,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
                   <input 
                     type="text" 
                     className={styles.input} 
-                    value={bedId || 'No disponible'} 
+                    value={codigoCamaDesdeId(bedId, bedSector, bedId) || 'No disponible'} 
                     disabled 
                     readOnly
                   />

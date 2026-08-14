@@ -236,8 +236,10 @@ const BedsList = () => {
 				<ModalEgresoPaciente
 					isOpen={egresoModalOpen}
 					onClose={() => setEgresoModalOpen(false)}
+					onSuccess={handleRefreshBeds}
 					numeroVisita={selectedBed.numeroVisita}
-					bedId={selectedBed.id}
+					bedId={selectedBed.numeroCama || selectedBed.id}
+					bedSector={selectedBed.sector}
 					header={selectedBed.header}
 				/>
 			)}
@@ -246,8 +248,9 @@ const BedsList = () => {
 				<ModalCambiarCama
 					isOpen={cambiarCamaModalOpen}
 					onClose={() => setCambiarCamaModalOpen(false)}
+					onSuccess={handleRefreshBeds}
 					numeroVisita={selectedBed.numeroVisita}
-					bedId={selectedBed.id}
+					bedId={selectedBed.numeroCama || selectedBed.id}
 					bedSector={selectedBed.sector}
 					sectorInfo={selectedSector}
 					header={selectedBed.header}

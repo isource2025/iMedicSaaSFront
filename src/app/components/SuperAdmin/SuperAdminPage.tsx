@@ -13,12 +13,14 @@ import type {
 } from '@/app/types/superAdmin';
 import Loader from '../Loader/Loader';
 import OnboardingWizard from './OnboardingWizard';
+import EmpresaEditor from './EmpresaEditor';
 import SuperAdminSeguridadPanel from './SuperAdminSeguridadPanel';
 import styles from './superAdmin.module.css';
 
 const TABS: { id: SuperAdminTab; label: string }[] = [
   { id: 'panel', label: 'Panel' },
   { id: 'empresas', label: 'Empresas' },
+  { id: 'editar', label: 'Editar' },
   { id: 'onboarding', label: 'Puesta en marcha' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'configuracion', label: 'Config' },
@@ -156,9 +158,22 @@ export default function SuperAdminPage() {
       setError(null);
       const det = await superAdminService.getEmpresa(id);
       setSelectedEmpresa(det);
-      setTab('onboarding');
+      setTab('editar');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al abrir empresa');
+    }
+  };
+
+  const continuarPuestaEnMarcha = async (id?: string) => {
+    try {
+      setError(null);
+      const targetId = id || selectedEmpresa?.id;
+      if (!targetId) return;
+      const det = await superAdminService.getEmpresa(targetId);
+      setSelectedEmpresa(det);
+      setTab('onboarding');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al abrir puesta en marcha');
     }
   };
 
@@ -346,7 +361,7 @@ export default function SuperAdminPage() {
         </section>
       )}
 
-      {tab === 'onboarding' && catalogos && (
+      {tab === 'editar' && catalogos && (
         <section className={styles.panel}>
           <div className={styles.empresaBar}>
             <label className={styles.empresaBarLabel}>Empresa</label>
@@ -366,8 +381,48 @@ export default function SuperAdminPage() {
               ))}
             </select>
           </div>
+          {selectedEmpresa ? (
+            <EmpresaEditor
+              empresa={selectedEmpresa}
+              catalogos={catalogos}
+              onEmpresaActualizada={setSelectedEmpresa}
+              onAbrirPuestaEnMarcha={() => void continuarPuestaEnMarcha()}
+              onVolver={() => setTab('empresas')}
+              onError={setError}
+            />
+          ) : (
+            <p className={styles.emptyHint}>Elegí una empresa del listado para editarla.</p>
+          )}
+        </section>
+      )}
 
-          {selectedEmpresa && catalogos ? (
+      {tab === 'onboarding' && catalogos && (
+        <section className={styles.panel}>
+          <div className={styles.empresaBar}>
+            <label className={styles.empresaBarLabel}>Empresa</label>
+            <select
+              className={styles.select}
+              value={selectedEmpresa?.id || ''}
+              onChange={async (e) => {
+                if (e.target.value) await continuarPuestaEnMarcha(e.target.value);
+                else setSelectedEmpresa(null);
+              }}
+            >
+              <option value="">Elegir empresa…</option>
+              {empresas.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.descripcion}
+                </option>
+              ))}
+            </select>
+            {selectedEmpresa && (
+              <button type="button" className={styles.btnSecondary} onClick={() => setTab('editar')}>
+                Ir a edición
+              </button>
+            )}
+          </div>
+
+          {selectedEmpresa ? (
             <OnboardingWizard
               empresa={selectedEmpresa}
               catalogos={catalogos}
@@ -384,7 +439,7 @@ export default function SuperAdminPage() {
               onError={setError}
             />
           ) : (
-            <p className={styles.emptyHint}>Elegí una empresa para iniciar el wizard de alta.</p>
+            <p className={styles.emptyHint}>Elegí una empresa para continuar el alta (wizard).</p>
           )}
         </section>
       )}

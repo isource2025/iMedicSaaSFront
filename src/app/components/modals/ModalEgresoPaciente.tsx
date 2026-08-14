@@ -14,12 +14,15 @@ import { DiagnosticoCie10 } from '../../types/diagnosticos';
 import { DisposicionEgreso } from '../../types/disposicionEgreso.types';
 import { useAppContext } from '../../contexts/AppContext';
 import type { PatientHeaderSnapshot } from '../../utils/bedHeader';
+import { fechaLocalISO, horaLocalHHMM, codigoCamaDesdeId } from '../../utils/dateUtils';
 
 interface ModalEgresoPacienteProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   numeroVisita: number;
   bedId: string;
+  bedSector?: string;
   header?: PatientHeaderSnapshot | null;
 }
 
@@ -28,8 +31,10 @@ interface ModalEgresoPacienteProps {
 const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
   isOpen,
   onClose,
+  onSuccess,
   numeroVisita,
   bedId,
+  bedSector,
   header,
 }) => {
   const router = useRouter();
@@ -72,9 +77,8 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
   useEffect(() => {
     const setCurrentDateTime = () => {
       const now = new Date();
-      const formattedDate = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-      setFechaEgreso(formattedDate);
-      setHoraEgreso(now.toTimeString().substring(0, 5)); // Formato HH:MM
+      setFechaEgreso(fechaLocalISO(now));
+      setHoraEgreso(horaLocalHHMM(now));
     };
 
     // Establecer fecha y hora actual al abrir el modal
@@ -301,28 +305,24 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
         horaEgreso: horaEgreso,
         disposicionEgreso: parseInt(disposicionEgreso) || null,
         diagnostico: diagnosticoSeleccionado?.CodigoOMS || null,
-        bedId: bedId
+        bedId: codigoCamaDesdeId(bedId, bedSector, bedId)
       };
       console.log('Datos de egreso:', datosEgreso);
-      // Actualiza movimiento, visita y libera la cama en una sola transacción
       await visitaMovimientoService.actualizarUltimoMovimiento(numeroVisita, datosEgreso);
 
       setSuccess(true);
+      onSuccess?.();
       
-      // Guardar el sector actual para redirigir después
       const sectorId = sectorSeleccionado?.idSector || '';
       
-      // Cerrar el modal después de 2 segundos
       setTimeout(() => {
         onClose();
-        // Redirigir a la pantalla de camas con el mismo sector
         if (sectorId) {
           router.push(`/dashboard/beds?sector=${sectorId}`);
         } else {
-          // Si no hay sector seleccionado, simplemente recargar la página
-          window.location.reload();
+          router.refresh();
         }
-      }, 2000);
+      }, 800);
     } catch (err: any) {
       console.error('Error al procesar el egreso:', err);
       const status = err?.response?.status;

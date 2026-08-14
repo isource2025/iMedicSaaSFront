@@ -199,6 +199,7 @@ export interface ConfigPlataforma {
 export type SuperAdminTab =
   | 'panel'
   | 'empresas'
+  | 'editar'
   | 'onboarding'
   | 'usuarios'
   | 'configuracion'

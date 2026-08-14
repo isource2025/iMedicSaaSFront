@@ -350,8 +350,10 @@ const BedDetail = ({
         <ModalEgresoPaciente
           isOpen={egresoModalOpen}
           onClose={() => setEgresoModalOpen(false)}
+          onSuccess={onClose}
           numeroVisita={selectedBed.numeroVisita ?? 0}
           bedId={selectedBed.numeroCama ?? ''}
+          bedSector={selectedBed.sector ?? ''}
         />
       )}
       
@@ -359,6 +361,7 @@ const BedDetail = ({
         <ModalCambiarCama
           isOpen={cambiarCamaModalOpen}
           onClose={() => setCambiarCamaModalOpen(false)}
+          onSuccess={onClose}
           numeroVisita={selectedBed.numeroVisita ?? 0}
           bedId={selectedBed.numeroCama ?? ''}
           bedSector={selectedBed.sector ?? ''}

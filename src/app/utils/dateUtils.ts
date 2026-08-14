@@ -100,10 +100,11 @@ export const formatTime = (clarionTime: number | string | null | undefined): str
   if (!clarionTime || Number(clarionTime) === 0) return '-';
 
   try {
-    const totalSeconds = Math.floor(Number(clarionTime) / 100); // Clarion → centésimas de segundo
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-
+    // Clarion TIME: dateadd(ms, (ClarionTIME-1)*10, 0)
+    const milisegundosTotales = Math.max(0, (Number(clarionTime) - 1) * 10);
+    const hours = Math.floor(milisegundosTotales / 3600000);
+    const minutes = Math.floor((milisegundosTotales % 3600000) / 60000);
+    if (!Number.isFinite(hours) || hours >= 24) return '-';
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   } catch (err) {
     console.error('Error al convertir hora Clarion:', err);
@@ -165,12 +166,44 @@ export const timeToClarionTime = (date: Date): number => {
   const hours = date.getHours();
   const minutes = date.getMinutes();
   const seconds = date.getSeconds();
-  
-  // Calcular el total de centésimas de segundo
-  const totalCentiseconds = ((hours * 3600) + (minutes * 60) + seconds) * 100;
-  
-  return totalCentiseconds;
+  const ms = hours * 3_600_000 + minutes * 60_000 + seconds * 1_000;
+  return Math.floor(ms / 10) + 1;
 };
+
+/** YYYY-MM-DD en zona local del navegador (no UTC). */
+export function fechaLocalISO(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** HH:MM en zona local del navegador. */
+export function horaLocalHHMM(date: Date = new Date()): string {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+/** Clarion DATE → YYYY-MM-DD local. */
+export function clarionDateToISO(clarionDate: number | string | null | undefined): string | null {
+  const date = clarionDateToDate(clarionDate);
+  if (!date || Number.isNaN(date.getTime())) return null;
+  return fechaLocalISO(date);
+}
+
+/** Extrae el código de cama si el id viene como "SECTOR-CAMA". */
+export function codigoCamaDesdeId(bedId: string, sector?: string, fallback = ''): string {
+  const raw = String(bedId || '').trim();
+  const sec = String(sector || '').trim();
+  const fb = String(fallback || '').trim();
+  if (!raw) return fb;
+  if (sec) {
+    const prefix = `${sec}-`;
+    if (raw.length > prefix.length && raw.slice(0, prefix.length).toUpperCase() === prefix.toUpperCase()) {
+      return raw.slice(prefix.length);
+    }
+  }
+  return raw;
+}
 
 /**
  * Formatea una fecha en formato SQL (como '2025-04-29 18:21:44.410') a un formato legible
