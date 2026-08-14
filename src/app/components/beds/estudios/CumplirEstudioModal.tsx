@@ -39,6 +39,7 @@ export default function CumplirEstudioModal({
 	const [archivos, setArchivos] = useState<File[]>([]);
 	const [tipos, setTipos] = useState<TipoImagenHC[]>([]);
 	const [tipoImagen, setTipoImagen] = useState('');
+	const [solicitanteNombre, setSolicitanteNombre] = useState('');
 
 	useEffect(() => {
 		if (!open) return;
@@ -46,6 +47,8 @@ export default function CumplirEstudioModal({
 		setError(null);
 		setArchivos([]);
 		setTipoImagen('');
+		const nombreInicial = String(pedido?.MedicoSolicitanteNombre || '').trim();
+		setSolicitanteNombre(nombreInicial);
 		const practica = (pedido?.PracticaSolicitada || pedido?.NomencladorDescripcion || '').trim();
 		void adjuntosService
 			.getTiposImagenes()
@@ -54,7 +57,16 @@ export default function CumplirEstudioModal({
 				setTipoImagen(sugerirTipoImagen(list, practica));
 			})
 			.catch(() => setTipos([]));
-	}, [open, pedido?.IdPedido, pedido?.PracticaSolicitada, pedido?.NomencladorDescripcion]);
+		if (pedido?.IdPedido) {
+			void estudiosService
+				.obtenerPorId(pedido.IdPedido)
+				.then((full) => {
+					const n = String(full?.MedicoSolicitanteNombre || '').trim();
+					if (n) setSolicitanteNombre(n);
+				})
+				.catch(() => undefined);
+		}
+	}, [open, pedido?.IdPedido, pedido?.PracticaSolicitada, pedido?.NomencladorDescripcion, pedido?.MedicoSolicitanteNombre]);
 
 	if (!open || !pedido) return null;
 
@@ -62,7 +74,7 @@ export default function CumplirEstudioModal({
 		(pedido.PracticaSolicitada || pedido.NomencladorDescripcion || '').trim() ||
 		`Pedido #${pedido.IdPedido}`;
 	const mensaje = (pedido.NotasObservacion || '').trim();
-	const quien = (pedido.MedicoSolicitanteNombre || '').trim();
+	const quien = solicitanteNombre || String(pedido.MedicoSolicitanteNombre || '').trim();
 	const origen = (pedido.SectorSolicitanteNombre || pedido.SectorSolicitante || '').trim();
 	const cuando = formatCuando(pedido.FechaPedidoISO, pedido.HoraPedido);
 	const metaSolicitud = [origen ? `desde ${origen}` : '', cuando].filter(Boolean).join(' · ');
