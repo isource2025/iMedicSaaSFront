@@ -51,7 +51,8 @@
 }
 
 .section > summary,
-.nested > summary {
+.nested > summary,
+.sectionHead {
 	cursor: pointer;
 	list-style: none;
 	display: flex;
@@ -63,6 +64,11 @@
 	color: #0e7490;
 	background: #f8fafc;
 	user-select: none;
+}
+
+.sectionHead {
+	cursor: default;
+	border-bottom: 1px solid #e2e8f0;
 }
 
 .section > summary::-webkit-details-marker,

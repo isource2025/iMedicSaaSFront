@@ -115,13 +115,20 @@ export default function PersonalPage() {
 		setSyncResult(null);
 		try {
 			const resumen = await personalService.syncDesdeFisico();
-			const informe = resumen.informe || {
-				mensaje: resumen.sinCambios
-					? 'La nube ya estaba al día. No hubo cambios respecto a la base física.'
-					: 'Se aplicaron cambios desde la base física.',
-				sinCambios: !!resumen.sinCambios,
-				items: [],
-				usuarios: [],
+			const usuarios = resumen.informe?.usuarios?.length
+				? resumen.informe.usuarios
+				: resumen.usuarios || [];
+			const informe = {
+				mensaje:
+					resumen.informe?.mensaje ||
+					(resumen.sinCambios
+						? 'La nube ya estaba al día. No hubo cambios respecto a la base física.'
+						: 'Se aplicaron cambios desde la base física.'),
+				sinCambios: resumen.informe ? resumen.informe.sinCambios : !!resumen.sinCambios,
+				items: resumen.informe?.items || [],
+				usuarios,
+				catalogoSectores: resumen.informe?.catalogoSectores || [],
+				roles: resumen.informe?.roles,
 			};
 			setSyncResult({ ok: true, informe });
 			await refreshList();
@@ -230,7 +237,11 @@ export default function PersonalPage() {
 					onClose={() => setSyncResult(null)}
 					title={
 						syncResult?.ok
-							? 'Actualización desde base física'
+							? `Actualización desde base física${
+									syncResult.informe?.usuarios?.length
+										? ` · ${syncResult.informe.usuarios.length} personas`
+										: ''
+							  }`
 							: 'Error al actualizar'
 					}
 					size={syncResult?.ok ? 'large' : 'small'}

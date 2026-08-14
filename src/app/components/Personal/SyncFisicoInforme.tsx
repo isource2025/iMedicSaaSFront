@@ -107,10 +107,14 @@ function CambioBlock({
 }
 
 export default function SyncFisicoInforme({ informe, onClose }: Props) {
-	const [q, setQ] = useState('');
-	const [abiertos, setAbiertos] = useState<Set<number>>(() => new Set());
 	const rolesPorTipo = informe.roles?.porTipo || [];
-	const usuarios = informe.usuarios || [];
+	const usuarios = useMemo(() => informe.usuarios || [], [informe.usuarios]);
+	const [q, setQ] = useState('');
+	const [abiertos, setAbiertos] = useState<Set<number>>(() => {
+		const next = new Set<number>();
+		usuarios.forEach((u) => next.add(u.valor));
+		return next;
+	});
 
 	const filtrados = useMemo(() => {
 		const term = q.trim().toLowerCase();
@@ -211,14 +215,18 @@ export default function SyncFisicoInforme({ informe, onClose }: Props) {
 				</details>
 			) : null}
 
-			<details className={styles.section} open={!informe.sinCambios}>
-				<summary>
+			<div className={styles.section} data-open="true">
+				<div className={styles.sectionHead}>
 					Usuarios actualizados
 					<span className={styles.badge}>{usuarios.length}</span>
-				</summary>
+				</div>
 				<div className={styles.sectionBody}>
 					{usuarios.length === 0 ? (
-						<p className={styles.note}>Ningún usuario cambió en esta corrida.</p>
+						<p className={styles.note}>
+							{informe.sinCambios || !informe.items.length
+								? 'Ningún usuario cambió en esta corrida.'
+								: 'Hay cambios en el resumen, pero no llegó el listado de personas. El backend tiene que estar desplegado con el informe detallado.'}
+						</p>
 					) : (
 						<>
 							<div className={styles.toolbar}>
@@ -281,7 +289,7 @@ export default function SyncFisicoInforme({ informe, onClose }: Props) {
 						</>
 					)}
 				</div>
-			</details>
+			</div>
 
 			<button type='button' className={styles.ok} onClick={onClose}>
 				Aceptar

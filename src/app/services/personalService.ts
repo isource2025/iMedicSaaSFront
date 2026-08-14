@@ -501,6 +501,7 @@ export type SyncFisicoResumen = {
 	sinCambios?: boolean;
 	totalCambios?: number;
 	informe?: SyncFisicoInforme;
+	usuarios?: SyncUsuarioInforme[];
 };
 
 export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {
@@ -510,8 +511,25 @@ export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {
 		{},
 		{ timeout: 300000 },
 	);
-	if (res.data.success && res.data.data) return res.data.data;
-	throw new Error(res.data.mensaje || 'Error al sincronizar desde base física');
+	if (!res.data.success || !res.data.data) {
+		throw new Error(res.data.mensaje || 'Error al sincronizar desde base física');
+	}
+	const data = res.data.data;
+	const usuarios = data.informe?.usuarios?.length
+		? data.informe.usuarios
+		: data.usuarios || [];
+	return {
+		...data,
+		usuarios,
+		informe: {
+			mensaje: data.informe?.mensaje || '',
+			sinCambios: !!data.informe?.sinCambios,
+			items: data.informe?.items || [],
+			usuarios,
+			catalogoSectores: data.informe?.catalogoSectores || [],
+			roles: data.informe?.roles,
+		},
+	};
 };
 
 export const exportarPersonal = async (
