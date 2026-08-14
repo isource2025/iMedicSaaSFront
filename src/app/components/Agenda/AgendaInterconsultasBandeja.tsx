@@ -260,17 +260,12 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 								).trim()}
 							</h3>
 							<div className={formStyles.solicitudBox}>
-								<span className={formStyles.solicitudKicker}>Mensaje del solicitante</span>
-								<span className={formStyles.solicitudMeta}>
-									{[
-										cumplirRow.MedicoSolicitanteNombre
-											? `Solicitó ${cumplirRow.MedicoSolicitanteNombre}`
-											: '',
-										formatFecha(cumplirRow),
-									]
-										.filter(Boolean)
-										.join(' · ')}
-								</span>
+								<strong className={formStyles.solicitudDe}>
+									{cumplirRow.MedicoSolicitanteNombre
+										? `Solicitud de ${cumplirRow.MedicoSolicitanteNombre}`
+										: 'Solicitud del profesional'}
+								</strong>
+								<span className={formStyles.solicitudMeta}>{formatFecha(cumplirRow)}</span>
 								{(cumplirRow.Motivo || '').trim() ? (
 									<blockquote className={formStyles.solicitudQuote}>
 										{cumplirRow.Motivo.trim()}

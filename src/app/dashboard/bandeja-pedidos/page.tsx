@@ -12,6 +12,8 @@ import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { useAppContext } from '@/app/contexts/AppContext';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
+import PedidoAdjuntosField from '@/app/components/beds/estudios/PedidoAdjuntosField';
+import PacientePedidoHeader from '@/app/components/beds/estudios/PacientePedidoHeader';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from './bandejaPedidos.module.css';
@@ -276,7 +278,7 @@ function BandejaPedidosContent() {
 				.getTiposImagenes()
 				.then((list) => {
 					setTiposAdj(list);
-					setTipoAdjIc((prev) => prev || list[0]?.TipoImagen || '');
+					setTipoAdjIc('');
 				})
 				.catch(() => setTiposAdj([])),
 		);
@@ -836,20 +838,24 @@ function BandejaPedidosContent() {
 								'Interconsulta'
 							).trim()}
 						</h3>
-						<p className={styles.cardPatient}>{pacienteNombre(cumplirIc)}</p>
-						{ubicacionLinea(cumplirIc) ? (
-							<p className={styles.cardLocation}>{ubicacionLinea(cumplirIc)}</p>
-						) : null}
-						{pacienteSecundario(cumplirIc) ? (
-							<p className={styles.cardMeta}>{pacienteSecundario(cumplirIc)}</p>
-						) : null}
+						<PacientePedidoHeader
+							nombre={cumplirIc.PacienteNombre}
+							documento={cumplirIc.PacienteDocumento}
+							sexo={cumplirIc.PacienteSexo}
+							sexoDescripcion={cumplirIc.PacienteSexoDescripcion}
+							tipoAtencion={cumplirIc.TipoAtencion}
+							ubicacion={cumplirIc.Ubicacion}
+							idVisita={cumplirIc.IdVisita}
+							obraSocial={cumplirIc.ObraSocial}
+						/>
 						<div className={formStyles.solicitudBox}>
-							<span className={formStyles.solicitudKicker}>Mensaje del solicitante</span>
+							<strong className={formStyles.solicitudDe}>
+								{cumplirIc.MedicoSolicitanteNombre
+									? `Solicitud de ${cumplirIc.MedicoSolicitanteNombre}`
+									: 'Solicitud del profesional'}
+							</strong>
 							<span className={formStyles.solicitudMeta}>
 								{[
-									cumplirIc.MedicoSolicitanteNombre
-										? `Solicitó ${cumplirIc.MedicoSolicitanteNombre}`
-										: '',
 									(cumplirIc.SectorSolicitanteNombre || cumplirIc.SectorSolicitante)
 										? `desde ${cumplirIc.SectorSolicitanteNombre || cumplirIc.SectorSolicitante}`
 										: '',
@@ -876,28 +882,15 @@ function BandejaPedidosContent() {
 								placeholder="Redacte la respuesta de la interconsulta…"
 							/>
 						</label>
-						<label className={styles.field} style={{ display: 'block', marginTop: '0.75rem' }}>
-							<span>Adjuntar archivo (documentos del paciente)</span>
-							{tiposAdj.length > 0 ? (
-								<select
-									className={styles.select}
-									value={tipoAdjIc}
-									onChange={(e) => setTipoAdjIc(e.target.value)}
-									style={{ marginTop: '0.35rem', marginBottom: '0.35rem' }}
-								>
-									{tiposAdj.map((t) => (
-										<option key={t.TipoImagen} value={t.TipoImagen}>
-											{t.DescTipoImagen || t.TipoImagen}
-										</option>
-									))}
-								</select>
-							) : null}
-							<input
-								type="file"
-								multiple
-								onChange={(e) => setAdjuntosIc(Array.from(e.target.files || []))}
-							/>
-						</label>
+						<PedidoAdjuntosField
+							tipos={tiposAdj}
+							tipoImagen={tipoAdjIc}
+							onTipoChange={setTipoAdjIc}
+							archivos={adjuntosIc}
+							onArchivosChange={setAdjuntosIc}
+							disabled={busyId === icId(cumplirIc)}
+							idVisita={cumplirIc.IdVisita}
+						/>
 						<div className={styles.actions}>
 							<button
 								type="button"

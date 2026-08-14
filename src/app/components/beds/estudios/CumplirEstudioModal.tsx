@@ -7,6 +7,8 @@ import type { PedidoEstudio } from '@/app/types/estudios';
 import type { TipoImagenHC } from '@/app/types/adjuntos';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
+import PedidoAdjuntosField, { sugerirTipoImagen } from './PedidoAdjuntosField';
+import PacientePedidoHeader from './PacientePedidoHeader';
 
 type Props = {
 	open: boolean;
@@ -16,11 +18,12 @@ type Props = {
 	onCumplido: (pedido: PedidoEstudio) => void;
 };
 
-function sexoIcon(sexo?: string | null) {
-	const s = String(sexo || '').trim().toUpperCase();
-	if (s === 'F' || s.includes('FEM')) return '♀';
-	if (s === 'M' || s.includes('MASC')) return '♂';
-	return '·';
+function formatCuando(iso?: string | null, hora?: string | null) {
+	const raw = String(iso || '').trim();
+	const h = String(hora || '').trim();
+	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+	const fecha = m ? `${m[3]}/${m[2]}/${m[1]}` : raw;
+	return [fecha, h].filter(Boolean).join(' · ');
 }
 
 export default function CumplirEstudioModal({
@@ -43,14 +46,15 @@ export default function CumplirEstudioModal({
 		setError(null);
 		setArchivos([]);
 		setTipoImagen('');
+		const practica = (pedido?.PracticaSolicitada || pedido?.NomencladorDescripcion || '').trim();
 		void adjuntosService
 			.getTiposImagenes()
 			.then((list) => {
 				setTipos(list);
-				setTipoImagen((prev) => prev || list[0]?.TipoImagen || '');
+				setTipoImagen(sugerirTipoImagen(list, practica));
 			})
 			.catch(() => setTipos([]));
-	}, [open, pedido?.IdPedido]);
+	}, [open, pedido?.IdPedido, pedido?.PracticaSolicitada, pedido?.NomencladorDescripcion]);
 
 	if (!open || !pedido) return null;
 
@@ -60,10 +64,8 @@ export default function CumplirEstudioModal({
 	const mensaje = (pedido.NotasObservacion || '').trim();
 	const quien = (pedido.MedicoSolicitanteNombre || '').trim();
 	const origen = (pedido.SectorSolicitanteNombre || pedido.SectorSolicitante || '').trim();
-	const cuando = [pedido.FechaPedidoISO, pedido.HoraPedido].filter(Boolean).join(' ');
-	const metaSolicitud = [quien ? `Solicitó ${quien}` : '', origen ? `desde ${origen}` : '', cuando]
-		.filter(Boolean)
-		.join(' · ');
+	const cuando = formatCuando(pedido.FechaPedidoISO, pedido.HoraPedido);
+	const metaSolicitud = [origen ? `desde ${origen}` : '', cuando].filter(Boolean).join(' · ');
 
 	const submit = async () => {
 		if (!texto.trim()) {
@@ -104,25 +106,22 @@ export default function CumplirEstudioModal({
 				</div>
 				<div className={styles.modalBody}>
 					{error && <div className={formStyles.error}>{error}</div>}
-					<p className={formStyles.hint}>
-						{pedido.PacienteNombre ? (
-							<>
-								<span aria-hidden>{sexoIcon(pedido.PacienteSexo || pedido.PacienteSexoDescripcion)}</span>{' '}
-								<strong>{pedido.PacienteNombre}</strong>
-								{pedido.PacienteDocumento ? ` · Doc. ${pedido.PacienteDocumento}` : ''}
-								<br />
-							</>
-						) : null}
-						Visita {pedido.IdVisita}
-						{pedido.ObraSocial ? ` · ${pedido.ObraSocial}` : ''}
-						{pedido.TipoAtencion === 'INTERNADO' && pedido.Ubicacion
-							? ` · Internado · ${pedido.Ubicacion}`
-							: pedido.TipoAtencion === 'AMBULATORIO'
-								? ' · Ambulatorio'
-								: ''}
-					</p>
+
+					<PacientePedidoHeader
+						nombre={pedido.PacienteNombre}
+						documento={pedido.PacienteDocumento}
+						sexo={pedido.PacienteSexo}
+						sexoDescripcion={pedido.PacienteSexoDescripcion}
+						tipoAtencion={pedido.TipoAtencion}
+						ubicacion={pedido.Ubicacion}
+						idVisita={pedido.IdVisita}
+						obraSocial={pedido.ObraSocial}
+					/>
+
 					<div className={formStyles.solicitudBox}>
-						<span className={formStyles.solicitudKicker}>Mensaje del solicitante</span>
+						<strong className={formStyles.solicitudDe}>
+							{quien ? `Solicitud de ${quien}` : 'Solicitud del profesional'}
+						</strong>
 						{metaSolicitud ? (
 							<span className={formStyles.solicitudMeta}>{metaSolicitud}</span>
 						) : null}
@@ -132,6 +131,7 @@ export default function CumplirEstudioModal({
 							<p className={formStyles.solicitudEmpty}>No dejó observaciones en el pedido.</p>
 						)}
 					</div>
+
 					<label className={`${formStyles.label} ${formStyles.informeLabel}`}>
 						Tu informe / resultado
 						<textarea
@@ -142,35 +142,17 @@ export default function CumplirEstudioModal({
 							placeholder="Redacte el resultado del estudio…"
 						/>
 					</label>
-					<div className={formStyles.label}>
-						Adjuntar archivo (documentos del paciente)
-						{tipos.length > 0 ? (
-							<select
-								className={formStyles.input}
-								value={tipoImagen}
-								onChange={(e) => setTipoImagen(e.target.value)}
-								disabled={submitting}
-								style={{ marginTop: '0.35rem', marginBottom: '0.5rem' }}
-							>
-								{tipos.map((t) => (
-									<option key={t.TipoImagen} value={t.TipoImagen}>
-										{t.DescTipoImagen || t.TipoImagen}
-									</option>
-								))}
-							</select>
-						) : null}
-						<input
-							type="file"
-							multiple
-							disabled={submitting}
-							onChange={(e) => setArchivos(Array.from(e.target.files || []))}
-						/>
-						{archivos.length > 0 ? (
-							<p className={formStyles.hint} style={{ marginTop: '0.35rem' }}>
-								{archivos.length} archivo(s) listo(s) para subir a la visita {pedido.IdVisita}
-							</p>
-						) : null}
-					</div>
+
+					<PedidoAdjuntosField
+						tipos={tipos}
+						tipoImagen={tipoImagen}
+						onTipoChange={setTipoImagen}
+						archivos={archivos}
+						onArchivosChange={setArchivos}
+						disabled={submitting}
+						idVisita={pedido.IdVisita}
+					/>
+
 					<div className={formStyles.actions}>
 						<button type="button" className={formStyles.btnSecondary} onClick={onClose} disabled={submitting}>
 							Cancelar
