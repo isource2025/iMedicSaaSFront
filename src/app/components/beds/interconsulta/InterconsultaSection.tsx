@@ -94,9 +94,7 @@ export default function InterconsultaSection({
 			.listarSectoresDestino()
 			.then((list) => {
 				setSectores(list);
-				setIdSectorReceptor(
-					(prev) => prev || list.find((s) => s.valor === 'OFT')?.valor || list[0]?.valor || '',
-				);
+				setIdSectorReceptor((prev) => prev || '');
 			})
 			.catch(() => setSectores([]));
 	}, []);

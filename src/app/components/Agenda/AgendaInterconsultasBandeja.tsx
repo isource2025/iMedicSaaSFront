@@ -49,7 +49,6 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 				list,
 			);
 			if (resolved) setSector(resolved);
-			else if (list.find((s) => s.valor === 'OFT')) setSector('OFT');
 			else if (list[0]?.valor) setSector(list[0].valor);
 		});
 	}, [open, sectorInicial, sectorSeleccionado]);
@@ -253,9 +252,35 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 				{cumplirRow && (
 					<div className={icStyles.modalOverlay} onClick={() => setCumplirRow(null)}>
 						<div className={icStyles.modalContent} onClick={(e) => e.stopPropagation()}>
-							<h3>Responder interconsulta</h3>
+							<h3>
+								Responder ·{' '}
+								{(cumplirRow.PracticaSolicitada ||
+									cumplirRow.Especialidad ||
+									'Interconsulta'
+								).trim()}
+							</h3>
+							<div className={formStyles.solicitudBox}>
+								<span className={formStyles.solicitudKicker}>Mensaje del solicitante</span>
+								<span className={formStyles.solicitudMeta}>
+									{[
+										cumplirRow.MedicoSolicitanteNombre
+											? `Solicitó ${cumplirRow.MedicoSolicitanteNombre}`
+											: '',
+										formatFecha(cumplirRow),
+									]
+										.filter(Boolean)
+										.join(' · ')}
+								</span>
+								{(cumplirRow.Motivo || '').trim() ? (
+									<blockquote className={formStyles.solicitudQuote}>
+										{cumplirRow.Motivo.trim()}
+									</blockquote>
+								) : (
+									<p className={formStyles.solicitudEmpty}>No dejó un motivo en el pedido.</p>
+								)}
+							</div>
 							<label className={icStyles.formLabel}>
-								Respuesta / informe
+								Tu respuesta / informe
 								<textarea
 									value={respuesta}
 									onChange={(e) => setRespuesta(e.target.value)}

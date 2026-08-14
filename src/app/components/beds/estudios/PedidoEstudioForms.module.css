@@ -42,6 +42,59 @@
 	margin: 0 0 0.75rem;
 }
 
+.solicitudBox {
+	margin: 0 0 1.1rem;
+	padding: 0.85rem 1rem 0.95rem;
+	border-radius: 10px;
+	border: 1px solid #bae6fd;
+	background: #f0f9fc;
+	border-left: 3px solid #0284c7;
+}
+
+.solicitudKicker {
+	display: block;
+	font-size: 0.68rem;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #0369a1;
+	margin: 0 0 0.2rem;
+}
+
+.solicitudMeta {
+	display: block;
+	font-size: 0.78rem;
+	font-weight: 500;
+	color: #475569;
+	line-height: 1.4;
+	margin: 0 0 0.65rem;
+}
+
+.solicitudQuote {
+	margin: 0;
+	padding: 0;
+	border: none;
+	font-size: 0.95rem;
+	font-weight: 500;
+	font-style: italic;
+	color: #0f172a;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.solicitudEmpty {
+	margin: 0;
+	font-size: 0.85rem;
+	font-weight: 400;
+	font-style: italic;
+	color: #64748b;
+}
+
+.informeLabel {
+	margin-top: 0.15rem;
+}
+
 .results {
 	list-style: none;
 	margin: 0;

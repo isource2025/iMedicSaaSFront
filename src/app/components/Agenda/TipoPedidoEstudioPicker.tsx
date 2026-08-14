@@ -68,7 +68,7 @@ export default function TipoPedidoEstudioPicker({
 						? exclKey.split(',').map((x) => Number(x))
 						: [],
 				);
-				setResults(rows.filter((r) => !excl.has(r.idTipoPedido)));
+				setResults(rows.filter((r) => !excl.has(r.idPractica) && !excl.has(r.idTipoPedido)));
 				setSearchedTerm(t);
 			} catch {
 				if (reqId !== reqIdRef.current) return;
@@ -125,7 +125,7 @@ export default function TipoPedidoEstudioPicker({
 				<div className={styles.diagResults}>
 					{results.map((r) => (
 						<button
-							key={r.idTipoPedido}
+							key={`${r.idPractica}-${r.idTipoPedido}`}
 							type='button'
 							className={styles.diagRow}
 							onClick={() => handlePick(r)}

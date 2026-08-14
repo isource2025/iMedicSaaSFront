@@ -54,6 +54,17 @@ export default function CumplirEstudioModal({
 
 	if (!open || !pedido) return null;
 
+	const practica =
+		(pedido.PracticaSolicitada || pedido.NomencladorDescripcion || '').trim() ||
+		`Pedido #${pedido.IdPedido}`;
+	const mensaje = (pedido.NotasObservacion || '').trim();
+	const quien = (pedido.MedicoSolicitanteNombre || '').trim();
+	const origen = (pedido.SectorSolicitanteNombre || pedido.SectorSolicitante || '').trim();
+	const cuando = [pedido.FechaPedidoISO, pedido.HoraPedido].filter(Boolean).join(' ');
+	const metaSolicitud = [quien ? `Solicitó ${quien}` : '', origen ? `desde ${origen}` : '', cuando]
+		.filter(Boolean)
+		.join(' · ');
+
 	const submit = async () => {
 		if (!texto.trim()) {
 			setError('Ingrese el informe / resultado');
@@ -86,7 +97,7 @@ export default function CumplirEstudioModal({
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<h3>Completar · {pedido.PracticaSolicitada}</h3>
+					<h3>Completar · {practica}</h3>
 					<button type="button" className={styles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>
@@ -109,15 +120,20 @@ export default function CumplirEstudioModal({
 							: pedido.TipoAtencion === 'AMBULATORIO'
 								? ' · Ambulatorio'
 								: ''}
-						{pedido.MedicoSolicitanteNombre
-							? ` · Solicitó ${pedido.MedicoSolicitanteNombre}`
-							: ''}
-						{pedido.SectorSolicitanteNombre || pedido.SectorSolicitante
-							? ` (${pedido.SectorSolicitanteNombre || pedido.SectorSolicitante})`
-							: ''}
 					</p>
-					<label className={formStyles.label}>
-						Informe / resultado
+					<div className={formStyles.solicitudBox}>
+						<span className={formStyles.solicitudKicker}>Mensaje del solicitante</span>
+						{metaSolicitud ? (
+							<span className={formStyles.solicitudMeta}>{metaSolicitud}</span>
+						) : null}
+						{mensaje ? (
+							<blockquote className={formStyles.solicitudQuote}>{mensaje}</blockquote>
+						) : (
+							<p className={formStyles.solicitudEmpty}>No dejó observaciones en el pedido.</p>
+						)}
+					</div>
+					<label className={`${formStyles.label} ${formStyles.informeLabel}`}>
+						Tu informe / resultado
 						<textarea
 							className={formStyles.textarea}
 							value={texto}

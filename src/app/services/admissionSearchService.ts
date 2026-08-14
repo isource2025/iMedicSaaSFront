@@ -164,6 +164,7 @@ export type ExportSectionKey =
   | 'evoluciones'
   | 'estudios'
   | 'protocolos'
+  | 'epicrisis'
   | 'adjuntos';
 
 export interface ExportSelectivoBody {

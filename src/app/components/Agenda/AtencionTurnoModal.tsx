@@ -9,6 +9,7 @@ import TipoPedidoEstudioPicker from '@/app/components/Agenda/TipoPedidoEstudioPi
 import PracticaFacturacionPicker from '@/app/components/Agenda/PracticaFacturacionPicker';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { useModalLayer } from '@/app/hooks/useModalLayer';
+import { resolveReceptorPorTipo, sectorCoincideServicio } from '@/app/utils/resolveSectorReceptor';
 import styles from './AtencionTurnoModal.module.css';
 
 /** Prefijo (primeros 2 dígitos) del código de práctica, para filtrar sector receptor. */
@@ -353,13 +354,10 @@ export default function AtencionTurnoModal({
 			let changed = false;
 			const next = prev.map((p) => {
 				if (p.idSectorReceptor) return p;
-				const pref = prefijoPractica(p.tipo.idPractica);
-				const matches = pref
-					? sectoresReceptor.filter((s) => s.prefijos.includes(pref))
-					: sectoresReceptor;
-				if (matches.length === 1) {
+				const auto = resolveReceptorPorTipo(p.tipo, sectoresReceptor);
+				if (auto) {
 					changed = true;
-					return { ...p, idSectorReceptor: matches[0].valor };
+					return { ...p, idSectorReceptor: auto };
 				}
 				return p;
 			});
@@ -451,6 +449,7 @@ export default function AtencionTurnoModal({
 			})),
 			pedidosEstudios: pedidosEstudios.map((p) => ({
 				idTipoPedido: p.tipo.idTipoPedido,
+				idPractica: p.tipo.idPractica,
 				idSectorReceptor: p.idSectorReceptor.trim(),
 				notas: p.notas.trim() || undefined,
 				estadoUrgencia: p.estadoUrgencia,
@@ -729,9 +728,11 @@ export default function AtencionTurnoModal({
 								<div className={styles.itemGrid}>
 									{pedidosEstudios.map((p, idx) => {
 										const pref = prefijoPractica(p.tipo.idPractica);
-										const matches = pref
-											? sectoresReceptor.filter((s) => s.prefijos.includes(pref))
-											: sectoresReceptor;
+										const matches = sectoresReceptor.filter(
+											(s) =>
+												sectorCoincideServicio({ descripcion: p.tipo.descripcion }, s) ||
+												(pref ? s.prefijos.includes(pref) : false),
+										);
 										const sectoresBase = matches.length > 0 ? matches : sectoresReceptor;
 										const sectoresOpts = sectoresBase.map((s) => ({
 											value: s.valor,

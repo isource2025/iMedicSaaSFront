@@ -4,7 +4,7 @@ import type { AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import type { VisitDetailTabId } from './AdmissionVisitDetailModal';
 import styles from './AdmissionSearchClinicalBadges.module.css';
 
-export type ClinicalBadgeKind = 'HCI' | 'Prác' | 'Ind' | 'Med' | 'Evo' | 'Est' | 'Prot' | 'Adj';
+export type ClinicalBadgeKind = 'HCI' | 'Prác' | 'Ind' | 'Med' | 'Evo' | 'Est' | 'Prot' | 'Epi' | 'Adj';
 
 export const CLINICAL_BADGE_TAB: Record<ClinicalBadgeKind, VisitDetailTabId> = {
 	HCI: 'hcIngreso',
@@ -14,6 +14,7 @@ export const CLINICAL_BADGE_TAB: Record<ClinicalBadgeKind, VisitDetailTabId> = {
 	Evo: 'evoluciones',
 	Est: 'estudios',
 	Prot: 'protocolos',
+	Epi: 'epicrisis',
 	Adj: 'adjuntos',
 };
 
@@ -42,6 +43,7 @@ const BADGE_ITEMS: {
 	{ label: 'Evo', keys: ['CntEvoluciones', 'cntEvoluciones'], title: 'Evoluciones' },
 	{ label: 'Est', keys: ['CntEstudios', 'cntEstudios', 'CntLaboratorios', 'cntLaboratorios'], title: 'Estudios solicitados' },
 	{ label: 'Prot', keys: ['CntProtocolos', 'cntProtocolos'], title: 'Protocolos' },
+	{ label: 'Epi', keys: ['CntEpicrisis', 'cntEpicrisis'], title: 'Epicrisis' },
 	{ label: 'Adj', keys: ['CntAdjuntos', 'cntAdjuntos'], title: 'Adjuntos' },
 ];
 

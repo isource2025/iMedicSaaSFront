@@ -58,6 +58,7 @@ export interface CrearPedidoEstudioPayload {
   idVisita: number;
   sectorSolicitante: string;
   idTipoPedido: number;
+  idPractica?: number;
   idSectorReceptor: string;
   notas?: string;
   estadoUrgencia?: 'Normal' | 'Medio' | 'Urgente';

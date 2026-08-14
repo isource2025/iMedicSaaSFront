@@ -299,6 +299,19 @@
   line-height: 1.35;
 }
 
+.bandejaSplit {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.55rem;
+  font-size: 0.75rem;
+  color: #0c4a6e;
+}
+
+.bandejaSplit strong {
+  font-weight: 800;
+}
+
 .bandejaLinks {
   display: flex;
   gap: 0.5rem;

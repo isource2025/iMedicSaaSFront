@@ -12,6 +12,7 @@ export type SectorLoginLike = {
 export type ReceptorLike = {
 	valor: string;
 	descripcion?: string;
+	prefijos?: string[];
 };
 
 function fold(v: unknown): string {
@@ -87,4 +88,21 @@ export function resolveSectorReceptor(
 	if (!list?.length) return '';
 	const hit = list.find((s) => sectorCoincideServicio(sectorLogin, s));
 	return hit ? String(hit.valor || '').trim() : '';
+}
+
+/** Destino del pedido: stem clínico del tipo (ECOG → ECO) y, si no hay, prefijo de práctica. */
+export function resolveReceptorPorTipo(
+	tipo: { descripcion?: string | null; idPractica?: number | string | null } | null,
+	list: ReceptorLike[],
+): string {
+	if (!tipo || !list?.length) return '';
+	const byStem = resolveSectorReceptor({ descripcion: tipo.descripcion }, list);
+	if (byStem) return byStem;
+	const pref = String(tipo.idPractica ?? '')
+		.replace(/\D/g, '')
+		.padStart(2, '0')
+		.slice(0, 2);
+	if (!pref) return '';
+	const match = list.find((s) => Array.isArray(s.prefijos) && s.prefijos.includes(pref));
+	return match ? String(match.valor || '').trim() : '';
 }

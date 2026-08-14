@@ -13,9 +13,7 @@ function valorPersonalFromUser(user: Record<string, unknown> | null): number | n
 	const raw =
 		user.valorPersonal ??
 		user.ValorPersonal ??
-		user.idValorpersonal ??
-		user.idCodOperador ??
-		user.codigoOperador;
+		user.idValorpersonal;
 	const n = parseInt(String(raw ?? ''), 10);
 	return Number.isFinite(n) && n > 0 ? n : null;
 }
@@ -55,7 +53,8 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 	const [items, setItems] = useState<NotificacionItem[]>([]);
 	const [loadingList, setLoadingList] = useState(false);
 	const panelRef = useRef<HTMLDivElement>(null);
-	const { count: bandejaLibres } = useBandejaPedidosCount(Boolean(userId));
+	const { count: bandejaLibres, estudios: bandejaEstudios, interconsultas: bandejaIc } =
+		useBandejaPedidosCount(Boolean(userId));
 
 	const refreshUser = useCallback(() => {
 		const u = authService.getCurrentUser() as Record<string, unknown> | null;
@@ -112,14 +111,6 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 	}, [open, userId, loadList]);
 
 	useEffect(() => {
-		const onOpenEvent = () => {
-			if (userId) setOpen(true);
-		};
-		window.addEventListener(OPEN_EVENT, onOpenEvent);
-		return () => window.removeEventListener(OPEN_EVENT, onOpenEvent);
-	}, [userId]);
-
-	useEffect(() => {
 		if (!open) return;
 		const onDoc = (e: MouseEvent) => {
 			const el = panelRef.current;
@@ -133,9 +124,34 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		return () => document.removeEventListener('mousedown', onDoc);
 	}, [open]);
 
+	const marcarTodasAlAbrir = useCallback(async () => {
+		if (!userId) return;
+		try {
+			await notificacionesService.marcarTodasLeidas(userId);
+			setCount(0);
+			setItems((prev) => prev.map((x) => ({ ...x, Leida: 1 })));
+		} catch {
+			/* noop */
+		}
+	}, [userId]);
+
+	useEffect(() => {
+		const onOpenEvent = () => {
+			if (!userId) return;
+			void marcarTodasAlAbrir();
+			setOpen(true);
+		};
+		window.addEventListener(OPEN_EVENT, onOpenEvent);
+		return () => window.removeEventListener(OPEN_EVENT, onOpenEvent);
+	}, [userId, marcarTodasAlAbrir]);
+
 	const handleOpen = () => {
 		if (!userId) return;
-		setOpen((v) => !v);
+		setOpen((v) => {
+			const next = !v;
+			if (next) void marcarTodasAlAbrir();
+			return next;
+		});
 	};
 
 	const irBandeja = (tab?: 'estudios' | 'interconsultas') => {
@@ -200,18 +216,18 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	const hasUnread = count > 0;
 	const hasPedidos = bandejaLibres > 0;
-	const fabHighlight = hasUnread || hasPedidos;
-	const badgeTotal = count + bandejaLibres;
+	const fabHighlight = hasUnread;
+	const badgeTotal = count;
 
 	return (
 		<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={panelRef}>
 			<button
 				id="notifications-fab-trigger"
 				type="button"
-				className={`${styles.fab} ${fabHighlight ? styles.fabAlert : styles.fabIdle} ${hasPedidos ? styles.fabPedidos : ''}`}
+				className={`${styles.fab} ${fabHighlight ? styles.fabAlert : styles.fabIdle}`}
 				onClick={handleOpen}
 				aria-expanded={open}
-				aria-label={`Notificaciones${fabHighlight ? `, ${badgeTotal} pendientes` : ''}`}
+				aria-label={`Notificaciones${fabHighlight ? `, ${badgeTotal} sin leer` : ''}`}
 				title="Notificaciones"
 			>
 				<svg
@@ -264,6 +280,14 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 								? `${bandejaLibres} libre${bandejaLibres === 1 ? '' : 's'} para aceptar`
 								: 'Sin pedidos libres en tu servicio'}
 						</p>
+						<div className={styles.bandejaSplit}>
+							<span>
+								<strong>{bandejaEstudios}</strong> estudio{bandejaEstudios === 1 ? '' : 's'}
+							</span>
+							<span>
+								<strong>{bandejaIc}</strong> interconsulta{bandejaIc === 1 ? '' : 's'}
+							</span>
+						</div>
 						<div className={styles.bandejaLinks}>
 							<span
 								role="link"

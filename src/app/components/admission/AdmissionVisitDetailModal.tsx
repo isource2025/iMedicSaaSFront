@@ -73,6 +73,24 @@ export type VisitDetailPayload = {
     realizadorNombre?: string;
     RealizadorNombre?: string;
   }>;
+  epicrisis?: Array<{
+    IdHCEpicrisis?: number;
+    idHCEpicrisis?: number;
+    Fecha?: string;
+    fecha?: string;
+    Hora?: string;
+    hora?: string;
+    SectorDescripcion?: string;
+    sectorDescripcion?: string;
+    ProfesionalNombreCompleto?: string;
+    profesionalNombreCompleto?: string;
+    Epicrisis?: string;
+    epicrisis?: string;
+    Diagnostico?: string;
+    diagnostico?: string;
+    DiagnosticoText?: string;
+    diagnosticoText?: string;
+  }>;
   /** Protocolos clínicos HCProtocolosPtes */
   protocolos?: Array<{
     idProtocolo?: number;
@@ -100,6 +118,7 @@ export type VisitDetailTabId =
   | 'evoluciones'
   | 'estudios'
   | 'protocolos'
+  | 'epicrisis'
   | 'adjuntos';
 
 interface AdmissionVisitDetailModalProps {

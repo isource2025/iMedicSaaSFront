@@ -13,23 +13,16 @@ export const clarionDateToDate = (clarionDate: number | string | null | undefine
   if (clarionDate === null || clarionDate === undefined || clarionDate === '') {
     return null;
   }
-  
-  // Convertir a número si es string
+
   const numericDate = typeof clarionDate === 'string' ? parseInt(clarionDate, 10) : clarionDate;
-  
-  // Validar que sea un número válido
-  if (isNaN(numericDate)) {
+  if (!Number.isFinite(numericDate) || numericDate <= 0) {
     return null;
   }
-  
-  // Algoritmo de conversión de fecha Clarion a fecha JavaScript
-  // En Clarion, las fechas se almacenan como días desde el 28/12/1800
-  const clarionEpochDate = new Date(1800, 11, 28); // 28 de diciembre de 1800
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  
-  const resultDate = new Date(clarionEpochDate.getTime() + (numericDate * millisecondsPerDay));
-  
-  return resultDate;
+
+  // Calendario UTC (28/12/1800). No usar getTime() local: DST / offset histórico corre el día.
+  const utc = Date.UTC(1800, 11, 28) + numericDate * 86400000;
+  const d = new Date(utc);
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0);
 };
 
 /**
@@ -146,15 +139,9 @@ export const formatHoraSimple = (hora: string | null | undefined): string => {
  * @returns Número de días desde 28/12/1800 (formato Clarion)
  */
 export const dateToClarionDate = (date: Date): number => {
-  // Fecha base Clarion: 28/12/1800
-  const clarionEpochDate = new Date(1800, 11, 28);
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  
-  // Calcular la diferencia en días
-  const diffTime = date.getTime() - clarionEpochDate.getTime();
-  const diffDays = Math.floor(diffTime / millisecondsPerDay);
-  
-  return diffDays;
+  const utcFecha = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const base = Date.UTC(1800, 11, 28);
+  return Math.round((utcFecha - base) / 86400000);
 };
 
 /**
@@ -185,9 +172,15 @@ export function horaLocalHHMM(date: Date = new Date()): string {
 
 /** Clarion DATE → YYYY-MM-DD local. */
 export function clarionDateToISO(clarionDate: number | string | null | undefined): string | null {
-  const date = clarionDateToDate(clarionDate);
-  if (!date || Number.isNaN(date.getTime())) return null;
-  return fechaLocalISO(date);
+  const numericDate =
+    typeof clarionDate === 'string' ? parseInt(clarionDate, 10) : clarionDate;
+  if (!Number.isFinite(numericDate) || Number(numericDate) <= 0) return null;
+  const utc = Date.UTC(1800, 11, 28) + Number(numericDate) * 86400000;
+  const d = new Date(utc);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 /** Extrae el código de cama si el id viene como "SECTOR-CAMA". */

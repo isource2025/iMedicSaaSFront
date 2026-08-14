@@ -20,6 +20,7 @@ const SECTION_LABELS: Record<Exclude<VisitDetailSectionId, 'resumen'>, string> =
   evoluciones: 'Evoluciones',
   estudios: 'Estudios solicitados',
   protocolos: 'Protocolos',
+  epicrisis: 'Epicrisis',
   adjuntos: 'Adjuntos',
 };
 
@@ -31,6 +32,7 @@ const SECTION_ORDER: Exclude<VisitDetailSectionId, 'resumen'>[] = [
   'evoluciones',
   'estudios',
   'protocolos',
+  'epicrisis',
   'adjuntos',
 ];
 
@@ -172,8 +174,9 @@ export default function AdmissionVisitDetailContent({
     const evo = data?.evolucionesMedicas?.length ?? 0;
     const estudios = data?.estudios?.length ?? 0;
     const protocolos = data?.protocolos?.length ?? 0;
+    const epicrisis = data?.epicrisis?.length ?? 0;
     const adj = data?.practicas?.adjuntos?.length ?? 0;
-    return { hci, practicas, indicaciones, med, evo, estudios, protocolos, adj };
+    return { hci, practicas, indicaciones, med, evo, estudios, protocolos, epicrisis, adj };
   }, [data]);
 
   const countFor = (id: Exclude<VisitDetailSectionId, 'resumen'>): number => {
@@ -185,6 +188,7 @@ export default function AdmissionVisitDetailContent({
       evoluciones: counts.evo,
       estudios: counts.estudios,
       protocolos: counts.protocolos,
+      epicrisis: counts.epicrisis,
       adjuntos: counts.adj,
     };
     return map[id];
@@ -512,6 +516,38 @@ export default function AdmissionVisitDetailContent({
                     .join(', ')}
                 </p>
               ) : null}
+            </div>
+          );
+        });
+
+      case 'epicrisis':
+        if (!data.epicrisis?.length) {
+          return <EmptyState message="No hay epicrisis para esta visita." />;
+        }
+        return data.epicrisis.map((ep, i) => {
+          const id = ep.IdHCEpicrisis ?? ep.idHCEpicrisis ?? i;
+          const fecha = str(ep.Fecha || ep.fecha).slice(0, 16);
+          const hora = str(ep.Hora || ep.hora);
+          const prof = str(ep.ProfesionalNombreCompleto || ep.profesionalNombreCompleto);
+          const sector = str(ep.SectorDescripcion || ep.sectorDescripcion);
+          const texto = str(ep.Epicrisis || ep.epicrisis);
+          const dx = str(ep.Diagnostico || ep.diagnostico);
+          const dxTxt = str(ep.DiagnosticoText || ep.diagnosticoText);
+          return (
+            <div key={String(id)} className={styles.listItem}>
+              <p className={styles.listItemTitle}>Epicrisis</p>
+              <p className={styles.listItemMeta}>
+                {[fecha, hora, prof, sector].filter(Boolean).join(' · ')}
+              </p>
+              {dx ? (
+                <p className={styles.fieldLine}>
+                  <span className={styles.fieldLabel}>Diagnóstico:</span> {dx}
+                </p>
+              ) : null}
+              {dxTxt ? <p className={styles.plainText}>{dxTxt}</p> : null}
+              {texto ? <p className={styles.plainText}>{texto}</p> : (
+                <p className={styles.muted}>Sin texto de epicrisis.</p>
+              )}
             </div>
           );
         });

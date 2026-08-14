@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import type { SectorReceptorEstudio, TipoPedidoEstudio } from '@/app/types/estudios';
+import { resolveReceptorPorTipo } from '@/app/utils/resolveSectorReceptor';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
 
@@ -72,9 +73,7 @@ export default function SolicitarEstudioModal({
 
 	const sectorAuto = useMemo(() => {
 		if (!tipo || !sectores.length) return '';
-		const pref = String(tipo.idPractica || '').padStart(2, '0').slice(0, 2);
-		const match = sectores.find((s) => s.prefijos.some((p) => p === pref));
-		return match?.valor || '';
+		return resolveReceptorPorTipo(tipo, sectores);
 	}, [tipo, sectores]);
 
 	useEffect(() => {
@@ -99,6 +98,7 @@ export default function SolicitarEstudioModal({
 				idVisita,
 				sectorSolicitante,
 				idTipoPedido: tipo.idTipoPedido,
+				idPractica: tipo.idPractica,
 				idSectorReceptor: idSectorReceptor.trim(),
 				notas: notas.trim() || undefined,
 				estadoUrgencia: urgencia,
@@ -148,7 +148,7 @@ export default function SolicitarEstudioModal({
 								{tipos.length > 0 && (
 									<ul className={formStyles.results}>
 										{tipos.map((t) => (
-											<li key={t.idTipoPedido}>
+											<li key={`${t.idPractica}-${t.idTipoPedido}`}>
 												<button
 													type="button"
 													onClick={() => {

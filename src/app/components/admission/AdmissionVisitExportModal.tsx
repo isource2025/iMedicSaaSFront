@@ -13,6 +13,7 @@ const SECTIONS: { id: ExportSectionKey; label: string }[] = [
   { id: 'evoluciones', label: 'Evoluciones' },
   { id: 'estudios', label: 'Estudios solicitados (pedidos / resultados)' },
   { id: 'protocolos', label: 'Protocolos clínicos' },
+  { id: 'epicrisis', label: 'Epicrisis' },
   { id: 'adjuntos', label: 'Adjuntos (solo metadatos; sin archivos binarios)' },
 ];
 
@@ -26,6 +27,7 @@ const NEEDS_DATE_SECTIONS: ExportSectionKey[] = [
   'medicamentos',
   'estudios',
   'protocolos',
+  'epicrisis',
   'adjuntos',
   'evoluciones',
 ];

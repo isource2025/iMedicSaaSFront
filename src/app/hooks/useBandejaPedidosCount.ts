@@ -8,24 +8,34 @@ import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 
 const POLL_MS = 45_000;
 
+export type BandejaPedidosCount = {
+	count: number;
+	estudios: number;
+	interconsultas: number;
+	refresh: () => Promise<void>;
+};
+
 /** Contador de pedidos libres (estudios + interconsultas) en los servicios del usuario. */
 export function useBandejaPedidosCount(
 	enabled = true,
 	options?: { poll?: boolean },
-) {
+): BandejaPedidosCount {
 	const poll = options?.poll !== false;
-	const [count, setCount] = useState(0);
+	const [estudios, setEstudios] = useState(0);
+	const [interconsultas, setInterconsultas] = useState(0);
 	const { sectorSeleccionado } = useAppContext();
 
 	const refresh = useCallback(async () => {
 		if (!enabled) {
-			setCount(0);
+			setEstudios(0);
+			setInterconsultas(0);
 			return;
 		}
 		try {
 			const sectores = await estudiosService.listarSectoresReceptor({ soloMios: true });
 			if (!sectores.length) {
-				setCount(0);
+				setEstudios(0);
+				setInterconsultas(0);
 				return;
 			}
 			const preferred = resolveSectorReceptor(sectorSeleccionado, sectores);
@@ -38,18 +48,21 @@ export function useBandejaPedidosCount(
 
 			const counts = await Promise.all(
 				unique.map(async (sector) => {
-					const [estudios, ics] = await Promise.all([
+					const [est, ics] = await Promise.all([
 						estudiosService.listarPendientes(sector),
 						interconsultasService.listarPendientes(sector),
 					]);
-					return (
-						estudios.filter((r) => !r.Tomado).length + ics.filter((r) => !r.Tomado).length
-					);
+					return {
+						estudios: est.filter((r) => !r.Tomado).length,
+						interconsultas: ics.filter((r) => !r.Tomado).length,
+					};
 				}),
 			);
-			setCount(counts.reduce((a, b) => a + b, 0));
+			setEstudios(counts.reduce((a, b) => a + b.estudios, 0));
+			setInterconsultas(counts.reduce((a, b) => a + b.interconsultas, 0));
 		} catch {
-			setCount(0);
+			setEstudios(0);
+			setInterconsultas(0);
 		}
 	}, [enabled, sectorSeleccionado]);
 
@@ -70,5 +83,10 @@ export function useBandejaPedidosCount(
 		};
 	}, [enabled, refresh, poll]);
 
-	return { count, refresh };
+	return {
+		count: estudios + interconsultas,
+		estudios,
+		interconsultas,
+		refresh,
+	};
 }

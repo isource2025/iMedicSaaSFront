@@ -13,6 +13,7 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
+import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from './bandejaPedidos.module.css';
 
 const POLL_MS = 30_000;
@@ -62,7 +63,9 @@ function pacienteSecundario(r: {
 }
 
 function tituloPracticaEstudio(r: PedidoEstudio) {
-	const nombre = r.PracticaSolicitada || `Pedido #${r.IdPedido}`;
+	const nombre =
+		(r.PracticaSolicitada || r.NomencladorDescripcion || r.NotasObservacion || '').trim() ||
+		`Pedido #${r.IdPedido}`;
 	const cod = r.CodigoPractica != null && Number(r.CodigoPractica) > 0 ? String(r.CodigoPractica) : '';
 	return cod ? `${cod} · ${nombre}` : nombre;
 }
@@ -96,27 +99,49 @@ function OrigenPedido({
 	}
 	return (
 		<>
-			Desde <strong className={styles.cardEmph}>{serv}</strong>
+			Pedido desde <strong className={styles.cardEmph}>{serv}</strong>
 		</>
 	);
 }
 
 function TituloPracticaEstudio({ r }: { r: PedidoEstudio }) {
-	const nombre = r.PracticaSolicitada || `Pedido #${r.IdPedido}`;
+	const nombre =
+		(r.PracticaSolicitada || r.NomencladorDescripcion || r.NotasObservacion || '').trim() ||
+		`Pedido #${r.IdPedido}`;
+	const notas = (r.NotasObservacion || '').trim();
+	const mostrarNotas = Boolean(notas && notas.toUpperCase() !== nombre.toUpperCase());
 	const cod = r.CodigoPractica != null && Number(r.CodigoPractica) > 0 ? String(r.CodigoPractica) : '';
-	if (!cod) return <strong className={styles.practicaNombre}>{nombre}</strong>;
 	return (
 		<>
-			<strong className={styles.practicaCod}>{cod}</strong>
-			<span className={styles.practicaSep}> · </span>
-			<strong className={styles.practicaNombre}>{nombre}</strong>
+			{cod ? (
+				<>
+					<strong className={styles.practicaCod}>{cod}</strong>
+					<span className={styles.practicaSep}> · </span>
+					<strong className={styles.practicaNombre}>{nombre}</strong>
+				</>
+			) : (
+				<strong className={styles.practicaNombre}>{nombre}</strong>
+			)}
+			{mostrarNotas ? <span className={styles.practicaNotas}>{notas}</span> : null}
 		</>
 	);
 }
 
 function TituloInterconsulta({ r }: { r: InterconsultaRow }) {
-	const motivo = (r.Motivo || r.NotasObservacion || 'Interconsulta').trim();
-	return <strong className={styles.practicaNombre}>{motivo.slice(0, 140)}</strong>;
+	const titulo = (
+		r.PracticaSolicitada ||
+		r.TipoPedidoDescripcion ||
+		r.Especialidad ||
+		'Interconsulta'
+	).trim();
+	const motivo = (r.Motivo || r.NotasObservacion || '').trim();
+	const mostrarMotivo = Boolean(motivo && motivo.toUpperCase() !== titulo.toUpperCase());
+	return (
+		<>
+			<strong className={styles.practicaNombre}>{titulo.slice(0, 140)}</strong>
+			{mostrarMotivo ? <span className={styles.practicaNotas}>{motivo.slice(0, 180)}</span> : null}
+		</>
+	);
 }
 
 function fingerprintEstudios(rows: PedidoEstudio[]) {
@@ -803,7 +828,14 @@ function BandejaPedidosContent() {
 			{cumplirIc ? (
 				<div className={styles.modalOverlay} onClick={() => setCumplirIc(null)}>
 					<div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-						<h3 className={styles.modalTitle}>Completar interconsulta</h3>
+						<h3 className={styles.modalTitle}>
+							Completar ·{' '}
+							{(cumplirIc.PracticaSolicitada ||
+								cumplirIc.TipoPedidoDescripcion ||
+								cumplirIc.Especialidad ||
+								'Interconsulta'
+							).trim()}
+						</h3>
 						<p className={styles.cardPatient}>{pacienteNombre(cumplirIc)}</p>
 						{ubicacionLinea(cumplirIc) ? (
 							<p className={styles.cardLocation}>{ubicacionLinea(cumplirIc)}</p>
@@ -811,13 +843,39 @@ function BandejaPedidosContent() {
 						{pacienteSecundario(cumplirIc) ? (
 							<p className={styles.cardMeta}>{pacienteSecundario(cumplirIc)}</p>
 						) : null}
-						<textarea
-							className={styles.textarea}
-							rows={6}
-							value={respuestaIc}
-							onChange={(e) => setRespuestaIc(e.target.value)}
-							placeholder="Respuesta / resultado…"
-						/>
+						<div className={formStyles.solicitudBox}>
+							<span className={formStyles.solicitudKicker}>Mensaje del solicitante</span>
+							<span className={formStyles.solicitudMeta}>
+								{[
+									cumplirIc.MedicoSolicitanteNombre
+										? `Solicitó ${cumplirIc.MedicoSolicitanteNombre}`
+										: '',
+									(cumplirIc.SectorSolicitanteNombre || cumplirIc.SectorSolicitante)
+										? `desde ${cumplirIc.SectorSolicitanteNombre || cumplirIc.SectorSolicitante}`
+										: '',
+									formatFechaIc(cumplirIc),
+								]
+									.filter(Boolean)
+									.join(' · ')}
+							</span>
+							{(cumplirIc.Motivo || cumplirIc.NotasObservacion || '').trim() ? (
+								<blockquote className={formStyles.solicitudQuote}>
+									{(cumplirIc.Motivo || cumplirIc.NotasObservacion || '').trim()}
+								</blockquote>
+							) : (
+								<p className={formStyles.solicitudEmpty}>No dejó un motivo en el pedido.</p>
+							)}
+						</div>
+						<label className={formStyles.label}>
+							Tu respuesta / resultado
+							<textarea
+								className={styles.textarea}
+								rows={6}
+								value={respuestaIc}
+								onChange={(e) => setRespuestaIc(e.target.value)}
+								placeholder="Redacte la respuesta de la interconsulta…"
+							/>
+						</label>
 						<label className={styles.field} style={{ display: 'block', marginTop: '0.75rem' }}>
 							<span>Adjuntar archivo (documentos del paciente)</span>
 							{tiposAdj.length > 0 ? (

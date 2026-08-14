@@ -42,6 +42,7 @@ export interface CierreProcedimientoPayload {
 
 export interface CierrePedidoEstudioPayload {
 	idTipoPedido: number;
+	idPractica?: number;
 	idSectorReceptor: string;
 	notas?: string;
 	estadoUrgencia?: 'Normal' | 'Urgente' | 'Medio';
