@@ -127,6 +127,7 @@ interface AdmissionVisitDetailModalProps {
   numeroVisita: number | null;
   loading: boolean;
   data: VisitDetailPayload | null;
+  error?: string;
   initialTab?: VisitDetailTabId;
   backLabel?: string;
   onReloadData?: () => void;
@@ -138,6 +139,7 @@ export default function AdmissionVisitDetailModal({
   numeroVisita,
   loading,
   data,
+  error,
   initialTab,
   backLabel = '← Atrás a resultados',
   onReloadData,
@@ -158,6 +160,7 @@ export default function AdmissionVisitDetailModal({
             numeroVisita={numeroVisita}
             loading={loading}
             data={data}
+            error={error}
             initialSection={initialTab}
             onBack={onClose}
             backLabel={backLabel}

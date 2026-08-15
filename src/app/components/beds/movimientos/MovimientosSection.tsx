@@ -10,6 +10,7 @@ import EmptyState from "../shared/EmptyState";
 import ExportButton, { ExportOption } from "../shared/ExportButton";
 import { exportToPDF } from "../../../utils/pdfExport";
 import { obtenerInfoEmpresa } from "../../../services/empresaService";
+import { clarionDateToISO, horaMostrada, isoCalendarioADmy } from "../../../utils/dateUtils";
 
 interface MovimientosProps {
 	numeroVisita: number | null;
@@ -21,31 +22,8 @@ interface MovimientosProps {
 }
 
 function formatClarionDate(v: number | null | undefined): string {
-	if (!v) return "—";
-	try {
-		const base = new Date(1800, 11, 28);
-		base.setDate(base.getDate() + Number(v));
-		return base.toLocaleDateString("es-AR");
-	} catch {
-		return String(v);
-	}
-}
-
-function formatClarionTime(v: number | null | undefined): string {
-	if (!v) return "—";
-	const ms = (Number(v) - 1) * 10;
-	const h = Math.floor(ms / 3600000);
-	const m = Math.floor((ms % 3600000) / 60000);
-	return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-function formatISODate(v: string | null | undefined): string {
-	if (!v) return "—";
-	if (/^\d{4}-\d{2}-\d{2}/.test(v)) {
-		const d = new Date(v);
-		return d.toLocaleDateString("es-AR");
-	}
-	return v;
+	const iso = clarionDateToISO(v);
+	return iso ? isoCalendarioADmy(iso) : "—";
 }
 
 export default function MovimientosSection({
@@ -100,11 +78,11 @@ export default function MovimientosSection({
 					{ label: "Sector", value: m.NombreSector || m.ValorSector || "—" },
 					{
 						label: "Ingreso",
-						value: `${m.FechaAdmisionISO || formatClarionDate(m.FechaAdmision) || "—"} ${m.HoraAdmisionISO || ""}`.trim(),
+						value: `${m.FechaAdmisionISO ? isoCalendarioADmy(m.FechaAdmisionISO) : formatClarionDate(m.FechaAdmision)} ${horaMostrada(m.HoraAdmisionISO || m.HoraAdmision)}`.trim(),
 					},
 					{
 						label: "Egreso",
-						value: `${m.FechaEgresoISO || formatClarionDate(m.FechaEgreso) || "—"} ${m.HoraEgresoISO || ""}`.trim(),
+						value: `${m.FechaEgresoISO ? isoCalendarioADmy(m.FechaEgresoISO) : formatClarionDate(m.FechaEgreso)} ${horaMostrada(m.HoraEgresoISO || m.HoraEgreso)}`.trim(),
 					},
 					{
 						label: "Disposición",
@@ -215,13 +193,13 @@ export default function MovimientosSection({
 								<tbody>
 									{movimientos.map((m, idx) => {
 										const fechaAdm = m.FechaAdmisionISO
-											? formatISODate(m.FechaAdmisionISO)
+											? isoCalendarioADmy(m.FechaAdmisionISO)
 											: formatClarionDate(m.FechaAdmision);
-										const horaAdm = m.HoraAdmisionISO || formatClarionTime(m.HoraAdmision);
+										const horaAdm = horaMostrada(m.HoraAdmisionISO || m.HoraAdmision);
 										const fechaEg = m.FechaEgresoISO
-											? formatISODate(m.FechaEgresoISO)
+											? isoCalendarioADmy(m.FechaEgresoISO)
 											: formatClarionDate(m.FechaEgreso);
-										const horaEg = m.HoraEgresoISO || formatClarionTime(m.HoraEgreso);
+										const horaEg = horaMostrada(m.HoraEgresoISO || m.HoraEgreso);
 
 										return (
 									<tr key={idx} className={idx === 0 ? tStyles.rowActual : ""}>

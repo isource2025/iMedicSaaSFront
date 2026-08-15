@@ -61,7 +61,7 @@ export function VisitClinicalBadges({ row, onBadgeClick, activeKind }: Props) {
 				const count = visitClinicalCount(row, ...keys);
 				const isActive = activeKind === label;
 				const className = `${styles.visitBadge} ${count === 0 ? styles.visitBadgeZero : ''} ${
-					count > 0 && onBadgeClick ? styles.visitBadgeClickable : ''
+					onBadgeClick ? styles.visitBadgeClickable : ''
 				} ${isActive ? styles.visitBadgeActive : ''}`;
 				const content = (
 					<>
@@ -69,7 +69,7 @@ export function VisitClinicalBadges({ row, onBadgeClick, activeKind }: Props) {
 					</>
 				);
 
-				if (count > 0 && onBadgeClick) {
+				if (onBadgeClick) {
 					return (
 						<button
 							key={label}

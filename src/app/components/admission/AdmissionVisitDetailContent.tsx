@@ -134,6 +134,7 @@ export interface AdmissionVisitDetailContentProps {
   numeroVisita: number | null;
   loading: boolean;
   data: VisitDetailPayload | null;
+  error?: string;
   initialSection?: VisitDetailSectionId;
   onBack?: () => void;
   backLabel?: string;
@@ -151,6 +152,7 @@ export default function AdmissionVisitDetailContent({
   numeroVisita,
   loading,
   data,
+  error,
   initialSection,
   onBack,
   backLabel = '← Atrás',
@@ -603,7 +605,13 @@ export default function AdmissionVisitDetailContent({
       ) : null}
 
       {!loading && !data ? (
-        <EmptyState message="No se pudo cargar el detalle. Probá de nuevo." />
+        <EmptyState
+          message={
+            error?.trim()
+              ? error
+              : 'No se pudo cargar el detalle. Probá de nuevo.'
+          }
+        />
       ) : null}
 
       {!loading && data && singleSectionOnly ? (

@@ -84,6 +84,7 @@ export default function AdmissionSearchPage() {
     loadingDetail,
     detailModalOpen,
     detailInitialTab,
+    detailError,
     openVisitDetail,
     closeVisitDetail,
     reloadVisitDetail,
@@ -530,6 +531,7 @@ export default function AdmissionSearchPage() {
         numeroVisita={selectedVisit}
         loading={loadingDetail}
         data={detailData}
+        error={detailError}
         initialTab={detailInitialTab}
         onReloadData={() => void reloadVisitDetail()}
       />

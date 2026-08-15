@@ -202,7 +202,10 @@ export const admissionSearchService = {
   },
 
   async detalle(numeroVisita: number): Promise<any> {
-    const response = await apiService.get<AdmissionDetailResponse>(`/admission-search/${numeroVisita}/detail`);
+    const response = await apiService.get<AdmissionDetailResponse>(
+      `/admission-search/${numeroVisita}/detail`,
+      { timeout: 60000 },
+    );
     return response.data?.data;
   },
 

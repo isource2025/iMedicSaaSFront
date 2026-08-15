@@ -170,6 +170,28 @@ export function horaLocalHHMM(date: Date = new Date()): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+/** YYYY-MM-DD (o ISO datetime) → d/m/yyyy sin pasar por Date/UTC. */
+export function isoCalendarioADmy(iso?: string | null): string {
+	const s = String(iso || '').trim();
+	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+	if (!m) return s || '—';
+	return `${Number(m[3])}/${Number(m[2])}/${m[1]}`;
+}
+
+/** HH:MM o HH:MM:SS o Clarion TIME → HH:MM, sin reconvertir zonas. */
+export function horaMostrada(v?: string | number | null): string {
+	if (v == null || v === '') return '—';
+	if (typeof v === 'number') return formatTime(v);
+	const s = String(v).trim();
+	const hm = /^(\d{1,2}):(\d{2})/.exec(s);
+	if (hm) return `${hm[1].padStart(2, '0')}:${hm[2]}`;
+	const isoT = /T(\d{2}:\d{2})/.exec(s);
+	if (isoT) return isoT[1];
+	const n = Number(s);
+	if (Number.isFinite(n) && n > 24) return formatTime(n);
+	return s || '—';
+}
+
 /** Clarion DATE → YYYY-MM-DD local. */
 export function clarionDateToISO(clarionDate: number | string | null | undefined): string | null {
   const numericDate =
