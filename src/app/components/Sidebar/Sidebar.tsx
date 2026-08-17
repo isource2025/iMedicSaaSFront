@@ -112,11 +112,12 @@ const menuItems: MenuItem[] = [
     path: '/dashboard/super-admin',
     subItems: [
       { submoduloId: 'PANEL',      label: 'Panel',              path: '/dashboard/super-admin' },
-      { submoduloId: 'EMPRESAS',   label: 'Empresas',           path: '/dashboard/super-admin' },
-      { submoduloId: 'USUARIOS',   label: 'Usuarios',           path: '/dashboard/super-admin' },
-      { submoduloId: 'ONBOARDING', label: 'Puesta en marcha',   path: '/dashboard/super-admin' },
-      { submoduloId: 'COBRANZA',   label: 'Cobranza',           path: '/dashboard/super-admin' },
-      { submoduloId: 'CONFIG',     label: 'Configuración',      path: '/dashboard/super-admin' },
+      { submoduloId: 'EMPRESAS',   label: 'Empresas',           path: '/dashboard/super-admin/empresas' },
+      { submoduloId: 'ONBOARDING', label: 'Nueva empresa',      path: '/dashboard/super-admin/alta' },
+      { submoduloId: 'USUARIOS',   label: 'Usuarios',           path: '/dashboard/super-admin/usuarios' },
+      { submoduloId: 'COBRANZA',   label: 'Cobranza',           path: '/dashboard/super-admin/cobranza' },
+      { submoduloId: 'CONFIG',     label: 'Configuración',      path: '/dashboard/super-admin/configuracion' },
+      { submoduloId: 'SEGURIDAD',  label: 'Seguridad',          path: '/dashboard/super-admin/seguridad' },
     ]
   },
   {
@@ -220,7 +221,6 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
           ...plataforma,
           label: 'Plataforma',
           path: '/dashboard/super-admin',
-          subItems: [],
         })
       }
       if (usuario) out.push(usuario)
@@ -343,6 +343,14 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const isSubActive = (path: string) => {
     const base = pathBase(path)
     if (pathname !== base && !pathname.startsWith(base + '/')) return false
+    const allBases = visibleMenu.flatMap((item) => item.subItems.map((s) => pathBase(s.path)))
+    const hasMoreSpecific = allBases.some(
+      (b) =>
+        b.length > base.length &&
+        (pathname === b || pathname.startsWith(b + '/')) &&
+        (b === base || b.startsWith(base + '/')),
+    )
+    if (hasMoreSpecific) return false
     const q = path.includes('?') ? path.slice(path.indexOf('?') + 1) : ''
     if (!q) return true
     if (typeof window === 'undefined') return pathname === base

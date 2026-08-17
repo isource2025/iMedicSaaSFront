@@ -2,9 +2,11 @@ import { apiService } from './axios';
 import type {
   ActualizarUsuarioEmpresaBody,
   CatalogoSector,
+  AltaEmpresaBody,
   ConfigPlataforma,
   CrearUsuarioEmpresaBody,
   EmpresaAdmin,
+  EmpresaChecklist,
   EmpresaConexion,
   EmpresaUsuario,
   PreviewTabla,
@@ -63,6 +65,26 @@ export const superAdminService = {
 
   async createEmpresa(body: Partial<EmpresaAdmin> & { packs?: string[] }): Promise<EmpresaAdmin> {
     const res = await apiService.post<{ success: boolean; data: EmpresaAdmin }>(`${BASE}/empresas`, body);
+    return res.data.data;
+  },
+
+  async createEmpresaAlta(body: AltaEmpresaBody): Promise<EmpresaAdmin> {
+    try {
+      const res = await apiService.post<{ success: boolean; data: EmpresaAdmin; mensaje?: string }>(
+        `${BASE}/empresas/alta`,
+        body,
+      );
+      return res.data.data;
+    } catch (error) {
+      const ax = error as { response?: { data?: { mensaje?: string } }; message?: string };
+      throw new Error(ax.response?.data?.mensaje || ax.message || 'Error al dar de alta la empresa');
+    }
+  },
+
+  async getChecklist(id: string | number): Promise<EmpresaChecklist> {
+    const res = await apiService.get<{ success: boolean; data: EmpresaChecklist }>(
+      `${BASE}/empresas/${id}/checklist`,
+    );
     return res.data.data;
   },
 
@@ -140,7 +162,13 @@ export const superAdminService = {
 
   async updateOnboarding(
     id: string | number,
-    body: { pasoActual?: string; completado?: boolean; notas?: string; sectoresDefecto?: string[] },
+    body: {
+      pasoActual?: string;
+      completado?: boolean;
+      notas?: string;
+      sectoresDefecto?: string[];
+      altaCompletada?: boolean;
+    },
   ) {
     const res = await apiService.put<{ success: boolean; data: unknown }>(
       `${BASE}/empresas/${id}/onboarding`,

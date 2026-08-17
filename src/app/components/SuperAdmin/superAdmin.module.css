@@ -721,3 +721,227 @@
   padding: 0.85rem 1.1rem;
   border-top: 1px solid #e5e7eb;
 }
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.crumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.crumbSep {
+  color: #cbd5e1;
+}
+
+.crumbLink {
+  color: #0083a9;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.crumbLink:hover {
+  text-decoration: underline;
+}
+
+.crumbCurrent {
+  color: #334155;
+  font-weight: 600;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.7rem;
+}
+
+.kpiCard {
+  padding: 0.85rem 0.95rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.kpiHint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.attentionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.attentionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.attentionRow:hover {
+  border-color: #7dd3fc;
+  background: #f8fbff;
+}
+
+.attentionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.workspaceHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.workspaceTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.workspaceBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.sectionNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.sectionNavBtn {
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sectionNavBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.sectionNavBtnActive {
+  background: #0083a9;
+  color: #fff;
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.checklistItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+}
+
+.checklistItem:hover {
+  border-color: #7dd3fc;
+}
+
+.checkOk {
+  color: #166534;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.checkPend {
+  color: #b45309;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.altaGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.altaBlock {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+}
+
+.altaBlock h2 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.altaBlock p {
+  margin: 0 0 0.85rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.linkBtn {
+  border: none;
+  background: none;
+  color: #0083a9;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+}
+
+.muted {
+  color: #94a3b8;
+  font-size: 0.8125rem;
+}

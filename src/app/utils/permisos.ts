@@ -164,9 +164,10 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			{ id: 'PANEL', label: 'Panel', path: '/dashboard/super-admin', acciones: [ACCIONES.VER] },
 			{ id: 'EMPRESAS', label: 'Empresas', path: '/dashboard/super-admin/empresas', acciones: [...CRUD, ACCIONES.GESTIONAR] },
 			{ id: 'USUARIOS', label: 'Usuarios', path: '/dashboard/super-admin/usuarios', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
-			{ id: 'ONBOARDING', label: 'Puesta en marcha', path: '/dashboard/super-admin/onboarding', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
+			{ id: 'ONBOARDING', label: 'Alta de empresa', path: '/dashboard/super-admin/alta', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
 			{ id: 'COBRANZA', label: 'Cobranza', path: '/dashboard/super-admin/cobranza', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR, ACCIONES.EXPORTAR] },
 			{ id: 'CONFIG', label: 'Configuración', path: '/dashboard/super-admin/configuracion', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
+			{ id: 'SEGURIDAD', label: 'Seguridad', path: '/dashboard/super-admin/seguridad', acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
 		],
 	},
 	{

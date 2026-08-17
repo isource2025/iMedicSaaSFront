@@ -11,6 +11,7 @@ export interface EmpresaOnboarding {
   completado: boolean;
   notas?: string;
   sectoresDefecto?: string[];
+  altaCompletada?: boolean;
 }
 
 export interface EmpresaSuscripcion {
@@ -94,6 +95,9 @@ export interface EmpresaAdmin {
   suscripcion?: EmpresaSuscripcion;
   cantUsuarios?: number;
   usuarios?: EmpresaUsuario[];
+  altaCompletada?: boolean;
+  motivoAtencion?: string | null;
+  checklist?: EmpresaChecklist;
 }
 
 export interface EmpresaUsuario {
@@ -140,8 +144,75 @@ export interface SuperAdminDashboard {
   enPrueba: number;
   suspendidas: number;
   onboardingPendiente: number;
+  pendientesAtencion?: number;
   totalUsuarios: number;
   empresasRecientes: EmpresaAdmin[];
+  empresasAtencion?: EmpresaAtencion[];
+}
+
+export interface EmpresaAtencion {
+  id: string;
+  descripcion: string;
+  tipoServidor?: TipoServidor;
+  plan?: string | null;
+  estado?: string | null;
+  motivoAtencion: string;
+}
+
+export interface ChecklistItem {
+  id: string;
+  grupo: 'alta' | 'infra' | 'comercial' | 'ciclo' | string;
+  label: string;
+  ok: boolean;
+  seccion: EmpresaSeccion;
+  opcional?: boolean;
+}
+
+export interface EmpresaChecklist {
+  items: ChecklistItem[];
+  altaCompletada: boolean;
+  listaParaActivar: boolean;
+  pendientes: number;
+  motivoAtencion: string | null;
+  tipoServidor?: TipoServidor;
+  estado?: string;
+}
+
+export type EmpresaSeccion =
+  | 'resumen'
+  | 'datos'
+  | 'infra'
+  | 'modulos'
+  | 'sectores'
+  | 'usuarios'
+  | 'cobranza';
+
+export interface AltaEmpresaBody {
+  descripcion: string;
+  cuit?: string;
+  email?: string;
+  telefono?: string;
+  calle?: string;
+  calle_nro?: string;
+  localidad?: string;
+  provincia?: string;
+  tipoServidor: TipoServidor;
+  plan?: string;
+  importeMensual?: number | null;
+  packs?: string[];
+  sector: {
+    valor: string;
+    descripcion: string;
+    ambInt?: string;
+  };
+  admin: {
+    nombreRed: string;
+    password: string;
+    apellido: string;
+    nombres: string;
+    numeroDocumento?: string;
+    idRol?: number;
+  };
 }
 
 export interface CatalogoSector {
