@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { admissionSearchService } from '@/app/services/admissionSearchService';
+import { admissionApiErrorMessage, admissionSearchService } from '@/app/services/admissionSearchService';
 import type { VisitDetailPayload, VisitDetailTabId } from '@/app/components/admission/AdmissionVisitDetailModal';
 
 export function useAdmissionVisitDetail() {
@@ -23,10 +23,7 @@ export function useAdmissionVisitDetail() {
 			const data = await admissionSearchService.detalle(numeroVisita);
 			setDetailData(data as VisitDetailPayload);
 		} catch (e: unknown) {
-			const err = e as { response?: { data?: { message?: string } }; message?: string };
-			setDetailError(
-				err?.response?.data?.message || err?.message || 'No se pudo cargar el detalle de la visita',
-			);
+			setDetailError(admissionApiErrorMessage(e, 'No se pudo cargar el detalle de la visita'));
 		} finally {
 			setLoadingDetail(false);
 		}
@@ -46,10 +43,7 @@ export function useAdmissionVisitDetail() {
 			const data = await admissionSearchService.detalle(selectedVisit);
 			setDetailData(data as VisitDetailPayload);
 		} catch (e: unknown) {
-			const err = e as { response?: { data?: { message?: string } }; message?: string };
-			setDetailError(
-				err?.response?.data?.message || err?.message || 'No se pudo recargar el detalle',
-			);
+			setDetailError(admissionApiErrorMessage(e, 'No se pudo recargar el detalle'));
 		} finally {
 			setLoadingDetail(false);
 		}

@@ -188,6 +188,18 @@ async function parseBlobError(blob: Blob): Promise<string> {
   }
 }
 
+export function admissionApiErrorMessage(e: unknown, fallback: string): string {
+  const err = e as {
+    response?: { data?: { message?: string; detail?: string; mensaje?: string } };
+    message?: string;
+  };
+  const data = err?.response?.data;
+  const msg = data?.message || data?.mensaje || err?.message || fallback;
+  const detail = typeof data?.detail === 'string' ? data.detail.trim() : '';
+  if (detail && detail !== msg) return `${msg} (${detail})`;
+  return msg;
+}
+
 export const admissionSearchService = {
   async buscar(filters: AdmissionSearchFilters): Promise<AdmissionSearchResponse> {
     const params = new URLSearchParams();

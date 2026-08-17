@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Modal from '@/app/components/UI/Modal';
-import { admissionSearchService } from '@/app/services/admissionSearchService';
+import { admissionApiErrorMessage, admissionSearchService } from '@/app/services/admissionSearchService';
 import type { AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import AdmissionVisitDetailContent from './AdmissionVisitDetailContent';
 import AdmissionVisitExportModal from './AdmissionVisitExportModal';
@@ -128,10 +128,7 @@ export default function PatientFolderVisitsModal({
 			setDetailCache((prev) => ({ ...prev, [numeroVisita]: data }));
 			return data;
 		} catch (e: unknown) {
-			const err = e as { response?: { data?: { message?: string } }; message?: string };
-			setDetailError(
-				err?.response?.data?.message || err?.message || 'No se pudo cargar el detalle',
-			);
+			setDetailError(admissionApiErrorMessage(e, 'No se pudo cargar el detalle'));
 			return null;
 		} finally {
 			setLoadingDetail(null);
