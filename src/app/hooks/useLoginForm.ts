@@ -20,6 +20,16 @@ function empresaToValue(e: EmpresaLogin) {
   return `${e.idEmpresa}-${e.descripcionEmpresa}`;
 }
 
+function uniqueEmpresasPorId(list: EmpresaLogin[]): EmpresaLogin[] {
+  const map = new Map<number, EmpresaLogin>();
+  for (const e of list || []) {
+    const id = Number(e.idEmpresa);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    if (!map.has(id)) map.set(id, e);
+  }
+  return [...map.values()];
+}
+
 export function useLoginForm() {
   const [credentials, setCredentials] = useState<CredentialsState>({
     username: '',
@@ -152,14 +162,24 @@ export function useLoginForm() {
 
     setLoading(true);
     try {
-      const data = await authService.login(buildLoginPayload());
+      let data = await authService.login(buildLoginPayload());
 
-      if (data.step === 'SELECT_EMPRESA' && Array.isArray(data.empresas) && data.empresas.length > 1) {
-        setEmpresas(data.empresas);
-        setTempToken(data.tempToken || '');
-        setLoginStep('SELECT_EMPRESA');
-        setCredentials((prev) => ({ ...prev, empresa: '' }));
-        return;
+      if (data.step === 'SELECT_EMPRESA' && Array.isArray(data.empresas)) {
+        const unique = uniqueEmpresasPorId(data.empresas);
+        if (unique.length === 1) {
+          data = await authService.login({
+            username: credentials.username.trim(),
+            password: credentials.password,
+            idEmpresa: String(unique[0].idEmpresa),
+            tempToken: data.tempToken || tempToken || undefined,
+          });
+        } else if (unique.length > 1) {
+          setEmpresas(unique);
+          setTempToken(data.tempToken || '');
+          setLoginStep('SELECT_EMPRESA');
+          setCredentials((prev) => ({ ...prev, empresa: '' }));
+          return;
+        }
       }
 
       if (data.success && (data.step === 'COMPLETE' || !data.step)) {
