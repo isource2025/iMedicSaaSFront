@@ -1,17 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import protocolosService from '@/app/services/protocolosService';
 import type { ProtocoloClinico } from '@/app/types/protocolos';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import CargarProtocoloModal from './CargarProtocoloModal';
+import BedSectionLayout from '../shared/BedSectionLayout';
+import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
-import btnStyles from '../indicaciones/IndicacionesSection.module.css';
 import localStyles from './ProtocolosSection.module.css';
 
 type Props = {
@@ -68,6 +69,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<ProtocoloClinico | null>(null);
 	const [showCargar, setShowCargar] = useState(false);
+	const [query, setQuery] = useState('');
 
 	const load = useCallback(async () => {
 		if (!numeroVisita) return;
@@ -86,10 +88,29 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 		void load();
 	}, [load]);
 
+	const filtered = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		if (!q) return rows;
+		return rows.filter((r) => {
+			const hay = (v?: string | number | null) =>
+				v != null && String(v).toLowerCase().includes(q);
+			const prac = r.practicas?.[0];
+			return (
+				hay(r.tipoDescripcion) ||
+				hay(r.tipoProtocolo) ||
+				hay(r.numeroProtocolo) ||
+				hay(prac?.descripcion) ||
+				hay(prac?.codigoPractica) ||
+				hay(r.operadorNombre) ||
+				hay(resumenEquipo(r))
+			);
+		});
+	}, [rows, query]);
+
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = rows.map((r, idx) => {
+			const parts = filtered.map((r, idx) => {
 				const prac = r.practicas?.[0];
 				return {
 					title: `Protocolo ${idx + 1}${r.numeroProtocolo ? ` · N° ${r.numeroProtocolo}` : ''}`,
@@ -121,84 +142,92 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	};
 
 	if (!numeroVisita) {
-		return <div className={styles.empty}>No hay visita seleccionada</div>;
+		return (
+			<EmptyState
+				variant="protocolos"
+				text="No hay visita seleccionada"
+				description="Abrí una internación para ver los protocolos."
+			/>
+		);
 	}
 
 	return (
-		<div className={styles.wrap}>
-			<div className={styles.header}>
-				<div>
-					<h2 className={styles.title}>Protocolos</h2>
-					<p className={styles.subtitle}>
-						Protocolos post-práctica / cirugía: quien carga, equipo por rol y descripción clínica.
-					</p>
-				</div>
-				<div className={styles.headerActions}>
-					{puedeCrear && (
-						<button
-							type="button"
-							className={`${btnStyles.btn} ${btnStyles.btnPrimary} ${btnStyles.btnAddDate}`}
-							onClick={() => setShowCargar(true)}
-						>
-							<span className={btnStyles.addIcon} aria-hidden>+</span>
-							Protocolo
-						</button>
-					)}
+		<>
+			<BedSectionLayout
+				title="Protocolos"
+				subtitle="Post-práctica / cirugía · equipo por rol y descripción clínica"
+				addLabel={puedeCrear ? 'Protocolo' : undefined}
+				onAdd={puedeCrear ? () => setShowCargar(true) : undefined}
+				exportSlot={
 					<ExportButton
-						data={rows}
+						data={filtered}
 						fileName={`protocolos_${numeroVisita}.pdf`}
 						onExport={handleExport}
 						options={['pdf']}
 					/>
-				</div>
-			</div>
-
-			{error && <div className={styles.error}>{error}</div>}
-
-			{loading ? (
-				<Loader />
-			) : rows.length === 0 ? (
-				<div className={styles.empty}>No hay protocolos cargados en esta visita.</div>
-			) : (
-				<div className={styles.tableWrap}>
-					<table className={styles.table}>
-						<thead>
-							<tr>
-								<th>Fecha</th>
-								<th>Tipo</th>
-								<th>Práctica</th>
-								<th>Equipo</th>
-								<th>Cargado por</th>
-							</tr>
-						</thead>
-						<tbody>
-							{rows.map((r) => {
-								const prac = r.practicas?.[0];
-								return (
-									<tr
-										key={r.idProtocolo}
-										className={styles.clickableRow}
-										onClick={() => setSelected(r)}
-									>
-										<td>{formatFecha(r.fecha)}</td>
-										<td>
-											{r.tipoDescripcion || r.tipoProtocolo || '—'}
-											{r.numeroProtocolo ? (
-												<span className={localStyles.nro}> #{r.numeroProtocolo}</span>
-											) : null}
-										</td>
-										<td className={styles.practica}>
-											{prac?.descripcion || prac?.codigoPractica || '—'}
-										</td>
-										<td className={localStyles.equipoCell}>{resumenEquipo(r)}</td>
-										<td>{r.operadorNombre || '—'}</td>
-									</tr>
-								);
-							})}
-						</tbody>
-					</table>
-				</div>
-			)}
+				}
+				search={{
+					value: query,
+					onChange: setQuery,
+					placeholder: 'Buscar por tipo, práctica, equipo, operador…',
+				}}
+			>
+				{error && <div className={styles.error}>{error}</div>}
+				{loading ? (
+					<Loader />
+				) : filtered.length === 0 ? (
+					<EmptyState
+						variant="protocolos"
+						text={rows.length === 0 ? 'Sin protocolos' : 'Sin resultados'}
+						description={
+							rows.length === 0
+								? 'Cargá un protocolo con el botón + Protocolo.'
+								: 'Probá con otro criterio de búsqueda.'
+						}
+						actionLabel={puedeCrear && rows.length === 0 ? 'Protocolo' : undefined}
+						onAction={puedeCrear && rows.length === 0 ? () => setShowCargar(true) : undefined}
+					/>
+				) : (
+					<div className={styles.tableWrap}>
+						<table className={styles.table}>
+							<thead>
+								<tr>
+									<th>Fecha</th>
+									<th>Tipo</th>
+									<th>Práctica</th>
+									<th>Equipo</th>
+									<th>Cargado por</th>
+								</tr>
+							</thead>
+							<tbody>
+								{filtered.map((r) => {
+									const prac = r.practicas?.[0];
+									return (
+										<tr
+											key={r.idProtocolo}
+											className={styles.clickableRow}
+											onClick={() => setSelected(r)}
+										>
+											<td>{formatFecha(r.fecha)}</td>
+											<td>
+												{r.tipoDescripcion || r.tipoProtocolo || '—'}
+												{r.numeroProtocolo ? (
+													<span className={localStyles.nro}> #{r.numeroProtocolo}</span>
+												) : null}
+											</td>
+											<td className={styles.practica}>
+												{prac?.descripcion || prac?.codigoPractica || '—'}
+											</td>
+											<td className={localStyles.equipoCell}>{resumenEquipo(r)}</td>
+											<td>{r.operadorNombre || '—'}</td>
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
+					</div>
+				)}
+			</BedSectionLayout>
 
 			{selected && (
 				<PedidoDetalleModal
@@ -224,6 +253,6 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 				onClose={() => setShowCargar(false)}
 				onCreated={() => void load()}
 			/>
-		</div>
+		</>
 	);
 }

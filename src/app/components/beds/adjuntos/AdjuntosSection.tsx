@@ -11,6 +11,7 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
+import BedSectionLayout from '../shared/BedSectionLayout';
 import styles from './AdjuntosSection.module.css';
 import Loader from '../../Loader/Loader';
 import { useBedDetail } from '../contexts/BedDetailContext';
@@ -66,6 +67,7 @@ export default function AdjuntosSection({
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
   const [dicomImporterOpen, setDicomImporterOpen] = useState(false);
+  const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita'>('visita');
   const fileUploadRef = useRef<FileUploadRef>(null);
 
   const showMessage = useCallback((title: string, message: string, tone: MessageModalTone = 'info') => {
@@ -144,7 +146,9 @@ export default function AdjuntosSection({
 
       setSelectedFiles([]);
       fileUploadRef.current?.clearFiles();
+      setTipoImagenCodigo('');
       setUploading(false);
+      setModo('visita');
       showMessage(
         'Adjunto subido',
         `${cantidadSubida} archivo(s) subido(s) correctamente`,
@@ -233,147 +237,181 @@ export default function AdjuntosSection({
   }
 
   return (
-    <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerInfo}>
-          <h2 className={styles.title}>Archivos Adjuntos</h2>
-          <div className={styles.patientInfo}>
-            <span className={styles.patientName}>{patientName || 'PACIENTE'}</span>
-            {documentoPaciente && (
-              <>
-                <span className={styles.separator}>•</span>
-                <span>DNI: {documentoPaciente}</span>
-              </>
-            )}
-            {patientLocation && (
-              <>
-                <span className={styles.separator}>•</span>
-                <span>{patientLocation}</span>
-              </>
-            )}
-          </div>
-        </div>
+    <BedSectionLayout
+      title="Adjuntos"
+      subtitle="Archivos de esta internación"
+      exportSlot={
         <ExportButton
           data={adjuntos}
           fileName={`adjuntos_${numeroVisita}.pdf`}
           onExport={handleExport}
           options={['pdf']}
         />
-      </div>
+      }
+      extraToolbar={
+        <div className={styles.modeTabs} role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={modo === 'archivos'}
+            className={modo === 'archivos' ? styles.modeTabActive : styles.modeTab}
+            onClick={() => setModo('archivos')}
+          >
+            Adjuntos
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={modo === 'dicom'}
+            className={modo === 'dicom' ? styles.modeTabActive : styles.modeTab}
+            onClick={() => setModo('dicom')}
+          >
+            Serie DICOM
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={modo === 'visita'}
+            className={modo === 'visita' ? styles.modeTabActive : styles.modeTab}
+            onClick={() => setModo('visita')}
+          >
+            En la visita ({adjuntos.length})
+          </button>
+        </div>
+      }
+    >
+      <p className={styles.cargadoPor}>Cargás como {etiquetaUsuarioActual()}</p>
 
-      {/* Error */}
       {error && (
         <div className={styles.error}>
           {error}
         </div>
       )}
 
-      {adjuntos.length > 0 && countAdjuntosRecientes(adjuntos) > 0 && (
+      {adjuntos.length > 0 && countAdjuntosRecientes(adjuntos) > 0 && modo === 'visita' && (
         <p className={styles.adjuntosNotaRecientes} role="status">
-          Hay archivos cargados en las últimas 72 horas. El ítem &quot;Archivos Adjuntos&quot; del menú se resalta para facilitar su ubicación (no reemplaza notificaciones por base de datos).
+          Hay archivos cargados en las últimas 72 horas.
         </p>
       )}
 
-      {/* Upload Section */}
-      <div className={styles.uploadSection}>
-        <h3 className={styles.sectionTitle}>Subir archivos</h3>
+      {modo === 'archivos' && (
+        <div className={styles.uploadSection}>
+          <FileUpload
+            ref={fileUploadRef}
+            onFilesSelected={handleFilesSelected}
+            onValidationError={(msg) => showMessage('Archivo no válido', msg, 'warning')}
+            disabled={uploading}
+            maxFiles={5}
+          />
+          {selectedFiles.length > 0 && (
+            <div className={styles.uploadStep}>
+              <label className={styles.tipoStep} htmlFor="adj-tipo-imagen">
+                <span>Tipo de estudio</span>
+                <span className={styles.tipoHint}>Obligatorio para guardar</span>
+                <select
+                  id="adj-tipo-imagen"
+                  className={styles.tipoSelect}
+                  value={tipoImagenCodigo}
+                  onChange={(e) => setTipoImagenCodigo(e.target.value)}
+                  disabled={uploading}
+                >
+                  <option value="">Elegí el tipo…</option>
+                  {tiposImagen.map((t) => (
+                    <option key={t.TipoImagen} value={t.TipoImagen}>
+                      {t.DescTipoImagen}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={() => void handleUpload()}
+                disabled={uploading}
+                className={styles.uploadButton}
+              >
+                {uploading ? 'Subiendo…' : `Guardar ${selectedFiles.length} archivo(s)`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
-        <div className={styles.uploadMetaGrid}>
-          <div className={styles.uploadMetaCard}>
-            <span className={styles.uploadMetaLabel}>Cargado por</span>
-            <span className={styles.uploadMetaValue}>{etiquetaUsuarioActual()}</span>
-          </div>
-          <div className={styles.uploadMetaCard}>
-            <label className={styles.uploadMetaLabel} htmlFor="adj-tipo-imagen">
-              Tipo de estudio
-            </label>
+      {modo === 'dicom' && (
+        <div className={styles.uploadSection}>
+          <p className={styles.dicomLead}>
+            Convertí una serie DICOM en un video y lo guardás como adjunto de esta visita.
+          </p>
+          <label className={styles.tipoStep} htmlFor="adj-dicom-tipo-imagen">
+            <span>Tipo de estudio</span>
+            <span className={styles.tipoHint}>Obligatorio para importar</span>
             <select
-              id="adj-tipo-imagen"
+              id="adj-dicom-tipo-imagen"
               className={styles.tipoSelect}
               value={tipoImagenCodigo}
               onChange={(e) => setTipoImagenCodigo(e.target.value)}
               disabled={uploading}
             >
-              <option value="">Seleccione un tipo…</option>
+              <option value="">Elegí el tipo…</option>
               {tiposImagen.map((t) => (
                 <option key={t.TipoImagen} value={t.TipoImagen}>
                   {t.DescTipoImagen}
                 </option>
               ))}
             </select>
-          </div>
-        </div>
-
-        <FileUpload
-          ref={fileUploadRef}
-          onFilesSelected={handleFilesSelected}
-          onValidationError={(msg) => showMessage('Archivo no válido', msg, 'warning')}
-          disabled={uploading}
-          maxFiles={5}
-        />
-
-        <button
-          type="button"
-          className={styles.dicomImportButton}
-          disabled={uploading}
-          onClick={() => {
-            if (!tipoImagenCodigo.trim()) {
-              showMessage(
-                'Falta tipo de estudio',
-                'Seleccione el tipo de estudio antes de importar la serie DICOM.',
-                'warning',
-              );
-              return;
-            }
-            setDicomImporterOpen(true);
-          }}
-        >
-          Importar serie DICOM → Video
-        </button>
-
-        <DicomVideoImporter
-          open={dicomImporterOpen}
-          onClose={() => setDicomImporterOpen(false)}
-          numeroVisita={numeroVisita}
-          tipoImagenCodigo={tipoImagenCodigo}
-          onUploaded={async () => {
-            showMessage(
-              'Adjunto subido',
-              'Video generado y guardado como adjunto.',
-              'success',
-            );
-            await loadAdjuntos();
-          }}
-        />
-
-        {selectedFiles.length > 0 && (
+          </label>
           <button
-            onClick={handleUpload}
-            disabled={uploading || !tipoImagenCodigo.trim()}
-            className={styles.uploadButton}
+            type="button"
+            className={styles.dicomImportButton}
+            disabled={uploading}
+            onClick={() => {
+              if (!tipoImagenCodigo.trim()) {
+                showMessage(
+                  'Falta tipo de estudio',
+                  'Elegí el tipo de estudio y después importá la serie.',
+                  'warning',
+                );
+                return;
+              }
+              setDicomImporterOpen(true);
+            }}
           >
-            {uploading ? 'Subiendo...' : `Subir ${selectedFiles.length} archivo(s)`}
+            Elegir serie DICOM
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* List Section */}
-      <div className={styles.listSection}>
-        <h3 className={styles.sectionTitle}>Archivos de la visita</h3>
-        {loading ? (
-          <div style={{ position: 'relative', minHeight: '150px' }}>
-            <Loader />
-          </div>
-        ) : (
-          <FileList
-            adjuntos={adjuntos}
-            onDelete={handleDelete}
-            onError={(msg) => showMessage('Error', msg, 'error')}
-            readOnly={false}
-          />
-        )}
-      </div>
+      {modo === 'visita' && (
+        <div className={styles.listSection}>
+          {loading ? (
+            <div style={{ position: 'relative', minHeight: '150px' }}>
+              <Loader />
+            </div>
+          ) : (
+            <FileList
+              adjuntos={adjuntos}
+              onDelete={handleDelete}
+              onError={(msg) => showMessage('Error', msg, 'error')}
+              readOnly={false}
+            />
+          )}
+        </div>
+      )}
+
+      <DicomVideoImporter
+        open={dicomImporterOpen}
+        onClose={() => setDicomImporterOpen(false)}
+        numeroVisita={numeroVisita}
+        tipoImagenCodigo={tipoImagenCodigo}
+        onUploaded={async () => {
+          showMessage(
+            'Adjunto subido',
+            'Video generado y guardado como adjunto.',
+            'success',
+          );
+          setModo('visita');
+          await loadAdjuntos();
+        }}
+      />
 
       <MessageModal
         open={!!feedback}
@@ -382,6 +420,6 @@ export default function AdjuntosSection({
         tone={feedback?.tone || 'info'}
         onClose={() => setFeedback(null)}
       />
-    </div>
+    </BedSectionLayout>
   );
 }

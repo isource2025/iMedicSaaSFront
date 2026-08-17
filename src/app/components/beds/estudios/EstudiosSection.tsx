@@ -1,22 +1,26 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import { PedidoEstudio } from '@/app/types/estudios';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import SolicitarEstudioModal from './SolicitarEstudioModal';
+import BedSectionLayout from '../shared/BedSectionLayout';
+import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './EstudiosSection.module.css';
-import btnStyles from '../indicaciones/IndicacionesSection.module.css';
 import { IoEyeOutline } from 'react-icons/io5';
 
 type Props = {
 	numeroVisita: number | null;
 	sectorSolicitante?: string | null;
+	patientName?: string;
+	documentoPaciente?: string;
+	patientLocation?: string;
 };
 
 function urgenciaClass(estado?: string) {
@@ -59,7 +63,13 @@ function buildEstudioFields(row: PedidoEstudio) {
 	];
 }
 
-export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Props) {
+export default function EstudiosSection({
+	numeroVisita,
+	sectorSolicitante,
+	patientName,
+	documentoPaciente,
+	patientLocation,
+}: Props) {
 	const { puede } = usePermiso();
 	const puedeCrear = puede('INTERNACION.ESTUDIOS.CREAR');
 	const [rows, setRows] = useState<PedidoEstudio[]>([]);
@@ -67,6 +77,7 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<PedidoEstudio | null>(null);
 	const [showSolicitar, setShowSolicitar] = useState(false);
+	const [query, setQuery] = useState('');
 
 	const loadVisita = useCallback(async () => {
 		if (!numeroVisita) return;
@@ -84,6 +95,23 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 	useEffect(() => {
 		void loadVisita();
 	}, [loadVisita]);
+
+	const filtered = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		if (!q) return rows;
+		return rows.filter((r) => {
+			const hay = (v?: string | number | null) =>
+				v != null && String(v).toLowerCase().includes(q);
+			return (
+				hay(r.PracticaSolicitada) ||
+				hay(r.CodigoPractica) ||
+				hay(r.NotasObservacion) ||
+				hay(r.MedicoSolicitanteNombre) ||
+				hay(r.ServicioDescripcion) ||
+				hay(r.EstadoWorkflow)
+			);
+		});
+	}, [rows, query]);
 
 	const handleRowClick = async (row: PedidoEstudio) => {
 		const detail = await estudiosService.obtenerPorId(row.IdPedido);
@@ -122,119 +150,132 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 				fileName: `estudios_${numeroVisita}.pdf`,
 				orientation: 'portrait',
 				empresaInfo,
-				patientInfo: { numeroVisita: numeroVisita || undefined },
+				patientInfo: {
+					numeroVisita: numeroVisita || undefined,
+					nombre: patientName,
+					numeroDocumento: documentoPaciente,
+					ubicacion: patientLocation,
+				},
 			});
 		}
 	};
 
 	if (!numeroVisita) {
-		return <div className={styles.empty}>No hay visita seleccionada</div>;
+		return (
+			<EmptyState
+				variant="estudios"
+				text="No hay visita seleccionada"
+				description="Abrí una internación para ver los pedidos de estudios."
+			/>
+		);
 	}
 
 	return (
-		<div className={styles.wrap}>
-			<div className={styles.header}>
-				<div>
-					<h2 className={styles.title}>Pedidos de estudios</h2>
-					<p className={styles.subtitle}>
-						Estudios solicitados para este paciente. El cumplimiento se gestiona desde la
-						bandeja de pedidos del servicio receptor.
-					</p>
-				</div>
-				<div className={styles.headerActions}>
-					{puedeCrear && (
-						<button
-							type="button"
-							className={`${btnStyles.btn} ${btnStyles.btnPrimary} ${btnStyles.btnAddDate}`}
-							onClick={() => setShowSolicitar(true)}
-							disabled={!sectorSolicitante}
-							title={!sectorSolicitante ? 'Sin sector de la cama' : undefined}
-						>
-							<span className={btnStyles.addIcon} aria-hidden>+</span>
-							Estudio
-						</button>
-					)}
+		<>
+			<BedSectionLayout
+				title="Estudios"
+				subtitle="Pedidos de este paciente · el servicio destino los atiende en la bandeja"
+				addLabel={puedeCrear ? 'Estudio' : undefined}
+				onAdd={puedeCrear ? () => setShowSolicitar(true) : undefined}
+				addDisabled={!sectorSolicitante}
+				addTitle={!sectorSolicitante ? 'Sin sector de la cama' : undefined}
+				exportSlot={
 					<ExportButton
-						data={rows}
+						data={filtered}
 						fileName={`estudios_${numeroVisita}.pdf`}
 						onExport={handleExport}
 						options={['pdf']}
 					/>
-				</div>
-			</div>
-
-			{error && <div className={styles.error}>{error}</div>}
-			{loading ? (
-				<div style={{ position: 'relative', minHeight: 200 }}>
-					<Loader />
-				</div>
-			) : rows.length === 0 ? (
-				<div className={styles.empty}>No hay pedidos de estudios para esta internación.</div>
-			) : (
-				<div className={styles.tableWrap}>
-					<table className={styles.table}>
-						<thead>
-							<tr>
-								<th>Urg.</th>
-								<th>Estado</th>
-								<th>Fecha / hora</th>
-								<th>Cód.</th>
-								<th>Práctica solicitada</th>
-								<th>Notas</th>
-								<th>Solicitado por</th>
-								<th>Acciones</th>
-							</tr>
-						</thead>
-						<tbody>
-							{rows.map((r) => (
-								<tr key={r.IdPedido}>
-									<td>
-										<span
-											className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia)}`}
-											title={r.EstadoUrgencia || 'Sin urgencia'}
-										/>
-									</td>
-									<td className={styles.meta}>
-										{r.Cumplido
-											? 'Cumplido'
-											: r.Tomado
-												? `Tomado${r.NombreToma ? ` · ${r.NombreToma}` : ''}`
-												: 'Pendiente'}
-									</td>
-									<td className={styles.meta}>{formatFecha(r)}</td>
-									<td className={styles.codigo}>{r.CodigoPractica ?? '—'}</td>
-									<td>
-										<div className={styles.practica}>{r.PracticaSolicitada}</div>
-										{(r.ServicioDescripcion || r.SectorReceptorNombre) && (
-											<div className={styles.meta}>
-												Destino: {r.ServicioDescripcion || r.SectorReceptorNombre}
-											</div>
-										)}
-									</td>
-									<td className={styles.notas}>
-										{r.NotasObservacion
-											? r.NotasObservacion.length > 120
-												? `${r.NotasObservacion.slice(0, 120)}…`
-												: r.NotasObservacion
-											: '—'}
-									</td>
-									<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
-									<td>
-										<button
-											type="button"
-											className={styles.btnAction}
-											title="Ver detalle"
-											onClick={() => void handleRowClick(r)}
-										>
-											<IoEyeOutline color="#5BC0DE" size={18} />
-										</button>
-									</td>
+				}
+				search={{
+					value: query,
+					onChange: setQuery,
+					placeholder: 'Buscar por práctica, código, notas, profesional…',
+				}}
+			>
+				{error && <div className={styles.error}>{error}</div>}
+				{loading ? (
+					<div style={{ position: 'relative', minHeight: 200 }}>
+						<Loader />
+					</div>
+				) : filtered.length === 0 ? (
+					<EmptyState
+						variant="estudios"
+						text={rows.length === 0 ? 'Sin pedidos de estudios' : 'Sin resultados'}
+						description={
+							rows.length === 0
+								? 'Solicitá un estudio con el botón + Estudio.'
+								: 'Probá con otro criterio de búsqueda.'
+						}
+						actionLabel={puedeCrear && rows.length === 0 ? 'Estudio' : undefined}
+						onAction={puedeCrear && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
+					/>
+				) : (
+					<div className={styles.tableWrap}>
+						<table className={styles.table}>
+							<thead>
+								<tr>
+									<th>Urg.</th>
+									<th>Estado</th>
+									<th>Fecha / hora</th>
+									<th>Cód.</th>
+									<th>Práctica solicitada</th>
+									<th>Notas</th>
+									<th>Solicitado por</th>
+									<th>Acciones</th>
 								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			)}
+							</thead>
+							<tbody>
+								{filtered.map((r) => (
+									<tr key={r.IdPedido}>
+										<td>
+											<span
+												className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia)}`}
+												title={r.EstadoUrgencia || 'Sin urgencia'}
+											/>
+										</td>
+										<td className={styles.meta}>
+											{r.Cumplido
+												? 'Cumplido'
+												: r.Tomado
+													? `Tomado${r.NombreToma ? ` · ${r.NombreToma}` : ''}`
+													: 'Pendiente'}
+										</td>
+										<td className={styles.meta}>{formatFecha(r)}</td>
+										<td className={styles.codigo}>{r.CodigoPractica ?? '—'}</td>
+										<td>
+											<div className={styles.practica}>{r.PracticaSolicitada}</div>
+											{(r.ServicioDescripcion || r.SectorReceptorNombre) && (
+												<div className={styles.meta}>
+													Destino: {r.ServicioDescripcion || r.SectorReceptorNombre}
+												</div>
+											)}
+										</td>
+										<td className={styles.notas}>
+											{r.NotasObservacion
+												? r.NotasObservacion.length > 120
+													? `${r.NotasObservacion.slice(0, 120)}…`
+													: r.NotasObservacion
+												: '—'}
+										</td>
+										<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
+										<td>
+											<button
+												type="button"
+												className={styles.btnAction}
+												title="Ver detalle"
+												onClick={() => void handleRowClick(r)}
+											>
+												<IoEyeOutline color="#5BC0DE" size={18} />
+											</button>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				)}
+			</BedSectionLayout>
 
 			{selected && (
 				<PedidoDetalleModal
@@ -262,6 +303,6 @@ export default function EstudiosSection({ numeroVisita, sectorSolicitante }: Pro
 					}}
 				/>
 			)}
-		</div>
+		</>
 	);
 }

@@ -29,6 +29,8 @@ import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
 import { bedToHeaderSnapshot } from '../../utils/bedHeader';
 import AdmissionVisitExportModal from '../admission/AdmissionVisitExportModal';
+import BedSectionLayout from './shared/BedSectionLayout';
+import EmptyState from './shared/EmptyState';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -194,6 +196,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<EstudiosSection
 							numeroVisita={bed?.NumeroVisita || null}
 							sectorSolicitante={bed?.sector || null}
+							patientName={bed?.NombrePaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'laboratorios' ? (
 						<LabResultsSection
@@ -218,23 +223,13 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'procedimientos' ? (
-						<div className={styles.placeholderCard}>
-							<div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-								<div style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-									⚕️
-								</div>
-								<h3 style={{ margin: '0 0 0.5rem 0', color: '#0083A9' }}>
-									Procedimientos
-								</h3>
-								<p style={{ color: '#666', margin: '0' }}>
-									Procedimientos médicos realizados al paciente.
-									<br />
-									<strong>Paciente:</strong> {bed.NombrePaciente}
-									<br />
-									<strong>Servicio:</strong> {bed.servicioMedicoDescripcion}
-								</p>
-							</div>
-						</div>
+						<BedSectionLayout title="Procedimientos" subtitle="Registro de procedimientos de esta internación">
+							<EmptyState
+								variant="procedimientos"
+								text="Procedimientos"
+								description="Esta sección todavía no está disponible. El resto del detalle de cama ya usa el mismo encabezado, el + en modal y el estado vacío."
+							/>
+						</BedSectionLayout>
 					) : activeSection === 'movimientos' ? (
 						<MovimientosSection
 							numeroVisita={bed?.NumeroVisita || null}

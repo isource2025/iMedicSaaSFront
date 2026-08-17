@@ -177,18 +177,6 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
                             onExport={handleExport}
                             options={['pdf']}
                         />
-                        <button
-                            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-                            onClick={() => {
-                                // TODO: Implementar modal de agregar insumo
-                                alert("Funcionalidad de agregar insumo en desarrollo");
-                            }}
-                        >
-                            <span className={styles.addIcon} aria-hidden>
-                                +
-                            </span>
-                            Insumo
-                        </button>
                     </div>
                 </div>
             )}

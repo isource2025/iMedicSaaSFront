@@ -11,6 +11,8 @@ import LabAnalysisView from './LabAnalysisView';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import BedSectionLayout from '../shared/BedSectionLayout';
+import EmptyState from '../shared/EmptyState';
 import styles from './LabResultsSection.module.css';
 
 interface LabResultsSectionProps {
@@ -138,19 +140,30 @@ export default function LabResultsSection({
 
   if (!numeroVisita) {
     return (
-      <div className={styles.container}>
-        <div className={styles.emptyState}>
-          <p>No hay visita seleccionada</p>
-        </div>
-      </div>
+      <EmptyState
+        variant="laboratorios"
+        text="No hay visita seleccionada"
+        description="Abrí una internación para ver los resultados de laboratorio."
+      />
     );
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.topBar}>
-        <div className={styles.topBarMain}>
-          <h2 className={styles.title}>Resultados de Laboratorio</h2>
+    <>
+      <BedSectionLayout
+        title="Laboratorio"
+        subtitle="Resultados de esta internación"
+        addLabel="Laboratorio"
+        onAdd={() => setShowUploadModal(true)}
+        exportSlot={
+          <ExportButton
+            data={examenes}
+            fileName={`laboratorios_${numeroVisita}.pdf`}
+            onExport={handleExport}
+            options={['pdf']}
+          />
+        }
+        extraToolbar={
           <div className={styles.tabs}>
             <button
               className={`${styles.tab} ${activeTab === 'analisis' ? styles.activeTab : ''}`}
@@ -168,50 +181,24 @@ export default function LabResultsSection({
               Lista de exámenes
             </button>
           </div>
-        </div>
-        <div className={styles.topBarActions}>
-          <ExportButton
-            data={examenes}
-            fileName={`laboratorios_${numeroVisita}.pdf`}
-            onExport={handleExport}
-            options={['pdf']}
+        }
+      >
+        {error && <div className={styles.error}>{error}</div>}
+        {loading ? (
+          <div style={{ position: 'relative', minHeight: '300px' }}>
+            <Loader />
+          </div>
+        ) : examenes.length === 0 ? (
+          <EmptyState
+            variant="laboratorios"
+            text="Sin estudios de laboratorio"
+            description="Cargá un examen con el botón + Laboratorio."
+            actionLabel="Laboratorio"
+            onAction={() => setShowUploadModal(true)}
           />
-          <button
-            type="button"
-            className={styles.uploadCompact}
-            onClick={() => setShowUploadModal(true)}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            Cargar laboratorio
-          </button>
-        </div>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className={styles.error}>
-          {error}
-        </div>
-      )}
-
-      {/* Loading */}
-      {loading ? (
-        <div style={{ position: 'relative', minHeight: '300px' }}>
-          <Loader />
-        </div>
-      ) : examenes.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🧪</div>
-          <h3>No hay estudios de laboratorio</h3>
-          <p>Cargue un nuevo estudio haciendo clic en el botón &quot;Cargar Laboratorio&quot;</p>
-        </div>
-      ) : activeTab === 'analisis' ? (
-        <LabAnalysisView examenes={examenes} />
-      ) : (
+        ) : activeTab === 'analisis' ? (
+          <LabAnalysisView examenes={examenes} />
+        ) : (
         <div className={styles.examenesGrid}>
           {examenes.map((examen) => (
             <div key={examen.IdExamen} className={styles.examenCard}>
@@ -304,6 +291,7 @@ export default function LabResultsSection({
           ))}
         </div>
       )}
+      </BedSectionLayout>
 
       {/* Modal de carga */}
       {showUploadModal && numeroVisita && (
@@ -349,6 +337,6 @@ export default function LabResultsSection({
           onSuccess={handleEditSuccess}
         />
       )}
-    </div>
+    </>
   );
 }

@@ -78,8 +78,9 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
 
     const files = validateFiles(e.dataTransfer.files);
     if (files.length > 0) {
-      setSelectedFiles(files);
-      onFilesSelected(files);
+      const merged = [...selectedFiles, ...files].slice(0, maxFiles);
+      setSelectedFiles(merged);
+      onFilesSelected(merged);
     }
   };
 
@@ -88,9 +89,11 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
 
     const files = validateFiles(e.target.files);
     if (files.length > 0) {
-      setSelectedFiles(files);
-      onFilesSelected(files);
+      const merged = [...selectedFiles, ...files].slice(0, maxFiles);
+      setSelectedFiles(merged);
+      onFilesSelected(merged);
     }
+    if (e.target) e.target.value = '';
   };
 
   const handleClick = () => {
@@ -118,9 +121,9 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
   }));
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${selectedFiles.length > 0 ? styles.containerPending : ''}`}>
       <div
-        className={`${styles.dropZone} ${dragActive ? styles.dragActive : ''} ${disabled ? styles.disabled : ''}`}
+        className={`${styles.dropZone} ${selectedFiles.length > 0 ? styles.dropZoneCompact : ''} ${dragActive ? styles.dragActive : ''} ${disabled ? styles.disabled : ''}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -139,20 +142,24 @@ const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFilesSelected
         <div className={styles.dropZoneContent}>
           <span className={styles.uploadIcon}>📎</span>
           <p className={styles.dropZoneText}>
-            Arrastra archivos aquí o haz click para seleccionar
+            {selectedFiles.length > 0
+              ? 'Agregar más archivos'
+              : 'Arrastra archivos aquí o hacé click para seleccionar'}
           </p>
-          <p className={styles.dropZoneHint}>
-            PDF, JPG, PNG, GIF, DICOM (.dcm), DOC (máx {maxFiles} archivos, 10MB cada uno)
-          </p>
+          {selectedFiles.length === 0 && (
+            <p className={styles.dropZoneHint}>
+              PDF, JPG, PNG, GIF, DICOM (.dcm), DOC (máx {maxFiles} archivos, 10MB cada uno)
+            </p>
+          )}
         </div>
       </div>
 
       {selectedFiles.length > 0 && (
         <div className={styles.selectedFiles}>
-          <h4 className={styles.selectedTitle}>Archivos seleccionados ({selectedFiles.length}):</h4>
+          <h4 className={styles.selectedTitle}>Seleccionados ({selectedFiles.length})</h4>
           <ul className={styles.fileList}>
             {selectedFiles.map((file, index) => (
-              <li key={index} className={styles.fileItem}>
+              <li key={`${file.name}-${index}`} className={styles.fileItem}>
                 <span className={styles.fileName}>{file.name}</span>
                 <span className={styles.fileSize}>
                   {(file.size / 1024).toFixed(2)} KB

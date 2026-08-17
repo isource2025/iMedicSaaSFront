@@ -1,20 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	interconsultasService,
 	InterconsultaRow,
-	SectorDestinoInterconsulta,
 } from '@/app/services/interconsultasService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import Loader from '../../Loader/Loader';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
+import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
+import BedSectionLayout from '../shared/BedSectionLayout';
+import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { generarPDFInterconsulta } from '../../../utils/pdfInterconsulta';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
-import btnStyles from '../indicaciones/IndicacionesSection.module.css';
 import { IoEyeOutline } from 'react-icons/io5';
 
 type Props = {
@@ -78,26 +79,12 @@ export default function InterconsultaSection({
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
 
 	const [rows, setRows] = useState<InterconsultaRow[]>([]);
-	const [sectores, setSectores] = useState<SectorDestinoInterconsulta[]>([]);
-	const [idSectorReceptor, setIdSectorReceptor] = useState('');
-	const [motivo, setMotivo] = useState('');
-	const [urgencia, setUrgencia] = useState('Normal');
-	const [showForm, setShowForm] = useState(false);
+	const [showSolicitar, setShowSolicitar] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const [saving, setSaving] = useState(false);
 	const [exportingDetail, setExportingDetail] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
-
-	useEffect(() => {
-		void interconsultasService
-			.listarSectoresDestino()
-			.then((list) => {
-				setSectores(list);
-				setIdSectorReceptor((prev) => prev || '');
-			})
-			.catch(() => setSectores([]));
-	}, []);
+	const [query, setQuery] = useState('');
 
 	const loadVisita = useCallback(async () => {
 		if (!numeroVisita) return;
@@ -116,38 +103,29 @@ export default function InterconsultaSection({
 		void loadVisita();
 	}, [loadVisita]);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!numeroVisita || !motivo.trim() || !idSectorReceptor.trim()) return;
-		setSaving(true);
-		setError(null);
-		try {
-			await interconsultasService.crear({
-				idVisita: numeroVisita,
-				idSectorReceptor: idSectorReceptor.trim(),
-				sectorSolicitante: sectorSolicitante || undefined,
-				motivo: motivo.trim(),
-				estadoUrgencia: urgencia,
-			});
-			setMotivo('');
-			setShowForm(false);
-			await loadVisita();
-		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Error al guardar');
-		} finally {
-			setSaving(false);
-		}
-	};
+	const filtered = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		if (!q) return rows;
+		return rows.filter((r) => {
+			const hay = (v?: string | number | null) =>
+				v != null && String(v).toLowerCase().includes(q);
+			return (
+				hay(r.Motivo) ||
+				hay(r.ServicioDescripcion) ||
+				hay(r.SectorReceptorNombre) ||
+				hay(r.Especialidad) ||
+				hay(r.MedicoSolicitanteNombre) ||
+				hay(r.EstadoWorkflow) ||
+				hay(r.Estado)
+			);
+		});
+	}, [rows, query]);
 
 	const handleRowClick = async (row: InterconsultaRow) => {
 		const id = row.Origen === 'WEB' ? row.IdInterconsulta : row.IdPedido || row.IdInterconsulta;
 		const detail = await interconsultasService.obtenerPorId(id, row.Origen || 'LEGACY');
 		setSelected(detail || row);
 	};
-
-	if (!numeroVisita) {
-		return <div className={styles.empty}>No hay visita seleccionada</div>;
-	}
 
 	const selectedTextBlocks = selected
 		? [
@@ -167,7 +145,7 @@ export default function InterconsultaSection({
 	const handleExport = async (option: ExportOption, _data?: InterconsultaRow[]) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = rows.map((r, idx) => {
+			const parts = filtered.map((r, idx) => {
 				const tomado = !!r.Tomado;
 				const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
 				return {
@@ -233,151 +211,122 @@ export default function InterconsultaSection({
 		}
 	};
 
+	if (!numeroVisita) {
+		return (
+			<EmptyState
+				variant="interconsulta"
+				text="No hay visita seleccionada"
+				description="Abrí una internación para ver las interconsultas."
+			/>
+		);
+	}
+
 	return (
-		<div className={styles.wrap}>
-			<div className={styles.header}>
-				<div>
-					<h2 className={styles.title}>Interconsultas</h2>
-					<p className={styles.subtitle}>
-						Interconsultas de este paciente. El servicio destino las atiende desde la bandeja
-						de pedidos.
-					</p>
-				</div>
-				<div className={styles.headerActions}>
-					{canCreate && (
-						<button
-							type="button"
-							className={`${btnStyles.btn} ${btnStyles.btnPrimary} ${btnStyles.btnAddDate}`}
-							onClick={() => setShowForm((v) => !v)}
-						>
-							{!showForm && <span className={btnStyles.addIcon} aria-hidden>+</span>}
-							{showForm ? 'Cancelar' : 'Interconsulta'}
-						</button>
-					)}
+		<>
+			<BedSectionLayout
+				title="Interconsultas"
+				subtitle="El servicio destino las atiende desde la bandeja de pedidos"
+				addLabel={canCreate ? 'Interconsulta' : undefined}
+				onAdd={canCreate ? () => setShowSolicitar(true) : undefined}
+				exportSlot={
 					<ExportButton
-						data={rows}
+						data={filtered}
 						fileName={`interconsultas_${numeroVisita}.pdf`}
 						onExport={handleExport}
 						options={['pdf']}
 					/>
-				</div>
-			</div>
-
-			{showForm && canCreate && (
-				<form className={styles.form} onSubmit={handleSubmit}>
-					<label>
-						Servicio destino *
-						<select
-							value={idSectorReceptor}
-							onChange={(e) => setIdSectorReceptor(e.target.value)}
-							required
-						>
-							<option value="">Seleccione…</option>
-							{sectores.map((s) => (
-								<option key={s.valor} value={s.valor}>
-									{s.descripcion} ({s.valor})
-								</option>
-							))}
-						</select>
-					</label>
-					<label>
-						Urgencia
-						<select value={urgencia} onChange={(e) => setUrgencia(e.target.value)}>
-							<option value="Normal">Normal</option>
-							<option value="Medio">Medio</option>
-							<option value="Urgente">Urgente</option>
-						</select>
-					</label>
-					<label>
-						Motivo / consulta *
-						<textarea
-							value={motivo}
-							onChange={(e) => setMotivo(e.target.value)}
-							rows={4}
-							required
-							placeholder="Motivo de la interconsulta…"
-						/>
-					</label>
-					<button type="submit" className={styles.primaryBtn} disabled={saving || !idSectorReceptor}>
-						{saving ? 'Guardando…' : 'Registrar interconsulta'}
-					</button>
-				</form>
-			)}
-
-			{error && <div className={styles.error}>{error}</div>}
-			{loading ? (
-				<div style={{ position: 'relative', minHeight: 200 }}>
-					<Loader />
-				</div>
-			) : rows.length === 0 ? (
-				<div className={styles.empty}>No hay interconsultas registradas para esta internación.</div>
-			) : (
-				<div className={styles.tableWrap}>
-					<table className={styles.table}>
-						<thead>
-							<tr>
-								<th>Urg.</th>
-								<th>Fecha / hora</th>
-								<th>Destino</th>
-								<th>Motivo</th>
-								<th>Solicitado por</th>
-								<th>Estado</th>
-								<th>Acciones</th>
-							</tr>
-						</thead>
-						<tbody>
-							{rows.map((r) => {
-								const id = r.IdPedido || r.IdInterconsulta;
-								const tomado = !!r.Tomado;
-								const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
-								return (
-									<tr key={`${r.Origen || 'LEGACY'}-${id}`}>
-										<td>
-											<span
-												className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
-												title={r.EstadoUrgencia || r.Estado || 'Sin urgencia'}
-											/>
-										</td>
-										<td className={styles.meta}>{formatFecha(r)}</td>
-										<td>
-											<div className={styles.destino}>
-												{r.ServicioDescripcion ||
-													r.SectorReceptorNombre ||
-													r.Especialidad ||
-													'—'}
-											</div>
-											{r.Origen === 'WEB' && (
-												<div className={styles.meta}>Registro web (legado)</div>
-											)}
-										</td>
-										<td className={styles.motivo}>
-											{(r.Motivo || '').length > 120
-												? `${r.Motivo.slice(0, 120)}…`
-												: r.Motivo || '—'}
-										</td>
-										<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
-										<td className={styles.meta}>
-											{r.EstadoWorkflow ||
-												(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
-											{tomado && r.NombreToma ? ` · ${r.NombreToma}` : ''}
-										</td>
-										<td>
-											<button
-												type="button"
-												className={styles.btnAction}
-												title="Ver detalle"
-												onClick={() => void handleRowClick(r)}
-											>
-												<IoEyeOutline color="#5BC0DE" size={18} />
-											</button>
-										</td>
-									</tr>
-								);
-							})}
-						</tbody>
-					</table>
-				</div>
-			)}
+				}
+				search={{
+					value: query,
+					onChange: setQuery,
+					placeholder: 'Buscar por destino, motivo, profesional, estado…',
+				}}
+			>
+				{error && <div className={styles.error}>{error}</div>}
+				{loading ? (
+					<div style={{ position: 'relative', minHeight: 200 }}>
+						<Loader />
+					</div>
+				) : filtered.length === 0 ? (
+					<EmptyState
+						variant="interconsulta"
+						text={rows.length === 0 ? 'Sin interconsultas' : 'Sin resultados'}
+						description={
+							rows.length === 0
+								? 'Solicitá una interconsulta con el botón + Interconsulta.'
+								: 'Probá con otro criterio de búsqueda.'
+						}
+						actionLabel={canCreate && rows.length === 0 ? 'Interconsulta' : undefined}
+						onAction={canCreate && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
+					/>
+				) : (
+					<div className={styles.tableWrap}>
+						<table className={styles.table}>
+							<thead>
+								<tr>
+									<th>Urg.</th>
+									<th>Fecha / hora</th>
+									<th>Destino</th>
+									<th>Motivo</th>
+									<th>Solicitado por</th>
+									<th>Estado</th>
+									<th>Acciones</th>
+								</tr>
+							</thead>
+							<tbody>
+								{filtered.map((r) => {
+									const id = r.IdPedido || r.IdInterconsulta;
+									const tomado = !!r.Tomado;
+									const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
+									return (
+										<tr key={`${r.Origen || 'LEGACY'}-${id}`}>
+											<td>
+												<span
+													className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
+													title={r.EstadoUrgencia || r.Estado || 'Sin urgencia'}
+												/>
+											</td>
+											<td className={styles.meta}>{formatFecha(r)}</td>
+											<td>
+												<div className={styles.destino}>
+													{r.ServicioDescripcion ||
+														r.SectorReceptorNombre ||
+														r.Especialidad ||
+														'—'}
+												</div>
+												{r.Origen === 'WEB' && (
+													<div className={styles.meta}>Registro web (legado)</div>
+												)}
+											</td>
+											<td className={styles.motivo}>
+												{(r.Motivo || '').length > 120
+													? `${r.Motivo.slice(0, 120)}…`
+													: r.Motivo || '—'}
+											</td>
+											<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
+											<td className={styles.meta}>
+												{r.EstadoWorkflow ||
+													(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
+												{tomado && r.NombreToma ? ` · ${r.NombreToma}` : ''}
+											</td>
+											<td>
+												<button
+													type="button"
+													className={styles.btnAction}
+													title="Ver detalle"
+													onClick={() => void handleRowClick(r)}
+												>
+													<IoEyeOutline color="#5BC0DE" size={18} />
+												</button>
+											</td>
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
+					</div>
+				)}
+			</BedSectionLayout>
 
 			{selected && (
 				<PedidoDetalleModal
@@ -395,6 +344,18 @@ export default function InterconsultaSection({
 					exporting={exportingDetail}
 				/>
 			)}
-		</div>
+
+			{showSolicitar ? (
+				<SolicitarInterconsultaModal
+					open={showSolicitar}
+					idVisita={numeroVisita}
+					sectorSolicitante={sectorSolicitante}
+					onClose={() => setShowSolicitar(false)}
+					onCreated={() => {
+						void loadVisita();
+					}}
+				/>
+			) : null}
+		</>
 	);
 }
