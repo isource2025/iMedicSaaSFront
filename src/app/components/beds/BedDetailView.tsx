@@ -29,8 +29,7 @@ import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
 import { bedToHeaderSnapshot } from '../../utils/bedHeader';
 import AdmissionVisitExportModal from '../admission/AdmissionVisitExportModal';
-import BedSectionLayout from './shared/BedSectionLayout';
-import EmptyState from './shared/EmptyState';
+import ProcedimientosSection from './procedimientos/ProcedimientosSection';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -215,13 +214,12 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'procedimientos' ? (
-						<BedSectionLayout title="Procedimientos" subtitle="Registro de procedimientos de esta internación">
-							<EmptyState
-								variant="procedimientos"
-								text="Procedimientos"
-								description="Esta sección todavía no está disponible. El resto del detalle de cama ya usa el mismo encabezado, el + en modal y el estado vacío."
-							/>
-						</BedSectionLayout>
+						<ProcedimientosSection
+							numeroVisita={bed?.NumeroVisita || null}
+							patientName={bed?.NombrePaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							patientLocation={bed?.ubicacionPaciente}
+						/>
 					) : activeSection === 'movimientos' ? (
 						<MovimientosSection
 							numeroVisita={bed?.NumeroVisita || null}

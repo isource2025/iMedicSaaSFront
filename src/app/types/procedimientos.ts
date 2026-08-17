@@ -1,0 +1,22 @@
+export type FacPracticaVisita = {
+	Valor: number;
+	NumeroVisita: number;
+	Practica?: string | number | null;
+	PracticaDescripcion?: string | null;
+	TipoPractica?: string | null;
+	CantidadPractica?: number | string | null;
+	FechaPractica?: string | null;
+	HoraPracticaInicio?: string | null;
+	HoraPracticaFin?: string | null;
+	ValorSector?: string | null;
+	Estado?: string | number | null;
+	Factura?: string | number | null;
+	Autorizada?: string | number | null;
+	CodOperador?: string | number | null;
+	NroInforme?: string | number | null;
+	NroAutorizacion?: string | number | null;
+	IdProtocolo?: number | null;
+	SolicitanteNombre?: string | null;
+	Realizadores?: string[];
+	Profesionales?: string | null;
+};
