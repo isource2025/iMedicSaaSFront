@@ -178,7 +178,7 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
     () => {
       const inicial: { [key: string]: boolean } = {};
       adjuntosAgrupados.forEach((grupo) => {
-        inicial[grupo.nombre] = false;
+        inicial[grupo.nombre] = true;
       });
       return inicial;
     },
@@ -206,7 +206,10 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
       <h4 className={styles.title}>Archivos adjuntos ({adjuntos.length})</h4>
       
       {adjuntosAgrupados.map((grupo) => (
-        <div key={grupo.nombre} className={styles.grupoContainer}>
+        <div
+          key={grupo.nombre}
+          className={`${styles.grupoContainer} ${gruposExpandidos[grupo.nombre] ? styles.grupoAbierto : ''}`}
+        >
           <div 
             className={styles.grupoHeader}
             onClick={() => toggleGrupo(grupo.nombre)}

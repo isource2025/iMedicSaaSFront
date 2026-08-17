@@ -193,7 +193,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
               className={modo === 'visita' ? styles.modeTabActive : styles.modeTab}
               onClick={() => setModo('visita')}
             >
-              En la visita ({adjuntos.length})
+              Lista de archivos ({adjuntos.length})
             </button>
           </div>
 

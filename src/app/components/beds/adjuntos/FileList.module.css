@@ -3,10 +3,10 @@
 }
 
 .title {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
-  color: #0083A9;
-  margin: 0 0 16px 0;
+  color: #64748b;
+  margin: 0 0 10px 0;
 }
 
 .fileList {
@@ -15,37 +15,41 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .fileItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  transition: all 0.2s;
+  gap: 10px;
+  padding: 10px 8px 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s;
+}
+
+.fileItem:last-child {
+  border-bottom: none;
 }
 
 .fileItem:hover {
-  border-color: #00B5E2;
-  box-shadow: 0 2px 8px rgba(0, 131, 169, 0.1);
+  background: #f8fdff;
 }
 
 .fileIcon {
-  margin-right: 12px;
   flex-shrink: 0;
-  color: #64748b;
+  color: #0083A9;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f0f9fc;
 }
 
 .fileIcon svg {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 
 .fileInfo {
@@ -54,131 +58,129 @@
 }
 
 .fileName {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #0083A9;
-  margin-bottom: 4px;
+  color: #0f172a;
+  margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .fileName:hover {
-  color: #00B5E2;
-  text-decoration: underline;
+  color: #0083A9;
 }
 
 .fileMetadata {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #64748b;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
   flex-wrap: wrap;
 }
 
 .separator {
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 .fileActions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
 .downloadButton,
-.deleteButton {
-  padding: 8px;
+.deleteButton,
+.viewButton {
+  padding: 6px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s, color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
 }
 
-.downloadButton svg,
-.deleteButton svg {
-  width: 18px;
-  height: 18px;
-}
-
+.viewButton,
 .downloadButton {
-  background: #00B5E2;
-  color: white;
+  color: #0083A9;
 }
 
+.viewButton:hover:not(:disabled),
 .downloadButton:hover:not(:disabled) {
-  background: #0083A9;
-  transform: translateY(-1px);
+  background: #e0f7ff;
 }
 
 .deleteButton {
-  background: #ef4444;
-  color: white;
-  margin-left: 8px;
+  color: #ef4444;
 }
 
 .deleteButton:hover:not(:disabled) {
-  background: #dc2626;
-  transform: translateY(-1px);
+  background: #fee2e2;
 }
 
 .emptyState {
   text-align: center;
-  padding: 40px 20px;
-  color: #64748b;
+  padding: 32px 16px;
+  color: #94a3b8;
   font-size: 14px;
 }
 
 .grupoContainer {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
+  border: 1px solid #e8eef3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
 }
 
 .grupoHeader {
-  background: linear-gradient(135deg, #00B5E2 0%, #0083A9 100%);
-  padding: 12px 16px;
-  border-radius: 8px;
+  background: #f8fafc;
+  padding: 8px 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 12px;
+}
+
+.grupoAbierto .grupoHeader {
+  border-bottom: 1px solid #eef2f7;
 }
 
 .grupoHeader:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 131, 169, 0.2);
+  background: #f1f5f9;
 }
 
 .grupoTitulo {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: #334155;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .nombreGrupo {
   flex: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.01em;
+  color: #0083A9;
 }
 
 .cantidadGrupo {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .iconoExpandido,
 .iconoColapsado {
   transition: transform 0.2s;
   flex-shrink: 0;
+  color: #94a3b8;
 }
 
 .iconoExpandido {
@@ -189,53 +191,31 @@
   transform: rotate(0deg);
 }
 
-.viewButton {
-  padding: 8px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #61D6EB;
-  color: white;
-}
-
-.viewButton:hover:not(:disabled) {
-  background: #41C8DC;
-  transform: translateY(-1px);
-}
-
 .viewButton:disabled,
 .downloadButton:disabled,
 .deleteButton:disabled {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: wait;
-  transform: none;
 }
 
-.viewButton svg {
-  width: 18px;
-  height: 18px;
+.viewButton svg,
+.downloadButton svg,
+.deleteButton svg {
+  width: 16px;
+  height: 16px;
 }
 
 @media (max-width: 768px) {
   .fileItem {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .fileInfo {
-    width: 100%;
+    width: calc(100% - 50px);
   }
 
   .fileActions {
     width: 100%;
     justify-content: flex-end;
-  }
-
-  .fileMetadata {
-    font-size: 11px;
   }
 }
