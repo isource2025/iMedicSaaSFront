@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { adjuntosService } from '@/app/services/adjuntosService';
+import type { TipoImagenHC } from '@/app/types/adjuntos';
 import { buildVideoFromDicomFiles, DicomVideoBuildResult } from '@/app/utils/dicomVideoBuilder';
 import {
   inferFpsFromDicomFiles,
@@ -11,23 +12,27 @@ import {
 import styles from './DicomVideoImporter.module.css';
 
 interface DicomVideoImporterProps {
-  open: boolean;
-  onClose: () => void;
   numeroVisita: number;
-  tipoImagenCodigo: string;
+  tiposImagen: TipoImagenHC[];
   onUploaded: () => void;
+  /** Si es true, se muestra en la pestaña (sin segundo modal). */
+  embedded?: boolean;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 export default function DicomVideoImporter({
-  open,
-  onClose,
   numeroVisita,
-  tipoImagenCodigo,
+  tiposImagen,
   onUploaded,
+  embedded = false,
+  open = true,
+  onClose,
 }: DicomVideoImporterProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [tipoImagenCodigo, setTipoImagenCodigo] = useState('');
   const [fps, setFps] = useState(12);
   const [fpsTouched, setFpsTouched] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,10 +43,11 @@ export default function DicomVideoImporter({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const sortedFiles = useMemo(() => sortDicomFilesByNumericOrder(files), [files]);
+  const hasFiles = sortedFiles.length > 0;
 
-  useEffect(() => {
-    if (!open) return;
+  const reset = () => {
     setFiles([]);
+    setTipoImagenCodigo('');
     setFps(12);
     setFpsTouched(false);
     setBusy(false);
@@ -53,7 +59,14 @@ export default function DicomVideoImporter({
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
-  }, [open]);
+  };
+
+  useEffect(() => {
+    if (embedded) return;
+    if (!open) return;
+    reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, embedded]);
 
   useEffect(() => {
     if (!files.length || fpsTouched) return;
@@ -66,7 +79,7 @@ export default function DicomVideoImporter({
     };
   }, [previewUrl]);
 
-  if (!open) return null;
+  if (!embedded && !open) return null;
 
   const addFiles = (incoming: FileList | File[]) => {
     const list = Array.from(incoming).filter(isDicomFile);
@@ -82,35 +95,40 @@ export default function DicomVideoImporter({
     }
     setFiles((prev) => {
       const map = new Map<string, File>();
-      [...prev, ...list].forEach((file) => map.set(`${file.name}-${file.size}`, file));
+      prev.concat(list).forEach((file) => map.set(`${file.name}-${file.size}`, file));
       return Array.from(map.values());
     });
   };
 
+  const removeFile = (name: string, size: number) => {
+    setFiles((prev) => prev.filter((f) => !(f.name === name && f.size === size)));
+    setResult(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  };
+
   const handleGenerate = async () => {
     if (sortedFiles.length < 2) {
-      setError('Arrastre al menos 2 archivos DICOM numerados.');
+      setError('Necesitás al menos 2 archivos DICOM de la serie.');
       return;
     }
-
     try {
       setBusy(true);
       setError(null);
       setProgress(0);
       setProgressMessage('Iniciando…');
-
       const built = await buildVideoFromDicomFiles(sortedFiles, fps, (p) => {
         const pct = p.total > 0 ? Math.round((p.current / p.total) * 100) : 0;
         setProgress(pct);
         setProgressMessage(p.message);
       });
-
       if (previewUrl) URL.revokeObjectURL(previewUrl);
-      const url = URL.createObjectURL(built.blob);
-      setPreviewUrl(url);
+      setPreviewUrl(URL.createObjectURL(built.blob));
       setResult(built);
       setProgress(100);
-      setProgressMessage(`Video listo: ${built.frameCount} frames a ${built.fps} fps.`);
+      setProgressMessage(`${built.frameCount} frames · ${built.fps} fps`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo generar el video.');
     } finally {
@@ -121,17 +139,17 @@ export default function DicomVideoImporter({
   const handleSave = async () => {
     if (!result) return;
     if (!tipoImagenCodigo.trim()) {
-      setError('Seleccione el tipo de estudio antes de guardar.');
+      setError('Elegí el tipo de estudio para guardar.');
       return;
     }
-
     try {
       setBusy(true);
       setError(null);
       const videoFile = new File([result.blob], result.fileName, { type: result.mimeType });
       await adjuntosService.subirArchivo(numeroVisita, videoFile, tipoImagenCodigo);
+      reset();
       onUploaded();
-      onClose();
+      onClose?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar el video como adjunto.');
     } finally {
@@ -139,128 +157,177 @@ export default function DicomVideoImporter({
     }
   };
 
+  const body = (
+    <div className={styles.body}>
+      <p className={styles.hint}>
+        Arrastrá los <strong>.dcm</strong> de la serie. Se ordenan por el número del nombre y se
+        genera un video (no se suben los DICOM sueltos).
+      </p>
+
+      <div className={hasFiles ? styles.pendingRow : undefined}>
+        <div
+          className={`${styles.dropZone} ${hasFiles ? styles.dropZoneCompact : ''} ${
+            dragActive ? styles.dropActive : ''
+          }`}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            setDragActive(false);
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragActive(false);
+            if (!busy) addFiles(e.dataTransfer.files);
+          }}
+          onClick={() => !busy && inputRef.current?.click()}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept=".dcm,.dicom,application/dicom"
+            className={styles.fileInput}
+            onChange={(e) => {
+              if (e.target.files) addFiles(e.target.files);
+              e.target.value = '';
+            }}
+          />
+          <span className={styles.dropIcon}>🩻</span>
+          <div className={styles.dropText}>
+            {hasFiles ? 'Agregar más .dcm' : 'Arrastrá los DICOM o hacé click'}
+          </div>
+          {!hasFiles ? <div className={styles.dropMeta}>Mínimo 2 archivos de la misma serie</div> : null}
+        </div>
+
+        {hasFiles ? (
+          <div className={styles.fileSummary}>
+            <div className={styles.fileSummaryHead}>
+              <span>
+                Serie · <strong>{sortedFiles.length}</strong> archivo{sortedFiles.length === 1 ? '' : 's'}
+              </span>
+              <button type="button" className={styles.clearBtn} disabled={busy} onClick={reset}>
+                Vaciar
+              </button>
+            </div>
+            <ul className={styles.fileList}>
+              {sortedFiles.slice(0, 10).map((file) => (
+                <li key={`${file.name}-${file.size}`} className={styles.fileRow}>
+                  <span className={styles.fileName}>{file.name}</span>
+                  <button
+                    type="button"
+                    className={styles.removeBtn}
+                    disabled={busy}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFile(file.name, file.size);
+                    }}
+                    aria-label={`Quitar ${file.name}`}
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+              {sortedFiles.length > 10 ? (
+                <li className={styles.fileMore}>… y {sortedFiles.length - 10} más</li>
+              ) : null}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+
+      {hasFiles ? (
+        <div className={styles.steps}>
+          <label className={styles.label}>
+            <span>Tipo de estudio</span>
+            <span className={styles.tipoHint}>Obligatorio para guardar</span>
+            <select
+              className={styles.select}
+              value={tipoImagenCodigo}
+              disabled={busy}
+              onChange={(e) => setTipoImagenCodigo(e.target.value)}
+            >
+              <option value="">Elegí el tipo…</option>
+              {tiposImagen.map((t) => (
+                <option key={t.TipoImagen} value={t.TipoImagen}>
+                  {t.DescTipoImagen}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.label}>
+            <span>FPS</span>
+            <span className={styles.tipoHint}>Se sugiere según los números del nombre</span>
+            <input
+              type="number"
+              min={1}
+              max={60}
+              step={1}
+              className={styles.fpsInput}
+              value={fps}
+              disabled={busy}
+              onChange={(e) => {
+                setFpsTouched(true);
+                setFps(Number(e.target.value) || 12);
+              }}
+            />
+          </label>
+        </div>
+      ) : null}
+
+      {busy ? (
+        <div className={styles.progressWrap}>
+          <div className={styles.progressBar}>
+            <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+          </div>
+          <span className={styles.progressText}>{progressMessage || 'Procesando…'}</span>
+        </div>
+      ) : null}
+
+      {previewUrl ? <video src={previewUrl} className={styles.preview} controls playsInline /> : null}
+
+      {error ? <div className={styles.error}>{error}</div> : null}
+
+      {hasFiles ? (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            onClick={handleGenerate}
+            disabled={busy || sortedFiles.length < 2}
+          >
+            {busy && !result ? 'Generando…' : result ? 'Regenerar video' : 'Generar video'}
+          </button>
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            onClick={() => void handleSave()}
+            disabled={busy || !result}
+          >
+            {busy && result ? 'Guardando…' : 'Guardar video'}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  if (embedded) {
+    return <div className={styles.embedded}>{body}</div>;
+  }
+
   return (
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h3 className={styles.title}>Importar serie DICOM → Video</h3>
+          <h3 className={styles.title}>Serie DICOM → video</h3>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
             ✕
           </button>
         </div>
-
-        <div className={styles.body}>
-          <p className={styles.hint}>
-            Arrastre todos los archivos <strong>.dcm</strong> de la serie. Se ordenan por el número en el
-            nombre y se genera un video para guardarlo como adjunto (no se suben los DICOM sueltos).
-          </p>
-
-          <div
-            className={`${styles.dropZone} ${dragActive ? styles.dropActive : ''}`}
-            onDragEnter={(e) => {
-              e.preventDefault();
-              setDragActive(true);
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              setDragActive(false);
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragActive(false);
-              if (!busy) addFiles(e.dataTransfer.files);
-            }}
-            onClick={() => !busy && inputRef.current?.click()}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              accept=".dcm,.dicom,application/dicom"
-              className={styles.fileInput}
-              onChange={(e) => {
-                if (e.target.files) addFiles(e.target.files);
-                e.target.value = '';
-              }}
-            />
-            <span className={styles.dropIcon}>🩻</span>
-            <div>Arrastre los DICOM aquí o haga clic para seleccionarlos</div>
-          </div>
-
-          {sortedFiles.length > 0 ? (
-            <div className={styles.fileSummary}>
-              <strong>{sortedFiles.length}</strong> archivo(s) — orden por número en nombre:
-              <ol className={styles.fileList}>
-                {sortedFiles.slice(0, 8).map((file) => (
-                  <li key={`${file.name}-${file.size}`}>{file.name}</li>
-                ))}
-                {sortedFiles.length > 8 ? <li>… y {sortedFiles.length - 8} más</li> : null}
-              </ol>
-            </div>
-          ) : null}
-
-          <div className={styles.metaRow}>
-            <div className={styles.fileSummary}>
-              El FPS se sugiere según el rango numérico de los archivos. Puede ajustarlo antes de generar.
-            </div>
-            <label className={styles.label}>
-              FPS
-              <input
-                type="number"
-                min={1}
-                max={60}
-                step={1}
-                className={styles.fpsInput}
-                value={fps}
-                disabled={busy}
-                onChange={(e) => {
-                  setFpsTouched(true);
-                  setFps(Number(e.target.value) || 12);
-                }}
-              />
-            </label>
-          </div>
-
-          {busy ? (
-            <div className={styles.progressWrap}>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-              </div>
-              <span className={styles.progressText}>{progressMessage || 'Procesando…'}</span>
-            </div>
-          ) : null}
-
-          {previewUrl ? (
-            <video src={previewUrl} className={styles.preview} controls playsInline />
-          ) : null}
-
-          {error ? <div className={styles.error}>{error}</div> : null}
-
-          <div className={styles.actions}>
-            <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={busy}>
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              onClick={handleGenerate}
-              disabled={busy || sortedFiles.length < 2}
-            >
-              {busy && !result ? 'Generando video…' : 'Generar video'}
-            </button>
-            {result ? (
-              <button
-                type="button"
-                className={styles.btnPrimary}
-                onClick={handleSave}
-                disabled={busy || !tipoImagenCodigo.trim()}
-              >
-                {busy ? 'Guardando…' : 'Guardar como adjunto'}
-              </button>
-            ) : null}
-          </div>
-        </div>
+        {body}
       </div>
     </div>
   );

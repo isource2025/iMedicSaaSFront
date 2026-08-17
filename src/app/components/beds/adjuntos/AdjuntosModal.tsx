@@ -39,7 +39,6 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState('');
-  const [dicomImporterOpen, setDicomImporterOpen] = useState(false);
   const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita'>('archivos');
   const fileUploadRef = useRef<FileUploadRef>(null);
 
@@ -241,45 +240,20 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
 
           {modo === 'dicom' && (
             <div className={styles.uploadBlock}>
-              <p className={styles.dicomLead}>
-                Convertí una serie DICOM en un video y lo guardás como adjunto de esta visita.
-              </p>
-              <label className={styles.tipoStep} htmlFor="modal-dicom-tipo-imagen">
-                <span>Tipo de estudio</span>
-                <span className={styles.tipoHint}>Obligatorio para importar</span>
-                <select
-                  id="modal-dicom-tipo-imagen"
-                  className={styles.tipoSelect}
-                  value={tipoImagenCodigo}
-                  onChange={(e) => setTipoImagenCodigo(e.target.value)}
-                  disabled={uploading}
-                >
-                  <option value="">Elegí el tipo…</option>
-                  {tiposImagen.map((t) => (
-                    <option key={t.TipoImagen} value={t.TipoImagen}>
-                      {t.DescTipoImagen}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                className={styles.dicomImportButton}
-                disabled={uploading}
-                onClick={() => {
-                  if (!tipoImagenCodigo.trim()) {
-                    showMessage(
-                      'Falta tipo de estudio',
-                      'Elegí el tipo de estudio y después importá la serie.',
-                      'warning',
-                    );
-                    return;
-                  }
-                  setDicomImporterOpen(true);
+              <DicomVideoImporter
+                embedded
+                numeroVisita={numeroVisita}
+                tiposImagen={tiposImagen}
+                onUploaded={async () => {
+                  showMessage(
+                    'Adjunto subido',
+                    'Video generado y guardado como adjunto.',
+                    'success',
+                  );
+                  setModo('visita');
+                  await loadAdjuntos();
                 }}
-              >
-                Elegir serie DICOM
-              </button>
+              />
             </div>
           )}
 
@@ -298,21 +272,6 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
             </div>
           )}
 
-          <DicomVideoImporter
-            open={dicomImporterOpen}
-            onClose={() => setDicomImporterOpen(false)}
-            numeroVisita={numeroVisita}
-            tipoImagenCodigo={tipoImagenCodigo}
-            onUploaded={async () => {
-              showMessage(
-                'Adjunto subido',
-                'Video generado y guardado como adjunto.',
-                'success',
-              );
-              setModo('visita');
-              await loadAdjuntos();
-            }}
-          />
         </div>
       </div>
 
