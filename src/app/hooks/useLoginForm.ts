@@ -27,7 +27,7 @@ function uniqueEmpresasPorId(list: EmpresaLogin[]): EmpresaLogin[] {
     if (!Number.isFinite(id) || id <= 0) continue;
     if (!map.has(id)) map.set(id, e);
   }
-  return [...map.values()];
+  return Array.from(map.values());
 }
 
 export function useLoginForm() {

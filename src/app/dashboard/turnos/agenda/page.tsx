@@ -901,9 +901,7 @@ function AgendaPageContent() {
 												{slotsFiltrados.length > 0 && (
 													<span className={styles.badge}>{slotsFiltrados.length}</span>
 												)}
-												{!fechaPasada &&
-												diaMotivo === 'sin_horario' &&
-												diaMotivo !== 'feriado' ? (
+												{!fechaPasada && diaMotivo === 'sin_horario' ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
@@ -1187,8 +1185,7 @@ function AgendaPageContent() {
 												)}
 												{!fechaPasada &&
 												matriculaSel &&
-												diaMotivo === 'sin_horario' &&
-												diaMotivo !== 'feriado' ? (
+												diaMotivo === 'sin_horario' ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
