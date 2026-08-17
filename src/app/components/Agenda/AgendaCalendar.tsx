@@ -35,15 +35,37 @@ export default function AgendaCalendar({
 	const gridRef = useRef<HTMLDivElement>(null);
 	const monthKey = `${cursor.getFullYear()}-${cursor.getMonth()}`;
 	const [diasConAgenda, setDiasConAgenda] = useState<Set<string>>(() => new Set());
+	const [feriadosMes, setFeriadosMes] = useState<Map<string, string>>(() => new Map());
 
 	useEffect(() => {
-		if (!matricula) {
-			setDiasConAgenda(new Set());
-			return;
-		}
 		let cancel = false;
 		const desde = toIso(monthStart);
 		const hasta = toIso(monthEnd);
+
+		agendaService
+			.getFeriados(desde, hasta)
+			.then((lista) => {
+				if (cancel) return;
+				const map = new Map<string, string>();
+				for (const f of lista || []) {
+					const iso = String(f?.fecha || '').slice(0, 10);
+					if (iso.length === 10) {
+						map.set(iso, String(f?.nombre || 'Feriado').trim() || 'Feriado');
+					}
+				}
+				setFeriadosMes(map);
+			})
+			.catch(() => {
+				if (!cancel) setFeriadosMes(new Map());
+			});
+
+		if (!matricula) {
+			setDiasConAgenda(new Set());
+			return () => {
+				cancel = true;
+			};
+		}
+
 		const aplicarFechas = (lista: string[]) => {
 			const fechas = new Set<string>();
 			for (const f of lista) {
@@ -61,7 +83,6 @@ export default function AgendaCalendar({
 			})
 			.catch(async (err) => {
 				if (cancel) return;
-				// Backend anterior sin /dias-agenda: fallback a slots ligero del mes
 				if (err?.response?.status === 404) {
 					try {
 						const r = await agendaService.getSlots(matricula, desde, hasta, { ligero: true });
@@ -185,12 +206,21 @@ export default function AgendaCalendar({
 									const outside = isOutsideMonth(d);
 									const active = isSame(d, selected);
 									const past = isPast(d);
+									const iso = toIso(d);
+									const feriadoNombre = !outside ? feriadosMes.get(iso) : undefined;
+									const esFeriado = Boolean(feriadoNombre);
 									const hasTurnos =
 										!!matricula &&
-										diasConAgenda.has(toIso(d)) &&
+										diasConAgenda.has(iso) &&
 										!outside &&
 										!past &&
-										!active;
+										!active &&
+										!esFeriado;
+									const title = esFeriado
+										? `Feriado: ${feriadoNombre}`
+										: past
+											? 'No se pueden asignar turnos en fechas pasadas'
+											: undefined;
 									return (
 										<button
 											key={i}
@@ -202,15 +232,26 @@ export default function AgendaCalendar({
 												hasTurnos ? `${calExtra.hasTurnos} ${calExtra.cellHasTurnos}` : '',
 												active ? calExtra.selected : '',
 												past ? calExtra.past : '',
+												esFeriado ? calExtra.feriado : '',
 											]
 												.filter(Boolean)
 												.join(' ')}
 											onClick={() => !past && onSelect(d)}
 											aria-pressed={active}
 											aria-disabled={past}
-											title={past ? 'No se pueden asignar turnos en fechas pasadas' : undefined}
+											aria-label={
+												esFeriado
+													? `${d.getDate()}, feriado: ${feriadoNombre}`
+													: undefined
+											}
+											title={title}
 										>
-											{d.getDate()}
+											<span className={calExtra.dayNum}>{d.getDate()}</span>
+											{esFeriado ? (
+												<span className={calExtra.feriadoMark} aria-hidden>
+													F
+												</span>
+											) : null}
 										</button>
 									);
 								})}
@@ -219,6 +260,10 @@ export default function AgendaCalendar({
 					</CSSTransition>
 				</SwitchTransition>
 			</div>
+			<p className={calExtra.leyenda}>
+				<span className={calExtra.leyendaFeriado}>F</span> Feriado nacional — al hacer clic
+				se ve el motivo
+			</p>
 		</div>
 	);
 }

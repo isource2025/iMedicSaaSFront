@@ -10,6 +10,62 @@
 	background: #e3f2f7 !important;
 }
 
+/* Feriado nacional: se puede seleccionar para ver el motivo */
+.feriado {
+	color: #b91c1c;
+	background: #fee2e2 !important;
+	font-weight: 600;
+	position: relative;
+}
+
+.feriado:hover {
+	background: #fecaca !important;
+	border-color: #f87171 !important;
+}
+
+.feriado.selected {
+	background: #b91c1c !important;
+	color: #fff !important;
+	border-color: #991b1b !important;
+}
+
+.dayNum {
+	display: block;
+	line-height: 1.1;
+}
+
+.feriadoMark {
+	display: block;
+	font-size: 9px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	line-height: 1;
+	margin-top: 1px;
+	opacity: 0.95;
+}
+
+.leyenda {
+	margin: 8px 4px 0;
+	font-size: 11px;
+	color: #64748b;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.leyendaFeriado {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 4px;
+	background: #fee2e2;
+	color: #b91c1c;
+	font-size: 10px;
+	font-weight: 800;
+}
+
 /* Día con agenda del profesional (solo futuros / hoy, no seleccionado) */
 .hasTurnos,
 .cellHasTurnos {

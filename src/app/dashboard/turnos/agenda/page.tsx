@@ -198,6 +198,7 @@ function AgendaPageContent() {
 
 	// Vista médico
 	const [diaMotivo, setDiaMotivo] = useState<string | null>(null);
+	const [diaMotivoLabel, setDiaMotivoLabel] = useState<string | null>(null);
 	const [fechaMedicoLista, setFechaMedicoLista] = useState(false);
 
 	const [error, setError] = useState<string | null>(null);
@@ -386,6 +387,7 @@ function AgendaPageContent() {
 				);
 				const dia = r.dias[0];
 				setDiaMotivo(dia?.motivo ?? null);
+				setDiaMotivoLabel(dia?.motivoLabel ?? null);
 				setTodosSlots(dia?.slots ?? []);
 				setJornadas([]);
 				setJornadaSel(0);
@@ -399,6 +401,7 @@ function AgendaPageContent() {
 				setTodosSlots([]);
 				setJornadas([]);
 				setDiaMotivo(null);
+				setDiaMotivoLabel(null);
 			} finally {
 				setLoadingSlots(false);
 			}
@@ -411,6 +414,7 @@ function AgendaPageContent() {
 			setJornadas([]);
 			setProfesionalAgenda(null);
 			setDiaMotivo(null);
+			setDiaMotivoLabel(null);
 			return;
 		}
 		setLoadingSlots(true);
@@ -428,6 +432,7 @@ function AgendaPageContent() {
 			}
 			const dia = r.dias[0];
 			setDiaMotivo(dia?.motivo ?? null);
+			setDiaMotivoLabel(dia?.motivoLabel ?? null);
 			setTodosSlots(dia?.slots ?? []);
 			const j = dia?.jornadas?.length ? dia.jornadas : [];
 			setJornadas(j);
@@ -439,6 +444,7 @@ function AgendaPageContent() {
 			setTodosSlots([]);
 			setJornadas([]);
 			setDiaMotivo(null);
+			setDiaMotivoLabel(null);
 		} finally {
 			setLoadingSlots(false);
 		}
@@ -866,6 +872,13 @@ function AgendaPageContent() {
 							una fecha actual o futura en el calendario.
 						</div>
 					)}
+					{diaMotivo === 'feriado' && (
+						<div className={styles.warning}>
+							{diaMotivoLabel
+								? `Feriado nacional: ${diaMotivoLabel}. No se asignan turnos.`
+								: 'Feriado nacional. No se asignan turnos.'}
+						</div>
+					)}
 
 					{/* ───────────────── Vista MÉDICO ───────────────── */}
 					{esMedico && (
@@ -888,7 +901,9 @@ function AgendaPageContent() {
 												{slotsFiltrados.length > 0 && (
 													<span className={styles.badge}>{slotsFiltrados.length}</span>
 												)}
-												{!fechaPasada && diaMotivo === 'sin_horario' ? (
+												{!fechaPasada &&
+												diaMotivo === 'sin_horario' &&
+												diaMotivo !== 'feriado' ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
@@ -958,17 +973,24 @@ function AgendaPageContent() {
 										<AgendaEmptyState
 											icon='📋'
 											title={
-												diaMotivo === 'sin_horario'
-													? 'Sin horario configurado'
-													: 'Sin turnos en la agenda'
+												diaMotivo === 'feriado'
+													? diaMotivoLabel
+														? `Feriado: ${diaMotivoLabel}`
+														: 'Feriado nacional'
+													: diaMotivo === 'sin_horario'
+														? 'Sin horario configurado'
+														: 'Sin turnos en la agenda'
 											}
 											description={
-												diaMotivo === 'sin_horario'
-													? 'Este día no tiene grilla de turnos. Podés agregar un sobreturno igualmente.'
-													: 'No hay cupos para esta fecha con el filtro actual.'
+												diaMotivo === 'feriado'
+													? 'Este día no está disponible para turnos.'
+													: diaMotivo === 'sin_horario'
+														? 'Este día no tiene grilla de turnos. Podés agregar un sobreturno igualmente.'
+														: 'No hay cupos para esta fecha con el filtro actual.'
 											}
 											action={
 												!fechaPasada &&
+												diaMotivo !== 'feriado' &&
 												(diaMotivo === 'sin_horario' || filtroSlots === 'TODOS')
 													? {
 															label: '+ Agregar sobreturno',
@@ -1165,7 +1187,8 @@ function AgendaPageContent() {
 												)}
 												{!fechaPasada &&
 												matriculaSel &&
-												diaMotivo === 'sin_horario' ? (
+												diaMotivo === 'sin_horario' &&
+												diaMotivo !== 'feriado' ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
@@ -1214,22 +1237,29 @@ function AgendaPageContent() {
 													? 'Sin turnos libres'
 													: filtroSlots === 'OCUPADOS'
 														? 'Sin turnos ocupados'
-														: diaMotivo === 'sin_horario'
-															? 'Sin horario configurado'
-															: 'Sin turnos en la agenda'
+														: diaMotivo === 'feriado'
+															? diaMotivoLabel
+																? `Feriado: ${diaMotivoLabel}`
+																: 'Feriado nacional'
+															: diaMotivo === 'sin_horario'
+																? 'Sin horario configurado'
+																: 'Sin turnos en la agenda'
 											}
 											description={
 												filtroSlots === 'LIBRES'
 													? 'No hay cupos libres con el filtro actual. Probá ver «Total» u «Ocupados», o elegí otra fecha.'
 													: filtroSlots === 'OCUPADOS'
 														? 'No hay turnos ocupados con el filtro actual. Los cupos libres aparecen en «Libres» o «Total».'
-														: diaMotivo === 'sin_horario'
-															? 'Este profesional no tiene grilla ese día. Podés agregar un sobreturno.'
-															: 'Este profesional no tiene turnos generados para la fecha seleccionada.'
+														: diaMotivo === 'feriado'
+															? 'Este día no está disponible para turnos.'
+															: diaMotivo === 'sin_horario'
+																? 'Este profesional no tiene grilla ese día. Podés agregar un sobreturno.'
+																: 'Este profesional no tiene turnos generados para la fecha seleccionada.'
 											}
 											action={
 												!fechaPasada &&
 												matriculaSel &&
+												diaMotivo !== 'feriado' &&
 												(diaMotivo === 'sin_horario' || filtroSlots === 'TODOS')
 													? {
 															label: '+ Agregar sobreturno',

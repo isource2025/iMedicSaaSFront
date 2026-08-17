@@ -141,6 +141,7 @@ export interface AgendaDia {
 	dia: string;
 	bloqueado: boolean;
 	motivo?: string;
+	motivoLabel?: string;
 	jornadas?: AgendaJornada[];
 	slots: AgendaSlot[];
 }
@@ -161,11 +162,17 @@ export interface SlotsResponse {
 	profesional?: AgendaProfesionalMeta;
 }
 
+export interface AgendaFeriado {
+	fecha: string;
+	nombre: string;
+}
+
 export interface DiasAgendaResponse {
 	matricula: number;
 	desde: string;
 	hasta: string;
 	fechas: string[];
+	feriados?: AgendaFeriado[];
 }
 
 export interface ResumenDia {
@@ -382,6 +389,15 @@ export const agendaService = {
 		return r.data.data;
 	},
 
+	/** Feriados nacionales del rango (calendario). */
+	async getFeriados(desde: string, hasta: string): Promise<AgendaFeriado[]> {
+		const qs = new URLSearchParams({ desde, hasta });
+		const r = await apiService.get<ApiResp<AgendaFeriado[]>>(
+			`/agenda/feriados?${qs.toString()}`,
+		);
+		return r.data.data || [];
+	},
+
 	/** Días del rango con cupos de agenda (calendario mensual). */
 	async getDiasConAgenda(
 		matricula: number,
@@ -444,7 +460,9 @@ export const agendaService = {
 		dias: {
 			fecha: string;
 			dia?: string;
+			bloqueado?: boolean;
 			motivo?: string | null;
+			motivoLabel?: string | null;
 			slots: AgendaSlot[];
 			jornadas?: AgendaJornada[];
 		}[];
@@ -457,7 +475,9 @@ export const agendaService = {
 				dias: {
 					fecha: string;
 					dia?: string;
+					bloqueado?: boolean;
 					motivo?: string | null;
+					motivoLabel?: string | null;
 					slots: AgendaSlot[];
 					jornadas?: AgendaJornada[];
 				}[];
