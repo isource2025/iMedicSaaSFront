@@ -54,30 +54,19 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 		<div className={styles.root}>
 			{/* ====== HEADER (arriba de todo) ====== */}
 			<header className={styles.header}>
-				<div className={styles.headerRow}>
-					<PatientMiniHeader
-						numeroVisita={numeroVisita ?? ''}
-						header={headerSnapshot}
-						burgerButton={
-							<button
-								className={styles.burger}
-								onClick={() => setDrawerOpen(true)}
-								aria-label='Abrir menú'
-							>
-								<span className={styles.chevronIcon}>›</span>
-							</button>
-						}
-					/>
-					{numeroVisita ? (
+				<PatientMiniHeader
+					numeroVisita={numeroVisita ?? ''}
+					header={headerSnapshot}
+					burgerButton={
 						<button
-							type="button"
-							className={styles.exportDetailBtn}
-							onClick={() => setShowExportAll(true)}
+							className={styles.burger}
+							onClick={() => setDrawerOpen(true)}
+							aria-label='Abrir menú'
 						>
-							Exportar detalle…
+							<span className={styles.chevronIcon}>›</span>
 						</button>
-					) : null}
-				</div>
+					}
+				/>
 			</header>
 
 			{/* ====== MAIN CONTENT (sidebar + body) ====== */}
@@ -92,7 +81,10 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							selected={selectedDate ?? undefined}
 							fechaIngreso={bed?.fechaIngresoSQL}
 						/>
-						<SidebarFilters onCloseDrawer={() => setDrawerOpen(false)} />
+						<SidebarFilters
+							onCloseDrawer={() => setDrawerOpen(false)}
+							onExportDetalle={numeroVisita ? () => setShowExportAll(true) : undefined}
+						/>
 					</div>
 				</aside>
 

@@ -20,31 +20,6 @@
 	z-index: 10;
 }
 
-.headerRow {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.75rem;
-	flex-wrap: wrap;
-}
-
-.exportDetailBtn {
-	flex-shrink: 0;
-	background: #fff;
-	color: #0083a9;
-	border: 1px solid #00b5e2;
-	border-radius: 8px;
-	padding: 0.45rem 0.9rem;
-	font-size: 0.85rem;
-	font-weight: 600;
-	cursor: pointer;
-	white-space: nowrap;
-}
-
-.exportDetailBtn:hover {
-	background: #e0f7fc;
-}
-
 /* Contenedor principal debajo del header */
 .mainContent {
 	display: grid;

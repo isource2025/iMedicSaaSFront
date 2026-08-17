@@ -9,6 +9,7 @@ import { usePermiso } from '@/app/hooks/usePermiso';
 type Props = {
 	bedId?: string;
 	onCloseDrawer?: () => void;
+	onExportDetalle?: () => void;
 };
 
 /**
@@ -134,7 +135,7 @@ function Collapse({
 	);
 }
 
-export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
+export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props = {}) {
 	const {
 		openSections,
 		activeSection,
@@ -469,6 +470,18 @@ export default function SidebarFilters({ onCloseDrawer }: Props = {}) {
 						onClick={() => window.dispatchEvent(new Event('imedic:notifications-open'))}
 					>
 						Notificaciones
+					</button>
+					)}
+					{onExportDetalle && (
+					<button
+						type="button"
+						className={styles.navButton}
+						onClick={() => {
+							onCloseDrawer?.();
+							onExportDetalle();
+						}}
+					>
+						Exportar detalle
 					</button>
 					)}
 					<button
