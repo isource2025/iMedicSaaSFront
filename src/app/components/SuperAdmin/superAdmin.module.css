@@ -204,6 +204,13 @@
   cursor: not-allowed;
 }
 
+a.btn,
+a.btnSecondary {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
 .btnSecondary {
   background: #fff;
   color: #334155;
