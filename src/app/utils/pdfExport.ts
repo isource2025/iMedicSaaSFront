@@ -536,16 +536,36 @@ async function drawParts(doc: jsPDF, parts: PDFPart[], startY: number): Promise<
 
 		if (part.fields?.length) {
 			doc.setFontSize(8);
+			const left = 12;
+			const right = pageWidth - 12;
+			const usable = right - left;
 			for (const f of part.fields) {
 				const label = String(f.label || '').trim();
 				const value = f.value == null || f.value === '' ? '—' : String(f.value);
-				y = ensureSpace(doc, y, 8);
+				y = ensureSpace(doc, y, 10);
+				const labelText = label ? `${label}:` : '';
 				doc.setFont('helvetica', 'bold');
-				doc.text(`${label}:`, 12, y);
-				doc.setFont('helvetica', 'normal');
-				const lines = doc.splitTextToSize(value, pageWidth - 55);
-				doc.text(lines, 42, y);
-				y += Math.max(4, lines.length * 3.6) + 1;
+				const labelW = labelText ? doc.getTextWidth(labelText) : 0;
+				const gap = 2.2;
+				const maxInlineLabel = usable * 0.45;
+				if (labelW > 0 && labelW <= maxInlineLabel) {
+					doc.text(labelText, left, y);
+					doc.setFont('helvetica', 'normal');
+					const valueX = left + labelW + gap;
+					const lines = doc.splitTextToSize(value, Math.max(24, right - valueX));
+					doc.text(lines, valueX, y);
+					y += Math.max(4.2, lines.length * 3.8) + 1;
+				} else {
+					if (labelText) {
+						const labelLines = doc.splitTextToSize(labelText, usable);
+						doc.text(labelLines, left, y);
+						y += labelLines.length * 3.8;
+					}
+					doc.setFont('helvetica', 'normal');
+					const lines = doc.splitTextToSize(value, usable);
+					doc.text(lines, left, y);
+					y += Math.max(4.2, lines.length * 3.8) + 1;
+				}
 			}
 		}
 

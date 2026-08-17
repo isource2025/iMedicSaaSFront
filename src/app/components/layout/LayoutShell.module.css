@@ -6,6 +6,9 @@
   display: flex;
   min-height: 100vh;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* =============================================
@@ -14,18 +17,20 @@
 
 .main {
   flex: 1;
+  min-width: 0;
   margin-left: 72px;
+  width: calc(100% - 72px);
   padding: 1.15rem 1.5rem;
   background: var(--background, #F8FAFC);
   min-height: 100vh;
-  transition: transform 300ms ease-out, filter 300ms ease-out;
+  transition: filter 300ms ease-out;
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .mainShifted {
-  transform: translateX(40px);
   filter: blur(3px);
   pointer-events: none;
 }
@@ -325,8 +330,8 @@
     padding-top: 76px;
   }
 
-  .mainShifted {
-    transform: translateX(0);
+  .main {
+    width: 100%;
   }
   
   .menuButton {

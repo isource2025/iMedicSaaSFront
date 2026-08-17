@@ -4,17 +4,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { admissionSearchService, type ExportSectionKey } from '@/app/services/admissionSearchService';
 import styles from './AdmissionVisitExportModal.module.css';
 
-const SECTIONS: { id: ExportSectionKey; label: string }[] = [
+const SECTIONS: { id: ExportSectionKey; label: string; hint?: string }[] = [
   { id: 'admision', label: 'Datos de admisión' },
   { id: 'hcIngreso', label: 'HC de ingreso' },
   { id: 'practicas', label: 'Prácticas por paciente' },
   { id: 'indicaciones', label: 'Indicaciones' },
   { id: 'medicamentos', label: 'Medicamentos suministrados' },
   { id: 'evoluciones', label: 'Evoluciones' },
-  { id: 'estudios', label: 'Estudios solicitados (pedidos / resultados)' },
+  { id: 'estudios', label: 'Estudios solicitados', hint: 'Pedidos y resultados' },
   { id: 'protocolos', label: 'Protocolos clínicos' },
   { id: 'epicrisis', label: 'Epicrisis' },
-  { id: 'adjuntos', label: 'Adjuntos (solo metadatos; sin archivos binarios)' },
+  { id: 'adjuntos', label: 'Adjuntos', hint: 'Solo metadatos, sin archivos' },
 ];
 
 const SECTIONS_MAIN = SECTIONS.filter((s) => s.id !== 'evoluciones');
@@ -49,6 +49,12 @@ function toYmd(value: unknown): string | null {
   const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
   if (m) return m[1];
   return null;
+}
+
+function formatYmd(ymd: string): string {
+  const m = ymd.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return ymd;
+  return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 function inDateRange(ymd: string | null, fechaInicio: string, fechaFin: string, exportAll: boolean): boolean {
@@ -185,6 +191,9 @@ export default function AdmissionVisitExportModal({
     [selection]
   );
 
+  const selectedCount = selectedList.length;
+  const totalCount = SECTIONS.length;
+
   const setAll = (v: boolean) => {
     const next = { ...selection };
     for (const s of SECTIONS) next[s.id] = v;
@@ -209,6 +218,17 @@ export default function AdmissionVisitExportModal({
     if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) onClose();
   };
 
+  const summaryText = useMemo(() => {
+    const bloques = `${selectedCount} bloque${selectedCount === 1 ? '' : 's'}`;
+    if (exportAll) return `${bloques} · toda la visita`;
+    const ini = fechaInicio.trim();
+    const fin = fechaFin.trim();
+    if (!ini && !fin) return `${bloques} · falta el rango de fechas`;
+    if (ini && fin) return `${bloques} · ${formatYmd(ini)} – ${formatYmd(fin)}`;
+    if (ini) return `${bloques} · desde ${formatYmd(ini)}`;
+    return `${bloques} · hasta ${formatYmd(fin)}`;
+  }, [selectedCount, exportAll, fechaInicio, fechaFin]);
+
   const runExport = async () => {
     const nv = numeroVisita != null ? Number(numeroVisita) : 0;
     const idp = idPaciente != null ? Number(idPaciente) : 0;
@@ -226,7 +246,7 @@ export default function AdmissionVisitExportModal({
       }
     }
     if (!exportAll && needsDateFilter(selectedList) && !fechaInicio.trim() && !fechaFin.trim()) {
-      setError('Indicá fecha desde y/o hasta, o elegí “Exportar todo”.');
+      setError('Indicá fecha desde y/o hasta, o elegí “Toda la visita”.');
       return;
     }
     setError('');
@@ -273,138 +293,167 @@ export default function AdmissionVisitExportModal({
     <div className={styles.overlay} onClick={handleBackdrop} role="presentation">
       <div className={styles.dialog} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="export-visita-title">
         <div className={styles.header}>
-          <h2 id="export-visita-title" className={styles.title}>
-            {modeGeneral
-              ? 'Exportar carpeta (todas las visitas)'
-              : `Exportar visita ${numeroVisita != null ? `#${numeroVisita}` : ''}`}
-          </h2>
+          <div className={styles.headerText}>
+            <p className={styles.kicker}>PDF de la historia</p>
+            <h2 id="export-visita-title" className={styles.title}>
+              {modeGeneral
+                ? 'Exportar carpeta'
+                : `Exportar visita ${numeroVisita != null ? `#${numeroVisita}` : ''}`}
+            </h2>
+            <p className={styles.subtitle}>
+              {modeGeneral
+                ? 'Incluye todas las visitas del paciente. Elegí el período y qué bloques van al PDF.'
+                : 'Elegí el período y qué bloques van al PDF. No se descargan archivos adjuntos binarios.'}
+            </p>
+          </div>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
             ✕
           </button>
         </div>
-        <div className={styles.body}>
-          <div className={styles.block}>
-            <p className={styles.blockTitle}>Alcance temporal</p>
-            <div className={styles.radioRow}>
-              <label>
-                <input
-                  type="radio"
-                  name="exportScope"
-                  checked={exportAll}
-                  onChange={() => setExportAll(true)}
-                />
-                Exportar todo (sin filtrar por fecha)
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="exportScope"
-                  checked={!exportAll}
-                  onChange={() => setExportAll(false)}
-                />
-                Filtrar por fecha de cada registro
-              </label>
-            </div>
-            <div className={styles.dateRow}>
-              <label>
-                Desde
-                <input
-                  type="date"
-                  value={fechaInicio}
-                  onChange={(e) => setFechaInicio(e.target.value)}
-                  disabled={exportAll}
-                />
-              </label>
-              <label>
-                Hasta
-                <input
-                  type="date"
-                  value={fechaFin}
-                  onChange={(e) => setFechaFin(e.target.value)}
-                  disabled={exportAll}
-                />
-              </label>
-            </div>
-            <p className={styles.hint}>
-              Con filtro activo, cada bloque usa su fecha habitual (ej.: HC → fecha del registro, medicación → fecha de
-              control, estudios → fecha del examen, adjuntos → fecha de carga).
-            </p>
-          </div>
 
-          <div className={styles.block}>
-            <p className={styles.blockTitle}>Qué incluir</p>
-            <div className={styles.selectAllRow}>
-              <button type="button" className={styles.linkish} onClick={() => setAll(true)}>
-                Marcar todo
+        <div className={styles.body}>
+          <section className={styles.scopeCard}>
+            <div className={styles.sectionHead}>
+              <h3 className={styles.blockTitle}>Período</h3>
+            </div>
+            <div className={styles.segment} role="radiogroup" aria-label="Período del export">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={exportAll}
+                className={exportAll ? styles.segmentActive : styles.segmentBtn}
+                onClick={() => setExportAll(true)}
+              >
+                Toda la visita
               </button>
-              <button type="button" className={styles.linkish} onClick={() => setAll(false)}>
-                Desmarcar todo
+              <button
+                type="button"
+                role="radio"
+                aria-checked={!exportAll}
+                className={!exportAll ? styles.segmentActive : styles.segmentBtn}
+                onClick={() => setExportAll(false)}
+              >
+                Por fechas
               </button>
             </div>
-            <div className={styles.checkboxList}>
+            {exportAll ? (
+              <p className={styles.hint}>Se incluyen todos los registros, sin recortar por fecha.</p>
+            ) : (
+              <div className={styles.dateCard}>
+                <div className={styles.dateRow}>
+                  <label>
+                    Desde
+                    <input
+                      type="date"
+                      value={fechaInicio}
+                      onChange={(e) => setFechaInicio(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Hasta
+                    <input
+                      type="date"
+                      value={fechaFin}
+                      onChange={(e) => setFechaFin(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <p className={styles.hint}>
+                  Cada bloque usa su fecha habitual: HC del registro, medicación del control, estudios del
+                  examen, adjuntos de la carga.
+                </p>
+              </div>
+            )}
+          </section>
+
+          <section className={styles.includeCard}>
+            <div className={styles.sectionHead}>
+              <h3 className={styles.blockTitle}>
+                Qué incluir
+                <span className={styles.countPill}>
+                  {selectedCount}/{totalCount}
+                </span>
+              </h3>
+              <div className={styles.selectAllRow}>
+                <button type="button" className={styles.linkish} onClick={() => setAll(true)}>
+                  Todo
+                </button>
+                <span className={styles.dotSep} aria-hidden>
+                  ·
+                </span>
+                <button type="button" className={styles.linkish} onClick={() => setAll(false)}>
+                  Nada
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.tileGrid}>
               {SECTIONS_MAIN.map((s) => (
-                <label key={s.id} className={styles.checkboxRow}>
+                <label
+                  key={s.id}
+                  className={`${styles.tile} ${selection[s.id] ? styles.tileOn : ''}`}
+                >
                   <input type="checkbox" checked={selection[s.id]} onChange={() => toggle(s.id)} />
-                  <span>{s.label}</span>
+                  <span className={styles.tileText}>
+                    <span className={styles.tileLabel}>{s.label}</span>
+                    {s.hint ? <span className={styles.tileHint}>{s.hint}</span> : null}
+                  </span>
                 </label>
               ))}
+            </div>
 
-              {showEvoFold ? (
-                <details className={styles.evoDetails} open>
-                  <summary className={styles.evoSummary}>
-                    <span className={styles.evoSummaryInner}>
+            {showEvoFold ? (
+              <details className={styles.evoDetails} open>
+                <summary className={styles.evoSummary}>
+                  <span className={styles.evoSummaryInner}>
+                    <input
+                      type="checkbox"
+                      checked={selection.evoluciones}
+                      onChange={() => toggle('evoluciones')}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Incluir evoluciones en el PDF"
+                    />
+                    <span className={styles.tileText}>
+                      <span className={styles.tileLabel}>{EVO_META.label}</span>
+                      <span className={styles.tileHint}>
+                        {evolucionesFiltradas.length} en el período · filtrá por servicio
+                      </span>
+                    </span>
+                  </span>
+                </summary>
+                <div className={styles.evoBody}>
+                  {evoGroups.map((g) => (
+                    <label key={g.serviceKey} className={styles.evoServiceHead}>
                       <input
                         type="checkbox"
-                        checked={selection.evoluciones}
-                        onChange={() => toggle('evoluciones')}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label="Incluir evoluciones en el PDF"
+                        checked={serviceSelected[g.serviceKey] !== false}
+                        disabled={!selection.evoluciones}
+                        onChange={() => toggleService(g.serviceKey)}
+                        aria-label={`Incluir evoluciones de ${g.serviceLabel}`}
                       />
-                      <span>{EVO_META.label}</span>
-                      <span className={styles.evoChevron}>▾ Desplegar por servicio</span>
-                    </span>
-                  </summary>
-                  <p className={`${styles.hint} ${styles.evoHint}`}>
-                    Marcá qué servicios querés incluir. Las evoluciones listadas son las de esta visita; el
-                    rango de fechas de arriba sigue aplicando dentro de cada servicio elegido.
-                  </p>
-                  <p className={`${styles.hint} ${styles.evoHint}`}>
-                    Evoluciones visibles con el filtro actual: {evolucionesFiltradas.length}
-                  </p>
-                  {evoGroups.map((g) => (
-                    <div key={g.serviceKey} className={styles.evoServiceBlock}>
-                      <label className={styles.evoServiceHead}>
-                        <input
-                          type="checkbox"
-                          checked={serviceSelected[g.serviceKey] !== false}
-                          disabled={!selection.evoluciones}
-                          onChange={() => toggleService(g.serviceKey)}
-                          aria-label={`Incluir evoluciones de ${g.serviceLabel}`}
-                        />
-                        <span>
-                          {g.serviceLabel}
-                          <span className={styles.mutedCount}> ({g.items.length})</span>
-                        </span>
-                      </label>
-                      <ul className={styles.evoItemList}>
-                        {g.items.map((it, idx) => (
-                          <li key={idx}>{it.line}</li>
-                        ))}
-                      </ul>
-                    </div>
+                      <span>
+                        {g.serviceLabel}
+                        <span className={styles.mutedCount}> · {g.items.length}</span>
+                      </span>
+                    </label>
                   ))}
-                </details>
-              ) : (
-                <label className={styles.checkboxRow}>
-                  <input type="checkbox" checked={selection.evoluciones} onChange={() => toggle('evoluciones')} />
-                  <span>{EVO_META.label}</span>
-                </label>
-              )}
-            </div>
-          </div>
+                </div>
+              </details>
+            ) : (
+              <label className={`${styles.tile} ${styles.tileWide} ${selection.evoluciones ? styles.tileOn : ''}`}>
+                <input type="checkbox" checked={selection.evoluciones} onChange={() => toggle('evoluciones')} />
+                <span className={styles.tileText}>
+                  <span className={styles.tileLabel}>{EVO_META.label}</span>
+                </span>
+              </label>
+            )}
+          </section>
 
           {error ? <p className={styles.error}>{error}</p> : null}
+        </div>
 
+        <div className={styles.footer}>
+          <p className={styles.summary}>{summaryText}</p>
           <div className={styles.actions}>
             <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={busy}>
               Cancelar
@@ -415,7 +464,7 @@ export default function AdmissionVisitExportModal({
               onClick={() => void runExport()}
               disabled={busy || (!modeGeneral && !(numeroVisita != null && Number(numeroVisita) > 0))}
             >
-              {busy ? 'Generando…' : 'Descargar PDF'}
+              {busy ? 'Generando PDF…' : 'Descargar PDF'}
             </button>
           </div>
         </div>

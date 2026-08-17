@@ -46,7 +46,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         onClick={() => setSidebarExpanded(false)}
       />
       
-      {/* Contenido principal con efectos de blur y desplazamiento */}
+      {/* Contenido principal: blur al abrir el menú (sin desplazar, evita scroll horizontal) */}
       <main
         className={`${styles.main} ${sidebarExpanded ? styles.mainShifted : ''} ${lockMainScroll ? styles.mainLocked : ''}`}
       >

@@ -107,12 +107,73 @@ function obtenerTituloSeccion(fieldKey: string): string | null {
   return SECCIONES_CONFIG[pref] || null;
 }
 
+/** Palabras conocidas para partir claves ALLCAPS (SV_PESOACTUAL → Peso actual). */
+const HCI_LABEL_WORDS = [
+  'HEMIDIAFRAGMAS',
+  'SENOSCOSTOFRENICOS',
+  'CAMPOSPULMONARES',
+  'CIRCULACIONCOLATERAL',
+  'ESTADONUTRICIONAL',
+  'IMPRESIONGENERAL',
+  'PESOHABITUAL',
+  'PESOACTUAL',
+  'SILUETACARDIO',
+  'CONCLUSIONES',
+  'LINFANGITIS',
+  'ADENOMEGALIAS',
+  'NUTRICIONAL',
+  'PULMONARES',
+  'CIRCULACION',
+  'COLATERAL',
+  'IMPRESION',
+  'GENERAL',
+  'HABITUAL',
+  'ACTUAL',
+  'ESTADO',
+  'CAMPOS',
+  'SILUETA',
+  'CARDIO',
+  'SENOS',
+  'PESO',
+];
+
+function titleWords(s: string): string {
+  return s
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+function splitAllCapsBlob(blob: string): string {
+  const upper = blob.toUpperCase();
+  const words = [...HCI_LABEL_WORDS].sort((a, b) => b.length - a.length);
+  let rest = upper;
+  const parts: string[] = [];
+  while (rest) {
+    const hit = words.find((w) => rest.startsWith(w));
+    if (hit) {
+      parts.push(hit);
+      rest = rest.slice(hit.length);
+      continue;
+    }
+    parts.push(rest);
+    break;
+  }
+  return parts.join(' ');
+}
+
 function formatearNombreCampo(key: string): string {
   const sinPrefijo = key.replace(/^[A-Z]+_/, '');
-  return sinPrefijo
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (s) => s.toUpperCase())
-    .trim();
+  if (!sinPrefijo) return key;
+  if (sinPrefijo.includes('_')) {
+    return titleWords(sinPrefijo.replace(/_/g, ' '));
+  }
+  if (/[a-z]/.test(sinPrefijo) && /[A-Z]/.test(sinPrefijo)) {
+    return titleWords(sinPrefijo.replace(/([A-Z])/g, ' $1'));
+  }
+  return titleWords(splitAllCapsBlob(sinPrefijo));
 }
 
 const IGNORE_KEYS = new Set([
