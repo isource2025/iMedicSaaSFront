@@ -41,17 +41,30 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 			setLoading(true);
 			setError('');
 			try {
-				const [secs, secCat, srvs, srvCat] = await Promise.all([
+				const settled = await Promise.allSettled([
 					personalService.getPersonalSectores(personalId),
 					personalService.getSectoresCatalogo(),
 					personalService.getPersonalServiciosPedidos(personalId),
 					personalService.getServicios(),
 				]);
 				if (cancelled) return;
+				const val = <T,>(i: number, fallback: T): T =>
+					settled[i].status === 'fulfilled' ? (settled[i] as PromiseFulfilledResult<T>).value : fallback;
+				const secs = val<PersonalSectorAsignado[]>(0, []);
+				const secCat = val<{ IdSector: string; Descripcion: string }[]>(1, []);
+				const srvs = val<PersonalServicioAsignado[]>(2, []);
+				const srvCat = val<CatalogoItemTexto[]>(3, []);
 				setSecCatalogo(secCat);
 				setCatServicios(srvCat);
-				setSecSel(new Set(secs.map((s: PersonalSectorAsignado) => s.idSector)));
-				setSrvSel(new Set(srvs.map((s: PersonalServicioAsignado) => s.idServicio)));
+				setSecSel(new Set(secs.map((s) => s.idSector)));
+				setSrvSel(new Set(srvs.map((s) => s.idServicio)));
+				const failed = settled.filter((s) => s.status === 'rejected') as PromiseRejectedResult[];
+				if (failed.length) {
+					const msg = failed
+						.map((f) => (f.reason instanceof Error ? f.reason.message : String(f.reason)))
+						.join(' · ');
+					setError(msg);
+				}
 			} catch (e) {
 				if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar asignaciones');
 			} finally {

@@ -13,7 +13,13 @@
 	border-bottom: 1.5px solid #e2e8f0;
 	padding: 0 0.2rem;
 	overflow-x: auto;
+	overflow-y: hidden;
 	flex-wrap: nowrap;
+	scrollbar-width: none;
+}
+
+.tabsContainer::-webkit-scrollbar {
+	display: none;
 }
 
 .tab {

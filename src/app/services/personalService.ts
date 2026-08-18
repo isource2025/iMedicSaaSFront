@@ -121,10 +121,14 @@ export const getFunciones = async (): Promise<CatalogoItemNumerico[]> => {
 };
 
 export const getServicios = async (): Promise<CatalogoItemTexto[]> => {
-	const res = await apiService.get<ApiResponse<CatalogoItemTexto[]>>(
-		'/personal/catalogos/servicios',
-	);
-	return res.data.success && res.data.data ? res.data.data : [];
+	try {
+		const res = await apiService.get<ApiResponse<CatalogoItemTexto[]>>(
+			'/personal/catalogos/servicios',
+		);
+		return res.data.success && res.data.data ? res.data.data : [];
+	} catch {
+		return [];
+	}
 };
 
 export const getCategorias = async (): Promise<CatalogoItemNumerico[]> => {
@@ -268,9 +272,13 @@ export const deletePersonalFirma = async (id: number): Promise<void> => {
 };
 
 export const getPersonalSectores = async (id: number): Promise<PersonalSectorAsignado[]> => {
-	const res = await apiService.get<ApiResponse<PersonalSectorAsignado[]>>(`/personal/${id}/sectores`);
-	if (res.data.success && res.data.data) return res.data.data;
-	throw new Error(res.data.mensaje || 'Error al listar sectores');
+	try {
+		const res = await apiService.get<ApiResponse<PersonalSectorAsignado[]>>(`/personal/${id}/sectores`);
+		if (res.data.success && res.data.data) return res.data.data;
+		return [];
+	} catch {
+		return [];
+	}
 };
 
 export const addPersonalSector = async (
@@ -297,11 +305,15 @@ export const removePersonalSector = async (
 };
 
 export const getPersonalServiciosPedidos = async (id: number): Promise<PersonalServicioAsignado[]> => {
-	const res = await apiService.get<ApiResponse<PersonalServicioAsignado[]>>(
-		`/personal/${id}/servicios-pedidos`,
-	);
-	if (res.data.success && res.data.data) return res.data.data;
-	throw new Error(res.data.mensaje || 'Error al listar servicios');
+	try {
+		const res = await apiService.get<ApiResponse<PersonalServicioAsignado[]>>(
+			`/personal/${id}/servicios-pedidos`,
+		);
+		if (res.data.success && res.data.data) return res.data.data;
+		return [];
+	} catch {
+		return [];
+	}
 };
 
 export const addPersonalServicioPedido = async (
@@ -341,11 +353,21 @@ export const replacePersonalAsignaciones = async (
 
 /** Catálogo global de sectores (imSectores). */
 export const getSectoresCatalogo = async (): Promise<{ IdSector: string; Descripcion: string }[]> => {
-	const res = await apiService.get<{ success: boolean; data: { IdSector: string; Descripcion: string }[] }>(
-		'/sectores',
-	);
-	const rows = res.data?.data;
-	return Array.isArray(rows) ? rows : [];
+	try {
+		const res = await apiService.get<{
+			success: boolean;
+			data: { IdSector?: string; id?: string; Descripcion?: string; descripcion?: string }[];
+		}>('/sectores');
+		const rows = res.data?.data;
+		return (Array.isArray(rows) ? rows : [])
+			.map((r) => ({
+				IdSector: String(r.IdSector || r.id || ''),
+				Descripcion: String(r.Descripcion || r.descripcion || ''),
+			}))
+			.filter((r) => r.IdSector);
+	} catch {
+		return [];
+	}
 };
 
 export const getPersonalCodigosFacturacion = async (
