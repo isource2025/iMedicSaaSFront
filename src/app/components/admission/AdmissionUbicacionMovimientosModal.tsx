@@ -22,6 +22,9 @@ import {
 } from '@/app/components/beds/movimientos/movimientosDisplay';
 import styles from './AdmissionUbicacionMovimientosModal.module.css';
 import tStyles from '@/app/components/beds/movimientos/MovimientosSection.module.css';
+import ConfirmationModal from '@/app/components/beds/shared/ConfirmationModal';
+import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
+import type { EstadoRevertirEgreso } from '@/app/services/visitaMovimientoService';
 
 type Props = {
   isOpen: boolean;
@@ -70,6 +73,17 @@ function codigoCieDesdeTexto(raw: string): string {
   if (conDesc) return conDesc[1].toUpperCase();
   if (/^[A-Za-z][0-9][0-9A-Za-z.]{1,6}$/.test(v)) return v.toUpperCase();
   return v;
+}
+
+function mensajeErrorHttp(e: unknown, fallback: string): string {
+  const err = e as { response?: { data?: { message?: string; mensaje?: string } }; message?: string };
+  return err?.response?.data?.mensaje || err?.response?.data?.message || err?.message || fallback;
+}
+
+function textoConfirmacionRevertir(estado: EstadoRevertirEgreso): string {
+  const avisos = (estado.avisos || []).map((a) => a.mensaje).filter(Boolean);
+  if (!avisos.length) return estado.mensaje;
+  return `${estado.mensaje}\n\n${avisos.join('\n\n')}`;
 }
 
 function etiquetaOperadorSesion(): { codigo: string; label: string } {
@@ -123,6 +137,9 @@ export default function AdmissionUbicacionMovimientosModal({
   const [diagLoading, setDiagLoading] = useState(false);
   const [operadorEgreso, setOperadorEgreso] = useState('');
   const [revertBusy, setRevertBusy] = useState(false);
+  const [estadoRevertir, setEstadoRevertir] = useState<EstadoRevertirEgreso | null>(null);
+  const [confirmarLimpiar, setConfirmarLimpiar] = useState(false);
+  const [aviso, setAviso] = useState<{ title: string; message: string; tone: MessageModalTone } | null>(null);
   const puedeRevertirEgreso = esAdminClinico();
 
   const load = useCallback(async () => {
@@ -279,13 +296,7 @@ export default function AdmissionUbicacionMovimientosModal({
       });
       await load();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string; mensaje?: string } }; message?: string };
-      setError(
-        err?.response?.data?.mensaje ||
-          err?.response?.data?.message ||
-          err?.message ||
-          'Error al registrar egreso',
-      );
+      setError(mensajeErrorHttp(e, 'Error al registrar egreso'));
     } finally {
       setLoading(false);
     }
@@ -293,26 +304,65 @@ export default function AdmissionUbicacionMovimientosModal({
 
   const onRevertirEgreso = async () => {
     if (!numeroVisita) return;
-    const ok = window.confirm(
-      '¿Revertir el egreso? El paciente volverá a internación en la misma cama, si sigue libre.',
-    );
-    if (!ok) return;
     try {
       setRevertBusy(true);
       setError('');
-      await visitaMovimientoService.revertirEgreso(numeroVisita);
-      await load();
+      const estado = await visitaMovimientoService.getEstadoRevertirEgreso(numeroVisita);
+      if (!estado.puedeRevertir) {
+        setAviso({
+          title: 'No se puede revertir el egreso',
+          message: textoConfirmacionRevertir(estado),
+          tone: 'warning',
+        });
+        return;
+      }
+      setEstadoRevertir(estado);
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string; mensaje?: string } }; message?: string };
-      setError(
-        err?.response?.data?.mensaje ||
-          err?.response?.data?.message ||
-          err?.message ||
-          'Error al revertir el egreso',
-      );
+      setAviso({
+        title: 'No se puede revertir el egreso',
+        message: mensajeErrorHttp(e, 'No se pudo revisar el egreso'),
+        tone: 'error',
+      });
     } finally {
       setRevertBusy(false);
     }
+  };
+
+  const confirmarRevertirEgreso = async () => {
+    if (!numeroVisita) return;
+    try {
+      setRevertBusy(true);
+      setError('');
+      const res = await visitaMovimientoService.revertirEgreso(numeroVisita);
+      setEstadoRevertir(null);
+      setAviso({
+        title: 'Egreso anulado',
+        message: res.mensaje || res.message || 'Se anuló el egreso y el paciente volvió a internación.',
+        tone: 'success',
+      });
+      await load();
+    } catch (e: unknown) {
+      setEstadoRevertir(null);
+      setAviso({
+        title: 'No se pudo anular el egreso',
+        message: mensajeErrorHttp(e, 'Error al revertir el egreso'),
+        tone: 'error',
+      });
+    } finally {
+      setRevertBusy(false);
+    }
+  };
+
+  const onLimpiarEgreso = () => {
+    setFechaEgreso('');
+    setHoraEgreso('');
+    setDisposicionEgreso('');
+    setDiagnosticoEgreso('');
+    setDiagnosticoEgresoDesc('');
+    setDiagQuery('');
+    setDiagOpen(false);
+    setDiagResults([]);
+    setConfirmarLimpiar(false);
   };
 
   if (!isOpen) return null;
@@ -528,15 +578,24 @@ export default function AdmissionUbicacionMovimientosModal({
                 >
                   {yaEgresado ? 'Actualizar egreso' : 'Registrar egreso'}
                 </button>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  disabled={loading || revertBusy}
+                  onClick={() => setConfirmarLimpiar(true)}
+                  title="Borra fecha, hora, condición y diagnóstico de esta pantalla para cargarlos de nuevo"
+                >
+                  Limpiar
+                </button>
                 {yaEgresado && puedeRevertirEgreso ? (
                   <button
                     type="button"
                     className={`${styles.btn} ${styles.btnDanger}`}
                     disabled={loading || revertBusy}
                     onClick={() => void onRevertirEgreso()}
-                    title="Devuelve al paciente a internación en la cama anterior"
+                    title="Anula el egreso y devuelve al paciente a la misma cama"
                   >
-                    {revertBusy ? 'Revirtiendo…' : 'Revertir egreso'}
+                    {revertBusy ? 'Revisando…' : 'Revertir egreso'}
                   </button>
                 ) : null}
               </div>
@@ -547,31 +606,77 @@ export default function AdmissionUbicacionMovimientosModal({
     </div>
   );
 
+  const overlays = (
+    <>
+      <ConfirmationModal
+        isOpen={Boolean(estadoRevertir)}
+        title="Anular egreso"
+        message={estadoRevertir ? textoConfirmacionRevertir(estadoRevertir) : ''}
+        confirmText={revertBusy ? 'Anulando…' : 'Anular egreso'}
+        cancelText="Cancelar"
+        onClose={() => {
+          if (!revertBusy) setEstadoRevertir(null);
+        }}
+        onConfirm={() => {
+          if (!revertBusy) void confirmarRevertirEgreso();
+        }}
+      />
+      <ConfirmationModal
+        isOpen={confirmarLimpiar}
+        title="Limpiar egreso"
+        message={
+          yaEgresado
+            ? 'Se van a borrar fecha, hora, condición y diagnóstico de esta pantalla para cargarlos de nuevo. Lo ya guardado no cambia hasta que actualices. Si el paciente tiene que volver a internación, usá Revertir egreso.'
+            : 'Se van a borrar fecha, hora, condición y diagnóstico de esta pantalla para cargarlos de nuevo.'
+        }
+        confirmText="Limpiar"
+        cancelText="Cancelar"
+        onClose={() => setConfirmarLimpiar(false)}
+        onConfirm={onLimpiarEgreso}
+      />
+      <MessageModal
+        open={Boolean(aviso)}
+        title={aviso?.title || ''}
+        message={aviso?.message || ''}
+        tone={aviso?.tone || 'info'}
+        onClose={() => setAviso(null)}
+      />
+    </>
+  );
+
   if (embedded) {
-    return body;
+    return (
+      <>
+        {body}
+        {overlays}
+      </>
+    );
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.dialog} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        <div className={styles.header}>
-          <h2 className={styles.title}>
-            {focusSection === 'ubicacion'
-              ? 'Ubicación'
-              : focusSection === 'movimientos'
-                ? 'Movimientos'
-                : focusSection === 'ubicacion_movimientos'
-                  ? 'Ubicación y movimientos'
-                  : focusSection === 'egreso'
-                    ? 'Egreso'
-                    : 'Ubicación · Movimientos · Egreso'}
-          </h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
-            ×
-          </button>
+    <>
+      <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.dialog} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+          <div className={styles.header}>
+            <h2 className={styles.title}>
+              {focusSection === 'ubicacion'
+                ? 'Ubicación'
+                : focusSection === 'movimientos'
+                  ? 'Movimientos'
+                  : focusSection === 'ubicacion_movimientos'
+                    ? 'Ubicación y movimientos'
+                    : focusSection === 'egreso'
+                      ? 'Egreso'
+                      : 'Ubicación · Movimientos · Egreso'}
+            </h2>
+            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
+              ×
+            </button>
+          </div>
+          {body}
         </div>
-        {body}
       </div>
-    </div>
+      {overlays}
+    </>
   );
 }

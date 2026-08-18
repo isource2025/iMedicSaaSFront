@@ -36,6 +36,19 @@ export interface InternadoSinCama {
   diagnosticoDescripcion?: string;
 }
 
+export type EstadoRevertirEgreso = {
+  pacienteNombre: string;
+  cama?: string;
+  sector?: string;
+  sectorDescripcion?: string;
+  etiquetaUbicacion: string;
+  camaEstado: string;
+  puedeRevertir: boolean;
+  mensaje: string;
+  conflictos: { codigo: string; mensaje: string }[];
+  avisos: { codigo: string; mensaje: string }[];
+};
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 const visitaMovimientoService = {
@@ -80,7 +93,9 @@ const visitaMovimientoService = {
     }
   },
 
-  revertirEgreso: async (numeroVisita: string | number): Promise<any> => {
+  revertirEgreso: async (
+    numeroVisita: string | number,
+  ): Promise<{ success: boolean; mensaje?: string; message?: string; data?: any }> => {
     const url = `${BASE_URL}/patients/visitas/${numeroVisita}/revertir-egreso`;
     const response = await apiService.post<ApiResponse>(url, {});
     if (!response.data?.success) {
@@ -89,6 +104,17 @@ const visitaMovimientoService = {
       );
     }
     return response.data;
+  },
+
+  getEstadoRevertirEgreso: async (
+    numeroVisita: string | number,
+  ): Promise<EstadoRevertirEgreso> => {
+    const url = `${BASE_URL}/patients/visitas/${numeroVisita}/revertir-egreso`;
+    const response = await apiService.get<{ success: boolean; data: EstadoRevertirEgreso; mensaje?: string }>(url);
+    if (!response.data?.success || !response.data.data) {
+      throw new Error(response.data?.mensaje || 'No se pudo revisar el egreso');
+    }
+    return response.data.data;
   },
   
   moverPacienteACamaVacia: async (numeroVisita: string | number, datosCambio: {

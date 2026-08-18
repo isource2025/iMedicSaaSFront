@@ -19,7 +19,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     padding: 24px;
     width: 90%;
-    max-width: 400px;
+    max-width: 480px;
     z-index: 1801;
     transform: scale(0.95);
     animation: scaleIn 0.2s ease-out forwards;
@@ -38,6 +38,7 @@
     color: #333;
     margin-bottom: 24px;
     line-height: 1.5;
+    white-space: pre-line;
 }
 
 .actions {
