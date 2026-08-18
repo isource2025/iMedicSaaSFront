@@ -24,7 +24,7 @@
     min-width: 1040px;
     border-collapse: collapse; /* grilla clásica */
     table-layout: fixed; /* respeta widths y truncados */
-    font-size: 13px;
+    font-size: 0.85rem;
     line-height: 1.25;
     color: #111827; /* slate-900 */
 }
@@ -37,8 +37,9 @@
     background: #e0f2fe; /* gris header */
     color: #111827;
     text-align: left;
-    padding: 6px 12px;
+    padding: 0.65rem 0.75rem;
     font-weight: 700;
+    font-size: 0.85rem;
     border-bottom: 2px solid #bae6fd;
 }
 
@@ -53,7 +54,7 @@
 
 /* Celdas cuerpo */
 .tbody .row td {
-    padding: 9px 12px;
+    padding: 0.65rem 0.75rem;
     border-top: 1px solid #e5e7eb; /* líneas horizontales */
     vertical-align: top;
     background: #fff;

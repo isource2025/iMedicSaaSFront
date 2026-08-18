@@ -43,9 +43,13 @@ export const authService = {
 
   /** Sesión actual (cookie httpOnly + validación servidor). */
   me: async () => {
-    const res = await apiService.get<{ success: boolean; usuario?: unknown; rol?: unknown }>(
-      '/auth/me',
-    );
+    const res = await apiService.get<{
+      success: boolean;
+      usuario?: unknown;
+      rol?: unknown;
+      idEmpresa?: number | null;
+      modulosEmpresa?: import('../types/superAdmin').ModulosEmpresa | null;
+    }>('/auth/me');
     return res.data;
   },
 

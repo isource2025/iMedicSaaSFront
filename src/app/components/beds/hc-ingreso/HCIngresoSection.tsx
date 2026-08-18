@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import styles from './HCIngresoSection.module.css';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
+import EmptyState from '../shared/EmptyState';
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";
 import { 
@@ -275,7 +276,7 @@ export default function HCIngresoSection({
     const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
     const [activeSection, setActiveSection] = useState<string>("antecedentes");
     const [showOnlySelectedDay, setShowOnlySelectedDay] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [empresaInfo, setEmpresaInfo] = useState<EmpresaInfo | undefined>(undefined);
@@ -314,7 +315,10 @@ export default function HCIngresoSection({
 
     // Cargar datos desde el backend
     useEffect(() => {
-        if (!numeroVisita) return;
+        if (!numeroVisita) {
+            setLoading(false);
+            return;
+        }
 
         const cargarDatos = async () => {
             setLoading(true);
@@ -557,6 +561,9 @@ export default function HCIngresoSection({
 
     // ===== RENDER: MODO VIEW =====
     if (mode === "view") {
+        if (loading) {
+            return <BedSectionLoading />;
+        }
         return (
             <div className={styles.root}>
                 {/* Header con fecha */}
@@ -572,13 +579,6 @@ export default function HCIngresoSection({
                                 <span className={styles.addIcon}>+</span> Agregar
                             </button>
                         </div>
-                    </div>
-                )}
-
-                {/* Mostrar estado de carga o error */}
-                {loading && (
-                    <div style={{ position: 'relative', minHeight: '200px' }}>
-                        <Loader />
                     </div>
                 )}
 
@@ -734,9 +734,11 @@ export default function HCIngresoSection({
                             })()}
                         </div>
                     ) : records.length === 0 ? (
-                        <div className={styles.emptyDetail}>
-                            No hay registros de HC de Ingreso
-                        </div>
+                        <EmptyState
+                            variant="hcIngreso"
+                            text="Sin HC de ingreso"
+                            description="Cargá la historia clínica de ingreso con el botón de alta."
+                        />
                     ) : null}
                 </div>
                 )}

@@ -13,7 +13,8 @@ import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import styles from './AdjuntosSection.module.css';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
+import EmptyState from '../shared/EmptyState';
 import { useBedDetail } from '../contexts/BedDetailContext';
 
 function etiquetaUsuarioActual(): string {
@@ -59,7 +60,7 @@ export default function AdjuntosSection({
 }: AdjuntosSectionProps) {
   const { setAdjuntosSidebarInfo } = useBedDetail();
   const [adjuntos, setAdjuntos] = useState<Adjunto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -101,7 +102,10 @@ export default function AdjuntosSection({
   }, [adjuntos, setAdjuntosSidebarInfo]);
 
   const loadAdjuntos = async () => {
-    if (!numeroVisita) return;
+    if (!numeroVisita) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -227,12 +231,16 @@ export default function AdjuntosSection({
 
   if (!numeroVisita) {
     return (
-      <div className={styles.container}>
-        <div className={styles.emptyState}>
-          <p>No hay visita seleccionada</p>
-        </div>
-      </div>
+      <EmptyState
+        variant="adjuntos"
+        text="No hay visita seleccionada"
+        description="Abrí una internación para ver los adjuntos."
+      />
     );
+  }
+
+  if (loading) {
+    return <BedSectionLoading />;
   }
 
   return (
@@ -356,18 +364,12 @@ export default function AdjuntosSection({
 
       {modo === 'visita' && (
         <div className={styles.listSection}>
-          {loading ? (
-            <div style={{ position: 'relative', minHeight: '150px' }}>
-              <Loader />
-            </div>
-          ) : (
-            <FileList
-              adjuntos={adjuntos}
-              onDelete={handleDelete}
-              onError={(msg) => showMessage('Error', msg, 'error')}
-              readOnly={false}
-            />
-          )}
+          <FileList
+            adjuntos={adjuntos}
+            onDelete={handleDelete}
+            onError={(msg) => showMessage('Error', msg, 'error')}
+            readOnly={false}
+          />
         </div>
       )}
 

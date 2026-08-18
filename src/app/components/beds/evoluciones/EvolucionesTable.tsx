@@ -1,6 +1,5 @@
 "use client";
 import styles from "./EvolucionesTable.module.css";
-import EmptyState from "../shared/EmptyState";
 import { IoPencilOutline, IoTrashOutline, IoEyeOutline } from "react-icons/io5";
 import { evolucionesService } from "../../../services/evolucionesService";
 import { useState } from "react";
@@ -193,17 +192,10 @@ export default function EvolucionesTable({
                                 : null}
                         </tbody>
                     </table>
-
-                    {!hasRows && (
-                        <div className={styles.emptyOverlay}>
-                            <EmptyState text="No hay evoluciones registradas para esta visita." />
-                        </div>
-                    )}
                 </div>
             </div>
             <div className={styles.mobileList}>
-                {hasRows ? (
-                    rows.map((r, index) => (
+                {rows.map((r, index) => (
                         <article
                             key={`evolucion-mobile-${r.id}-${index}`}
                             className={`${styles.mobileCard} ${
@@ -261,12 +253,7 @@ export default function EvolucionesTable({
                                 </>)}
                             </div>
                         </article>
-                    ))
-                ) : (
-                    <div className={styles.mobileEmpty}>
-                        <EmptyState text="No hay evoluciones registradas para esta visita." />
-                    </div>
-                )}
+                    ))}
             </div>
 
             {/* Modal de confirmación de eliminación */}

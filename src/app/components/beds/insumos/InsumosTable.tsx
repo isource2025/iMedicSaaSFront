@@ -1,6 +1,5 @@
 "use client";
 import styles from "./InsumosTable.module.css";
-import EmptyState from "../shared/EmptyState";
 import { IoPencil, IoTrash } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
 import { useState } from "react";
@@ -212,12 +211,6 @@ export default function InsumosTable({
                                 : null}
                         </tbody>
                     </table>
-
-                    {!hasRows && (
-                        <div className={styles.emptyOverlay}>
-                            <EmptyState text="No hay insumos registrados para esta visita." />
-                        </div>
-                    )}
                 </div>
             </div>
 

@@ -16,6 +16,9 @@ const ICONS: Record<string, string> = {
 	protocolos: "📑",
 	laboratorios: "🧪",
 	procedimientos: "⚕️",
+	epicrisis: "📝",
+	adjuntos: "📎",
+	hcIngreso: "🏥",
 	default: "📂",
 };
 

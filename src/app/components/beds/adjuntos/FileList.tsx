@@ -11,6 +11,7 @@ import {
   esAdminClinico,
   esRegistroPropio,
 } from '@/app/hooks/useUsuarioActual';
+import EmptyState from '../shared/EmptyState';
 import styles from './FileList.module.css';
 
 interface FileListProps {
@@ -193,9 +194,11 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
 
   if (adjuntos.length === 0) {
     return (
-      <div className={styles.emptyState}>
-        <p>No hay archivos adjuntos</p>
-      </div>
+      <EmptyState
+        variant="adjuntos"
+        text="Sin archivos adjuntos"
+        description="Subí un archivo o importá una serie DICOM."
+      />
     );
   }
 

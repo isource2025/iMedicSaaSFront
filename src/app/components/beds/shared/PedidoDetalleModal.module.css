@@ -1,134 +1,232 @@
+.overlay,
 .modalOverlay {
 	position: fixed;
 	inset: 0;
-	background: rgba(15, 23, 42, 0.45);
+	z-index: 1200;
+	background: rgba(15, 23, 42, 0.5);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 1200;
-	padding: 1rem;
+	padding: 16px;
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
+.dialog,
 .modalContent {
 	background: #fff;
-	border-radius: 12px;
-	width: min(720px, 100%);
-	max-height: 90vh;
-	overflow: hidden;
+	border-radius: 14px;
+	width: 100%;
+	max-width: 40rem;
+	max-height: min(90vh, 860px);
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+	overflow: hidden;
+	box-shadow: 0 24px 56px rgba(15, 23, 42, 0.22);
+	box-sizing: border-box;
 }
 
+.header,
 .modalHeader {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
-	gap: 1rem;
-	padding: 1rem 1.25rem;
-	border-bottom: 1px solid #e2e8f0;
-	background: #f0f9fc;
+	gap: 12px;
+	padding: 16px 18px 14px;
+	border-bottom: 1px solid #e8eef3;
+	background: linear-gradient(180deg, #f0f9fc 0%, #fff 100%);
+	min-width: 0;
 }
 
+.headerText {
+	min-width: 0;
+	flex: 1;
+}
+
+.kicker {
+	margin: 0 0 2px;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #00b5e2;
+}
+
+.title,
 .modalHeader h3 {
 	margin: 0;
-	font-size: 1.1rem;
+	font-size: 1.05rem;
+	font-weight: 700;
 	color: #0083a9;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	min-width: 0;
 }
 
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.chip,
+.urgenciaBadge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 0.72rem;
+	font-weight: 700;
+	line-height: 1.4;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
+.chipUrgente,
+.urgenciaUrgente { background: #fee2e2; color: #b91c1c; }
+.chipMedio,
+.urgenciaMedio { background: #fef9c3; color: #a16207; }
+.chipOk,
+.urgenciaBajo,
+.urgenciaNormal { background: #dcfce7; color: #15803d; }
+.chipInfo { background: #e0f2fe; color: #0369a1; }
+.chipMuted,
+.urgenciaNone { background: #f1f5f9; color: #475569; }
+
+.closeBtn,
 .btnClose {
-	background: none;
 	border: none;
-	font-size: 1.5rem;
+	background: transparent;
+	font-size: 1.15rem;
 	line-height: 1;
 	cursor: pointer;
 	color: #64748b;
-	padding: 0.25rem;
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	flex-shrink: 0;
 }
 
+.closeBtn:hover,
+.btnClose:hover {
+	background: #f1f5f9;
+	color: #0f172a;
+}
+
+.body,
 .modalBody {
-	padding: 1.25rem;
+	padding: 16px 18px;
+	overflow-x: hidden;
 	overflow-y: auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
 }
 
+.grid,
 .detailGrid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.85rem 1.25rem;
+	gap: 10px 12px;
 }
 
+.item,
 .detailItem {
+	min-width: 0;
+	padding: 10px 12px;
+	background: #f8fafc;
+	border: 1px solid #e8eef3;
+	border-radius: 10px;
 	display: flex;
 	flex-direction: column;
-	gap: 0.2rem;
+	gap: 4px;
 }
 
+.itemFull,
 .detailItemFull {
 	grid-column: 1 / -1;
 }
 
+.label,
 .detailLabel {
-	font-size: 0.75rem;
-	font-weight: 600;
+	font-size: 0.7rem;
+	font-weight: 700;
 	color: #64748b;
 	text-transform: uppercase;
-	letter-spacing: 0.03em;
+	letter-spacing: 0.04em;
 }
 
+.value,
 .detailValue {
-	font-size: 0.95rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #0f172a;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.block {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.text,
+.textBlock {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	line-height: 1.5;
+	padding: 10px 12px;
+	background: #f8fafc;
+	border-radius: 10px;
+	border: 1px solid #e8eef3;
+	font-size: 0.9rem;
 	color: #0f172a;
 }
 
-.textBlock {
-	white-space: pre-wrap;
-	line-height: 1.5;
-	padding: 0.75rem;
-	background: #f8fafc;
-	border-radius: 8px;
-	border: 1px solid #e2e8f0;
-}
-
-.urgenciaBadge {
-	display: inline-block;
-	padding: 0.2rem 0.55rem;
-	border-radius: 999px;
-	font-size: 0.75rem;
-	font-weight: 600;
-}
-
-.urgenciaUrgente { background: #fee2e2; color: #b91c1c; }
-.urgenciaMedio { background: #fef9c3; color: #a16207; }
-.urgenciaBajo,
-.urgenciaNormal { background: #dcfce7; color: #15803d; }
-.urgenciaNone { background: #f1f5f9; color: #475569; }
-
+.footer,
 .modalFooter {
 	display: flex;
 	justify-content: flex-end;
-	gap: 0.75rem;
-	padding: 0.85rem 1.25rem 1.1rem;
-	border-top: 1px solid #e2e8f0;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 12px 18px 14px;
+	border-top: 1px solid #e8eef3;
 	background: #f8fafc;
 }
 
-.btnExport {
-	border: 1px solid #0083a9;
-	background: #0083a9;
-	color: #fff;
+.btnPrimary,
+.btnExport,
+.btnSecondary {
 	border-radius: 8px;
-	padding: 0.5rem 1rem;
-	font-size: 0.9rem;
+	padding: 9px 14px;
+	font-size: 0.85rem;
 	font-weight: 600;
 	cursor: pointer;
 }
 
-.btnExport:hover:not(:disabled) {
-	background: #006d8c;
+.btnPrimary,
+.btnExport {
+	border: none;
+	background: #00b5e2;
+	color: #fff;
 }
 
+.btnPrimary:hover:not(:disabled),
+.btnExport:hover:not(:disabled) {
+	background: #0083a9;
+}
+
+.btnPrimary:disabled,
 .btnExport:disabled {
-	opacity: 0.6;
+	opacity: 0.55;
 	cursor: not-allowed;
 }
 
@@ -136,11 +234,6 @@
 	border: 1px solid #cbd5e1;
 	background: #fff;
 	color: #334155;
-	border-radius: 8px;
-	padding: 0.5rem 1rem;
-	font-size: 0.9rem;
-	font-weight: 600;
-	cursor: pointer;
 }
 
 .btnSecondary:hover {
@@ -148,7 +241,19 @@
 }
 
 @media (max-width: 640px) {
+	.grid,
 	.detailGrid {
 		grid-template-columns: 1fr;
+	}
+
+	.footer,
+	.modalFooter {
+		flex-direction: column-reverse;
+	}
+
+	.btnPrimary,
+	.btnExport,
+	.btnSecondary {
+		width: 100%;
 	}
 }

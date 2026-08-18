@@ -177,11 +177,7 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 														font: 'inherit',
 														color: 'inherit',
 													}}
-													onClick={() =>
-														void estudiosService
-															.obtenerPorId(r.IdPedido)
-															.then((d) => setSelected(d || r))
-													}
+													onClick={() => setSelected(r)}
 												>
 													<div className={styles.practica}>{r.PracticaSolicitada}</div>
 													<div className={styles.meta}>Cód. {r.CodigoPractica}</div>

@@ -1,6 +1,5 @@
 'use client';
 import styles from "./EvolucionEnfermeriaTable.module.css";
-import EmptyState from "../shared/EmptyState";
 import { IoPencilOutline, IoTrashOutline, IoEyeOutline } from "react-icons/io5";
 import { useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
@@ -170,17 +169,10 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                                 : null}
                         </tbody>
                     </table>
-
-                    {!hasRows && (
-                        <div className={styles.emptyOverlay}>
-                            <EmptyState text="No hay evoluciones registradas para esta visita." />
-                        </div>
-                    )}
                 </div>
             </div>
             <div className={styles.mobileList}>
-                {hasRows ? (
-                    rows.map((r, index) => {
+                {rows.map((r, index) => {
                         const propio = puedeGestionar(r, usuarioActual);
                         return (
                             <article
@@ -235,12 +227,7 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                                 </div>
                             </article>
                         );
-                    })
-                ) : (
-                    <div className={styles.mobileEmpty}>
-                        <EmptyState text="No hay evoluciones registradas para esta visita." />
-                    </div>
-                )}
+                    })}
             </div>
 
             <ConfirmationModal

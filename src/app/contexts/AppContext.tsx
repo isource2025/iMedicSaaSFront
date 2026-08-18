@@ -10,6 +10,7 @@ import {
 } from '../services/empresaService';
 import { getIdEmpresaFromToken } from '../utils/jwtSession';
 import { clearTenantUiCaches } from '../utils/sessionCaches';
+import { authService } from '../services/authService';
 import type { ModulosEmpresa } from '../types/superAdmin';
 
 interface AppContextState {
@@ -123,12 +124,32 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     fetchEmpresaInfo();
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const refreshModulos = async () => {
+      try {
+        const me = await authService.me();
+        if (me.modulosEmpresa) {
+          setModulosEmpresaState(me.modulosEmpresa);
+          localStorage.setItem('empresaModulos', JSON.stringify(me.modulosEmpresa));
+          window.dispatchEvent(new Event('imedic:permisos-refresh'));
+        }
+      } catch {
+        /* sesión sin /me o Super Admin */
+      }
+    };
+    void refreshModulos();
+  }, [isAuthenticated]);
+
   const setModulosEmpresa = (modulos: ModulosEmpresa | null) => {
     setModulosEmpresaState(modulos);
     if (modulos) {
       localStorage.setItem('empresaModulos', JSON.stringify(modulos));
     } else {
       localStorage.removeItem('empresaModulos');
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('imedic:permisos-refresh'));
     }
   };
 

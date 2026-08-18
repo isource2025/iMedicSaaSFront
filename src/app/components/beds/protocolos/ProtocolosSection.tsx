@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import protocolosService from '@/app/services/protocolosService';
 import type { ProtocoloClinico } from '@/app/types/protocolos';
 import { usePermiso } from '@/app/hooks/usePermiso';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import CargarProtocoloModal from './CargarProtocoloModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -13,7 +13,7 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
-import localStyles from './ProtocolosSection.module.css';
+import tableStyles from '../shared/BedTable.module.css';
 
 type Props = {
 	numeroVisita: number | null;
@@ -65,7 +65,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	const { puede } = usePermiso();
 	const puedeCrear = puede('INTERNACION.PROTOCOLOS.CREAR');
 	const [rows, setRows] = useState<ProtocoloClinico[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<ProtocoloClinico | null>(null);
 	const [showCargar, setShowCargar] = useState(false);
@@ -151,6 +151,10 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 		);
 	}
 
+	if (loading) {
+		return <BedSectionLoading />;
+	}
+
 	return (
 		<>
 			<BedSectionLayout
@@ -173,9 +177,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 				}}
 			>
 				{error && <div className={styles.error}>{error}</div>}
-				{loading ? (
-					<Loader />
-				) : filtered.length === 0 ? (
+				{filtered.length === 0 ? (
 					<EmptyState
 						variant="protocolos"
 						text={rows.length === 0 ? 'Sin protocolos' : 'Sin resultados'}
@@ -188,9 +190,10 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 						onAction={puedeCrear && rows.length === 0 ? () => setShowCargar(true) : undefined}
 					/>
 				) : (
-					<div className={styles.tableWrap}>
-						<table className={styles.table}>
-							<thead>
+					<div className={tableStyles.tableWrap}>
+						<div className={tableStyles.scrollArea}>
+						<table className={tableStyles.table}>
+							<thead className={tableStyles.thead}>
 								<tr>
 									<th>Fecha</th>
 									<th>Tipo</th>
@@ -199,32 +202,35 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 									<th>Cargado por</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody className={tableStyles.tbody}>
 								{filtered.map((r) => {
 									const prac = r.practicas?.[0];
 									return (
 										<tr
 											key={r.idProtocolo}
-											className={styles.clickableRow}
+											className={`${tableStyles.row} ${styles.clickableRow}`}
 											onClick={() => setSelected(r)}
 										>
-											<td>{formatFecha(r.fecha)}</td>
+											<td className={tableStyles.meta}>{formatFecha(r.fecha)}</td>
 											<td>
-												{r.tipoDescripcion || r.tipoProtocolo || '—'}
+												<div className={tableStyles.practica}>
+													{r.tipoDescripcion || r.tipoProtocolo || '—'}
+												</div>
 												{r.numeroProtocolo ? (
-													<span className={localStyles.nro}> #{r.numeroProtocolo}</span>
+													<div className={tableStyles.meta}>#{r.numeroProtocolo}</div>
 												) : null}
 											</td>
-											<td className={styles.practica}>
+											<td className={tableStyles.practica}>
 												{prac?.descripcion || prac?.codigoPractica || '—'}
 											</td>
-											<td className={localStyles.equipoCell}>{resumenEquipo(r)}</td>
-											<td>{r.operadorNombre || '—'}</td>
+											<td className={tableStyles.meta}>{resumenEquipo(r)}</td>
+											<td className={tableStyles.meta}>{r.operadorNombre || '—'}</td>
 										</tr>
 									);
 								})}
 							</tbody>
 						</table>
+						</div>
 					</div>
 				)}
 			</BedSectionLayout>

@@ -5,7 +5,7 @@ import { useBedDetail } from "../contexts/BedDetailContext";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import styles from "../indicaciones/IndicacionesSection.module.css";
 import tStyles from "./MovimientosSection.module.css";
-import Loader from "../../Loader/Loader";
+import BedSectionLoading from "../shared/BedSectionLoading";
 import EmptyState from "../shared/EmptyState";
 import ExportButton, { ExportOption } from "../shared/ExportButton";
 import { exportToPDF } from "../../../utils/pdfExport";
@@ -128,6 +128,10 @@ export default function MovimientosSection({
 
 	if (activeSection !== "movimientos") return null;
 
+	if (isLoading) {
+		return <BedSectionLoading />;
+	}
+
 	return (
 		<div className={styles.root}>
 			{/* Header */}
@@ -151,11 +155,6 @@ export default function MovimientosSection({
 
 			<div className={styles.content}>
 				<div className={styles.tableHolder}>
-					{isLoading && (
-						<div style={{ position: "relative", minHeight: 200 }}>
-							<Loader />
-						</div>
-					)}
 					{error && (
 						<div className={styles.errorBox}>
 							Error al cargar movimientos: {error.message}

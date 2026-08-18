@@ -5,7 +5,7 @@ import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import styles from './IndicacionesSection.module.css';
-import Loader from '../../Loader/Loader';
+import EmptyState from '../shared/EmptyState';
 import IndicativoColors from "./IdicativosColors";
 import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";
 import { NuevaIndicacionPayload } from "../../../types/indicaciones";
@@ -396,6 +396,10 @@ export default function IndicacionesSection({
         }
     };
 
+    if (isLoading) {
+        return <BedSectionLoading />;
+    }
+
     return (
         <div className={styles.root}>
             {/* Fecha seleccionada + botón agregar */}
@@ -469,36 +473,24 @@ export default function IndicacionesSection({
             {/* Contenedor flexible para la tabla */}
             <div className={styles.content}>
                 <div className={styles.tableHolder}>
-                    {isLoading && (
-                        <div style={{ position: 'relative', minHeight: '200px' }}>
-                            <Loader />
-                        </div>
-                    )}
-
                     {error ? (
                         <div className={styles.errorBox}>
                             <div>
                                 Error cargando indicaciones: {error.message}
                             </div>
                         </div>
-                    ) : rows.length === 0 && !isLoading ? (
-                        <div className={styles.emptyState}>
-                            <div className={styles.emptyIcon}>💊</div>
-                            <h3 className={styles.emptyTitle}>No hay indicaciones registradas</h3>
-                            <p className={styles.emptyDescription}>
-                                Aún no se han cargado indicaciones médicas para esta fecha. 
-                                Podés agregar una nueva indicación haciendo clic en el botón de arriba.
-                            </p>
-                            <div className={styles.emptyAction}>
-                                <button
-                                    className={`${styles.btn} ${styles.btnPrimary}`}
-                                    onClick={onAddIndicacion}
-                                >
-                                    <span className={styles.addIcon} aria-hidden>+</span>
-                                    Nueva Indicación
-                                </button>
-                            </div>
-                        </div>
+                    ) : rows.length === 0 ? (
+                        <EmptyState
+                            variant="indicaciones"
+                            text={baseRows.length === 0 ? 'Sin indicaciones registradas' : 'Sin resultados'}
+                            description={
+                                baseRows.length === 0
+                                    ? 'Cargá una indicación con el botón de arriba.'
+                                    : 'Probá con otro criterio de búsqueda.'
+                            }
+                            actionLabel={baseRows.length === 0 ? 'Nueva Indicación' : undefined}
+                            onAction={baseRows.length === 0 ? onAddIndicacion : undefined}
+                        />
                     ) : (
                         <IndicacionesTable
                             rows={rows}

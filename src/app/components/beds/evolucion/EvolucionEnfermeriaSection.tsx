@@ -11,7 +11,7 @@ import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './EvolucionEnfermeriaSection.module.css';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
@@ -202,6 +202,10 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
     return null;
   }
 
+  if (isLoading) {
+    return <BedSectionLoading />;
+  }
+
   return (
     <div className={styles.root}>
       {/* Fecha seleccionada + botón agregar */}
@@ -277,11 +281,6 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
       {/* Tabla */}
       <div className={styles.content}>
         <div className={styles.tableHolder}>
-          {isLoading && (
-            <div style={{ position: 'relative', minHeight: '200px' }}>
-              <Loader />
-            </div>
-          )}
           {error && (
             <div className={styles.errorBox}>
               Error al cargar evoluciones: {error.message}

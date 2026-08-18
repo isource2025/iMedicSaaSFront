@@ -15,7 +15,7 @@
 	min-width: 900px;
 	border-collapse: collapse;
 	table-layout: auto;
-	font-size: 13px;
+	font-size: 0.85rem;
 	line-height: 1.25;
 	color: #111827;
 }
@@ -27,8 +27,9 @@
 	background: #e0f2fe;
 	color: #111827;
 	text-align: left;
-	padding: 6px 12px;
+	padding: 0.65rem 0.75rem;
 	font-weight: 700;
+	font-size: 0.85rem;
 	border-bottom: 2px solid #bae6fd;
 	white-space: nowrap;
 }
@@ -38,7 +39,7 @@
 }
 
 .table tbody tr td {
-	padding: 9px 12px;
+	padding: 0.65rem 0.75rem;
 	border-top: 1px solid #e5e7eb;
 	vertical-align: middle;
 	background: #fff;
@@ -55,7 +56,12 @@
 
 .table th,
 .table td {
-	padding: 8px 12px;
+	border-right: 1px solid #e5e7eb;
+}
+
+.table th:last-child,
+.table td:last-child {
+	border-right: none;
 }
 
 /* Fila actual (primer movimiento = internación vigente) */

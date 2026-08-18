@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import { PedidoEstudio } from '@/app/types/estudios';
 import { usePermiso } from '@/app/hooks/usePermiso';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import SolicitarEstudioModal from './SolicitarEstudioModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -13,6 +13,7 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './EstudiosSection.module.css';
+import tableStyles from '../shared/BedTable.module.css';
 import { IoEyeOutline } from 'react-icons/io5';
 
 type Props = {
@@ -25,10 +26,10 @@ type Props = {
 
 function urgenciaClass(estado?: string) {
 	const v = (estado || '').trim().toLowerCase();
-	if (v.includes('urgent')) return styles.urgenciaUrgente;
-	if (v.includes('medio')) return styles.urgenciaMedio;
-	if (v.includes('bajo') || v.includes('normal')) return styles.urgenciaBajo;
-	return styles.urgenciaNone;
+	if (v.includes('urgent')) return tableStyles.urgenciaUrgente;
+	if (v.includes('medio')) return tableStyles.urgenciaMedio;
+	if (v.includes('bajo') || v.includes('normal')) return tableStyles.urgenciaBajo;
+	return tableStyles.urgenciaNone;
 }
 
 function formatFecha(row: PedidoEstudio) {
@@ -40,15 +41,9 @@ function formatFecha(row: PedidoEstudio) {
 function buildEstudioFields(row: PedidoEstudio) {
 	return [
 		{ label: 'Fecha / hora', value: formatFecha(row) },
-		{
-			label: 'Estado',
-			value:
-				row.EstadoWorkflow ||
-				(row.Cumplido ? 'Cumplido' : row.Tomado ? 'Tomado' : 'Pendiente'),
-		},
 		{ label: 'Código práctica', value: row.CodigoPractica },
 		{ label: 'Tipo de pedido', value: row.TipoPedidoDescripcion || row.PracticaSolicitada },
-		{ label: 'Nomenclador', value: row.NomencladorDescripcion },
+		{ label: 'Nomenclador', value: row.NomencladorDescripcion, full: true },
 		{ label: 'Solicitado por', value: row.MedicoSolicitanteNombre },
 		{ label: 'Matrícula', value: row.MatriculaSolicitante },
 		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
@@ -56,10 +51,11 @@ function buildEstudioFields(row: PedidoEstudio) {
 		{
 			label: 'Destino / servicio',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.SectorReceptor,
+			full: true,
 		},
+		{ label: 'Realizado por', value: row.RealizadorNombre },
 		{ label: 'Id resultado', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
 		{ label: 'Id pedido', value: row.IdPedido },
-		{ label: 'Realizado por', value: row.RealizadorNombre },
 	];
 }
 
@@ -73,7 +69,7 @@ export default function EstudiosSection({
 	const { puede } = usePermiso();
 	const puedeCrear = puede('INTERNACION.ESTUDIOS.CREAR');
 	const [rows, setRows] = useState<PedidoEstudio[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<PedidoEstudio | null>(null);
 	const [showSolicitar, setShowSolicitar] = useState(false);
@@ -113,9 +109,8 @@ export default function EstudiosSection({
 		});
 	}, [rows, query]);
 
-	const handleRowClick = async (row: PedidoEstudio) => {
-		const detail = await estudiosService.obtenerPorId(row.IdPedido);
-		setSelected(detail || row);
+	const handleRowClick = (row: PedidoEstudio) => {
+		setSelected(row);
 	};
 
 	const handleExport = async (option: ExportOption) => {
@@ -170,6 +165,10 @@ export default function EstudiosSection({
 		);
 	}
 
+	if (loading) {
+		return <BedSectionLoading />;
+	}
+
 	return (
 		<>
 			<BedSectionLayout
@@ -194,11 +193,7 @@ export default function EstudiosSection({
 				}}
 			>
 				{error && <div className={styles.error}>{error}</div>}
-				{loading ? (
-					<div style={{ position: 'relative', minHeight: 200 }}>
-						<Loader />
-					</div>
-				) : filtered.length === 0 ? (
+				{filtered.length === 0 ? (
 					<EmptyState
 						variant="estudios"
 						text={rows.length === 0 ? 'Sin pedidos de estudios' : 'Sin resultados'}
@@ -211,9 +206,10 @@ export default function EstudiosSection({
 						onAction={puedeCrear && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
 					/>
 				) : (
-					<div className={styles.tableWrap}>
-						<table className={styles.table}>
-							<thead>
+					<div className={tableStyles.tableWrap}>
+						<div className={tableStyles.scrollArea}>
+						<table className={tableStyles.table}>
+							<thead className={tableStyles.thead}>
 								<tr>
 									<th>Urg.</th>
 									<th>Estado</th>
@@ -225,46 +221,46 @@ export default function EstudiosSection({
 									<th>Acciones</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody className={tableStyles.tbody}>
 								{filtered.map((r) => (
-									<tr key={r.IdPedido}>
+									<tr key={r.IdPedido} className={tableStyles.row}>
 										<td>
 											<span
-												className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia)}`}
+												className={`${tableStyles.urgencia} ${urgenciaClass(r.EstadoUrgencia)}`}
 												title={r.EstadoUrgencia || 'Sin urgencia'}
 											/>
 										</td>
-										<td className={styles.meta}>
+										<td className={tableStyles.meta}>
 											{r.Cumplido
 												? 'Cumplido'
 												: r.Tomado
 													? `Tomado${r.NombreToma ? ` · ${r.NombreToma}` : ''}`
 													: 'Pendiente'}
 										</td>
-										<td className={styles.meta}>{formatFecha(r)}</td>
-										<td className={styles.codigo}>{r.CodigoPractica ?? '—'}</td>
+										<td className={tableStyles.meta}>{formatFecha(r)}</td>
+										<td className={tableStyles.codigo}>{r.CodigoPractica ?? '—'}</td>
 										<td>
-											<div className={styles.practica}>{r.PracticaSolicitada}</div>
+											<div className={tableStyles.practica}>{r.PracticaSolicitada}</div>
 											{(r.ServicioDescripcion || r.SectorReceptorNombre) && (
-												<div className={styles.meta}>
+												<div className={tableStyles.meta}>
 													Destino: {r.ServicioDescripcion || r.SectorReceptorNombre}
 												</div>
 											)}
 										</td>
-										<td className={styles.notas}>
+										<td className={tableStyles.notas}>
 											{r.NotasObservacion
 												? r.NotasObservacion.length > 120
 													? `${r.NotasObservacion.slice(0, 120)}…`
 													: r.NotasObservacion
 												: '—'}
 										</td>
-										<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
+										<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
 										<td>
 											<button
 												type="button"
-												className={styles.btnAction}
+												className={tableStyles.btnAction}
 												title="Ver detalle"
-												onClick={() => void handleRowClick(r)}
+												onClick={() => handleRowClick(r)}
 											>
 												<IoEyeOutline color="#5BC0DE" size={18} />
 											</button>
@@ -273,14 +269,20 @@ export default function EstudiosSection({
 								))}
 							</tbody>
 						</table>
+						</div>
 					</div>
 				)}
 			</BedSectionLayout>
 
 			{selected && (
 				<PedidoDetalleModal
+					kicker="Estudio"
 					title={selected.PracticaSolicitada || 'Pedido de estudio'}
 					urgencia={selected.EstadoUrgencia}
+					estado={
+						selected.EstadoWorkflow ||
+						(selected.Cumplido ? 'Cumplido' : selected.Tomado ? 'Tomado' : 'Pendiente')
+					}
 					fields={buildEstudioFields(selected)}
 					textBlocks={[
 						{ label: 'Notas / observación', value: selected.NotasObservacion },

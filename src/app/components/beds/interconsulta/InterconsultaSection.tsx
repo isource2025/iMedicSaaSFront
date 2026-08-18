@@ -6,7 +6,7 @@ import {
 	InterconsultaRow,
 } from '@/app/services/interconsultasService';
 import { usePermiso } from '@/app/hooks/usePermiso';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -16,6 +16,7 @@ import { exportToPDF } from '../../../utils/pdfExport';
 import { generarPDFInterconsulta } from '../../../utils/pdfInterconsulta';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
+import tableStyles from '../shared/BedTable.module.css';
 import { IoEyeOutline } from 'react-icons/io5';
 
 type Props = {
@@ -28,10 +29,10 @@ type Props = {
 
 function urgenciaClass(estado?: string) {
 	const v = (estado || '').trim().toLowerCase();
-	if (v.includes('urgent')) return styles.urgenciaUrgente;
-	if (v.includes('medio')) return styles.urgenciaMedio;
-	if (v.includes('bajo') || v.includes('normal')) return styles.urgenciaBajo;
-	return styles.urgenciaNone;
+	if (v.includes('urgent')) return tableStyles.urgenciaUrgente;
+	if (v.includes('medio')) return tableStyles.urgenciaMedio;
+	if (v.includes('bajo') || v.includes('normal')) return tableStyles.urgenciaBajo;
+	return tableStyles.urgenciaNone;
 }
 
 function formatFecha(row: InterconsultaRow) {
@@ -42,8 +43,7 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 	if (row.Origen === 'WEB') {
 		return [
 			{ label: 'Fecha / hora', value: formatFecha(row) },
-			{ label: 'Especialidad solicitada', value: row.Especialidad },
-			{ label: 'Estado', value: row.Estado },
+			{ label: 'Especialidad solicitada', value: row.Especialidad, full: true },
 			{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
 			{ label: 'Matrícula', value: row.MedicoSolicitante },
 			{ label: 'Origen', value: 'Registro web (legado)' },
@@ -55,9 +55,8 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 		{
 			label: 'Servicio destino',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.Especialidad,
+			full: true,
 		},
-		{ label: 'Estado', value: row.EstadoWorkflow || row.Estado },
-		{ label: 'Urgencia', value: row.EstadoUrgencia },
 		{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
 		{ label: 'Matrícula', value: row.MedicoSolicitante },
 		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
@@ -80,7 +79,7 @@ export default function InterconsultaSection({
 
 	const [rows, setRows] = useState<InterconsultaRow[]>([]);
 	const [showSolicitar, setShowSolicitar] = useState(false);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [exportingDetail, setExportingDetail] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
@@ -121,10 +120,8 @@ export default function InterconsultaSection({
 		});
 	}, [rows, query]);
 
-	const handleRowClick = async (row: InterconsultaRow) => {
-		const id = row.Origen === 'WEB' ? row.IdInterconsulta : row.IdPedido || row.IdInterconsulta;
-		const detail = await interconsultasService.obtenerPorId(id, row.Origen || 'LEGACY');
-		setSelected(detail || row);
+	const handleRowClick = (row: InterconsultaRow) => {
+		setSelected(row);
 	};
 
 	const selectedTextBlocks = selected
@@ -221,6 +218,10 @@ export default function InterconsultaSection({
 		);
 	}
 
+	if (loading) {
+		return <BedSectionLoading />;
+	}
+
 	return (
 		<>
 			<BedSectionLayout
@@ -243,11 +244,7 @@ export default function InterconsultaSection({
 				}}
 			>
 				{error && <div className={styles.error}>{error}</div>}
-				{loading ? (
-					<div style={{ position: 'relative', minHeight: 200 }}>
-						<Loader />
-					</div>
-				) : filtered.length === 0 ? (
+				{filtered.length === 0 ? (
 					<EmptyState
 						variant="interconsulta"
 						text={rows.length === 0 ? 'Sin interconsultas' : 'Sin resultados'}
@@ -260,9 +257,10 @@ export default function InterconsultaSection({
 						onAction={canCreate && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
 					/>
 				) : (
-					<div className={styles.tableWrap}>
-						<table className={styles.table}>
-							<thead>
+					<div className={tableStyles.tableWrap}>
+						<div className={tableStyles.scrollArea}>
+						<table className={tableStyles.table}>
+							<thead className={tableStyles.thead}>
 								<tr>
 									<th>Urg.</th>
 									<th>Fecha / hora</th>
@@ -273,38 +271,38 @@ export default function InterconsultaSection({
 									<th>Acciones</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody className={tableStyles.tbody}>
 								{filtered.map((r) => {
 									const id = r.IdPedido || r.IdInterconsulta;
 									const tomado = !!r.Tomado;
 									const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
 									return (
-										<tr key={`${r.Origen || 'LEGACY'}-${id}`}>
+										<tr key={`${r.Origen || 'LEGACY'}-${id}`} className={tableStyles.row}>
 											<td>
 												<span
-													className={`${styles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
+													className={`${tableStyles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
 													title={r.EstadoUrgencia || r.Estado || 'Sin urgencia'}
 												/>
 											</td>
-											<td className={styles.meta}>{formatFecha(r)}</td>
+											<td className={tableStyles.meta}>{formatFecha(r)}</td>
 											<td>
-												<div className={styles.destino}>
+												<div className={tableStyles.destino}>
 													{r.ServicioDescripcion ||
 														r.SectorReceptorNombre ||
 														r.Especialidad ||
 														'—'}
 												</div>
 												{r.Origen === 'WEB' && (
-													<div className={styles.meta}>Registro web (legado)</div>
+													<div className={tableStyles.meta}>Registro web (legado)</div>
 												)}
 											</td>
-											<td className={styles.motivo}>
+											<td className={tableStyles.motivo}>
 												{(r.Motivo || '').length > 120
 													? `${r.Motivo.slice(0, 120)}…`
 													: r.Motivo || '—'}
 											</td>
-											<td className={styles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
-											<td className={styles.meta}>
+											<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
+											<td className={tableStyles.meta}>
 												{r.EstadoWorkflow ||
 													(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
 												{tomado && r.NombreToma ? ` · ${r.NombreToma}` : ''}
@@ -312,9 +310,9 @@ export default function InterconsultaSection({
 											<td>
 												<button
 													type="button"
-													className={styles.btnAction}
+													className={tableStyles.btnAction}
 													title="Ver detalle"
-													onClick={() => void handleRowClick(r)}
+													onClick={() => handleRowClick(r)}
 												>
 													<IoEyeOutline color="#5BC0DE" size={18} />
 												</button>
@@ -324,12 +322,14 @@ export default function InterconsultaSection({
 								})}
 							</tbody>
 						</table>
+						</div>
 					</div>
 				)}
 			</BedSectionLayout>
 
 			{selected && (
 				<PedidoDetalleModal
+					kicker="Interconsulta"
 					title={
 						selected.ServicioDescripcion ||
 						selected.Especialidad ||
@@ -337,6 +337,7 @@ export default function InterconsultaSection({
 						'Interconsulta'
 					}
 					urgencia={selected.EstadoUrgencia}
+					estado={selected.EstadoWorkflow || selected.Estado}
 					fields={buildInterconsultaFields(selected)}
 					textBlocks={selectedTextBlocks}
 					onClose={() => setSelected(null)}

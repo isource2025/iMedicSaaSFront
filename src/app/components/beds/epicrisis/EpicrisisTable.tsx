@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import styles from '../evoluciones/EvolucionesTable.module.css';
-import EmptyState from '../shared/EmptyState';
 import { IoPencilOutline, IoTrashOutline, IoEyeOutline, IoPrintOutline } from 'react-icons/io5';
 import { epicrisisService } from '../../../services/epicrisisService';
 import ConfirmationModal from '../shared/ConfirmationModal';
@@ -166,12 +165,6 @@ export default function EpicrisisTable({
 								: null}
 						</tbody>
 					</table>
-
-					{!hasRows && (
-						<div className={styles.emptyOverlay}>
-							<EmptyState text="No hay epicrisis registradas para esta internación." />
-						</div>
-					)}
 				</div>
 			</div>
 

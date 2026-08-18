@@ -574,11 +574,7 @@ function BandejaPedidosContent() {
 									<button
 										type="button"
 										className={styles.cardTitleBtn}
-										onClick={() =>
-											void estudiosService
-												.obtenerPorId(r.IdPedido)
-												.then((d) => setSelectedEstudio(d || r))
-										}
+										onClick={() => setSelectedEstudio(r)}
 									>
 										<TituloPracticaEstudio r={r} />
 									</button>

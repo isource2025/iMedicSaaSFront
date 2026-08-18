@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import estudiosService from '@/app/services/estudiosService';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import type { PedidoEstudio } from '@/app/types/estudios';
 import type { TipoImagenHC } from '@/app/types/adjuntos';
@@ -57,15 +56,6 @@ export default function CumplirEstudioModal({
 				setTipoImagen(sugerirTipoImagen(list, practica));
 			})
 			.catch(() => setTipos([]));
-		if (pedido?.IdPedido) {
-			void estudiosService
-				.obtenerPorId(pedido.IdPedido)
-				.then((full) => {
-					const n = String(full?.MedicoSolicitanteNombre || '').trim();
-					if (n) setSolicitanteNombre(n);
-				})
-				.catch(() => undefined);
-		}
 	}, [open, pedido?.IdPedido, pedido?.PracticaSolicitada, pedido?.NomencladorDescripcion, pedido?.MedicoSolicitanteNombre]);
 
 	if (!open || !pedido) return null;

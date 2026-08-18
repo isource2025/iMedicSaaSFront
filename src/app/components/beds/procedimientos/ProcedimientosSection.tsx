@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IoEyeOutline } from 'react-icons/io5';
 import procedimientosService from '@/app/services/procedimientosService';
 import type { FacPracticaVisita } from '@/app/types/procedimientos';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
@@ -12,6 +12,7 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
+import tableStyles from '../shared/BedTable.module.css';
 
 type Props = {
 	numeroVisita: number | null;
@@ -67,7 +68,7 @@ export default function ProcedimientosSection({
 	patientLocation,
 }: Props) {
 	const [rows, setRows] = useState<FacPracticaVisita[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<FacPracticaVisita | null>(null);
 	const [query, setQuery] = useState('');
@@ -150,6 +151,10 @@ export default function ProcedimientosSection({
 		);
 	}
 
+	if (loading) {
+		return <BedSectionLoading />;
+	}
+
 	return (
 		<>
 			<BedSectionLayout
@@ -170,11 +175,7 @@ export default function ProcedimientosSection({
 				}}
 			>
 				{error && <div className={styles.error}>{error}</div>}
-				{loading ? (
-					<div style={{ position: 'relative', minHeight: 200 }}>
-						<Loader />
-					</div>
-				) : filtered.length === 0 ? (
+				{filtered.length === 0 ? (
 					<EmptyState
 						variant="procedimientos"
 						text={rows.length === 0 ? 'Sin prácticas en esta visita' : 'Sin resultados'}
@@ -185,9 +186,10 @@ export default function ProcedimientosSection({
 						}
 					/>
 				) : (
-					<div className={styles.tableWrap}>
-						<table className={styles.table}>
-							<thead>
+					<div className={tableStyles.tableWrap}>
+						<div className={tableStyles.scrollArea}>
+						<table className={tableStyles.table}>
+							<thead className={tableStyles.thead}>
 								<tr>
 									<th>Fecha / hora</th>
 									<th>Cód.</th>
@@ -199,22 +201,22 @@ export default function ProcedimientosSection({
 									<th>Acciones</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody className={tableStyles.tbody}>
 								{filtered.map((r) => (
-									<tr key={r.Valor}>
-										<td className={styles.meta}>{formatFechaHora(r)}</td>
-										<td className={styles.codigo}>{r.Practica ?? '—'}</td>
+									<tr key={r.Valor} className={tableStyles.row}>
+										<td className={tableStyles.meta}>{formatFechaHora(r)}</td>
+										<td className={tableStyles.codigo}>{r.Practica ?? '—'}</td>
 										<td>
-											<div className={styles.practica}>{practicaTitulo(r)}</div>
+											<div className={tableStyles.practica}>{practicaTitulo(r)}</div>
 										</td>
-										<td className={styles.meta}>{r.TipoPractica || '—'}</td>
-										<td className={styles.meta}>{r.CantidadPractica ?? '—'}</td>
-										<td className={styles.meta}>{r.ValorSector || '—'}</td>
-										<td className={styles.meta}>{r.Profesionales || '—'}</td>
+										<td className={tableStyles.meta}>{r.TipoPractica || '—'}</td>
+										<td className={tableStyles.meta}>{r.CantidadPractica ?? '—'}</td>
+										<td className={tableStyles.meta}>{r.ValorSector || '—'}</td>
+										<td className={tableStyles.meta}>{r.Profesionales || '—'}</td>
 										<td>
 											<button
 												type="button"
-												className={styles.btnAction}
+												className={tableStyles.btnAction}
 												title="Ver detalle"
 												onClick={() => setSelected(r)}
 											>
@@ -225,6 +227,7 @@ export default function ProcedimientosSection({
 								))}
 							</tbody>
 						</table>
+						</div>
 					</div>
 				)}
 			</BedSectionLayout>

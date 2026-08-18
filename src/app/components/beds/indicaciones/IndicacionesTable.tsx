@@ -1,6 +1,5 @@
 "use client";
 import styles from "./IndicacionesTable.module.css";
-import EmptyState from "../shared/EmptyState";
 import { IoMedicalOutline, IoCloseCircleOutline, IoRepeatOutline, IoPencilOutline, IoTrashOutline } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
 import { useState } from "react";
@@ -481,12 +480,6 @@ export default function IndicacionesTable({
                                 : null}
                         </tbody>
                     </table>
-
-                    {!hasRows && (
-                        <div className={styles.emptyOverlay}>
-                            <EmptyState text="No hay indicaciones registradas para esta visita." />
-                        </div>
-                    )}
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { ExamenLabCompleto, ExamenLabDetalle } from "@/app/types/laboratorios";
 import { laboratoriosService } from "@/app/services/laboratoriosService";
 import LabParameterChart, { LabDataPoint } from "./LabParameterChart";
+import EmptyState from "../shared/EmptyState";
 import styles from "./LabAnalysisView.module.css";
 
 interface LabAnalysisViewProps {
@@ -342,9 +343,11 @@ function LabAnalysisTipoSections({ examenes }: { examenes: ExamenLabCompleto[] }
 
   if (examenes.length === 0) {
     return (
-      <div className={styles.emptyState}>
-        <p>No hay exámenes que coincidan con el filtro seleccionado</p>
-      </div>
+      <EmptyState
+        variant="laboratorios"
+        text="Sin resultados para el filtro"
+        description="Probá con otro tipo de estudio."
+      />
     );
   }
 
@@ -436,9 +439,11 @@ export default function LabAnalysisView({ examenes }: LabAnalysisViewProps) {
 
   if (examenes.length === 0) {
     return (
-      <div className={styles.emptyState}>
-        <p>No hay exámenes de laboratorio para analizar</p>
-      </div>
+      <EmptyState
+        variant="laboratorios"
+        text="Sin estudios de laboratorio"
+        description="No hay exámenes para analizar en esta internación."
+      />
     );
   }
 

@@ -1,0 +1,144 @@
+/* Estándar de tablas del detalle de cama:
+   tipografía de Estudios/Interconsultas + colores/disposición de Evoluciones. */
+
+.tableWrap {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-width: 0;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.scrollArea {
+	position: relative;
+	flex: 1 1 auto;
+	overflow: auto;
+	max-height: 100%;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: auto;
+	font-size: 0.85rem;
+	line-height: 1.25;
+	color: #111827;
+}
+
+.thead th,
+.table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: #e0f2fe;
+	color: #111827;
+	text-align: left;
+	padding: 0.65rem 0.75rem;
+	font-weight: 700;
+	font-size: 0.85rem;
+	border-bottom: 2px solid #bae6fd;
+	white-space: nowrap;
+}
+
+.tbody .row td,
+.table tbody tr td {
+	padding: 0.65rem 0.75rem;
+	border-top: 1px solid #e5e7eb;
+	vertical-align: top;
+	background: #fff;
+}
+
+.tbody .row:nth-child(even) td,
+.table tbody tr:nth-child(even) td {
+	background: #fafafa;
+}
+
+.row:hover td,
+.table tbody tr:hover td {
+	background: #e0f2fe;
+	color: #111827;
+}
+
+.table th,
+.table td {
+	border-right: 1px solid #e5e7eb;
+}
+
+.table th:last-child,
+.table td:last-child {
+	border-right: none;
+}
+
+.practica,
+.destino,
+.primary {
+	font-weight: 600;
+	color: #0f172a;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.meta,
+.sub {
+	margin-top: 2px;
+	color: #64748b;
+	font-size: 0.8rem;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.codigo {
+	font-size: 0.75rem;
+	color: #64748b;
+	white-space: nowrap;
+}
+
+.notas,
+.motivo {
+	white-space: pre-wrap;
+	max-width: 28rem;
+	color: #334155;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.urgencia {
+	display: inline-block;
+	width: 0.65rem;
+	height: 0.65rem;
+	border-radius: 50%;
+	vertical-align: middle;
+}
+
+.urgenciaUrgente { background: #ef4444; }
+.urgenciaMedio { background: #eab308; }
+.urgenciaBajo,
+.urgenciaNormal { background: #22c55e; }
+.urgenciaNone { background: #cbd5e1; }
+
+.btnAction {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: none;
+	background: transparent;
+	border-radius: 6px;
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+.btnAction:hover {
+	background: #f3f4f6;
+}
+
+.error {
+	padding: 1rem;
+	color: #b45309;
+}

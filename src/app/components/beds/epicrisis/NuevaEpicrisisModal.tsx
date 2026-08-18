@@ -9,6 +9,7 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { epicrisisService } from '../../../services/epicrisisService';
 import { authService } from '../../../services/authService';
 import { agendaService, type DiagnosticoCie10 } from '@/app/services/agendaService';
+import type { EpicrisisRow } from './EpicrisisTable';
 
 const DISCLAIMER_IA_UI =
 	'Esta epicrisis fue elaborada con asistencia de inteligencia artificial a partir de la historia clínica. Al guardar, Ud. confirma haberla revisado y validado. La responsabilidad clínica y legal recae exclusivamente en el profesional firmante; la IA no sustituye el juicio médico.';
@@ -21,6 +22,8 @@ interface Props {
 	/** Sector de la cama/paciente (no se muestra; se guarda oculto) */
 	bedSector?: string;
 	idEpicrisis?: number | null;
+	/** Fila ya cargada en la tabla: no se vuelve a pedir al servidor. */
+	registro?: EpicrisisRow | null;
 	refetch?: () => Promise<void>;
 }
 
@@ -54,6 +57,7 @@ export default function NuevaEpicrisisModal({
 	documentoPaciente,
 	bedSector,
 	idEpicrisis = null,
+	registro = null,
 	refetch,
 }: Props) {
 	const { idsector, sectorSeleccionado } = useAppContext();
@@ -103,58 +107,36 @@ export default function NuevaEpicrisisModal({
 			setDiagTerm('');
 			setDiagSel(null);
 			setDiagResults([]);
+			return;
 		}
-	}, [initial, esEdicion]);
-
-	useEffect(() => {
-		setForm((prev) => ({
-			...prev,
-			IdSector: sectorEfectivo || prev.IdSector,
-			NumeroDocumento: documentoEfectivo || prev.NumeroDocumento,
-		}));
-	}, [sectorEfectivo, documentoEfectivo]);
-
-	useEffect(() => {
-		(async () => {
-			if (!idEpicrisis) return;
-			setLoading(true);
-			try {
-				const res = await epicrisisService.obtenerPorId(idEpicrisis);
-				if (!res) return;
-				const texto = res.epicrisis || '';
-				const yaTieneDisclaimer = texto.includes(
-					'DESLINDE DE RESPONSABILIDAD (asistencia por IA)',
-				);
-				setGeneradoConIA(yaTieneDisclaimer);
-				const codigo = String(res.diagnostico || '').trim();
-				const desc = String(res.diagnosticoText || '').trim();
-				setForm((prev) => ({
-					...prev,
-					IdVisita: res.idVisita,
-					Fecha: String(res.fecha || '').slice(0, 10),
-					Hora: String(res.hora || '').slice(0, 5),
-					IdSector: sectorEfectivo || res.idSector || prev.IdSector,
-					Epicrisis: texto,
-					NumeroDocumento: documentoEfectivo || String(res.numeroDocumento || ''),
-					Profecional: res.profesional ?? prev.Profecional,
-					Diagnostico: codigo,
-					DiagnosticoText: desc,
-					GeneradoConIA: yaTieneDisclaimer,
-				}));
-				if (codigo) {
-					setDiagSel({ codigo, descripcion: desc || codigo, valor: 0 });
-					setDiagTerm(codigo);
-				} else {
-					setDiagSel(null);
-					setDiagTerm('');
-				}
-			} catch (err) {
-				console.error('Error cargando epicrisis:', err);
-			} finally {
-				setLoading(false);
-			}
-		})();
-	}, [idEpicrisis, sectorEfectivo, documentoEfectivo]);
+		if (!registro) return;
+		const texto = registro.epicrisis || '';
+		const yaTieneDisclaimer = texto.includes(
+			'DESLINDE DE RESPONSABILIDAD (asistencia por IA)',
+		);
+		const codigo = String(registro.diagnostico || '').trim();
+		const desc = String(registro.diagnosticoText || '').trim();
+		setGeneradoConIA(yaTieneDisclaimer);
+		setForm({
+			IdVisita: registro.idVisita,
+			Fecha: String(registro.fecha || '').slice(0, 10),
+			Hora: String(registro.hora || '').slice(0, 5),
+			IdSector: sectorEfectivo || registro.idSector || '',
+			Epicrisis: texto,
+			NumeroDocumento: documentoEfectivo || String(registro.numeroDocumento || ''),
+			Profecional: registro.profesional ?? resolverProfecional(idPersonal),
+			Diagnostico: codigo,
+			DiagnosticoText: desc,
+			GeneradoConIA: yaTieneDisclaimer,
+		});
+		if (codigo) {
+			setDiagSel({ codigo, descripcion: desc || codigo, valor: 0 });
+			setDiagTerm(codigo);
+		} else {
+			setDiagSel(null);
+			setDiagTerm('');
+		}
+	}, [initial, esEdicion, registro, sectorEfectivo, documentoEfectivo, idPersonal]);
 
 	useEffect(() => {
 		if (diagSel) return;

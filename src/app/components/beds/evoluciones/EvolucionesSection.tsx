@@ -9,7 +9,7 @@ import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { evolucionesService } from "../../../services/evolucionesService";
 import EvolucionesTable, { EvolucionRow } from "./EvolucionesTable";
 import styles from './EvolucionesSection.module.css';
-import Loader from '../../Loader/Loader';
+import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -247,6 +247,10 @@ export default function EvolucionesSection({
         }
     };
 
+    if (isLoading) {
+        return <BedSectionLoading />;
+    }
+
     return (
         <div className={styles.root}>
             {/* Fecha seleccionada + botón agregar */}
@@ -342,17 +346,25 @@ export default function EvolucionesSection({
             {/* Tabla */}
             <div className={styles.content}>
                 <div className={styles.tableHolder}>
-                    {isLoading && (
-                        <div style={{ position: 'relative', minHeight: '200px' }}>
-                            <Loader />
-                        </div>
-                    )}
                     {error && (
                         <div className={styles.errorBox}>
                             Error al cargar evoluciones: {error.message}
                         </div>
                     )}
-                    {!isLoading && !error && (
+                    {!isLoading && !error && rows.length === 0 && (
+                        <EmptyState
+                            variant="evolucion"
+                            text={baseRows.length === 0 ? 'Sin evoluciones' : 'Sin resultados'}
+                            description={
+                                baseRows.length === 0
+                                    ? 'Cargá una evolución con el botón + Evolución.'
+                                    : 'Probá con otro criterio de búsqueda o filtro.'
+                            }
+                            actionLabel={baseRows.length === 0 ? 'Evolución' : undefined}
+                            onAction={baseRows.length === 0 ? onAddEvolucion : undefined}
+                        />
+                    )}
+                    {!isLoading && !error && rows.length > 0 && (
                         <EvolucionesTable
                             rows={rows}
                             onSelectRow={setSelectedId}
@@ -394,6 +406,7 @@ export default function EvolucionesSection({
                     defaultIdVisita={numeroVisita}
                     documentoPaciente={documentoPaciente}
                     idEvolucion={selectedId}
+                    registro={selectedId != null ? baseRows.find((r) => r.id === selectedId) ?? null : null}
                     refetch={refetch}
                 />
             </ModalBasePaciente>

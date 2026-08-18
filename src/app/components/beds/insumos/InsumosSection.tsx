@@ -5,7 +5,7 @@ import { useBedDetail } from "../contexts/BedDetailContext";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import InsumosTable, { InsumoRow } from "./InsumosTable";
 import styles from './InsumosSection.module.css';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import EmptyState from '../shared/EmptyState';
 import { exportToPDF } from '../../../utils/pdfExport';
@@ -140,13 +140,7 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     }
 
     if (isLoading) {
-        return (
-            <div className={styles.root}>
-                <div style={{ position: 'relative', minHeight: '200px' }}>
-                    <Loader />
-                </div>
-            </div>
-        );
+        return <BedSectionLoading />;
     }
 
     if (error) {

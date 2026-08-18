@@ -11,6 +11,7 @@ import {
 	type RolNombre,
 	type ModuloDef,
 } from '../utils/permisos';
+import { leerModulosEmpresaLocal, moduloEmpresaHabilitado } from '../utils/modulosEmpresa';
 
 export interface RolEnUso {
 	id: number;
@@ -75,7 +76,9 @@ export function usePermiso() {
 		setState(leerLocal());
 
 		const onStorage = (e: StorageEvent) => {
-			if (e.key === 'rol' || e.key === 'roles' || e.key === 'permisos') setState(leerLocal());
+			if (e.key === 'rol' || e.key === 'roles' || e.key === 'permisos' || e.key === 'empresaModulos') {
+				setState(leerLocal());
+			}
 		};
 		const onRefresh = () => setState(leerLocal());
 		window.addEventListener('storage', onStorage);
@@ -89,15 +92,23 @@ export function usePermiso() {
 
 	const { rol, permisos: lista, loaded } = state;
 	const efectivos = permisosDeRol(rol ?? undefined, lista);
+	const contratados = leerModulosEmpresaLocal();
+	const moduloOk = (idModulo: string) =>
+		moduloEmpresaHabilitado(contratados, idModulo) &&
+		tieneAccesoAModulo(rol ?? undefined, idModulo, lista);
 
 	return {
 		rol,
 		loaded,
 		permisos: efectivos,
-		puede: (codigo: string): boolean => tienePermiso(rol ?? undefined, codigo, lista),
-		puedeModulo: (idModulo: string): boolean =>
-			tieneAccesoAModulo(rol ?? undefined, idModulo, lista),
+		puede: (codigo: string): boolean => {
+			const idModulo = String(codigo || '').split('.')[0] || '';
+			if (!moduloEmpresaHabilitado(contratados, idModulo)) return false;
+			return tienePermiso(rol ?? undefined, codigo, lista);
+		},
+		puedeModulo: (idModulo: string): boolean => moduloOk(idModulo),
 		puedeSubmodulo: (idModulo: string, idSubmodulo: string): boolean =>
+			moduloOk(idModulo) &&
 			tieneAccesoASubmodulo(rol ?? undefined, idModulo, idSubmodulo, lista),
 		menu: modulosVisibles(rol ?? undefined, lista) as ModuloDef[],
 	};

@@ -83,7 +83,7 @@
 
 .table {
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.85rem;
   /* Ancho mínimo: columna fija + N columnas con mínimo legible → scroll horizontal si hace falta */
   min-width: max(100%, calc(var(--sticky-param-w) + var(--lab-date-count, 1) * var(--date-col-min)));
 }
@@ -94,18 +94,19 @@
 }
 
 .table thead {
-  background: #f8f9fa;
+  background: #e0f2fe;
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
 .table th {
-  padding: 10px 8px;
+  padding: 0.65rem 0.75rem;
   text-align: left;
-  font-weight: 600;
-  color: #495057;
-  border-bottom: 2px solid #dee2e6;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #111827;
+  border-bottom: 2px solid #bae6fd;
   vertical-align: bottom;
   box-sizing: border-box;
 }
@@ -124,7 +125,7 @@
 
 .table thead .stickyCol {
   z-index: 3;
-  background: #f8f9fa;
+  background: #e0f2fe;
 }
 
 .headerGraphCheckLabel {
@@ -159,9 +160,9 @@
 }
 
 .stickyHeaderTitle {
-  font-weight: 600;
-  font-size: 13px;
-  color: #2c3e50;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #111827;
 }
 
 .stickyHeaderHint {

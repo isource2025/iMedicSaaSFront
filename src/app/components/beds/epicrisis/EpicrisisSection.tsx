@@ -15,7 +15,9 @@ import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { formatSqlDate } from '../../../utils/dateUtils';
 import styles from '../evoluciones/EvolucionesSection.module.css';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
+import BedSectionLayout from '../shared/BedSectionLayout';
+import EmptyState from '../shared/EmptyState';
 
 export default function EpicrisisSection({
 	numeroVisita,
@@ -194,75 +196,82 @@ export default function EpicrisisSection({
 		}
 	};
 
+	if (!numeroVisita) {
+		return (
+			<EmptyState
+				variant="epicrisis"
+				text="No hay visita seleccionada"
+				description="Abrí una internación para ver las epicrisis."
+			/>
+		);
+	}
+
+	if (isLoading) {
+		return <BedSectionLoading />;
+	}
+
 	return (
-		<div className={styles.root}>
-			<div className={styles.dateHeader}>
-				<h2 className={styles.sectionTitle}>Epicrisis</h2>
-				<span className={styles.dateText}>
-					{patientName ? `Paciente: ${patientName}` : 'Resumen del episodio de hospitalización'}
-				</span>
-				<div className={styles.dateActions}>
-					<button
-						className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-						onClick={() => {
-							setSelectedId(null);
-							setModalOpen(true);
-						}}
-					>
-						<span className={styles.addIcon} aria-hidden>
-							+
-						</span>
-						Epicrisis
-					</button>
-					{canPrint && (
+		<>
+			<BedSectionLayout
+				title="Epicrisis"
+				subtitle="Resumen del episodio de hospitalización"
+				addLabel="Epicrisis"
+				onAdd={() => {
+					setSelectedId(null);
+					setModalOpen(true);
+				}}
+				exportSlot={
+					canPrint ? (
 						<ExportButton
 							data={rows}
 							fileName={`epicrisis_${numeroVisita || 'visita'}.pdf`}
 							onExport={handleExport}
 							options={['pdf']}
 						/>
-					)}
-				</div>
-			</div>
-
-			<div className={styles.toolbar}>
-				<div className={styles.searchWrap}>
-					<span className={styles.searchIcon}>🔍</span>
-					<input
-						type="text"
-						placeholder="Buscar por texto, diagnóstico, profesional…"
-						className={styles.searchInput}
-						value={query}
-						onChange={(e) => setQuery(e.target.value)}
+					) : undefined
+				}
+				search={{
+					value: query,
+					onChange: setQuery,
+					placeholder: 'Buscar por texto, diagnóstico, profesional…',
+				}}
+			>
+				{error && (
+					<div className={styles.errorBox}>
+						Error al cargar epicrisis: {error.message}
+					</div>
+				)}
+				{!error && rows.length === 0 ? (
+					<EmptyState
+						variant="epicrisis"
+						text={baseRows.length === 0 ? 'Sin epicrisis' : 'Sin resultados'}
+						description={
+							baseRows.length === 0
+								? 'Cargá una epicrisis con el botón + Epicrisis.'
+								: 'Probá con otro criterio de búsqueda.'
+						}
+						actionLabel={baseRows.length === 0 ? 'Epicrisis' : undefined}
+						onAction={
+							baseRows.length === 0
+								? () => {
+										setSelectedId(null);
+										setModalOpen(true);
+									}
+								: undefined
+						}
 					/>
-				</div>
-			</div>
-
-			<div className={styles.content}>
-				<div className={styles.tableHolder}>
-					{isLoading && (
-						<div style={{ position: 'relative', minHeight: '200px' }}>
-							<Loader />
-						</div>
-					)}
-					{error && (
-						<div className={styles.errorBox}>
-							Error al cargar epicrisis: {error.message}
-						</div>
-					)}
-					{!isLoading && !error && (
-						<EpicrisisTable
-							rows={rows}
-							onSelectRow={setSelectedId}
-							selectedId={selectedId}
-							refetch={refetch}
-							canPrint={canPrint}
-							onPrint={printEpicrisis}
-							printing={printing}
-						/>
-					)}
-				</div>
-			</div>
+				) : !error ? (
+					<EpicrisisTable
+						rows={rows}
+						onSelectRow={setSelectedId}
+						selectedId={selectedId}
+						refetch={refetch}
+						canPrint={canPrint}
+						onPrint={printEpicrisis}
+						printing={printing}
+					/>
+				) : null}
+			</BedSectionLayout>
 
 			<ModalBasePaciente
 				numeroVisita={numeroVisita ? String(numeroVisita) : ''}
@@ -299,9 +308,10 @@ export default function EpicrisisSection({
 					documentoPaciente={documentoPaciente}
 					bedSector={bedSector}
 					idEpicrisis={selectedId}
+					registro={selectedRow}
 					refetch={refetch}
 				/>
 			</ModalBasePaciente>
-		</div>
+		</>
 	);
 }

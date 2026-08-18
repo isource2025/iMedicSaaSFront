@@ -13,7 +13,7 @@ import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from '../indicaciones/IndicacionesSection.module.css';
 import tableStyles from './ControlesFrecuentesSection.module.css';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import EmptyState from '../shared/EmptyState';
 import { exportToPDF } from '../../../utils/pdfExport';
@@ -167,6 +167,10 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 
 	if (activeSection !== 'controles-frecuentes') return null;
 
+	if (isLoading) {
+		return <BedSectionLoading />;
+	}
+
 	return (
 		<div className={styles.root}>
 			{/* Header */}
@@ -215,11 +219,6 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 			{/* Contenido */}
 			<div className={styles.content}>
 				<div className={styles.tableHolder}>
-					{isLoading && (
-						<div style={{ position: 'relative', minHeight: 200 }}>
-							<Loader />
-						</div>
-					)}
 					{error && <div className={styles.errorBox}>Error al cargar: {error.message}</div>}
 					{!isLoading && !error && controlsFiltrados.length === 0 ? (
 						<EmptyState

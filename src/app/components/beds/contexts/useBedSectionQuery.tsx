@@ -133,7 +133,7 @@ export function useBedSectionFetch<T = unknown>(
 	);
 
 	const [data, setData] = useState<T | undefined>(undefined);
-	const [isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | undefined>(undefined);
 	const [url, setUrl] = useState<string | undefined>(undefined);
 	const [lastUpdatedAt, setLastUpdatedAt] = useState<number | undefined>(undefined);
@@ -145,11 +145,15 @@ export function useBedSectionFetch<T = unknown>(
 	const abortRef = useRef<AbortController | null>(null);
 
 	const doFetch = async () => {
-		if (!enabled) return;
+		if (!enabled) {
+			setIsLoading(false);
+			return;
+		}
 
 		const finalUrl = resolvedBaseUrl + buildQuery(queryParams);
 		setUrl(finalUrl);
 		setError(undefined);
+		setIsLoading(true);
 
 		// 1) Cache check
 		const now = Date.now();
@@ -157,7 +161,8 @@ export function useBedSectionFetch<T = unknown>(
 		if (cached && now - cached.ts < cacheTimeMs) {
 			setData(cached.data as T);
 			setLastUpdatedAt(cached.ts);
-			return; // servir desde cache
+			setIsLoading(false);
+			return;
 		}
 
 		// 2) Network
@@ -165,7 +170,6 @@ export function useBedSectionFetch<T = unknown>(
 		const controller = new AbortController();
 		abortRef.current = controller;
 
-		setIsLoading(true);
 		try {
 			const res = await apiFetch(finalUrl, {
 				method: 'GET',
@@ -187,10 +191,11 @@ export function useBedSectionFetch<T = unknown>(
 
 	// Refetch en cambios de sección/fecha/params/baseUrl
 	useEffect(() => {
+		if (enabled) setIsLoading(true);
 		doFetch();
 		return () => abortRef.current?.abort();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [queryKey, baseUrl]);
+	}, [queryKey, baseUrl, enabled]);
 
 	// Revalidate on window focus (opcional)
 	useEffect(() => {
@@ -210,9 +215,11 @@ export function useBedSectionFetch<T = unknown>(
 		await doFetch();
 	};
 
+	const waitingFirstData = enabled && data === undefined && !error;
+
 	return {
 		data,
-		isLoading,
+		isLoading: isLoading || waitingFirstData,
 		error,
 		refetch,
 		url,

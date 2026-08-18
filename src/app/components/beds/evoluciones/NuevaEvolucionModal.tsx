@@ -4,8 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import styles from "./NuevaEvolucionModal.module.css";
 import { NuevaEvolucionPayload } from "../../../types/evoluciones";
 import { useAppContext } from "@/app/contexts/AppContext";
-import { evolucionesService } from "../../../services/evolucionesService";
 import { authService } from "../../../services/authService";
+import type { EvolucionRow } from "./EvolucionesTable";
 
 interface NuevaEvolucionModalProps {
     onClose: () => void;
@@ -14,6 +14,7 @@ interface NuevaEvolucionModalProps {
     documentoPaciente?: string;
     idEvolucion?: number | null;
     refetch?: () => Promise<void>;
+    registro?: EvolucionRow | null;
 }
 
 const getLocalDateString = (date: Date): string => {
@@ -57,6 +58,7 @@ export default function NuevaEvolucionModal({
     defaultIdVisita,
     documentoPaciente,
     idEvolucion = null,
+    registro = null,
     refetch,
 }: NuevaEvolucionModalProps) {
     const { idsector, sectorSeleccionado } = useAppContext();
@@ -75,38 +77,23 @@ export default function NuevaEvolucionModal({
     const [form, setForm] = useState<NuevaEvolucionPayload>(initial);
     const [loading, setLoading] = useState(false);
 
-    // Cargar datos - exactamente igual que en NuevaIndicacionModal
     useEffect(() => {
-        (async () => {
-            setLoading(true);
-
-            try {
-                if (idEvolucion) {
-                    console.log('🔍 Cargando evolución con ID:', idEvolucion);
-                    const res = await evolucionesService.getEvolucionById(idEvolucion);
-
-                    if (res) {
-                        console.log('✅ Evolución cargada:', res);
-                        const resAny = res as any;
-                        setForm((prev) => ({
-                            ...prev,
-                            IdVisita: resAny.IdVisita || res.idVisita,
-                            FechaEv: resAny.FechaEv || res.fechaEv,
-                            HoraEv: resAny.HoraEv || res.horaEv,
-                            IdSector: resAny.IdSector || res.idSector || '',
-                            Evolucion: resAny.Evolucion || res.evolucion,
-                            NumeroDocumento: resAny.NumeroDocumento || res.numeroDocumento || '',
-                            Profecional: resAny.Profecional || res.profesional,
-                        }));
-                    }
-                }
-            } catch (err) {
-                console.error('❌ Error al cargar evolución:', err);
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, []);
+        if (!idEvolucion || !registro) {
+            setForm(initial);
+            setLoading(false);
+            return;
+        }
+        setForm({
+            IdVisita: registro.idVisita,
+            FechaEv: String(registro.fechaEv || '').slice(0, 10),
+            HoraEv: String(registro.horaEv || '').slice(0, 5),
+            IdSector: registro.idSector || idsector || '',
+            Evolucion: registro.evolucion || '',
+            NumeroDocumento: registro.numeroDocumento || documentoEfectivo,
+            Profecional: registro.profesional,
+        });
+        setLoading(false);
+    }, [idEvolucion, registro, initial, idsector, documentoEfectivo]);
 
     const set = (field: keyof NuevaEvolucionPayload, value: any) =>
         setForm((prev) => ({ ...prev, [field]: value }));

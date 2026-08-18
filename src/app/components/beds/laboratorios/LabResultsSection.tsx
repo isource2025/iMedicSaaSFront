@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { laboratoriosService } from '@/app/services/laboratoriosService';
 import { ExamenLabCompleto } from '@/app/types/laboratorios';
-import Loader from '../../Loader/Loader';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import LabUploadModal from './LabUploadModal';
 import LabFormModal from './LabFormModal';
 import LabResultsTable from './LabResultsTable';
@@ -34,7 +34,7 @@ export default function LabResultsSection({
   horaIngreso,
 }: LabResultsSectionProps) {
   const [examenes, setExamenes] = useState<ExamenLabCompleto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedExamen, setSelectedExamen] = useState<ExamenLabCompleto | null>(null);
@@ -148,6 +148,10 @@ export default function LabResultsSection({
     );
   }
 
+  if (loading) {
+    return <BedSectionLoading />;
+  }
+
   return (
     <>
       <BedSectionLayout
@@ -184,11 +188,7 @@ export default function LabResultsSection({
         }
       >
         {error && <div className={styles.error}>{error}</div>}
-        {loading ? (
-          <div style={{ position: 'relative', minHeight: '300px' }}>
-            <Loader />
-          </div>
-        ) : examenes.length === 0 ? (
+        {examenes.length === 0 ? (
           <EmptyState
             variant="laboratorios"
             text="Sin estudios de laboratorio"
