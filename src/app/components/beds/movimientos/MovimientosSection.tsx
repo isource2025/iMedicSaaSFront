@@ -56,6 +56,14 @@ function diagnosticoTexto(m: Record<string, unknown>): string {
 	return "—";
 }
 
+function disposicionTexto(m: Record<string, unknown>): string {
+	const desc = String(
+		m.DisposicionEgresoDescripcion || m.disposicionEgresoDescripcion || "",
+	).trim();
+	if (desc && !esCodigoCrudo(desc)) return desc;
+	return "—";
+}
+
 export default function MovimientosSection({
 	numeroVisita,
 	patientName,
@@ -120,10 +128,7 @@ export default function MovimientosSection({
 					},
 					{
 						label: "Disposición",
-						value:
-							m.DisposicionEgreso && Number(m.DisposicionEgreso) > 0
-								? String(m.DisposicionEgreso)
-								: "—",
+						value: disposicionTexto(m),
 					},
 					{ label: "Diagnóstico", value: diagnosticoTexto(m) },
 				],
@@ -249,7 +254,7 @@ export default function MovimientosSection({
 											<td>{horaAdm}</td>
 											<td>{fechaEg}</td>
 											<td>{horaEg}</td>
-											<td>{m.DisposicionEgreso && Number(m.DisposicionEgreso) > 0 ? String(m.DisposicionEgreso) : "—"}</td>
+											<td>{disposicionTexto(m)}</td>
 											<td className={tStyles.cellDiag}>{diagnosticoTexto(m)}</td>
 										</tr>
 										);
