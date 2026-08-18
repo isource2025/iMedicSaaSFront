@@ -2,17 +2,40 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
-import type { SectorReceptorEstudio, TipoPedidoEstudio } from '@/app/types/estudios';
+import type {
+	PedidoEstudio,
+	SectorReceptorEstudio,
+	TipoPedidoEstudio,
+} from '@/app/types/estudios';
 import { resolveReceptorPorTipo } from '@/app/utils/resolveSectorReceptor';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
 
 type Urgencia = 'Normal' | 'Medio' | 'Urgente';
 
+function urgenciaDePedido(estado?: string | null): Urgencia {
+	const v = String(estado || '').trim().toLowerCase();
+	if (v.includes('urgent')) return 'Urgente';
+	if (v.includes('medio')) return 'Medio';
+	return 'Normal';
+}
+
+function tipoDePedido(pedido: PedidoEstudio): TipoPedidoEstudio | null {
+	const idTipo = Number(pedido.IdTipoPedido) || 0;
+	const idPractica = Number(pedido.CodigoPractica) || 0;
+	if (idTipo <= 0 && idPractica <= 0) return null;
+	return {
+		idTipoPedido: idTipo,
+		idPractica,
+		descripcion: pedido.TipoPedidoDescripcion || pedido.PracticaSolicitada || '',
+	};
+}
+
 type Props = {
 	open: boolean;
 	sectorSolicitante: string;
 	idVisita: number;
+	pedido?: PedidoEstudio | null;
 	onClose: () => void;
 	onCreated: () => void;
 };
@@ -21,9 +44,11 @@ export default function SolicitarEstudioModal({
 	open,
 	sectorSolicitante,
 	idVisita,
+	pedido,
 	onClose,
 	onCreated,
 }: Props) {
+	const editando = Boolean(pedido?.IdPedido);
 	const [term, setTerm] = useState('');
 	const [tipos, setTipos] = useState<TipoPedidoEstudio[]>([]);
 	const [loadingTipos, setLoadingTipos] = useState(false);
@@ -39,13 +64,20 @@ export default function SolicitarEstudioModal({
 		if (!open) return;
 		setTerm('');
 		setTipos([]);
-		setTipo(null);
-		setIdSectorReceptor('');
-		setUrgencia('Normal');
-		setNotas('');
 		setError(null);
+		if (pedido) {
+			setTipo(tipoDePedido(pedido));
+			setIdSectorReceptor(String(pedido.SectorReceptor || '').trim());
+			setUrgencia(urgenciaDePedido(pedido.EstadoUrgencia));
+			setNotas(pedido.NotasObservacion || '');
+		} else {
+			setTipo(null);
+			setIdSectorReceptor('');
+			setUrgencia('Normal');
+			setNotas('');
+		}
 		void estudiosService.listarSectoresReceptor().then(setSectores).catch(() => setSectores([]));
-	}, [open]);
+	}, [open, pedido]);
 
 	useEffect(() => {
 		const t = term.trim();
@@ -94,19 +126,26 @@ export default function SolicitarEstudioModal({
 		setSubmitting(true);
 		setError(null);
 		try {
-			await estudiosService.crear({
-				idVisita,
-				sectorSolicitante,
+			const payload = {
 				idTipoPedido: tipo.idTipoPedido,
 				idPractica: tipo.idPractica,
 				idSectorReceptor: idSectorReceptor.trim(),
 				notas: notas.trim() || undefined,
 				estadoUrgencia: urgencia,
-			});
+			};
+			if (editando && pedido) {
+				await estudiosService.actualizar(pedido.IdPedido, payload);
+			} else {
+				await estudiosService.crear({
+					idVisita,
+					sectorSolicitante,
+					...payload,
+				});
+			}
 			onCreated();
 			onClose();
 		} catch (e: unknown) {
-			setError(e instanceof Error ? e.message : 'Error al solicitar');
+			setError(e instanceof Error ? e.message : editando ? 'Error al guardar' : 'Error al solicitar');
 		} finally {
 			setSubmitting(false);
 		}
@@ -116,7 +155,7 @@ export default function SolicitarEstudioModal({
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<h3>Solicitar estudio</h3>
+					<h3>{editando ? 'Editar estudio' : 'Solicitar estudio'}</h3>
 					<button type="button" className={styles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>
@@ -213,7 +252,7 @@ export default function SolicitarEstudioModal({
 							Cancelar
 						</button>
 						<button type="button" className={formStyles.btnPrimary} onClick={() => void submit()} disabled={submitting}>
-							{submitting ? 'Guardando…' : 'Solicitar'}
+							{submitting ? 'Guardando…' : editando ? 'Guardar' : 'Solicitar'}
 						</button>
 					</div>
 				</div>

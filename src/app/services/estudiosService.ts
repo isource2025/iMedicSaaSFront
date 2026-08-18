@@ -1,5 +1,6 @@
 import { apiFetch } from '@/app/utils/authFetch';
 import type {
+  ActualizarPedidoEstudioPayload,
   CrearPedidoEstudioPayload,
   CumplirPedidoPayload,
   PedidoEstudio,
@@ -86,6 +87,37 @@ const estudiosService = {
       throw new Error(json?.mensaje || 'No se pudo crear el pedido');
     }
     return json.data;
+  },
+
+  async actualizar(
+    idPedido: number,
+    payload: ActualizarPedidoEstudioPayload,
+  ): Promise<PedidoEstudio> {
+    const res = await apiFetch(`/estudios/${idPedido}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await parseJson<{
+      success?: boolean;
+      data?: PedidoEstudio;
+      mensaje?: string;
+    }>(res);
+    if (!res.ok || !json?.success || !json.data) {
+      throw new Error(json?.mensaje || 'No se pudo actualizar el pedido');
+    }
+    return json.data;
+  },
+
+  async eliminar(idPedido: number): Promise<void> {
+    const res = await apiFetch(`/estudios/${idPedido}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const json = await parseJson<{ success?: boolean; mensaje?: string }>(res);
+    if (!res.ok || !json?.success) {
+      throw new Error(json?.mensaje || 'No se pudo eliminar el pedido');
+    }
   },
 
   async cumplir(

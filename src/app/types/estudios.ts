@@ -65,6 +65,14 @@ export interface CrearPedidoEstudioPayload {
   matriculaSolicitante?: number;
 }
 
+export interface ActualizarPedidoEstudioPayload {
+  idTipoPedido: number;
+  idPractica?: number;
+  idSectorReceptor: string;
+  notas?: string;
+  estadoUrgencia?: 'Normal' | 'Medio' | 'Urgente';
+}
+
 export interface CumplirPedidoPayload {
   textoInforme: string;
   sectorServicio?: string;

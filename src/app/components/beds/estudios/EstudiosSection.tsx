@@ -14,7 +14,9 @@ import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './EstudiosSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
-import { IoEyeOutline } from 'react-icons/io5';
+import { IoEyeOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
+import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
+import ConfirmationModal from '../shared/ConfirmationModal';
 
 type Props = {
 	numeroVisita: number | null;
@@ -36,6 +38,28 @@ function formatFecha(row: PedidoEstudio) {
 	const f = row.FechaPedidoISO || '';
 	const h = row.HoraPedido || '';
 	return [f, h].filter(Boolean).join(' ');
+}
+
+function pedidoPendiente(row: PedidoEstudio) {
+	if (row.Cumplido || Number(row.IdProtocolo) > 0) return false;
+	if (row.Tomado) return false;
+	const w = String(row.EstadoWorkflow || '').toUpperCase();
+	if (w === 'TOMADO' || w === 'CUMPLIDO' || w === 'RESPONDIDO') return false;
+	return true;
+}
+
+function esCreadorPedido(
+	row: PedidoEstudio,
+	usuario: { matricula: number | null; valorPersonal: number | null; codOperador: number | null } | null,
+) {
+	if (!usuario) return false;
+	const autor = Number(row.MatriculaSolicitante);
+	if (!Number.isFinite(autor) || autor <= 0) return false;
+	return (
+		(usuario.matricula != null && autor === usuario.matricula) ||
+		(usuario.valorPersonal != null && autor === usuario.valorPersonal) ||
+		(usuario.codOperador != null && autor === usuario.codOperador)
+	);
 }
 
 function buildEstudioFields(row: PedidoEstudio) {
@@ -67,11 +91,19 @@ export default function EstudiosSection({
 	patientLocation,
 }: Props) {
 	const { puede } = usePermiso();
+	const usuarioActual = useUsuarioActual();
 	const puedeCrear = puede('INTERNACION.ESTUDIOS.CREAR');
+	const puedeEditar =
+		puede('INTERNACION.ESTUDIOS.EDITAR') || puedeCrear;
+	const puedeEliminar =
+		puede('INTERNACION.ESTUDIOS.ELIMINAR') || puedeCrear;
 	const [rows, setRows] = useState<PedidoEstudio[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<PedidoEstudio | null>(null);
+	const [editing, setEditing] = useState<PedidoEstudio | null>(null);
+	const [deleting, setDeleting] = useState<PedidoEstudio | null>(null);
+	const [deletingBusy, setDeletingBusy] = useState(false);
 	const [showSolicitar, setShowSolicitar] = useState(false);
 	const [query, setQuery] = useState('');
 
@@ -111,6 +143,24 @@ export default function EstudiosSection({
 
 	const handleRowClick = (row: PedidoEstudio) => {
 		setSelected(row);
+	};
+
+	const puedeGestionarPedido = (row: PedidoEstudio) =>
+		pedidoPendiente(row) && esCreadorPedido(row, usuarioActual);
+
+	const handleConfirmDelete = async () => {
+		if (!deleting) return;
+		setDeletingBusy(true);
+		setError(null);
+		try {
+			await estudiosService.eliminar(deleting.IdPedido);
+			setDeleting(null);
+			await loadVisita();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo eliminar el pedido');
+		} finally {
+			setDeletingBusy(false);
+		}
 	};
 
 	const handleExport = async (option: ExportOption) => {
@@ -256,6 +306,7 @@ export default function EstudiosSection({
 										</td>
 										<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
 										<td>
+											<div className={tableStyles.actionBtns}>
 											<button
 												type="button"
 												className={tableStyles.btnAction}
@@ -264,6 +315,27 @@ export default function EstudiosSection({
 											>
 												<IoEyeOutline color="#5BC0DE" size={18} />
 											</button>
+											{puedeEditar && puedeGestionarPedido(r) && (
+												<button
+													type="button"
+													className={tableStyles.btnAction}
+													title="Editar"
+													onClick={() => setEditing(r)}
+												>
+													<IoPencilOutline color="#5BC0DE" size={18} />
+												</button>
+											)}
+											{puedeEliminar && puedeGestionarPedido(r) && (
+												<button
+													type="button"
+													className={tableStyles.btnAction}
+													title="Eliminar"
+													onClick={() => setDeleting(r)}
+												>
+													<IoTrashOutline color="#5BC0DE" size={18} />
+												</button>
+											)}
+											</div>
 										</td>
 									</tr>
 								))}
@@ -305,6 +377,37 @@ export default function EstudiosSection({
 					}}
 				/>
 			)}
+
+			{editing && (
+				<SolicitarEstudioModal
+					open={Boolean(editing)}
+					idVisita={numeroVisita}
+					sectorSolicitante={sectorSolicitante || editing.SectorSolicitante || ''}
+					pedido={editing}
+					onClose={() => setEditing(null)}
+					onCreated={() => {
+						void loadVisita();
+					}}
+				/>
+			)}
+
+			<ConfirmationModal
+				isOpen={Boolean(deleting)}
+				onClose={() => {
+					if (!deletingBusy) setDeleting(null);
+				}}
+				onConfirm={() => {
+					void handleConfirmDelete();
+				}}
+				title="Eliminar pedido"
+				message={
+					deleting
+						? `¿Eliminar el pedido “${deleting.PracticaSolicitada || deleting.IdPedido}”? Solo se puede mientras está pendiente.`
+						: ''
+				}
+				confirmText={deletingBusy ? 'Eliminando…' : 'Eliminar'}
+				cancelText="Cancelar"
+			/>
 		</>
 	);
 }

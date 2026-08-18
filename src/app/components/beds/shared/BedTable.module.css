@@ -122,6 +122,13 @@
 .urgenciaNormal { background: #22c55e; }
 .urgenciaNone { background: #cbd5e1; }
 
+.actionBtns {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	white-space: nowrap;
+}
+
 .btnAction {
 	display: inline-flex;
 	align-items: center;
