@@ -1,5 +1,6 @@
 import { clearCachedBedsList } from './bedsListCache';
 import { clearBedSnapshot } from './bedSnapshotCache';
+import { clearStoredBedsListFilters } from './bedsListFilters';
 
 /**
  * Limpia caches de UI atados al tenant (empresa).
@@ -13,6 +14,11 @@ export function clearTenantUiCaches(): void {
 	}
 	try {
 		clearBedSnapshot();
+	} catch {
+		/* ignore */
+	}
+	try {
+		clearStoredBedsListFilters();
 	} catch {
 		/* ignore */
 	}

@@ -11,6 +11,10 @@ import {
 	setCachedBedMeta,
 	setCachedBedsList,
 } from '../utils/bedsListCache';
+import {
+	getStoredBedsListFilters,
+	setStoredBedsListFilters,
+} from '../utils/bedsListFilters';
 
 const ORDEN_TIPO_RECURSO: Record<BedTipoRecurso, number> = {
 	cama: 0,
@@ -26,12 +30,15 @@ export type UseBedsManagementOptions = {
 	enableAutoRefresh?: boolean;
 	/** Intervalo si enableAutoRefresh (default 60s). */
 	refreshIntervalMs?: number;
+	/** Sector de `?sector=` en la URL de la lista. */
+	urlSector?: string | null;
 };
 
 export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 	const {
 		enableAutoRefresh: enableAutoRefreshOpt = false,
 		refreshIntervalMs = 60_000,
+		urlSector = null,
 	} = options;
 
 	const { sectorSeleccionado, idsector, isAuthenticated, empresaInfo } = useAppContext();
@@ -126,6 +133,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 			setSectors([]);
 			setBedStates([]);
 			setSectorFilter('all');
+			setStoredBedsListFilters({ sector: 'all' });
 			setFilter('all');
 			setServicioFilter('all');
 			void fetchBeds({ silent: false });
@@ -141,22 +149,43 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		if (!meta?.sectores?.length) void fetchSectores();
 	}, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated, idEmpresa]);
 
-	// Sector inicial del usuario
+	// Sector: filtro de esta sesión > URL > sector de login > Todos
 	useEffect(() => {
 		if (sectors.length === 0) return;
-		const sectorExiste = (sectorId: string) => sectors.some((s) => s.valor === sectorId);
+		const sectorExiste = (sectorId: string) =>
+			sectorId === 'all' || sectors.some((s) => s.valor === sectorId);
+
+		const stored = getStoredBedsListFilters()?.sector;
+		if (stored && sectorExiste(stored)) {
+			setSectorFilter(stored);
+			return;
+		}
+
+		const fromUrl = String(urlSector || '').trim();
+		if (fromUrl && sectorExiste(fromUrl)) {
+			setSectorFilter(fromUrl);
+			setStoredBedsListFilters({ sector: fromUrl });
+			return;
+		}
 
 		if (idsector && sectorExiste(idsector)) {
 			setSectorFilter(idsector);
-		} else if (
-			sectorSeleccionado?.idSector &&
-			sectorExiste(sectorSeleccionado.idSector)
-		) {
-			setSectorFilter(sectorSeleccionado.idSector);
-		} else {
-			setSectorFilter('all');
+			setStoredBedsListFilters({ sector: idsector });
+			return;
 		}
-	}, [sectors, sectorSeleccionado, idsector]);
+		if (sectorSeleccionado?.idSector && sectorExiste(sectorSeleccionado.idSector)) {
+			setSectorFilter(sectorSeleccionado.idSector);
+			setStoredBedsListFilters({ sector: sectorSeleccionado.idSector });
+			return;
+		}
+		setSectorFilter('all');
+	}, [sectors, sectorSeleccionado, idsector, idEmpresa, urlSector]);
+
+	const setSectorFilterPersist = useCallback((value: string) => {
+		const next = String(value || '').trim() || 'all';
+		setSectorFilter(next);
+		setStoredBedsListFilters({ sector: next });
+	}, []);
 
 	// Polling opcional: solo con pestaña visible
 	useEffect(() => {
@@ -243,7 +272,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		filter,
 		setFilter,
 		sectorFilter,
-		setSectorFilter,
+		setSectorFilter: setSectorFilterPersist,
 		servicioFilter,
 		setServicioFilter,
 		searchTerm,

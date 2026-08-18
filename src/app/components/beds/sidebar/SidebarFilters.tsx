@@ -5,6 +5,7 @@ import { useMemo, useRef } from 'react';
 import styles from './SidebarFilters.module.css';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { bedsListHref } from '@/app/utils/bedsListFilters';
 
 type Props = {
 	bedId?: string;
@@ -486,7 +487,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 					)}
 					<button
 						className={styles.closeButton}
-						onClick={() => router.replace('/dashboard/beds')}
+						onClick={() => router.replace(bedsListHref())}
 					>
 						Cerrar
 					</button>

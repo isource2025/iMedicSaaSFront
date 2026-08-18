@@ -18,6 +18,7 @@ import { bedToHeaderSnapshot, type PatientHeaderSnapshot } from '../../utils/bed
 const BedsList = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const urlSector = searchParams.get('sector');
 	const {
 		beds,
 		bedStates,
@@ -40,7 +41,7 @@ const BedsList = () => {
 		setAutoRefresh,
 		refreshInterval,
 		setRefreshInterval,
-	} = useBedsManagement({ enableAutoRefresh: false });
+	} = useBedsManagement({ enableAutoRefresh: false, urlSector });
 
 	const [nursingModalOpen, setNursingModalOpen] = useState(false);
 	const [labModalOpen, setLabModalOpen] = useState(false);
