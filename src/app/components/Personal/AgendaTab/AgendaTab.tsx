@@ -316,7 +316,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 				</div>
 				<div className={styles.field}>
 					<label>Total semanal</label>
-					<div style={{ fontWeight: 600, fontSize: '1.05rem', color: '#1e40af' }}>
+					<div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0083A9' }}>
 						{total} turnos
 					</div>
 				</div>
