@@ -35,8 +35,18 @@ function esCodigoCrudo(valor: string): boolean {
 }
 
 function nombreOperador(m: Record<string, unknown>): string {
-	const nombre = String(m.OperadorNombre || m.NombreOperador || "").trim();
-	if (nombre && !esCodigoCrudo(nombre)) return nombre;
+	const candidatos = [
+		m.OperadorNombre,
+		m.operadorNombre,
+		m.NombreOperador,
+		m.nombreOperador,
+	];
+	for (const c of candidatos) {
+		const nombre = String(c || "").trim();
+		if (nombre && !esCodigoCrudo(nombre)) return nombre;
+	}
+	const raw = String(m.Operador || m.operador || "").trim();
+	if (raw && !esCodigoCrudo(raw) && /[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(raw)) return raw;
 	return "—";
 }
 
