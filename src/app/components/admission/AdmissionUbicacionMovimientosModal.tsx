@@ -56,6 +56,21 @@ type MovimientoRow = {
   DisposicionEgresoDescripcion?: string;
 };
 
+function etiquetaDiagnosticoEgreso(codigo: string, descripcion: string): string {
+  const code = codigo.trim();
+  const desc = descripcion.trim();
+  if (code && desc) return `${code} — ${desc}`;
+  return code || desc;
+}
+
+function codigoCieDesdeTexto(raw: string): string {
+  const v = raw.trim();
+  const conDesc = /^([A-Za-z][0-9][0-9A-Za-z.]{1,6})\s*[—–-]\s+/.exec(v);
+  if (conDesc) return conDesc[1].toUpperCase();
+  if (/^[A-Za-z][0-9][0-9A-Za-z.]{1,6}$/.test(v)) return v.toUpperCase();
+  return v;
+}
+
 function etiquetaOperadorSesion(): { codigo: string; label: string } {
   const u = authService.getCurrentUser() as Record<string, unknown> | null;
   const codigoRaw = u?.codOperador ?? u?.CodOperador ?? u?.idCodOperador ?? '';
@@ -102,6 +117,7 @@ export default function AdmissionUbicacionMovimientosModal({
   const [diagnosticoEgresoDesc, setDiagnosticoEgresoDesc] = useState('');
   const [diagQuery, setDiagQuery] = useState('');
   const [diagOpen, setDiagOpen] = useState(false);
+  const [diagTyping, setDiagTyping] = useState(false);
   const [diagResults, setDiagResults] = useState<DiagnosticoCie10[]>([]);
   const [diagLoading, setDiagLoading] = useState(false);
   const [operadorEgreso, setOperadorEgreso] = useState('');
@@ -171,6 +187,7 @@ export default function AdmissionUbicacionMovimientosModal({
       }
       setDiagnosticoEgresoDesc(diagDesc);
       setDiagOpen(false);
+      setDiagTyping(false);
       setDiagQuery('');
       setDiagResults([]);
       const guardado = etiquetaOperadorGuardado(payload.visita);
@@ -221,6 +238,7 @@ export default function AdmissionUbicacionMovimientosModal({
     setDiagnosticoEgreso(String(d.CodigoOMS || '').trim());
     setDiagnosticoEgresoDesc(String(d.descripcion || '').trim());
     setDiagOpen(false);
+    setDiagTyping(false);
     setDiagQuery('');
     setDiagResults([]);
   };
@@ -253,7 +271,7 @@ export default function AdmissionUbicacionMovimientosModal({
         fechaEgreso,
         horaEgreso,
         disposicionEgreso: Number(disposicionEgreso) || null,
-        diagnostico: diagnosticoEgreso || null,
+        diagnostico: codigoCieDesdeTexto(diagnosticoEgreso) || null,
         bedId: bedId || null,
       });
       await load();
@@ -416,12 +434,17 @@ export default function AdmissionUbicacionMovimientosModal({
                   <span>Diagnóstico egreso</span>
                   <div className={styles.diagLookup}>
                     <input
-                      value={diagnosticoEgreso}
+                      value={
+                        diagTyping
+                          ? diagQuery
+                          : etiquetaDiagnosticoEgreso(diagnosticoEgreso, diagnosticoEgresoDesc)
+                      }
                       onChange={(e) => {
                         const v = e.target.value;
-                        setDiagnosticoEgreso(v);
-                        setDiagnosticoEgresoDesc('');
+                        setDiagTyping(true);
                         setDiagQuery(v);
+                        setDiagnosticoEgreso(codigoCieDesdeTexto(v));
+                        setDiagnosticoEgresoDesc('');
                         setDiagOpen(true);
                       }}
                       onFocus={() => {
@@ -430,9 +453,6 @@ export default function AdmissionUbicacionMovimientosModal({
                       }}
                       placeholder="Código o descripción CIE"
                     />
-                    {diagnosticoEgresoDesc ? (
-                      <small className={styles.diagHint}>{diagnosticoEgresoDesc}</small>
-                    ) : null}
                     {diagOpen ? (
                       <div className={styles.diagPanel}>
                         {diagLoading ? <div className={styles.diagItem}>Buscando…</div> : null}
