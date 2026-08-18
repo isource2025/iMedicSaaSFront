@@ -165,8 +165,6 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
             </div>
           )}
 
-          <p className={styles.cargadoPor}>Cargás como {etiquetaUsuarioActual()}</p>
-
           <div className={styles.modeTabs} role="tablist">
             <button
               type="button"
