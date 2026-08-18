@@ -191,8 +191,8 @@ export default function PersonalCuentaTab({
 			<div className={formStyles.asignGrid}>
 				<section className={formStyles.asignCol}>
 					<h3 className={formStyles.subsectionTitle}>Login</h3>
-					<div className={formStyles.usuarioGrid}>
-						<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+					<div className={formStyles.loginStack}>
+						<div className={formStyles.field}>
 							<label className={formStyles.label}>Usuario *</label>
 							<input
 								type="text"
@@ -203,7 +203,7 @@ export default function PersonalCuentaTab({
 								disabled={saving}
 							/>
 						</div>
-						<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+						<div className={formStyles.field}>
 							<label className={formStyles.label}>Cód. operador</label>
 							<input
 								type="text"
@@ -215,7 +215,7 @@ export default function PersonalCuentaTab({
 						</div>
 						{!tieneCuenta ? (
 							<>
-								<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+								<div className={formStyles.field}>
 									<label className={formStyles.label}>Contraseña *</label>
 									<input
 										type="password"
@@ -226,7 +226,7 @@ export default function PersonalCuentaTab({
 										disabled={saving}
 									/>
 								</div>
-								<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+								<div className={formStyles.field}>
 									<label className={formStyles.label}>Confirmar *</label>
 									<input
 										type="password"
@@ -239,7 +239,7 @@ export default function PersonalCuentaTab({
 								</div>
 							</>
 						) : (
-							<div className={`${formStyles.field} ${formStyles.fieldHalf}`}>
+							<div className={formStyles.field}>
 								<label className={formStyles.label}>Nueva contraseña</label>
 								<input
 									type="password"
@@ -297,7 +297,7 @@ export default function PersonalCuentaTab({
 				</section>
 			</div>
 
-			<div className={variant === 'form' ? formStyles.actions : styles.actions}>
+			<div className={variant === 'form' ? `${formStyles.actions} ${formStyles.cuentaActions}` : styles.actions}>
 				{variant === 'modal' && onClose ? (
 					<button type="button" className={secondaryBtnClass} onClick={onClose} disabled={saving}>
 						Cerrar

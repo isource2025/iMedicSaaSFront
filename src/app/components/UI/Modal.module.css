@@ -46,6 +46,9 @@
 
 .modalXLarge {
 	max-width: 64rem;
+	width: 100%;
+	height: calc(100vh - 2rem);
+	max-height: calc(100vh - 2rem);
 }
 
 .modalFull {
