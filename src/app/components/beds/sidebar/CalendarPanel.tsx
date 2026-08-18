@@ -10,6 +10,9 @@ type Props = {
 	onSelect?: (d: Date) => void;
 	/** Fecha ingreso DD/MM/YYYY */
 	fechaIngreso?: string | null;
+	/** Fecha egreso DD/MM/YYYY (si hay, el rango de internación termina ese día) */
+	fechaEgreso?: string | null;
+	egresada?: boolean;
 };
 
 function parseAdmissionDate(fechaIngreso?: string | null): Date | null {
@@ -32,14 +35,22 @@ function startOfDay(d: Date) {
 	return x;
 }
 
-export default function CalendarPanel({ selected, onSelect, fechaIngreso }: Props) {
+export default function CalendarPanel({
+	selected,
+	onSelect,
+	fechaIngreso,
+	fechaEgreso,
+	egresada,
+}: Props) {
 	const { selectedDate, setSelectedDate } = useBedDetail();
 	const { cursor, monthStart, monthEnd, prev, next } = useCalendar(
 		selectedDate ?? new Date(),
 	);
 
 	const admission = useMemo(() => parseAdmissionDate(fechaIngreso), [fechaIngreso]);
+	const discharge = useMemo(() => parseAdmissionDate(fechaEgreso), [fechaEgreso]);
 	const today = useMemo(() => startOfDay(new Date()), []);
+	const rangeEnd = discharge || today;
 
 	const [dir, setDir] = useState<1 | -1>(1);
 	const titleRef = useRef<HTMLDivElement>(null);
@@ -89,10 +100,14 @@ export default function CalendarPanel({ selected, onSelect, fechaIngreso }: Prop
 	const internacionInfo = (d: Date) => {
 		if (!admission) return null;
 		const day = startOfDay(d);
-		if (day < admission || day > today) return null;
+		if (day < admission || day > rangeEnd) return null;
 		const dayNumber =
 			Math.floor((day.getTime() - admission.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-		return { dayNumber, isFirst: isSame(day, admission) };
+		return {
+			dayNumber,
+			isFirst: isSame(day, admission),
+			egresada: Boolean(egresada || discharge),
+		};
 	};
 
 	const handlePrev = () => {
@@ -176,7 +191,9 @@ export default function CalendarPanel({ selected, onSelect, fechaIngreso }: Prop
 												outside ? styles.muted : ''
 											} ${active ? styles.active : ''} ${
 												stay ? styles.internacion : ''
-											} ${stay?.isFirst ? styles.internacionFirst : ''}`}
+											} ${stay?.egresada ? styles.internacionEgresada : ''} ${
+												stay?.isFirst ? styles.internacionFirst : ''
+											}`}
 											onClick={() => handleSelect(d)}
 											aria-pressed={active}
 											title={

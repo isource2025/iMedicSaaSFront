@@ -199,12 +199,15 @@ export default function MovimientosSection({
 											? isoCalendarioADmy(m.FechaEgresoISO)
 											: formatClarionDate(m.FechaEgreso);
 										const horaEg = horaMostrada(m.HoraEgresoISO || m.HoraEgreso);
+										const abierto =
+											!(Number(m.FechaEgreso) > 0) && !m.FechaEgresoISO;
+										const esActual = idx === 0 && abierto;
 
 										return (
-									<tr key={idx} className={idx === 0 ? tStyles.rowActual : ""}>
+									<tr key={idx} className={esActual ? tStyles.rowActual : ""}>
 											<td className={tStyles.cellIdx}>
 												{movimientos.length - idx}
-												{idx === 0 && <span className={tStyles.badgeActual}>actual</span>}
+												{esActual && <span className={tStyles.badgeActual}>actual</span>}
 											</td>
 											<td className={tStyles.cellCama}>
 												{m.NombreCama || m.NumeroCama || m.ValorHabitacionCama || "—"}

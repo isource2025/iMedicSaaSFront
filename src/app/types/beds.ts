@@ -38,6 +38,7 @@ export interface Bed {
 	fechaIngresoFormateada?: string; // Fecha ya formateada desde el padre
 	fechaIngresoSQL?: string; // Fecha de ingreso en formato SQL (DD/MM/YYYY)
 	horaIngresoSQL?: string; // Hora de ingreso en formato SQL (HH:MM:SS)
+	fechaEgresoSQL?: string;
 	/** Valor crudo de imHabitacionCamas.Tipo */
 	tipoRaw?: string;
 	/** Tipo de recurso normalizado para UI y permisos de acciones */

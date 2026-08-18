@@ -79,6 +79,8 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<CalendarPanel
 							selected={selectedDate ?? undefined}
 							fechaIngreso={bed?.fechaIngresoSQL}
+							fechaEgreso={bed?.fechaEgresoSQL}
+							egresada={Boolean(bed?.egresada)}
 						/>
 						<SidebarFilters
 							onCloseDrawer={() => setDrawerOpen(false)}
