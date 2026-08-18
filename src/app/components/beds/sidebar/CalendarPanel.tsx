@@ -1,6 +1,6 @@
 'use client';
 import styles from './CalendarPanel.module.css';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCalendar } from '../hooks/useCalendar';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
@@ -51,6 +51,13 @@ export default function CalendarPanel({
 	const discharge = useMemo(() => parseAdmissionDate(fechaEgreso), [fechaEgreso]);
 	const today = useMemo(() => startOfDay(new Date()), []);
 	const rangeEnd = discharge || today;
+	const stayClosed = Boolean(egresada || discharge);
+
+	useEffect(() => {
+		if (!stayClosed || !discharge) return;
+		const sel = selectedDate ? startOfDay(selectedDate) : today;
+		if (sel > discharge) setSelectedDate(new Date(discharge));
+	}, [stayClosed, discharge, selectedDate, setSelectedDate, today]);
 
 	const [dir, setDir] = useState<1 | -1>(1);
 	const titleRef = useRef<HTMLDivElement>(null);
@@ -106,7 +113,7 @@ export default function CalendarPanel({
 		return {
 			dayNumber,
 			isFirst: isSame(day, admission),
-			egresada: Boolean(egresada || discharge),
+			isDischarge: Boolean(discharge && isSame(day, discharge)),
 		};
 	};
 
@@ -182,8 +189,11 @@ export default function CalendarPanel({
 							<div className={styles.grid}>
 								{cells.map((d, i) => {
 									const outside = isOutsideMonth(d);
-									const active = isSame(d, selectedDate);
 									const stay = internacionInfo(d);
+									const day = startOfDay(d);
+									const active =
+										isSame(d, selectedDate) &&
+										(!stayClosed || (stay != null && day <= rangeEnd));
 									return (
 										<button
 											key={i}
@@ -191,15 +201,19 @@ export default function CalendarPanel({
 												outside ? styles.muted : ''
 											} ${active ? styles.active : ''} ${
 												stay ? styles.internacion : ''
-											} ${stay?.egresada ? styles.internacionEgresada : ''} ${
-												stay?.isFirst ? styles.internacionFirst : ''
+											} ${stay?.isDischarge ? styles.internacionEgresada : ''} ${
+												stay?.isFirst && !stay?.isDischarge
+													? styles.internacionFirst
+													: ''
 											}`}
 											onClick={() => handleSelect(d)}
 											aria-pressed={active}
 											title={
-												stay
-													? `Día ${stay.dayNumber} de internación`
-													: undefined
+												stay?.isDischarge
+													? 'Día de egreso'
+													: stay
+														? `Día ${stay.dayNumber} de internación`
+														: undefined
 											}
 										>
 											{d.getDate()}
