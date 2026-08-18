@@ -58,6 +58,15 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
 
   useEffect(() => {
     if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     let cancelled = false;
     (async () => {
       try {
@@ -154,7 +163,10 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Archivos Adjuntos - Visita #{numeroVisita}</h2>
+          <h2 className={styles.title}>
+            Archivos adjuntos
+            <span className={styles.titleMeta}>Visita #{numeroVisita}</span>
+          </h2>
           <button onClick={onClose} className={styles.closeButton}>✕</button>
         </div>
 

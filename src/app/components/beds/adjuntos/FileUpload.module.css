@@ -162,11 +162,11 @@
   }
 
   .dropZone {
-    padding: 30px 15px;
+    padding: 24px 12px;
   }
 
   .dropZoneCompact {
-    padding: 12px;
+    padding: 16px 12px;
   }
 
   .uploadIcon {
@@ -179,5 +179,14 @@
 
   .dropZoneHint {
     font-size: 12px;
+  }
+
+  .fileItem {
+    min-height: 44px;
+  }
+
+  .removeButton {
+    width: 36px;
+    height: 36px;
   }
 }
