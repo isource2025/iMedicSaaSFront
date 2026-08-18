@@ -12,6 +12,12 @@ import { exportToPDF } from "../../../utils/pdfExport";
 import { obtenerInfoEmpresa } from "../../../services/empresaService";
 import { clarionDateToISO, horaMostrada, isoCalendarioADmy } from "../../../utils/dateUtils";
 import { getDisposicionesEgreso } from "../../../services/disposicionEgresoService";
+import {
+	catalogoDisposiciones,
+	diagnosticoTexto,
+	disposicionTexto,
+	nombreOperador,
+} from "./movimientosDisplay";
 
 interface MovimientosProps {
 	numeroVisita: number | null;
@@ -25,54 +31,6 @@ interface MovimientosProps {
 function formatClarionDate(v: number | null | undefined): string {
 	const iso = clarionDateToISO(v);
 	return iso ? isoCalendarioADmy(iso) : "—";
-}
-
-function esCodigoCrudo(valor: string): boolean {
-	const v = valor.trim();
-	if (!v) return true;
-	if (/^\d+$/.test(v)) return true;
-	if (/^[A-Z][0-9][0-9A-Z.]{1,6}$/i.test(v)) return true;
-	return false;
-}
-
-function nombreOperador(m: Record<string, unknown>): string {
-	const candidatos = [
-		m.OperadorNombre,
-		m.operadorNombre,
-		m.NombreOperador,
-		m.nombreOperador,
-	];
-	for (const c of candidatos) {
-		const nombre = String(c || "").trim();
-		if (nombre && !esCodigoCrudo(nombre)) return nombre;
-	}
-	const raw = String(m.Operador || m.operador || "").trim();
-	if (raw && !esCodigoCrudo(raw) && /[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(raw)) return raw;
-	return "—";
-}
-
-function diagnosticoTexto(m: Record<string, unknown>): string {
-	const desc = String(
-		m.DiagnosticoDescripcion || m.diagnosticoDescripcion || "",
-	).trim();
-	if (desc && !esCodigoCrudo(desc)) return desc;
-	return "—";
-}
-
-function disposicionTexto(
-	m: Record<string, unknown>,
-	catalogo: Map<number, string>,
-): string {
-	const desc = String(
-		m.DisposicionEgresoDescripcion || m.disposicionEgresoDescripcion || "",
-	).trim();
-	if (desc && !esCodigoCrudo(desc)) return desc;
-	const code = Number(m.DisposicionEgreso ?? m.disposicionEgreso);
-	if (Number.isFinite(code) && code > 0) {
-		const fromCat = catalogo.get(code);
-		if (fromCat) return fromCat;
-	}
-	return "—";
 }
 
 export default function MovimientosSection({
@@ -89,17 +47,7 @@ export default function MovimientosSection({
 	useEffect(() => {
 		if (activeSection !== "movimientos") return;
 		void getDisposicionesEgreso().then((rows) => {
-			const next = new Map<number, string>();
-			for (const r of rows) {
-				if (Number(r.Valor) > 0 && String(r.Descripcion || "").trim()) {
-					next.set(Number(r.Valor), String(r.Descripcion).trim());
-				}
-			}
-			if (!next.has(1)) next.set(1, "ALTA MEDICA");
-			if (!next.has(2)) next.set(2, "DERIVADO");
-			if (!next.has(3)) next.set(3, "DEFUNCION");
-			if (!next.has(4)) next.set(4, "ALTA VOLUNTARIA");
-			setDispCatalogo(next);
+			setDispCatalogo(catalogoDisposiciones(rows));
 		});
 	}, [activeSection]);
 

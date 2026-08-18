@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Loader from '@/app/components/Loader/Loader';
-import ModalCambiarCama from '@/app/components/modals/ModalCambiarCama';
 import {
   admissionSearchService,
   type AdmissionDatosPrincipalesVisita,
@@ -10,12 +9,18 @@ import {
 import visitaMovimientoService from '@/app/services/visitaMovimientoService';
 import { getDisposicionesEgreso } from '@/app/services/disposicionEgresoService';
 import diagnosticosService from '@/app/services/diagnosticosService';
-import { dateToClarionDate, timeToClarionTime, fechaLocalISO, horaLocalHHMM } from '@/app/utils/dateUtils';
+import { clarionDateToISO, fechaLocalISO, horaLocalHHMM, horaMostrada, isoCalendarioADmy } from '@/app/utils/dateUtils';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
-import type { PatientHeaderSnapshot } from '@/app/utils/bedHeader';
 import { authService } from '@/app/services/authService';
+import {
+  catalogoDisposiciones,
+  diagnosticoTexto,
+  disposicionTexto,
+  nombreOperador,
+} from '@/app/components/beds/movimientos/movimientosDisplay';
 import styles from './AdmissionUbicacionMovimientosModal.module.css';
+import tStyles from '@/app/components/beds/movimientos/MovimientosSection.module.css';
 
 type Props = {
   isOpen: boolean;
@@ -32,8 +37,13 @@ type MovimientoRow = {
   ValorHabitacionCama?: string;
   NombreSector?: string;
   NombreCama?: string;
+  NumeroCama?: string;
   NombreServicio?: string;
   ServicioHospital?: string;
+  FechaAdmision?: number;
+  HoraAdmision?: number | string;
+  FechaEgreso?: number;
+  HoraEgreso?: number | string;
   FechaAdmisionISO?: string;
   HoraAdmisionISO?: string;
   FechaEgresoISO?: string;
@@ -43,16 +53,8 @@ type MovimientoRow = {
   Diagnostico?: string;
   DiagnosticoDescripcion?: string;
   DisposicionEgreso?: number;
+  DisposicionEgresoDescripcion?: string;
 };
-
-function dmy(iso?: string | null) {
-  if (!iso) return '—';
-  if (/^\d{4}-\d{2}-\d{2}/.test(iso)) {
-    const [y, m, d] = iso.slice(0, 10).split('-');
-    return `${d}/${m}/${y}`;
-  }
-  return iso;
-}
 
 function etiquetaOperadorSesion(): { codigo: string; label: string } {
   const u = authService.getCurrentUser() as Record<string, unknown> | null;
@@ -90,8 +92,8 @@ export default function AdmissionUbicacionMovimientosModal({
   const [error, setError] = useState('');
   const [visita, setVisita] = useState<AdmissionDatosPrincipalesVisita | null>(null);
   const [movimientos, setMovimientos] = useState<MovimientoRow[]>([]);
-  const [selectedIdx, setSelectedIdx] = useState(0);
   const [disposiciones, setDisposiciones] = useState<DisposicionEgreso[]>([]);
+  const [dispCatalogo, setDispCatalogo] = useState<Map<number, string>>(new Map());
 
   const [fechaEgreso, setFechaEgreso] = useState('');
   const [horaEgreso, setHoraEgreso] = useState('');
@@ -103,10 +105,6 @@ export default function AdmissionUbicacionMovimientosModal({
   const [diagResults, setDiagResults] = useState<DiagnosticoCie10[]>([]);
   const [diagLoading, setDiagLoading] = useState(false);
   const [operadorEgreso, setOperadorEgreso] = useState('');
-
-  const [cambiarOpen, setCambiarOpen] = useState(false);
-  const [swapVisita, setSwapVisita] = useState('');
-  const [swapBusy, setSwapBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!numeroVisita) return;
@@ -139,8 +137,8 @@ export default function AdmissionUbicacionMovimientosModal({
         }
       }
       setMovimientos(list);
-      setSelectedIdx(0);
       setDisposiciones(disp || []);
+      setDispCatalogo(catalogoDisposiciones(disp || []));
       const fe = String(payload.visita.FechaEgreso || '').slice(0, 10);
       const he = String(payload.visita.HoraEgreso || '').slice(0, 5);
       if (/^\d{4}-\d{2}-\d{2}$/.test(fe)) {
@@ -236,22 +234,8 @@ export default function AdmissionUbicacionMovimientosModal({
   ).trim();
 
   const bedId = hab;
-  const canMove = Boolean(numeroVisita && bedId);
   const yaEgresado = Boolean(visita?.FechaEgreso);
   const canEgreso = Boolean(numeroVisita);
-
-  const headerSnapshot = useMemo<PatientHeaderSnapshot | null>(
-    () =>
-      visita
-        ? {
-            nombre: String(visita.ApellidoYNombre || '').trim(),
-            documento: String(visita.NumeroDocumento || ''),
-            sector,
-            numeroCama: hab,
-          }
-        : null,
-    [visita, sector, hab],
-  );
 
   const onEgresoRapido = async () => {
     if (!numeroVisita || !fechaEgreso || !horaEgreso) {
@@ -283,41 +267,6 @@ export default function AdmissionUbicacionMovimientosModal({
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const onIntercambiar = async () => {
-    if (!numeroVisita) return;
-    const other = Number(swapVisita);
-    if (!Number.isFinite(other) || other <= 0) {
-      setError('Indicá el Nº de admisión del paciente con el que intercambiar cama');
-      return;
-    }
-    try {
-      setSwapBusy(true);
-      setError('');
-      const now = new Date();
-      await visitaMovimientoService.intercambiarCamas(numeroVisita, other, {
-        FechaEgreso: dateToClarionDate(now),
-        HoraEgreso: timeToClarionTime(now),
-        FechaAdmision: dateToClarionDate(now),
-        HoraAdmision: timeToClarionTime(now),
-        Diagnostico: visita?.Diagnostico || '',
-        FechaCarga: dateToClarionDate(now),
-        HoraCarga: timeToClarionTime(now),
-      });
-      setSwapVisita('');
-      await load();
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string; mensaje?: string } }; message?: string };
-      setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.mensaje ||
-          err?.message ||
-          'Error al intercambiar camas',
-      );
-    } finally {
-      setSwapBusy(false);
     }
   };
 
@@ -381,75 +330,61 @@ export default function AdmissionUbicacionMovimientosModal({
                 {movimientos.length === 0 ? (
                   <div className={styles.empty}>Sin movimientos registrados</div>
                 ) : (
-                  <table className={styles.table}>
+                  <table className={tStyles.table}>
                     <thead>
                       <tr>
-                        <th>Pase por</th>
-                        <th>Habitación</th>
+                        <th>#</th>
+                        <th>Operador</th>
+                        <th>Cama</th>
                         <th>Sector</th>
-                        <th>Ingreso</th>
-                        <th>Egreso</th>
+                        <th>Fecha ingreso</th>
+                        <th>Hora ingreso</th>
+                        <th>Fecha egreso</th>
+                        <th>Hora egreso</th>
+                        <th>Disposición</th>
                         <th>Diagnóstico</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {movimientos.map((m, idx) => (
-                        <tr
-                          key={`${m.FechaAdmisionISO}-${m.HoraAdmisionISO}-${idx}`}
-                          className={idx === selectedIdx ? styles.rowSelected : undefined}
-                          onClick={() => setSelectedIdx(idx)}
-                        >
-                          <td>{m.OperadorNombre || '—'}</td>
-                          <td>{m.ValorHabitacionCama || m.NombreCama || '—'}</td>
-                          <td>{m.NombreSector || m.ValorSector || '—'}</td>
-                          <td>
-                            {dmy(m.FechaAdmisionISO)} {m.HoraAdmisionISO || ''}
-                          </td>
-                          <td>
-                            {m.FechaEgresoISO ? `${dmy(m.FechaEgresoISO)} ${m.HoraEgresoISO || ''}` : '—'}
-                          </td>
-                          <td>{m.DiagnosticoDescripcion || '—'}</td>
-                        </tr>
-                      ))}
+                      {movimientos.map((m, idx) => {
+                        const fechaAdm = m.FechaAdmisionISO
+                          ? isoCalendarioADmy(m.FechaAdmisionISO)
+                          : clarionDateToISO(m.FechaAdmision)
+                            ? isoCalendarioADmy(clarionDateToISO(m.FechaAdmision))
+                            : '—';
+                        const horaAdm = horaMostrada(m.HoraAdmisionISO || m.HoraAdmision);
+                        const fechaEg = m.FechaEgresoISO
+                          ? isoCalendarioADmy(m.FechaEgresoISO)
+                          : clarionDateToISO(m.FechaEgreso)
+                            ? isoCalendarioADmy(clarionDateToISO(m.FechaEgreso))
+                            : '—';
+                        const horaEg = horaMostrada(m.HoraEgresoISO || m.HoraEgreso);
+                        const abierto = !(Number(m.FechaEgreso) > 0) && !m.FechaEgresoISO;
+                        const esActual = idx === 0 && abierto;
+                        const row = m as Record<string, unknown>;
+                        return (
+                          <tr key={`${m.FechaAdmisionISO}-${m.HoraAdmisionISO}-${idx}`} className={esActual ? tStyles.rowActual : undefined}>
+                            <td className={tStyles.cellIdx}>
+                              {movimientos.length - idx}
+                              {esActual ? <span className={tStyles.badgeActual}>actual</span> : null}
+                            </td>
+                            <td className={tStyles.cellOperador}>{nombreOperador(row)}</td>
+                            <td className={tStyles.cellCama}>
+                              {m.NombreCama || m.NumeroCama || m.ValorHabitacionCama || '—'}
+                            </td>
+                            <td>{m.NombreSector || m.ValorSector || '—'}</td>
+                            <td>{fechaAdm}</td>
+                            <td>{horaAdm}</td>
+                            <td>{fechaEg}</td>
+                            <td>{horaEg}</td>
+                            <td>{disposicionTexto(row, dispCatalogo)}</td>
+                            <td className={tStyles.cellDiag}>{diagnosticoTexto(row)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 )}
-              </div>
-
-              <div className={styles.actions} style={{ marginTop: 10 }}>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  disabled={!canMove}
-                  onClick={() => setCambiarOpen(true)}
-                  title={canMove ? 'Agregar movimiento / cambiar cama' : 'La visita no tiene cama asignada'}
-                >
-                  Agregar movimiento
-                </button>
-                <button
-                  type="button"
-                  className={styles.btn}
-                  disabled={!canMove}
-                  onClick={() => setCambiarOpen(true)}
-                >
-                  Modificar movimiento
-                </button>
-                <div className={styles.actions}>
-                  <input
-                    style={{ width: 120, border: '1px solid #cbd5e1', borderRadius: 4, padding: '6px 8px' }}
-                    placeholder="Nº visita"
-                    value={swapVisita}
-                    onChange={(e) => setSwapVisita(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.btn}
-                    disabled={!canMove || swapBusy}
-                    onClick={() => void onIntercambiar()}
-                  >
-                    Intercambiar cama
-                  </button>
-                </div>
               </div>
             </section>
           ) : null}
@@ -551,20 +486,6 @@ export default function AdmissionUbicacionMovimientosModal({
           ) : null}
         </>
       )}
-
-      {numeroVisita ? (
-        <ModalCambiarCama
-          isOpen={cambiarOpen && Boolean(bedId)}
-          onClose={() => {
-            setCambiarOpen(false);
-            void load();
-          }}
-          numeroVisita={numeroVisita}
-          bedId={bedId}
-          bedSector={sector}
-          header={headerSnapshot}
-        />
-      ) : null}
     </div>
   );
 
