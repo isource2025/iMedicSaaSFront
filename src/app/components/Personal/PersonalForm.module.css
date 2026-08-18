@@ -390,9 +390,7 @@
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 1rem 1.25rem;
-	align-items: stretch;
-	flex: 1;
-	min-height: 0;
+	align-items: start;
 }
 
 .asignCol {
@@ -401,11 +399,21 @@
 	gap: 0.55rem;
 	min-width: 0;
 	min-height: 0;
-	height: 100%;
 	padding: 0.85rem 0.9rem;
 	border: 1px solid #e2e8f0;
 	border-radius: 12px;
 	background: #f8fafc;
+}
+
+.asignColHead {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.asignColHead .subsectionTitle {
+	margin-bottom: 0.15rem;
 }
 
 @media (max-width: 760px) {

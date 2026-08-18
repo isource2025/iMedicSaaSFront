@@ -26,8 +26,11 @@ function toggle(set: Set<string>, id: string) {
 export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
+	const [editing, setEditing] = useState(false);
 	const [error, setError] = useState('');
 
+	const [secAsignados, setSecAsignados] = useState<PersonalSectorAsignado[]>([]);
+	const [srvAsignados, setSrvAsignados] = useState<PersonalServicioAsignado[]>([]);
 	const [secCatalogo, setSecCatalogo] = useState<{ IdSector: string; Descripcion: string }[]>([]);
 	const [catServicios, setCatServicios] = useState<CatalogoItemTexto[]>([]);
 	const [secSel, setSecSel] = useState<Set<string>>(new Set());
@@ -54,17 +57,12 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 				const secCat = val<{ IdSector: string; Descripcion: string }[]>(1, []);
 				const srvs = val<PersonalServicioAsignado[]>(2, []);
 				const srvCat = val<CatalogoItemTexto[]>(3, []);
+				setSecAsignados(secs);
+				setSrvAsignados(srvs);
 				setSecCatalogo(secCat);
 				setCatServicios(srvCat);
 				setSecSel(new Set(secs.map((s) => s.idSector)));
 				setSrvSel(new Set(srvs.map((s) => s.idServicio)));
-				const failed = settled.filter((s) => s.status === 'rejected') as PromiseRejectedResult[];
-				if (failed.length) {
-					const msg = failed
-						.map((f) => (f.reason instanceof Error ? f.reason.message : String(f.reason)))
-						.join(' · ');
-					setError(msg);
-				}
 			} catch (e) {
 				if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar asignaciones');
 			} finally {
@@ -93,14 +91,32 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 		);
 	}, [catServicios, qSrv]);
 
+	const abrirEdicion = () => {
+		setSecSel(new Set(secAsignados.map((s) => s.idSector)));
+		setSrvSel(new Set(srvAsignados.map((s) => s.idServicio)));
+		setQSec('');
+		setQSrv('');
+		setEditing(true);
+	};
+
+	const cancelarEdicion = () => {
+		setSecSel(new Set(secAsignados.map((s) => s.idSector)));
+		setSrvSel(new Set(srvAsignados.map((s) => s.idServicio)));
+		setEditing(false);
+		setError('');
+	};
+
 	const guardar = async () => {
 		setSaving(true);
 		setError('');
 		try {
-			await personalService.replacePersonalAsignaciones(personalId, {
+			const data = await personalService.replacePersonalAsignaciones(personalId, {
 				sectores: Array.from(secSel),
 				servicios: Array.from(srvSel),
 			});
+			setSecAsignados(data.sectores || []);
+			setSrvAsignados(data.servicios || []);
+			setEditing(false);
 			await onSaved?.();
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'Error al guardar');
@@ -118,86 +134,140 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 	}
 
 	return (
-		<div className={formStyles.asignGrid}>
-			{error ? <div className={formStyles.alertError} style={{ gridColumn: '1 / -1' }}>{error}</div> : null}
+		<div>
+			{error ? <div className={formStyles.alertError}>{error}</div> : null}
 
+			{!editing ? (
+				<div className={formStyles.asignColHead} style={{ marginBottom: '0.75rem' }}>
+					<p className={formStyles.usuarioHint} style={{ margin: 0 }}>
+						Sectores y servicios asignados a esta persona.
+					</p>
+					<button type="button" className={styles.btnPrimary} onClick={abrirEdicion}>
+						Editar / asignar
+					</button>
+				</div>
+			) : null}
+
+			<div className={formStyles.asignGrid}>
 			<section className={formStyles.asignCol}>
-				<h3 className={formStyles.subsectionTitle}>Sectores</h3>
-				<p className={formStyles.usuarioHint}>Internación, login y camas. No define la bandeja de pedidos.</p>
-				<div className={styles.addRow}>
-					<input
-						className={styles.select}
-						placeholder="Buscar…"
-						value={qSec}
-						onChange={(e) => setQSec(e.target.value)}
-					/>
-					<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSecSel(new Set(secCatalogo.map((c) => c.IdSector)))}>
-						Todos
-					</button>
-					<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSecSel(new Set())}>
-						Ninguno
-					</button>
+				<div>
+					<h3 className={formStyles.subsectionTitle}>Sectores</h3>
+					<p className={formStyles.usuarioHint}>Internación, login y camas.</p>
 				</div>
-				<div className={styles.list}>
-					{secsFiltrados.length === 0 ? (
-						<span className={styles.muted}>Sin sectores en el catálogo.</span>
-					) : (
-						secsFiltrados.map((c) => (
-							<label key={c.IdSector} className={styles.listItem}>
-								<input
-									type="checkbox"
-									checked={secSel.has(c.IdSector)}
-									disabled={saving}
-									onChange={() => setSecSel((prev) => toggle(prev, c.IdSector))}
-								/>
-								<span>{c.Descripcion || c.IdSector}</span>
-							</label>
-						))
-					)}
-				</div>
+				{editing ? (
+					<>
+						<div className={styles.addRow}>
+							<input
+								className={styles.select}
+								placeholder="Buscar…"
+								value={qSec}
+								onChange={(e) => setQSec(e.target.value)}
+							/>
+							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSecSel(new Set(secCatalogo.map((c) => c.IdSector)))}>
+								Todos
+							</button>
+							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSecSel(new Set())}>
+								Ninguno
+							</button>
+						</div>
+						<div className={styles.list}>
+							{secsFiltrados.length === 0 ? (
+								<span className={styles.muted}>Sin sectores en el catálogo.</span>
+							) : (
+								secsFiltrados.map((c) => (
+									<label key={c.IdSector} className={styles.listItem}>
+										<input
+											type="checkbox"
+											checked={secSel.has(c.IdSector)}
+											disabled={saving}
+											onChange={() => setSecSel((prev) => toggle(prev, c.IdSector))}
+										/>
+										<span>{c.Descripcion || c.IdSector}</span>
+									</label>
+								))
+							)}
+						</div>
+					</>
+				) : (
+					<div className={styles.list}>
+						{secAsignados.length === 0 ? (
+							<span className={styles.muted}>Sin sectores asignados.</span>
+						) : (
+							secAsignados.map((s) => (
+								<div key={s.idSector} className={styles.listItem}>
+									<span>{s.Descripcion || s.idSector}</span>
+								</div>
+							))
+						)}
+					</div>
+				)}
 			</section>
 
 			<section className={formStyles.asignCol}>
-				<h3 className={formStyles.subsectionTitle}>Servicios de pedidos</h3>
-				<p className={formStyles.usuarioHint}>Bandeja de estudios e interconsultas. Podés marcar varios y guardar.</p>
-				<div className={styles.addRow}>
-					<input
-						className={styles.select}
-						placeholder="Buscar…"
-						value={qSrv}
-						onChange={(e) => setQSrv(e.target.value)}
-					/>
-					<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSrvSel(new Set(catServicios.map((c) => c.valor)))}>
-						Todos
-					</button>
-					<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSrvSel(new Set())}>
-						Ninguno
-					</button>
+				<div>
+					<h3 className={formStyles.subsectionTitle}>Servicios de pedidos</h3>
+					<p className={formStyles.usuarioHint}>Bandeja de estudios e interconsultas.</p>
 				</div>
-				<div className={styles.list}>
-					{srvsFiltrados.length === 0 ? (
-						<span className={styles.muted}>Sin servicios en el catálogo.</span>
-					) : (
-						srvsFiltrados.map((o) => (
-							<label key={o.valor} className={styles.listItem}>
-								<input
-									type="checkbox"
-									checked={srvSel.has(o.valor)}
-									disabled={saving}
-									onChange={() => setSrvSel((prev) => toggle(prev, o.valor))}
-								/>
-								<span>{o.descripcion}</span>
-							</label>
-						))
-					)}
-				</div>
+				{editing ? (
+					<>
+						<div className={styles.addRow}>
+							<input
+								className={styles.select}
+								placeholder="Buscar…"
+								value={qSrv}
+								onChange={(e) => setQSrv(e.target.value)}
+							/>
+							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSrvSel(new Set(catServicios.map((c) => c.valor)))}>
+								Todos
+							</button>
+							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSrvSel(new Set())}>
+								Ninguno
+							</button>
+						</div>
+						<div className={styles.list}>
+							{srvsFiltrados.length === 0 ? (
+								<span className={styles.muted}>Sin servicios en el catálogo.</span>
+							) : (
+								srvsFiltrados.map((o) => (
+									<label key={o.valor} className={styles.listItem}>
+										<input
+											type="checkbox"
+											checked={srvSel.has(o.valor)}
+											disabled={saving}
+											onChange={() => setSrvSel((prev) => toggle(prev, o.valor))}
+										/>
+										<span>{o.descripcion}</span>
+									</label>
+								))
+							)}
+						</div>
+					</>
+				) : (
+					<div className={styles.list}>
+						{srvAsignados.length === 0 ? (
+							<span className={styles.muted}>Sin servicios asignados.</span>
+						) : (
+							srvAsignados.map((s) => (
+								<div key={s.idServicio} className={styles.listItem}>
+									<span>{s.Descripcion || s.idServicio}</span>
+								</div>
+							))
+						)}
+					</div>
+				)}
 			</section>
-
-			<div style={{ gridColumn: '1 / -1' }}>
-				<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => void guardar()}>
-					{saving ? 'Guardando…' : 'Guardar asignaciones'}
-				</button>
 			</div>
+
+			{editing ? (
+				<div className={styles.actions}>
+					<button type="button" className={styles.btn} disabled={saving} onClick={cancelarEdicion}>
+						Cancelar
+					</button>
+					<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => void guardar()}>
+						{saving ? 'Guardando…' : 'Guardar asignaciones'}
+					</button>
+				</div>
+			) : null}
 		</div>
 	);
 }
