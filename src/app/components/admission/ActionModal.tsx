@@ -13,6 +13,7 @@ interface ActionModalProps {
     key: string;
     label: string;
     editable?: boolean;
+    type?: string;
   }[];
   initialValues?: Record<string, string>;
   onSubmit: (values: Record<string, string>) => Promise<void>;
@@ -98,10 +99,10 @@ const ActionModal = ({
                 <div key={field.key} className={styles.formGroup}>
                   <label className={styles.formLabel}>{field.label}:</label>
                   <input
-                    type="text"
+                    type={field.type || 'text'}
                     value={formValues[field.key] || ''}
                     onChange={(e) => handleInputChange(field.key, e.target.value)}
-                    disabled={action === 'edit' && !field.editable}
+                    disabled={action === 'edit' && field.editable === false}
                     className={styles.formInput}
                     placeholder={`Ingrese ${field.label.toLowerCase()}`}
                   />

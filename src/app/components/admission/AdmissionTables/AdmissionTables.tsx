@@ -38,6 +38,7 @@ import { TipoPaciente } from '../../../types/tipoPaciente.types';
 import { getProvincias, getProvincia, createProvincia, updateProvincia, deleteProvincia, getProvinciasByNacionalidad } from '../../../services/provincia.service';
 import { getRazas, getRaza, createRaza, updateRaza, deleteRaza } from '../../../services/raza.service';
 import { getReligiones, getReligion, createReligion, updateReligion, deleteReligion } from '../../../services/religion.service';
+import { getFeriadosTabla, createFeriadoTabla, updateFeriadoTabla, deleteFeriadoTabla } from '../../../services/feriadosTabla.service';
 import { getRequisitos, getRequisito, createRequisito, updateRequisito, deleteRequisito } from '../../../services/requisito.service';
 import { getRolesContacto, getRolContacto, createRolContacto, updateRolContacto, deleteRolContacto } from '../../../services/rolContacto.service';
 import { getTiposAdmision, getTipoAdmision, createTipoAdmision, updateTipoAdmision, deleteTipoAdmision } from '../../../services/tipoAdmision.service';
@@ -62,7 +63,8 @@ const AdmissionTables: React.FC = () => {
   const [showDataModal, setShowDataModal] = useState<boolean>(false);
   const [currentTableData, setCurrentTableData] = useState<any[]>([]);
   const [currentTableTitle, setCurrentTableTitle] = useState<string>('');
-  const [currentTableColumns, setCurrentTableColumns] = useState<{key: string; label: string; editable?: boolean}[]>([]);
+  const [currentTableColumns, setCurrentTableColumns] = useState<{key: string; label: string; editable?: boolean; type?: string}[]>([]);
+  const [currentKeyField, setCurrentKeyField] = useState<string>('Valor');
   const [isLoadingTableData, setIsLoadingTableData] = useState<boolean>(false);
 
   // Estados para opciones dinámicas de la API
@@ -382,6 +384,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Religiones');
+      setCurrentKeyField('Valor');
       setCurrentTableColumns([
         { key: 'Valor', label: 'Código' },
         { key: 'Descripcion', label: 'Descripción' },
@@ -393,6 +396,27 @@ const AdmissionTables: React.FC = () => {
     } catch (error) {
       console.error('Error al cargar religiones:', error);
       alert('Error al cargar datos de religiones');
+    } finally {
+      setIsLoadingTableData(false);
+    }
+  };
+
+  const handleShowFeriadosData = async () => {
+    try {
+      setIsLoadingTableData(true);
+      setCurrentTableTitle('Feriados');
+      setCurrentKeyField('Fecha');
+      setCurrentTableColumns([
+        { key: 'Fecha', label: 'Fecha', editable: true, type: 'date' },
+        { key: 'Descripcion', label: 'Descripción', editable: true },
+      ]);
+
+      const data = await getFeriadosTabla();
+      setCurrentTableData(data);
+      setShowDataModal(true);
+    } catch (error) {
+      console.error('Error al cargar feriados:', error);
+      alert('Error al cargar datos de feriados');
     } finally {
       setIsLoadingTableData(false);
     }
@@ -518,6 +542,7 @@ const AdmissionTables: React.FC = () => {
   const handleShowDataForOption = (optionType: string) => {
     // Normalización del texto para manejar tanto formatos camelCase como texto descriptivo
     const normalizedType = optionType.toLowerCase().trim();
+    setCurrentKeyField('Valor');
     
     if (normalizedType.includes('clase') && normalizedType.includes('paciente')) {
       handleShowClasesPacienteData();
@@ -563,6 +588,9 @@ const AdmissionTables: React.FC = () => {
     }
     else if (normalizedType.includes('religion') || normalizedType.includes('religión')) {
       handleShowReligionesData();
+    }
+    else if (normalizedType.includes('feriado')) {
+      handleShowFeriadosData();
     }
     else if (normalizedType.includes('requisito') || normalizedType.includes('requisitos')) {
       handleShowRequisitosData();
@@ -722,6 +750,13 @@ const AdmissionTables: React.FC = () => {
           };
           await createReligion(nuevaReligion);
           await handleShowReligionesData();
+          break;
+        case 'Feriados':
+          await createFeriadoTabla({
+            Fecha: values.Fecha,
+            Descripcion: values.Descripcion || ''
+          });
+          await handleShowFeriadosData();
           break;
         case 'Requisitos de Clientes':
           const nuevoRequisito = {
@@ -897,6 +932,13 @@ const AdmissionTables: React.FC = () => {
           const updatedReligiones = await getReligiones();
           setCurrentTableData(updatedReligiones);
           break;
+        case 'Feriados':
+          await updateFeriadoTabla(key, {
+            Fecha: values.Fecha,
+            Descripcion: values.Descripcion || ''
+          });
+          await handleShowFeriadosData();
+          break;
         case 'Requisitos de Clientes':
           const datosActualizacion = {
             Descripcion: values.Descripcion,
@@ -1022,6 +1064,10 @@ const AdmissionTables: React.FC = () => {
           await deleteReligion(key);
           await handleShowReligionesData();
           break;
+        case 'Feriados':
+          await deleteFeriadoTabla(key);
+          await handleShowFeriadosData();
+          break;
         case 'Requisitos de Clientes':
           // Espera number
           await deleteRequisito(parseInt(key));
@@ -1123,6 +1169,15 @@ const AdmissionTables: React.FC = () => {
         
         // Ordenamos por el campo 'orden'
         filteredOptions.sort((a: TableOption, b: TableOption) => a.orden - b.orden);
+
+        if (!filteredOptions.some((o) => o.descripcion.toLowerCase().includes('feriado'))) {
+          filteredOptions.push({
+            rubro: 'ADMISION',
+            descripcion: 'Feriados',
+            icono: '',
+            orden: 999,
+          });
+        }
         
         // Actualizamos el estado
         setDynamicOptions(filteredOptions);
@@ -1201,7 +1256,7 @@ const AdmissionTables: React.FC = () => {
         onAddItem={handleAddCurrentTableItem}
         onUpdateItem={handleUpdateCurrentTableItem}
         onDeleteItem={handleDeleteCurrentTableItem}
-        keyField="Valor" // La clave primaria es 'Valor' para todas las tablas
+        keyField={currentKeyField}
       />
     </div>
   );

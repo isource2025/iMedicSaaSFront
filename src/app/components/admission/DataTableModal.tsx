@@ -14,6 +14,7 @@ interface DataTableModalProps {
     key: string;
     label: string;
     editable?: boolean;
+    type?: string;
   }[];
   onAddItem?: (values: Record<string, string>) => Promise<void>;
   onUpdateItem?: (key: string, values: Record<string, string>) => Promise<void>;
