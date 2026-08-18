@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import styles from "../indicaciones/IndicacionesSection.module.css";
@@ -11,6 +11,7 @@ import ExportButton, { ExportOption } from "../shared/ExportButton";
 import { exportToPDF } from "../../../utils/pdfExport";
 import { obtenerInfoEmpresa } from "../../../services/empresaService";
 import { clarionDateToISO, horaMostrada, isoCalendarioADmy } from "../../../utils/dateUtils";
+import { getDisposicionesEgreso } from "../../../services/disposicionEgresoService";
 
 interface MovimientosProps {
 	numeroVisita: number | null;
@@ -51,16 +52,26 @@ function nombreOperador(m: Record<string, unknown>): string {
 }
 
 function diagnosticoTexto(m: Record<string, unknown>): string {
-	const desc = String(m.DiagnosticoDescripcion || "").trim();
+	const desc = String(
+		m.DiagnosticoDescripcion || m.diagnosticoDescripcion || "",
+	).trim();
 	if (desc && !esCodigoCrudo(desc)) return desc;
 	return "—";
 }
 
-function disposicionTexto(m: Record<string, unknown>): string {
+function disposicionTexto(
+	m: Record<string, unknown>,
+	catalogo: Map<number, string>,
+): string {
 	const desc = String(
 		m.DisposicionEgresoDescripcion || m.disposicionEgresoDescripcion || "",
 	).trim();
 	if (desc && !esCodigoCrudo(desc)) return desc;
+	const code = Number(m.DisposicionEgreso ?? m.disposicionEgreso);
+	if (Number.isFinite(code) && code > 0) {
+		const fromCat = catalogo.get(code);
+		if (fromCat) return fromCat;
+	}
 	return "—";
 }
 
@@ -73,6 +84,24 @@ export default function MovimientosSection({
 	horaIngreso,
 }: MovimientosProps) {
 	const { activeSection, selectedDate } = useBedDetail();
+	const [dispCatalogo, setDispCatalogo] = useState<Map<number, string>>(new Map());
+
+	useEffect(() => {
+		if (activeSection !== "movimientos") return;
+		void getDisposicionesEgreso().then((rows) => {
+			const next = new Map<number, string>();
+			for (const r of rows) {
+				if (Number(r.Valor) > 0 && String(r.Descripcion || "").trim()) {
+					next.set(Number(r.Valor), String(r.Descripcion).trim());
+				}
+			}
+			if (!next.has(1)) next.set(1, "ALTA MEDICA");
+			if (!next.has(2)) next.set(2, "DERIVADO");
+			if (!next.has(3)) next.set(3, "DEFUNCION");
+			if (!next.has(4)) next.set(4, "ALTA VOLUNTARIA");
+			setDispCatalogo(next);
+		});
+	}, [activeSection]);
 
 	const movPath = useMemo(
 		() =>
@@ -128,7 +157,7 @@ export default function MovimientosSection({
 					},
 					{
 						label: "Disposición",
-						value: disposicionTexto(m),
+						value: disposicionTexto(m, dispCatalogo),
 					},
 					{ label: "Diagnóstico", value: diagnosticoTexto(m) },
 				],
@@ -254,7 +283,7 @@ export default function MovimientosSection({
 											<td>{horaAdm}</td>
 											<td>{fechaEg}</td>
 											<td>{horaEg}</td>
-											<td>{disposicionTexto(m)}</td>
+											<td>{disposicionTexto(m, dispCatalogo)}</td>
 											<td className={tStyles.cellDiag}>{diagnosticoTexto(m)}</td>
 										</tr>
 										);
