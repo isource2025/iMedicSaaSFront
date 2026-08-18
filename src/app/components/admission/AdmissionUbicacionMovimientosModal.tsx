@@ -399,7 +399,7 @@ export default function AdmissionUbicacionMovimientosModal({
                           className={idx === selectedIdx ? styles.rowSelected : undefined}
                           onClick={() => setSelectedIdx(idx)}
                         >
-                          <td>{m.OperadorNombre || m.Operador || '—'}</td>
+                          <td>{m.OperadorNombre || '—'}</td>
                           <td>{m.ValorHabitacionCama || m.NombreCama || '—'}</td>
                           <td>{m.NombreSector || m.ValorSector || '—'}</td>
                           <td>
@@ -408,7 +408,7 @@ export default function AdmissionUbicacionMovimientosModal({
                           <td>
                             {m.FechaEgresoISO ? `${dmy(m.FechaEgresoISO)} ${m.HoraEgresoISO || ''}` : '—'}
                           </td>
-                          <td>{m.DiagnosticoDescripcion || m.Diagnostico || m.NombreServicio || '—'}</td>
+                          <td>{m.DiagnosticoDescripcion || '—'}</td>
                         </tr>
                       ))}
                     </tbody>

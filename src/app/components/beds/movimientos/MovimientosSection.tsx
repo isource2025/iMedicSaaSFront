@@ -26,6 +26,26 @@ function formatClarionDate(v: number | null | undefined): string {
 	return iso ? isoCalendarioADmy(iso) : "—";
 }
 
+function esCodigoCrudo(valor: string): boolean {
+	const v = valor.trim();
+	if (!v) return true;
+	if (/^\d+$/.test(v)) return true;
+	if (/^[A-Z][0-9][0-9A-Z.]{1,6}$/i.test(v)) return true;
+	return false;
+}
+
+function nombreOperador(m: Record<string, unknown>): string {
+	const nombre = String(m.OperadorNombre || m.NombreOperador || "").trim();
+	if (nombre && !esCodigoCrudo(nombre)) return nombre;
+	return "—";
+}
+
+function diagnosticoTexto(m: Record<string, unknown>): string {
+	const desc = String(m.DiagnosticoDescripcion || "").trim();
+	if (desc && !esCodigoCrudo(desc)) return desc;
+	return "—";
+}
+
 export default function MovimientosSection({
 	numeroVisita,
 	patientName,
@@ -85,20 +105,20 @@ export default function MovimientosSection({
 						value: `${m.FechaEgresoISO ? isoCalendarioADmy(m.FechaEgresoISO) : formatClarionDate(m.FechaEgreso)} ${horaMostrada(m.HoraEgresoISO || m.HoraEgreso)}`.trim(),
 					},
 					{
+						label: "Operador",
+						value: nombreOperador(m),
+					},
+					{
 						label: "Disposición",
 						value:
 							m.DisposicionEgreso && Number(m.DisposicionEgreso) > 0
 								? String(m.DisposicionEgreso)
 								: "—",
 					},
-					{ label: "Diagnóstico", value: m.Diagnostico || "—" },
+					{ label: "Diagnóstico", value: diagnosticoTexto(m) },
 				],
 				profesional: {
-					nombre:
-						(m as any).OperadorNombre ||
-						(m as any).NombreOperador ||
-						(m as any).OperadorEgresoNombre ||
-						undefined,
+					nombre: nombreOperador(m) !== "—" ? nombreOperador(m) : undefined,
 					matricula:
 						(m as any).OperadorEgreso ??
 						(m as any).OperadorAdmision ??
@@ -179,6 +199,7 @@ export default function MovimientosSection({
 								<thead>
 									<tr>
 										<th>#</th>
+										<th>Operador</th>
 										<th>Cama</th>
 										<th>Sector</th>
 										<th>Fecha ingreso</th>
@@ -209,6 +230,7 @@ export default function MovimientosSection({
 												{movimientos.length - idx}
 												{esActual && <span className={tStyles.badgeActual}>actual</span>}
 											</td>
+											<td className={tStyles.cellOperador}>{nombreOperador(m)}</td>
 											<td className={tStyles.cellCama}>
 												{m.NombreCama || m.NumeroCama || m.ValorHabitacionCama || "—"}
 											</td>
@@ -218,7 +240,7 @@ export default function MovimientosSection({
 											<td>{fechaEg}</td>
 											<td>{horaEg}</td>
 											<td>{m.DisposicionEgreso && Number(m.DisposicionEgreso) > 0 ? String(m.DisposicionEgreso) : "—"}</td>
-											<td className={tStyles.cellDiag}>{m.Diagnostico || m.diagnostico || "—"}</td>
+											<td className={tStyles.cellDiag}>{diagnosticoTexto(m)}</td>
 										</tr>
 										);
 									})}
