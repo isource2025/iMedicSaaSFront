@@ -39,9 +39,9 @@ type MovimientoRow = {
   FechaEgresoISO?: string;
   HoraEgresoISO?: string;
   Operador?: string;
-  FechaCargaISO?: string;
-  HoraCargaISO?: string;
+  OperadorNombre?: string;
   Diagnostico?: string;
+  DiagnosticoDescripcion?: string;
   DisposicionEgreso?: number;
 };
 
@@ -384,14 +384,12 @@ export default function AdmissionUbicacionMovimientosModal({
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>Ingreso / Hora</th>
-                        <th>Sector</th>
-                        <th>Habitación</th>
-                        <th>Diagnóstico / Servicio</th>
-                        <th>Egreso / Hora</th>
                         <th>Pase por</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
+                        <th>Habitación</th>
+                        <th>Sector</th>
+                        <th>Ingreso</th>
+                        <th>Egreso</th>
+                        <th>Diagnóstico</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -401,18 +399,16 @@ export default function AdmissionUbicacionMovimientosModal({
                           className={idx === selectedIdx ? styles.rowSelected : undefined}
                           onClick={() => setSelectedIdx(idx)}
                         >
+                          <td>{m.OperadorNombre || m.Operador || '—'}</td>
+                          <td>{m.ValorHabitacionCama || m.NombreCama || '—'}</td>
+                          <td>{m.NombreSector || m.ValorSector || '—'}</td>
                           <td>
                             {dmy(m.FechaAdmisionISO)} {m.HoraAdmisionISO || ''}
                           </td>
-                          <td>{m.ValorSector || '—'}</td>
-                          <td>{m.ValorHabitacionCama || m.NombreCama || '—'}</td>
-                          <td>{m.NombreServicio || m.Diagnostico || m.ServicioHospital || '—'}</td>
                           <td>
                             {m.FechaEgresoISO ? `${dmy(m.FechaEgresoISO)} ${m.HoraEgresoISO || ''}` : '—'}
                           </td>
-                          <td>{m.Operador || '—'}</td>
-                          <td>{dmy(m.FechaCargaISO)}</td>
-                          <td>{m.HoraCargaISO || '—'}</td>
+                          <td>{m.DiagnosticoDescripcion || m.Diagnostico || m.NombreServicio || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
