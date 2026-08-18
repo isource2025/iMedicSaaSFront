@@ -15,6 +15,7 @@ import { DisposicionEgreso } from '../../types/disposicionEgreso.types';
 import { useAppContext } from '../../contexts/AppContext';
 import type { PatientHeaderSnapshot } from '../../utils/bedHeader';
 import { fechaLocalISO, horaLocalHHMM, codigoCamaDesdeId } from '../../utils/dateUtils';
+import { admissionSearchService } from '../../services/admissionSearchService';
 
 interface ModalEgresoPacienteProps {
   isOpen: boolean;
@@ -87,7 +88,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
     }
   }, [isOpen]);
 
-  // Cargar disposiciones de egreso cuando se abre el modal
+  // Cargar disposiciones y datos de egreso ya guardados (CRUD)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -104,8 +105,37 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
       }
     };
 
+    const fetchEgresoExistente = async () => {
+      try {
+        const payload = await admissionSearchService.getDatosPrincipales(numeroVisita);
+        const v = payload?.visita;
+        if (!v) return;
+        const fe = String(v.FechaEgreso || '').slice(0, 10);
+        const he = String(v.HoraEgreso || '').slice(0, 5);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fe)) {
+          setFechaEgreso(fe);
+          if (/^\d{2}:\d{2}/.test(he)) setHoraEgreso(he.slice(0, 5));
+        }
+        const disp = Number(v.DisposicionEgreso);
+        if (Number.isFinite(disp) && disp > 0) setDisposicionEgreso(String(disp));
+        const code = String(v.DiagnosticoEgreso || '').trim();
+        if (code) {
+          const desc = String(v.DiagnosticoEgresoDescripcion || '').trim();
+          setDiagnosticoSeleccionado({
+            idDiagnostico: 0,
+            CodigoOMS: code,
+            descripcion: desc,
+          });
+          setBusquedaDiagnostico(desc ? `${code} ${desc}` : code);
+        }
+      } catch (err) {
+        console.error('Error cargando egreso existente:', err);
+      }
+    };
+
     fetchDisposiciones();
-  }, [isOpen]);
+    void fetchEgresoExistente();
+  }, [isOpen, numeroVisita]);
 
   const updateDropdownPosition = useCallback(() => {
     const anchor = diagnosticoContainerRef.current;

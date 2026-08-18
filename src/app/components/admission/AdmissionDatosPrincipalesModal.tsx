@@ -117,6 +117,8 @@ export default function AdmissionDatosPrincipalesModal({
   const [fechaEgreso, setFechaEgreso] = useState('');
   const [horaEgreso, setHoraEgreso] = useState('');
   const [operadorEgresoLabel, setOperadorEgresoLabel] = useState('');
+  const [disposicionEgresoLabel, setDisposicionEgresoLabel] = useState('');
+  const [diagnosticoEgresoLabel, setDiagnosticoEgresoLabel] = useState('');
   const [patientLabel, setPatientLabel] = useState('');
   const [catalogos, setCatalogos] = useState<AdmissionDatosPrincipalesPayload['catalogos'] | null>(null);
   const [coberturas, setCoberturas] = useState<CoberturaOption[]>([]);
@@ -158,6 +160,12 @@ export default function AdmissionDatosPrincipalesModal({
       setOperadorEgresoLabel(
         opNombre && opCod ? `${opNombre} (${opCod})` : opNombre || (opCod ? `Operador ${opCod}` : ''),
       );
+      const dispDesc = String(v.DisposicionEgresoDescripcion || '').trim();
+      const dispCod = v.DisposicionEgreso != null && Number(v.DisposicionEgreso) > 0 ? String(v.DisposicionEgreso) : '';
+      setDisposicionEgresoLabel(dispDesc || dispCod);
+      const diagCod = String(v.DiagnosticoEgreso || '').trim();
+      const diagDesc = String(v.DiagnosticoEgresoDescripcion || '').trim();
+      setDiagnosticoEgresoLabel(diagCod ? (diagDesc ? `${diagCod} ${diagDesc}` : diagCod) : '');
       setForm({
         fechaAdmision: String(v.FechaAdmision || '').slice(0, 10),
         horaAdmision: String(v.HoraAdmision || '').slice(0, 5),
@@ -435,6 +443,14 @@ export default function AdmissionDatosPrincipalesModal({
                           {operadorEgresoLabel ? (
                             <span className={styles.fieldHint}>Operador: {operadorEgresoLabel}</span>
                           ) : null}
+                          {disposicionEgresoLabel ? (
+                            <span className={styles.fieldHint}>Condición: {disposicionEgresoLabel}</span>
+                          ) : null}
+                          {diagnosticoEgresoLabel ? (
+                            <span className={styles.fieldHint}>Diagnóstico egreso: {diagnosticoEgresoLabel}</span>
+                          ) : (
+                            <span className={styles.fieldHint}>Se carga y edita en la sección Egreso</span>
+                          )}
                         </div>
 
                         <div className={styles.field}>

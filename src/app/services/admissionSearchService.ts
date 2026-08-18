@@ -102,7 +102,9 @@ export interface AdmissionDatosPrincipalesVisita {
   FechaEgreso?: string | null;
   HoraEgreso?: string | null;
   DisposicionEgreso?: number | null;
+  DisposicionEgresoDescripcion?: string;
   DiagnosticoEgreso?: string;
+  DiagnosticoEgresoDescripcion?: string;
   OperadorEgreso?: number | null;
   OperadorEgresoNombre?: string | null;
   CentroSalud?: string;

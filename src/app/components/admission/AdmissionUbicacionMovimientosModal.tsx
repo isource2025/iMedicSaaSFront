@@ -150,11 +150,28 @@ export default function AdmissionUbicacionMovimientosModal({
         setFechaEgreso(fechaLocalISO());
         setHoraEgreso(horaLocalHHMM());
       }
-      setDisposicionEgreso(
-        payload.visita.DisposicionEgreso != null ? String(payload.visita.DisposicionEgreso) : '',
-      );
-      setDiagnosticoEgreso(String(payload.visita.DiagnosticoEgreso || '').trim());
-      setDiagnosticoEgresoDesc('');
+      const dispVisita = Number(payload.visita.DisposicionEgreso);
+      const dispMov = Number((ultimo as MovimientoRow | null)?.DisposicionEgreso);
+      const dispVal =
+        Number.isFinite(dispVisita) && dispVisita > 0
+          ? String(dispVisita)
+          : Number.isFinite(dispMov) && dispMov > 0
+            ? String(dispMov)
+            : '';
+      setDisposicionEgreso(dispVal);
+      const diagCode = String(payload.visita.DiagnosticoEgreso || '').trim();
+      setDiagnosticoEgreso(diagCode);
+      let diagDesc = String(payload.visita.DiagnosticoEgresoDescripcion || '').trim();
+      if (diagCode && !diagDesc) {
+        try {
+          const rows = await diagnosticosService.buscarDiagnosticosCie10(diagCode);
+          const hit = (rows || []).find((r) => String(r.CodigoOMS || '').trim() === diagCode);
+          if (hit) diagDesc = String(hit.descripcion || '').trim();
+        } catch {
+          /* catálogo CIE opcional */
+        }
+      }
+      setDiagnosticoEgresoDesc(diagDesc);
       setDiagOpen(false);
       setDiagQuery('');
       setDiagResults([]);
@@ -220,7 +237,8 @@ export default function AdmissionUbicacionMovimientosModal({
 
   const bedId = hab;
   const canMove = Boolean(numeroVisita && bedId);
-  const canEgreso = Boolean(numeroVisita && bedId);
+  const yaEgresado = Boolean(visita?.FechaEgreso);
+  const canEgreso = Boolean(numeroVisita);
 
   const headerSnapshot = useMemo<PatientHeaderSnapshot | null>(
     () =>
@@ -240,13 +258,17 @@ export default function AdmissionUbicacionMovimientosModal({
       setError('Indicá fecha y hora de egreso');
       return;
     }
+    if (!disposicionEgreso) {
+      setError('Indicá la condición de egreso');
+      return;
+    }
     try {
       setLoading(true);
       setError('');
       await visitaMovimientoService.actualizarUltimoMovimiento(numeroVisita, {
         fechaEgreso,
         horaEgreso,
-        disposicionEgreso: disposicionEgreso ? Number(disposicionEgreso) : null,
+        disposicionEgreso: Number(disposicionEgreso) || null,
         diagnostico: diagnosticoEgreso || null,
         bedId: bedId || null,
       });
@@ -453,7 +475,7 @@ export default function AdmissionUbicacionMovimientosModal({
                   <select value={disposicionEgreso} onChange={(e) => setDisposicionEgreso(e.target.value)}>
                     <option value="">—</option>
                     {disposiciones.map((d) => (
-                      <option key={String(d.Valor)} value={String(d.Valor)}>
+                      <option key={String(d.Valor)} value={String(Number(d.Valor) || d.Valor)}>
                         {d.Descripcion || d.Valor}
                       </option>
                     ))}
@@ -526,7 +548,7 @@ export default function AdmissionUbicacionMovimientosModal({
                   disabled={loading || !canEgreso}
                   onClick={() => void onEgresoRapido()}
                 >
-                  Registrar egreso
+                  {yaEgresado ? 'Actualizar egreso' : 'Registrar egreso'}
                 </button>
               </div>
             </section>
