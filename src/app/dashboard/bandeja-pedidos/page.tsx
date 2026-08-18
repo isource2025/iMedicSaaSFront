@@ -538,7 +538,7 @@ function BandejaPedidosContent() {
 				<div className={styles.emptyCard}>
 					<p className={styles.emptyTitle}>Sin servicios asignados</p>
 					<p className={styles.emptyHint}>
-						Tu usuario no tiene sectores vinculados a servicios de pedidos. Pedí a un administrador que te asigne el sector correspondiente.
+						Tu usuario no tiene servicios de pedidos asignados. Un administrador puede cargarlos en Personal → Servicio / facturación.
 					</p>
 				</div>
 			) : loading ? (

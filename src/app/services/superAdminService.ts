@@ -2,6 +2,7 @@ import { apiService } from './axios';
 import type {
   ActualizarUsuarioEmpresaBody,
   CatalogoSector,
+  CatalogoServicio,
   AltaEmpresaBody,
   ConfigPlataforma,
   CrearUsuarioEmpresaBody,
@@ -167,6 +168,7 @@ export const superAdminService = {
       completado?: boolean;
       notas?: string;
       sectoresDefecto?: string[];
+      serviciosDefecto?: string[];
       altaCompletada?: boolean;
     },
   ) {
@@ -221,6 +223,28 @@ export const superAdminService = {
 
   async eliminarSector(valor: string, idEmpresa: number): Promise<void> {
     await apiService.delete(`${BASE}/sectores/${encodeURIComponent(valor)}`, {
+      params: { idEmpresa },
+    });
+  },
+
+  async crearServicio(body: { idEmpresa?: number; valor?: string; descripcion: string }): Promise<CatalogoServicio> {
+    const res = await apiService.post<{ success: boolean; data: CatalogoServicio }>(`${BASE}/servicios`, body);
+    return res.data.data;
+  },
+
+  async actualizarServicio(
+    valor: string,
+    body: { idEmpresa?: number; descripcion: string },
+  ): Promise<CatalogoServicio> {
+    const res = await apiService.put<{ success: boolean; data: CatalogoServicio }>(
+      `${BASE}/servicios/${encodeURIComponent(valor)}`,
+      body,
+    );
+    return res.data.data;
+  },
+
+  async eliminarServicio(valor: string, idEmpresa: number): Promise<void> {
+    await apiService.delete(`${BASE}/servicios/${encodeURIComponent(valor)}`, {
       params: { idEmpresa },
     });
   },

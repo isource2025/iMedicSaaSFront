@@ -11,6 +11,7 @@ import {
 	EmpresaCatalogoItem,
 	PersonalServicioDto,
 	PersonalSectorAsignado,
+	PersonalServicioAsignado,
 	PersonalCodigoFacturacion,
 } from '@/app/types/personal';
 import { personalService } from '@/app/services/personalService';
@@ -71,6 +72,9 @@ export default function PersonalActionModals({
 	const [secCatalogo, setSecCatalogo] = useState<{ IdSector: string; Descripcion: string }[]>([]);
 	const [secSel, setSecSel] = useState('');
 
+	const [srvPedidos, setSrvPedidos] = useState<PersonalServicioAsignado[]>([]);
+	const [srvPedidoSel, setSrvPedidoSel] = useState('');
+
 	// códigos facturación (imPersonalCodsFacturacion)
 	const [codigos, setCodigos] = useState<PersonalCodigoFacturacion[]>([]);
 	const [nuevoAsoc, setNuevoAsoc] = useState('');
@@ -90,13 +94,16 @@ export default function PersonalActionModals({
 			setLoading(true);
 			try {
 				if (kind === 'servicio') {
-					const [dto, sv] = await Promise.all([
+					const [dto, sv, asignados] = await Promise.all([
 						personalService.getPersonalServicio(id),
 						personalService.getServicios(),
+						personalService.getPersonalServiciosPedidos(id),
 					]);
 					if (!cancelled) {
 						setServicio(dto);
 						setCatServicios(sv);
+						setSrvPedidos(asignados);
+						setSrvPedidoSel('');
 					}
 				} else if (kind === 'empresas') {
 					const [asig, cat] = await Promise.all([
@@ -168,7 +175,7 @@ export default function PersonalActionModals({
 
 	const title =
 		kind === 'servicio'
-			? 'Servicio del personal'
+			? 'Servicio y bandeja de pedidos'
 			: kind === 'empresas'
 			? 'Empresas asociadas'
 			: kind === 'firma'
@@ -306,6 +313,35 @@ export default function PersonalActionModals({
 		}
 	};
 
+	const agregarServicioPedido = async () => {
+		if (!id || !srvPedidoSel) return;
+		setSaving(true);
+		try {
+			const list = await personalService.addPersonalServicioPedido(id, srvPedidoSel);
+			setSrvPedidos(list);
+			setSrvPedidoSel('');
+			await onSaved();
+		} catch (e: any) {
+			alert(e?.message || 'Error');
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const quitarServicioPedido = async (sid: string) => {
+		if (!id) return;
+		setSaving(true);
+		try {
+			const list = await personalService.removePersonalServicioPedido(id, sid);
+			setSrvPedidos(list);
+			await onSaved();
+		} catch (e: any) {
+			alert(e?.message || 'Error');
+		} finally {
+			setSaving(false);
+		}
+	};
+
 	const agregarSector = async () => {
 		if (!id || !secSel) return;
 		setSaving(true);
@@ -411,22 +447,55 @@ export default function PersonalActionModals({
 					</div>
 				) : kind === 'servicio' ? (
 					<div className={styles.row}>
-						<div>
-							<div className={styles.label}>Servicio asistencial</div>
-							<select
-								className={styles.select}
-								value={servicio.ValorServicio ?? ''}
-								onChange={(e) =>
-									setServicio((s) => ({ ...s, ValorServicio: e.target.value || null }))
-								}
+						<p className={styles.muted}>
+							La bandeja de pedidos usa solo los servicios asignados acá, no los sectores de internación.
+						</p>
+						<div className={styles.addRow}>
+							<div style={{ flex: 1, minWidth: 200 }}>
+								<div className={styles.label}>Agregar servicio (bandeja)</div>
+								<select
+									className={styles.select}
+									value={srvPedidoSel}
+									onChange={(e) => setSrvPedidoSel(e.target.value)}
+								>
+									<option value="">— Elegir —</option>
+									{catServicios
+										.filter((o) => !srvPedidos.some((a) => a.idServicio === o.valor))
+										.map((o) => (
+											<option key={o.valor} value={o.valor}>
+												{o.descripcion}
+											</option>
+										))}
+								</select>
+							</div>
+							<button
+								type="button"
+								className={styles.btnPrimary}
+								onClick={agregarServicioPedido}
+								disabled={saving || !srvPedidoSel}
 							>
-								<option value=''>— Sin asignar —</option>
-								{catServicios.map((o) => (
-									<option key={o.valor} value={o.valor}>
-										{o.descripcion}
-									</option>
-								))}
-							</select>
+								Agregar
+							</button>
+						</div>
+						<div className={styles.label}>Servicios de la bandeja</div>
+						<div className={styles.list}>
+							{srvPedidos.length === 0 ? (
+								<span className={styles.muted}>Sin servicios asignados.</span>
+							) : (
+								srvPedidos.map((s) => (
+									<div key={s.idServicio} className={styles.listItem}>
+										<span>{s.Descripcion || s.idServicio}</span>
+										<button
+											type="button"
+											className={styles.btnDanger}
+											onClick={() => quitarServicioPedido(s.idServicio)}
+											disabled={saving}
+										>
+											Quitar
+										</button>
+									</div>
+								))
+							)}
 						</div>
 						<div>
 							<div className={styles.label}>Servicio para facturar (código)</div>
@@ -439,15 +508,15 @@ export default function PersonalActionModals({
 										ValorServicioParaFacturar: e.target.value || null,
 									}))
 								}
-								placeholder='Ej. código en imPersonal.ValorServicioParaFacturar'
+								placeholder="Código de facturación"
 							/>
 						</div>
 						<div className={styles.actions}>
-							<button type='button' className={styles.btn} onClick={onClose} disabled={saving}>
+							<button type="button" className={styles.btn} onClick={onClose} disabled={saving}>
 								Cerrar
 							</button>
-							<button type='button' className={styles.btnPrimary} onClick={guardarServicio} disabled={saving}>
-								{saving ? 'Guardando…' : 'Guardar'}
+							<button type="button" className={styles.btnPrimary} onClick={guardarServicio} disabled={saving}>
+								{saving ? 'Guardando…' : 'Guardar facturación'}
 							</button>
 						</div>
 					</div>

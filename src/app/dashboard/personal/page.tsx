@@ -4,14 +4,10 @@ import { useEffect, useState } from 'react';
 import { usePersonal } from '@/app/hooks/usePersonal';
 import { Personal } from '@/app/types/personal';
 import PersonalList from '@/app/components/Personal/PersonalList';
-import PersonalActionModals, {
-	type PersonalExtraKind,
-} from '@/app/components/Personal/PersonalActionModals';
 import PersonalExportModal, {
 	type ExportFieldOption,
 } from '@/app/components/Personal/PersonalExportModal';
 import PersonalForm from '@/app/components/Personal/PersonalForm';
-import PersonalDetails from '@/app/components/Personal/PersonalDetails';
 import DeletePersonalConfirmation from '@/app/components/Personal/DeletePersonalConfirmation';
 import SyncFisicoInforme from '@/app/components/Personal/SyncFisicoInforme';
 import Modal from '@/app/components/UI/Modal';
@@ -35,7 +31,6 @@ export default function PersonalPage() {
 		isAddModalOpen,
 		isEditModalOpen,
 		isDeleteModalOpen,
-		isViewModalOpen,
 		initialize,
 		handlePageChange,
 		handleSearch,
@@ -48,16 +43,10 @@ export default function PersonalPage() {
 		closeEditModal,
 		openDeleteModal,
 		closeDeleteModal,
-		openViewModal,
-		closeViewModal,
 		refreshList,
 	} = usePersonal();
 
 	const [fullPersonalEditing, setFullPersonalEditing] = useState<Personal | null>(null);
-	const [extraModal, setExtraModal] = useState<{
-		kind: PersonalExtraKind;
-		personal: Personal;
-	} | null>(null);
 	const [loadingFull, setLoadingFull] = useState(false);
 	const [syncDisponible, setSyncDisponible] = useState(false);
 	const [syncing, setSyncing] = useState(false);
@@ -227,9 +216,6 @@ export default function PersonalPage() {
 					totalPages={totalPages}
 					onPageChange={handlePageChange}
 					onEdit={openEditModal}
-					onDelete={openDeleteModal}
-					onView={openViewModal}
-					onOpenExtra={(p, kind) => setExtraModal({ personal: p, kind })}
 				/>
 
 				<Modal
@@ -275,14 +261,6 @@ export default function PersonalPage() {
 					onConfirm={handleExport}
 				/>
 
-				<PersonalActionModals
-					open={!!extraModal}
-					kind={extraModal?.kind ?? null}
-					personal={extraModal?.personal ?? null}
-					onClose={() => setExtraModal(null)}
-					onSaved={refreshList}
-				/>
-
 				<Modal
 					isOpen={isAddModalOpen}
 					onClose={closeAddModal}
@@ -316,6 +294,10 @@ export default function PersonalPage() {
 									updatePersonal(fullPersonalEditing.Valor, data)
 								}
 								onCancel={closeEditModal}
+								onDelete={() => {
+									closeEditModal();
+									openDeleteModal(fullPersonalEditing);
+								}}
 								isSubmitting={loading || loadingFull}
 							/>
 						)}
@@ -334,24 +316,6 @@ export default function PersonalPage() {
 							onConfirm={() => deletePersonal(selected.Valor)}
 							onCancel={closeDeleteModal}
 							isDeleting={loading}
-						/>
-					</Modal>
-				)}
-
-				{selected && (
-					<Modal
-						isOpen={isViewModalOpen}
-						onClose={closeViewModal}
-						title='Detalle del personal'
-						size='large'
-					>
-						<PersonalDetails
-							personal={selected}
-							onClose={closeViewModal}
-							onEdit={() => {
-								closeViewModal();
-								openEditModal(selected);
-							}}
 						/>
 					</Modal>
 				)}

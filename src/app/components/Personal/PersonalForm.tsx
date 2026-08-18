@@ -22,6 +22,7 @@ import styles from './PersonalForm.module.css';
 import { nacionalidadDescripcionACodigo } from '../../utils/nacionalidadCodigo';
 import AgendaTab from './AgendaTab/AgendaTab';
 import PersonalCuentaTab from './PersonalCuentaTab';
+import PersonalAsignacionesTab from './PersonalAsignacionesTab';
 import { usePermiso } from '../../hooks/usePermiso';
 
 interface EstadoCivil {
@@ -35,9 +36,10 @@ interface PersonalFormProps {
 	isSubmitting?: boolean;
 	onSubmit: (data: PersonalFormData) => Promise<boolean>;
 	onCancel: () => void;
+	onDelete?: () => void;
 }
 
-type Tab = 'personal' | 'profesional' | 'cuenta' | 'agenda';
+type Tab = 'personal' | 'profesional' | 'asignaciones' | 'cuenta' | 'agenda';
 
 const TIPOS_DOCUMENTO = [
 	{ value: 'DNI', label: 'DNI' },
@@ -88,6 +90,7 @@ export default function PersonalForm({
 	isSubmitting = false,
 	onSubmit,
 	onCancel,
+	onDelete,
 }: PersonalFormProps) {
 	const [formData, setFormData] = useState<PersonalFormData>(() => buildInitial(personal));
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -190,9 +193,11 @@ export default function PersonalForm({
 	const showAgendaTab =
 		isEditing && (puedeConfigurarAgenda || esAdmin);
 	const showCuentaTab = isEditing && !!formData.Valor;
+	const showAsignacionesTab = isEditing && !!formData.Valor;
 	const matriculaProfesional = Number(formData.MatriculaProvincial) || null;
 
 	const tabIds: Tab[] = ['personal', 'profesional'];
+	if (showAsignacionesTab) tabIds.push('asignaciones');
 	if (showCuentaTab) tabIds.push('cuenta');
 	if (showAgendaTab) tabIds.push('agenda');
 
@@ -200,7 +205,7 @@ export default function PersonalForm({
 		const idx = tabIds.indexOf(activeTab);
 		const node = tabsRef.current[idx];
 		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
-	}, [activeTab, showAgendaTab, showCuentaTab]);
+	}, [activeTab, showAgendaTab, showCuentaTab, showAsignacionesTab]);
 
 	const fetchProvincia = async (valorProvincia: string) => {
 		try {
@@ -428,6 +433,17 @@ export default function PersonalForm({
 				>
 					Datos Profesionales
 				</div>
+				{showAsignacionesTab && (
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[tabIds.indexOf('asignaciones')] = el;
+						}}
+						className={`${styles.tab} ${activeTab === 'asignaciones' ? styles.tabActive : ''}`}
+						onClick={() => setActiveTab('asignaciones')}
+					>
+						Sectores y servicios
+					</div>
+				)}
 				{showCuentaTab && (
 					<div
 						ref={(el) => {
@@ -436,7 +452,7 @@ export default function PersonalForm({
 						className={`${styles.tab} ${activeTab === 'cuenta' ? styles.tabActive : ''}`}
 						onClick={() => setActiveTab('cuenta')}
 					>
-						Cuenta de acceso
+						Acceso y roles
 					</div>
 				)}
 				{showAgendaTab && (
@@ -918,6 +934,10 @@ export default function PersonalForm({
 				</div>
 			)}
 
+			{activeTab === 'asignaciones' && showAsignacionesTab && formData.Valor && (
+				<PersonalAsignacionesTab personalId={formData.Valor} />
+			)}
+
 			{activeTab === 'cuenta' && showCuentaTab && formData.Valor && (
 				<PersonalCuentaTab
 					personalId={formData.Valor}
@@ -933,12 +953,23 @@ export default function PersonalForm({
 			</div>
 
 			<div className={styles.actions}>
-				{(activeTab === 'cuenta' || activeTab === 'agenda') && (
+				{(activeTab === 'cuenta' || activeTab === 'agenda' || activeTab === 'asignaciones') && (
 					<p className={styles.tabActionsHint}>
 						Los cambios de esta solapa se guardan con el botón dentro de la sección.
 					</p>
 				)}
 				<div className={styles.actionsButtons}>
+				{isEditing && onDelete ? (
+					<button
+						type='button'
+						onClick={onDelete}
+						className={styles.cancelButton}
+						disabled={internalSubmitting}
+						style={{ color: '#b91c1c', borderColor: '#fecaca' }}
+					>
+						Eliminar
+					</button>
+				) : null}
 				<button
 					type='button'
 					onClick={onCancel}
@@ -948,7 +979,7 @@ export default function PersonalForm({
 				>
 					Cancelar
 				</button>
-				{activeTab !== 'cuenta' && activeTab !== 'agenda' && (
+				{activeTab !== 'cuenta' && activeTab !== 'agenda' && activeTab !== 'asignaciones' && (
 				<button
 					type='submit'
 					className={`${styles.submitButton} ${internalSubmitting ? styles.loading : ''}`}

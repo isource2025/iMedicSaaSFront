@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	Personal,
 	CatalogoItemNumerico,
 	CatalogoItemTexto,
 } from '../../types/personal';
-import type { PersonalExtraKind } from './PersonalActionModals';
-import PersonalRowMenu, { type PersonalMenuAction } from './PersonalRowMenu';
 import { personalService } from '../../services/personalService';
 import styles from './PersonalList.module.css';
 import Pagination from '../UI/Pagination';
@@ -27,11 +25,8 @@ interface PersonalListProps {
 	error: string | null;
 	currentPage: number;
 	totalPages: number;
-	onPageChange: (page: number) => void;
 	onEdit: (p: Personal) => void;
-	onDelete: (p: Personal) => void;
-	onView: (p: Personal) => void;
-	onOpenExtra?: (p: Personal, kind: PersonalExtraKind) => void;
+	onPageChange: (page: number) => void;
 }
 
 export default function PersonalList({
@@ -42,16 +37,8 @@ export default function PersonalList({
 	totalPages,
 	onPageChange,
 	onEdit,
-	onDelete,
-	onView,
-	onOpenExtra,
 }: PersonalListProps) {
 	const [expandedId, setExpandedId] = useState<number | null>(null);
-	const [rowMenu, setRowMenu] = useState<{
-		personal: Personal;
-		x: number;
-		y: number;
-	} | null>(null);
 	const [especialidades, setEspecialidades] = useState<CatalogoItemNumerico[]>([]);
 	const [servicios, setServicios] = useState<CatalogoItemTexto[]>([]);
 	const [categorias, setCategorias] = useState<CatalogoItemNumerico[]>([]);
@@ -97,19 +84,6 @@ export default function PersonalList({
 
 	const toggleExpand = (id: number) =>
 		setExpandedId((prev) => (prev === id ? null : id));
-
-	const abrirMenuPersonal = (e: MouseEvent, p: Personal) => {
-		e.stopPropagation();
-		setRowMenu({ personal: p, x: e.clientX, y: e.clientY });
-	};
-
-	const handleMenuAction = (action: PersonalMenuAction, p: Personal) => {
-		setRowMenu(null);
-		if (action === 'ver') onView(p);
-		else if (action === 'editar') onEdit(p);
-		else if (action === 'eliminar') onDelete(p);
-		else if (onOpenExtra) onOpenExtra(p, action as PersonalExtraKind);
-	};
 
 	const iniciales = (nombre: string) => {
 		const parts = (nombre || '')
@@ -182,9 +156,9 @@ export default function PersonalList({
 									<tr
 										key={p.Valor}
 										className={styles.tableRow}
-										onClick={(e) => abrirMenuPersonal(e, p)}
+										onClick={() => onEdit(p)}
 										style={{ cursor: 'pointer' }}
-										title='Clic para ver opciones'
+										title='Editar'
 									>
 										<td className={styles.cellId}>
 											<div className={styles.idPrimary}>{p.Valor}</div>
@@ -287,8 +261,8 @@ export default function PersonalList({
 									<button
 										type='button'
 										className={styles.mobileItemMain}
-										onClick={(e) => abrirMenuPersonal(e, p)}
-										aria-label={`Opciones para ${p.ApellidoNombre}`}
+										onClick={() => onEdit(p)}
+										aria-label={`Editar ${p.ApellidoNombre}`}
 									>
 										<div className={styles.avatar}>{iniciales(p.ApellidoNombre)}</div>
 										<div className={styles.mobileItemLeft}>
@@ -371,16 +345,6 @@ export default function PersonalList({
 					})
 				)}
 			</div>
-
-			<PersonalRowMenu
-				open={!!rowMenu}
-				x={rowMenu?.x ?? 0}
-				y={rowMenu?.y ?? 0}
-				personal={rowMenu?.personal ?? null}
-				conExtras={!!onOpenExtra}
-				onClose={() => setRowMenu(null)}
-				onAction={handleMenuAction}
-			/>
 
 			{!loading && personalList.length > 0 && (
 				<Pagination

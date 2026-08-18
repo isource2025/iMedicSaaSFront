@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { superAdminService } from '@/app/services/superAdminService';
-import type { CatalogoRol, CatalogoSector, EmpresaAdmin, EmpresaUsuario } from '@/app/types/superAdmin';
+import type { CatalogoRol, CatalogoSector, CatalogoServicio, EmpresaAdmin, EmpresaUsuario } from '@/app/types/superAdmin';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import styles from '../superAdmin.module.css';
 
@@ -14,6 +14,7 @@ type Form = {
   numeroDocumento: string;
   idRol: number;
   sectores: string[];
+  servicios: string[];
 };
 
 type Modal =
@@ -25,11 +26,12 @@ type Props = {
   empresa: EmpresaAdmin;
   roles: CatalogoRol[];
   sectores: CatalogoSector[];
+  servicios: CatalogoServicio[];
   onUpdated: (empresa: EmpresaAdmin) => void;
   onError: (msg: string | null) => void;
 };
 
-const emptyForm = (idRol: number, sectores: string[] = []): Form => ({
+const emptyForm = (idRol: number, sectores: string[] = [], servicios: string[] = []): Form => ({
   nombreRed: '',
   password: '',
   apellido: '',
@@ -37,9 +39,10 @@ const emptyForm = (idRol: number, sectores: string[] = []): Form => ({
   numeroDocumento: '',
   idRol,
   sectores,
+  servicios,
 });
 
-export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, onError }: Props) {
+export default function SeccionUsuarios({ empresa, roles, sectores, servicios, onUpdated, onError }: Props) {
   const idRolDefault = roles[0]?.idRol ?? 0;
   const [q, setQ] = useState('');
   const [modal, setModal] = useState<Modal>(null);
@@ -79,6 +82,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
           numeroDocumento: form.numeroDocumento,
           idRol: form.idRol || undefined,
           sectores: form.sectores,
+          servicios: form.servicios,
         });
       } else {
         await superAdminService.actualizarUsuarioEmpresa(Number(empresa.id), modal.idPersonal, {
@@ -89,6 +93,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
           password: form.password || undefined,
           idRol: form.idRol || undefined,
           sectores: form.sectores,
+          servicios: form.servicios,
         });
       }
       setModal(null);
@@ -125,7 +130,11 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
           onClick={() =>
             setModal({
               mode: 'create',
-              form: emptyForm(idRolDefault, empresa.onboarding?.sectoresDefecto || []),
+              form: emptyForm(
+                idRolDefault,
+                empresa.onboarding?.sectoresDefecto || [],
+                empresa.onboarding?.serviciosDefecto || [],
+              ),
             })
           }
         >
@@ -147,13 +156,14 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
               <th>Nombre</th>
               <th>Rol</th>
               <th>Sectores</th>
+              <th>Servicios</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {usuarios.length === 0 ? (
               <tr>
-                <td colSpan={5} className={styles.emptyCell}>
+                <td colSpan={6} className={styles.emptyCell}>
                   Sin usuarios
                 </td>
               </tr>
@@ -166,6 +176,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
                   </td>
                   <td>{u.rol || '—'}</td>
                   <td>{(u.sectores || []).map((s) => s.descripcion || s.id).join(', ') || '—'}</td>
+                  <td>{(u.servicios || []).map((s) => s.descripcion || s.id).join(', ') || '—'}</td>
                   <td className={styles.actionsCell}>
                     <button
                       type="button"
@@ -182,6 +193,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
                             numeroDocumento: u.numeroDocumento || '',
                             idRol: u.idRol ?? idRolDefault,
                             sectores: (u.sectores || []).map((s) => s.id),
+                            servicios: (u.servicios || []).map((s) => s.id),
                           },
                         })
                       }
@@ -255,7 +267,21 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
                 </div>
               </div>
               <p className={styles.crudBlockTitle} style={{ marginTop: '0.85rem' }}>
-                Sectores
+                Sectores{' '}
+                <button
+                  type="button"
+                  className={styles.btnSmSecondary}
+                  onClick={() => patch({ sectores: sectores.map((s) => s.id) })}
+                >
+                  Todos
+                </button>{' '}
+                <button
+                  type="button"
+                  className={styles.btnSmSecondary}
+                  onClick={() => patch({ sectores: [] })}
+                >
+                  Ninguno
+                </button>
               </p>
               <div className={styles.sectorGrid}>
                 {sectores.map((s) => (
@@ -268,6 +294,40 @@ export default function SeccionUsuarios({ empresa, roles, sectores, onUpdated, o
                         if (next.has(s.id)) next.delete(s.id);
                         else next.add(s.id);
                         patch({ sectores: Array.from(next) });
+                      }}
+                    />
+                    {s.descripcion}
+                  </label>
+                ))}
+              </div>
+              <p className={styles.crudBlockTitle} style={{ marginTop: '0.85rem' }}>
+                Servicios{' '}
+                <button
+                  type="button"
+                  className={styles.btnSmSecondary}
+                  onClick={() => patch({ servicios: servicios.map((s) => s.id) })}
+                >
+                  Todos
+                </button>{' '}
+                <button
+                  type="button"
+                  className={styles.btnSmSecondary}
+                  onClick={() => patch({ servicios: [] })}
+                >
+                  Ninguno
+                </button>
+              </p>
+              <div className={styles.sectorGrid}>
+                {servicios.map((s) => (
+                  <label key={s.id} className={styles.sectorChip}>
+                    <input
+                      type="checkbox"
+                      checked={modal.form.servicios.includes(s.id)}
+                      onChange={() => {
+                        const next = new Set(modal.form.servicios);
+                        if (next.has(s.id)) next.delete(s.id);
+                        else next.add(s.id);
+                        patch({ servicios: Array.from(next) });
                       }}
                     />
                     {s.descripcion}

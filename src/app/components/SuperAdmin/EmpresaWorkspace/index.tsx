@@ -7,6 +7,7 @@ import { superAdminService } from '@/app/services/superAdminService';
 import type {
   CatalogoRol,
   CatalogoSector,
+  CatalogoServicio,
   EmpresaAdmin,
   EmpresaChecklist,
   EmpresaSeccion,
@@ -21,6 +22,7 @@ import SeccionDatos from './SeccionDatos';
 import SeccionInfra from './SeccionInfra';
 import SeccionModulos from './SeccionModulos';
 import SeccionSectores from './SeccionSectores';
+import SeccionServicios from './SeccionServicios';
 import SeccionUsuarios from './SeccionUsuarios';
 import SeccionCobranza from './SeccionCobranza';
 import styles from '../superAdmin.module.css';
@@ -31,6 +33,7 @@ const SECCIONES: { id: EmpresaSeccion; label: string }[] = [
   { id: 'infra', label: 'Infra' },
   { id: 'modulos', label: 'Módulos' },
   { id: 'sectores', label: 'Sectores' },
+  { id: 'servicios', label: 'Servicios' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'cobranza', label: 'Cobranza' },
 ];
@@ -51,6 +54,7 @@ export default function EmpresaWorkspace({ id }: Props) {
   const [catalogos, setCatalogos] = useState<SuperAdminCatalogos | null>(null);
   const [checklist, setChecklist] = useState<EmpresaChecklist | null>(null);
   const [sectores, setSectores] = useState<CatalogoSector[]>([]);
+  const [servicios, setServicios] = useState<CatalogoServicio[]>([]);
   const [roles, setRoles] = useState<CatalogoRol[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,6 +74,7 @@ export default function EmpresaWorkspace({ id }: Props) {
       setCatalogos(cat);
       setChecklist(check);
       setSectores(cat.sectores || []);
+      setServicios(cat.servicios || []);
       setRoles(cat.roles || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al abrir la empresa');
@@ -95,6 +100,7 @@ export default function EmpresaWorkspace({ id }: Props) {
     const cat = await superAdminService.getCatalogosEmpresa(id);
     setCatalogos(cat);
     setSectores(cat.sectores || []);
+    setServicios(cat.servicios || []);
     setRoles(cat.roles || []);
   };
 
@@ -193,11 +199,21 @@ export default function EmpresaWorkspace({ id }: Props) {
           onError={setError}
         />
       )}
+      {seccion === 'servicios' && (
+        <SeccionServicios
+          empresa={empresa}
+          servicios={servicios}
+          onRefresh={refreshCatalogos}
+          onUpdated={(e) => void onUpdated(e)}
+          onError={setError}
+        />
+      )}
       {seccion === 'usuarios' && (
         <SeccionUsuarios
           empresa={empresa}
           roles={roles}
           sectores={sectores}
+          servicios={servicios}
           onUpdated={(e) => void onUpdated(e)}
           onError={setError}
         />

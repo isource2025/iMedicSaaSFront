@@ -11,6 +11,7 @@ export interface EmpresaOnboarding {
   completado: boolean;
   notas?: string;
   sectoresDefecto?: string[];
+  serviciosDefecto?: string[];
   altaCompletada?: boolean;
 }
 
@@ -110,6 +111,7 @@ export interface EmpresaUsuario {
   idRol?: number | null;
   activo: boolean;
   sectores?: SectorUsuario[];
+  servicios?: SectorUsuario[];
 }
 
 export interface ActualizarUsuarioEmpresaBody {
@@ -120,6 +122,7 @@ export interface ActualizarUsuarioEmpresaBody {
   password?: string;
   idRol?: number;
   sectores?: string[];
+  servicios?: string[];
 }
 
 export interface SectorBody {
@@ -184,6 +187,7 @@ export type EmpresaSeccion =
   | 'infra'
   | 'modulos'
   | 'sectores'
+  | 'servicios'
   | 'usuarios'
   | 'cobranza';
 
@@ -215,6 +219,11 @@ export interface AltaEmpresaBody {
   };
 }
 
+export interface CatalogoServicio {
+  id: string;
+  descripcion: string;
+}
+
 export interface CatalogoSector {
   id: string;
   descripcion: string;
@@ -243,6 +252,7 @@ export interface CrearUsuarioEmpresaBody {
   codOperador?: string;
   idRol?: number;
   sectores?: string[];
+  servicios?: string[];
 }
 
 export interface SuperAdminCatalogos {
@@ -252,6 +262,7 @@ export interface SuperAdminCatalogos {
   planes: { id: string; label: string; importeSugerido: number }[];
   estadosSuscripcion: string[];
   sectores?: CatalogoSector[];
+  servicios?: CatalogoServicio[];
   roles?: CatalogoRol[];
 }
 

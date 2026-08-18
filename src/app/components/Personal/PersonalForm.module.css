@@ -12,17 +12,21 @@
 	gap: 0;
 	border-bottom: 1.5px solid #e2e8f0;
 	padding: 0 0.2rem;
+	overflow-x: auto;
+	flex-wrap: nowrap;
 }
 
 .tab {
-	padding: 0.7rem 1.25rem;
-	font-size: 0.82rem;
+	padding: 0.7rem 1rem;
+	font-size: 0.78rem;
 	font-weight: 600;
 	color: #64748b;
 	cursor: pointer;
 	transition: color 0.2s ease;
 	user-select: none;
 	letter-spacing: 0.02em;
+	white-space: nowrap;
+	flex-shrink: 0;
 }
 
 .tab:hover {
@@ -359,6 +363,30 @@
 	font-weight: 600;
 	color: #0f172a;
 	font-size: 0.9rem;
+}
+
+.asignGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem 1.25rem;
+	align-items: start;
+}
+
+.asignCol {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	min-width: 0;
+	padding: 0.85rem 0.9rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #f8fafc;
+}
+
+@media (max-width: 760px) {
+	.asignGrid {
+		grid-template-columns: 1fr;
+	}
 }
 
 .tabActionsHint {

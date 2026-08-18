@@ -109,6 +109,11 @@ export interface PersonalSectorAsignado {
 	Descripcion: string;
 }
 
+export interface PersonalServicioAsignado {
+	idServicio: string;
+	Descripcion: string;
+}
+
 export interface PersonalCodigoFacturacion {
 	CodigoAsociacion: string;
 	CodigoFacturacion: string;

@@ -9,6 +9,7 @@ import {
 	EmpresaCatalogoItem,
 	PersonalServicioDto,
 	PersonalSectorAsignado,
+	PersonalServicioAsignado,
 	PersonalCodigoFacturacion,
 	PersonalCuentaEstado,
 	CrearPersonalCuentaData,
@@ -295,6 +296,49 @@ export const removePersonalSector = async (
 	throw new Error(res.data.mensaje || 'Error al quitar sector');
 };
 
+export const getPersonalServiciosPedidos = async (id: number): Promise<PersonalServicioAsignado[]> => {
+	const res = await apiService.get<ApiResponse<PersonalServicioAsignado[]>>(
+		`/personal/${id}/servicios-pedidos`,
+	);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al listar servicios');
+};
+
+export const addPersonalServicioPedido = async (
+	id: number,
+	idServicio: string,
+): Promise<PersonalServicioAsignado[]> => {
+	const res = await apiService.post<ApiResponse<PersonalServicioAsignado[]>>(
+		`/personal/${id}/servicios-pedidos`,
+		{ idServicio },
+	);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al asignar servicio');
+};
+
+export const removePersonalServicioPedido = async (
+	id: number,
+	idServicio: string,
+): Promise<PersonalServicioAsignado[]> => {
+	const q = encodeURIComponent(idServicio);
+	const res = await apiService.delete<ApiResponse<PersonalServicioAsignado[]>>(
+		`/personal/${id}/servicios-pedidos?idServicio=${q}`,
+	);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al quitar servicio');
+};
+
+export const replacePersonalAsignaciones = async (
+	id: number,
+	body: { sectores: string[]; servicios: string[] },
+): Promise<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }> => {
+	const res = await apiService.put<
+		ApiResponse<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }>
+	>(`/personal/${id}/asignaciones`, body);
+	if (res.data.success && res.data.data) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al guardar asignaciones');
+};
+
 /** Catálogo global de sectores (imSectores). */
 export const getSectoresCatalogo = async (): Promise<{ IdSector: string; Descripcion: string }[]> => {
 	const res = await apiService.get<{ success: boolean; data: { IdSector: string; Descripcion: string }[] }>(
@@ -575,6 +619,10 @@ export const personalService = {
 	getPersonalSectores,
 	addPersonalSector,
 	removePersonalSector,
+	getPersonalServiciosPedidos,
+	addPersonalServicioPedido,
+	removePersonalServicioPedido,
+	replacePersonalAsignaciones,
 	getSectoresCatalogo,
 	getPersonalCodigosFacturacion,
 	addPersonalCodigoFacturacion,

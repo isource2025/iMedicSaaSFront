@@ -60,6 +60,7 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
 }
 
 .btnDownload {
@@ -140,25 +141,37 @@
   }
 
   .header {
-    padding: 10px 12px;
-    padding-top: max(10px, env(safe-area-inset-top));
-    flex-wrap: wrap;
+    padding: 4px 8px;
+    padding-top: max(4px, env(safe-area-inset-top));
+    gap: 6px;
+    min-height: 0;
+    flex-wrap: nowrap;
   }
 
   .title {
-    width: 100%;
-    white-space: normal;
-    word-break: break-word;
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .actions {
-    width: 100%;
+    width: auto;
+    gap: 4px;
   }
 
   .btnDownload,
   .btnClose {
-    flex: 1;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    min-height: 0;
+    padding: 0;
     justify-content: center;
-    min-height: 44px;
+    border-radius: 6px;
+  }
+
+  .btnLabel {
+    display: none;
   }
 }
