@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Loader from '@/app/components/Loader/Loader';
 import { personalService } from '@/app/services/personalService';
 import type {
 	CatalogoItemTexto,
@@ -15,6 +14,11 @@ type Props = {
 	personalId: number;
 	onSaved?: () => void | Promise<void>;
 };
+
+function idValido(id: string | undefined | null) {
+	const v = String(id ?? '').trim();
+	return v.length > 0 && v !== '0';
+}
 
 function toggle(set: Set<string>, id: string) {
 	const next = new Set(set);
@@ -53,10 +57,12 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 				if (cancelled) return;
 				const val = <T,>(i: number, fallback: T): T =>
 					settled[i].status === 'fulfilled' ? (settled[i] as PromiseFulfilledResult<T>).value : fallback;
-				const secs = val<PersonalSectorAsignado[]>(0, []);
-				const secCat = val<{ IdSector: string; Descripcion: string }[]>(1, []);
-				const srvs = val<PersonalServicioAsignado[]>(2, []);
-				const srvCat = val<CatalogoItemTexto[]>(3, []);
+				const secs = val<PersonalSectorAsignado[]>(0, []).filter((s) => idValido(s.idSector));
+				const secCat = val<{ IdSector: string; Descripcion: string }[]>(1, []).filter((c) =>
+					idValido(c.IdSector),
+				);
+				const srvs = val<PersonalServicioAsignado[]>(2, []).filter((s) => idValido(s.idServicio));
+				const srvCat = val<CatalogoItemTexto[]>(3, []).filter((c) => idValido(c.valor));
 				setSecAsignados(secs);
 				setSrvAsignados(srvs);
 				setSecCatalogo(secCat);
@@ -125,16 +131,9 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 		}
 	};
 
-	if (loading) {
-		return (
-			<div style={{ position: 'relative', minHeight: 160 }}>
-				<Loader />
-			</div>
-		);
-	}
-
 	return (
 		<div>
+			{loading ? <p className={formStyles.usuarioHint}>Cargando asignaciones…</p> : null}
 			{error ? <div className={formStyles.alertError}>{error}</div> : null}
 
 			{!editing ? (

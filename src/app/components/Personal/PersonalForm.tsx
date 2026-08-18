@@ -111,6 +111,10 @@ export default function PersonalForm({
 	const [internalSubmitting, setInternalSubmitting] = useState(false);
 	const [nextId, setNextId] = useState<number | null>(null);
 
+	useEffect(() => {
+		setFormData(buildInitial(personal));
+	}, [personal?.Valor, personal?.DNI, personal?.MatriculaNacional]);
+
 	const tabsRef = useRef<HTMLDivElement[]>([]);
 	const autoProvinciaAppliedRef = useRef(false);
 
@@ -470,7 +474,7 @@ export default function PersonalForm({
 			</div>
 
 			<div className={styles.tabPanel}>
-			{activeTab === 'personal' && (
+			<div className={activeTab !== 'personal' ? styles.tabHidden : undefined}>
 				<div className={styles.grid}>
 					<div className={`${styles.field} ${styles.fieldId}`}>
 						<label className={styles.label}>ID</label>
@@ -666,9 +670,9 @@ export default function PersonalForm({
 						/>
 					</div>
 				</div>
-			)}
+			</div>
 
-			{activeTab === 'profesional' && (
+			<div className={activeTab !== 'profesional' ? styles.tabHidden : undefined}>
 				<div className={styles.grid}>
 					<div className={`${styles.field} ${styles.fieldHalf}`}>
 						<label className={styles.label}>Matrícula Provincial</label>
@@ -932,24 +936,30 @@ export default function PersonalForm({
 						</div>
 					)}
 				</div>
-			)}
+			</div>
 
-			{activeTab === 'asignaciones' && showAsignacionesTab && formData.Valor && (
-				<PersonalAsignacionesTab personalId={formData.Valor} />
-			)}
+			{showAsignacionesTab && formData.Valor ? (
+				<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
+					<PersonalAsignacionesTab personalId={formData.Valor} />
+				</div>
+			) : null}
 
-			{activeTab === 'cuenta' && showCuentaTab && formData.Valor && (
-				<PersonalCuentaTab
-					personalId={formData.Valor}
-					apellidoNombre={formData.ApellidoNombre}
-					matriculaProvincial={formData.MatriculaProvincial || null}
-					variant='form'
-				/>
-			)}
+			{showCuentaTab && formData.Valor ? (
+				<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
+					<PersonalCuentaTab
+						personalId={formData.Valor}
+						apellidoNombre={formData.ApellidoNombre}
+						matriculaProvincial={formData.MatriculaProvincial || null}
+						variant='form'
+					/>
+				</div>
+			) : null}
 
-			{activeTab === 'agenda' && showAgendaTab && (
-				<AgendaTab matricula={matriculaProfesional} />
-			)}
+			{showAgendaTab ? (
+				<div className={activeTab !== 'agenda' ? styles.tabHidden : undefined}>
+					<AgendaTab matricula={matriculaProfesional} />
+				</div>
+			) : null}
 			</div>
 
 			{activeTab !== 'cuenta' && activeTab !== 'agenda' && activeTab !== 'asignaciones' ? (

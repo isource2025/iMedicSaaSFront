@@ -12,7 +12,6 @@ import DeletePersonalConfirmation from '@/app/components/Personal/DeletePersonal
 import SyncFisicoInforme from '@/app/components/Personal/SyncFisicoInforme';
 import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
-import Loader from '@/app/components/Loader/Loader';
 import { personalService } from '@/app/services/personalService';
 import type { SyncFisicoInforme as SyncFisicoInformeData } from '@/app/services/personalService';
 import { downloadPersonalExcel } from '@/app/utils/downloadPersonalExcel';
@@ -47,7 +46,6 @@ export default function PersonalPage() {
 	} = usePersonal();
 
 	const [fullPersonalEditing, setFullPersonalEditing] = useState<Personal | null>(null);
-	const [loadingFull, setLoadingFull] = useState(false);
 	const [syncDisponible, setSyncDisponible] = useState(false);
 	const [syncing, setSyncing] = useState(false);
 	const [syncResult, setSyncResult] = useState<{
@@ -83,14 +81,11 @@ export default function PersonalPage() {
 	useEffect(() => {
 		(async () => {
 			if (isEditModalOpen && selected) {
-				setLoadingFull(true);
 				try {
 					const p = await personalService.getPersonalById(selected.Valor);
 					setFullPersonalEditing(p);
 				} catch (e) {
 					console.error('refetch personal', e);
-				} finally {
-					setLoadingFull(false);
 				}
 			} else {
 				setFullPersonalEditing(null);
@@ -281,26 +276,19 @@ export default function PersonalPage() {
 						title='Editar Personal'
 						size='xlarge'
 					>
-						{(loadingFull || !fullPersonalEditing) && (
-							<div style={{ position: 'relative', minHeight: '200px' }}>
-								<Loader />
-							</div>
-						)}
-						{fullPersonalEditing && (
-							<PersonalForm
-								personal={fullPersonalEditing}
+						<PersonalForm
+								personal={fullPersonalEditing || selected}
 								isEditing
 								onSubmit={async (data) =>
-									updatePersonal(fullPersonalEditing.Valor, data)
+									updatePersonal((fullPersonalEditing || selected).Valor, data)
 								}
 								onCancel={closeEditModal}
 								onDelete={() => {
 									closeEditModal();
-									openDeleteModal(fullPersonalEditing);
+									openDeleteModal(fullPersonalEditing || selected);
 								}}
-								isSubmitting={loading || loadingFull}
+								isSubmitting={loading}
 							/>
-						)}
 					</Modal>
 				)}
 

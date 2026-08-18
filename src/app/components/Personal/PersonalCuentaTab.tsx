@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Loader from '@/app/components/Loader/Loader';
 import { personalService } from '@/app/services/personalService';
 import { rolesService, type Rol } from '@/app/services/rolesService';
 import type { PersonalCuentaEstado } from '@/app/types/personal';
@@ -156,14 +155,6 @@ export default function PersonalCuentaTab({
 		}
 	};
 
-	if (loading) {
-		return (
-			<div style={{ position: 'relative', minHeight: 160 }}>
-				<Loader />
-			</div>
-		);
-	}
-
 	const wrapClass = variant === 'form' ? formStyles.usuarioSection : styles.row;
 	const primaryBtnClass = variant === 'form' ? formStyles.submitButton : styles.btnPrimary;
 	const secondaryBtnClass = variant === 'form' ? formStyles.cancelButton : styles.btn;
@@ -177,7 +168,11 @@ export default function PersonalCuentaTab({
 			) : null}
 
 			<div className={formStyles.usuarioHead}>
-				<p className={formStyles.usuarioHint}>Usuario de login, contraseña y roles en un solo lugar.</p>
+				<p className={formStyles.usuarioHint}>
+					{loading
+						? 'Cargando acceso y roles…'
+						: 'Usuario de login, contraseña y roles en un solo lugar.'}
+				</p>
 				{tieneCuenta ? (
 					<span className={formStyles.statusBadgeActive}>Con cuenta</span>
 				) : (
@@ -200,7 +195,7 @@ export default function PersonalCuentaTab({
 								onChange={(e) => setNombreRed(e.target.value)}
 								className={formStyles.input}
 								autoComplete="off"
-								disabled={saving}
+								disabled={saving || loading}
 							/>
 						</div>
 						<div className={formStyles.field}>
@@ -223,7 +218,7 @@ export default function PersonalCuentaTab({
 										onChange={(e) => setPassword(e.target.value)}
 										className={formStyles.input}
 										autoComplete="new-password"
-										disabled={saving}
+										disabled={saving || loading}
 									/>
 								</div>
 								<div className={formStyles.field}>
@@ -234,7 +229,7 @@ export default function PersonalCuentaTab({
 										onChange={(e) => setConfirmPassword(e.target.value)}
 										className={formStyles.input}
 										autoComplete="new-password"
-										disabled={saving}
+										disabled={saving || loading}
 									/>
 								</div>
 							</>
@@ -248,7 +243,7 @@ export default function PersonalCuentaTab({
 									className={formStyles.input}
 									autoComplete="new-password"
 									placeholder="Dejar vacío para no cambiar"
-									disabled={saving}
+									disabled={saving || loading}
 								/>
 							</div>
 						)}
@@ -266,7 +261,7 @@ export default function PersonalCuentaTab({
 										type="checkbox"
 										checked={checked}
 										onChange={() => toggleRol(r.IdRol)}
-										disabled={saving}
+										disabled={saving || loading}
 									/>
 									<span>{r.Descripcion || r.Nombre}</span>
 								</label>
@@ -280,7 +275,7 @@ export default function PersonalCuentaTab({
 								className={formStyles.input}
 								value={rolPrincipal}
 								onChange={(e) => setRolPrincipal(e.target.value)}
-								disabled={saving}
+								disabled={saving || loading}
 							>
 								{roles
 									.filter((r) => rolesAsignados.includes(r.IdRol))

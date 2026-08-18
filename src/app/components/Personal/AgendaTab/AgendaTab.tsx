@@ -260,16 +260,9 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 		);
 	}
 
-	if (loading) {
-		return (
-			<div className={styles.wrapper}>
-				<span className={styles.spinner} /> Cargando agenda…
-			</div>
-		);
-	}
-
 	return (
 		<div className={styles.wrapper}>
+			{loading ? <p className={styles.dayCount} style={{ margin: 0 }}>Cargando agenda…</p> : null}
 			{error && <div className={styles.error}>{error}</div>}
 			{info && <div className={styles.totalRow} style={{ background: '#ecfdf5', borderColor: '#bbf7d0', color: '#065f46' }}>{info}</div>}
 			{permanentesCount > 0 && (
