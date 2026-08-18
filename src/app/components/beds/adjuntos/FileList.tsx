@@ -88,12 +88,9 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
         if (office) {
           try {
             const mammoth = await import('mammoth');
-            const convert =
-              mammoth.convertToHtml ||
-              (mammoth as { default?: { convertToHtml?: typeof mammoth.convertToHtml } }).default
-                ?.convertToHtml;
-            if (!convert) throw new Error('mammoth');
-            const { value } = await convert({ arrayBuffer: await blob.arrayBuffer() });
+            const { value } = await mammoth.convertToHtml({
+              arrayBuffer: await blob.arrayBuffer(),
+            });
             if (cancelled) return;
             setDocHtml(value || null);
           } catch {

@@ -28,20 +28,3 @@ export function isOfficeDoc(fileName: string, mimeType: string): boolean {
     /\.docx?$/i.test(fileName)
   );
 }
-
-
-export function isImage(fileName: string, mimeType: string): boolean {
-  return mimeType.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(fileName);
-}
-
-export function isDicom(fileName: string, mimeType: string): boolean {
-  return (
-    mimeType === 'application/dicom' ||
-    /\.dcm$/i.test(fileName) ||
-    /\.dicom$/i.test(fileName)
-  );
-}
-
-export function isVideo(fileName: string, mimeType: string): boolean {
-  return mimeType.startsWith('video/') || /\.(webm|mp4)$/i.test(fileName);
-}
