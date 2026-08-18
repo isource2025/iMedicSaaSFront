@@ -6,11 +6,12 @@ import { Bed } from '../beds';
 export interface BedCardProps {
   bed: Bed;
   onNursingReport: (bed: Bed) => void;
-  onRecentIndications: (bedId: string) => void;
+  onRecentIndications?: (bedId: string) => void;
   onChangeBed: (bedId: string) => void;
   onBedClick?: (bedId: string) => void;
   onLabResults?: (bedId: string) => void;
   onDischarge?: (bedId: string) => void;
+  onOpenAdjuntos?: (bed: Bed) => void;
   /** Asignar internado sin cama a esta cama libre */
   onAssignPatient?: (bed: Bed) => void;
 }

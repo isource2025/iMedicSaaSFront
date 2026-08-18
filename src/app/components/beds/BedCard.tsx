@@ -7,7 +7,7 @@ import styles from './BedCard.module.css';
 import {
 	IoMedicalOutline,
 	IoSwapHorizontalOutline,
-	IoDocumentTextOutline,
+	IoAttachOutline,
 	IoMale,
 	IoFemale,
 	IoFlaskOutline,
@@ -37,6 +37,7 @@ const BedCard: React.FC<BedCardProps> = ({
 	onLabResults,
 	onDischarge,
 	onAssignPatient,
+	onOpenAdjuntos,
 }) => {
 	const recurso = bed.tipoRecurso ?? 'cama';
 
@@ -57,12 +58,12 @@ const BedCard: React.FC<BedCardProps> = ({
 				variant="consultorio"
 				bed={bed}
 				onNursingReport={onNursingReport}
-				onRecentIndications={onRecentIndications}
 				onChangeBed={onChangeBed}
 				onBedClick={onBedClick}
 				onLabResults={onLabResults}
 				onDischarge={onDischarge}
 				onAssignPatient={onAssignPatient}
+				onOpenAdjuntos={onOpenAdjuntos}
 			/>
 		);
 	}
@@ -72,12 +73,12 @@ const BedCard: React.FC<BedCardProps> = ({
 			variant="cama"
 			bed={bed}
 			onNursingReport={onNursingReport}
-			onRecentIndications={onRecentIndications}
 			onChangeBed={onChangeBed}
 			onBedClick={onBedClick}
 			onLabResults={onLabResults}
 			onDischarge={onDischarge}
 			onAssignPatient={onAssignPatient}
+			onOpenAdjuntos={onOpenAdjuntos}
 		/>
 	);
 };
@@ -87,12 +88,12 @@ function CamaOConsultorioCard({
 	variant,
 	bed,
 	onNursingReport,
-	onRecentIndications,
 	onChangeBed,
 	onBedClick,
 	onLabResults,
 	onDischarge,
 	onAssignPatient,
+	onOpenAdjuntos,
 }: BedCardProps & { variant: 'cama' | 'consultorio' }) {
 	const renderGenderIcon = () => {
 		const sexoValue = bed.SexoPaciente ? bed.SexoPaciente.toLowerCase() : '';
@@ -231,13 +232,13 @@ function CamaOConsultorioCard({
 
 							<span
 								className={styles.iconWrapper}
-								title={variant === 'consultorio' ? 'Historial / atención' : 'Últimas Indicaciones'}
+								title="Archivos adjuntos"
 								onClick={(e) => {
 									e.stopPropagation();
-									onRecentIndications && onRecentIndications(bed.id);
+									onOpenAdjuntos?.(bed);
 								}}
 							>
-								<IoDocumentTextOutline className={styles.actionIcon} />
+								<IoAttachOutline className={styles.actionIcon} />
 							</span>
 
 							{variant === 'cama' && (

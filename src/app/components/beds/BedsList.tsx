@@ -6,6 +6,7 @@ import LabResultsModal from './laboratorios/LabResultsModal';
 import ModalEgresoPaciente from '../modals/ModalEgresoPaciente';
 import ModalCambiarCama from '../modals/ModalCambiarCama';
 import ModalAsignarCama from '../modals/ModalAsignarCama';
+import AdjuntosModal from './adjuntos/AdjuntosModal';
 import BedCard from './BedCard';
 import BedFilters from './BedFilters';
 import styles from './Bedslist.module.css';
@@ -48,6 +49,7 @@ const BedsList = () => {
 	const [egresoModalOpen, setEgresoModalOpen] = useState(false);
 	const [cambiarCamaModalOpen, setCambiarCamaModalOpen] = useState(false);
 	const [asignarCamaModalOpen, setAsignarCamaModalOpen] = useState(false);
+	const [adjuntosModalOpen, setAdjuntosModalOpen] = useState(false);
 	const [selectedBed, setSelectedBed] = useState<{
 		numeroVisita: number;
 		nombrePaciente: string;
@@ -100,6 +102,15 @@ const BedsList = () => {
 		}
 		setSelectedBed(pickSelected(bed));
 		setNursingModalOpen(true);
+	};
+
+	const handleOpenAdjuntos = (bed: Bed) => {
+		if (!bed.numeroVisita && !bed.NumeroVisita) {
+			console.warn('No hay visita para abrir adjuntos.');
+			return;
+		}
+		setSelectedBed(pickSelected(bed));
+		setAdjuntosModalOpen(true);
 	};
 
 	const handleRecentIndications = (_bedId: string) => {};
@@ -204,6 +215,7 @@ const BedsList = () => {
 							bed={bed}
 							onNursingReport={handleNursingReport}
 							onRecentIndications={() => handleRecentIndications(bed.id)}
+							onOpenAdjuntos={() => handleOpenAdjuntos(bed)}
 							onChangeBed={() => handleChangeBed(bed.id, bed.sector)}
 							onBedClick={() => handleBedClick(bed.id)}
 							onLabResults={() => handleLabResults(bed.id)}
@@ -257,6 +269,14 @@ const BedsList = () => {
 					header={selectedBed.header}
 				/>
 			)}
+
+			{adjuntosModalOpen && selectedBed?.numeroVisita ? (
+				<AdjuntosModal
+					numeroVisita={selectedBed.numeroVisita}
+					isOpen={adjuntosModalOpen}
+					onClose={() => setAdjuntosModalOpen(false)}
+				/>
+			) : null}
 
 			{asignarCamaModalOpen && selectedBed && (
 				<ModalAsignarCama
