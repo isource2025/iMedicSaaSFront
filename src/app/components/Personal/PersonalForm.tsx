@@ -113,7 +113,7 @@ export default function PersonalForm({
 
 	useEffect(() => {
 		setFormData(buildInitial(personal));
-	}, [personal?.Valor, personal?.DNI, personal?.MatriculaNacional]);
+	}, [personal?.Valor, personal?.NumeroDocumento, personal?.MatriculaNacional]);
 
 	const tabsRef = useRef<HTMLDivElement[]>([]);
 	const autoProvinciaAppliedRef = useRef(false);
