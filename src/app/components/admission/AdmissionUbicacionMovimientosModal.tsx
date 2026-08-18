@@ -252,8 +252,13 @@ export default function AdmissionUbicacionMovimientosModal({
       });
       await load();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      setError(err?.response?.data?.message || err?.message || 'Error al registrar egreso');
+      const err = e as { response?: { data?: { message?: string; mensaje?: string } }; message?: string };
+      setError(
+        err?.response?.data?.mensaje ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error al registrar egreso',
+      );
     } finally {
       setLoading(false);
     }
