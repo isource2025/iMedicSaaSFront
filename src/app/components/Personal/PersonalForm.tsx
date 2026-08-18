@@ -952,12 +952,8 @@ export default function PersonalForm({
 			)}
 			</div>
 
+			{activeTab !== 'cuenta' && activeTab !== 'agenda' && activeTab !== 'asignaciones' ? (
 			<div className={styles.actions}>
-				{(activeTab === 'cuenta' || activeTab === 'agenda' || activeTab === 'asignaciones') && (
-					<p className={styles.tabActionsHint}>
-						Los cambios de esta solapa se guardan con el botón dentro de la sección.
-					</p>
-				)}
 				<div className={styles.actionsButtons}>
 				{isEditing && onDelete ? (
 					<button
@@ -979,7 +975,6 @@ export default function PersonalForm({
 				>
 					Cancelar
 				</button>
-				{activeTab !== 'cuenta' && activeTab !== 'agenda' && activeTab !== 'asignaciones' && (
 				<button
 					type='submit'
 					className={`${styles.submitButton} ${internalSubmitting ? styles.loading : ''}`}
@@ -989,9 +984,9 @@ export default function PersonalForm({
 					{internalSubmitting && <span className={styles.inlineSpinner} aria-hidden='true' />}
 					{internalSubmitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
 				</button>
-				)}
 				</div>
 			</div>
+			) : null}
 		</form>
 	);
 }
