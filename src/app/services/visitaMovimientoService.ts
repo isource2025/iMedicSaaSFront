@@ -79,6 +79,17 @@ const visitaMovimientoService = {
       throw error;
     }
   },
+
+  revertirEgreso: async (numeroVisita: string | number): Promise<any> => {
+    const url = `${BASE_URL}/patients/visitas/${numeroVisita}/revertir-egreso`;
+    const response = await apiService.post<ApiResponse>(url, {});
+    if (!response.data?.success) {
+      throw new Error(
+        response.data?.mensaje || response.data?.message || 'Error al revertir el egreso',
+      );
+    }
+    return response.data;
+  },
   
   moverPacienteACamaVacia: async (numeroVisita: string | number, datosCambio: {
     FechaAdmision: number;

@@ -13,6 +13,7 @@ import { clarionDateToISO, fechaLocalISO, horaLocalHHMM, horaMostrada, isoCalend
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import { authService } from '@/app/services/authService';
+import { esAdminClinico } from '@/app/hooks/useUsuarioActual';
 import {
   catalogoDisposiciones,
   diagnosticoTexto,
@@ -121,6 +122,8 @@ export default function AdmissionUbicacionMovimientosModal({
   const [diagResults, setDiagResults] = useState<DiagnosticoCie10[]>([]);
   const [diagLoading, setDiagLoading] = useState(false);
   const [operadorEgreso, setOperadorEgreso] = useState('');
+  const [revertBusy, setRevertBusy] = useState(false);
+  const puedeRevertirEgreso = esAdminClinico();
 
   const load = useCallback(async () => {
     if (!numeroVisita) return;
@@ -285,6 +288,30 @@ export default function AdmissionUbicacionMovimientosModal({
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onRevertirEgreso = async () => {
+    if (!numeroVisita) return;
+    const ok = window.confirm(
+      '¿Revertir el egreso? El paciente volverá a internación en la misma cama, si sigue libre.',
+    );
+    if (!ok) return;
+    try {
+      setRevertBusy(true);
+      setError('');
+      await visitaMovimientoService.revertirEgreso(numeroVisita);
+      await load();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string; mensaje?: string } }; message?: string };
+      setError(
+        err?.response?.data?.mensaje ||
+          err?.response?.data?.message ||
+          err?.message ||
+          'Error al revertir el egreso',
+      );
+    } finally {
+      setRevertBusy(false);
     }
   };
 
@@ -501,6 +528,17 @@ export default function AdmissionUbicacionMovimientosModal({
                 >
                   {yaEgresado ? 'Actualizar egreso' : 'Registrar egreso'}
                 </button>
+                {yaEgresado && puedeRevertirEgreso ? (
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnDanger}`}
+                    disabled={loading || revertBusy}
+                    onClick={() => void onRevertirEgreso()}
+                    title="Devuelve al paciente a internación en la cama anterior"
+                  >
+                    {revertBusy ? 'Revirtiendo…' : 'Revertir egreso'}
+                  </button>
+                ) : null}
               </div>
             </section>
           ) : null}
