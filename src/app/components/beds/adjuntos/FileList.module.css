@@ -39,6 +39,8 @@
 .subirBtn:hover {
   filter: brightness(1.05);
 }
+
+.vistaToggle {
   display: inline-flex;
   border: 1px solid #cbd5e1;
   border-radius: 999px;
