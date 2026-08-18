@@ -39,7 +39,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState('');
-  const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita'>('archivos');
+  const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita'>('visita');
   const fileUploadRef = useRef<FileUploadRef>(null);
 
   const showMessage = useCallback((title: string, message: string, tone: MessageModalTone = 'info') => {
@@ -48,7 +48,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
 
   useEffect(() => {
     if (isOpen) {
-      setModo('archivos');
+      setModo('visita');
       setSelectedFiles([]);
       setTipoImagenCodigo('');
       loadAdjuntos();
@@ -170,11 +170,20 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
             <button
               type="button"
               role="tab"
+              aria-selected={modo === 'visita'}
+              className={modo === 'visita' ? styles.modeTabActive : styles.modeTab}
+              onClick={() => setModo('visita')}
+            >
+              Lista de archivos ({adjuntos.length})
+            </button>
+            <button
+              type="button"
+              role="tab"
               aria-selected={modo === 'archivos'}
               className={modo === 'archivos' ? styles.modeTabActive : styles.modeTab}
               onClick={() => setModo('archivos')}
             >
-              Adjuntos
+              Subir adjunto
             </button>
             <button
               type="button"
@@ -184,15 +193,6 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
               onClick={() => setModo('dicom')}
             >
               Serie DICOM
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={modo === 'visita'}
-              className={modo === 'visita' ? styles.modeTabActive : styles.modeTab}
-              onClick={() => setModo('visita')}
-            >
-              Lista de archivos ({adjuntos.length})
             </button>
           </div>
 
@@ -267,6 +267,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
                   onDelete={handleDelete}
                   onError={(msg) => showMessage('Error', msg, 'error')}
                   readOnly={false}
+                  onSubirNuevo={() => setModo('archivos')}
                 />
               )}
             </div>

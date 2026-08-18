@@ -2,11 +2,65 @@
   width: 100%;
 }
 
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .title {
   font-size: 13px;
   font-weight: 600;
   color: #64748b;
-  margin: 0 0 10px 0;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.subirBtn {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #00b5e2, #0083a9);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.32rem 0.85rem;
+  cursor: pointer;
+}
+
+.subirBtn:hover {
+  filter: brightness(1.05);
+}
+  display: inline-flex;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.vistaBtn,
+.vistaBtnActive {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.28rem 0.7rem;
+  cursor: pointer;
+}
+
+.vistaBtnActive {
+  background: #e0f2fe;
+  color: #0369a1;
 }
 
 .fileList {
@@ -189,6 +243,74 @@
 
 .iconoColapsado {
   transform: rotate(0deg);
+}
+
+.thumbGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.thumbCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid #e8eef3;
+  border-radius: 10px;
+  padding: 6px;
+  background: #f8fafc;
+}
+
+.thumbHit {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e0f2fe;
+  cursor: pointer;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #0083a9;
+}
+
+.thumbKind {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.thumbName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thumbCard .fileActions {
+  justify-content: center;
 }
 
 .viewButton:disabled,
