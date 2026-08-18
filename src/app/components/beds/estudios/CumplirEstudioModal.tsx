@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import estudiosService from '@/app/services/estudiosService';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import type { PedidoEstudio } from '@/app/types/estudios';
 import type { TipoImagenHC } from '@/app/types/adjuntos';

@@ -108,14 +108,18 @@
 .cellGlucemia,
 .cellSector {
     font-weight: 600;
+    font-size: 0.85rem;
+    color: #0f172a;
+}
+
+.cellProfesional {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 400;
 }
 
 .cellGlucemia {
     font-variant-numeric: tabular-nums;
-    color: #374151;
-}
-
-.cellProfesional {
     color: #374151;
 }
 
@@ -127,7 +131,10 @@
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    line-height: 1.4;
+    line-height: 1.25;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #334155;
 }
 
 /* Acciones */

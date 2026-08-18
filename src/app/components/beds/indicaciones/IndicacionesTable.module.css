@@ -20,7 +20,7 @@
 
 .hijaItem {
     color: #0083A9;
-    font-size: 12px;
+    font-size: 0.8rem;
     font-weight: 500;
     margin: 2px 0;
     display: flex;
@@ -56,7 +56,7 @@
 }
 
 .nroHija {
-    font-size: 11px;
+    font-size: 0.75rem;
     color: #00B5E2;
     font-weight: 600;
     padding-left: 8px;
@@ -118,7 +118,7 @@
     display: inline-block;
     margin-top: 2px;
     font-weight: 500;
-    font-size: 11px;
+    font-size: 0.75rem;
     color: #6b7280;
 }
 
@@ -154,16 +154,20 @@
 
 /* Texto principal / secundario dentro de celdas compuestas */
 .primary {
-    font-weight: 700;
-    white-space: normal; /* Permitir saltos de línea */
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #0f172a;
+    white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 .sub {
     margin-top: 2px;
-    font-size: 12px;
-    color: #94a3b8;
-    white-space: normal; /* Permitir saltos de línea */
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #64748b;
+    white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
@@ -209,21 +213,21 @@
 /* Celda de estado */
 .cellEstado {
     text-align: center;
-    padding: 9px 6px !important;
+    padding: 0.65rem 0.75rem !important;
 }
 
-/* Indicador de estado */
 .estadoIndicador {
-    width: 32px;
-    height: 32px;
+    width: 0.65rem;
+    height: 0.65rem;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: 600;
+    font-size: 0;
     color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
+    vertical-align: middle;
 }
 
 /* Estados con colores */
@@ -250,14 +254,20 @@
 
 .estadoSuspendida {
     background-color: #6b7280;
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 0.7rem;
 }
 
 .estadoUnica {
     background-color: #fef3c7;
     color: #d97706;
-    font-weight: bold;
+    font-weight: 600;
     border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 0.7rem;
 }
 
 /* Animación de zona para estado azul (menos de 10 minutos) */

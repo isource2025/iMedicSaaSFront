@@ -5,6 +5,7 @@ import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import styles from './IndicacionesSection.module.css';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import IndicativoColors from "./IdicativosColors";
 import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";

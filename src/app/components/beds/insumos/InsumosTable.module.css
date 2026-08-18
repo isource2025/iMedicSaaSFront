@@ -83,15 +83,19 @@
 
 /* Texto principal / secundario dentro de celdas compuestas */
 .primary {
-    font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #0f172a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .sub {
     margin-top: 2px;
-    font-size: 12px;
-    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #64748b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -134,21 +138,21 @@
 /* Celda de estado */
 .cellEstado {
     text-align: center;
-    padding: 9px 6px !important;
+    padding: 0.65rem 0.75rem !important;
 }
 
-/* Indicador de estado */
 .estadoIndicador {
-    width: 32px;
-    height: 32px;
+    width: 0.65rem;
+    height: 0.65rem;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: 600;
+    font-size: 0;
     color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
+    vertical-align: middle;
 }
 
 /* Estados con colores */

@@ -9,6 +9,7 @@ import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { evolucionesService } from "../../../services/evolucionesService";
 import EvolucionesTable, { EvolucionRow } from "./EvolucionesTable";
 import styles from './EvolucionesSection.module.css';
+import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
