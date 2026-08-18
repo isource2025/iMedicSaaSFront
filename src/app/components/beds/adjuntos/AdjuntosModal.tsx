@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import { authService } from '@/app/services/authService';
 import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
@@ -147,9 +148,9 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
@@ -283,6 +284,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
         tone={feedback?.tone || 'info'}
         onClose={() => setFeedback(null)}
       />
-    </div>
+    </div>,
+    document.body,
   );
 }

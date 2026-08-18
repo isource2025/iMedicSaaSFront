@@ -11,7 +11,7 @@ import {
   esAdminClinico,
   esRegistroPropio,
 } from '@/app/hooks/useUsuarioActual';
-import { isImage, isVideo } from '@/app/utils/adjuntoFileTypes';
+import { isImage, isVideo, isPdf, isOfficeDoc } from '@/app/utils/adjuntoFileTypes';
 import EmptyState from '../shared/EmptyState';
 import styles from './FileList.module.css';
 
@@ -65,7 +65,13 @@ function FileIcon({ tipoArchivo, nombreArchivo }: { tipoArchivo: string; nombreA
 
 function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
   const [url, setUrl] = useState<string | null>(null);
-  const previewable = isImage(adjunto.NombreArchivo, adjunto.TipoArchivo || '');
+  const [docHtml, setDocHtml] = useState<string | null>(null);
+  const mime = adjunto.TipoArchivo || '';
+  const name = adjunto.NombreArchivo;
+  const image = isImage(name, mime);
+  const pdf = isPdf(name, mime);
+  const office = isOfficeDoc(name, mime);
+  const previewable = image || pdf || office;
 
   useEffect(() => {
     if (!previewable) return;
@@ -73,33 +79,75 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
     let created: string | null = null;
     void adjuntosService
       .cargarBlobAdjunto(adjunto.IdAdjunto)
-      .then(({ blobUrl }) => {
+      .then(async ({ blob, blobUrl }) => {
         if (cancelled) {
           adjuntosService.revocarBlobUrl(blobUrl);
           return;
         }
         created = blobUrl;
+        if (office) {
+          try {
+            const mammoth = await import('mammoth');
+            const convert =
+              mammoth.convertToHtml ||
+              (mammoth as { default?: { convertToHtml?: typeof mammoth.convertToHtml } }).default
+                ?.convertToHtml;
+            if (!convert) throw new Error('mammoth');
+            const { value } = await convert({ arrayBuffer: await blob.arrayBuffer() });
+            if (cancelled) return;
+            setDocHtml(value || null);
+          } catch {
+            if (!cancelled) setDocHtml(null);
+          }
+          adjuntosService.revocarBlobUrl(blobUrl);
+          created = null;
+          return;
+        }
         setUrl(blobUrl);
       })
       .catch(() => {
-        if (!cancelled) setUrl(null);
+        if (!cancelled) {
+          setUrl(null);
+          setDocHtml(null);
+        }
       });
     return () => {
       cancelled = true;
       adjuntosService.revocarBlobUrl(created);
     };
-  }, [adjunto.IdAdjunto, previewable]);
+  }, [adjunto.IdAdjunto, previewable, office]);
 
-  if (url) {
+  if (url && image) {
     return <img src={url} alt="" className={styles.thumbImg} />;
+  }
+
+  if (url && pdf) {
+    return (
+      <span className={styles.thumbDocWrap}>
+        <iframe
+          src={`${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+          className={styles.thumbDocFrame}
+          title=""
+          tabIndex={-1}
+        />
+      </span>
+    );
+  }
+
+  if (docHtml) {
+    return (
+      <span className={styles.thumbDocWrap}>
+        <span className={styles.thumbDocHtml} dangerouslySetInnerHTML={{ __html: docHtml }} />
+      </span>
+    );
   }
 
   return (
     <span className={styles.thumbFallback}>
       <FileIcon tipoArchivo={adjunto.TipoArchivo} nombreArchivo={adjunto.NombreArchivo} />
-      {isVideo(adjunto.NombreArchivo, adjunto.TipoArchivo || '') ? (
-        <span className={styles.thumbKind}>Video</span>
-      ) : null}
+      {isVideo(name, mime) ? <span className={styles.thumbKind}>Video</span> : null}
+      {pdf ? <span className={styles.thumbKind}>PDF</span> : null}
+      {office ? <span className={styles.thumbKind}>DOC</span> : null}
     </span>
   );
 }
@@ -109,8 +157,8 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
-  const [vista, setVista] = useState<VistaAdjuntos>('filas');
-  const [gruposExpandidos, setGruposExpandidos] = useState<Record<string, boolean>>({});
+  const [vista, setVista] = useState<VistaAdjuntos>('cuadros');
+  const [tipoFiltro, setTipoFiltro] = useState<string>('__todos__');
   const usuarioActual = useUsuarioActual();
   const { puede } = usePermiso();
 
@@ -201,12 +249,12 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
       .sort((a, b) => b.cantidad - a.cantidad);
   }, [adjuntos]);
 
-  const toggleGrupo = (nombre: string) => {
-    setGruposExpandidos((prev) => ({
-      ...prev,
-      [nombre]: !prev[nombre],
-    }));
-  };
+  const visibles = useMemo(() => {
+    if (tipoFiltro === '__todos__') return adjuntos;
+    return adjuntos.filter((a) => (a.TipoImagenNombre || 'Sin categoría') === tipoFiltro);
+  }, [adjuntos, tipoFiltro]);
+
+  const tipoSeleccionado = adjuntosAgrupados.find((g) => g.nombre === tipoFiltro);
 
   const renderActions = (adjunto: Adjunto) => (
     <div className={styles.fileActions}>
@@ -260,16 +308,23 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
 
   if (adjuntos.length === 0) {
     return (
-      <div className={styles.container}>
-        <div className={styles.listHeader}>
-          <h4 className={styles.title}>Archivos adjuntos (0)</h4>
-          {subirBtn}
-        </div>
-        <EmptyState
-          variant="adjuntos"
-          text="Sin archivos adjuntos"
-          description="Subí un archivo o importá una serie DICOM."
-        />
+      <div className={styles.shell}>
+        <section className={styles.panel}>
+          <div className={styles.toolbar}>
+            <div className={styles.toolbarLead}>
+              <h4 className={styles.title}>Archivos de la internación</h4>
+              <p className={styles.subtitle}>Todavía no hay documentos cargados.</p>
+            </div>
+            {subirBtn}
+          </div>
+          <div className={styles.canvas}>
+            <EmptyState
+              variant="adjuntos"
+              text="Sin archivos adjuntos"
+              description="Subí un archivo o importá una serie DICOM."
+            />
+          </div>
+        </section>
       </div>
     );
   }
@@ -277,109 +332,122 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
   return (
     <>
       <AdjuntoFileViewer viewer={viewer} loading={viewerLoading} onClose={closeViewer} />
-      <div className={styles.container}>
-        <div className={styles.listHeader}>
-          <h4 className={styles.title}>Archivos adjuntos ({adjuntos.length})</h4>
-          <div className={styles.headerActions}>
-            <div className={styles.vistaToggle} role="group" aria-label="Formato de lista">
-              <button
-                type="button"
-                className={vista === 'filas' ? styles.vistaBtnActive : styles.vistaBtn}
-                onClick={() => setVista('filas')}
-              >
-                Filas
-              </button>
-              <button
-                type="button"
-                className={vista === 'cuadros' ? styles.vistaBtnActive : styles.vistaBtn}
-                onClick={() => setVista('cuadros')}
-              >
-                Miniaturas
-              </button>
+      <div className={styles.shell}>
+        <section className={styles.panel}>
+          <div className={styles.toolbar}>
+            <div className={styles.toolbarLead}>
+              <h4 className={styles.title}>Archivos de la internación</h4>
+              <p className={styles.subtitle}>
+                {visibles.length} de {adjuntos.length}
+                {tipoFiltro === '__todos__'
+                  ? ' · todos los tipos'
+                  : ` · ${tipoSeleccionado?.nombre || tipoFiltro}`}
+              </p>
             </div>
-            {subirBtn}
-          </div>
-        </div>
-
-        {adjuntosAgrupados.map((grupo) => {
-          const abierto = !!gruposExpandidos[grupo.nombre];
-          return (
-            <div
-              key={grupo.nombre}
-              className={`${styles.grupoContainer} ${abierto ? styles.grupoAbierto : ''}`}
-            >
-              <div className={styles.grupoHeader} onClick={() => toggleGrupo(grupo.nombre)}>
-                <div className={styles.grupoTitulo}>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={abierto ? styles.iconoExpandido : styles.iconoColapsado}
-                  >
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                  <span className={styles.nombreGrupo}>{grupo.nombre}</span>
-                  <span className={styles.cantidadGrupo}>{grupo.cantidad}</span>
-                </div>
-              </div>
-
-              {abierto && vista === 'filas' && (
-                <ul className={styles.fileList}>
-                  {grupo.adjuntos.map((adjunto) => (
-                    <li key={adjunto.IdAdjunto} className={styles.fileItem}>
-                      <div className={styles.fileIcon}>
-                        <FileIcon tipoArchivo={adjunto.TipoArchivo} nombreArchivo={adjunto.NombreArchivo} />
-                      </div>
-                      <div className={styles.fileInfo}>
-                        <div
-                          className={styles.fileName}
-                          onClick={() => handleView(adjunto)}
-                          title="Click para visualizar"
-                        >
-                          {adjunto.NombreArchivo}
-                        </div>
-                        <div className={styles.fileMetadata}>
-                          <span>{adjuntosService.formatearTamanio(adjunto.TamanioBytes)}</span>
-                          <span className={styles.separator}>•</span>
-                          <span>{formatearFecha(adjunto.FechaCarga)}</span>
-                          <span className={styles.separator}>•</span>
-                          <span>{adjunto.NombreUsuario}</span>
-                        </div>
-                      </div>
-                      {renderActions(adjunto)}
-                    </li>
+            <div className={styles.headerActions}>
+              <label className={styles.selectWrap}>
+                <span className={styles.selectLabel}>Tipo</span>
+                <select
+                  className={styles.tipoSelect}
+                  value={tipoFiltro}
+                  onChange={(e) => setTipoFiltro(e.target.value)}
+                >
+                  <option value="__todos__">Todos ({adjuntos.length})</option>
+                  {adjuntosAgrupados.map((g) => (
+                    <option key={g.nombre} value={g.nombre}>
+                      {g.nombre} ({g.cantidad})
+                    </option>
                   ))}
-                </ul>
-              )}
+                </select>
+              </label>
+              <div className={styles.vistaToggle} role="group" aria-label="Formato de lista">
+                <button
+                  type="button"
+                  className={vista === 'filas' ? styles.vistaBtnActive : styles.vistaBtn}
+                  onClick={() => setVista('filas')}
+                >
+                  Filas
+                </button>
+                <button
+                  type="button"
+                  className={vista === 'cuadros' ? styles.vistaBtnActive : styles.vistaBtn}
+                  onClick={() => setVista('cuadros')}
+                >
+                  Miniaturas
+                </button>
+              </div>
+              {subirBtn}
+            </div>
+          </div>
 
-              {abierto && vista === 'cuadros' && (
-                <div className={styles.thumbGrid}>
-                  {grupo.adjuntos.map((adjunto) => (
-                    <article key={adjunto.IdAdjunto} className={styles.thumbCard}>
-                      <button
-                        type="button"
-                        className={styles.thumbHit}
+          <div className={styles.canvas}>
+            {visibles.length === 0 ? (
+              <EmptyState
+                variant="adjuntos"
+                text="Sin archivos en este tipo"
+                description="Elegí otro tipo de estudio en el selector."
+              />
+            ) : vista === 'filas' ? (
+              <ul className={styles.fileList}>
+                {visibles.map((adjunto) => (
+                  <li key={adjunto.IdAdjunto} className={styles.fileItem}>
+                    <div className={styles.fileIcon}>
+                      <FileIcon tipoArchivo={adjunto.TipoArchivo} nombreArchivo={adjunto.NombreArchivo} />
+                    </div>
+                    <div className={styles.fileInfo}>
+                      <div
+                        className={styles.fileName}
                         onClick={() => handleView(adjunto)}
-                        title={adjunto.NombreArchivo}
+                        title="Click para visualizar"
                       >
-                        <AdjuntoThumb adjunto={adjunto} />
-                      </button>
-                      <div className={styles.thumbName} title={adjunto.NombreArchivo}>
                         {adjunto.NombreArchivo}
                       </div>
-                      {renderActions(adjunto)}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                      <div className={styles.fileMetadata}>
+                        <span>{adjunto.TipoImagenNombre || 'Sin categoría'}</span>
+                        <span className={styles.separator}>•</span>
+                        <span>{adjuntosService.formatearTamanio(adjunto.TamanioBytes)}</span>
+                        <span className={styles.separator}>•</span>
+                        <span>{formatearFecha(adjunto.FechaCarga)}</span>
+                        <span className={styles.separator}>•</span>
+                        <span>{adjunto.NombreUsuario}</span>
+                      </div>
+                    </div>
+                    {renderActions(adjunto)}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className={styles.thumbGrid}>
+                {visibles.map((adjunto) => (
+                  <article key={adjunto.IdAdjunto} className={styles.thumbCard}>
+                    <div
+                      className={styles.thumbHit}
+                      onClick={() => handleView(adjunto)}
+                      title={adjunto.NombreArchivo}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          void handleView(adjunto);
+                        }
+                      }}
+                    >
+                      <AdjuntoThumb adjunto={adjunto} />
+                    </div>
+                    <div className={styles.thumbName} title={adjunto.NombreArchivo}>
+                      {adjunto.NombreArchivo}
+                    </div>
+                    <div className={styles.thumbMeta}>
+                      {adjunto.TipoImagenNombre || 'Sin categoría'}
+                    </div>
+                    {renderActions(adjunto)}
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
       </div>
       <ConfirmationModal
         isOpen={pendingDeleteId != null}
