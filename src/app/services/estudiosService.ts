@@ -294,7 +294,13 @@ const estudiosService = {
         setCachedBandejaCount(data);
         return data;
       } catch {
-        return peekCachedBandejaCount() ?? { estudios: 0, interconsultas: 0, urgentes: 0, porServicio: [] };
+        const cached = peekCachedBandejaCount();
+        return {
+          estudios: cached?.estudios || 0,
+          interconsultas: cached?.interconsultas || 0,
+          urgentes: 0,
+          porServicio: [],
+        };
       }
     })().finally(() => {
       conteoInflight.delete(key);
