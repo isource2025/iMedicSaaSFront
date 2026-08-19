@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import estudiosService from '@/app/services/estudiosService';
+import estudiosService, { type BandejaConteo } from '@/app/services/estudiosService';
 import {
 	interconsultasService,
 	type InterconsultaRow,
 } from '@/app/services/interconsultasService';
 import type { PedidoEstudio } from '@/app/types/estudios';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
-import { useAppContext } from '@/app/contexts/AppContext';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
@@ -165,7 +164,6 @@ function fingerprintIc(rows: InterconsultaRow[]) {
 function BandejaPedidosContent() {
 	const searchParams = useSearchParams();
 	const usuario = useUsuarioActual();
-	const { sectorSeleccionado } = useAppContext();
 	const matriculaSesion = usuario?.matricula ?? null;
 
 	const tabParam = String(searchParams.get('tab') || '').toLowerCase();
@@ -175,6 +173,13 @@ function BandejaPedidosContent() {
 
 	const { sectores, loading: loadingSectores } = useSectoresReceptor({ soloMios: true });
 	const [sector, setSector] = useState('');
+	const [qServicio, setQServicio] = useState('');
+	const [resumen, setResumen] = useState<BandejaConteo>({
+		estudios: 0,
+		interconsultas: 0,
+		urgentes: 0,
+		porServicio: [],
+	});
 	const [estudios, setEstudios] = useState<PedidoEstudio[]>([]);
 	const [interconsultas, setInterconsultas] = useState<InterconsultaRow[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -217,16 +222,32 @@ function BandejaPedidosContent() {
 
 	useEffect(() => {
 		const qSector = String(searchParams.get('sector') || '').trim();
-		const resolved = resolveSectorReceptor(
-			qSector
-				? { idSector: qSector, descripcion: sectorSeleccionado?.descripcion }
-				: sectorSeleccionado,
-			sectores,
-		);
-		if (resolved) setSector(resolved);
-		else if (sectores[0]?.valor) setSector(sectores[0].valor);
-		else if (!loadingSectores) setSector('');
-	}, [searchParams, sectorSeleccionado, sectores, loadingSectores]);
+		if (qSector) {
+			const resolved = resolveSectorReceptor(
+				{ idSector: qSector, descripcion: qSector },
+				sectores,
+			);
+			setSector(resolved || qSector);
+			return;
+		}
+		if (sectores.length === 1 && sectores[0]?.valor) {
+			setSector(sectores[0].valor);
+		}
+	}, [searchParams, sectores]);
+
+	const loadResumen = useCallback(async () => {
+		try {
+			const data = await estudiosService.contarLibres({ soloMios: true });
+			setResumen({
+				estudios: data.estudios || 0,
+				interconsultas: data.interconsultas || 0,
+				urgentes: data.urgentes || 0,
+				porServicio: data.porServicio || [],
+			});
+		} catch {
+			/* se mantiene el último resumen */
+		}
+	}, []);
 
 	const load = useCallback(async (opts?: { silent?: boolean }) => {
 		const sec = sectorRef.current.trim();
@@ -234,7 +255,8 @@ function BandejaPedidosContent() {
 		if (!sec) {
 			setEstudios([]);
 			setInterconsultas([]);
-			if (!loadingSectoresRef.current && sectoresLenRef.current === 0) setLoading(false);
+			setLoading(false);
+			void loadResumen();
 			return;
 		}
 		const silent = Boolean(opts?.silent);
@@ -269,8 +291,9 @@ function BandejaPedidosContent() {
 			}
 		} finally {
 			setLoading(false);
+			void loadResumen();
 		}
-	}, []);
+	}, [loadResumen]);
 
 	useEffect(() => {
 		if (!cumplirIc) return;
@@ -292,20 +315,23 @@ function BandejaPedidosContent() {
 	}, [sector, tab, load]);
 
 	useEffect(() => {
-		if (!sector.trim()) return;
+		void loadResumen();
 		const id = window.setInterval(() => {
 			if (document.visibilityState !== 'visible') return;
-			void load({ silent: true });
+			void loadResumen();
+			if (sectorRef.current.trim()) void load({ silent: true });
 		}, POLL_MS);
 		const onVis = () => {
-			if (document.visibilityState === 'visible') void load({ silent: true });
+			if (document.visibilityState !== 'visible') return;
+			void loadResumen();
+			if (sectorRef.current.trim()) void load({ silent: true });
 		};
 		document.addEventListener('visibilitychange', onVis);
 		return () => {
 			window.clearInterval(id);
 			document.removeEventListener('visibilitychange', onVis);
 		};
-	}, [sector, tab, load]);
+	}, [load, loadResumen, sector, tab]);
 
 	const esMioEstudio = (r: PedidoEstudio) =>
 		matriculaSesion != null &&
@@ -409,32 +435,157 @@ function BandejaPedidosContent() {
 			? rowsEstudio.filter((r) => esMioEstudio(r)).length
 			: rowsIc.filter((r) => esMioIc(r)).length;
 	const total = tab === 'estudios' ? rowsEstudio.length : rowsIc.length;
+	const vistaPanorama = !sector.trim() && sectores.length > 1;
+	const servicioActual = sectores.find((s) => s.valor === sector);
+	const pendientesServicios = (resumen.porServicio || []).filter((s) => s.total > 0);
+	const qSvc = qServicio.trim().toLowerCase();
+	const serviciosVisibles = pendientesServicios.filter(
+		(s) =>
+			!qSvc ||
+			s.descripcion.toLowerCase().includes(qSvc) ||
+			s.valor.toLowerCase().includes(qSvc),
+	);
+	const serviciosSinPendiente = (resumen.porServicio || []).filter((s) => s.total <= 0).length;
+	const totalPendientes = resumen.estudios + resumen.interconsultas;
+
+	const abrirServicio = (valor: string, nextTab?: Tab) => {
+		if (nextTab) setTab(nextTab);
+		setSector(valor);
+	};
 
 	return (
 		<div className={styles.page}>
 			<header className={styles.hero}>
 				<div className={styles.heroText}>
+					{!vistaPanorama && sectores.length > 1 ? (
+						<button type="button" className={styles.backBtn} onClick={() => setSector('')}>
+							← Todos los servicios
+						</button>
+					) : null}
 					<p className={styles.eyebrow}>Recepción de pedidos</p>
 					<h1 className={styles.title}>Bandeja</h1>
 					<p className={styles.subtitle}>
-						Estudios e interconsultas de tu servicio. Un pedido, una persona.
+						{vistaPanorama
+							? 'Pendientes libres de todos los servicios. Entrá al que tengas que atender.'
+							: servicioActual
+								? `${servicioActual.descripcion}. Un pedido, una persona.`
+								: 'Estudios e interconsultas. Un pedido, una persona.'}
 					</p>
 				</div>
-				<div className={styles.stats}>
-					<div className={`${styles.stat} ${styles.statLibre}`}>
-						<span className={styles.statValue}>{libres}</span>
-						<span className={styles.statLabel}>Libres</span>
+				{vistaPanorama ? null : (
+					<div className={styles.stats}>
+						<div className={`${styles.stat} ${styles.statLibre}`}>
+							<span className={styles.statValue}>{libres}</span>
+							<span className={styles.statLabel}>Libres</span>
+						</div>
+						<div className={`${styles.stat} ${styles.statMio}`}>
+							<span className={styles.statValue}>{mios}</span>
+							<span className={styles.statLabel}>Tuyos</span>
+						</div>
+						<div className={styles.stat}>
+							<span className={styles.statValue}>{total}</span>
+							<span className={styles.statLabel}>Total</span>
+						</div>
 					</div>
-					<div className={`${styles.stat} ${styles.statMio}`}>
-						<span className={styles.statValue}>{mios}</span>
-						<span className={styles.statLabel}>Tuyos</span>
-					</div>
-					<div className={styles.stat}>
-						<span className={styles.statValue}>{total}</span>
-						<span className={styles.statLabel}>Total</span>
-					</div>
-				</div>
+				)}
 			</header>
+
+			{error ? <div className={styles.error}>{error}</div> : null}
+
+			{vistaPanorama ? (
+				<div className={styles.overview}>
+					<div className={styles.kpis}>
+						<div className={styles.kpi}>
+							<span className={styles.kpiValue}>{totalPendientes}</span>
+							<span className={styles.kpiLabel}>Pendientes</span>
+							<span className={styles.kpiHint}>Libres para aceptar</span>
+						</div>
+						<div className={`${styles.kpi} ${styles.kpiEst}`}>
+							<span className={styles.kpiValue}>{resumen.estudios}</span>
+							<span className={styles.kpiLabel}>Estudios</span>
+							<span className={styles.kpiHint}>Todos los servicios</span>
+						</div>
+						<div className={`${styles.kpi} ${styles.kpiIc}`}>
+							<span className={styles.kpiValue}>{resumen.interconsultas}</span>
+							<span className={styles.kpiLabel}>Interconsultas</span>
+							<span className={styles.kpiHint}>Todos los servicios</span>
+						</div>
+						<div className={`${styles.kpi} ${styles.kpiUrg}`}>
+							<span className={styles.kpiValue}>{resumen.urgentes}</span>
+							<span className={styles.kpiLabel}>Urgentes</span>
+							<span className={styles.kpiHint}>Prioridad clínica</span>
+						</div>
+					</div>
+					<div className={styles.overviewHead}>
+						<div>
+							<h2 className={styles.overviewTitle}>Por servicio</h2>
+							<p className={styles.overviewMeta}>
+								{pendientesServicios.length} con pedidos
+								{serviciosSinPendiente > 0 ? ` · ${serviciosSinPendiente} sin pendientes` : ''}
+							</p>
+						</div>
+						<input
+							className={styles.svcSearch}
+							type="search"
+							placeholder="Buscar servicio…"
+							value={qServicio}
+							onChange={(e) => setQServicio(e.target.value)}
+						/>
+					</div>
+					{loadingSectores && sectores.length === 0 ? (
+						<p className={styles.empty}>Cargando servicios…</p>
+					) : serviciosVisibles.length === 0 ? (
+						<div className={styles.emptyCard}>
+							<p className={styles.emptyTitle}>
+								{qSvc ? 'Ningún servicio coincide' : 'Nada pendiente'}
+							</p>
+							<p className={styles.emptyHint}>
+								{qSvc
+									? 'Probá con otro nombre o código.'
+									: 'Cuando llegue un pedido libre, aparece acá.'}
+							</p>
+						</div>
+					) : (
+						<div className={styles.svcGrid}>
+							{serviciosVisibles.map((s) => (
+								<button
+									key={s.valor}
+									type="button"
+									className={`${styles.svcCard} ${s.urgentes > 0 ? styles.svcCardUrg : ''}`}
+									onClick={() =>
+										abrirServicio(
+											s.valor,
+											s.interconsultas > s.estudios ? 'interconsultas' : 'estudios',
+										)
+									}
+								>
+									<div className={styles.svcTop}>
+										<div>
+											<p className={styles.svcName}>{s.descripcion}</p>
+											<p className={styles.svcCode}>{s.valor}</p>
+										</div>
+										<span className={styles.svcTotal}>{s.total}</span>
+									</div>
+									<div className={styles.svcSplit}>
+										<span className={`${styles.svcChip} ${styles.svcChipEst}`}>
+											{s.estudios} estudios
+										</span>
+										<span className={`${styles.svcChip} ${styles.svcChipIc}`}>
+											{s.interconsultas} interc.
+										</span>
+										{s.urgentes > 0 ? (
+											<span className={`${styles.svcChip} ${styles.svcChipUrg}`}>
+												{s.urgentes} urgentes
+											</span>
+										) : null}
+									</div>
+								</button>
+							))}
+						</div>
+					)}
+				</div>
+			) : (
+			<>
 
 			<div className={styles.toolbar}>
 				<label className={styles.field}>
@@ -734,6 +885,9 @@ function BandejaPedidosContent() {
 						);
 					})}
 				</ul>
+			)}
+
+			</>
 			)}
 
 			{selectedEstudio ? (

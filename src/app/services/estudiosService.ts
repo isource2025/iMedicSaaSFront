@@ -23,8 +23,24 @@ async function parseJson<T>(res: Response): Promise<T | null> {
   }
 }
 
+export type BandejaServicioConteo = {
+  valor: string;
+  descripcion: string;
+  estudios: number;
+  interconsultas: number;
+  urgentes: number;
+  total: number;
+};
+
+export type BandejaConteo = {
+  estudios: number;
+  interconsultas: number;
+  urgentes: number;
+  porServicio: BandejaServicioConteo[];
+};
+
 const sectoresInflight = new Map<string, Promise<SectorReceptorEstudio[]>>();
-const conteoInflight = new Map<string, Promise<{ estudios: number; interconsultas: number }>>();
+const conteoInflight = new Map<string, Promise<BandejaConteo>>();
 
 async function fetchSectoresReceptor(soloMios: boolean): Promise<SectorReceptorEstudio[]> {
   const key = soloMios ? 'mios' : 'all';
@@ -237,7 +253,7 @@ const estudiosService = {
     return fetchSectoresReceptor(soloMios);
   },
 
-  async contarLibres(opts?: { soloMios?: boolean }): Promise<{ estudios: number; interconsultas: number }> {
+  async contarLibres(opts?: { soloMios?: boolean }): Promise<BandejaConteo> {
     const soloMios = Boolean(opts?.soloMios);
     const key = soloMios ? 'mios' : 'all';
     const pending = conteoInflight.get(key);
@@ -252,16 +268,33 @@ const estudiosService = {
         if (!res.ok) throw new Error('conteo');
         const json = await parseJson<{
           success?: boolean;
-          data?: { estudios?: number; interconsultas?: number };
+          data?: {
+            estudios?: number;
+            interconsultas?: number;
+            urgentes?: number;
+            porServicio?: BandejaServicioConteo[];
+          };
         }>(res);
-        const data = {
+        const porServicio = Array.isArray(json?.data?.porServicio)
+          ? json.data.porServicio.map((s) => ({
+              valor: String(s.valor || '').trim(),
+              descripcion: String(s.descripcion || s.valor || '').trim(),
+              estudios: Number(s.estudios) || 0,
+              interconsultas: Number(s.interconsultas) || 0,
+              urgentes: Number(s.urgentes) || 0,
+              total: Number(s.total) || Number(s.estudios) + Number(s.interconsultas) || 0,
+            }))
+          : [];
+        const data: BandejaConteo = {
           estudios: Number(json?.data?.estudios) || 0,
           interconsultas: Number(json?.data?.interconsultas) || 0,
+          urgentes: Number(json?.data?.urgentes) || 0,
+          porServicio,
         };
         setCachedBandejaCount(data);
         return data;
       } catch {
-        return peekCachedBandejaCount() ?? { estudios: 0, interconsultas: 0 };
+        return peekCachedBandejaCount() ?? { estudios: 0, interconsultas: 0, urgentes: 0, porServicio: [] };
       }
     })().finally(() => {
       conteoInflight.delete(key);
