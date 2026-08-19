@@ -448,27 +448,61 @@ function BandejaPedidosContent() {
 	const serviciosSinPendiente = (resumen.porServicio || []).filter((s) => s.total <= 0).length;
 	const totalPendientes = resumen.estudios + resumen.interconsultas;
 
+	const puedeVolver = !vistaPanorama && sectores.length > 1;
+
+	const volverAPanorama = () => {
+		setSector('');
+		setQServicio('');
+	};
+
 	const abrirServicio = (valor: string, nextTab?: Tab) => {
 		if (nextTab) setTab(nextTab);
 		setSector(valor);
+		const main = document.querySelector('main');
+		if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+		else window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
+
+	useEffect(() => {
+		if (!puedeVolver) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key !== 'Escape') return;
+			if (selectedEstudio || selectedIc || cumplirEstudio || cumplirIc) return;
+			setSector('');
+			setQServicio('');
+		};
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	}, [puedeVolver, selectedEstudio, selectedIc, cumplirEstudio, cumplirIc]);
 
 	return (
 		<div className={styles.page}>
+			{puedeVolver ? (
+				<div className={styles.queueContext}>
+					<button type="button" className={styles.backBarBtn} onClick={volverAPanorama}>
+						<span className={styles.backBarIcon} aria-hidden>
+							←
+						</span>
+						Volver a todos los servicios
+					</button>
+					<p className={styles.queueWhere}>
+						Estás en <strong>{servicioActual?.descripcion || 'este servicio'}</strong>
+						{servicioActual?.valor ? ` · ${servicioActual.valor}` : ''}
+					</p>
+				</div>
+			) : null}
+
 			<header className={styles.hero}>
 				<div className={styles.heroText}>
-					{!vistaPanorama && sectores.length > 1 ? (
-						<button type="button" className={styles.backBtn} onClick={() => setSector('')}>
-							← Todos los servicios
-						</button>
-					) : null}
 					<p className={styles.eyebrow}>Recepción de pedidos</p>
-					<h1 className={styles.title}>Bandeja</h1>
+					<h1 className={styles.title}>
+						{vistaPanorama ? 'Bandeja' : servicioActual?.descripcion || 'Bandeja'}
+					</h1>
 					<p className={styles.subtitle}>
 						{vistaPanorama
-							? 'Pendientes libres de todos los servicios. Entrá al que tengas que atender.'
+							? 'Elegí el servicio al que querés entrar. Después podés volver acá con un clic.'
 							: servicioActual
-								? `${servicioActual.descripcion}. Un pedido, una persona.`
+								? 'Cola de este servicio. Un pedido, una persona.'
 								: 'Estudios e interconsultas. Un pedido, una persona.'}
 					</p>
 				</div>
@@ -520,7 +554,10 @@ function BandejaPedidosContent() {
 						<div>
 							<h2 className={styles.overviewTitle}>Por servicio</h2>
 							<p className={styles.overviewMeta}>
-								{pendientesServicios.length} con pedidos
+								Tocá una tarjeta para abrir la cola
+								{pendientesServicios.length > 0
+									? ` · ${pendientesServicios.length} con pedidos`
+									: ''}
 								{serviciosSinPendiente > 0 ? ` · ${serviciosSinPendiente} sin pendientes` : ''}
 							</p>
 						</div>
@@ -552,6 +589,7 @@ function BandejaPedidosContent() {
 									key={s.valor}
 									type="button"
 									className={`${styles.svcCard} ${s.urgentes > 0 ? styles.svcCardUrg : ''}`}
+									aria-label={`Abrir cola de ${s.descripcion}`}
 									onClick={() =>
 										abrirServicio(
 											s.valor,
@@ -579,6 +617,10 @@ function BandejaPedidosContent() {
 											</span>
 										) : null}
 									</div>
+									<span className={styles.svcCta}>
+										Abrir cola
+										<span aria-hidden> →</span>
+									</span>
 								</button>
 							))}
 						</div>
@@ -589,7 +631,7 @@ function BandejaPedidosContent() {
 
 			<div className={styles.toolbar}>
 				<label className={styles.field}>
-					<span>Servicio</span>
+					<span>{sectores.length > 1 ? 'Cambiar servicio' : 'Servicio'}</span>
 					<select
 						className={styles.select}
 						value={sector}
@@ -597,7 +639,11 @@ function BandejaPedidosContent() {
 						disabled={loadingSectores && sectores.length === 0}
 					>
 						<option value="">
-							{loadingSectores && sectores.length === 0 ? 'Cargando…' : 'Seleccionar…'}
+							{loadingSectores && sectores.length === 0
+								? 'Cargando…'
+								: sectores.length > 1
+									? 'Todos los servicios'
+									: 'Seleccionar…'}
 						</option>
 						{sectores.map((s) => (
 							<option key={s.valor} value={s.valor}>
@@ -687,8 +733,6 @@ function BandejaPedidosContent() {
 					Limpiar filtros
 				</button>
 			</div>
-
-			{error ? <div className={styles.error}>{error}</div> : null}
 
 			{loadingSectores && sectores.length === 0 ? (
 				<p className={styles.empty}>Cargando servicios…</p>
