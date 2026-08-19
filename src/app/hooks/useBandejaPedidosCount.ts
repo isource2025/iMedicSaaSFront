@@ -1,10 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
-import { interconsultasService } from '@/app/services/interconsultasService';
-import { useAppContext } from '@/app/contexts/AppContext';
-import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
+import { peekCachedBandejaCount } from '@/app/utils/serviciosReceptorCache';
 
 const POLL_MS = 45_000;
 
@@ -23,7 +21,6 @@ export function useBandejaPedidosCount(
 	const poll = options?.poll !== false;
 	const [estudios, setEstudios] = useState(0);
 	const [interconsultas, setInterconsultas] = useState(0);
-	const { sectorSeleccionado } = useAppContext();
 
 	const refresh = useCallback(async () => {
 		if (!enabled) {
@@ -32,39 +29,26 @@ export function useBandejaPedidosCount(
 			return;
 		}
 		try {
-			const sectores = await estudiosService.listarSectoresReceptor({ soloMios: true });
-			if (!sectores.length) {
-				setEstudios(0);
-				setInterconsultas(0);
-				return;
-			}
-			const preferred = resolveSectorReceptor(sectorSeleccionado, sectores);
-			const ordered = preferred
-				? [preferred, ...sectores.map((s) => s.valor).filter((v) => v !== preferred)]
-				: sectores.map((s) => s.valor);
-			const unique = Array.from(
-				new Set(ordered.map((v) => String(v || '').trim()).filter(Boolean)),
-			);
-
-			const counts = await Promise.all(
-				unique.map(async (sector) => {
-					const [est, ics] = await Promise.all([
-						estudiosService.listarPendientes(sector),
-						interconsultasService.listarPendientes(sector),
-					]);
-					return {
-						estudios: est.filter((r) => !r.Tomado).length,
-						interconsultas: ics.filter((r) => !r.Tomado).length,
-					};
-				}),
-			);
-			setEstudios(counts.reduce((a, b) => a + b.estudios, 0));
-			setInterconsultas(counts.reduce((a, b) => a + b.interconsultas, 0));
+			const data = await estudiosService.contarLibres({ soloMios: true });
+			setEstudios(data.estudios);
+			setInterconsultas(data.interconsultas);
 		} catch {
-			setEstudios(0);
-			setInterconsultas(0);
+			const fallback = peekCachedBandejaCount();
+			if (fallback) {
+				setEstudios(fallback.estudios);
+				setInterconsultas(fallback.interconsultas);
+			}
 		}
-	}, [enabled, sectorSeleccionado]);
+	}, [enabled]);
+
+	useLayoutEffect(() => {
+		if (!enabled) return;
+		const local = peekCachedBandejaCount();
+		if (local) {
+			setEstudios(local.estudios);
+			setInterconsultas(local.interconsultas);
+		}
+	}, [enabled]);
 
 	useEffect(() => {
 		if (!enabled) return;

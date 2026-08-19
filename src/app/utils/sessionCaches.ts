@@ -1,6 +1,7 @@
 import { clearCachedBedsList } from './bedsListCache';
 import { clearBedSnapshot } from './bedSnapshotCache';
 import { clearStoredBedsListFilters } from './bedsListFilters';
+import { clearServiciosReceptorCache } from './serviciosReceptorCache';
 
 /**
  * Limpia caches de UI atados al tenant (empresa).
@@ -26,6 +27,11 @@ export function clearTenantUiCaches(): void {
 		if (typeof localStorage !== 'undefined') {
 			localStorage.removeItem('sectorSeleccionado');
 		}
+	} catch {
+		/* ignore */
+	}
+	try {
+		clearServiciosReceptorCache();
 	} catch {
 		/* ignore */
 	}

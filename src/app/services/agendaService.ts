@@ -618,10 +618,8 @@ export const agendaService = {
 	},
 
 	async listarSectoresReceptorEstudios(): Promise<SectorReceptorEstudio[]> {
-		const r = await apiService.get<ApiResp<SectorReceptorEstudio[]>>(
-			'/agenda/sectores-receptor-estudios',
-		);
-		return r.data.data;
+		const { default: estudiosService } = await import('./estudiosService');
+		return estudiosService.listarSectoresReceptor();
 	},
 
 	async buscarClientes(q: string, limit = 30): Promise<ClienteCobertura[]> {

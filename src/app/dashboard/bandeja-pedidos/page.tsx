@@ -7,9 +7,10 @@ import {
 	interconsultasService,
 	type InterconsultaRow,
 } from '@/app/services/interconsultasService';
-import type { PedidoEstudio, SectorReceptorEstudio } from '@/app/types/estudios';
+import type { PedidoEstudio } from '@/app/types/estudios';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { useAppContext } from '@/app/contexts/AppContext';
+import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
 import PedidoAdjuntosField from '@/app/components/beds/estudios/PedidoAdjuntosField';
@@ -172,7 +173,7 @@ function BandejaPedidosContent() {
 		tabParam === 'interconsultas' || tabParam === 'interconsulta' ? 'interconsultas' : 'estudios',
 	);
 
-	const [sectores, setSectores] = useState<SectorReceptorEstudio[]>([]);
+	const { sectores, loading: loadingSectores } = useSectoresReceptor({ soloMios: true });
 	const [sector, setSector] = useState('');
 	const [estudios, setEstudios] = useState<PedidoEstudio[]>([]);
 	const [interconsultas, setInterconsultas] = useState<InterconsultaRow[]>([]);
@@ -195,9 +196,13 @@ function BandejaPedidosContent() {
 	const fpRef = useRef('');
 	const sectorRef = useRef(sector);
 	const tabRef = useRef(tab);
+	const loadingSectoresRef = useRef(loadingSectores);
+	const sectoresLenRef = useRef(sectores.length);
 	const filtroRef = useRef({ paciente: '', fechaDesde: '', fechaHasta: '' });
 	sectorRef.current = sector;
 	tabRef.current = tab;
+	loadingSectoresRef.current = loadingSectores;
+	sectoresLenRef.current = sectores.length;
 	filtroRef.current = {
 		paciente: filtroPaciente,
 		fechaDesde: filtroFechaDesde,
@@ -211,20 +216,17 @@ function BandejaPedidosContent() {
 	}, [searchParams]);
 
 	useEffect(() => {
-		void estudiosService.listarSectoresReceptor({ soloMios: true }).then((list) => {
-			setSectores(list);
-			const qSector = String(searchParams.get('sector') || '').trim();
-			const resolved = resolveSectorReceptor(
-				qSector
-					? { idSector: qSector, descripcion: sectorSeleccionado?.descripcion }
-					: sectorSeleccionado,
-				list,
-			);
-			if (resolved) setSector(resolved);
-			else if (list[0]?.valor) setSector(list[0].valor);
-			else setSector('');
-		});
-	}, [searchParams, sectorSeleccionado]);
+		const qSector = String(searchParams.get('sector') || '').trim();
+		const resolved = resolveSectorReceptor(
+			qSector
+				? { idSector: qSector, descripcion: sectorSeleccionado?.descripcion }
+				: sectorSeleccionado,
+			sectores,
+		);
+		if (resolved) setSector(resolved);
+		else if (sectores[0]?.valor) setSector(sectores[0].valor);
+		else if (!loadingSectores) setSector('');
+	}, [searchParams, sectorSeleccionado, sectores, loadingSectores]);
 
 	const load = useCallback(async (opts?: { silent?: boolean }) => {
 		const sec = sectorRef.current.trim();
@@ -232,7 +234,7 @@ function BandejaPedidosContent() {
 		if (!sec) {
 			setEstudios([]);
 			setInterconsultas([]);
-			setLoading(false);
+			if (!loadingSectoresRef.current && sectoresLenRef.current === 0) setLoading(false);
 			return;
 		}
 		const silent = Boolean(opts?.silent);
@@ -441,8 +443,11 @@ function BandejaPedidosContent() {
 						className={styles.select}
 						value={sector}
 						onChange={(e) => setSector(e.target.value)}
+						disabled={loadingSectores && sectores.length === 0}
 					>
-						<option value="">Seleccionar…</option>
+						<option value="">
+							{loadingSectores && sectores.length === 0 ? 'Cargando…' : 'Seleccionar…'}
+						</option>
 						{sectores.map((s) => (
 							<option key={s.valor} value={s.valor}>
 								{s.descripcion} ({s.valor})
@@ -534,7 +539,9 @@ function BandejaPedidosContent() {
 
 			{error ? <div className={styles.error}>{error}</div> : null}
 
-			{!loading && sectores.length === 0 ? (
+			{loadingSectores && sectores.length === 0 ? (
+				<p className={styles.empty}>Cargando servicios…</p>
+			) : !loading && sectores.length === 0 ? (
 				<div className={styles.emptyCard}>
 					<p className={styles.emptyTitle}>Sin servicios asignados</p>
 					<p className={styles.emptyHint}>

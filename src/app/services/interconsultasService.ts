@@ -66,16 +66,8 @@ export const interconsultasService = {
 	},
 
 	async listarSectoresDestino(): Promise<SectorDestinoInterconsulta[]> {
-		const res = await apiFetch('/interconsultas/sectores-destino');
-		const json = await parseJson<{
-			success?: boolean;
-			data?: SectorDestinoInterconsulta[];
-			mensaje?: string;
-		}>(res);
-		if (!res.ok || !json?.success) {
-			throw new Error(json?.mensaje || 'No se pudieron cargar los servicios destino');
-		}
-		return Array.isArray(json.data) ? json.data : [];
+		const { default: estudiosService } = await import('@/app/services/estudiosService');
+		return estudiosService.listarSectoresReceptor();
 	},
 
 	async listarPendientes(

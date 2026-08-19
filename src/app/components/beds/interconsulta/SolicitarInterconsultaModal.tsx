@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-	interconsultasService,
-	SectorDestinoInterconsulta,
-} from '@/app/services/interconsultasService';
+import { interconsultasService } from '@/app/services/interconsultasService';
+import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from '../estudios/PedidoEstudioForms.module.css';
 
@@ -25,7 +23,7 @@ export default function SolicitarInterconsultaModal({
 	onClose,
 	onCreated,
 }: Props) {
-	const [sectores, setSectores] = useState<SectorDestinoInterconsulta[]>([]);
+	const { sectores } = useSectoresReceptor({ enabled: open });
 	const [idSectorReceptor, setIdSectorReceptor] = useState('');
 	const [urgencia, setUrgencia] = useState<Urgencia>('Normal');
 	const [motivo, setMotivo] = useState('');
@@ -38,10 +36,6 @@ export default function SolicitarInterconsultaModal({
 		setUrgencia('Normal');
 		setMotivo('');
 		setError(null);
-		void interconsultasService
-			.listarSectoresDestino()
-			.then(setSectores)
-			.catch(() => setSectores([]));
 	}, [open]);
 
 	if (!open) return null;

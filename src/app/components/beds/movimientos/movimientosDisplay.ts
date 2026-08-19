@@ -9,7 +9,12 @@ export function esCodigoCrudo(valor: string): boolean {
 }
 
 export function nombreOperador(m: Record<string, unknown>): string {
+	const lower = Object.fromEntries(
+		Object.entries(m).map(([k, v]) => [k.toLowerCase(), v]),
+	);
 	const candidatos = [
+		lower.operadornombre,
+		lower.nombreoperador,
 		m.OperadorNombre,
 		m.operadorNombre,
 		m.NombreOperador,
@@ -19,7 +24,7 @@ export function nombreOperador(m: Record<string, unknown>): string {
 		const nombre = String(c || "").trim();
 		if (nombre && !esCodigoCrudo(nombre)) return nombre;
 	}
-	const raw = String(m.Operador || m.operador || "").trim();
+	const raw = String(m.Operador || m.operador || lower.operador || "").trim();
 	if (raw && !esCodigoCrudo(raw) && /[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(raw)) return raw;
 	return "—";
 }

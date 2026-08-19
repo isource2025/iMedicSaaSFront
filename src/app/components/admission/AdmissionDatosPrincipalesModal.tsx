@@ -152,8 +152,15 @@ export default function AdmissionDatosPrincipalesModal({
       setPatientLabel(
         `Visita #${v.NumeroVisita} · ${String(v.ApellidoYNombre || '').trim()} · DNI ${v.NumeroDocumento || '—'}`,
       );
-      setFechaEgreso(String(v.FechaEgreso || '').slice(0, 10));
-      setHoraEgreso(String(v.HoraEgreso || '').slice(0, 5));
+      const fe = String(v.FechaEgreso || '').slice(0, 10);
+      const he = String(v.HoraEgreso || '').slice(0, 5);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fe)) {
+        setFechaEgreso(fe);
+        setHoraEgreso(/^\d{2}:\d{2}/.test(he) ? he.slice(0, 5) : '');
+      } else {
+        setFechaEgreso('');
+        setHoraEgreso('');
+      }
       const opCod =
         v.OperadorEgreso != null && Number(v.OperadorEgreso) > 0 ? String(v.OperadorEgreso) : '';
       const opNombre = String(v.OperadorEgresoNombre || '').trim();

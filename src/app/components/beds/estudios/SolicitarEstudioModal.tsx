@@ -2,11 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
-import type {
-	PedidoEstudio,
-	SectorReceptorEstudio,
-	TipoPedidoEstudio,
-} from '@/app/types/estudios';
+import type { PedidoEstudio, TipoPedidoEstudio } from '@/app/types/estudios';
+import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveReceptorPorTipo } from '@/app/utils/resolveSectorReceptor';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
@@ -53,7 +50,7 @@ export default function SolicitarEstudioModal({
 	const [tipos, setTipos] = useState<TipoPedidoEstudio[]>([]);
 	const [loadingTipos, setLoadingTipos] = useState(false);
 	const [tipo, setTipo] = useState<TipoPedidoEstudio | null>(null);
-	const [sectores, setSectores] = useState<SectorReceptorEstudio[]>([]);
+	const { sectores } = useSectoresReceptor({ enabled: open });
 	const [idSectorReceptor, setIdSectorReceptor] = useState('');
 	const [urgencia, setUrgencia] = useState<Urgencia>('Normal');
 	const [notas, setNotas] = useState('');
@@ -76,7 +73,6 @@ export default function SolicitarEstudioModal({
 			setUrgencia('Normal');
 			setNotas('');
 		}
-		void estudiosService.listarSectoresReceptor().then(setSectores).catch(() => setSectores([]));
 	}, [open, pedido]);
 
 	useEffect(() => {

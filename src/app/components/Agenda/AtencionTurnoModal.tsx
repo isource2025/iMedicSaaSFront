@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { agendaService, type AgendaSlot, type DiagnosticoCie10, type PracticaFacturacion, type SectorReceptorEstudio, type TipoPedidoEstudio } from '@/app/services/agendaService';
+import { agendaService, type AgendaSlot, type DiagnosticoCie10, type PracticaFacturacion, type TipoPedidoEstudio } from '@/app/services/agendaService';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AgendaAdjuntosTab from '@/app/components/Agenda/AgendaAdjuntosTab';
 import TipoPedidoEstudioPicker from '@/app/components/Agenda/TipoPedidoEstudioPicker';
 import PracticaFacturacionPicker from '@/app/components/Agenda/PracticaFacturacionPicker';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { useModalLayer } from '@/app/hooks/useModalLayer';
+import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveReceptorPorTipo, sectorCoincideServicio } from '@/app/utils/resolveSectorReceptor';
 import styles from './AtencionTurnoModal.module.css';
 
@@ -151,8 +152,9 @@ export default function AtencionTurnoModal({
 	const [icDestinoDraft, setIcDestinoDraft] = useState('');
 	const [icMotivoDraft, setIcMotivoDraft] = useState('');
 	const [icUrgenciaDraft, setIcUrgenciaDraft] = useState<'Normal' | 'Urgente' | 'Medio'>('Normal');
-	const [sectoresReceptor, setSectoresReceptor] = useState<SectorReceptorEstudio[]>([]);
-	const [loadingSectores, setLoadingSectores] = useState(false);
+	const { sectores: sectoresReceptor, loading: loadingSectores } = useSectoresReceptor({
+		enabled: open,
+	});
 
 	const [visited, setVisited] = useState<Record<WizardStep, boolean>>({
 		rac: false,
@@ -293,26 +295,6 @@ export default function AtencionTurnoModal({
 			cancel = true;
 		};
 	}, [open, turno?.idTurno, modoEdicion]);
-
-	useEffect(() => {
-		if (!open) return;
-		let cancel = false;
-		setLoadingSectores(true);
-		agendaService
-			.listarSectoresReceptorEstudios()
-			.then((rows) => {
-				if (!cancel) setSectoresReceptor(rows);
-			})
-			.catch(() => {
-				if (!cancel) setSectoresReceptor([]);
-			})
-			.finally(() => {
-				if (!cancel) setLoadingSectores(false);
-			});
-		return () => {
-			cancel = true;
-		};
-	}, [open]);
 
 	useEffect(() => {
 		if (!open) return;

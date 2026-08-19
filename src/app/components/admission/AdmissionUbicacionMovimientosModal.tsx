@@ -9,10 +9,9 @@ import {
 import visitaMovimientoService from '@/app/services/visitaMovimientoService';
 import { getDisposicionesEgreso } from '@/app/services/disposicionEgresoService';
 import diagnosticosService from '@/app/services/diagnosticosService';
-import { clarionDateToISO, fechaLocalISO, horaLocalHHMM, horaMostrada, isoCalendarioADmy } from '@/app/utils/dateUtils';
+import { clarionDateToISO, horaMostrada, isoCalendarioADmy } from '@/app/utils/dateUtils';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
-import { authService } from '@/app/services/authService';
 import { esAdminClinico } from '@/app/hooks/useUsuarioActual';
 import {
   catalogoDisposiciones,
@@ -84,19 +83,6 @@ function textoConfirmacionRevertir(estado: EstadoRevertirEgreso): string {
   const avisos = (estado.avisos || []).map((a) => a.mensaje).filter(Boolean);
   if (!avisos.length) return estado.mensaje;
   return `${estado.mensaje}\n\n${avisos.join('\n\n')}`;
-}
-
-function etiquetaOperadorSesion(): { codigo: string; label: string } {
-  const u = authService.getCurrentUser() as Record<string, unknown> | null;
-  const codigoRaw = u?.codOperador ?? u?.CodOperador ?? u?.idCodOperador ?? '';
-  const codigo = codigoRaw != null && String(codigoRaw).trim() !== '' ? String(codigoRaw).trim() : '';
-  const nom = [u?.apellido, u?.nombre].filter(Boolean).join(', ').trim()
-    || [u?.nombre, u?.apellido].filter(Boolean).join(' ').trim()
-    || String(u?.username || u?.user || '').trim();
-  if (nom && codigo) return { codigo, label: `${nom} (${codigo})` };
-  if (nom) return { codigo, label: nom };
-  if (codigo) return { codigo, label: `Operador ${codigo}` };
-  return { codigo: '', label: 'Sesión sin CodOperador' };
 }
 
 function etiquetaOperadorGuardado(visita: AdmissionDatosPrincipalesVisita | null): string {
@@ -177,45 +163,45 @@ export default function AdmissionUbicacionMovimientosModal({
       setDispCatalogo(catalogoDisposiciones(disp || []));
       const fe = String(payload.visita.FechaEgreso || '').slice(0, 10);
       const he = String(payload.visita.HoraEgreso || '').slice(0, 5);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(fe)) {
+      const tieneEgreso = /^\d{4}-\d{2}-\d{2}$/.test(fe);
+      if (tieneEgreso) {
         setFechaEgreso(fe);
-        setHoraEgreso(/^\d{2}:\d{2}/.test(he) ? he.slice(0, 5) : horaLocalHHMM());
-      } else {
-        setFechaEgreso(fechaLocalISO());
-        setHoraEgreso(horaLocalHHMM());
-      }
-      const dispVisita = Number(payload.visita.DisposicionEgreso);
-      const dispMov = Number((ultimo as MovimientoRow | null)?.DisposicionEgreso);
-      const dispVal =
-        Number.isFinite(dispVisita) && dispVisita > 0
-          ? String(dispVisita)
-          : Number.isFinite(dispMov) && dispMov > 0
-            ? String(dispMov)
-            : '';
-      setDisposicionEgreso(dispVal);
-      const diagCode = String(payload.visita.DiagnosticoEgreso || '').trim();
-      setDiagnosticoEgreso(diagCode);
-      let diagDesc = String(payload.visita.DiagnosticoEgresoDescripcion || '').trim();
-      if (diagCode && !diagDesc) {
-        try {
-          const rows = await diagnosticosService.buscarDiagnosticosCie10(diagCode);
-          const hit = (rows || []).find((r) => String(r.CodigoOMS || '').trim() === diagCode);
-          if (hit) diagDesc = String(hit.descripcion || '').trim();
-        } catch {
-          /* catálogo CIE opcional */
+        setHoraEgreso(/^\d{2}:\d{2}/.test(he) ? he.slice(0, 5) : '');
+        const dispVisita = Number(payload.visita.DisposicionEgreso);
+        const dispMov = Number((ultimo as MovimientoRow | null)?.DisposicionEgreso);
+        const dispVal =
+          Number.isFinite(dispVisita) && dispVisita > 0
+            ? String(dispVisita)
+            : Number.isFinite(dispMov) && dispMov > 0
+              ? String(dispMov)
+              : '';
+        setDisposicionEgreso(dispVal);
+        const diagCode = String(payload.visita.DiagnosticoEgreso || '').trim();
+        setDiagnosticoEgreso(diagCode);
+        let diagDesc = String(payload.visita.DiagnosticoEgresoDescripcion || '').trim();
+        if (diagCode && !diagDesc) {
+          try {
+            const rows = await diagnosticosService.buscarDiagnosticosCie10(diagCode);
+            const hit = (rows || []).find((r) => String(r.CodigoOMS || '').trim() === diagCode);
+            if (hit) diagDesc = String(hit.descripcion || '').trim();
+          } catch {
+            /* catálogo CIE opcional */
+          }
         }
+        setDiagnosticoEgresoDesc(diagDesc);
+        setOperadorEgreso(etiquetaOperadorGuardado(payload.visita));
+      } else {
+        setFechaEgreso('');
+        setHoraEgreso('');
+        setDisposicionEgreso('');
+        setDiagnosticoEgreso('');
+        setDiagnosticoEgresoDesc('');
+        setOperadorEgreso('');
       }
-      setDiagnosticoEgresoDesc(diagDesc);
       setDiagOpen(false);
       setDiagTyping(false);
       setDiagQuery('');
       setDiagResults([]);
-      const guardado = etiquetaOperadorGuardado(payload.visita);
-      if (guardado) {
-        setOperadorEgreso(guardado);
-      } else {
-        setOperadorEgreso(etiquetaOperadorSesion().label);
-      }
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       setError(err?.response?.data?.message || err?.message || 'Error al cargar ubicación / movimientos');
@@ -565,6 +551,7 @@ export default function AdmissionUbicacionMovimientosModal({
                   <input
                     value={operadorEgreso}
                     readOnly
+                    placeholder="Se completa al registrar"
                     title="Se registra automáticamente con el usuario de la sesión (nombre y código)"
                   />
                 </label>

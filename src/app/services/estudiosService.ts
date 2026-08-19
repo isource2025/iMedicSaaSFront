@@ -7,6 +7,13 @@ import type {
   SectorReceptorEstudio,
   TipoPedidoEstudio,
 } from '@/app/types/estudios';
+import {
+  peekCachedBandejaCount,
+  peekCachedSectoresReceptor,
+  SERVICIOS_RECEPTOR_FRESH_MS,
+  setCachedBandejaCount,
+  setCachedSectoresReceptor,
+} from '@/app/utils/serviciosReceptorCache';
 
 async function parseJson<T>(res: Response): Promise<T | null> {
   try {
@@ -14,6 +21,33 @@ async function parseJson<T>(res: Response): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+const sectoresInflight = new Map<string, Promise<SectorReceptorEstudio[]>>();
+const conteoInflight = new Map<string, Promise<{ estudios: number; interconsultas: number }>>();
+
+async function fetchSectoresReceptor(soloMios: boolean): Promise<SectorReceptorEstudio[]> {
+  const key = soloMios ? 'mios' : 'all';
+  const pending = sectoresInflight.get(key);
+  if (pending) return pending;
+  const job = (async () => {
+    const qs = soloMios ? '?soloMios=1' : '';
+    const res = await apiFetch(`/estudios/sectores-receptor${qs}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      return peekCachedSectoresReceptor({ soloMios, allowStale: true }) ?? [];
+    }
+    const json = await parseJson<{ success?: boolean; data?: SectorReceptorEstudio[] }>(res);
+    const list = Array.isArray(json?.data) ? json.data : [];
+    setCachedSectoresReceptor(list, { soloMios });
+    return list;
+  })().finally(() => {
+    sectoresInflight.delete(key);
+  });
+  sectoresInflight.set(key, job);
+  return job;
 }
 
 const estudiosService = {
@@ -185,15 +219,55 @@ const estudiosService = {
     return Array.isArray(json?.data) ? json.data : [];
   },
 
-  async listarSectoresReceptor(opts?: { soloMios?: boolean }): Promise<SectorReceptorEstudio[]> {
-    const qs = opts?.soloMios ? '?soloMios=1' : '';
-    const res = await apiFetch(`/estudios/sectores-receptor${qs}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+  async listarSectoresReceptor(opts?: {
+    soloMios?: boolean;
+    force?: boolean;
+  }): Promise<SectorReceptorEstudio[]> {
+    const soloMios = Boolean(opts?.soloMios);
+    const force = Boolean(opts?.force);
+    if (!force) {
+      const fresh = peekCachedSectoresReceptor({ soloMios, maxAgeMs: SERVICIOS_RECEPTOR_FRESH_MS });
+      if (fresh !== null) return fresh;
+      const stale = peekCachedSectoresReceptor({ soloMios, allowStale: true });
+      if (stale !== null) {
+        void fetchSectoresReceptor(soloMios);
+        return stale;
+      }
+    }
+    return fetchSectoresReceptor(soloMios);
+  },
+
+  async contarLibres(opts?: { soloMios?: boolean }): Promise<{ estudios: number; interconsultas: number }> {
+    const soloMios = Boolean(opts?.soloMios);
+    const key = soloMios ? 'mios' : 'all';
+    const pending = conteoInflight.get(key);
+    if (pending) return pending;
+    const job = (async () => {
+      const qs = soloMios ? '?soloMios=1' : '';
+      try {
+        const res = await apiFetch(`/estudios/pendientes/conteo${qs}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) throw new Error('conteo');
+        const json = await parseJson<{
+          success?: boolean;
+          data?: { estudios?: number; interconsultas?: number };
+        }>(res);
+        const data = {
+          estudios: Number(json?.data?.estudios) || 0,
+          interconsultas: Number(json?.data?.interconsultas) || 0,
+        };
+        setCachedBandejaCount(data);
+        return data;
+      } catch {
+        return peekCachedBandejaCount() ?? { estudios: 0, interconsultas: 0 };
+      }
+    })().finally(() => {
+      conteoInflight.delete(key);
     });
-    if (!res.ok) return [];
-    const json = await parseJson<{ success?: boolean; data?: SectorReceptorEstudio[] }>(res);
-    return Array.isArray(json?.data) ? json.data : [];
+    conteoInflight.set(key, job);
+    return job;
   },
 };
 

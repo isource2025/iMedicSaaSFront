@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
-import type { PedidoEstudio, SectorReceptorEstudio } from '@/app/types/estudios';
+import type { PedidoEstudio } from '@/app/types/estudios';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { useAppContext } from '@/app/contexts/AppContext';
+import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
@@ -28,7 +29,7 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 	const usuario = useUsuarioActual();
 	const { sectorSeleccionado } = useAppContext();
 	const matriculaSesion = usuario?.matricula ?? null;
-	const [sectores, setSectores] = useState<SectorReceptorEstudio[]>([]);
+	const { sectores } = useSectoresReceptor({ soloMios: true, enabled: open });
 	const [sector, setSector] = useState('');
 	const [rows, setRows] = useState<PedidoEstudio[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -39,18 +40,15 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 
 	useEffect(() => {
 		if (!open) return;
-		void estudiosService.listarSectoresReceptor({ soloMios: true }).then((list) => {
-			setSectores(list);
-			const init = String(sectorInicial || '').trim();
-			const resolved = resolveSectorReceptor(
-				init ? { idSector: init, descripcion: sectorSeleccionado?.descripcion } : sectorSeleccionado,
-				list,
-			);
-			if (resolved) setSector(resolved);
-			else if (list[0]?.valor) setSector(list[0].valor);
-			else setSector('');
-		});
-	}, [open, sectorInicial, sectorSeleccionado]);
+		const init = String(sectorInicial || '').trim();
+		const resolved = resolveSectorReceptor(
+			init ? { idSector: init, descripcion: sectorSeleccionado?.descripcion } : sectorSeleccionado,
+			sectores,
+		);
+		if (resolved) setSector(resolved);
+		else if (sectores[0]?.valor) setSector(sectores[0].valor);
+		else setSector('');
+	}, [open, sectorInicial, sectorSeleccionado, sectores]);
 
 	const load = useCallback(async () => {
 		if (!sector.trim()) {

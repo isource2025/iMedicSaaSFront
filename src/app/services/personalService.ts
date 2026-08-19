@@ -1,4 +1,5 @@
 import { apiService } from './axios';
+import { clearServiciosReceptorCache } from '@/app/utils/serviciosReceptorCache';
 import {
 	Personal,
 	PersonalFormData,
@@ -324,7 +325,10 @@ export const addPersonalServicioPedido = async (
 		`/personal/${id}/servicios-pedidos`,
 		{ idServicio },
 	);
-	if (res.data.success && res.data.data) return res.data.data;
+	if (res.data.success && res.data.data) {
+		clearServiciosReceptorCache();
+		return res.data.data;
+	}
 	throw new Error(res.data.mensaje || 'Error al asignar servicio');
 };
 
@@ -336,7 +340,10 @@ export const removePersonalServicioPedido = async (
 	const res = await apiService.delete<ApiResponse<PersonalServicioAsignado[]>>(
 		`/personal/${id}/servicios-pedidos?idServicio=${q}`,
 	);
-	if (res.data.success && res.data.data) return res.data.data;
+	if (res.data.success && res.data.data) {
+		clearServiciosReceptorCache();
+		return res.data.data;
+	}
 	throw new Error(res.data.mensaje || 'Error al quitar servicio');
 };
 
@@ -344,11 +351,19 @@ export const replacePersonalAsignaciones = async (
 	id: number,
 	body: { sectores: string[]; servicios: string[] },
 ): Promise<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }> => {
-	const res = await apiService.put<
-		ApiResponse<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }>
-	>(`/personal/${id}/asignaciones`, body);
-	if (res.data.success && res.data.data) return res.data.data;
-	throw new Error(res.data.mensaje || 'Error al guardar asignaciones');
+	try {
+		const res = await apiService.put<
+			ApiResponse<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }>
+		>(`/personal/${id}/asignaciones`, body);
+		if (res.data.success && res.data.data) {
+			clearServiciosReceptorCache();
+			return res.data.data;
+		}
+		throw new Error(res.data.mensaje || 'Error al guardar asignaciones');
+	} catch (error: unknown) {
+		const ax = error as { response?: { data?: { mensaje?: string } }; message?: string };
+		throw new Error(ax.response?.data?.mensaje || ax.message || 'Error al guardar asignaciones');
+	}
 };
 
 /** Catálogo global de sectores (imSectores). */
