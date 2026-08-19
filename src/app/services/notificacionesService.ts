@@ -36,12 +36,16 @@ export const notificacionesService = {
       success: boolean;
       data: NotificacionItem[];
       pagination: { total: number; page: number; limit: number };
+      error?: string;
     }>('/notificaciones', {
       params: { userId, page, limit, soloNoLeidas },
     });
+    if (!res.data?.success) {
+      throw new Error(res.data?.error || 'Error al listar notificaciones');
+    }
     return {
-      data: res.data?.data ?? [],
-      pagination: res.data?.pagination ?? { total: 0, page, limit },
+      data: Array.isArray(res.data.data) ? res.data.data : [],
+      pagination: res.data.pagination ?? { total: 0, page, limit },
     };
   },
 

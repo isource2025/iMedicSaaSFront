@@ -11,9 +11,10 @@ import styles from './NotificationsFab.module.css';
 function valorPersonalFromUser(user: Record<string, unknown> | null): number | null {
 	if (!user) return null;
 	const raw =
+		user.idValorpersonal ??
 		user.valorPersonal ??
 		user.ValorPersonal ??
-		user.idValorpersonal;
+		user.id;
 	const n = parseInt(String(raw ?? ''), 10);
 	return Number.isFinite(n) && n > 0 ? n : null;
 }
@@ -52,6 +53,7 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 	const [open, setOpen] = useState(false);
 	const [items, setItems] = useState<NotificacionItem[]>([]);
 	const [loadingList, setLoadingList] = useState(false);
+	const [listError, setListError] = useState<string | null>(null);
 	const panelRef = useRef<HTMLDivElement>(null);
 	const { count: bandejaLibres, estudios: bandejaEstudios, interconsultas: bandejaIc } =
 		useBandejaPedidosCount(Boolean(userId));
@@ -76,11 +78,13 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		const vp = valorPersonalFromUser(authService.getCurrentUser() as Record<string, unknown> | null);
 		if (!vp) return;
 		setLoadingList(true);
+		setListError(null);
 		try {
 			const { data } = await notificacionesService.listar(vp, { limit: 40, soloNoLeidas: false });
 			setItems(data);
-		} catch {
+		} catch (e) {
 			setItems([]);
+			setListError(e instanceof Error ? e.message : 'No se pudieron cargar las notificaciones');
 		} finally {
 			setLoadingList(false);
 		}
@@ -124,34 +128,19 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		return () => document.removeEventListener('mousedown', onDoc);
 	}, [open]);
 
-	const marcarTodasAlAbrir = useCallback(async () => {
-		if (!userId) return;
-		try {
-			await notificacionesService.marcarTodasLeidas(userId);
-			setCount(0);
-			setItems((prev) => prev.map((x) => ({ ...x, Leida: 1 })));
-		} catch {
-			/* noop */
-		}
-	}, [userId]);
-
 	useEffect(() => {
 		const onOpenEvent = () => {
 			if (!userId) return;
-			void marcarTodasAlAbrir();
 			setOpen(true);
+			void loadList();
 		};
 		window.addEventListener(OPEN_EVENT, onOpenEvent);
 		return () => window.removeEventListener(OPEN_EVENT, onOpenEvent);
-	}, [userId, marcarTodasAlAbrir]);
+	}, [userId, loadList]);
 
 	const handleOpen = () => {
 		if (!userId) return;
-		setOpen((v) => {
-			const next = !v;
-			if (next) void marcarTodasAlAbrir();
-			return next;
-		});
+		setOpen((v) => !v);
 	};
 
 	const irBandeja = (tab?: 'estudios' | 'interconsultas') => {
@@ -216,15 +205,16 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	const hasUnread = count > 0;
 	const hasPedidos = bandejaLibres > 0;
-	const fabHighlight = hasUnread;
-	const badgeTotal = count;
+	const fabHighlight = hasUnread || hasPedidos;
+	const badgeTotal = hasUnread ? count : bandejaLibres;
+	const fabTone = hasUnread ? styles.fabAlert : hasPedidos ? styles.fabPedidos : styles.fabIdle;
 
 	return (
 		<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={panelRef}>
 			<button
 				id="notifications-fab-trigger"
 				type="button"
-				className={`${styles.fab} ${fabHighlight ? styles.fabAlert : styles.fabIdle}`}
+				className={`${styles.fab} ${fabTone}`}
 				onClick={handleOpen}
 				aria-expanded={open}
 				aria-label={`Notificaciones${fabHighlight ? `, ${badgeTotal} sin leer` : ''}`}
@@ -329,8 +319,14 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 					<div className={styles.panelBody}>
 						{loadingList ? (
 							<p className={styles.muted}>Cargando…</p>
+						) : listError ? (
+							<p className={styles.muted}>{listError}</p>
 						) : items.length === 0 ? (
-							<p className={styles.muted}>No hay notificaciones</p>
+							<p className={styles.muted}>
+								{hasPedidos
+									? 'Los pedidos libres están arriba. Todavía no hay avisos individuales.'
+									: 'No hay notificaciones'}
+							</p>
 						) : (
 							<ul className={styles.list}>
 								{items.map((n) => {

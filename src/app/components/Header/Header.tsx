@@ -47,7 +47,12 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
           {/* Right side - User options */}
           <div className={styles.rightSection}>
             {/* Notifications */}
-            <button className={styles.notificationButton}>
+            <button
+              type="button"
+              className={styles.notificationButton}
+              onClick={() => window.dispatchEvent(new Event('imedic:notifications-open'))}
+              title="Notificaciones"
+            >
               <span className={styles.srOnly}>Ver notificaciones</span>
               <span className={styles.notificationIcon}>🔔</span>
             </button>
