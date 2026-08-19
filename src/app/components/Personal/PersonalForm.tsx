@@ -23,6 +23,7 @@ import { nacionalidadDescripcionACodigo } from '../../utils/nacionalidadCodigo';
 import AgendaTab from './AgendaTab/AgendaTab';
 import PersonalCuentaTab from './PersonalCuentaTab';
 import PersonalAsignacionesTab from './PersonalAsignacionesTab';
+import PersonalFirmaTab from './PersonalFirmaTab';
 import { usePermiso } from '../../hooks/usePermiso';
 
 interface EstadoCivil {
@@ -39,7 +40,7 @@ interface PersonalFormProps {
 	onDelete?: () => void;
 }
 
-type Tab = 'personal' | 'profesional' | 'asignaciones' | 'cuenta' | 'agenda';
+type Tab = 'personal' | 'profesional' | 'firma' | 'asignaciones' | 'cuenta' | 'agenda';
 
 const TIPOS_DOCUMENTO = [
 	{ value: 'DNI', label: 'DNI' },
@@ -198,9 +199,11 @@ export default function PersonalForm({
 		isEditing && (puedeConfigurarAgenda || esAdmin);
 	const showCuentaTab = isEditing && !!formData.Valor;
 	const showAsignacionesTab = isEditing && !!formData.Valor;
+	const showFirmaTab = isEditing && !!formData.Valor;
 	const matriculaProfesional = Number(formData.MatriculaProvincial) || null;
 
 	const tabIds: Tab[] = ['personal', 'profesional'];
+	if (showFirmaTab) tabIds.push('firma');
 	if (showAsignacionesTab) tabIds.push('asignaciones');
 	if (showCuentaTab) tabIds.push('cuenta');
 	if (showAgendaTab) tabIds.push('agenda');
@@ -209,7 +212,7 @@ export default function PersonalForm({
 		const idx = tabIds.indexOf(activeTab);
 		const node = tabsRef.current[idx];
 		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
-	}, [activeTab, showAgendaTab, showCuentaTab, showAsignacionesTab]);
+	}, [activeTab, showAgendaTab, showCuentaTab, showAsignacionesTab, showFirmaTab]);
 
 	const fetchProvincia = async (valorProvincia: string) => {
 		try {
@@ -384,6 +387,14 @@ export default function PersonalForm({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if (
+			activeTab === 'firma' ||
+			activeTab === 'cuenta' ||
+			activeTab === 'agenda' ||
+			activeTab === 'asignaciones'
+		) {
+			return;
+		}
 		if (internalSubmitting) return;
 		if (!validate()) return;
 		try {
@@ -437,6 +448,17 @@ export default function PersonalForm({
 				>
 					Datos Profesionales
 				</div>
+				{showFirmaTab && (
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[tabIds.indexOf('firma')] = el;
+						}}
+						className={`${styles.tab} ${activeTab === 'firma' ? styles.tabActive : ''}`}
+						onClick={() => setActiveTab('firma')}
+					>
+						Firma
+					</div>
+				)}
 				{showAsignacionesTab && (
 					<div
 						ref={(el) => {
@@ -938,6 +960,16 @@ export default function PersonalForm({
 				</div>
 			</div>
 
+			{showFirmaTab && formData.Valor ? (
+				<div className={activeTab !== 'firma' ? styles.tabHidden : undefined}>
+					<PersonalFirmaTab
+						personalId={formData.Valor}
+						active={activeTab === 'firma'}
+						variant='form'
+					/>
+				</div>
+			) : null}
+
 			{showAsignacionesTab && formData.Valor ? (
 				<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
 					<PersonalAsignacionesTab personalId={formData.Valor} />
@@ -962,7 +994,10 @@ export default function PersonalForm({
 			) : null}
 			</div>
 
-			{activeTab !== 'cuenta' && activeTab !== 'agenda' && activeTab !== 'asignaciones' ? (
+			{activeTab !== 'cuenta' &&
+			activeTab !== 'agenda' &&
+			activeTab !== 'asignaciones' &&
+			activeTab !== 'firma' ? (
 			<div className={styles.actions}>
 				<div className={styles.actionsButtons}>
 				{isEditing && onDelete ? (

@@ -204,7 +204,26 @@ export default function SyncFisicoInforme({ informe, onClose }: Props) {
 					</summary>
 					<ul className={styles.plainList}>
 						{informe.catalogoSectores.map((s) => (
-							<li key={s.valor}>
+							<li key={`sec-${s.valor}`}>
+								<strong>{s.descripcion}</strong>{' '}
+								<span>
+									({s.accion === 'alta' ? 'nuevo' : `antes: ${s.de || '—'}`})
+								</span>
+							</li>
+						))}
+					</ul>
+				</details>
+			) : null}
+
+			{informe.catalogoServicios && informe.catalogoServicios.length > 0 ? (
+				<details className={styles.section}>
+					<summary>
+						Catálogo de servicios
+						<span className={styles.badge}>{informe.catalogoServicios.length}</span>
+					</summary>
+					<ul className={styles.plainList}>
+						{informe.catalogoServicios.map((s) => (
+							<li key={`srv-${s.valor}`}>
 								<strong>{s.descripcion}</strong>{' '}
 								<span>
 									({s.accion === 'alta' ? 'nuevo' : `antes: ${s.de || '—'}`})

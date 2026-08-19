@@ -182,6 +182,44 @@
   min-width: 140px;
 }
 
+.passwordWrap {
+  position: relative;
+  display: flex;
+  min-width: 140px;
+  width: 100%;
+}
+
+.passwordWrap .input {
+  width: 100%;
+  padding-right: 2.35rem;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border: none;
+  background: none;
+  color: #0083a9;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.passwordToggle:hover {
+  color: #0e7490;
+}
+
+.passwordToggle:focus-visible {
+  outline: 2px solid #0083a9;
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
 .select {
   flex: 1;
   max-width: 100%;

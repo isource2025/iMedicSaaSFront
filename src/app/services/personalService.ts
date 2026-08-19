@@ -523,7 +523,7 @@ export type SyncRolTipo = {
 };
 
 export type SyncCambioUsuario = {
-	tipo: 'ficha' | 'cuenta' | 'rol' | 'sector' | 'vinculo';
+	tipo: 'ficha' | 'cuenta' | 'rol' | 'sector' | 'servicio' | 'vinculo';
 	accion: string;
 	titulo: string;
 	campos?: SyncCampoCambio[];
@@ -551,6 +551,12 @@ export type SyncFisicoInforme = {
 		accion: string;
 		de?: string;
 	}>;
+	catalogoServicios?: Array<{
+		valor: string;
+		descripcion: string;
+		accion: string;
+		de?: string;
+	}>;
 	roles?: {
 		asignados: number;
 		yaTenia: number;
@@ -573,6 +579,9 @@ export type SyncFisicoResumen = {
 	sectoresAsignaciones?: number;
 	sectoresAsignacionesTotal?: number;
 	sectoresCatalogoCambios?: number;
+	serviciosAsignaciones?: number;
+	serviciosAsignacionesTotal?: number;
+	serviciosCatalogoCambios?: number;
 	vinculos?: number;
 	vinculosTotal?: number;
 	rolesAsignados?: number;
@@ -608,6 +617,7 @@ export const syncDesdeFisico = async (): Promise<SyncFisicoResumen> => {
 			items: data.informe?.items || [],
 			usuarios,
 			catalogoSectores: data.informe?.catalogoSectores || [],
+			catalogoServicios: data.informe?.catalogoServicios || [],
 			roles: data.informe?.roles,
 		},
 	};

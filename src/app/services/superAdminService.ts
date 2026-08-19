@@ -184,7 +184,11 @@ export const superAdminService = {
       const res = await apiService.post<{ success: boolean; data: EmpresaUsuario; mensaje?: string }>(
         `${BASE}/empresas/${idEmpresa}/usuarios/nuevo`,
         body,
+        { timeout: 60000 },
       );
+      if (!res.data?.success) {
+        throw new Error(res.data?.mensaje || 'Error al crear usuario');
+      }
       return res.data.data;
     } catch (error) {
       const ax = error as { response?: { data?: { mensaje?: string } }; message?: string };
@@ -200,6 +204,7 @@ export const superAdminService = {
     const res = await apiService.put<{ success: boolean; data: EmpresaUsuario }>(
       `${BASE}/empresas/${idEmpresa}/usuarios/${idPersonal}`,
       body,
+      { timeout: 60000 },
     );
     return res.data.data;
   },

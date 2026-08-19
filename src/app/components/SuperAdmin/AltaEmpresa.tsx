@@ -6,7 +6,9 @@ import { superAdminService } from '@/app/services/superAdminService';
 import type { SuperAdminCatalogos, TipoServidor } from '@/app/types/superAdmin';
 import Loader from '../Loader/Loader';
 import SuperAdminShell from './SuperAdminShell';
+import PasswordInput from './ui/PasswordInput';
 import styles from './superAdmin.module.css';
+import { etiquetaRol } from '@/app/utils/permisos';
 
 const emptyForm = {
   descripcion: '',
@@ -257,7 +259,7 @@ export default function AltaEmpresa() {
               >
                 {(catalogos?.roles || []).map((r) => (
                   <option key={r.idRol} value={r.idRol}>
-                    {r.nombre}
+                    {etiquetaRol(r)}
                   </option>
                 ))}
               </select>
@@ -268,9 +270,7 @@ export default function AltaEmpresa() {
             </div>
             <div className={styles.formGroup}>
               <label>Contraseña *</label>
-              <input
-                className={styles.input}
-                type="password"
+              <PasswordInput
                 value={form.adminPassword}
                 onChange={(e) => set('adminPassword', e.target.value)}
               />

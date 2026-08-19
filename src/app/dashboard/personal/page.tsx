@@ -112,6 +112,7 @@ export default function PersonalPage() {
 				items: resumen.informe?.items || [],
 				usuarios,
 				catalogoSectores: resumen.informe?.catalogoSectores || [],
+				catalogoServicios: resumen.informe?.catalogoServicios || [],
 				roles: resumen.informe?.roles,
 			};
 			setSyncResult({ ok: true, informe });

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from '@/app/components/UI/Modal';
 import Loader from '@/app/components/Loader/Loader';
-import PersonalFirmaPad, { type PersonalFirmaPadRef } from '@/app/components/Personal/PersonalFirmaPad';
+import PersonalFirmaTab from '@/app/components/Personal/PersonalFirmaTab';
 import PersonalCuentaTab from '@/app/components/Personal/PersonalCuentaTab';
 import {
 	Personal,
@@ -59,14 +59,6 @@ export default function PersonalActionModals({
 	const [empCatalogo, setEmpCatalogo] = useState<EmpresaCatalogoItem[]>([]);
 	const [empSel, setEmpSel] = useState('');
 
-	// firma
-	const [firma, setFirma] = useState<{
-		hasFirma: boolean;
-		mime?: string;
-		dataUrl?: string;
-	} | null>(null);
-	const firmaPadRef = useRef<PersonalFirmaPadRef>(null);
-
 	// sectores
 	const [secAsignados, setSecAsignados] = useState<PersonalSectorAsignado[]>([]);
 	const [secCatalogo, setSecCatalogo] = useState<{ IdSector: string; Descripcion: string }[]>([]);
@@ -89,6 +81,10 @@ export default function PersonalActionModals({
 
 	useEffect(() => {
 		if (!open || !id || !kind) return;
+		if (kind === 'firma' || kind === 'cuenta') {
+			setLoading(false);
+			return;
+		}
 		let cancelled = false;
 		(async () => {
 			setLoading(true);
@@ -114,11 +110,6 @@ export default function PersonalActionModals({
 						setEmpAsignadas(asig);
 						setEmpCatalogo(cat);
 						setEmpSel('');
-					}
-				} else if (kind === 'firma') {
-					const f = await personalService.getPersonalFirma(id);
-					if (!cancelled) {
-						setFirma(f);
 					}
 				} else if (kind === 'sectores') {
 					const [asig, cat] = await Promise.all([
@@ -270,41 +261,6 @@ export default function PersonalActionModals({
 		try {
 			const list = await personalService.removePersonalEmpresa(id, idEmpresa);
 			setEmpAsignadas(list);
-			await onSaved();
-		} catch (e: any) {
-			alert(e?.message || 'Error');
-		} finally {
-			setSaving(false);
-		}
-	};
-
-	const guardarFirmaDibujo = async () => {
-		if (!id) return;
-		const file = await firmaPadRef.current?.toPngFile();
-		if (!file) {
-			alert('Dibuje una firma en el lienzo antes de guardar.');
-			return;
-		}
-		setSaving(true);
-		try {
-			await personalService.uploadPersonalFirma(id, file);
-			const f = await personalService.getPersonalFirma(id);
-			setFirma(f);
-			await onSaved();
-		} catch (e: any) {
-			alert(e?.message || 'Error al guardar la firma');
-		} finally {
-			setSaving(false);
-		}
-	};
-
-	const borrarFirma = async () => {
-		if (!id || !confirm('¿Eliminar la firma guardada?')) return;
-		setSaving(true);
-		try {
-			await personalService.deletePersonalFirma(id);
-			setFirma({ hasFirma: false });
-			firmaPadRef.current?.clearPad();
 			await onSaved();
 		} catch (e: any) {
 			alert(e?.message || 'Error');
@@ -573,44 +529,14 @@ export default function PersonalActionModals({
 							</button>
 						</div>
 					</div>
-				) : kind === 'firma' ? (
-					<div className={styles.row}>
-						{loading ? (
-							<div style={{ position: 'relative', minHeight: 200 }}>
-								<Loader />
-							</div>
-						) : (
-							<>
-								<p className={styles.muted}>
-									Edite la firma en el lienzo (grosor y color ajustables). Al guardar se reemplaza la
-									imagen en base de datos.
-								</p>
-								<PersonalFirmaPad
-									ref={firmaPadRef}
-									active={open && kind === 'firma'}
-									initialDataUrl={firma?.hasFirma && firma.dataUrl ? firma.dataUrl : null}
-								/>
-							</>
-						)}
-						<div className={styles.actions}>
-							<button type='button' className={styles.btn} onClick={onClose} disabled={saving}>
-								Cerrar
-							</button>
-							{firma?.hasFirma ? (
-								<button type='button' className={styles.btnDanger} onClick={borrarFirma} disabled={saving}>
-									Eliminar firma
-								</button>
-							) : null}
-							<button
-								type='button'
-								className={styles.btnPrimary}
-								onClick={guardarFirmaDibujo}
-								disabled={saving || loading}
-							>
-								{saving ? 'Guardando…' : 'Guardar firma'}
-							</button>
-						</div>
-					</div>
+				) : kind === 'firma' && id ? (
+					<PersonalFirmaTab
+						personalId={id}
+						active={open && kind === 'firma'}
+						variant='modal'
+						onSaved={onSaved}
+						onClose={onClose}
+					/>
 				) : kind === 'sectores' ? (
 					<div className={styles.row}>
 						<div className={styles.addRow}>

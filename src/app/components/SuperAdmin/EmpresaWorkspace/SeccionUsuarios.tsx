@@ -4,7 +4,9 @@ import { useMemo, useState } from 'react';
 import { superAdminService } from '@/app/services/superAdminService';
 import type { CatalogoRol, CatalogoSector, CatalogoServicio, EmpresaAdmin, EmpresaUsuario } from '@/app/types/superAdmin';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import PasswordInput from '../ui/PasswordInput';
 import styles from '../superAdmin.module.css';
+import { etiquetaRol } from '@/app/utils/permisos';
 
 type Form = {
   nombreRed: string;
@@ -74,7 +76,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, servicios, o
       if (modal.mode === 'create') {
         if (!form.nombreRed.trim() || !form.password.trim()) throw new Error('Usuario y contraseña son obligatorios');
         if (!form.apellido.trim() || !form.nombres.trim()) throw new Error('Apellido y nombres son obligatorios');
-        await superAdminService.crearUsuarioEmpresa(Number(empresa.id), {
+      await superAdminService.crearUsuarioEmpresa(Number(empresa.id), {
           nombreRed: form.nombreRed.trim(),
           password: form.password,
           apellido: form.apellido.trim(),
@@ -97,7 +99,11 @@ export default function SeccionUsuarios({ empresa, roles, sectores, servicios, o
         });
       }
       setModal(null);
-      onUpdated(await superAdminService.getEmpresa(empresa.id));
+      try {
+        onUpdated(await superAdminService.getEmpresa(empresa.id));
+      } catch (refreshErr) {
+        console.warn('[usuarios] refresh post-guardar', refreshErr);
+      }
     } catch (e) {
       onError(e instanceof Error ? e.message : 'Error al guardar usuario');
     } finally {
@@ -174,7 +180,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, servicios, o
                   <td>
                     {u.apellido}, {u.nombre}
                   </td>
-                  <td>{u.rol || '—'}</td>
+                  <td>{etiquetaRol(u.rol) || '—'}</td>
                   <td>{(u.sectores || []).map((s) => s.descripcion || s.id).join(', ') || '—'}</td>
                   <td>{(u.servicios || []).map((s) => s.descripcion || s.id).join(', ') || '—'}</td>
                   <td className={styles.actionsCell}>
@@ -228,9 +234,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, servicios, o
                 </div>
                 <div className={styles.formGroup}>
                   <label>Contraseña {modal.mode === 'edit' ? '(vacío = no cambia)' : ''}</label>
-                  <input
-                    className={styles.input}
-                    type="password"
+                  <PasswordInput
                     value={modal.form.password}
                     onChange={(e) => patch({ password: e.target.value })}
                   />
@@ -260,7 +264,7 @@ export default function SeccionUsuarios({ empresa, roles, sectores, servicios, o
                   >
                     {roles.map((r) => (
                       <option key={r.idRol} value={r.idRol}>
-                        {r.nombre}
+                        {etiquetaRol(r)}
                       </option>
                     ))}
                   </select>

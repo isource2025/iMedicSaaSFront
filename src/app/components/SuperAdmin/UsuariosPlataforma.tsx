@@ -7,6 +7,7 @@ import type { EmpresaAdmin, UsuarioPlataforma } from '@/app/types/superAdmin';
 import Loader from '../Loader/Loader';
 import SuperAdminShell from './SuperAdminShell';
 import styles from './superAdmin.module.css';
+import { etiquetaRol } from '@/app/utils/permisos';
 
 export default function UsuariosPlataforma() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function UsuariosPlataforma() {
             <option value="">Todos los roles</option>
             {roles.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {etiquetaRol(r)}
               </option>
             ))}
           </select>
@@ -130,7 +131,7 @@ export default function UsuariosPlataforma() {
                       <td>
                         {u.apellido}, {u.nombre}
                       </td>
-                      <td>{u.rol || '—'}</td>
+                      <td>{etiquetaRol(u.rol) || '—'}</td>
                       <td>
                         {(u.empresas || '')
                           .split(',')

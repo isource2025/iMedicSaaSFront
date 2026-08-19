@@ -386,6 +386,26 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 	return null;
 }
 
+/** Etiqueta de catálogo (Personal / Super Admin). CARGA_HC se muestra como "Carga de adjuntos". */
+export function etiquetaRol(
+	rol: { nombre?: string; descripcion?: string } | string | null | undefined,
+): string {
+	if (!rol) return '';
+	const nombre = typeof rol === 'string' ? rol : String(rol.nombre || '');
+	const descripcion = typeof rol === 'string' ? '' : String(rol.descripcion || '').trim();
+	const esCargaHc = (s: string) => {
+		const n = String(s || '')
+			.trim()
+			.toUpperCase()
+			.replace(/\s+/g, '_');
+		return n === 'CARGA_HC' || n === 'CARGAHC';
+	};
+	if (esCargaHc(nombre) || esCargaHc(descripcion) || /^carga\s*hc$/i.test(nombre) || /^carga\s*hc$/i.test(descripcion)) {
+		return 'Carga de adjuntos';
+	}
+	return descripcion || nombre.trim();
+}
+
 /**
  * Lista de permisos efectivos del usuario.
  *

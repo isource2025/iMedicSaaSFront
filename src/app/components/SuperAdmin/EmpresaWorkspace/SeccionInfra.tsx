@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { superAdminService } from '@/app/services/superAdminService';
 import type { EmpresaAdmin, PreviewTabla, ResultadoImport, TablaImportable } from '@/app/types/superAdmin';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import PasswordInput from '../ui/PasswordInput';
 import styles from '../superAdmin.module.css';
 
 type Props = {
@@ -202,9 +203,7 @@ export default function SeccionInfra({ empresa, onUpdated, onError }: Props) {
             </div>
             <div className={styles.formGroup}>
               <label>Contraseña</label>
-              <input
-                className={styles.input}
-                type="password"
+              <PasswordInput
                 placeholder={empresa.conexion?.tienePassword ? 'Dejar vacío para conservar' : ''}
                 value={conexion.dbPassword}
                 onChange={(e) => setConexion({ ...conexion, dbPassword: e.target.value })}
