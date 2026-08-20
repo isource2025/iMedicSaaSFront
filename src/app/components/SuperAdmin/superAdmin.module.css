@@ -739,6 +739,11 @@ a.btnSecondary {
   overflow-y: auto;
 }
 
+.assignPanel .sectorGrid {
+  max-height: 200px;
+  min-height: 88px;
+}
+
 .sectorChip {
   display: flex;
   align-items: center;
@@ -778,12 +783,87 @@ a.btnSecondary {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
 }
 
+.modalPanelLg {
+  width: min(980px, 96vw);
+  max-height: 92vh;
+}
+
 .modalHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 0.9rem 1.1rem;
   border-bottom: 1px solid #e5e7eb;
+  gap: 0.75rem;
+}
+
+.modalSubtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.modalSectionTitle {
+  margin: 0.9rem 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.assignGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.assignPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.assignHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.assignHead em {
+  font-style: normal;
+  font-weight: 600;
+  color: #0083a9;
+}
+
+.assignActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.assignEmpty {
+  margin: 0;
+  padding: 0.65rem 0.2rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  .assignGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .modalClose {

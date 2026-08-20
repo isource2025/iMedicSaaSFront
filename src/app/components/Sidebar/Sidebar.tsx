@@ -124,15 +124,9 @@ const menuItems: MenuItem[] = [
   {
     id: 'configuracion', moduloId: 'CONFIGURACION', label: 'Configuración', icon: Settings,
     subItems: [
-      { submoduloId: 'GENERAL',  label: 'General',  path: '/dashboard/settings/general' },
-      { submoduloId: 'USUARIOS', label: 'Usuarios', path: '/dashboard/settings/usuarios' },
-      { submoduloId: 'PERMISOS', label: 'Permisos', path: '/dashboard/settings/permisos' },
-      { submoduloId: 'SECTORES', label: 'Sectores', path: '/dashboard/settings/sectores' },
-      { submoduloId: 'SECTORES', label: 'Servicios', path: '/dashboard/settings/servicios' },
       { submoduloId: 'PERSONAL', label: 'Personal', path: '/dashboard/personal' },
       { submoduloId: 'TABLA', permisoModuloId: 'TURNOS',      label: 'Tabla de Turnos',      path: '/dashboard/turnos/tabla' },
       { submoduloId: 'TABLA', permisoModuloId: 'ADMISION',    label: 'Tabla de Admisiones',  path: '/dashboard/admission/tables' },
-      { submoduloId: 'TABLA', permisoModuloId: 'INTERNACION', label: 'Tabla de Internación', path: '/dashboard/beds/tables' },
       { submoduloId: 'TABLA', permisoModuloId: 'FACTURACION', label: 'Tabla de Facturación', path: '/dashboard/billing/tables' },
     ]
   },

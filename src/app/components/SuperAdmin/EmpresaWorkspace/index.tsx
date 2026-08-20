@@ -216,6 +216,7 @@ export default function EmpresaWorkspace({ id }: Props) {
           servicios={servicios}
           onUpdated={(e) => void onUpdated(e)}
           onError={setError}
+          onRefreshCatalogos={refreshCatalogos}
         />
       )}
       {seccion === 'cobranza' && (
