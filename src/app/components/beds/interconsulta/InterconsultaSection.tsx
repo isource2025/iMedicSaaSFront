@@ -48,29 +48,22 @@ function previewText(value?: string | null, max = 100) {
 function buildInterconsultaFields(row: InterconsultaRow) {
 	if (row.Origen === 'WEB') {
 		return [
-			{ label: 'Fecha / hora', value: formatFecha(row) },
-			{ label: 'Especialidad solicitada', value: row.Especialidad, full: true },
-			{ label: 'Estado', value: row.EstadoWorkflow || row.Estado },
-			{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
+			{ label: 'Especialidad', value: row.Especialidad, full: true },
 			{ label: 'Matrícula', value: row.MedicoSolicitante },
-			{ label: 'Fecha respuesta', value: row.FechaRespuesta },
-			{ label: 'Origen', value: 'Registro web (legado)' },
+			{ label: 'Origen', value: 'Registro web' },
 		];
 	}
 
 	return [
-		{ label: 'Fecha / hora', value: formatFecha(row) },
 		{
-			label: 'Servicio destino',
+			label: 'Destino',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.Especialidad,
 			full: true,
 		},
-		{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
 		{ label: 'Matrícula', value: row.MedicoSolicitante },
 		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
-		{ label: 'Sector solicitante', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
-		{ label: 'Código práctica', value: row.CodigoPractica },
-		{ label: 'Fecha respuesta', value: row.FechaRespuesta },
+		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
+		{ label: 'Cód. práctica', value: row.CodigoPractica },
 		{ label: 'Id pedido', value: row.IdPedido || row.IdInterconsulta },
 		{ label: 'Id resultado', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
 	];
@@ -79,10 +72,18 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 function buildInterconsultaTextBlocks(row: InterconsultaRow) {
 	const cumplido = !!row.Cumplido || (row.IdProtocolo != null && row.IdProtocolo > 0) || !!row.Respuesta;
 	return [
-		{ label: 'Pedido', value: row.Motivo || null },
+		{
+			label: 'Pedido',
+			value: row.Motivo || null,
+			autor: row.MedicoSolicitanteNombre || null,
+			fecha: row.FechaSolicitud || null,
+			hora: row.HoraSolicitud || null,
+		},
 		{
 			label: 'Respuesta',
 			value: cumplido ? row.Respuesta || '(sin texto de respuesta)' : row.Respuesta || null,
+			autor: row.NombreToma || null,
+			fecha: row.FechaRespuesta || null,
 		},
 	];
 }

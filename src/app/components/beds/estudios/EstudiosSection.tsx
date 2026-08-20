@@ -70,21 +70,17 @@ function previewText(value?: string | null, max = 100) {
 
 function buildEstudioFields(row: PedidoEstudio) {
 	return [
-		{ label: 'Fecha / hora', value: formatFecha(row) },
-		{ label: 'Código práctica', value: row.CodigoPractica },
-		{ label: 'Tipo de pedido', value: row.TipoPedidoDescripcion || row.PracticaSolicitada },
+		{ label: 'Cód. práctica', value: row.CodigoPractica },
+		{ label: 'Tipo', value: row.TipoPedidoDescripcion || row.PracticaSolicitada },
 		{ label: 'Nomenclador', value: row.NomencladorDescripcion, full: true },
-		{ label: 'Solicitado por', value: row.MedicoSolicitanteNombre },
 		{ label: 'Matrícula', value: row.MatriculaSolicitante },
 		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
-		{ label: 'Sector solicitante', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
+		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{
-			label: 'Destino / servicio',
+			label: 'Destino',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.SectorReceptor,
 			full: true,
 		},
-		{ label: 'Fecha resultado', value: row.FechaResultado },
-		{ label: 'Realizado por', value: row.RealizadorNombre },
 		{ label: 'Id resultado', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
 		{ label: 'Id pedido', value: row.IdPedido },
 	];
@@ -92,12 +88,21 @@ function buildEstudioFields(row: PedidoEstudio) {
 
 function buildEstudioTextBlocks(row: PedidoEstudio) {
 	return [
-		{ label: 'Pedido', value: row.NotasObservacion || null },
+		{
+			label: 'Pedido',
+			value: row.NotasObservacion || null,
+			autor: row.MedicoSolicitanteNombre || null,
+			fecha: row.FechaPedidoISO || null,
+			hora: row.HoraPedido || null,
+		},
 		{
 			label: 'Respuesta',
 			value: row.Cumplido
 				? row.TextoResultado || '(sin texto de respuesta)'
 				: row.TextoResultado || null,
+			autor: row.RealizadorNombre || row.NombreToma || null,
+			fecha: row.FechaResultado || null,
+			hora: null,
 		},
 	];
 }

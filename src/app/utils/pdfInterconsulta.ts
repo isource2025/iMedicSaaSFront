@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '@/app/services/empresaService';
 import { drawProfesionalFirmaBlock, withPersonalFirma } from '@/app/utils/pdfExport';
+import { formatPedidoFechaHora } from '@/app/components/beds/shared/PedidoDetalleModal';
 
 export type InterconsultaPdfField = {
 	label: string;
@@ -11,6 +12,9 @@ export type InterconsultaPdfField = {
 export type InterconsultaPdfBlock = {
 	label: string;
 	value?: string | null;
+	autor?: string | null;
+	fecha?: string | null;
+	hora?: string | null;
 };
 
 export type InterconsultaPatientInfo = {
@@ -173,7 +177,7 @@ export async function generarPDFInterconsulta(opts: {
 	y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
 
 	for (const block of textBlocks) {
-		y = ensureSpace(doc, y, 20);
+		y = ensureSpace(doc, y, 24);
 		doc.setFillColor(...colorSecundario);
 		doc.rect(10, y, 190, 7, 'F');
 		doc.setTextColor(255, 255, 255);
@@ -181,6 +185,18 @@ export async function generarPDFInterconsulta(opts: {
 		doc.setFont('helvetica', 'bold');
 		doc.text(block.label.toUpperCase(), 15, y + 5);
 		y += 10;
+
+		const metaParts: string[] = [];
+		if (block.autor && String(block.autor).trim()) metaParts.push(String(block.autor).trim());
+		const fh = formatPedidoFechaHora(block.fecha, block.hora);
+		if (fh) metaParts.push(fh);
+		if (metaParts.length) {
+			doc.setTextColor(...colorGris);
+			doc.setFontSize(8);
+			doc.setFont('helvetica', 'normal');
+			doc.text(metaParts.join(' · '), 15, y);
+			y += 5;
+		}
 
 		doc.setTextColor(...colorTexto);
 		doc.setFontSize(9);
