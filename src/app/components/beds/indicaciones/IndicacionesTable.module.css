@@ -145,7 +145,6 @@
 .tbody .rowNueva td,
 .tbody .row.rowNueva:nth-child(even) td {
     background: #fff8e6;
-    box-shadow: inset 3px 0 0 #f59e0b;
 }
 
 .tbody .rowNueva:hover td,

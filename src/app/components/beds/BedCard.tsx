@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { BedCardProps } from '../../types/beds/BedComponents';
 import type { Bed } from '../../types/beds';
 import styles from './BedCard.module.css';
@@ -18,16 +18,133 @@ import {
 import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft, ClipboardList } from 'lucide-react';
 import { usePermiso } from '../../hooks/usePermiso';
 import { esEnfermeroSesion } from '../../hooks/useUsuarioActual';
+import { indicacionesService } from '../../services/indicacionesService';
 
 /**
  * Tarjeta de recurso hospitalario (cama / consultorio / insumos).
  * El tipo sale de imHabitacionCamas.Tipo (texto plano).
  */
-/** Texto del badge / etiqueta desde imHabitacionCamas.Tipo */
 function etiquetaTipoRecurso(bed: Pick<Bed, 'tipoRaw'>, fallback = 'Cama'): string {
 	const raw = (bed.tipoRaw ?? '').trim();
 	if (!raw) return fallback;
 	return raw;
+}
+
+function etiquetaTipoIndicacion(tipo?: string): string {
+	const t = String(tipo || '').trim().toUpperCase();
+	if (t === 'M' || t.includes('MEDIC')) return 'Medicamento';
+	if (t === 'D' || t.includes('DIET')) return 'Dieta';
+	if (t === 'C' || t.includes('CONTROL')) return 'Control';
+	if (t === 'A' || t.includes('ASIST')) return 'Asistencial';
+	return tipo ? String(tipo) : 'Indicación';
+}
+
+type NuevaIndicacionPreview = {
+	descripcion?: string;
+	tipo?: string;
+	frecuencia?: string;
+	cantidad?: number | string | null;
+	tipoUnidad?: string;
+};
+
+function IndicacionesNuevasBadge({
+	numeroVisita,
+	count,
+	onOpen,
+}: {
+	numeroVisita: number;
+	count: number;
+	onOpen: () => void;
+}) {
+	const [open, setOpen] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [items, setItems] = useState<NuevaIndicacionPreview[] | null>(null);
+	const [total, setTotal] = useState(count);
+	const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const load = async () => {
+		if (items) return;
+		setLoading(true);
+		try {
+			const data = await indicacionesService.getNuevasEnfermeria(numeroVisita, 3);
+			setItems(data.items);
+			setTotal(data.total || count);
+		} catch {
+			setItems([]);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const show = () => {
+		if (hideTimer.current) clearTimeout(hideTimer.current);
+		setOpen(true);
+		void load();
+	};
+
+	const hide = () => {
+		hideTimer.current = setTimeout(() => setOpen(false), 140);
+	};
+
+	const restantes = Math.max(0, total - (items?.length || 0));
+
+	return (
+		<span
+			className={styles.indicacionesBadgeWrap}
+			onMouseEnter={show}
+			onMouseLeave={hide}
+		>
+			<button
+				type="button"
+				className={styles.indicacionesBadge}
+				title={`${count} indicación${count === 1 ? '' : 'es'} nueva${count === 1 ? '' : 's'} por revisar`}
+				onClick={(e) => {
+					e.stopPropagation();
+					onOpen();
+				}}
+			>
+				<ClipboardList size={15} strokeWidth={2.4} aria-hidden />
+				<span className={styles.indicacionesBadgeCount}>{count}</span>
+			</button>
+			{open ? (
+				<div
+					className={styles.indicacionesPreview}
+					onClick={(e) => e.stopPropagation()}
+				>
+					<p className={styles.indicacionesPreviewTitle}>Indicaciones nuevas</p>
+					{loading && !items ? (
+						<p className={styles.indicacionesPreviewEmpty}>Cargando…</p>
+					) : !items?.length ? (
+						<p className={styles.indicacionesPreviewEmpty}>Sin detalle para mostrar</p>
+					) : (
+						<ul className={styles.indicacionesPreviewList}>
+							{items.map((item, idx) => (
+								<li key={`${item.descripcion}-${idx}`} className={styles.indicacionesPreviewItem}>
+									<span className={styles.indicacionesPreviewName}>
+										{item.descripcion || 'Sin descripción'}
+									</span>
+									<span className={styles.indicacionesPreviewMeta}>
+										{etiquetaTipoIndicacion(item.tipo)}
+										{item.frecuencia ? ` · ${item.frecuencia}` : ''}
+										{item.cantidad != null && String(item.cantidad) !== ''
+											? ` · ${item.cantidad}${item.tipoUnidad ? ` ${item.tipoUnidad}` : ''}`
+											: ''}
+									</span>
+								</li>
+							))}
+						</ul>
+					)}
+					{restantes > 0 ? (
+						<p className={styles.indicacionesPreviewMore}>
+							+{restantes} más. Abrí la cama para verlas.
+						</p>
+					) : total > 3 ? (
+						<p className={styles.indicacionesPreviewMore}>Abrí la cama para ver el resto.</p>
+					) : null}
+				</div>
+			) : null}
+		</span>
+	);
 }
 
 const BedCard: React.FC<BedCardProps> = ({
@@ -180,19 +297,14 @@ function CamaOConsultorioCard({
 							{bed.numeroVisita}
 							{renderGenderIcon()}
 							{mostrarBadgeIndicaciones ? (
-								<button
-									type="button"
-									className={styles.indicacionesBadge}
-									title={`${nuevasIndicaciones} indicación${nuevasIndicaciones === 1 ? '' : 'es'} nueva${nuevasIndicaciones === 1 ? '' : 's'} por revisar`}
-									onClick={(e) => {
-										e.stopPropagation();
+								<IndicacionesNuevasBadge
+									numeroVisita={Number(bed.numeroVisita)}
+									count={nuevasIndicaciones}
+									onOpen={() => {
 										if (onRecentIndications) onRecentIndications(bed.id);
 										else onBedClick?.(bed.id);
 									}}
-								>
-									<ClipboardList size={15} strokeWidth={2.4} aria-hidden />
-									<span className={styles.indicacionesBadgeCount}>{nuevasIndicaciones}</span>
-								</button>
+								/>
 							) : null}
 						</div>
 					</div>

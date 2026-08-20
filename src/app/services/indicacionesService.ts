@@ -291,4 +291,34 @@ export const indicacionesService = {
             );
         }
     },
+
+    getNuevasEnfermeria: async (
+        numeroVisita: number,
+        limit = 3
+    ): Promise<{
+        total: number;
+        items: Array<{
+            nroIndicacion?: number;
+            descripcion?: string;
+            tipo?: string;
+            frecuencia?: string;
+            cantidad?: number | string | null;
+            tipoUnidad?: string;
+        }>;
+    }> => {
+        try {
+            const resp = await apiFetch(
+                `${BASE_URL}/indicaciones/${numeroVisita}/nuevas-enfermeria?limit=${limit}`,
+                { method: "GET", headers: { "Content-Type": "application/json" } }
+            );
+            const json = await resp.json().catch(() => ({}));
+            const data = json?.data || {};
+            return {
+                total: Number(data.total || 0),
+                items: Array.isArray(data.items) ? data.items : [],
+            };
+        } catch {
+            return { total: 0, items: [] };
+        }
+    },
 };

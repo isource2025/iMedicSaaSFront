@@ -69,6 +69,7 @@ export default function IndicacionesSection({
     const { activeSection, selectedDate } = useBedDetail();
     const { loaded } = usePermiso();
     const esEnfermero = loaded && esEnfermeroSesion();
+    const [ocultarNuevas, setOcultarNuevas] = useState(false);
     const vistoEnviadoRef = useRef<number | null>(null);
 
     const indicacionesPath = useMemo(
@@ -91,6 +92,7 @@ export default function IndicacionesSection({
 
     useEffect(() => {
         vistoEnviadoRef.current = null;
+        setOcultarNuevas(false);
     }, [numeroVisita]);
 
     useEffect(() => {
@@ -103,6 +105,7 @@ export default function IndicacionesSection({
             .marcarVistoEnfermeria(numeroVisita)
             .then(() => {
                 clearIndicacionesNuevasEnfermeria(numeroVisita);
+                setOcultarNuevas(true);
             })
             .catch((err) => {
                 vistoEnviadoRef.current = null;
@@ -152,7 +155,7 @@ export default function IndicacionesSection({
             OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
             matricula: (x as any).matricula ?? (x as any).Matricula ?? null,
             indicacionesHijas: (x as any).indicacionesHijas || [],
-            nuevaEnfermeria: Boolean((x as any).nuevaEnfermeria),
+            nuevaEnfermeria: Boolean((x as any).nuevaEnfermeria) && !ocultarNuevas,
         }));
 
         // Ordenar por ordenTipo (campo Orden de imInterTipoIndicacion) y luego por nro
@@ -169,7 +172,7 @@ export default function IndicacionesSection({
             const nroB = typeof b.nro === 'number' ? b.nro : parseInt(String(b.nro || '0'));
             return nroA - nroB;
         });
-    }, [data]);
+    }, [data, ocultarNuevas]);
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [query, setQuery] = useState("");

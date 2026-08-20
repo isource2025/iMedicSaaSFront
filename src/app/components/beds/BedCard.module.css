@@ -3,7 +3,7 @@
 
 .bedCard {
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   background-color: white;
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid #e0e0e0;
@@ -11,6 +11,7 @@
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
+  min-width: 0;
 }
 
 .bedCard:hover {
@@ -98,14 +99,16 @@
 }
 
 .tipoBadgeCama {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.25);
   color: #fff;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tipoBadgeConsultorio {
@@ -379,33 +382,44 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  gap: 8px;
+  padding: 10px 12px;
   background-color: #00838F;
   color: white;
+  border-radius: 12px 12px 0 0;
+  min-width: 0;
 }
 
 .bedInfo {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sectorLabel {
   background-color: rgba(255, 255, 255, 0.2);
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: white;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .bedNumber {
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   margin: 0;
   color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 7.5rem;
 }
 
 .headerRight {
@@ -419,6 +433,13 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.indicacionesBadgeWrap {
+  position: relative;
+  display: inline-flex;
   flex-shrink: 0;
 }
 
@@ -449,6 +470,91 @@
   color: #c2410c;
   min-width: 0.7rem;
   text-align: center;
+}
+
+.indicacionesPreview {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 260px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff;
+  color: #1f2937;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+  text-align: left;
+  white-space: normal;
+  cursor: default;
+}
+
+.indicacionesPreview::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 14px;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  transform: rotate(45deg);
+  box-shadow: -1px -1px 1px rgba(15, 23, 42, 0.06);
+}
+
+.indicacionesPreviewTitle {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9a3412;
+}
+
+.indicacionesPreviewList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.indicacionesPreviewItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.indicacionesPreviewItem:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.indicacionesPreviewName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #111827;
+}
+
+.indicacionesPreviewMeta {
+  font-size: 0.72rem;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+.indicacionesPreviewMore {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.indicacionesPreviewEmpty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6b7280;
 }
 
 .statusBadge {
@@ -519,6 +625,7 @@
   justify-content: space-between;
   gap: 0.35rem;
   flex: 1;
+  border-radius: 0 0 12px 12px;
 }
 .primaryData{
   display: flex;
