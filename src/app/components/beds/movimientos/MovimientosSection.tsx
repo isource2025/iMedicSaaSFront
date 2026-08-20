@@ -59,6 +59,7 @@ export default function MovimientosSection({
 
 	const { data, isLoading, error, refetch } = useBedSectionFetch<any>({
 		enabled: !!movPath && activeSection === "movimientos",
+		admissionId: numeroVisita ?? undefined,
 		endpointOverride: movPath ? { movimientos: movPath } : undefined,
 		cacheTimeMs: 30000,
 	});

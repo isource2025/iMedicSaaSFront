@@ -128,8 +128,9 @@ export function useBedSectionFetch<T = unknown>(
 	}, [dateISO, opts?.patientId, opts?.bedId, opts?.admissionId, opts?.params]);
 
 	const queryKey = useMemo(
-		() => `bedDetail::${section}::${dateISO ?? 'null'}::${stableStringify(queryParams)}`,
-		[section, dateISO, queryParams],
+		() =>
+			`bedDetail::${section}::${dateISO ?? 'null'}::${resolvedBaseUrl ?? 'no-url'}::${stableStringify(queryParams)}`,
+		[section, dateISO, resolvedBaseUrl, queryParams],
 	);
 
 	const [data, setData] = useState<T | undefined>(undefined);
@@ -189,9 +190,13 @@ export function useBedSectionFetch<T = unknown>(
 		}
 	};
 
-	// Refetch en cambios de sección/fecha/params/baseUrl
+	// Refetch en cambios de sección/fecha/params/URL (p. ej. otra visita)
 	useEffect(() => {
-		if (enabled) setIsLoading(true);
+		if (enabled) {
+			setIsLoading(true);
+			setData(undefined);
+			setError(undefined);
+		}
 		doFetch();
 		return () => abortRef.current?.abort();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
