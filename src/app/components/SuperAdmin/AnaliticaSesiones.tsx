@@ -14,6 +14,7 @@ import { analyticsService, type SessionExpirationKpis } from '@/app/services/ana
 import { superAdminService } from '@/app/services/superAdminService';
 import type { EmpresaAdmin } from '@/app/types/superAdmin';
 import { etiquetaRol } from '@/app/utils/permisos';
+import { simulateIdleLogout } from '@/app/utils/sessionActivity';
 import Loader from '../Loader/Loader';
 import SuperAdminShell from './SuperAdminShell';
 import styles from './superAdmin.module.css';
@@ -136,9 +137,19 @@ export default function AnaliticaSesiones() {
       error={error}
       onDismissError={() => setError(null)}
       actions={
-        <button type="button" className={styles.btn} onClick={() => void cargar()} disabled={loading}>
-          Actualizar
-        </button>
+        <>
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnSecondary}`}
+            title="Ctrl+Shift+E también dispara el timeout desde cualquier pantalla"
+            onClick={() => void simulateIdleLogout()}
+          >
+            Simular timeout
+          </button>
+          <button type="button" className={styles.btn} onClick={() => void cargar()} disabled={loading}>
+            Actualizar
+          </button>
+        </>
       }
     >
       <section className={styles.panel}>

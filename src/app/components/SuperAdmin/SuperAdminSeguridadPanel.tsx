@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { superAdminService } from '@/app/services/superAdminService';
+import { simulateIdleLogout } from '@/app/utils/sessionActivity';
 import styles from './superAdmin.module.css';
 
 type Pais = { CodigoISO: string; Nombre: string; Activo: number | boolean };
@@ -114,6 +115,15 @@ export default function SuperAdminSeguridadPanel() {
       </div>
       <p className={styles.wizardHint}>
         La sesión expira tras este período sin actividad. Por defecto: 30 minutos.
+      </p>
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+        <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => void simulateIdleLogout()}>
+          Simular logout por inactividad
+        </button>
+      </div>
+      <p className={styles.wizardHint}>
+        Revoca la sesión ahora, muestra el modal real y registra SESSION_EXPIRED en analítica.
+        También podés usar Ctrl+Shift+E desde cualquier pantalla logueada.
       </p>
 
       <h4 className={styles.sectionTitle} style={{ marginTop: '1.5rem' }}>

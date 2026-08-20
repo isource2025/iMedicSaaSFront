@@ -90,3 +90,16 @@ export function stopSessionActivityMonitor() {
 	const cleanup = (window as unknown as { __imedicActivityCleanup?: () => void }).__imedicActivityCleanup;
 	cleanup?.();
 }
+
+/** Dispara el mismo flujo que el timeout real: 401 de inactividad → modal + analytics. */
+export async function simulateIdleLogout() {
+	if (typeof window === 'undefined') return;
+	if (isSessionIdleOpen()) return;
+	stopSessionActivityMonitor();
+	try {
+		await apiService.post('/auth/simulate-idle', {});
+	} catch {
+		/* el interceptor 401 muestra el modal */
+	}
+	if (!isSessionIdleOpen()) notifySessionIdle();
+}

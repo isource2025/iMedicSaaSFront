@@ -11,7 +11,7 @@ import {
 import { getIdEmpresaFromToken } from '../utils/jwtSession';
 import { clearTenantUiCaches } from '../utils/sessionCaches';
 import { authService } from '../services/authService';
-import { startSessionActivityMonitor } from '../utils/sessionActivity';
+import { startSessionActivityMonitor, simulateIdleLogout } from '../utils/sessionActivity';
 import SessionIdleModal from '../components/layout/SessionIdleModal';
 import type { ModulosEmpresa } from '../types/superAdmin';
 
@@ -146,6 +146,19 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   useEffect(() => {
     if (!isAuthenticated) return;
     startSessionActivityMonitor();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e'))) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      e.preventDefault();
+      void simulateIdleLogout();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [isAuthenticated]);
 
   const setModulosEmpresa = (modulos: ModulosEmpresa | null) => {
