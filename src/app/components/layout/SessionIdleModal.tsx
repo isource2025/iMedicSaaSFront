@@ -85,10 +85,10 @@ export default function SessionIdleModal() {
 						<p className={styles.lead}>
 							Por inactividad, cerramos tu sesión para proteger la información clínica.
 						</p>
+						<p className={styles.hint}>Iniciá sesión cuando vuelvas.</p>
 					</div>
 				</div>
 				<div className={styles.footer}>
-					<p className={styles.hint}>Iniciá sesión cuando vuelvas.</p>
 					<button type="button" className={styles.cta} onClick={() => finish('login')}>
 						Iniciar sesión
 					</button>

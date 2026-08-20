@@ -27,11 +27,11 @@ export default function LoginCarousel() {
 					<p className={styles.kicker}>El cuidado, más cerca</p>
 					<h2 className={styles.headline}>La salud, a un toque</h2>
 					<p className={styles.support}>
-						Cuando el equipo clínico y el paciente se encuentran, todo tiene
-						que estar ahí: <strong>historia clínica</strong>,{' '}
-						<strong>internación</strong> y <strong>datos</strong> para decidir
-						mejor,{' '}
-						<span className={styles.highlight}>en el momento de atender</span>.
+						Cuando la salud del paciente está en juego,{' '}
+						<strong>todo</strong> tiene que estar ahí, al alcance de la mano:{' '}
+						<strong>historia clínica</strong>, <strong>medicaciones</strong> y{' '}
+						<strong>agendas</strong>,{' '}
+						<span className={styles.highlight}>listas para atender</span>.
 					</p>
 				</div>
 
