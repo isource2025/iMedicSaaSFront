@@ -118,6 +118,7 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'COBRANZA',   label: 'Cobranza',           path: '/dashboard/super-admin/cobranza' },
       { submoduloId: 'CONFIG',     label: 'Configuración',      path: '/dashboard/super-admin/configuracion' },
       { submoduloId: 'SEGURIDAD',  label: 'Seguridad',          path: '/dashboard/super-admin/seguridad' },
+      { submoduloId: 'ANALITICA',  label: 'Analítica',          path: '/dashboard/super-admin/analitica' },
     ]
   },
   {

@@ -12,6 +12,7 @@ const TAB_REDIRECT: Record<string, string> = {
   usuarios: '/dashboard/super-admin/usuarios',
   configuracion: '/dashboard/super-admin/configuracion',
   seguridad: '/dashboard/super-admin/seguridad',
+  analitica: '/dashboard/super-admin/analitica',
 };
 
 function LegacyTabRedirect() {

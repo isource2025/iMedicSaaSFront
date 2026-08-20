@@ -91,6 +91,7 @@ axiosInstance.interceptors.response.use(
 					reqUrl.includes('/auth/login') ||
 					reqUrl.includes('/auth/logout') ||
 					reqUrl.includes('/auth/refresh') ||
+					reqUrl.includes('/analytics/events') ||
 					reqUrl.includes('/empresa') ||
 					reqUrl.includes('/health');
 				if (!isLoginish) {
