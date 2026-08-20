@@ -1026,10 +1026,15 @@ function BandejaPedidosContent() {
 							label: 'Destino',
 							value: selectedIc.ServicioDescripcion || selectedIc.SectorReceptor,
 						},
+					]}
+					textBlocks={[
 						{
-							label: 'Motivo',
+							label: 'Pedido',
 							value: selectedIc.Motivo || selectedIc.NotasObservacion,
-							full: true,
+						},
+						{
+							label: 'Respuesta',
+							value: selectedIc.Respuesta || (selectedIc.Cumplido ? '(sin texto)' : null),
 						},
 					]}
 					onClose={() => setSelectedIc(null)}
