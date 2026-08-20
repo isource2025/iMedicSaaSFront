@@ -77,15 +77,14 @@ export default function SessionIdleModal() {
 						</p>
 						<p className={styles.hint}>Iniciá sesión cuando vuelvas.</p>
 					</div>
-					<div className={styles.artWrap} aria-hidden="true">
-						<img
-							src="/images/session-security.png"
-							alt=""
-							className={styles.art}
-							width={148}
-							height={148}
-						/>
-					</div>
+					<img
+						src="/images/session-security-shield.png"
+						alt=""
+						className={styles.art}
+						width={150}
+						height={150}
+						aria-hidden="true"
+					/>
 				</div>
 				<button type="button" className={styles.cta} onClick={() => finish('login')}>
 					Iniciar sesión

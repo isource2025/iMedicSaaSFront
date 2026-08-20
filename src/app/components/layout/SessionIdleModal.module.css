@@ -30,22 +30,13 @@
 	min-width: 0;
 }
 
-.artWrap {
-	flex: 0 0 auto;
-	width: 132px;
-	height: 132px;
-	border-radius: 50%;
-	overflow: hidden;
-	background: #05070c;
-	box-shadow: 0 8px 20px rgba(2, 132, 199, 0.22);
-}
-
 .art {
+	flex: 0 0 auto;
 	display: block;
-	width: 118%;
-	height: 118%;
-	margin: -9%;
-	object-fit: cover;
+	width: 132px;
+	height: auto;
+	object-fit: contain;
+	background: transparent;
 	pointer-events: none;
 	user-select: none;
 }
@@ -108,9 +99,8 @@
 		padding: 1.25rem 1.15rem 1.15rem;
 	}
 
-	.artWrap {
-		width: 88px;
-		height: 88px;
+	.art {
+		width: 96px;
 	}
 
 	.title {
