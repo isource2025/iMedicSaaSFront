@@ -259,7 +259,7 @@ export const indicacionesService = {
         return json?.data;
     },
 
-    crearIndicacionHija: async (payload: any) => {
+        crearIndicacionHija: async (payload: any) => {
         const resp = await apiFetch(`${BASE_URL}/indicaciones/hija`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -271,5 +271,24 @@ export const indicacionesService = {
             throw new Error(msg);
         }
         return json?.data;
+    },
+
+    /**
+     * Marca las indicaciones de la visita como vistas por enfermería (estado compartido).
+     */
+    marcarVistoEnfermeria: async (numeroVisita: number): Promise<void> => {
+        const resp = await apiFetch(
+            `${BASE_URL}/indicaciones/${numeroVisita}/visto-enfermeria`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+        const json = await resp.json().catch(() => ({}));
+        if (!resp.ok || json?.success === false) {
+            throw new Error(
+                json?.mensaje || json?.message || "No se pudieron marcar las indicaciones como vistas"
+            );
+        }
     },
 };

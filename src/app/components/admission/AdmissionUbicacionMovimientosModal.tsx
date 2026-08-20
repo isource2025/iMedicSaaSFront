@@ -9,18 +9,15 @@ import {
 import visitaMovimientoService from '@/app/services/visitaMovimientoService';
 import { getDisposicionesEgreso } from '@/app/services/disposicionEgresoService';
 import diagnosticosService from '@/app/services/diagnosticosService';
-import { clarionDateToISO, horaMostrada, isoCalendarioADmy } from '@/app/utils/dateUtils';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import { esAdminClinico } from '@/app/hooks/useUsuarioActual';
 import {
   catalogoDisposiciones,
-  diagnosticoTexto,
-  disposicionTexto,
-  nombreOperador,
+  ordenarMovimientos,
 } from '@/app/components/beds/movimientos/movimientosDisplay';
+import MovimientosTimelineTable from '@/app/components/beds/movimientos/MovimientosTimelineTable';
 import styles from './AdmissionUbicacionMovimientosModal.module.css';
-import tStyles from '@/app/components/beds/movimientos/MovimientosSection.module.css';
 import ConfirmationModal from '@/app/components/beds/shared/ConfirmationModal';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import type { EstadoRevertirEgreso } from '@/app/services/visitaMovimientoService';
@@ -158,7 +155,7 @@ export default function AdmissionUbicacionMovimientosModal({
           ];
         }
       }
-      setMovimientos(list);
+      setMovimientos(ordenarMovimientos(list));
       setDisposiciones(disp || []);
       setDispCatalogo(catalogoDisposiciones(disp || []));
       const fe = String(payload.visita.FechaEgreso || '').slice(0, 10);
@@ -407,66 +404,11 @@ export default function AdmissionUbicacionMovimientosModal({
           {showMovimientos ? (
             <section className={embedded ? styles.sectionFlat : styles.section}>
               <h3 className={styles.sectionTitle}>Historial de movimientos</h3>
-              <div className={styles.tableWrap}>
-                {movimientos.length === 0 ? (
-                  <div className={styles.empty}>Sin movimientos registrados</div>
-                ) : (
-                  <table className={tStyles.table}>
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Operador</th>
-                        <th>Cama</th>
-                        <th>Sector</th>
-                        <th>Fecha ingreso</th>
-                        <th>Hora ingreso</th>
-                        <th>Fecha egreso</th>
-                        <th>Hora egreso</th>
-                        <th>Disposición</th>
-                        <th>Diagnóstico</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {movimientos.map((m, idx) => {
-                        const fechaAdm = m.FechaAdmisionISO
-                          ? isoCalendarioADmy(m.FechaAdmisionISO)
-                          : clarionDateToISO(m.FechaAdmision)
-                            ? isoCalendarioADmy(clarionDateToISO(m.FechaAdmision))
-                            : '—';
-                        const horaAdm = horaMostrada(m.HoraAdmisionISO || m.HoraAdmision);
-                        const fechaEg = m.FechaEgresoISO
-                          ? isoCalendarioADmy(m.FechaEgresoISO)
-                          : clarionDateToISO(m.FechaEgreso)
-                            ? isoCalendarioADmy(clarionDateToISO(m.FechaEgreso))
-                            : '—';
-                        const horaEg = horaMostrada(m.HoraEgresoISO || m.HoraEgreso);
-                        const abierto = !(Number(m.FechaEgreso) > 0) && !m.FechaEgresoISO;
-                        const esActual = idx === 0 && abierto;
-                        const row = m as Record<string, unknown>;
-                        return (
-                          <tr key={`${m.FechaAdmisionISO}-${m.HoraAdmisionISO}-${idx}`} className={esActual ? tStyles.rowActual : undefined}>
-                            <td className={tStyles.cellIdx}>
-                              {movimientos.length - idx}
-                              {esActual ? <span className={tStyles.badgeActual}>actual</span> : null}
-                            </td>
-                            <td className={tStyles.cellOperador}>{nombreOperador(row)}</td>
-                            <td className={tStyles.cellCama}>
-                              {m.NombreCama || m.NumeroCama || m.ValorHabitacionCama || '—'}
-                            </td>
-                            <td>{m.NombreSector || m.ValorSector || '—'}</td>
-                            <td>{fechaAdm}</td>
-                            <td>{horaAdm}</td>
-                            <td>{fechaEg}</td>
-                            <td>{horaEg}</td>
-                            <td>{disposicionTexto(row, dispCatalogo)}</td>
-                            <td className={tStyles.cellDiag}>{diagnosticoTexto(row)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+              {movimientos.length === 0 ? (
+                <div className={styles.empty}>Sin movimientos registrados</div>
+              ) : (
+                <MovimientosTimelineTable movimientos={movimientos} dispCatalogo={dispCatalogo} compact />
+              )}
             </section>
           ) : null}
 

@@ -15,7 +15,8 @@ import {
 	IoTimeOutline,
 	IoAddOutline,
 } from 'react-icons/io5';
-import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft } from 'lucide-react';
+import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft, ClipboardList } from 'lucide-react';
+import { usePermiso } from '../../hooks/usePermiso';
 
 /**
  * Tarjeta de recurso hospitalario (cama / consultorio / insumos).
@@ -79,6 +80,7 @@ const BedCard: React.FC<BedCardProps> = ({
 			onDischarge={onDischarge}
 			onAssignPatient={onAssignPatient}
 			onOpenAdjuntos={onOpenAdjuntos}
+			onRecentIndications={onRecentIndications}
 		/>
 	);
 };
@@ -94,7 +96,17 @@ function CamaOConsultorioCard({
 	onDischarge,
 	onAssignPatient,
 	onOpenAdjuntos,
+	onRecentIndications,
 }: BedCardProps & { variant: 'cama' | 'consultorio' }) {
+	const { rol } = usePermiso();
+	const rolNombre = (rol?.nombre || '').toUpperCase();
+	const nuevasIndicaciones = Number(bed.indicacionesNuevasEnfermeria || 0);
+	const mostrarBadgeIndicaciones =
+		variant === 'cama' &&
+		rolNombre === 'ENFERMERO' &&
+		(bed.estado === 'ocupada' || bed.estado === 'aislada') &&
+		!!bed.numeroVisita &&
+		nuevasIndicaciones > 0;
 	const renderGenderIcon = () => {
 		const sexoValue = bed.SexoPaciente ? bed.SexoPaciente.toLowerCase() : '';
 		if (sexoValue === 'm' || sexoValue === 'masculino') {
@@ -159,10 +171,29 @@ function CamaOConsultorioCard({
 					<span className={styles.sectorLabel}>{bed.sector}</span>
 					<span className={styles.bedNumber}>{bed.numeroCama}</span>
 				</div>
-				{bed.numeroVisita && bed.numeroVisita !== 0 ? (
-					<div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-						{bed.numeroVisita}
-						{renderGenderIcon()}
+				{mostrarBadgeIndicaciones || (bed.numeroVisita && bed.numeroVisita !== 0) ? (
+					<div className={styles.headerRight}>
+						{bed.numeroVisita && bed.numeroVisita !== 0 ? (
+							<div className={styles.visitaHeader}>
+								{bed.numeroVisita}
+								{renderGenderIcon()}
+							</div>
+						) : null}
+						{mostrarBadgeIndicaciones ? (
+							<button
+								type="button"
+								className={styles.indicacionesBadge}
+								title={`${nuevasIndicaciones} indicación${nuevasIndicaciones === 1 ? '' : 'es'} nueva${nuevasIndicaciones === 1 ? '' : 's'} por revisar`}
+								onClick={(e) => {
+									e.stopPropagation();
+									if (onRecentIndications) onRecentIndications(bed.id);
+									else onBedClick?.(bed.id);
+								}}
+							>
+								<ClipboardList size={16} strokeWidth={2.2} aria-hidden />
+								<span className={styles.indicacionesBadgeCount}>{nuevasIndicaciones}</span>
+							</button>
+						) : null}
 					</div>
 				) : null}
 			</div>

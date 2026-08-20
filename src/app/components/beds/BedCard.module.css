@@ -408,6 +408,47 @@
   color: white;
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.visitaHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.indicacionesBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 3px 8px 3px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f766e;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.indicacionesBadge:hover {
+  background: #fff;
+  color: #115e59;
+}
+
+.indicacionesBadgeCount {
+  color: #c2410c;
+  min-width: 0.7rem;
+  text-align: center;
+}
+
 .statusBadge {
   background-color: transparent;
   color: #9E9E9E;

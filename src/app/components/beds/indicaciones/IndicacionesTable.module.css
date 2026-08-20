@@ -142,6 +142,30 @@
     color: #111827;
 }
 
+.tbody .rowNueva td,
+.tbody .row.rowNueva:nth-child(even) td {
+    background: #fff8e6;
+    box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.tbody .rowNueva:hover td,
+.tbody .row.rowNueva:nth-child(even):hover td {
+    background: #ffefc7;
+}
+
+.badgeNueva {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
 /* Divisores de columna (opcional, coméntalo si no los quieres) */
 .table th,
 .table td {
@@ -214,6 +238,12 @@
 .cellEstado {
     text-align: center;
     padding: 0.65rem 0.75rem !important;
+}
+
+.cellEstado .badgeNueva {
+    display: block;
+    width: fit-content;
+    margin: 6px auto 0;
 }
 
 .estadoIndicador {

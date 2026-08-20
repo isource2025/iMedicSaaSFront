@@ -113,7 +113,9 @@ const BedsList = () => {
 		setAdjuntosModalOpen(true);
 	};
 
-	const handleRecentIndications = (_bedId: string) => {};
+	const handleRecentIndications = (bedId: string) => {
+		handleBedClick(bedId);
+	};
 
 	const handleChangeBed = (bedId: string, bedSector: string) => {
 		const bed = beds.find((b) => b.id === bedId && b.sector === bedSector);

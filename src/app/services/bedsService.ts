@@ -56,6 +56,9 @@ function mapBedItem(item: Record<string, unknown>): Bed {
 		tipoRaw: String(tipoRaw),
 		tipoRecurso: normalizarTipoRecurso(tipoRaw || item.tipoRecurso),
 		egresada: Boolean(item.egresada),
+		indicacionesNuevasEnfermeria: Number(
+			item.IndicacionesNuevasEnfermeria ?? item.indicacionesNuevasEnfermeria ?? 0,
+		),
 	};
 }
 
@@ -71,7 +74,17 @@ export function normalizeBedFromApi(item: Record<string, unknown> | Bed): Bed {
 	) {
 		const b = item as Bed;
 		const nv = Number(b.NumeroVisita ?? b.numeroVisita ?? 0);
-		return { ...b, numeroVisita: nv, NumeroVisita: nv };
+		const raw = item as Record<string, unknown>;
+		return {
+			...b,
+			numeroVisita: nv,
+			NumeroVisita: nv,
+			indicacionesNuevasEnfermeria: Number(
+				b.indicacionesNuevasEnfermeria ??
+					raw.IndicacionesNuevasEnfermeria ??
+					0,
+			),
+		};
 	}
 	return mapBedItem(item as Record<string, unknown>);
 }
@@ -191,4 +204,4 @@ const parseEstado = (
 			return 'disponible';
 	}
 };
-
+

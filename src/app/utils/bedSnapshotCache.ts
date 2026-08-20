@@ -75,5 +75,7 @@ export function mergeBedSnapshots(cached: Bed | null, fresh: Bed): Bed {
 		sector: pick(fresh.sector, cached.sector) || '',
 		numeroCama: pick(fresh.numeroCama, cached.numeroCama) || '',
 		tipoRecurso: fresh.tipoRecurso || cached.tipoRecurso,
+		indicacionesNuevasEnfermeria:
+			fresh.indicacionesNuevasEnfermeria ?? cached.indicacionesNuevasEnfermeria ?? 0,
 	};
 }

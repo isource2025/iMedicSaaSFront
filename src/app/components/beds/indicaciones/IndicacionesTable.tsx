@@ -48,6 +48,8 @@ export type IndicacionRow = {
     indicacionesHijas?: IndicacionHijaRow[];
     /** CodOperador del profesional que cargó la indicación (para control de propiedad). */
     OperadorCarga?: number | null;
+    /** Aún no revisada por enfermería (estado compartido). */
+    nuevaEnfermeria?: boolean;
 };
 
 type Props = {
@@ -329,6 +331,7 @@ export default function IndicacionesTable({
                                             selectedId === r.id
                                                 ? styles.activeRow
                                                 : "",
+                                            r.nuevaEnfermeria ? styles.rowNueva : "",
                                         ].join(" ")}
                                     >
                                         {modoReindicar && (
@@ -345,6 +348,9 @@ export default function IndicacionesTable({
                                             <div className={`${styles.estadoIndicador} ${styles[`estado${getEstadoIndicacion(r).color.charAt(0).toUpperCase() + getEstadoIndicacion(r).color.slice(1)}`]}`}>
                                                 {getEstadoIndicacion(r).label}
                                             </div>
+                                            {r.nuevaEnfermeria ? (
+                                                <span className={styles.badgeNueva}>Nueva</span>
+                                            ) : null}
                                         </td>
 
                                         <td className={styles.cellTight}>

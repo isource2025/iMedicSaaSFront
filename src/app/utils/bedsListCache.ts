@@ -114,7 +114,20 @@ export function bedsListSignature(beds: Bed[]): string {
 	return beds
 		.map(
 			(b) =>
-				`${b.id}|${b.estado}|${b.numeroVisita}|${b.NombrePaciente}|${b.documentoPaciente}|${b.tipoRecurso}`,
+				`${b.id}|${b.estado}|${b.numeroVisita}|${b.NombrePaciente}|${b.documentoPaciente}|${b.tipoRecurso}|${b.indicacionesNuevasEnfermeria ?? 0}`,
 		)
 		.join(';');
+}
+
+/** Tras revisar indicaciones, el badge debe desaparecer en la lista cacheada. */
+export function clearIndicacionesNuevasEnfermeria(numeroVisita: number): void {
+	if (!cache?.beds?.length || !numeroVisita) return;
+	cache = {
+		...cache,
+		beds: cache.beds.map((b) =>
+			Number(b.numeroVisita || b.NumeroVisita || 0) === Number(numeroVisita)
+				? { ...b, indicacionesNuevasEnfermeria: 0 }
+				: b,
+		),
+	};
 }

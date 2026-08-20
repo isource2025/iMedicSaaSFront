@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
@@ -15,6 +15,8 @@ import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { usePermiso } from "../../../hooks/usePermiso";
+import { clearIndicacionesNuevasEnfermeria } from "../../../utils/bedsListCache";
 
 
 type IndicacionDTO = {
@@ -39,6 +41,7 @@ type IndicacionDTO = {
     estado?: string;
     suspendida?: boolean;
     unicaVez?: boolean;
+    nuevaEnfermeria?: boolean;
 };
 
 interface IndicacionesSectionProps {
@@ -63,6 +66,9 @@ export default function IndicacionesSection({
     horaIngreso,
 }: IndicacionesSectionProps) {
     const { activeSection, selectedDate } = useBedDetail();
+    const { rol } = usePermiso();
+    const rolNombre = (rol?.nombre || "").toUpperCase();
+    const vistoEnviadoRef = useRef<number | null>(null);
 
     const indicacionesPath = useMemo(
         () =>
@@ -81,6 +87,27 @@ export default function IndicacionesSection({
             : undefined,
         cacheTimeMs: 20000,
     });
+
+    useEffect(() => {
+        vistoEnviadoRef.current = null;
+    }, [numeroVisita]);
+
+    useEffect(() => {
+        if (rolNombre !== "ENFERMERO" || !numeroVisita) return;
+        if (activeSection !== "indicaciones" || isLoading || error) return;
+        if (data === undefined) return;
+        if (vistoEnviadoRef.current === numeroVisita) return;
+        vistoEnviadoRef.current = numeroVisita;
+        void indicacionesService
+            .marcarVistoEnfermeria(numeroVisita)
+            .then(() => {
+                clearIndicacionesNuevasEnfermeria(numeroVisita);
+            })
+            .catch((err) => {
+                vistoEnviadoRef.current = null;
+                console.warn("No se pudieron marcar las indicaciones como vistas:", err);
+            });
+    }, [rolNombre, numeroVisita, activeSection, isLoading, error, data]);
 
 
 
@@ -124,6 +151,7 @@ export default function IndicacionesSection({
             OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
             matricula: (x as any).matricula ?? (x as any).Matricula ?? null,
             indicacionesHijas: (x as any).indicacionesHijas || [],
+            nuevaEnfermeria: Boolean((x as any).nuevaEnfermeria),
         }));
 
         // Ordenar por ordenTipo (campo Orden de imInterTipoIndicacion) y luego por nro

@@ -45,6 +45,8 @@ export interface Bed {
 	tipoRecurso: BedTipoRecurso;
 	/** Visita con FechaEgreso > 0 (sigue permitiendo altas clínicas) */
 	egresada?: boolean;
+	/** Indicaciones médicas aún no revisadas por enfermería (compartido). */
+	indicacionesNuevasEnfermeria?: number;
 }
 
 export interface BedState {

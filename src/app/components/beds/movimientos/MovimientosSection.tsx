@@ -4,20 +4,25 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import styles from "../indicaciones/IndicacionesSection.module.css";
-import tStyles from "./MovimientosSection.module.css";
 import BedSectionLoading from "../shared/BedSectionLoading";
 import EmptyState from "../shared/EmptyState";
 import ExportButton, { ExportOption } from "../shared/ExportButton";
 import { exportToPDF } from "../../../utils/pdfExport";
 import { obtenerInfoEmpresa } from "../../../services/empresaService";
-import { clarionDateToISO, horaMostrada, isoCalendarioADmy } from "../../../utils/dateUtils";
 import { getDisposicionesEgreso } from "../../../services/disposicionEgresoService";
 import {
 	catalogoDisposiciones,
+	clasificarEstadoMovimiento,
 	diagnosticoTexto,
 	disposicionTexto,
+	etiquetaCama,
+	etiquetaSector,
+	fechaHoraEgreso,
+	fechaHoraIngreso,
 	nombreOperador,
+	ordenarMovimientos,
 } from "./movimientosDisplay";
+import MovimientosTimelineTable from "./MovimientosTimelineTable";
 
 interface MovimientosProps {
 	numeroVisita: number | null;
@@ -26,11 +31,6 @@ interface MovimientosProps {
 	documentoPaciente?: string;
 	fechaIngreso?: string;
 	horaIngreso?: string;
-}
-
-function formatClarionDate(v: number | null | undefined): string {
-	const iso = clarionDateToISO(v);
-	return iso ? isoCalendarioADmy(iso) : "—";
 }
 
 export default function MovimientosSection({
@@ -64,11 +64,12 @@ export default function MovimientosSection({
 	});
 
 	const movimientos: any[] = useMemo(() => {
-		if (!data) return [];
-		if (Array.isArray(data)) return data;
-		if (Array.isArray(data.data)) return data.data;
-		if (data && typeof data === "object") return [data];
-		return [];
+		let raw: any[] = [];
+		if (!data) raw = [];
+		else if (Array.isArray(data)) raw = data;
+		else if (Array.isArray(data.data)) raw = data.data;
+		else if (data && typeof data === "object") raw = [data];
+		return ordenarMovimientos(raw);
 	}, [data]);
 
 	const formatSelectedDate = () => {
@@ -89,25 +90,17 @@ export default function MovimientosSection({
 			const parts = movimientos.map((m, idx) => ({
 				title: `Movimiento ${idx + 1}`,
 				fields: [
-					{ label: "Cama", value: m.NombreCama || m.ValorHabitacionCama || "—" },
-					{ label: "Sector", value: m.NombreSector || m.ValorSector || "—" },
 					{
-						label: "Ingreso",
-						value: `${m.FechaAdmisionISO ? isoCalendarioADmy(m.FechaAdmisionISO) : formatClarionDate(m.FechaAdmision)} ${horaMostrada(m.HoraAdmisionISO || m.HoraAdmision)}`.trim(),
+						label: "Estado",
+						value: clasificarEstadoMovimiento(m, idx, movimientos),
 					},
-					{
-						label: "Egreso",
-						value: `${m.FechaEgresoISO ? isoCalendarioADmy(m.FechaEgresoISO) : formatClarionDate(m.FechaEgreso)} ${horaMostrada(m.HoraEgresoISO || m.HoraEgreso)}`.trim(),
-					},
-					{
-						label: "Operador",
-						value: nombreOperador(m),
-					},
-					{
-						label: "Disposición",
-						value: disposicionTexto(m, dispCatalogo),
-					},
+					{ label: "Cama", value: etiquetaCama(m) },
+					{ label: "Sector", value: etiquetaSector(m) },
+					{ label: "Fecha/Hora Ingreso", value: fechaHoraIngreso(m) },
+					{ label: "Fecha/Hora Egreso", value: fechaHoraEgreso(m) },
 					{ label: "Diagnóstico", value: diagnosticoTexto(m) },
+					{ label: "Operador", value: nombreOperador(m) },
+					{ label: "Disposición", value: disposicionTexto(m, dispCatalogo) },
 				],
 				profesional: {
 					nombre: nombreOperador(m) !== "—" ? nombreOperador(m) : undefined,
@@ -186,59 +179,7 @@ export default function MovimientosSection({
 						/>
 					)}
 					{!isLoading && !error && movimientos.length > 0 && (
-						<div className={tStyles.tableWrap}>
-							<table className={tStyles.table}>
-								<thead>
-									<tr>
-										<th>#</th>
-										<th>Operador</th>
-										<th>Cama</th>
-										<th>Sector</th>
-										<th>Fecha ingreso</th>
-										<th>Hora ingreso</th>
-										<th>Fecha egreso</th>
-										<th>Hora egreso</th>
-										<th>Disposición</th>
-										<th>Diagnóstico</th>
-									</tr>
-								</thead>
-								<tbody>
-									{movimientos.map((m, idx) => {
-										const fechaAdm = m.FechaAdmisionISO
-											? isoCalendarioADmy(m.FechaAdmisionISO)
-											: formatClarionDate(m.FechaAdmision);
-										const horaAdm = horaMostrada(m.HoraAdmisionISO || m.HoraAdmision);
-										const fechaEg = m.FechaEgresoISO
-											? isoCalendarioADmy(m.FechaEgresoISO)
-											: formatClarionDate(m.FechaEgreso);
-										const horaEg = horaMostrada(m.HoraEgresoISO || m.HoraEgreso);
-										const abierto =
-											!(Number(m.FechaEgreso) > 0) && !m.FechaEgresoISO;
-										const esActual = idx === 0 && abierto;
-
-										return (
-									<tr key={idx} className={esActual ? tStyles.rowActual : ""}>
-											<td className={tStyles.cellIdx}>
-												{movimientos.length - idx}
-												{esActual && <span className={tStyles.badgeActual}>actual</span>}
-											</td>
-											<td className={tStyles.cellOperador}>{nombreOperador(m)}</td>
-											<td className={tStyles.cellCama}>
-												{m.NombreCama || m.NumeroCama || m.ValorHabitacionCama || "—"}
-											</td>
-											<td>{m.NombreSector || m.ValorSector || "—"}</td>
-											<td>{fechaAdm}</td>
-											<td>{horaAdm}</td>
-											<td>{fechaEg}</td>
-											<td>{horaEg}</td>
-											<td>{disposicionTexto(m, dispCatalogo)}</td>
-											<td className={tStyles.cellDiag}>{diagnosticoTexto(m)}</td>
-										</tr>
-										);
-									})}
-								</tbody>
-							</table>
-						</div>
+						<MovimientosTimelineTable movimientos={movimientos} dispCatalogo={dispCatalogo} />
 					)}
 				</div>
 			</div>
