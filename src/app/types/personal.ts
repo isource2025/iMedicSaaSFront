@@ -65,6 +65,12 @@ export interface PersonalFormData {
 	Password?: string;
 	ConfirmPassword?: string;
 	CodOperador?: string;
+	/** Alta: IdRol de imRoles (obligatorio al crear). */
+	IdRol?: string;
+	/** Alta: sectores opcionales (imPersonalSectores). */
+	Sectores?: string[];
+	/** Alta: servicios de pedidos opcionales (imPersonalServicios). */
+	Servicios?: string[];
 }
 
 export interface ApiResponse<T> {

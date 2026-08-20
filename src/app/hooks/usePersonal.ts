@@ -53,13 +53,15 @@ export function usePersonal() {
 		fetchList(1, term);
 	};
 
-	const createPersonal = async (data: PersonalFormData): Promise<boolean> => {
+	const createPersonal = async (
+		data: PersonalFormData,
+	): Promise<Personal | false> => {
 		try {
 			setLoading(true);
 			setError(null);
-			await personalService.createPersonal(data);
+			const created = await personalService.createPersonal(data);
 			await fetchList(currentPage, searchTerm);
-			return true;
+			return created;
 		} catch (e: any) {
 			setError(e?.message || 'Error al crear el personal');
 			alert(e?.message || 'Error al crear el personal');

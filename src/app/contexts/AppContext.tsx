@@ -11,6 +11,8 @@ import {
 import { getIdEmpresaFromToken } from '../utils/jwtSession';
 import { clearTenantUiCaches } from '../utils/sessionCaches';
 import { authService } from '../services/authService';
+import { startSessionActivityMonitor } from '../utils/sessionActivity';
+import SessionIdleModal from '../components/layout/SessionIdleModal';
 import type { ModulosEmpresa } from '../types/superAdmin';
 
 interface AppContextState {
@@ -141,6 +143,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     void refreshModulos();
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    startSessionActivityMonitor();
+  }, [isAuthenticated]);
+
   const setModulosEmpresa = (modulos: ModulosEmpresa | null) => {
     setModulosEmpresaState(modulos);
     if (modulos) {
@@ -240,6 +247,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       }}
     >
       {children}
+      <SessionIdleModal />
     </AppContext.Provider>
   );
 };

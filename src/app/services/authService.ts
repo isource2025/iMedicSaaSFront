@@ -48,6 +48,7 @@ export const authService = {
       usuario?: unknown;
       rol?: unknown;
       idEmpresa?: number | null;
+      idleTimeoutMinutes?: number;
       modulosEmpresa?: import('../types/superAdmin').ModulosEmpresa | null;
     }>('/auth/me');
     return res.data;

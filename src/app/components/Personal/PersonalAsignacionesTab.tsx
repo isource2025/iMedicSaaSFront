@@ -11,7 +11,11 @@ import formStyles from './PersonalForm.module.css';
 import styles from './PersonalActionModals.module.css';
 
 type Props = {
-	personalId: number;
+	personalId?: number;
+	draft?: boolean;
+	draftSectores?: string[];
+	draftServicios?: string[];
+	onDraftChange?: (next: { sectores: string[]; servicios: string[] }) => void;
 	onSaved?: () => void | Promise<void>;
 };
 
@@ -27,10 +31,17 @@ function toggle(set: Set<string>, id: string) {
 	return next;
 }
 
-export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) {
+export default function PersonalAsignacionesTab({
+	personalId,
+	draft = false,
+	draftSectores = [],
+	draftServicios = [],
+	onDraftChange,
+	onSaved,
+}: Props) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
-	const [editing, setEditing] = useState(false);
+	const [editing, setEditing] = useState(draft);
 	const [error, setError] = useState('');
 
 	const [secAsignados, setSecAsignados] = useState<PersonalSectorAsignado[]>([]);
@@ -48,6 +59,33 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 			setLoading(true);
 			setError('');
 			try {
+				if (draft) {
+					const settled = await Promise.allSettled([
+						personalService.getSectoresCatalogo(),
+						personalService.getServicios(),
+					]);
+					if (cancelled) return;
+					const val = <T,>(i: number, fallback: T): T =>
+						settled[i].status === 'fulfilled'
+							? (settled[i] as PromiseFulfilledResult<T>).value
+							: fallback;
+					const secCat = val<{ IdSector: string; Descripcion: string }[]>(0, []).filter((c) =>
+						idValido(c.IdSector),
+					);
+					const srvCat = val<CatalogoItemTexto[]>(1, []).filter((c) => idValido(c.valor));
+					setSecCatalogo(secCat);
+					setCatServicios(srvCat);
+					setSecAsignados([]);
+					setSrvAsignados([]);
+					setSecSel(new Set(draftSectores.filter(idValido)));
+					setSrvSel(new Set(draftServicios.filter(idValido)));
+					setEditing(true);
+					return;
+				}
+				if (!personalId) {
+					setError('Personal inválido');
+					return;
+				}
 				const settled = await Promise.allSettled([
 					personalService.getPersonalSectores(personalId),
 					personalService.getSectoresCatalogo(),
@@ -78,7 +116,9 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 		return () => {
 			cancelled = true;
 		};
-	}, [personalId]);
+		// draftSectores/Servicios solo inicializan el alta; no rehidratar en cada click.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [personalId, draft]);
 
 	const secsFiltrados = useMemo(() => {
 		const t = qSec.trim().toLowerCase();
@@ -112,11 +152,27 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 		setError('');
 	};
 
+	const emitDraft = (sec: Set<string>, srv: Set<string>) => {
+		if (!draft) return;
+		onDraftChange?.({ sectores: Array.from(sec), servicios: Array.from(srv) });
+	};
+
+	const setSecDraft = (next: Set<string>) => {
+		setSecSel(next);
+		emitDraft(next, srvSel);
+	};
+
+	const setSrvDraft = (next: Set<string>) => {
+		setSrvSel(next);
+		emitDraft(secSel, next);
+	};
+
 	const guardar = async () => {
+		if (!personalId) return;
 		setSaving(true);
 		setError('');
 		try {
-			const data = await personalService.replacePersonalAsignaciones(personalId, {
+			const data = await personalService.replacePersonalAsignaciones(personalId as number, {
 				sectores: Array.from(secSel),
 				servicios: Array.from(srvSel),
 			});
@@ -136,7 +192,7 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 			{loading ? <p className={formStyles.usuarioHint}>Cargando asignaciones…</p> : null}
 			{error ? <div className={formStyles.alertError}>{error}</div> : null}
 
-			{!editing ? (
+			{!editing && !draft ? (
 				<div className={formStyles.asignColHead} style={{ marginBottom: '0.75rem' }}>
 					<p className={formStyles.usuarioHint} style={{ margin: 0 }}>
 						Sectores y servicios asignados a esta persona.
@@ -145,6 +201,11 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 						Editar / asignar
 					</button>
 				</div>
+			) : null}
+			{draft ? (
+				<p className={formStyles.usuarioHint}>
+					Opcional. Si no elige ninguno, el personal se crea igual. Se guardan al confirmar el alta.
+				</p>
 			) : null}
 
 			<div className={formStyles.asignGrid}>
@@ -162,10 +223,10 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 								value={qSec}
 								onChange={(e) => setQSec(e.target.value)}
 							/>
-							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSecSel(new Set(secCatalogo.map((c) => c.IdSector)))}>
+							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSecDraft(new Set(secCatalogo.map((c) => c.IdSector)))}>
 								Todos
 							</button>
-							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSecSel(new Set())}>
+							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSecDraft(new Set())}>
 								Ninguno
 							</button>
 						</div>
@@ -179,7 +240,7 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 											type="checkbox"
 											checked={secSel.has(c.IdSector)}
 											disabled={saving}
-											onChange={() => setSecSel((prev) => toggle(prev, c.IdSector))}
+											onChange={() => setSecDraft(toggle(secSel, c.IdSector))}
 										/>
 										<span>{c.Descripcion || c.IdSector}</span>
 									</label>
@@ -216,10 +277,10 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 								value={qSrv}
 								onChange={(e) => setQSrv(e.target.value)}
 							/>
-							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSrvSel(new Set(catServicios.map((c) => c.valor)))}>
+							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSrvDraft(new Set(catServicios.map((c) => c.valor)))}>
 								Todos
 							</button>
-							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSrvSel(new Set())}>
+							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSrvDraft(new Set())}>
 								Ninguno
 							</button>
 						</div>
@@ -233,7 +294,7 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 											type="checkbox"
 											checked={srvSel.has(o.valor)}
 											disabled={saving}
-											onChange={() => setSrvSel((prev) => toggle(prev, o.valor))}
+											onChange={() => setSrvDraft(toggle(srvSel, o.valor))}
 										/>
 										<span>{o.descripcion}</span>
 									</label>
@@ -257,7 +318,7 @@ export default function PersonalAsignacionesTab({ personalId, onSaved }: Props) 
 			</section>
 			</div>
 
-			{editing ? (
+			{editing && !draft ? (
 				<div className={styles.actions}>
 					<button type="button" className={styles.btn} disabled={saving} onClick={cancelarEdicion}>
 						Cancelar

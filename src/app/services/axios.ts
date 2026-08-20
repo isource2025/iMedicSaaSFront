@@ -1,6 +1,11 @@
 import axios from 'axios';
 import { getEnvApiBaseUrl, normalizeApiRequestPath } from '@/app/config/apiBaseUrl';
-import { clearTenantUiCaches } from '@/app/utils/sessionCaches';
+import {
+	clearClientAuth,
+	isPublicAuthPath,
+	isSessionIdleOpen,
+	notifySessionIdle,
+} from '@/app/utils/sessionIdle';
 
 const envApiBase = getEnvApiBaseUrl();
 
@@ -80,26 +85,21 @@ axiosInstance.interceptors.response.use(
 		const { response } = error;
 
 		if (response) {
-			// Handle unauthorized errors (no logout en rutas públicas de branding/login)
 			if (response.status === 401) {
 				const reqUrl = String(response.config?.url || '');
-				const isPublicRoute =
+				const isLoginish =
+					reqUrl.includes('/auth/login') ||
+					reqUrl.includes('/auth/logout') ||
+					reqUrl.includes('/auth/refresh') ||
 					reqUrl.includes('/empresa') ||
-					reqUrl.includes('/auth/') ||
 					reqUrl.includes('/health');
-				if (!isPublicRoute) {
-					localStorage.removeItem('token');
-					localStorage.removeItem('user');
-					localStorage.removeItem('userData');
-					localStorage.removeItem('rol');
-					localStorage.removeItem('roles');
-					localStorage.removeItem('permisos');
-					localStorage.removeItem('empresaSeleccionada');
-					localStorage.removeItem('empresaInfo');
-					localStorage.removeItem('empresaModulos');
-					clearTenantUiCaches();
-
-					if (window.location.pathname !== '/') {
+				if (!isLoginish) {
+					const mensaje = String(response.data?.mensaje || '').toLowerCase();
+					const idle = mensaje.includes('inactividad');
+					if (idle) {
+						notifySessionIdle();
+					} else if (!isSessionIdleOpen() && !isPublicAuthPath()) {
+						clearClientAuth();
 						window.location.href = '/';
 					}
 				}

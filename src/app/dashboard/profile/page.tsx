@@ -236,9 +236,15 @@ export default function MiPerfilPage() {
 			if (!res.success) throw new Error('Respuesta inválida');
 			setPerfil(res.data);
 			const initialForm: Record<string, string> = {};
-			const p = (res.data.personal || {}) as Record<string, unknown>;
+			const p = { ...(res.data.personal || {}) } as Record<string, unknown>;
+			const r = res.data.resumenOperador;
+			if (!p.ApellidoNombre && r) {
+				p.ApellidoNombre =
+					r.ApellidoNombrePersonal ||
+					[r.Apellido, r.Nombres].filter(Boolean).join(', ');
+			}
 			for (const key of EDITABLE_PROFILE_FIELDS) {
-				initialForm[key] = p[key] == null ? '' : String(p[key]);
+				initialForm[key] = p[key] == null || p[key] === '' ? '' : String(p[key]);
 			}
 			setProfileForm(initialForm);
 		} catch (e: unknown) {

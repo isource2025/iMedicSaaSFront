@@ -24,7 +24,11 @@ import AgendaTab from './AgendaTab/AgendaTab';
 import PersonalCuentaTab from './PersonalCuentaTab';
 import PersonalAsignacionesTab from './PersonalAsignacionesTab';
 import PersonalFirmaTab from './PersonalFirmaTab';
+import PersonalFirmaPad, { type PersonalFirmaPadRef } from './PersonalFirmaPad';
 import { usePermiso } from '../../hooks/usePermiso';
+import { rolesService, type Rol } from '../../services/rolesService';
+import { etiquetaRol } from '../../utils/permisos';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface EstadoCivil {
 	valor: string;
@@ -35,7 +39,7 @@ interface PersonalFormProps {
 	personal?: Personal | null;
 	isEditing?: boolean;
 	isSubmitting?: boolean;
-	onSubmit: (data: PersonalFormData) => Promise<boolean>;
+	onSubmit: (data: PersonalFormData) => Promise<boolean | Personal | false>;
 	onCancel: () => void;
 	onDelete?: () => void;
 }
@@ -75,11 +79,14 @@ const buildInitial = (d?: Partial<Personal> | null): PersonalFormData => ({
 	NumeroSocio: toStr(d?.NumeroSocio),
 	ConvenioFacturacion: toStr(d?.ConvenioFacturacion),
 	IdEspecialidadME: toStr(d?.IdEspecialidadME),
-	CrearUsuario: !d?.Valor,
+	CrearUsuario: false,
 	NombreRed: '',
 	Password: '',
 	ConfirmPassword: '',
 	CodOperador: '',
+	IdRol: '',
+	Sectores: [],
+	Servicios: [],
 });
 
 const normalizeCity = (raw: string) =>
@@ -111,6 +118,12 @@ export default function PersonalForm({
 	const [buscandoRenaper, setBuscandoRenaper] = useState(false);
 	const [internalSubmitting, setInternalSubmitting] = useState(false);
 	const [nextId, setNextId] = useState<number | null>(null);
+	const [rolesCatalogo, setRolesCatalogo] = useState<Rol[]>([]);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+	const [firmaDraftUrl, setFirmaDraftUrl] = useState<string | null>(null);
+	const firmaPadRef = useRef<PersonalFirmaPadRef>(null);
+	const pendingFirmaRef = useRef<File | null>(null);
 
 	useEffect(() => {
 		setFormData(buildInitial(personal));
@@ -174,6 +187,19 @@ export default function PersonalForm({
 	}, [isEditing]);
 
 	useEffect(() => {
+		if (isEditing) return;
+		(async () => {
+			try {
+				const lista = await rolesService.listar();
+				setRolesCatalogo((lista || []).filter((r) => r.Activo !== false));
+			} catch (e) {
+				console.error('roles', e);
+				setRolesCatalogo([]);
+			}
+		})();
+	}, [isEditing]);
+
+	useEffect(() => {
 		const val = formData.FechaNacimiento;
 		if (!val) return;
 		if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return;
@@ -197,15 +223,12 @@ export default function PersonalForm({
 		esAdmin;
 	const showAgendaTab =
 		isEditing && (puedeConfigurarAgenda || esAdmin);
-	const showCuentaTab = isEditing && !!formData.Valor;
-	const showAsignacionesTab = isEditing && !!formData.Valor;
-	const showFirmaTab = isEditing && !!formData.Valor;
+	const showCuentaTab = true;
+	const showAsignacionesTab = true;
+	const showFirmaTab = true;
 	const matriculaProfesional = Number(formData.MatriculaProvincial) || null;
 
-	const tabIds: Tab[] = ['personal', 'profesional'];
-	if (showFirmaTab) tabIds.push('firma');
-	if (showAsignacionesTab) tabIds.push('asignaciones');
-	if (showCuentaTab) tabIds.push('cuenta');
+	const tabIds: Tab[] = ['personal', 'profesional', 'cuenta', 'asignaciones', 'firma'];
 	if (showAgendaTab) tabIds.push('agenda');
 
 	useEffect(() => {
@@ -357,15 +380,20 @@ export default function PersonalForm({
 			newErrors.MatriculaProvincial = 'Matrícula inválida';
 		if (formData.MatriculaNacional && isNaN(Number(formData.MatriculaNacional)))
 			newErrors.MatriculaNacional = 'Matrícula inválida';
-		if (!isEditing && formData.CrearUsuario) {
-			if (!String(formData.NombreRed || '').trim()) {
-				newErrors.NombreRed = 'El nombre de usuario es obligatorio';
+		if (!isEditing) {
+			if (!String(formData.IdRol || '').trim() || Number(formData.IdRol) <= 0) {
+				newErrors.IdRol = 'El rol es obligatorio';
 			}
-			if (!formData.Password || formData.Password.length < 4) {
-				newErrors.Password = 'La contraseña debe tener al menos 4 caracteres';
-			}
-			if (formData.Password !== formData.ConfirmPassword) {
-				newErrors.ConfirmPassword = 'Las contraseñas no coinciden';
+			if (formData.CrearUsuario) {
+				if (!String(formData.NombreRed || '').trim()) {
+					newErrors.NombreRed = 'El nombre de usuario es obligatorio';
+				}
+				if (!formData.Password || formData.Password.length < 4) {
+					newErrors.Password = 'La contraseña debe tener al menos 4 caracteres';
+				}
+				if (formData.Password !== formData.ConfirmPassword) {
+					newErrors.ConfirmPassword = 'Las contraseñas no coinciden';
+				}
 			}
 		}
 		setErrors(newErrors);
@@ -376,8 +404,13 @@ export default function PersonalForm({
 				newErrors.FechaNacimiento
 			) {
 				setActiveTab('personal');
-			} else if (newErrors.NombreRed || newErrors.Password || newErrors.ConfirmPassword) {
-				setActiveTab('profesional');
+			} else if (
+				newErrors.IdRol ||
+				newErrors.NombreRed ||
+				newErrors.Password ||
+				newErrors.ConfirmPassword
+			) {
+				setActiveTab('cuenta');
 			} else {
 				setActiveTab('profesional');
 			}
@@ -385,13 +418,35 @@ export default function PersonalForm({
 		return Object.keys(newErrors).length === 0;
 	};
 
+	const captureFirmaDraft = async () => {
+		const file = await firmaPadRef.current?.toPngFile();
+		if (!file) return;
+		pendingFirmaRef.current = file;
+		setFirmaDraftUrl((old) => {
+			if (old) URL.revokeObjectURL(old);
+			return URL.createObjectURL(file);
+		});
+	};
+
+	const goTab = (tab: Tab) => {
+		if (!isEditing && activeTab === 'firma' && tab !== 'firma') {
+			void (async () => {
+				await captureFirmaDraft();
+				setActiveTab(tab);
+			})();
+			return;
+		}
+		setActiveTab(tab);
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (
-			activeTab === 'firma' ||
-			activeTab === 'cuenta' ||
-			activeTab === 'agenda' ||
-			activeTab === 'asignaciones'
+			isEditing &&
+			(activeTab === 'firma' ||
+				activeTab === 'cuenta' ||
+				activeTab === 'agenda' ||
+				activeTab === 'asignaciones')
 		) {
 			return;
 		}
@@ -399,6 +454,9 @@ export default function PersonalForm({
 		if (!validate()) return;
 		try {
 			setInternalSubmitting(true);
+			if (!isEditing) {
+				await captureFirmaDraft();
+			}
 			const payload: PersonalFormData = { ...formData };
 			if (isEditing) {
 				delete payload.CrearUsuario;
@@ -406,6 +464,9 @@ export default function PersonalForm({
 				delete payload.Password;
 				delete payload.ConfirmPassword;
 				delete payload.CodOperador;
+				delete payload.IdRol;
+				delete payload.Sectores;
+				delete payload.Servicios;
 			} else if (!payload.CrearUsuario) {
 				delete payload.NombreRed;
 				delete payload.Password;
@@ -414,8 +475,27 @@ export default function PersonalForm({
 			} else {
 				delete payload.ConfirmPassword;
 			}
-			const ok = await onSubmit(payload);
-			if (ok) onCancel();
+			const result = await onSubmit(payload);
+			if (!result) return;
+			if (!isEditing) {
+				const created =
+					typeof result === 'object' && result && 'Valor' in result
+						? result
+						: null;
+				const file =
+					pendingFirmaRef.current || (await firmaPadRef.current?.toPngFile()) || null;
+				if (created?.Valor && file) {
+					try {
+						await personalService.uploadPersonalFirma(created.Valor, file);
+					} catch (err) {
+						console.error('firma alta', err);
+						alert(
+							'El personal se creó, pero no se pudo guardar la firma. Podés cargarla al editar.',
+						);
+					}
+				}
+			}
+			onCancel();
 		} finally {
 			setInternalSubmitting(false);
 		}
@@ -435,7 +515,7 @@ export default function PersonalForm({
 						if (el) tabsRef.current[0] = el;
 					}}
 					className={`${styles.tab} ${activeTab === 'personal' ? styles.tabActive : ''}`}
-					onClick={() => setActiveTab('personal')}
+					onClick={() => goTab('personal')}
 				>
 					Datos Personales
 				</div>
@@ -444,19 +524,19 @@ export default function PersonalForm({
 						if (el) tabsRef.current[1] = el;
 					}}
 					className={`${styles.tab} ${activeTab === 'profesional' ? styles.tabActive : ''}`}
-					onClick={() => setActiveTab('profesional')}
+					onClick={() => goTab('profesional')}
 				>
 					Datos Profesionales
 				</div>
-				{showFirmaTab && (
+				{showCuentaTab && (
 					<div
 						ref={(el) => {
-							if (el) tabsRef.current[tabIds.indexOf('firma')] = el;
+							if (el) tabsRef.current[tabIds.indexOf('cuenta')] = el;
 						}}
-						className={`${styles.tab} ${activeTab === 'firma' ? styles.tabActive : ''}`}
-						onClick={() => setActiveTab('firma')}
+						className={`${styles.tab} ${activeTab === 'cuenta' ? styles.tabActive : ''}`}
+						onClick={() => goTab('cuenta')}
 					>
-						Firma
+						Acceso y roles
 					</div>
 				)}
 				{showAsignacionesTab && (
@@ -465,20 +545,20 @@ export default function PersonalForm({
 							if (el) tabsRef.current[tabIds.indexOf('asignaciones')] = el;
 						}}
 						className={`${styles.tab} ${activeTab === 'asignaciones' ? styles.tabActive : ''}`}
-						onClick={() => setActiveTab('asignaciones')}
+						onClick={() => goTab('asignaciones')}
 					>
 						Sectores y servicios
 					</div>
 				)}
-				{showCuentaTab && (
+				{showFirmaTab && (
 					<div
 						ref={(el) => {
-							if (el) tabsRef.current[tabIds.indexOf('cuenta')] = el;
+							if (el) tabsRef.current[tabIds.indexOf('firma')] = el;
 						}}
-						className={`${styles.tab} ${activeTab === 'cuenta' ? styles.tabActive : ''}`}
-						onClick={() => setActiveTab('cuenta')}
+						className={`${styles.tab} ${activeTab === 'firma' ? styles.tabActive : ''}`}
+						onClick={() => goTab('firma')}
 					>
-						Acceso y roles
+						Firma
 					</div>
 				)}
 				{showAgendaTab && (
@@ -487,7 +567,7 @@ export default function PersonalForm({
 							if (el) tabsRef.current[tabIds.indexOf('agenda')] = el;
 						}}
 						className={`${styles.tab} ${activeTab === 'agenda' ? styles.tabActive : ''}`}
-						onClick={() => setActiveTab('agenda')}
+						onClick={() => goTab('agenda')}
 					>
 						Agenda
 					</div>
@@ -864,103 +944,10 @@ export default function PersonalForm({
 							tabIndex={41}
 						/>
 					</div>
-
-					{!isEditing && (
-						<div className={styles.usuarioSection}>
-							<div className={styles.usuarioHead}>
-								<label className={styles.checkboxLabel}>
-									<input
-										type='checkbox'
-										checked={!!formData.CrearUsuario}
-										onChange={(e) =>
-											setFormData((prev) => ({
-												...prev,
-												CrearUsuario: e.target.checked,
-											}))
-										}
-									/>
-									Crear usuario de acceso al sistema
-								</label>
-								<p className={styles.usuarioHint}>
-									Genera el registro en imPassword con el mismo ID del personal para poder iniciar sesión.
-								</p>
-							</div>
-							{formData.CrearUsuario && (
-								<div className={styles.usuarioGrid}>
-									<div className={`${styles.field} ${styles.fieldHalf}`}>
-										<label className={styles.label}>Usuario (NombreRed) *</label>
-										<input
-											type='text'
-											name='NombreRed'
-											value={formData.NombreRed || ''}
-											onChange={handleChange}
-											className={`${styles.input} ${errors.NombreRed ? styles.inputError : ''}`}
-											autoComplete='off'
-											placeholder='Ej. jperez'
-											tabIndex={42}
-										/>
-										{errors.NombreRed && (
-											<span className={styles.error}>{errors.NombreRed}</span>
-										)}
-									</div>
-									<div className={`${styles.field} ${styles.fieldHalf}`}>
-										<label className={styles.label}>Código operador</label>
-										<input
-											type='text'
-											value={
-												formData.MatriculaProvincial
-													? String(formData.MatriculaProvincial)
-													: displayId
-														? String(displayId)
-														: '—'
-											}
-											readOnly
-											disabled
-											className={`${styles.input} ${styles.readOnly}`}
-											tabIndex={-1}
-										/>
-										<span className={styles.fieldHint}>
-											Se asigna automáticamente desde la matrícula provincial.
-										</span>
-									</div>
-									<div className={`${styles.field} ${styles.fieldHalf}`}>
-										<label className={styles.label}>Contraseña *</label>
-										<input
-											type='password'
-											name='Password'
-											value={formData.Password || ''}
-											onChange={handleChange}
-											className={`${styles.input} ${errors.Password ? styles.inputError : ''}`}
-											autoComplete='new-password'
-											tabIndex={44}
-										/>
-										{errors.Password && (
-											<span className={styles.error}>{errors.Password}</span>
-										)}
-									</div>
-									<div className={`${styles.field} ${styles.fieldHalf}`}>
-										<label className={styles.label}>Confirmar contraseña *</label>
-										<input
-											type='password'
-											name='ConfirmPassword'
-											value={formData.ConfirmPassword || ''}
-											onChange={handleChange}
-											className={`${styles.input} ${errors.ConfirmPassword ? styles.inputError : ''}`}
-											autoComplete='new-password'
-											tabIndex={45}
-										/>
-										{errors.ConfirmPassword && (
-											<span className={styles.error}>{errors.ConfirmPassword}</span>
-										)}
-									</div>
-								</div>
-							)}
-						</div>
-					)}
 				</div>
 			</div>
 
-			{showFirmaTab && formData.Valor ? (
+			{isEditing && formData.Valor ? (
 				<div className={activeTab !== 'firma' ? styles.tabHidden : undefined}>
 					<PersonalFirmaTab
 						personalId={formData.Valor}
@@ -968,15 +955,40 @@ export default function PersonalForm({
 						variant='form'
 					/>
 				</div>
-			) : null}
+			) : (
+				<div className={activeTab !== 'firma' ? styles.tabHidden : undefined}>
+					<div className={styles.usuarioSection}>
+						<h3 className={styles.subsectionTitle}>Firma digital</h3>
+						<p className={styles.usuarioHint}>
+							Opcional. Si dibuja una firma, se guarda al crear el personal.
+						</p>
+						<PersonalFirmaPad
+							ref={firmaPadRef}
+							active={activeTab === 'firma'}
+							initialDataUrl={firmaDraftUrl}
+						/>
+					</div>
+				</div>
+			)}
 
-			{showAsignacionesTab && formData.Valor ? (
+			{isEditing && formData.Valor ? (
 				<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
 					<PersonalAsignacionesTab personalId={formData.Valor} />
 				</div>
-			) : null}
+			) : (
+				<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
+					<PersonalAsignacionesTab
+						draft
+						draftSectores={formData.Sectores || []}
+						draftServicios={formData.Servicios || []}
+						onDraftChange={({ sectores, servicios }) =>
+							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: servicios }))
+						}
+					/>
+				</div>
+			)}
 
-			{showCuentaTab && formData.Valor ? (
+			{isEditing && formData.Valor ? (
 				<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
 					<PersonalCuentaTab
 						personalId={formData.Valor}
@@ -985,7 +997,149 @@ export default function PersonalForm({
 						variant='form'
 					/>
 				</div>
-			) : null}
+			) : (
+				<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
+					<div className={styles.usuarioSection}>
+						<h3 className={styles.subsectionTitle}>Rol *</h3>
+						<p className={styles.usuarioHint}>
+							Obligatorio. Define los permisos del personal en el sistema.
+						</p>
+						<div className={styles.field}>
+							<label className={styles.label}>Rol</label>
+							<select
+								name='IdRol'
+								value={formData.IdRol || ''}
+								onChange={handleChange}
+								className={`${styles.input} ${errors.IdRol ? styles.inputError : ''}`}
+							>
+								<option value=''>Seleccione un rol</option>
+								{rolesCatalogo.map((r) => (
+									<option key={r.IdRol} value={String(r.IdRol)}>
+										{etiquetaRol({ nombre: r.Nombre, descripcion: r.Descripcion }) || r.Nombre}
+									</option>
+								))}
+							</select>
+							{errors.IdRol ? <span className={styles.error}>{errors.IdRol}</span> : null}
+							{!isEditing && rolesCatalogo.length === 0 ? (
+								<span className={styles.fieldHint}>
+									No hay roles disponibles. Verificá el catálogo de roles de la empresa.
+								</span>
+							) : null}
+						</div>
+					</div>
+					<div className={styles.usuarioSection}>
+						<div className={styles.usuarioHead}>
+							<label className={styles.checkboxLabel}>
+								<input
+									type='checkbox'
+									checked={!!formData.CrearUsuario}
+									onChange={(e) =>
+										setFormData((prev) => ({
+											...prev,
+											CrearUsuario: e.target.checked,
+										}))
+									}
+								/>
+								Crear usuario de acceso al sistema
+							</label>
+							<p className={styles.usuarioHint}>
+								Opcional. Genera el usuario de login con el mismo ID del personal.
+							</p>
+						</div>
+						{formData.CrearUsuario ? (
+							<div className={styles.usuarioGrid}>
+								<div className={`${styles.field} ${styles.fieldHalf}`}>
+									<label className={styles.label}>Usuario (NombreRed) *</label>
+									<input
+										type='text'
+										name='NombreRed'
+										value={formData.NombreRed || ''}
+										onChange={handleChange}
+										className={`${styles.input} ${errors.NombreRed ? styles.inputError : ''}`}
+										autoComplete='off'
+										placeholder='Ej. jperez'
+									/>
+									{errors.NombreRed ? (
+										<span className={styles.error}>{errors.NombreRed}</span>
+									) : null}
+								</div>
+								<div className={`${styles.field} ${styles.fieldHalf}`}>
+									<label className={styles.label}>Código operador</label>
+									<input
+										type='text'
+										value={
+											formData.MatriculaProvincial
+												? String(formData.MatriculaProvincial)
+												: displayId
+													? String(displayId)
+													: '—'
+										}
+										readOnly
+										disabled
+										className={`${styles.input} ${styles.readOnly}`}
+										tabIndex={-1}
+									/>
+									<span className={styles.fieldHint}>
+										Se asigna automáticamente desde la matrícula provincial.
+									</span>
+								</div>
+								<div className={`${styles.field} ${styles.fieldHalf}`}>
+									<label className={styles.label}>Contraseña *</label>
+									<div className={styles.passwordWrap}>
+										<input
+											type={showPassword ? 'text' : 'password'}
+											name='Password'
+											value={formData.Password || ''}
+											onChange={handleChange}
+											className={`${styles.input} ${errors.Password ? styles.inputError : ''}`}
+											autoComplete='new-password'
+										/>
+										<button
+											type='button'
+											className={styles.passwordToggle}
+											onClick={() => setShowPassword((v) => !v)}
+											tabIndex={-1}
+											aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+										>
+											{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+										</button>
+									</div>
+									{errors.Password ? (
+										<span className={styles.error}>{errors.Password}</span>
+									) : null}
+								</div>
+								<div className={`${styles.field} ${styles.fieldHalf}`}>
+									<label className={styles.label}>Confirmar contraseña *</label>
+									<div className={styles.passwordWrap}>
+										<input
+											type={showConfirmPassword ? 'text' : 'password'}
+											name='ConfirmPassword'
+											value={formData.ConfirmPassword || ''}
+											onChange={handleChange}
+											className={`${styles.input} ${errors.ConfirmPassword ? styles.inputError : ''}`}
+											autoComplete='new-password'
+										/>
+										<button
+											type='button'
+											className={styles.passwordToggle}
+											onClick={() => setShowConfirmPassword((v) => !v)}
+											tabIndex={-1}
+											aria-label={
+												showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+											}
+										>
+											{showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+										</button>
+									</div>
+									{errors.ConfirmPassword ? (
+										<span className={styles.error}>{errors.ConfirmPassword}</span>
+									) : null}
+								</div>
+							</div>
+						) : null}
+					</div>
+				</div>
+			)}
 
 			{showAgendaTab ? (
 				<div className={activeTab !== 'agenda' ? styles.tabHidden : undefined}>
@@ -994,10 +1148,11 @@ export default function PersonalForm({
 			) : null}
 			</div>
 
-			{activeTab !== 'cuenta' &&
-			activeTab !== 'agenda' &&
-			activeTab !== 'asignaciones' &&
-			activeTab !== 'firma' ? (
+			{(!isEditing ||
+				(activeTab !== 'cuenta' &&
+					activeTab !== 'agenda' &&
+					activeTab !== 'asignaciones' &&
+					activeTab !== 'firma')) ? (
 			<div className={styles.actions}>
 				<div className={styles.actionsButtons}>
 				{isEditing && onDelete ? (
