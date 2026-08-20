@@ -241,7 +241,13 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 							{ label: 'Destino', value: selected.ServicioDescripcion || selected.SectorReceptor },
 							{ label: 'Estado', value: selected.EstadoWorkflow || selected.Estado },
 						]}
-						textBlocks={[{ label: 'Motivo', value: selected.Motivo }]}
+						textBlocks={[
+							{ label: 'Pedido', value: selected.Motivo },
+							{
+								label: 'Respuesta',
+								value: selected.Respuesta || (selected.Cumplido ? '(sin texto)' : null),
+							},
+						]}
 						onClose={() => setSelected(null)}
 					/>
 				)}

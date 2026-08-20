@@ -971,7 +971,15 @@ function BandejaPedidosContent() {
 							label: 'Destino',
 							value: selectedEstudio.ServicioDescripcion || selectedEstudio.SectorReceptor,
 						},
-						{ label: 'Notas', value: selectedEstudio.NotasObservacion, full: true },
+					]}
+					textBlocks={[
+						{ label: 'Pedido', value: selectedEstudio.NotasObservacion },
+						{
+							label: 'Respuesta',
+							value:
+								selectedEstudio.TextoResultado ||
+								(selectedEstudio.Cumplido ? '(sin texto)' : null),
+						},
 					]}
 					onClose={() => setSelectedEstudio(null)}
 				/>

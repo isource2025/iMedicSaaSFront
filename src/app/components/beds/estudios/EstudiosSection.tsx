@@ -62,6 +62,12 @@ function esCreadorPedido(
 	);
 }
 
+function previewText(value?: string | null, max = 100) {
+	const t = String(value || '').trim();
+	if (!t) return '—';
+	return t.length > max ? `${t.slice(0, max)}…` : t;
+}
+
 function buildEstudioFields(row: PedidoEstudio) {
 	return [
 		{ label: 'Fecha / hora', value: formatFecha(row) },
@@ -77,9 +83,22 @@ function buildEstudioFields(row: PedidoEstudio) {
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.SectorReceptor,
 			full: true,
 		},
+		{ label: 'Fecha resultado', value: row.FechaResultado },
 		{ label: 'Realizado por', value: row.RealizadorNombre },
 		{ label: 'Id resultado', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
 		{ label: 'Id pedido', value: row.IdPedido },
+	];
+}
+
+function buildEstudioTextBlocks(row: PedidoEstudio) {
+	return [
+		{ label: 'Pedido', value: row.NotasObservacion || null },
+		{
+			label: 'Respuesta',
+			value: row.Cumplido
+				? row.TextoResultado || '(sin texto de respuesta)'
+				: row.TextoResultado || null,
+		},
 	];
 }
 
@@ -134,6 +153,7 @@ export default function EstudiosSection({
 				hay(r.PracticaSolicitada) ||
 				hay(r.CodigoPractica) ||
 				hay(r.NotasObservacion) ||
+				hay(r.TextoResultado) ||
 				hay(r.MedicoSolicitanteNombre) ||
 				hay(r.ServicioDescripcion) ||
 				hay(r.EstadoWorkflow)
@@ -176,15 +196,23 @@ export default function EstudiosSection({
 					{ label: 'Fecha / hora', value: formatFecha(r) },
 					{ label: 'Código', value: r.CodigoPractica ?? '—' },
 					{ label: 'Práctica', value: r.PracticaSolicitada || '—' },
-					{ label: 'Notas', value: r.NotasObservacion || '—' },
 					{
 						label: 'Destino',
 						value: r.ServicioDescripcion || r.SectorReceptorNombre || '—',
 					},
+					{ label: 'Fecha resultado', value: r.FechaResultado || '—' },
+					{ label: 'Realizado por', value: r.RealizadorNombre || '—' },
+				],
+				textBlocks: [
+					{ label: 'Pedido', value: r.NotasObservacion || '—' },
+					{
+						label: 'Respuesta',
+						value: r.TextoResultado || (r.Cumplido ? '(sin texto)' : 'Sin respuesta cargada'),
+					},
 				],
 				profesional: {
-					nombre: r.MedicoSolicitanteNombre || 'PROFESIONAL',
-					matricula: r.MatriculaSolicitante ?? undefined,
+					nombre: r.RealizadorNombre || r.MedicoSolicitanteNombre || 'PROFESIONAL',
+					matricula: r.MatriculaRealizador ?? r.MatriculaSolicitante ?? undefined,
 				},
 			}));
 
@@ -266,7 +294,8 @@ export default function EstudiosSection({
 									<th>Fecha / hora</th>
 									<th>Cód.</th>
 									<th>Práctica solicitada</th>
-									<th>Notas</th>
+									<th>Pedido</th>
+									<th>Respuesta</th>
 									<th>Solicitado por</th>
 									<th>Acciones</th>
 								</tr>
@@ -297,12 +326,13 @@ export default function EstudiosSection({
 												</div>
 											)}
 										</td>
+										<td className={tableStyles.notas}>{previewText(r.NotasObservacion)}</td>
 										<td className={tableStyles.notas}>
-											{r.NotasObservacion
-												? r.NotasObservacion.length > 120
-													? `${r.NotasObservacion.slice(0, 120)}…`
-													: r.NotasObservacion
-												: '—'}
+											{r.TextoResultado
+												? previewText(r.TextoResultado)
+												: r.Cumplido
+													? '(sin texto)'
+													: '—'}
 										</td>
 										<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
 										<td>
@@ -356,12 +386,7 @@ export default function EstudiosSection({
 						(selected.Cumplido ? 'Cumplido' : selected.Tomado ? 'Tomado' : 'Pendiente')
 					}
 					fields={buildEstudioFields(selected)}
-					textBlocks={[
-						{ label: 'Notas / observación', value: selected.NotasObservacion },
-						...(selected.Cumplido
-							? [{ label: 'Resultado', value: selected.TextoResultado || '(sin texto)' }]
-							: []),
-					]}
+					textBlocks={buildEstudioTextBlocks(selected)}
 					onClose={() => setSelected(null)}
 				/>
 			)}

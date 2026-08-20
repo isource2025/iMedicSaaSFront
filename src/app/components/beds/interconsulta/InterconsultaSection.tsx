@@ -39,13 +39,21 @@ function formatFecha(row: InterconsultaRow) {
 	return [row.FechaSolicitud, row.HoraSolicitud].filter(Boolean).join(' ');
 }
 
+function previewText(value?: string | null, max = 100) {
+	const t = String(value || '').trim();
+	if (!t) return '—';
+	return t.length > max ? `${t.slice(0, max)}…` : t;
+}
+
 function buildInterconsultaFields(row: InterconsultaRow) {
 	if (row.Origen === 'WEB') {
 		return [
 			{ label: 'Fecha / hora', value: formatFecha(row) },
 			{ label: 'Especialidad solicitada', value: row.Especialidad, full: true },
+			{ label: 'Estado', value: row.EstadoWorkflow || row.Estado },
 			{ label: 'Médico solicitante', value: row.MedicoSolicitanteNombre },
 			{ label: 'Matrícula', value: row.MedicoSolicitante },
+			{ label: 'Fecha respuesta', value: row.FechaRespuesta },
 			{ label: 'Origen', value: 'Registro web (legado)' },
 		];
 	}
@@ -62,8 +70,20 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
 		{ label: 'Sector solicitante', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{ label: 'Código práctica', value: row.CodigoPractica },
+		{ label: 'Fecha respuesta', value: row.FechaRespuesta },
 		{ label: 'Id pedido', value: row.IdPedido || row.IdInterconsulta },
 		{ label: 'Id resultado', value: row.IdProtocolo && row.IdProtocolo > 0 ? row.IdProtocolo : null },
+	];
+}
+
+function buildInterconsultaTextBlocks(row: InterconsultaRow) {
+	const cumplido = !!row.Cumplido || (row.IdProtocolo != null && row.IdProtocolo > 0) || !!row.Respuesta;
+	return [
+		{ label: 'Pedido', value: row.Motivo || null },
+		{
+			label: 'Respuesta',
+			value: cumplido ? row.Respuesta || '(sin texto de respuesta)' : row.Respuesta || null,
+		},
 	];
 }
 
@@ -110,6 +130,7 @@ export default function InterconsultaSection({
 				v != null && String(v).toLowerCase().includes(q);
 			return (
 				hay(r.Motivo) ||
+				hay(r.Respuesta) ||
 				hay(r.ServicioDescripcion) ||
 				hay(r.SectorReceptorNombre) ||
 				hay(r.Especialidad) ||
@@ -124,12 +145,7 @@ export default function InterconsultaSection({
 		setSelected(row);
 	};
 
-	const selectedTextBlocks = selected
-		? [
-				{ label: 'Motivo / consulta', value: selected.Motivo },
-				...(selected.Respuesta ? [{ label: 'Respuesta', value: selected.Respuesta }] : []),
-			]
-		: [];
+	const selectedTextBlocks = selected ? buildInterconsultaTextBlocks(selected) : [];
 
 	const patientInfo = {
 		numeroVisita: numeroVisita || undefined,
@@ -144,7 +160,7 @@ export default function InterconsultaSection({
 			const empresaInfo = await obtenerInfoEmpresa();
 			const parts = filtered.map((r, idx) => {
 				const tomado = !!r.Tomado;
-				const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
+				const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0) || !!r.Respuesta;
 				return {
 					title: `Interconsulta ${idx + 1}`,
 					fields: [
@@ -159,9 +175,15 @@ export default function InterconsultaSection({
 								r.EstadoWorkflow ||
 								(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente'),
 						},
+						{ label: 'Fecha respuesta', value: r.FechaRespuesta || '—' },
 					],
-					textLabel: 'Motivo',
-					text: r.Motivo || '—',
+					textBlocks: [
+						{ label: 'Pedido', value: r.Motivo || '—' },
+						{
+							label: 'Respuesta',
+							value: r.Respuesta || (cumplido ? '(sin texto)' : 'Sin respuesta cargada'),
+						},
+					],
 					profesional: {
 						nombre: r.MedicoSolicitanteNombre || 'PROFESIONAL',
 						matricula: r.MedicoSolicitante ?? undefined,
@@ -265,7 +287,8 @@ export default function InterconsultaSection({
 									<th>Urg.</th>
 									<th>Fecha / hora</th>
 									<th>Destino</th>
-									<th>Motivo</th>
+									<th>Pedido</th>
+									<th>Respuesta</th>
 									<th>Solicitado por</th>
 									<th>Estado</th>
 									<th>Acciones</th>
@@ -275,7 +298,8 @@ export default function InterconsultaSection({
 								{filtered.map((r) => {
 									const id = r.IdPedido || r.IdInterconsulta;
 									const tomado = !!r.Tomado;
-									const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0);
+									const cumplido =
+										!!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0) || !!r.Respuesta;
 									return (
 										<tr key={`${r.Origen || 'LEGACY'}-${id}`} className={tableStyles.row}>
 											<td>
@@ -296,10 +320,13 @@ export default function InterconsultaSection({
 													<div className={tableStyles.meta}>Registro web (legado)</div>
 												)}
 											</td>
+											<td className={tableStyles.motivo}>{previewText(r.Motivo)}</td>
 											<td className={tableStyles.motivo}>
-												{(r.Motivo || '').length > 120
-													? `${r.Motivo.slice(0, 120)}…`
-													: r.Motivo || '—'}
+												{r.Respuesta
+													? previewText(r.Respuesta)
+													: cumplido
+														? '(sin texto)'
+														: '—'}
 											</td>
 											<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
 											<td className={tableStyles.meta}>

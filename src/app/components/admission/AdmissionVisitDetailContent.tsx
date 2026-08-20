@@ -438,17 +438,19 @@ export default function AdmissionVisitDetailContent({
                   .filter(Boolean)
                   .join(' · ')}
               </p>
-              {str(ex.PedidoEstudio || ex.pedidoEstudio) &&
-              str(ex.PedidoEstudio || ex.pedidoEstudio) !== titulo ? (
-                <p className={styles.plainText}>{str(ex.PedidoEstudio || ex.pedidoEstudio)}</p>
+              {str(ex.PedidoEstudio || ex.pedidoEstudio) ? (
+                <p className={styles.plainText}>
+                  <span className={styles.fieldLabel}>Pedido:</span>{' '}
+                  {str(ex.PedidoEstudio || ex.pedidoEstudio)}
+                </p>
               ) : null}
               {resultado ? (
                 <p className={styles.plainText}>
-                  <span className={styles.fieldLabel}>Resultado:</span> {resultado.slice(0, 500)}
+                  <span className={styles.fieldLabel}>Respuesta:</span> {resultado.slice(0, 500)}
                   {resultado.length > 500 ? '…' : ''}
                 </p>
               ) : (
-                <p className={styles.muted}>Sin resultado cargado.</p>
+                <p className={styles.muted}>Sin respuesta cargada.</p>
               )}
               {!realizador && resultado ? (
                 <p className={styles.muted}>Sin profesional realizador registrado.</p>

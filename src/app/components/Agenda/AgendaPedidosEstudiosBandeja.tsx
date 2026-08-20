@@ -239,7 +239,13 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 						{ label: 'Solicitante', value: selected.MedicoSolicitanteNombre },
 						{ label: 'Tomado por', value: selected.NombreToma },
 						{ label: 'Destino', value: selected.ServicioDescripcion || selected.SectorReceptor },
-						{ label: 'Notas', value: selected.NotasObservacion, full: true },
+					]}
+					textBlocks={[
+						{ label: 'Pedido', value: selected.NotasObservacion },
+						{
+							label: 'Respuesta',
+							value: selected.TextoResultado || (selected.Cumplido ? '(sin texto)' : null),
+						},
 					]}
 					onClose={() => setSelected(null)}
 				/>

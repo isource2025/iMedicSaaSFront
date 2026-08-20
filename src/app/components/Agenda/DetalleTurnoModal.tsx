@@ -370,7 +370,8 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 													<th>Sector receptor</th>
 													<th>Urgencia</th>
 													<th>Fecha pedido</th>
-													<th>Observaciones / resultado</th>
+													<th>Pedido</th>
+													<th>Respuesta</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -401,16 +402,15 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 																	})
 																: '—'}
 														</td>
+														<td>{val(pe.notas, '—')}</td>
 														<td>
-															{val(pe.notas, '—')}
-															{pe.cumplido && pe.textoResultado ? (
-																<div className={styles.listMeta}>
-																	Resultado:{' '}
-																	{pe.textoResultado.length > 160
-																		? `${pe.textoResultado.slice(0, 160)}…`
-																		: pe.textoResultado}
-																</div>
-															) : null}
+															{pe.cumplido
+																? pe.textoResultado
+																	? pe.textoResultado.length > 200
+																		? `${pe.textoResultado.slice(0, 200)}…`
+																		: pe.textoResultado
+																	: '(sin texto)'
+																: pe.textoResultado || '—'}
 														</td>
 													</tr>
 												))}

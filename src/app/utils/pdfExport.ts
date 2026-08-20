@@ -23,6 +23,8 @@ export type PDFPart = {
 	fields?: Array<{ label: string; value?: string | number | null }>;
 	textLabel?: string;
 	text?: string | null;
+	/** Varios bloques de texto (pedido + respuesta, etc.). */
+	textBlocks?: Array<{ label?: string; value?: string | null }>;
 	profesional?: ProfesionalFirmaInfo | null;
 };
 
@@ -586,6 +588,31 @@ async function drawParts(doc: jsPDF, parts: PDFPart[], startY: number): Promise<
 				y += 3.8;
 			}
 			y += 2;
+		}
+
+		if (part.textBlocks?.length) {
+			for (const block of part.textBlocks) {
+				const label = String(block.label || '').trim();
+				const value = block.value == null || String(block.value).trim() === ''
+					? '—'
+					: String(block.value);
+				y = ensureSpace(doc, y, 14);
+				if (label) {
+					doc.setFont('helvetica', 'bold');
+					doc.setFontSize(8);
+					doc.text(`${label}:`, 12, y);
+					y += 4;
+				}
+				doc.setFont('helvetica', 'normal');
+				doc.setFontSize(8);
+				const textLines = doc.splitTextToSize(value, pageWidth - 24);
+				for (const line of textLines) {
+					y = ensureSpace(doc, y, 5);
+					doc.text(line, 12, y);
+					y += 3.8;
+				}
+				y += 2;
+			}
 		}
 
 		y = await drawProfesionalFirmaBlock(doc, part.profesional, y + 4);
