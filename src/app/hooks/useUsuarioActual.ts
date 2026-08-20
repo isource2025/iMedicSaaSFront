@@ -72,6 +72,28 @@ export function esAdminClinico(): boolean {
 	return rol.nombre === 'ADMIN' || rol.id === 1;
 }
 
+function nombreEsEnfermero(nombre: unknown): boolean {
+	const n = String(nombre || '')
+		.trim()
+		.toUpperCase()
+		.replace(/\s+/g, '_');
+	return n === 'ENFERMERO' || n === 'ENFERMERIA' || n === 'ENFERMERA';
+}
+
+/** Rol de enfermería en sesión (principal o alguno de los asignados). */
+export function esEnfermeroSesion(): boolean {
+	if (typeof window === 'undefined') return false;
+	if (nombreEsEnfermero(authService.getCurrentRol()?.nombre)) return true;
+	try {
+		const raw = localStorage.getItem('roles');
+		const arr = raw ? JSON.parse(raw) : [];
+		if (!Array.isArray(arr)) return false;
+		return arr.some((r) => nombreEsEnfermero(typeof r === 'string' ? r : r?.nombre));
+	} catch {
+		return false;
+	}
+}
+
 export function esRegistroPropio(
 	registro: Record<string, unknown> | null | undefined,
 	usuario: UsuarioActual | null,

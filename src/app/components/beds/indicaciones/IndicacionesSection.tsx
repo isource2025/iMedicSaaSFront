@@ -16,6 +16,7 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { usePermiso } from "../../../hooks/usePermiso";
+import { esEnfermeroSesion } from "../../../hooks/useUsuarioActual";
 import { clearIndicacionesNuevasEnfermeria } from "../../../utils/bedsListCache";
 
 
@@ -66,8 +67,8 @@ export default function IndicacionesSection({
     horaIngreso,
 }: IndicacionesSectionProps) {
     const { activeSection, selectedDate } = useBedDetail();
-    const { rol } = usePermiso();
-    const rolNombre = (rol?.nombre || "").toUpperCase();
+    const { loaded } = usePermiso();
+    const esEnfermero = loaded && esEnfermeroSesion();
     const vistoEnviadoRef = useRef<number | null>(null);
 
     const indicacionesPath = useMemo(
@@ -93,7 +94,7 @@ export default function IndicacionesSection({
     }, [numeroVisita]);
 
     useEffect(() => {
-        if (rolNombre !== "ENFERMERO" || !numeroVisita) return;
+        if (!esEnfermero || !numeroVisita) return;
         if (activeSection !== "indicaciones" || isLoading || error) return;
         if (data === undefined) return;
         if (vistoEnviadoRef.current === numeroVisita) return;
@@ -107,7 +108,7 @@ export default function IndicacionesSection({
                 vistoEnviadoRef.current = null;
                 console.warn("No se pudieron marcar las indicaciones como vistas:", err);
             });
-    }, [rolNombre, numeroVisita, activeSection, isLoading, error, data]);
+    }, [esEnfermero, numeroVisita, activeSection, isLoading, error, data]);
 
 
 
