@@ -17,7 +17,7 @@
 	background: #fff;
 	border-radius: 14px;
 	width: 100%;
-	max-width: 42rem;
+	max-width: min(56rem, 96vw);
 	max-height: min(90vh, 860px);
 	min-width: 0;
 	display: flex;
