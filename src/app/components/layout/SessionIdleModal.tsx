@@ -66,14 +66,27 @@ export default function SessionIdleModal() {
 			}}
 		>
 			<div className={styles.card}>
-				<p className={styles.kicker}>Seguridad de la sesión</p>
-				<h2 id="idle-title" className={styles.title}>
-					Sesión finalizada
-				</h2>
-				<p className={styles.body}>
-					Por inactividad, cerramos tu sesión para proteger la información clínica.
-				</p>
-				<p className={styles.hint}>Iniciá sesión cuando vuelvas.</p>
+				<div className={styles.row}>
+					<div className={styles.copy}>
+						<p className={styles.kicker}>Seguridad de la sesión</p>
+						<h2 id="idle-title" className={styles.title}>
+							Sesión finalizada
+						</h2>
+						<p className={styles.body}>
+							Por inactividad, cerramos tu sesión para proteger la información clínica.
+						</p>
+						<p className={styles.hint}>Iniciá sesión cuando vuelvas.</p>
+					</div>
+					<div className={styles.artWrap} aria-hidden="true">
+						<img
+							src="/images/session-security.png"
+							alt=""
+							className={styles.art}
+							width={148}
+							height={148}
+						/>
+					</div>
+				</div>
 				<button type="button" className={styles.cta} onClick={() => finish('login')}>
 					Iniciar sesión
 				</button>

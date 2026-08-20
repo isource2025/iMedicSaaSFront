@@ -156,15 +156,15 @@ export default function AnaliticaSesiones() {
         <div className={styles.filtersBar}>
           <label className={styles.filterField}>
             <span>Desde</span>
-            <input className={styles.input} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <input className={styles.filterControl} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </label>
           <label className={styles.filterField}>
             <span>Hasta</span>
-            <input className={styles.input} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <input className={styles.filterControl} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </label>
           <label className={styles.filterField}>
             <span>Empresa</span>
-            <select className={styles.select} value={idEmpresa} onChange={(e) => setIdEmpresa(e.target.value)}>
+            <select className={styles.filterControl} value={idEmpresa} onChange={(e) => setIdEmpresa(e.target.value)}>
               <option value="">Todas</option>
               {empresas.map((e) => (
                 <option key={e.id} value={e.id}>
@@ -175,7 +175,7 @@ export default function AnaliticaSesiones() {
           </label>
           <label className={styles.filterField}>
             <span>Rol</span>
-            <select className={styles.select} value={role} onChange={(e) => setRole(e.target.value)}>
+            <select className={styles.filterControl} value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="">Todos</option>
               {ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -226,6 +226,25 @@ export default function AnaliticaSesiones() {
               <span className={styles.statValue}>{fmt(data.potentialImpressions)}</span>
               <span className={styles.kpiHint}>espacio de patrocinio</span>
             </div>
+          </section>
+
+          <section className={styles.panel} style={{ marginTop: '1rem' }}>
+            <h2 className={styles.sectionTitle}>Pantalla de login</h2>
+            <p className={styles.filterMeta}>
+              Aperturas de la landing. Independiente de empresa y rol porque todavía no hay sesión.
+            </p>
+            <section className={styles.kpiGrid}>
+              <div className={styles.kpiCard}>
+                <span className={styles.statLabel}>Vistas de login</span>
+                <span className={styles.statValue}>{fmt(data.loginScreen?.pageViews || 0)}</span>
+                <span className={styles.kpiHint}>aperturas de la pantalla</span>
+              </div>
+              <div className={styles.kpiCard}>
+                <span className={styles.statLabel}>Visitantes</span>
+                <span className={styles.statValue}>{fmt(data.loginScreen?.uniqueVisitors || 0)}</span>
+                <span className={styles.kpiHint}>únicos anónimos</span>
+              </div>
+            </section>
           </section>
 
           <section className={styles.kpiGrid} style={{ marginTop: '0.7rem' }}>

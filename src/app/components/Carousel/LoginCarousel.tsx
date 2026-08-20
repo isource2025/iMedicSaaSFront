@@ -1,9 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { ANALYTICS_EVENTS, trackPublicEvent } from "@/app/services/analyticsService";
 import styles from "./LoginCarousel.module.css";
 
+let loginPageTracked = false;
+
 export default function LoginCarousel() {
+	useEffect(() => {
+		if (loginPageTracked) return;
+		loginPageTracked = true;
+		trackPublicEvent(ANALYTICS_EVENTS.LOGIN_PAGE_VIEWED);
+	}, []);
+
 	return (
 		<div className={styles.root}>
 			<article className={styles.poster}>

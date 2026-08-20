@@ -5,6 +5,9 @@ export const ANALYTICS_EVENTS = {
   MODAL_VIEWED: 'MODAL_VIEWED',
   LOGIN_CLICKED: 'LOGIN_CLICKED',
   MODAL_DISMISSED: 'MODAL_DISMISSED',
+  LOGIN_PAGE_VIEWED: 'LOGIN_PAGE_VIEWED',
+  LOGIN_VISUAL_IMPRESSION: 'LOGIN_VISUAL_IMPRESSION',
+  LOGIN_VISUAL_CLICK: 'LOGIN_VISUAL_CLICK',
 } as const;
 
 export type AnalyticsEventType = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
@@ -55,7 +58,57 @@ export function clearIdleTracking() {
   }
 }
 
-/** Emite un evento de producto. No usa axios para no disparar el interceptor 401. */
+const ANON_VID_KEY = 'imedic_anon_vid';
+
+function getAnonymousVisitorId() {
+  if (typeof window === 'undefined') return '';
+  try {
+    let id = localStorage.getItem(ANON_VID_KEY);
+    if (!id) {
+      id =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+      localStorage.setItem(ANON_VID_KEY, id);
+    }
+    return id;
+  } catch {
+    return '';
+  }
+}
+
+function postAnalytics(body: Record<string, unknown>, token?: string | null) {
+  const url = `${getResolvedApiBaseUrl().replace(/\/+$/, '')}/analytics/events`;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  try {
+    void fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      credentials: 'include',
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Evento anónimo de la pantalla de login (sin sesión). */
+export function trackPublicEvent(
+  event: AnalyticsEventType,
+  opts?: { metadata?: Record<string, unknown> },
+) {
+  if (typeof window === 'undefined') return;
+  postAnalytics({
+    event,
+    visitorId: getAnonymousVisitorId(),
+    metadata: {
+      appVersion: APP_VERSION,
+      ...(opts?.metadata || {}),
+    },
+  });
+}
 export function trackProductEvent(
   event: AnalyticsEventType,
   opts?: { sessionId?: string | null; metadata?: Record<string, unknown>; token?: string | null },
@@ -63,31 +116,18 @@ export function trackProductEvent(
   if (typeof window === 'undefined') return;
   const sessionId = opts?.sessionId || getIdleTrackingSessionId() || sessionIdFromToken(opts?.token);
   if (!sessionId) return;
-
-  const url = `${getResolvedApiBaseUrl().replace(/\/+$/, '')}/analytics/events`;
-  const body = JSON.stringify({
-    event,
-    sessionId,
-    metadata: {
-      appVersion: APP_VERSION,
-      ...(opts?.metadata || {}),
-    },
-  });
   const token = opts?.token ?? localStorage.getItem('token');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  try {
-    void fetch(url, {
-      method: 'POST',
-      headers,
-      body,
-      credentials: 'include',
-      keepalive: true,
-    }).catch(() => undefined);
-  } catch {
-    /* ignore */
-  }
+  postAnalytics(
+    {
+      event,
+      sessionId,
+      metadata: {
+        appVersion: APP_VERSION,
+        ...(opts?.metadata || {}),
+      },
+    },
+    token,
+  );
 }
 
 export interface SessionExpirationKpis {
@@ -111,6 +151,14 @@ export interface SessionExpirationKpis {
   byRole: { role: string; count: number; pct: number }[];
   byEmpresa: { idEmpresa: number; nombre: string; expirations: number; uniqueUsers: number }[];
   byDevice: { device: string; count: number }[];
+  loginScreen: {
+    pageViews: number;
+    uniqueVisitors: number;
+    visualImpressions: number;
+    visualClicks: number;
+    ctr: number;
+    bySlide: { slide: string; impressions: number; clicks: number; ctr: number }[];
+  };
 }
 
 export type SessionExpirationFilters = {

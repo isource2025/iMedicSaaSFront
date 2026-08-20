@@ -11,12 +11,43 @@
 }
 
 .card {
-	width: min(420px, 100%);
+	width: min(520px, 100%);
 	padding: 1.65rem 1.7rem 1.4rem;
 	border-radius: 16px;
 	background: #fff;
 	box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
 	text-align: left;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: 1rem 1.15rem;
+}
+
+.copy {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.artWrap {
+	flex: 0 0 auto;
+	width: 132px;
+	height: 132px;
+	border-radius: 50%;
+	overflow: hidden;
+	background: #05070c;
+	box-shadow: 0 8px 20px rgba(2, 132, 199, 0.22);
+}
+
+.art {
+	display: block;
+	width: 118%;
+	height: 118%;
+	margin: -9%;
+	object-fit: cover;
+	pointer-events: none;
+	user-select: none;
 }
 
 .kicker {
@@ -70,4 +101,19 @@
 
 .cta:hover {
 	filter: brightness(1.04);
+}
+
+@media (max-width: 480px) {
+	.card {
+		padding: 1.25rem 1.15rem 1.15rem;
+	}
+
+	.artWrap {
+		width: 88px;
+		height: 88px;
+	}
+
+	.title {
+		font-size: 1.15rem;
+	}
 }
