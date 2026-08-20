@@ -33,10 +33,14 @@
 .art {
 	flex: 0 0 auto;
 	display: block;
-	width: 132px;
+	width: 108px;
 	height: auto;
+	max-width: 108px;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
 	object-fit: contain;
-	background: transparent;
 	pointer-events: none;
 	user-select: none;
 }
@@ -100,7 +104,8 @@
 	}
 
 	.art {
-		width: 96px;
+		width: 84px;
+		max-width: 84px;
 	}
 
 	.title {

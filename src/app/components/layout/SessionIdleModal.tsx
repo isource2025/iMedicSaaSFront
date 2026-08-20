@@ -8,6 +8,7 @@ import {
 } from '@/app/utils/sessionIdle';
 import { ANALYTICS_EVENTS, trackProductEvent } from '@/app/services/analyticsService';
 import styles from './SessionIdleModal.module.css';
+import shieldSrc from './session-idle-shield.png';
 
 export default function SessionIdleModal() {
 	const [open, setOpen] = useState(false);
@@ -78,11 +79,11 @@ export default function SessionIdleModal() {
 						<p className={styles.hint}>Iniciá sesión cuando vuelvas.</p>
 					</div>
 					<img
-						src="/images/session-security-shield.png"
+						src={shieldSrc.src}
 						alt=""
 						className={styles.art}
-						width={150}
-						height={150}
+						width={shieldSrc.width}
+						height={shieldSrc.height}
 						aria-hidden="true"
 					/>
 				</div>
