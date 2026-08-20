@@ -7,6 +7,7 @@ import { useAppContext } from '../contexts/AppContext';
 import {
 	bedsListSignature,
 	getCachedBedMeta,
+	applyIndicacionesNuevasVistoLocal,
 	getCachedBedsList,
 	setCachedBedMeta,
 	setCachedBedsList,
@@ -98,7 +99,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 			if (!silent) setLoading(true);
 			setError(null);
 			try {
-				const data = await bedsService.getAllBeds();
+				const data = applyIndicacionesNuevasVistoLocal(await bedsService.getAllBeds());
 				signatureRef.current = bedsListSignature(data);
 				setBeds(data);
 				setCachedBedsList(data, undefined, idEmpresa);

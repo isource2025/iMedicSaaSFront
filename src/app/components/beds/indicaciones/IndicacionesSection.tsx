@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState } from "react";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
@@ -15,9 +15,6 @@ import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
-import { usePermiso } from "../../../hooks/usePermiso";
-import { esEnfermeroSesion } from "../../../hooks/useUsuarioActual";
-import { clearIndicacionesNuevasEnfermeria } from "../../../utils/bedsListCache";
 import ResultadoReindicarModal, { ReindicarPorTipo } from "./ResultadoReindicarModal";
 
 
@@ -90,10 +87,6 @@ export default function IndicacionesSection({
     horaIngreso,
 }: IndicacionesSectionProps) {
     const { activeSection, selectedDate } = useBedDetail();
-    const { loaded } = usePermiso();
-    const esEnfermero = loaded && esEnfermeroSesion();
-    const [ocultarNuevas, setOcultarNuevas] = useState(false);
-    const vistoEnviadoRef = useRef<number | null>(null);
 
     const indicacionesPath = useMemo(
         () =>
@@ -112,31 +105,6 @@ export default function IndicacionesSection({
             : undefined,
         cacheTimeMs: 20000,
     });
-
-    useEffect(() => {
-        vistoEnviadoRef.current = null;
-        setOcultarNuevas(false);
-    }, [numeroVisita]);
-
-    useEffect(() => {
-        if (!esEnfermero || !numeroVisita) return;
-        if (activeSection !== "indicaciones" || isLoading || error) return;
-        if (data === undefined) return;
-        if (vistoEnviadoRef.current === numeroVisita) return;
-        vistoEnviadoRef.current = numeroVisita;
-        void indicacionesService
-            .marcarVistoEnfermeria(numeroVisita)
-            .then(() => {
-                clearIndicacionesNuevasEnfermeria(numeroVisita);
-                setOcultarNuevas(true);
-            })
-            .catch((err) => {
-                vistoEnviadoRef.current = null;
-                console.warn("No se pudieron marcar las indicaciones como vistas:", err);
-            });
-    }, [esEnfermero, numeroVisita, activeSection, isLoading, error, data]);
-
-
 
     const baseRows: IndicacionRow[] = useMemo(() => {
 
@@ -178,7 +146,7 @@ export default function IndicacionesSection({
             OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
             matricula: (x as any).matricula ?? (x as any).Matricula ?? null,
             indicacionesHijas: (x as any).indicacionesHijas || [],
-            nuevaEnfermeria: Boolean((x as any).nuevaEnfermeria) && !ocultarNuevas,
+            nuevaEnfermeria: Boolean((x as any).nuevaEnfermeria),
         }));
 
         // Ordenar por ordenTipo (campo Orden de imInterTipoIndicacion) y luego por nro
@@ -195,7 +163,7 @@ export default function IndicacionesSection({
             const nroB = typeof b.nro === 'number' ? b.nro : parseInt(String(b.nro || '0'));
             return nroA - nroB;
         });
-    }, [data, ocultarNuevas]);
+    }, [data]);
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [query, setQuery] = useState("");

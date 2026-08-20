@@ -6,6 +6,7 @@ import styles from './SidebarFilters.module.css';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { bedsListHref } from '@/app/utils/bedsListFilters';
+import { marcarIndicacionesVistasEnfermeria } from '@/app/hooks/useMarcarIndicacionesVistasAlSalir';
 
 type Props = {
 	bedId?: string;
@@ -138,6 +139,7 @@ function Collapse({
 
 export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props = {}) {
 	const {
+		bed,
 		openSections,
 		activeSection,
 		navigateToSection,
@@ -487,7 +489,10 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 					)}
 					<button
 						className={styles.closeButton}
-						onClick={() => router.replace(bedsListHref())}
+						onClick={() => {
+							marcarIndicacionesVistasEnfermeria(bed?.NumeroVisita ?? bed?.numeroVisita);
+							router.replace(bedsListHref());
+						}}
 					>
 						Cerrar
 					</button>

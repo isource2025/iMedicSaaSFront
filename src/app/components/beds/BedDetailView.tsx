@@ -9,6 +9,7 @@ import PatientMiniHeader from './patient/PatientMiniHeader';
 import CalendarPanel from './sidebar/CalendarPanel';
 import SidebarFilters from './sidebar/SidebarFilters';
 import { useBedDetail } from './contexts/BedDetailContext';
+import { useMarcarIndicacionesVistasAlSalir } from '../../hooks/useMarcarIndicacionesVistasAlSalir';
 import IndicacionesSection from './indicaciones/IndicacionesSection';
 import MedicacionSuministradaSection from './medicacion/MedicacionSuministradaSection';
 import ControlesFrecuentesSection from './controles/ControlesFrecuentesSection';
@@ -48,6 +49,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	const { activeSection, selectedDate, setSelectedDate, navigateToSection } = useBedDetail();
 	const headerSnapshot = bedToHeaderSnapshot(bed);
 	const numeroVisita = bed?.NumeroVisita ?? bed?.numeroVisita ?? null;
+	useMarcarIndicacionesVistasAlSalir(numeroVisita);
 
 	return (
 		<div className={styles.root}>

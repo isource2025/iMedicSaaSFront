@@ -11,6 +11,10 @@ type BedsListCache = {
 
 let cache: BedsListCache | null = null;
 
+/** Visitas marcadas como vistas al cerrar el detalle: el GET /beds no debe reponer el badge. */
+const VISTO_ENFERMERIA_TTL_MS = 90_000;
+const vistasEnfermeriaRecientes = new Map<number, number>();
+
 /** TTL corto: sirve para no re-pedir al abrir modales desde la lista. */
 const DEFAULT_TTL_MS = 45_000;
 
@@ -57,7 +61,7 @@ export function getCachedBedsList(
 	const current = resolveEmpresaId(idEmpresa);
 	if (!isSameEmpresa(cache.idEmpresa, current)) return null;
 	if (Date.now() - cache.ts > maxAgeMs) return null;
-	return cache.beds;
+	return applyIndicacionesNuevasVistoLocal(cache.beds);
 }
 
 export function getCachedBedMeta(
@@ -74,6 +78,23 @@ export function getCachedBedMeta(
 	return { states: cache.states, sectores: cache.sectores };
 }
 
+export function applyIndicacionesNuevasVistoLocal(beds: Bed[]): Bed[] {
+	if (!beds?.length || !vistasEnfermeriaRecientes.size) return beds;
+	const now = Date.now();
+	return beds.map((b) => {
+		const nro = Number(b.numeroVisita || b.NumeroVisita || 0);
+		if (!nro) return b;
+		const ts = vistasEnfermeriaRecientes.get(nro);
+		if (!ts) return b;
+		if (now - ts > VISTO_ENFERMERIA_TTL_MS) {
+			vistasEnfermeriaRecientes.delete(nro);
+			return b;
+		}
+		if (!b.indicacionesNuevasEnfermeria) return b;
+		return { ...b, indicacionesNuevasEnfermeria: 0 };
+	});
+}
+
 export function setCachedBedsList(
 	beds: Bed[],
 	extra?: { states?: BedsListCache['states']; sectores?: BedsListCache['sectores'] },
@@ -84,7 +105,7 @@ export function setCachedBedsList(
 	cache = {
 		ts: Date.now(),
 		idEmpresa: current,
-		beds,
+		beds: applyIndicacionesNuevasVistoLocal(beds),
 		states: extra?.states ?? (sameTenant ? cache?.states : undefined),
 		sectores: extra?.sectores ?? (sameTenant ? cache?.sectores : undefined),
 	};
@@ -119,15 +140,14 @@ export function bedsListSignature(beds: Bed[]): string {
 		.join(';');
 }
 
-/** Tras revisar indicaciones, el badge debe desaparecer en la lista cacheada. */
+/** Tras cerrar el detalle, el badge debe desaparecer en la lista cacheada. */
 export function clearIndicacionesNuevasEnfermeria(numeroVisita: number): void {
-	if (!cache?.beds?.length || !numeroVisita) return;
+	const nro = Number(numeroVisita || 0);
+	if (!nro) return;
+	vistasEnfermeriaRecientes.set(nro, Date.now());
+	if (!cache?.beds?.length) return;
 	cache = {
 		...cache,
-		beds: cache.beds.map((b) =>
-			Number(b.numeroVisita || b.NumeroVisita || 0) === Number(numeroVisita)
-				? { ...b, indicacionesNuevasEnfermeria: 0 }
-				: b,
-		),
+		beds: applyIndicacionesNuevasVistoLocal(cache.beds),
 	};
 }
