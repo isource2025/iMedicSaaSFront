@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { BedCardProps } from '../../types/beds/BedComponents';
 import type { Bed } from '../../types/beds';
 import styles from './BedCard.module.css';
@@ -57,10 +58,13 @@ function IndicacionesNuevasBadge({
 	onOpen: () => void;
 }) {
 	const [open, setOpen] = useState(false);
+	const [placement, setPlacement] = useState<'below' | 'above'>('below');
 	const [loading, setLoading] = useState(false);
 	const [items, setItems] = useState<NuevaIndicacionPreview[] | null>(null);
 	const [total, setTotal] = useState(count);
 	const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const wrapRef = useRef<HTMLSpanElement>(null);
+	const previewRef = useRef<HTMLDivElement>(null);
 
 	const load = async () => {
 		if (items) return;
@@ -83,32 +87,53 @@ function IndicacionesNuevasBadge({
 	};
 
 	const hide = () => {
-		hideTimer.current = setTimeout(() => setOpen(false), 140);
+		hideTimer.current = setTimeout(() => setOpen(false), 160);
 	};
+
+	useLayoutEffect(() => {
+		if (!open) return;
+
+		const place = () => {
+			const anchor = wrapRef.current;
+			const preview = previewRef.current;
+			if (!anchor || !preview) return;
+
+			const rect = anchor.getBoundingClientRect();
+			const pw = preview.offsetWidth;
+			const ph = preview.offsetHeight;
+			const gap = 8;
+			const spaceBelow = window.innerHeight - rect.bottom - gap;
+			const next = spaceBelow < ph && rect.top > ph + gap ? 'above' : 'below';
+
+			let left = rect.right - pw;
+			left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+			const top = next === 'above' ? rect.top - ph - gap : rect.bottom + gap;
+
+			preview.style.left = `${left}px`;
+			preview.style.top = `${top}px`;
+			setPlacement((prev) => (prev === next ? prev : next));
+		};
+
+		place();
+		window.addEventListener('scroll', place, true);
+		window.addEventListener('resize', place);
+		return () => {
+			window.removeEventListener('scroll', place, true);
+			window.removeEventListener('resize', place);
+		};
+	}, [open, items, loading]);
 
 	const restantes = Math.max(0, total - (items?.length || 0));
 
-	return (
-		<span
-			className={styles.indicacionesBadgeWrap}
-			onMouseEnter={show}
-			onMouseLeave={hide}
-		>
-			<button
-				type="button"
-				className={styles.indicacionesBadge}
-				title={`${count} indicación${count === 1 ? '' : 'es'} nueva${count === 1 ? '' : 's'} por revisar`}
-				onClick={(e) => {
-					e.stopPropagation();
-					onOpen();
-				}}
-			>
-				<ClipboardList size={15} strokeWidth={2.4} aria-hidden />
-				<span className={styles.indicacionesBadgeCount}>{count}</span>
-			</button>
-			{open ? (
+	const preview = open
+		? createPortal(
 				<div
-					className={styles.indicacionesPreview}
+					ref={previewRef}
+					className={`${styles.indicacionesPreview} ${
+						placement === 'above' ? styles.indicacionesPreviewAbove : styles.indicacionesPreviewBelow
+					}`}
+					onMouseEnter={show}
+					onMouseLeave={hide}
 					onClick={(e) => e.stopPropagation()}
 				>
 					<p className={styles.indicacionesPreviewTitle}>Indicaciones nuevas</p>
@@ -141,8 +166,31 @@ function IndicacionesNuevasBadge({
 					) : total > 3 ? (
 						<p className={styles.indicacionesPreviewMore}>Abrí la cama para ver el resto.</p>
 					) : null}
-				</div>
-			) : null}
+				</div>,
+				document.body
+			)
+		: null;
+
+	return (
+		<span
+			ref={wrapRef}
+			className={styles.indicacionesBadgeWrap}
+			onMouseEnter={show}
+			onMouseLeave={hide}
+		>
+			<button
+				type="button"
+				className={styles.indicacionesBadge}
+				title={`${count} indicación${count === 1 ? '' : 'es'} nueva${count === 1 ? '' : 's'} por revisar`}
+				onClick={(e) => {
+					e.stopPropagation();
+					onOpen();
+				}}
+			>
+				<ClipboardList size={13} strokeWidth={2.4} aria-hidden />
+				<span className={styles.indicacionesBadgeCount}>{count}</span>
+			</button>
+			{preview}
 		</span>
 	);
 }

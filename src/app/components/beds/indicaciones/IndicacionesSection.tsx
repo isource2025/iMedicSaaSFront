@@ -18,7 +18,30 @@ import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { usePermiso } from "../../../hooks/usePermiso";
 import { esEnfermeroSesion } from "../../../hooks/useUsuarioActual";
 import { clearIndicacionesNuevasEnfermeria } from "../../../utils/bedsListCache";
+import ResultadoReindicarModal, { ReindicarPorTipo } from "./ResultadoReindicarModal";
 
+
+function etiquetaTipoReindicar(row: IndicacionRow): string {
+    const prompt = String(row.promptCodigo || "").trim().toUpperCase();
+    if (prompt.includes("MEDIC")) return "Medicamento";
+    if (prompt.includes("DIET")) return "Dieta";
+    if (prompt.includes("CONTROL")) return "Control";
+    if (prompt.includes("ASIST")) return "Asistencial";
+    if (prompt) return prompt.charAt(0) + prompt.slice(1).toLowerCase();
+
+    const tipo = String(row.tipo || "").trim().toUpperCase();
+    if (tipo === "M") return "Medicamento";
+    if (tipo === "D") return "Dieta";
+    if (tipo === "C") return "Control";
+    if (tipo === "A") return "Asistencial";
+    return "Otras";
+}
+
+function formatearFechaReindicar(ymd: string): string {
+    const [y, m, d] = ymd.split("-");
+    if (!y || !m || !d) return ymd;
+    return `${d}/${m}/${y}`;
+}
 
 type IndicacionDTO = {
     id: string;
@@ -184,6 +207,12 @@ export default function IndicacionesSection({
     const [modoReindicar, setModoReindicar] = useState(false);
     const [selectedForReindicar, setSelectedForReindicar] = useState<Set<string>>(new Set());
     const [reindicando, setReindicando] = useState(false);
+    const [resultadoReindicar, setResultadoReindicar] = useState<{
+        fecha: string;
+        porTipo: ReindicarPorTipo[];
+        exitosas: number;
+        fallidas: number;
+    } | null>(null);
 
     // Handlers para modo reindicar
     const handleToggleReindicar = (id: string) => {
@@ -214,6 +243,7 @@ export default function IndicacionesSection({
             // Reindicar cada una
             let exitosas = 0;
             let fallidas = 0;
+            const porTipoMap = new Map<string, number>();
             
             for (const indicacion of indicacionesAReindicar) {
                 try {
@@ -263,19 +293,24 @@ export default function IndicacionesSection({
                     
                     await indicacionesService.postNuevaIndicacion(payload);
                     exitosas++;
+                    const tipo = etiquetaTipoReindicar(indicacion);
+                    porTipoMap.set(tipo, (porTipoMap.get(tipo) || 0) + 1);
                 } catch (error) {
                     console.error('Error al reindicar indicación:', indicacion.nro, error);
                     fallidas++;
                 }
             }
             
-            // Mostrar resultado
-            if (exitosas > 0) {
-                alert(`Se reindicaron exitosamente ${exitosas} indicación(es) con fecha ${fechaActual}`);
-            }
-            if (fallidas > 0) {
-                alert(`No se pudieron reindicar ${fallidas} indicación(es). Ver consola para detalles.`);
-            }
+            const porTipo: ReindicarPorTipo[] = Array.from(porTipoMap.entries())
+                .map(([tipo, cantidad]) => ({ tipo, cantidad }))
+                .sort((a, b) => b.cantidad - a.cantidad);
+
+            setResultadoReindicar({
+                fecha: formatearFechaReindicar(fechaActual),
+                porTipo,
+                exitosas,
+                fallidas,
+            });
             
             // Refrescar y salir del modo reindicar
             await refetch();
@@ -283,7 +318,12 @@ export default function IndicacionesSection({
             setSelectedForReindicar(new Set());
         } catch (err) {
             console.error('Error al reindicar:', err);
-            alert('Error al reindicar las indicaciones');
+            setResultadoReindicar({
+                fecha: "",
+                porTipo: [],
+                exitosas: 0,
+                fallidas: selectedForReindicar.size,
+            });
         } finally {
             setReindicando(false);
         }
@@ -596,6 +636,15 @@ export default function IndicacionesSection({
                     nroIndicacion={selectedId}
                 />
             </ModalBasePaciente>
+
+            <ResultadoReindicarModal
+                isOpen={resultadoReindicar !== null}
+                onClose={() => setResultadoReindicar(null)}
+                fecha={resultadoReindicar?.fecha ?? ""}
+                porTipo={resultadoReindicar?.porTipo ?? []}
+                exitosas={resultadoReindicar?.exitosas ?? 0}
+                fallidas={resultadoReindicar?.fallidas ?? 0}
+            />
         </div>
     );
 }
