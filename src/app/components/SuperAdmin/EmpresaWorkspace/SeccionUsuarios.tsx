@@ -172,8 +172,8 @@ export default function SeccionUsuarios({
           nombres: form.nombres.trim().slice(0, MAX_NOMBRES),
           numeroDocumento: form.numeroDocumento.replace(/\D/g, '').slice(0, MAX_DNI) || undefined,
           idRol: form.idRol || undefined,
-          sectores: form.sectores,
-          servicios: form.servicios,
+          sectores: form.sectores.map((s) => String(s).trim()).filter(Boolean),
+          servicios: form.servicios.map((s) => String(s).trim()).filter(Boolean),
         });
       } else {
         if (!form.nombreRed.trim()) throw new Error('El usuario es obligatorio');
@@ -188,8 +188,8 @@ export default function SeccionUsuarios({
           numeroDocumento: form.numeroDocumento.replace(/\D/g, '').slice(0, MAX_DNI),
           password: form.password.trim() || undefined,
           idRol: form.idRol || undefined,
-          sectores: form.sectores,
-          servicios: form.servicios,
+          sectores: form.sectores.map((s) => String(s).trim()).filter(Boolean),
+          servicios: form.servicios.map((s) => String(s).trim()).filter(Boolean),
         });
       }
       setModal(null);
