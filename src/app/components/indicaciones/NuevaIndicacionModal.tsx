@@ -32,6 +32,8 @@ interface IndicacionFormProps {
     nroIndicacion?: number | null;
     refetch?: () => Promise<void>;
     idSector?: string | null;
+    /** YYYY-MM-DD: hoy o mañana. Si no viene, el backend usa hoy. */
+    fechaCarga?: string | null;
 }
 
 // ===== Clarion helpers =====
@@ -47,11 +49,11 @@ const getLocalDateString = (date: Date): string => {
 };  
 
 // ===== Payload inicial =====
-const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
+const emptyPayload = (numeroVisita: number | null, fechaCarga: string | null = null): NuevaIndicacionPayload => ({
     NumeroVisita: numeroVisita,
     NroAdicional: null,
-    FechaCarga: null, // ✅ El backend calcula automáticamente con fecha actual
-    HoraCarga: null, // ✅ El backend calcula automáticamente con hora actual
+    FechaCarga: fechaCarga,
+    HoraCarga: null, // el backend usa la hora actual
     OperadorCarga: null,
     ProfesionalAsiste: null,
     FechaCumplido: null,
@@ -76,7 +78,7 @@ const emptyPayload = (numeroVisita: number | null): NuevaIndicacionPayload => ({
     Estado: null,
     CantidadPorTurno: null,
     CantidadEntregada: null,
-    ParaFechaEntrega: getLocalDateString(new Date()),
+    ParaFechaEntrega: fechaCarga || getLocalDateString(new Date()),
     FormaAdicional: null,
     NroIndicacionAnterior: null,
     IdSector: null,
@@ -93,13 +95,14 @@ export default function IndicacionForm({
     nroIndicacion = null,
     refetch,
     idSector = null,
+    fechaCarga = null,
 }: IndicacionFormProps) {
     const initial = useMemo(
         () => ({
-            ...emptyPayload(defaultNumeroVisita),
+            ...emptyPayload(defaultNumeroVisita, fechaCarga),
             IdSector: idSector, // ✅ Usar el idSector del prop si está disponible
         }),
-        [defaultNumeroVisita, idSector]
+        [defaultNumeroVisita, idSector, fechaCarga]
     );
     const [form, setForm] = useState<NuevaIndicacionPayload>(initial);
     const [dataLoading, setDataLoading] = useState(false);
@@ -138,8 +141,8 @@ export default function IndicacionForm({
         setAdicionalForm((prev) => ({ ...prev, [field]: value }));
 
     useEffect(() => {
-        setForm(emptyPayload(defaultNumeroVisita));
-    }, [defaultNumeroVisita]);
+        setForm(emptyPayload(defaultNumeroVisita, fechaCarga));
+    }, [defaultNumeroVisita, fechaCarga]);
 
     useEffect(() => {
         console.log('🔍 Usuario desde contexto:', usuario);
@@ -204,6 +207,7 @@ export default function IndicacionForm({
                         Cantidad: hija.cantidad,
                         AliasMedicamento: hija.aliasMedicamento,
                         FormaAdicional: hija.formaAdicional,
+                        FechaCarga: form.FechaCarga || fechaCarga,
                         NroAdicional: nroIndicacionPadre, // DEBE IR AL FINAL para sobrescribir el 0 del padre
                     };
                     

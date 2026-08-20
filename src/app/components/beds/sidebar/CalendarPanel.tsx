@@ -50,7 +50,12 @@ export default function CalendarPanel({
 	const admission = useMemo(() => parseAdmissionDate(fechaIngreso), [fechaIngreso]);
 	const discharge = useMemo(() => parseAdmissionDate(fechaEgreso), [fechaEgreso]);
 	const today = useMemo(() => startOfDay(new Date()), []);
-	const rangeEnd = discharge || today;
+	const tomorrow = useMemo(() => {
+		const d = startOfDay(new Date());
+		d.setDate(d.getDate() + 1);
+		return d;
+	}, []);
+	const rangeEnd = discharge || tomorrow;
 	const stayClosed = Boolean(egresada || discharge);
 
 	useEffect(() => {
@@ -128,6 +133,8 @@ export default function CalendarPanel({
 	};
 
 	const handleSelect = (d: Date) => {
+		const day = startOfDay(d);
+		if (day > rangeEnd) return;
 		if (onSelect) onSelect(d);
 		else setSelectedDate(d);
 	};
@@ -191,12 +198,15 @@ export default function CalendarPanel({
 									const outside = isOutsideMonth(d);
 									const stay = internacionInfo(d);
 									const day = startOfDay(d);
+									const beyondRange = day > rangeEnd;
 									const active =
 										isSame(d, selectedDate) &&
 										(!stayClosed || (stay != null && day <= rangeEnd));
 									return (
 										<button
 											key={i}
+											type="button"
+											disabled={beyondRange}
 											className={`${styles.cell} ${
 												outside ? styles.muted : ''
 											} ${active ? styles.active : ''} ${
@@ -205,12 +215,20 @@ export default function CalendarPanel({
 												stay?.isFirst && !stay?.isDischarge
 													? styles.internacionFirst
 													: ''
+											} ${beyondRange ? styles.disabled : ''} ${
+												stay && isSame(day, tomorrow) && !stayClosed
+													? styles.internacionManana
+													: ''
 											}`}
 											onClick={() => handleSelect(d)}
 											aria-pressed={active}
 											title={
-												stay?.isDischarge
+												beyondRange
+													? 'No se puede indicar más allá de mañana'
+													: stay?.isDischarge
 													? 'Día de egreso'
+													: stay && isSame(day, tomorrow) && !stayClosed
+														? 'Mañana — se puede indicar'
 													: stay
 														? `Día ${stay.dayNumber} de internación`
 														: undefined

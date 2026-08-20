@@ -112,6 +112,21 @@
 	color: #fff;
 }
 
+.internacionManana {
+	box-shadow: inset 0 0 0 1.5px #38bdf8;
+}
+
+.disabled,
+.cell:disabled {
+	opacity: 0.32;
+	cursor: default;
+	pointer-events: none;
+}
+.cell:disabled:hover {
+	border-color: transparent;
+	background: #e3f2f7;
+}
+
 /* === Transición por opacidad (sin desplazamiento) === */
 .fadeOnly-enter {
 	opacity: 0;

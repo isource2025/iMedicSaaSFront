@@ -16,7 +16,35 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import ResultadoReindicarModal, { ReindicarPorTipo } from "./ResultadoReindicarModal";
+import ConfirmarFechaReindicarModal from "./ConfirmarFechaReindicarModal";
 
+function toLocalYmd(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+function addDaysYmd(ymd: string, days: number): string {
+    const [y, m, d] = ymd.split("-").map(Number);
+    const dt = new Date(y, m - 1, d + days);
+    return toLocalYmd(dt);
+}
+
+function ymdToLocalDate(ymd: string): Date {
+    const [y, m, d] = ymd.split("-").map(Number);
+    return new Date(y, m - 1, d);
+}
+
+/** Indicaciones nuevas: día seleccionado si es hoy o mañana; si no, hoy. */
+function fechaIndicacionPermitida(selected: Date | null | undefined): string {
+    const hoy = toLocalYmd(new Date());
+    const manana = addDaysYmd(hoy, 1);
+    if (!selected) return hoy;
+    const ymd = toLocalYmd(selected);
+    if (ymd === hoy || ymd === manana) return ymd;
+    return hoy;
+}
 
 function etiquetaTipoReindicar(row: IndicacionRow): string {
     const prompt = String(row.promptCodigo || "").trim().toUpperCase();
@@ -86,7 +114,9 @@ export default function IndicacionesSection({
     fechaIngreso,
     horaIngreso,
 }: IndicacionesSectionProps) {
-    const { activeSection, selectedDate } = useBedDetail();
+    const { activeSection, selectedDate, setSelectedDate } = useBedDetail();
+    const fechaHoy = toLocalYmd(new Date());
+    const fechaManana = addDaysYmd(fechaHoy, 1);
 
     const indicacionesPath = useMemo(
         () =>
@@ -181,6 +211,7 @@ export default function IndicacionesSection({
         exitosas: number;
         fallidas: number;
     } | null>(null);
+    const [confirmarFechaOpen, setConfirmarFechaOpen] = useState(false);
 
     // Handlers para modo reindicar
     const handleToggleReindicar = (id: string) => {
@@ -195,27 +226,22 @@ export default function IndicacionesSection({
         });
     };
     
-    const handleConfirmarReindicar = async () => {
+    const handleConfirmarReindicar = async (fechaYmd: string) => {
         if (selectedForReindicar.size === 0) return;
         
         setReindicando(true);
         try {
-            // Obtener las indicaciones seleccionadas
             const indicacionesAReindicar = baseRows.filter(r => selectedForReindicar.has(r.id));
             
-            // Obtener fecha y hora actual
             const ahora = new Date();
-            const fechaActual = ahora.toISOString().split('T')[0]; // YYYY-MM-DD
-            const horaActual = ahora.toTimeString().split(' ')[0]; // HH:mm:ss
+            const horaActual = ahora.toTimeString().split(' ')[0];
             
-            // Reindicar cada una
             let exitosas = 0;
             let fallidas = 0;
             const porTipoMap = new Map<string, number>();
             
             for (const indicacion of indicacionesAReindicar) {
                 try {
-                    // Obtener la indicación completa del backend para tener todos los datos
                     const indicacionCompleta = await indicacionesService.getIndicacionesByNroIndicacion(Number(indicacion.nro));
                     
                     if (!indicacionCompleta) {
@@ -224,11 +250,10 @@ export default function IndicacionesSection({
                         continue;
                     }
                     
-                    // Crear payload con los datos de la indicación original pero con fecha actual
                     const payload: NuevaIndicacionPayload = {
                         NumeroVisita: numeroVisita,
                         NroAdicional: indicacionCompleta.NroAdicional,
-                        FechaCarga: fechaActual,
+                        FechaCarga: fechaYmd,
                         HoraCarga: horaActual,
                         OperadorCarga: indicacionCompleta.OperadorCarga,
                         ProfesionalAsiste: indicacionCompleta.ProfesionalAsiste,
@@ -274,16 +299,21 @@ export default function IndicacionesSection({
                 .sort((a, b) => b.cantidad - a.cantidad);
 
             setResultadoReindicar({
-                fecha: formatearFechaReindicar(fechaActual),
+                fecha: formatearFechaReindicar(fechaYmd),
                 porTipo,
                 exitosas,
                 fallidas,
             });
             
-            // Refrescar y salir del modo reindicar
-            await refetch();
             setModoReindicar(false);
             setSelectedForReindicar(new Set());
+
+            const mismaFecha = selectedDate ? toLocalYmd(selectedDate) === fechaYmd : false;
+            if (mismaFecha) {
+                await refetch();
+            } else {
+                setSelectedDate(ymdToLocalDate(fechaYmd));
+            }
         } catch (err) {
             console.error('Error al reindicar:', err);
             setResultadoReindicar({
@@ -300,6 +330,7 @@ export default function IndicacionesSection({
     const handleCancelarReindicar = () => {
         setModoReindicar(false);
         setSelectedForReindicar(new Set());
+        setConfirmarFechaOpen(false);
     };
 
     // Filtrado simple por texto
@@ -337,6 +368,7 @@ export default function IndicacionesSection({
             const finalPayload: NuevaIndicacionPayload = {
                 ...data,
                 NumeroVisita: data.NumeroVisita ?? numeroVisita,
+                FechaCarga: data.FechaCarga || fechaIndicacionPermitida(selectedDate),
             };
             const resultado = await indicacionesService.postNuevaIndicacion(finalPayload);
             
@@ -491,7 +523,7 @@ export default function IndicacionesSection({
                         <>
                             <button
                                 className={`${styles.btn} ${styles.btnSuccess} ${reindicando ? styles.btnAnimated : ''}`}
-                                onClick={handleConfirmarReindicar}
+                                onClick={() => setConfirmarFechaOpen(true)}
                                 disabled={selectedForReindicar.size === 0 || reindicando}
                             >
                                 <span className={styles.btnIcon} aria-hidden>
@@ -576,6 +608,7 @@ export default function IndicacionesSection({
                     onSave={handleSave}
                     defaultNumeroVisita={numeroVisita}
                     refetch={refetch}
+                    fechaCarga={fechaIndicacionPermitida(selectedDate)}
                 />
             </ModalBasePaciente>
 
@@ -604,6 +637,18 @@ export default function IndicacionesSection({
                     nroIndicacion={selectedId}
                 />
             </ModalBasePaciente>
+
+            <ConfirmarFechaReindicarModal
+                isOpen={confirmarFechaOpen && !reindicando}
+                cantidad={selectedForReindicar.size}
+                fechaHoy={fechaHoy}
+                fechaManana={fechaManana}
+                onCancel={() => setConfirmarFechaOpen(false)}
+                onElegir={(ymd) => {
+                    setConfirmarFechaOpen(false);
+                    void handleConfirmarReindicar(ymd);
+                }}
+            />
 
             <ResultadoReindicarModal
                 isOpen={resultadoReindicar !== null}
