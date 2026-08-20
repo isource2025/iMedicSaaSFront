@@ -108,11 +108,16 @@ export default function SeccionUsuarios({
     setModal((prev) => (prev ? { ...prev, form: { ...prev.form, ...p } } : prev));
   };
 
-  const abrirCrear = () => {
+  const abrirCrear = async () => {
     setModalError(null);
     setSectorQ('');
     setServicioQ('');
     setNuevoServicio({ valor: '', descripcion: '' });
+    try {
+      await onRefreshCatalogos?.();
+    } catch {
+      /* el modal igual se abre con lo que haya */
+    }
     setModal({
       mode: 'create',
       form: emptyForm(
@@ -123,11 +128,16 @@ export default function SeccionUsuarios({
     });
   };
 
-  const abrirEditar = (u: EmpresaUsuario) => {
+  const abrirEditar = async (u: EmpresaUsuario) => {
     setModalError(null);
     setSectorQ('');
     setServicioQ('');
     setNuevoServicio({ valor: '', descripcion: '' });
+    try {
+      await onRefreshCatalogos?.();
+    } catch {
+      /* el modal igual se abre con lo que haya */
+    }
     setModal({
       mode: 'edit',
       idPersonal: u.idPersonal,
