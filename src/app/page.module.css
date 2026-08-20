@@ -1,12 +1,13 @@
 .loginPage {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: stretch;
-  background-color: #f9fafb;
+  background-color: #f4f7f9;
 }
 
 .loginGrid {
@@ -18,40 +19,25 @@
 }
 
 .imageSection {
-  flex: 1;
+  flex: 0 0 60%;
+  max-width: 60%;
   position: relative;
   overflow: hidden;
-  display: none; /* Oculto en mobile por defecto */
-  align-self: stretch; /* hereda el alto del flex container */
-}
-
-.videoTag {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(0, 131, 169, 0.7), rgba(0, 181, 226, 0.6)); /* Pantone 314C y 313U con transparencia */
-  z-index: 1;
+  display: none;
+  align-self: stretch;
+  background: #dce5eb;
 }
 
 .formSection {
-  flex: 1;
+  flex: 0 0 40%;
+  max-width: 40%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 2rem 1.5rem;
   background-color: white;
   position: relative;
+  min-width: 0;
 }
 
 .loginNote {
@@ -60,7 +46,7 @@
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.8rem;
-  color: #0083A9; /* Pantone 314C */
+  color: #0083A9;
   opacity: 0.85;
   font-weight: 600;
   text-align: center;
@@ -69,19 +55,65 @@
 
 .brandLink {
   font-weight: 700;
-  color: #0083A9; /* Pantone 314C */
+  color: #0083A9;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .brandLink:hover {
-  color: #00B5E2; /* Pantone 313U */
+  color: #00B5E2;
 }
 
-/* Media query para tablets y escritorio - Mostrar carrusel 50/50 */
 @media (min-width: 768px) {
   .imageSection {
-    display: flex; /* flex en vez de block para que height:100% propague */
+    display: flex;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 767px) {
+  .loginPage {
+    height: 100vh;
+    height: 100dvh;
+    align-items: stretch;
+  }
+
+  .loginGrid {
+    position: relative;
+    display: block;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .imageSection {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    flex: none;
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .formSection {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    flex: none;
+    width: min(26rem, calc(100% - 2rem));
+    max-width: min(26rem, calc(100% - 2rem));
+    height: auto;
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    background: transparent;
+  }
+
+  .loginNote {
+    display: none;
   }
 }

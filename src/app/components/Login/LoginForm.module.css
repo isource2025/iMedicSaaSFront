@@ -279,3 +279,24 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 767px) {
+  .loginContainer {
+    max-width: 26rem;
+  }
+
+  .card {
+    padding: 1.25rem 1.15rem 1.15rem;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+  }
+
+  .title {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .formGroupPassword {
+    margin-bottom: 1rem;
+  }
+}

@@ -24,9 +24,9 @@ export default function LoginForm() {
   return (
     <div className={styles.loginContainer}>
       <div className={styles.card}>
-        <h2 className={styles.title}>
-          {loginStep === 'SELECT_EMPRESA' ? 'Seleccionar empresa' : 'Iniciar Sesión'}
-        </h2>
+        {loginStep === 'SELECT_EMPRESA' && (
+          <h2 className={styles.title}>Seleccionar empresa</h2>
+        )}
 
         {error && (
           <div className={styles.errorAlert} role="alert">
