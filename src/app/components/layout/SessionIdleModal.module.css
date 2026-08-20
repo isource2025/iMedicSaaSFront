@@ -11,31 +11,28 @@
 }
 
 .card {
-	width: min(520px, 100%);
-	padding: 1.65rem 1.7rem 1.4rem;
+	width: min(560px, 100%);
+	overflow: hidden;
 	border-radius: 16px;
 	background: #fff;
 	box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
 	text-align: left;
 }
 
-.row {
+.main {
 	display: flex;
 	align-items: center;
-	gap: 1rem 1.15rem;
-}
-
-.copy {
-	flex: 1 1 auto;
-	min-width: 0;
+	gap: 0;
+	padding: 1.45rem 1.55rem 1.35rem;
 }
 
 .art {
 	flex: 0 0 auto;
 	display: block;
-	width: 108px;
+	width: 104px;
 	height: auto;
-	max-width: 108px;
+	max-width: 104px;
+	margin-right: 1.2rem;
 	border: 0;
 	border-radius: 0;
 	background: none;
@@ -45,35 +42,61 @@
 	user-select: none;
 }
 
+.rule {
+	flex: 0 0 1px;
+	align-self: stretch;
+	width: 1px;
+	margin: 0.15rem 1.25rem 0.15rem 0;
+	background: #e2e8f0;
+}
+
+.copy {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
 .kicker {
-	margin: 0 0 0.45rem;
-	font-size: 0.7rem;
+	margin: 0 0 0.4rem;
+	font-size: 0.68rem;
 	font-weight: 800;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.1em;
 	text-transform: uppercase;
-	color: #0284c7;
+	color: #0083a9;
 }
 
 .title {
 	margin: 0;
-	font-size: 1.35rem;
+	font-size: 1.42rem;
 	font-weight: 800;
 	letter-spacing: -0.03em;
+	line-height: 1.15;
 	color: #0f172a;
 }
 
-.body {
+.lead {
 	margin: 0.7rem 0 0;
-	font-size: 0.95rem;
+	padding-top: 0.7rem;
+	border-top: 1px solid #eef2f6;
+	font-size: 0.93rem;
 	line-height: 1.5;
-	color: #334155;
+	color: #475569;
+}
+
+.footer {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 0.95rem 1.55rem 1.2rem;
+	border-top: 1px solid #e2e8f0;
+	background: #f8fafc;
 }
 
 .hint {
-	margin: 0.45rem 0 0;
-	font-size: 0.9rem;
+	margin: 0;
+	font-size: 0.82rem;
 	font-weight: 600;
-	color: #0f172a;
+	line-height: 1.4;
+	color: #64748b;
 }
 
 .cta {
@@ -81,7 +104,6 @@
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	margin-top: 1.35rem;
 	padding: 0.72rem 1.1rem;
 	border: none;
 	border-radius: 24px;
@@ -99,16 +121,25 @@
 }
 
 @media (max-width: 480px) {
-	.card {
-		padding: 1.25rem 1.15rem 1.15rem;
+	.main {
+		padding: 1.15rem 1.15rem 1.05rem;
 	}
 
 	.art {
-		width: 84px;
-		max-width: 84px;
+		width: 78px;
+		max-width: 78px;
+		margin-right: 0.9rem;
+	}
+
+	.rule {
+		margin-right: 0.9rem;
 	}
 
 	.title {
-		font-size: 1.15rem;
+		font-size: 1.18rem;
+	}
+
+	.footer {
+		padding: 0.85rem 1.15rem 1rem;
 	}
 }
