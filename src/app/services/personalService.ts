@@ -470,17 +470,22 @@ export const getSectoresCatalogo = async (): Promise<
 			.filter((s): s is NonNullable<typeof s> => Boolean(s));
 	};
 
-	const urls = ['/personal/catalogos/sectores', '/sectores', '/auth/sectores'];
-	for (const url of urls) {
-		try {
-			const res = await apiService.get<{ success: boolean; data: Record<string, unknown>[] }>(url);
-			const out = parse(res.data);
-			if (out.length) return out;
-		} catch (err) {
-			console.error(`[personal] catálogo sectores ${url}:`, err);
-		}
+	try {
+		const res = await apiService.get<{ success: boolean; data: Record<string, unknown>[] }>(
+			'/personal/catalogos/sectores',
+			{ timeout: 20000 },
+		);
+		return parse(res.data);
+	} catch (err) {
+		const ax = err as { code?: string; message?: string; response?: { status?: number; data?: { mensaje?: string } } };
+		console.error('[personal] catálogo sectores:', {
+			status: ax?.response?.status,
+			mensaje: ax?.response?.data?.mensaje,
+			code: ax?.code,
+			message: ax?.message || (err instanceof Error ? err.message : String(err)),
+		});
+		return [];
 	}
-	return [];
 };
 
 export const getPersonalCodigosFacturacion = async (
