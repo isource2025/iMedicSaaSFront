@@ -126,7 +126,13 @@ export const getServicios = async (): Promise<CatalogoItemTexto[]> => {
 		const res = await apiService.get<ApiResponse<CatalogoItemTexto[]>>(
 			'/personal/catalogos/servicios',
 		);
-		return res.data.success && res.data.data ? res.data.data : [];
+		const rows = res.data.success && res.data.data ? res.data.data : [];
+		return rows
+			.map((r) => ({
+				valor: String(r?.valor ?? '').trim(),
+				descripcion: String(r?.descripcion ?? '').trim(),
+			}))
+			.filter((r) => r.valor);
 	} catch {
 		return [];
 	}
@@ -272,10 +278,30 @@ export const deletePersonalFirma = async (id: number): Promise<void> => {
 	if (!res.data.success) throw new Error(res.data.mensaje || 'Error al eliminar firma');
 };
 
+function mapServicioAsignado(s: Record<string, unknown> | null | undefined): PersonalServicioAsignado {
+	const row = s || {};
+	return {
+		idServicio: String(row.idServicio ?? row.IdServicio ?? '').trim(),
+		Descripcion: String(row.Descripcion ?? row.descripcion ?? '').trim(),
+	};
+}
+
+function mapSectorAsignado(s: Record<string, unknown> | null | undefined): PersonalSectorAsignado {
+	const row = s || {};
+	return {
+		idSector: String(row.idSector ?? row.IdSector ?? '').trim(),
+		Descripcion: String(row.Descripcion ?? row.descripcion ?? '').trim(),
+	};
+}
+
 export const getPersonalSectores = async (id: number): Promise<PersonalSectorAsignado[]> => {
 	try {
 		const res = await apiService.get<ApiResponse<PersonalSectorAsignado[]>>(`/personal/${id}/sectores`);
-		if (res.data.success && res.data.data) return res.data.data;
+		if (res.data.success && res.data.data) {
+			return (res.data.data as unknown as Record<string, unknown>[])
+				.map(mapSectorAsignado)
+				.filter((s) => s.idSector);
+		}
 		return [];
 	} catch {
 		return [];
@@ -289,7 +315,11 @@ export const addPersonalSector = async (
 	const res = await apiService.post<ApiResponse<PersonalSectorAsignado[]>>(`/personal/${id}/sectores`, {
 		idSector,
 	});
-	if (res.data.success && res.data.data) return res.data.data;
+	if (res.data.success && res.data.data) {
+		return (res.data.data as unknown as Record<string, unknown>[])
+			.map(mapSectorAsignado)
+			.filter((s) => s.idSector);
+	}
 	throw new Error(res.data.mensaje || 'Error al asignar sector');
 };
 
@@ -301,7 +331,9 @@ export const removePersonalSector = async (
 	const res = await apiService.delete<ApiResponse<PersonalSectorAsignado[]>>(
 		`/personal/${id}/sectores?idSector=${q}`,
 	);
-	if (res.data.success && res.data.data) return res.data.data;
+	if (res.data.success && res.data.data) {
+		return (res.data.data as unknown as Record<string, unknown>[]).map(mapSectorAsignado).filter((s) => s.idSector);
+	}
 	throw new Error(res.data.mensaje || 'Error al quitar sector');
 };
 
@@ -310,7 +342,11 @@ export const getPersonalServiciosPedidos = async (id: number): Promise<PersonalS
 		const res = await apiService.get<ApiResponse<PersonalServicioAsignado[]>>(
 			`/personal/${id}/servicios-pedidos`,
 		);
-		if (res.data.success && res.data.data) return res.data.data;
+		if (res.data.success && res.data.data) {
+			return (res.data.data as unknown as Record<string, unknown>[])
+				.map(mapServicioAsignado)
+				.filter((s) => s.idServicio);
+		}
 		return [];
 	} catch {
 		return [];
@@ -327,7 +363,9 @@ export const addPersonalServicioPedido = async (
 	);
 	if (res.data.success && res.data.data) {
 		clearServiciosReceptorCache();
-		return res.data.data;
+		return (res.data.data as unknown as Record<string, unknown>[])
+			.map(mapServicioAsignado)
+			.filter((s) => s.idServicio);
 	}
 	throw new Error(res.data.mensaje || 'Error al asignar servicio');
 };
@@ -342,7 +380,9 @@ export const removePersonalServicioPedido = async (
 	);
 	if (res.data.success && res.data.data) {
 		clearServiciosReceptorCache();
-		return res.data.data;
+		return (res.data.data as unknown as Record<string, unknown>[])
+			.map(mapServicioAsignado)
+			.filter((s) => s.idServicio);
 	}
 	throw new Error(res.data.mensaje || 'Error al quitar servicio');
 };
@@ -357,7 +397,15 @@ export const replacePersonalAsignaciones = async (
 		>(`/personal/${id}/asignaciones`, body);
 		if (res.data.success && res.data.data) {
 			clearServiciosReceptorCache();
-			return res.data.data;
+			const d = res.data.data;
+			return {
+				sectores: ((d.sectores || []) as unknown as Record<string, unknown>[])
+					.map(mapSectorAsignado)
+					.filter((s) => s.idSector),
+				servicios: ((d.servicios || []) as unknown as Record<string, unknown>[])
+					.map(mapServicioAsignado)
+					.filter((s) => s.idServicio),
+			};
 		}
 		throw new Error(res.data.mensaje || 'Error al guardar asignaciones');
 	} catch (error: unknown) {

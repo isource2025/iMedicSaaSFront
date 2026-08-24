@@ -6,6 +6,7 @@ import { personalService } from '../../services/personalService';
 import modalStyles from './PersonalActionModals.module.css';
 import styles from './PersonalDetails.module.css';
 import { clarionDateToDate } from '../../utils/dateUtils';
+import { etiquetaCatalogo } from '../../utils/etiquetaCatalogo';
 
 interface PersonalDetailsProps {
 	personal: Personal;
@@ -70,9 +71,9 @@ export default function PersonalDetails({
 	}, [personal.Valor]);
 
 	const descNum = (list: CatalogoItemNumerico[], val: number | null) =>
-		val == null ? '-' : list.find((i) => i.valor === val)?.descripcion || String(val);
+		val == null ? '-' : list.find((i) => i.valor === val)?.descripcion || '-';
 	const descTxt = (list: CatalogoItemTexto[], val: string | null) =>
-		!val ? '-' : list.find((i) => i.valor === String(val).trim())?.descripcion || val;
+		etiquetaCatalogo(list, val) || '-';
 
 	return (
 		<div className={modalStyles.wrap}>

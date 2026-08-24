@@ -113,11 +113,13 @@ export interface PersonalServicioDto {
 export interface PersonalSectorAsignado {
 	idSector: string;
 	Descripcion: string;
+	descripcion?: string;
 }
 
 export interface PersonalServicioAsignado {
 	idServicio: string;
 	Descripcion: string;
+	descripcion?: string;
 }
 
 export interface PersonalCodigoFacturacion {

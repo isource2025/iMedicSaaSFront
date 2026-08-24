@@ -7,6 +7,7 @@ import {
 	CatalogoItemTexto,
 } from '../../types/personal';
 import { personalService } from '../../services/personalService';
+import { etiquetaCatalogo, mapaCatalogoTexto } from '../../utils/etiquetaCatalogo';
 import styles from './PersonalList.module.css';
 import Pagination from '../UI/Pagination';
 import Loader from '../Loader/Loader';
@@ -69,18 +70,13 @@ export default function PersonalList({
 		return { byEsp, byCat };
 	}, [especialidades, categorias]);
 
-	const mapTxt = useMemo(() => {
-		const bySv = new Map(servicios.map((i) => [i.valor.trim(), i.descripcion]));
-		const byCl = new Map(clases.map((i) => [i.valor.trim(), i.descripcion]));
-		return { bySv, byCl };
-	}, [servicios, clases]);
+	const mapSv = useMemo(() => mapaCatalogoTexto(servicios), [servicios]);
 
 	const descEsp = (v: number | null) =>
-		v == null ? null : mapNum.byEsp.get(v) || `#${v}`;
+		v == null ? null : mapNum.byEsp.get(v) || null;
 	const descCat = (v: number | null) =>
-		v == null ? null : mapNum.byCat.get(v) || `#${v}`;
-	const descSv = (v: string | null) =>
-		!v ? null : mapTxt.bySv.get(String(v).trim()) || v;
+		v == null ? null : mapNum.byCat.get(v) || null;
+	const descSv = (v: string | null) => etiquetaCatalogo(mapSv, v) || null;
 
 	const toggleExpand = (id: number) =>
 		setExpandedId((prev) => (prev === id ? null : id));

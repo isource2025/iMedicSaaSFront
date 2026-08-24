@@ -7,6 +7,7 @@ import type {
 	PersonalSectorAsignado,
 	PersonalServicioAsignado,
 } from '@/app/types/personal';
+import { etiquetaCatalogo } from '@/app/utils/etiquetaCatalogo';
 import formStyles from './PersonalForm.module.css';
 import styles from './PersonalActionModals.module.css';
 
@@ -133,9 +134,20 @@ export default function PersonalAsignacionesTab({
 		const t = qSrv.trim().toLowerCase();
 		if (!t) return catServicios;
 		return catServicios.filter(
-			(c) => c.valor.toLowerCase().includes(t) || (c.descripcion || '').toLowerCase().includes(t),
+			(c) =>
+				(c.descripcion || '').toLowerCase().includes(t) || c.valor.toLowerCase().includes(t),
 		);
 	}, [catServicios, qSrv]);
+
+	const labelSector = (id: string, desc?: string | null) =>
+		etiquetaCatalogo(
+			secCatalogo.map((c) => ({ valor: c.IdSector, descripcion: c.Descripcion })),
+			id,
+			desc,
+		) || '—';
+
+	const labelServicio = (id: string, desc?: string | null) =>
+		etiquetaCatalogo(catServicios, id, desc) || '—';
 
 	const abrirEdicion = () => {
 		setSecSel(new Set(secAsignados.map((s) => s.idSector)));
@@ -242,7 +254,7 @@ export default function PersonalAsignacionesTab({
 											disabled={saving}
 											onChange={() => setSecDraft(toggle(secSel, c.IdSector))}
 										/>
-										<span>{c.Descripcion || c.IdSector}</span>
+										<span>{labelSector(c.IdSector, c.Descripcion)}</span>
 									</label>
 								))
 							)}
@@ -255,7 +267,7 @@ export default function PersonalAsignacionesTab({
 						) : (
 							secAsignados.map((s) => (
 								<div key={s.idSector} className={styles.listItem}>
-									<span>{s.Descripcion || s.idSector}</span>
+									<span>{labelSector(s.idSector, s.Descripcion || s.descripcion)}</span>
 								</div>
 							))
 						)}
@@ -296,7 +308,7 @@ export default function PersonalAsignacionesTab({
 											disabled={saving}
 											onChange={() => setSrvDraft(toggle(srvSel, o.valor))}
 										/>
-										<span>{o.descripcion}</span>
+										<span>{labelServicio(o.valor, o.descripcion)}</span>
 									</label>
 								))
 							)}
@@ -309,7 +321,7 @@ export default function PersonalAsignacionesTab({
 						) : (
 							srvAsignados.map((s) => (
 								<div key={s.idServicio} className={styles.listItem}>
-									<span>{s.Descripcion || s.idServicio}</span>
+									<span>{labelServicio(s.idServicio, s.Descripcion || s.descripcion)}</span>
 								</div>
 							))
 						)}

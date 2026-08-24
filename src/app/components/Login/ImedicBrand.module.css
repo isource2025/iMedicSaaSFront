@@ -1,0 +1,27 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.word {
+  color: #00c2ee;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.lg .word {
+  font-size: 2.45rem;
+}
+
+.md .word {
+  font-size: 2rem;
+}
+
+.sm .word {
+  font-size: 1.55rem;
+}

@@ -16,13 +16,28 @@ function paramsUser(userId: number) {
   return { params: { userId } };
 }
 
+function apiErrorMessage(e: unknown, fallback: string): string {
+  const err = e as { response?: { data?: { error?: string } }; message?: string };
+  const fromApi = err?.response?.data?.error;
+  if (fromApi) return fromApi;
+  const msg = String(err?.message || '');
+  if (/status code 5\d\d/i.test(msg) || /server error/i.test(msg)) {
+    return fallback;
+  }
+  return msg || fallback;
+}
+
 export const notificacionesService = {
   async getUnreadCount(userId: number): Promise<number> {
-    const res = await apiService.get<{ success: boolean; count: number }>(
-      '/notificaciones/unread-count',
-      paramsUser(userId)
-    );
-    return res.data?.count ?? 0;
+    try {
+      const res = await apiService.get<{ success: boolean; count: number }>(
+        '/notificaciones/unread-count',
+        paramsUser(userId)
+      );
+      return res.data?.count ?? 0;
+    } catch {
+      return 0;
+    }
   },
 
   async listar(
@@ -32,14 +47,19 @@ export const notificacionesService = {
     const page = opts?.page ?? 1;
     const limit = opts?.limit ?? 30;
     const soloNoLeidas = opts?.soloNoLeidas ? '1' : '0';
-    const res = await apiService.get<{
-      success: boolean;
-      data: NotificacionItem[];
-      pagination: { total: number; page: number; limit: number };
-      error?: string;
-    }>('/notificaciones', {
-      params: { userId, page, limit, soloNoLeidas },
-    });
+    let res;
+    try {
+      res = await apiService.get<{
+        success: boolean;
+        data: NotificacionItem[];
+        pagination: { total: number; page: number; limit: number };
+        error?: string;
+      }>('/notificaciones', {
+        params: { userId, page, limit, soloNoLeidas },
+      });
+    } catch (e) {
+      throw new Error(apiErrorMessage(e, 'No se pudieron cargar las notificaciones'));
+    }
     if (!res.data?.success) {
       throw new Error(res.data?.error || 'Error al listar notificaciones');
     }

@@ -15,6 +15,7 @@ import {
 	PersonalCodigoFacturacion,
 } from '@/app/types/personal';
 import { personalService } from '@/app/services/personalService';
+import { etiquetaCatalogo } from '@/app/utils/etiquetaCatalogo';
 import { rolesService, type Rol } from '@/app/services/rolesService';
 import styles from './PersonalActionModals.module.css';
 
@@ -419,7 +420,7 @@ export default function PersonalActionModals({
 										.filter((o) => !srvPedidos.some((a) => a.idServicio === o.valor))
 										.map((o) => (
 											<option key={o.valor} value={o.valor}>
-												{o.descripcion}
+												{etiquetaCatalogo(catServicios, o.valor, o.descripcion) || o.descripcion}
 											</option>
 										))}
 								</select>
@@ -440,7 +441,13 @@ export default function PersonalActionModals({
 							) : (
 								srvPedidos.map((s) => (
 									<div key={s.idServicio} className={styles.listItem}>
-										<span>{s.Descripcion || s.idServicio}</span>
+										<span>
+											{etiquetaCatalogo(
+												catServicios,
+												s.idServicio,
+												s.Descripcion || s.descripcion,
+											) || '—'}
+										</span>
 										<button
 											type="button"
 											className={styles.btnDanger}
@@ -552,7 +559,7 @@ export default function PersonalActionModals({
 										.filter((c) => !secAsignados.some((a) => a.idSector === c.IdSector))
 										.map((c) => (
 											<option key={c.IdSector} value={c.IdSector}>
-												{c.Descripcion || c.IdSector}
+												{c.Descripcion || '—'}
 											</option>
 										))}
 								</select>
@@ -573,7 +580,16 @@ export default function PersonalActionModals({
 							) : (
 								secAsignados.map((s) => (
 									<div key={s.idSector} className={styles.listItem}>
-										<span>{s.Descripcion || s.idSector}</span>
+										<span>
+											{etiquetaCatalogo(
+												secCatalogo.map((c) => ({
+													valor: c.IdSector,
+													descripcion: c.Descripcion,
+												})),
+												s.idSector,
+												s.Descripcion || s.descripcion,
+											) || '—'}
+										</span>
 										<button
 											type='button'
 											className={styles.btnDanger}
