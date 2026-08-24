@@ -147,7 +147,15 @@ export const bedsService = {
 				})
 				.filter((s): s is { id: string; valor: string; descripcion: string } => Boolean(s));
 		} catch (error) {
-			console.error('Error fetching sectores:', error);
+			const ax = error && typeof error === 'object' && 'response' in error
+				? (error as { response?: { status?: number; data?: { mensaje?: string } }; code?: string; message?: string })
+				: null;
+			console.error('Error fetching sectores:', {
+				status: ax?.response?.status,
+				mensaje: ax?.response?.data?.mensaje,
+				code: ax?.code || (error as { code?: string })?.code,
+				message: error instanceof Error ? error.message : String(error),
+			});
 			return [];
 		}
 	},
