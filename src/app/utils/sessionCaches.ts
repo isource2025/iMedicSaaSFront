@@ -26,6 +26,7 @@ export function clearTenantUiCaches(): void {
 	try {
 		if (typeof localStorage !== 'undefined') {
 			localStorage.removeItem('sectorSeleccionado');
+			localStorage.removeItem('sectoresAsignados');
 		}
 	} catch {
 		/* ignore */

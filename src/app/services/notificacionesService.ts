@@ -29,15 +29,11 @@ function apiErrorMessage(e: unknown, fallback: string): string {
 
 export const notificacionesService = {
   async getUnreadCount(userId: number): Promise<number> {
-    try {
-      const res = await apiService.get<{ success: boolean; count: number }>(
-        '/notificaciones/unread-count',
-        paramsUser(userId)
-      );
-      return res.data?.count ?? 0;
-    } catch {
-      return 0;
-    }
+    const res = await apiService.get<{ success: boolean; count: number }>(
+      '/notificaciones/unread-count',
+      { ...paramsUser(userId), timeout: 45000 },
+    );
+    return res.data?.count ?? 0;
   },
 
   async listar(

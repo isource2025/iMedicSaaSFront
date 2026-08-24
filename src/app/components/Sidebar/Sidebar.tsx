@@ -81,6 +81,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { submoduloId: 'CAMAS',     label: 'Gestión de Camas',   path: '/dashboard/beds' },
       { submoduloId: 'OCUPACION', label: 'Ocupación de Camas', path: '/dashboard/beds/occupation' },
+      { submoduloId: 'ESTUDIOS',  label: 'Bandeja de pedidos', path: '/dashboard/bandeja-pedidos' },
     ]
   },
   {

@@ -16,6 +16,7 @@ const AUTH_KEYS = [
 	'empresaModulos',
 	'rememberUser',
 	'sectorSeleccionado',
+	'sectoresAsignados',
 ] as const;
 
 export function isSessionIdleOpen() {

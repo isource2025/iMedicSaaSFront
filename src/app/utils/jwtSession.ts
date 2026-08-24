@@ -25,3 +25,31 @@ export function getIdSectorFromToken(): string | null {
 	const s = String(payload.idSector || '').trim();
 	return s || null;
 }
+
+export type SectorSesionJwt = {
+	valor: string;
+	descripcion: string;
+	valorServicio: string;
+};
+
+/** Sectores del perfil capturados en el login (JWT). */
+export function getSectoresFromToken(): SectorSesionJwt[] {
+	const payload = readJwtPayload();
+	if (!payload || !Array.isArray(payload.sectores)) return [];
+	const seen = new Set<string>();
+	const out: SectorSesionJwt[] = [];
+	for (const raw of payload.sectores) {
+		const s = raw as { idSector?: string; valor?: string; descripcion?: string; valorServicio?: string };
+		const valor = String(s?.valor || s?.idSector || '').trim();
+		if (!valor) continue;
+		const k = valor.toUpperCase();
+		if (seen.has(k)) continue;
+		seen.add(k);
+		out.push({
+			valor,
+			descripcion: String(s?.descripcion || valor).trim(),
+			valorServicio: String(s?.valorServicio || '').trim(),
+		});
+	}
+	return out;
+}

@@ -9,6 +9,7 @@ import PatientMiniHeader from './patient/PatientMiniHeader';
 import CalendarPanel from './sidebar/CalendarPanel';
 import SidebarFilters from './sidebar/SidebarFilters';
 import { useBedDetail } from './contexts/BedDetailContext';
+import { getIdSectorFromToken } from '../../utils/jwtSession';
 import { useMarcarIndicacionesVistasAlSalir } from '../../hooks/useMarcarIndicacionesVistasAlSalir';
 import IndicacionesSection from './indicaciones/IndicacionesSection';
 import MedicacionSuministradaSection from './medicacion/MedicacionSuministradaSection';
@@ -49,6 +50,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	const { activeSection, selectedDate, setSelectedDate, navigateToSection } = useBedDetail();
 	const headerSnapshot = bedToHeaderSnapshot(bed);
 	const numeroVisita = bed?.NumeroVisita ?? bed?.numeroVisita ?? null;
+	const sectorOrigen = getIdSectorFromToken() || bed?.sector || null;
 	useMarcarIndicacionesVistasAlSalir(numeroVisita);
 
 	return (
@@ -182,7 +184,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					) : activeSection === 'interconsulta' ? (
 						<InterconsultaSection
 							numeroVisita={bed?.NumeroVisita || null}
-							sectorSolicitante={bed?.sector || null}
+							sectorSolicitante={sectorOrigen}
 							patientName={bed?.NombrePaciente}
 							documentoPaciente={bed?.documentoPaciente}
 							patientLocation={bed?.ubicacionPaciente}
@@ -190,7 +192,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					) : activeSection === 'solicitudEstudios' ? (
 						<EstudiosSection
 							numeroVisita={bed?.NumeroVisita || null}
-							sectorSolicitante={bed?.sector || null}
+							sectorSolicitante={sectorOrigen}
 							patientName={bed?.NombrePaciente}
 							documentoPaciente={bed?.documentoPaciente}
 							patientLocation={bed?.ubicacionPaciente}

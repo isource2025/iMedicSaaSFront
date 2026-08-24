@@ -347,8 +347,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'USUARIO.PERFIL.EDITAR',
 	],
 
-	/** Solo adjuntos en admisiones (con/sin egreso). CRUD de los propios. */
-	/** Código interno: CARGA_HC — en catálogo se muestra como "Carga de adjuntos". */
+	/** Código interno: CARGA_HC — "Carga de adjuntos". Bandeja de estudios para adjuntar resultados. */
 	CARGA_HC: [
 		'DASHBOARD.INICIO.VER',
 
@@ -359,6 +358,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 
 		'INTERNACION.CAMAS.VER',
 		'INTERNACION.CAMAS.GESTIONAR',
+		'INTERNACION.ESTUDIOS.VER',
+		'INTERNACION.ESTUDIOS.CREAR',
 		'INTERNACION.ADJUNTOS.VER',
 		'INTERNACION.ADJUNTOS.CREAR',
 		'INTERNACION.ADJUNTOS.EDITAR',

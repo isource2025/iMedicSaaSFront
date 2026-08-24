@@ -171,6 +171,15 @@ export function useLoginForm() {
         setSectorSeleccionado(null);
       }
 
+      try {
+        localStorage.setItem(
+          'sectoresAsignados',
+          JSON.stringify(Array.isArray(data.sectoresAsignados) ? data.sectoresAsignados : []),
+        );
+      } catch {
+        /* ignore */
+      }
+
       seedSectoresCache(data);
 
       if (rememberMe) {

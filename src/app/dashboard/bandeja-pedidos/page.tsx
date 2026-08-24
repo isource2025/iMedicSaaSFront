@@ -9,6 +9,7 @@ import {
 } from '@/app/services/interconsultasService';
 import type { PedidoEstudio } from '@/app/types/estudios';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
+import { usePermiso } from '@/app/hooks/usePermiso';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
@@ -164,11 +165,16 @@ function fingerprintIc(rows: InterconsultaRow[]) {
 function BandejaPedidosContent() {
 	const searchParams = useSearchParams();
 	const usuario = useUsuarioActual();
+	const { puede } = usePermiso();
 	const matriculaSesion = usuario?.matricula ?? null;
+	const puedeInterconsultas =
+		puede('INTERNACION.INTERCONSULTAS.VER') || puede('TURNOS.AGENDA.VER');
 
 	const tabParam = String(searchParams.get('tab') || '').toLowerCase();
 	const [tab, setTab] = useState<Tab>(
-		tabParam === 'interconsultas' || tabParam === 'interconsulta' ? 'interconsultas' : 'estudios',
+		puedeInterconsultas && (tabParam === 'interconsultas' || tabParam === 'interconsulta')
+			? 'interconsultas'
+			: 'estudios',
 	);
 
 	const { sectores, loading: loadingSectores } = useSectoresReceptor({ soloMios: true });
@@ -215,10 +221,16 @@ function BandejaPedidosContent() {
 	};
 
 	useEffect(() => {
+		if (!puedeInterconsultas && tab !== 'estudios') setTab('estudios');
+	}, [puedeInterconsultas, tab]);
+
+	useEffect(() => {
 		const t = String(searchParams.get('tab') || '').toLowerCase();
-		if (t === 'interconsultas' || t === 'interconsulta') setTab('interconsultas');
+		if (puedeInterconsultas && (t === 'interconsultas' || t === 'interconsulta')) {
+			setTab('interconsultas');
+		}
 		if (t === 'estudios' || t === 'estudio') setTab('estudios');
-	}, [searchParams]);
+	}, [searchParams, puedeInterconsultas]);
 
 	useEffect(() => {
 		const qSector = String(searchParams.get('sector') || '').trim();
@@ -252,13 +264,6 @@ function BandejaPedidosContent() {
 	const load = useCallback(async (opts?: { silent?: boolean }) => {
 		const sec = sectorRef.current.trim();
 		const currentTab = tabRef.current;
-		if (!sec) {
-			setEstudios([]);
-			setInterconsultas([]);
-			setLoading(false);
-			void loadResumen();
-			return;
-		}
 		const silent = Boolean(opts?.silent);
 		if (!silent) setLoading(true);
 		setError(null);
@@ -319,12 +324,12 @@ function BandejaPedidosContent() {
 		const id = window.setInterval(() => {
 			if (document.visibilityState !== 'visible') return;
 			void loadResumen();
-			if (sectorRef.current.trim()) void load({ silent: true });
+			void load({ silent: true });
 		}, POLL_MS);
 		const onVis = () => {
 			if (document.visibilityState !== 'visible') return;
 			void loadResumen();
-			if (sectorRef.current.trim()) void load({ silent: true });
+			void load({ silent: true });
 		};
 		document.addEventListener('visibilitychange', onVis);
 		return () => {
@@ -730,15 +735,17 @@ function BandejaPedidosContent() {
 					>
 						Estudios
 					</button>
-					<button
-						type="button"
-						role="tab"
-						aria-selected={tab === 'interconsultas'}
-						className={`${styles.tab} ${tab === 'interconsultas' ? styles.tabActive : ''}`}
-						onClick={() => setTab('interconsultas')}
-					>
-						Interconsultas
-					</button>
+					{puedeInterconsultas ? (
+						<button
+							type="button"
+							role="tab"
+							aria-selected={tab === 'interconsultas'}
+							className={`${styles.tab} ${tab === 'interconsultas' ? styles.tabActive : ''}`}
+							onClick={() => setTab('interconsultas')}
+						>
+							Interconsultas
+						</button>
+					) : null}
 				</div>
 				<button
 					type="button"
