@@ -547,7 +547,7 @@ export default function PersonalForm({
 						className={`${styles.tab} ${activeTab === 'asignaciones' ? styles.tabActive : ''}`}
 						onClick={() => goTab('asignaciones')}
 					>
-						Sectores y servicios
+						Sectores
 					</div>
 				)}
 				{showFirmaTab && (
@@ -980,9 +980,8 @@ export default function PersonalForm({
 					<PersonalAsignacionesTab
 						draft
 						draftSectores={formData.Sectores || []}
-						draftServicios={formData.Servicios || []}
-						onDraftChange={({ sectores, servicios }) =>
-							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: servicios }))
+						onDraftChange={({ sectores }) =>
+							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: [] }))
 						}
 					/>
 				</div>

@@ -119,7 +119,7 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 				</div>
 				<div className={modalStyles.modalBody}>
 					<label className={formStyles.label}>
-						Servicio receptor
+						Sector receptor
 						<select
 							className={formStyles.input}
 							value={sector}
@@ -138,7 +138,7 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 					{loading ? (
 						<p className={formStyles.hint}>Cargando…</p>
 					) : rows.length === 0 ? (
-						<p className={styles.empty}>No hay pedidos pendientes para este servicio.</p>
+						<p className={styles.empty}>No hay pedidos pendientes para este sector.</p>
 					) : (
 						<div className={styles.tableWrap}>
 							<table className={styles.table}>

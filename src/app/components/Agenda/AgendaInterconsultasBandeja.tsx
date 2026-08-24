@@ -29,7 +29,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 	const usuario = useUsuarioActual();
 	const { sectorSeleccionado } = useAppContext();
 	const matriculaSesion = usuario?.matricula ?? null;
-	const { sectores } = useSectoresReceptor({ enabled: open });
+	const { sectores } = useSectoresReceptor({ soloMios: true, enabled: open });
 	const [sector, setSector] = useState('');
 	const [rows, setRows] = useState<InterconsultaRow[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -140,7 +140,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 				</div>
 
 				<label className={formStyles.label}>
-					Servicio receptor
+					Sector receptor
 					<select
 						className={formStyles.input}
 						value={sector}
@@ -159,7 +159,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 				{loading ? (
 					<p className={styles.empty}>Cargando…</p>
 				) : rows.length === 0 ? (
-					<p className={styles.empty}>No hay interconsultas pendientes para este servicio.</p>
+					<p className={styles.empty}>No hay interconsultas pendientes para este sector.</p>
 				) : (
 					<div className={styles.tableWrap}>
 						<table className={styles.table}>

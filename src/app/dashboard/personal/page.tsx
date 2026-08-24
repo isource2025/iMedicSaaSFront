@@ -13,7 +13,10 @@ import SyncFisicoInforme from '@/app/components/Personal/SyncFisicoInforme';
 import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
 import { personalService } from '@/app/services/personalService';
-import type { SyncFisicoInforme as SyncFisicoInformeData } from '@/app/services/personalService';
+import type {
+	CuentaSoloNube,
+	SyncFisicoInforme as SyncFisicoInformeData,
+} from '@/app/services/personalService';
 import { downloadPersonalExcel } from '@/app/utils/downloadPersonalExcel';
 import styles from './personal.module.css';
 
@@ -56,6 +59,18 @@ export default function PersonalPage() {
 	const [exportOpen, setExportOpen] = useState(false);
 	const [exportFields, setExportFields] = useState<ExportFieldOption[]>([]);
 	const [exporting, setExporting] = useState(false);
+	const [huerfanos, setHuerfanos] = useState<CuentaSoloNube[]>([]);
+	const [reparandoHuerfanos, setReparandoHuerfanos] = useState(false);
+	const [huerfanosMsg, setHuerfanosMsg] = useState<string | null>(null);
+
+	const cargarHuerfanos = async () => {
+		try {
+			const rows = await personalService.getCuentasSoloNube();
+			setHuerfanos(rows);
+		} catch {
+			setHuerfanos([]);
+		}
+	};
 
 	useEffect(() => {
 		if (!initialized) initialize();
@@ -75,6 +90,7 @@ export default function PersonalPage() {
 			} catch (e) {
 				console.error('export fields', e);
 			}
+			await cargarHuerfanos();
 		})();
 	}, []);
 
@@ -117,6 +133,7 @@ export default function PersonalPage() {
 			};
 			setSyncResult({ ok: true, informe });
 			await refreshList();
+			await cargarHuerfanos();
 		} catch (e) {
 			setSyncResult({
 				ok: false,
@@ -141,6 +158,36 @@ export default function PersonalPage() {
 		}
 	};
 
+	const handleCreatePersonal = async (data: Parameters<typeof createPersonal>[0]) => {
+		const created = await createPersonal(data);
+		await cargarHuerfanos();
+		return created;
+	};
+
+	const handleRepararHuerfanos = async () => {
+		if (reparandoHuerfanos) return;
+		setReparandoHuerfanos(true);
+		setHuerfanosMsg(null);
+		try {
+			const result = await personalService.repararCuentasSoloNube();
+			const n = result.reparados.length;
+			const err = result.errores.length;
+			setHuerfanosMsg(
+				n === 0 && err === 0
+					? 'No había fichas para restaurar.'
+					: err
+					  ? `Se restauraron ${n} en el hospital. ${err} no se pudieron reparar.`
+					  : `Se restauraron ${n} ficha(s) en la base del hospital.`,
+			);
+			await refreshList();
+			await cargarHuerfanos();
+		} catch (e) {
+			setHuerfanosMsg(e instanceof Error ? e.message : 'Error al reparar');
+		} finally {
+			setReparandoHuerfanos(false);
+		}
+	};
+
 	return (
 		<div className={styles.container}>
 			<div className={styles.titleRow}>
@@ -154,13 +201,42 @@ export default function PersonalPage() {
 				</button>
 			</div>
 
+			{huerfanos.length > 0 && (
+				<div className={styles.orphanBanner} role='alert'>
+					<div className={styles.orphanBannerText}>
+						<strong>
+							{huerfanos.length === 1
+								? 'Hay 1 usuario que puede entrar al sistema pero no está en esta tabla.'
+								: `Hay ${huerfanos.length} usuarios que pueden entrar al sistema pero no están en esta tabla.`}
+						</strong>
+						<p>
+							Quedaron en la nube sin ficha en la base del hospital.{' '}
+							{huerfanos
+								.slice(0, 4)
+								.map((h) => h.apellidoNombre || h.nombreRed || `ID ${h.valor}`)
+								.join(', ')}
+							{huerfanos.length > 4 ? '…' : '.'}
+						</p>
+						{huerfanosMsg ? <p className={styles.orphanBannerMsg}>{huerfanosMsg}</p> : null}
+					</div>
+					<button
+						type='button'
+						className={styles.orphanBannerBtn}
+						onClick={handleRepararHuerfanos}
+						disabled={reparandoHuerfanos}
+					>
+						{reparandoHuerfanos ? 'Restaurando…' : 'Restaurar en el hospital'}
+					</button>
+				</div>
+			)}
+
 			<div className={styles.content}>
 				<div className={styles.controls}>
 					<div className={styles.searchContainer}>
 						<SearchInput
 							searchTerm={searchTerm}
 							setSearchTerm={handleSearch}
-							placeholder='Buscar por nombre, DNI o ID...'
+							placeholder='Buscar por nombre, DNI, ID o usuario...'
 							loading={loading}
 							error={error}
 							isSearching={!!searchTerm}
@@ -171,6 +247,7 @@ export default function PersonalPage() {
 										<li>Apellido y nombre</li>
 										<li>Número de documento (DNI)</li>
 										<li>ID interno</li>
+										<li>Usuario de acceso (NombreRed)</li>
 									</ul>
 								</>
 							}
@@ -264,7 +341,7 @@ export default function PersonalPage() {
 					size='xlarge'
 				>
 					<PersonalForm
-						onSubmit={createPersonal}
+						onSubmit={handleCreatePersonal}
 						onCancel={closeAddModal}
 						isSubmitting={loading}
 					/>

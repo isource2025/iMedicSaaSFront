@@ -69,9 +69,9 @@ export interface PersonalFormData {
 	CodOperador?: string;
 	/** Alta: IdRol de imRoles (obligatorio al crear). */
 	IdRol?: string;
-	/** Alta: sectores opcionales (imPersonalSectores). */
+	/** Alta: sectores opcionales (imPersonalSectores). El servicio sale de imSectores.ValorServicio. */
 	Sectores?: string[];
-	/** Alta: servicios de pedidos opcionales (imPersonalServicios). */
+	/** @deprecated Alta ya no asigna imPersonalServicios; se ignora. */
 	Servicios?: string[];
 }
 
@@ -116,6 +116,8 @@ export interface PersonalSectorAsignado {
 	idSector: string;
 	Descripcion: string;
 	descripcion?: string;
+	ValorServicio?: string;
+	DescripcionServicio?: string;
 }
 
 export interface PersonalServicioAsignado {

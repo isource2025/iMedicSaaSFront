@@ -26,6 +26,8 @@ async function parseJson<T>(res: Response): Promise<T | null> {
 export type BandejaServicioConteo = {
   valor: string;
   descripcion: string;
+  valorServicio?: string;
+  descripcionServicio?: string;
   estudios: number;
   interconsultas: number;
   urgentes: number;
@@ -279,6 +281,8 @@ const estudiosService = {
           ? json.data.porServicio.map((s) => ({
               valor: String(s.valor || '').trim(),
               descripcion: String(s.descripcion || s.valor || '').trim(),
+              valorServicio: String(s.valorServicio || '').trim(),
+              descripcionServicio: String(s.descripcionServicio || '').trim(),
               estudios: Number(s.estudios) || 0,
               interconsultas: Number(s.interconsultas) || 0,
               urgentes: Number(s.urgentes) || 0,

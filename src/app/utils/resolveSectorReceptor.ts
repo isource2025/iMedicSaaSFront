@@ -1,7 +1,6 @@
 /**
- * Resuelve el código de servicio receptor (imServicios.Valor) a partir del
- * sector de login (imSectores). Los códigos no siempre coinciden
- * (ECO vs ECOG, ECOGRAFÍA vs ECOGRAFIA).
+ * Código de sector receptor (imSectores.Valor). El servicio se deriva
+ * de ValorServicio y solo se usa para etiquetar o auto-elegir destino.
  */
 export type SectorLoginLike = {
 	idSector?: string | null;
@@ -12,6 +11,8 @@ export type SectorLoginLike = {
 export type ReceptorLike = {
 	valor: string;
 	descripcion?: string;
+	valorServicio?: string;
+	descripcionServicio?: string;
 	prefijos?: string[];
 };
 
@@ -52,53 +53,49 @@ function clinicalStem(valor: unknown, descripcion: unknown): string {
 	return code.length >= 3 ? code : '';
 }
 
-function codesRelated(a: unknown, b: unknown): boolean {
-	const x = fold(a).replace(/\s+/g, '');
-	const y = fold(b).replace(/\s+/g, '');
-	if (!x || !y) return false;
-	if (x === y) return true;
-	const min = Math.min(x.length, y.length);
-	if (min < 3) return false;
-	return x.startsWith(y) || y.startsWith(x);
+function compact(v: unknown): string {
+	return fold(v).replace(/\s+/g, '');
 }
 
-export function sectorCoincideServicio(
-	sectorLogin: SectorLoginLike,
-	srv: ReceptorLike,
-): boolean {
-	const id = fold(sectorLogin?.idSector).replace(/\s+/g, '');
-	const desc = fold(sectorLogin?.descripcion || sectorLogin?.descripcionSector);
-	const v = fold(srv?.valor).replace(/\s+/g, '');
-	const d = fold(srv?.descripcion);
-	if (!v && !d) return false;
-	if (id && v && id === v) return true;
-	if (desc && d && desc === d) return true;
-	if (desc && d && desc.length >= 4 && d.length >= 4 && (desc.includes(d) || d.includes(desc))) {
-		return true;
-	}
-	if (codesRelated(id, v)) return true;
-	const s1 = clinicalStem(sectorLogin?.idSector, sectorLogin?.descripcion || sectorLogin?.descripcionSector);
-	const s2 = clinicalStem(srv?.valor, srv?.descripcion);
-	return Boolean(s1 && s2 && s1 === s2);
-}
-
+/** Login / URL: mismo código de sector (CM1 → CM1). */
 export function resolveSectorReceptor(
 	sectorLogin: SectorLoginLike,
 	list: ReceptorLike[],
 ): string {
 	if (!list?.length) return '';
-	const hit = list.find((s) => sectorCoincideServicio(sectorLogin, s));
+	const id = compact(sectorLogin?.idSector);
+	if (!id) return '';
+	const hit = list.find((s) => compact(s.valor) === id);
 	return hit ? String(hit.valor || '').trim() : '';
 }
 
-/** Destino del pedido: stem clínico del tipo (ECOG → ECO) y, si no hay, prefijo de práctica. */
+/**
+ * Filtra destinos por tipo de estudio: servicio del sector (ValorServicio),
+ * descripción o prefijo de práctica — no por igualdad de código de piso.
+ */
+export function sectorCoincideServicio(
+	sectorLogin: SectorLoginLike,
+	srv: ReceptorLike,
+): boolean {
+	const needle = fold(sectorLogin?.descripcion || sectorLogin?.descripcionSector || sectorLogin?.idSector);
+	if (!needle) return false;
+	const blob = `${fold(srv?.valorServicio)} ${fold(srv?.descripcionServicio)} ${fold(srv?.descripcion)}`;
+	if (blob && needle.length >= 4 && blob.includes(needle)) return true;
+	if (compact(sectorLogin?.idSector) && compact(sectorLogin?.idSector) === compact(srv?.valorServicio)) {
+		return true;
+	}
+	const s1 = clinicalStem(sectorLogin?.idSector, sectorLogin?.descripcion || sectorLogin?.descripcionSector);
+	const s2 = clinicalStem(srv?.valorServicio || srv?.valor, srv?.descripcionServicio || srv?.descripcion);
+	return Boolean(s1 && s2 && s1 === s2);
+}
+
 export function resolveReceptorPorTipo(
 	tipo: { descripcion?: string | null; idPractica?: number | string | null } | null,
 	list: ReceptorLike[],
 ): string {
 	if (!tipo || !list?.length) return '';
-	const byStem = resolveSectorReceptor({ descripcion: tipo.descripcion }, list);
-	if (byStem) return byStem;
+	const byStem = list.find((s) => sectorCoincideServicio({ descripcion: tipo.descripcion }, s));
+	if (byStem) return String(byStem.valor || '').trim();
 	const pref = String(tipo.idPractica ?? '')
 		.replace(/\D/g, '')
 		.padStart(2, '0')
@@ -106,4 +103,12 @@ export function resolveReceptorPorTipo(
 	if (!pref) return '';
 	const match = list.find((s) => Array.isArray(s.prefijos) && s.prefijos.includes(pref));
 	return match ? String(match.valor || '').trim() : '';
+}
+
+export function etiquetaSectorReceptor(s: ReceptorLike | null | undefined): string {
+	if (!s?.valor) return '';
+	const nombre = String(s.descripcion || s.valor).trim();
+	const svc = String(s.descripcionServicio || s.valorServicio || '').trim();
+	if (svc && compact(svc) !== compact(nombre)) return `${nombre} (${s.valor}) · ${svc}`;
+	return `${nombre} (${s.valor})`;
 }

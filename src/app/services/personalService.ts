@@ -298,6 +298,8 @@ function mapSectorAsignado(s: Record<string, unknown> | null | undefined): Perso
 	return {
 		idSector: String(row.idSector ?? row.IdSector ?? '').trim(),
 		Descripcion: String(row.Descripcion ?? row.descripcion ?? '').trim(),
+		ValorServicio: String(row.ValorServicio ?? row.valorServicio ?? '').trim() || undefined,
+		DescripcionServicio: String(row.DescripcionServicio ?? row.descripcionServicio ?? '').trim() || undefined,
 	};
 }
 
@@ -396,7 +398,7 @@ export const removePersonalServicioPedido = async (
 
 export const replacePersonalAsignaciones = async (
 	id: number,
-	body: { sectores: string[]; servicios: string[] },
+	body: { sectores: string[]; servicios?: string[] },
 ): Promise<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }> => {
 	try {
 		const res = await apiService.put<
@@ -422,17 +424,21 @@ export const replacePersonalAsignaciones = async (
 };
 
 /** Catálogo global de sectores (imSectores). */
-export const getSectoresCatalogo = async (): Promise<{ IdSector: string; Descripcion: string }[]> => {
+export const getSectoresCatalogo = async (): Promise<
+	{ IdSector: string; Descripcion: string; ValorServicio?: string; DescripcionServicio?: string }[]
+> => {
 	try {
 		const res = await apiService.get<{
 			success: boolean;
-			data: { IdSector?: string; id?: string; Descripcion?: string; descripcion?: string }[];
+			data: Record<string, unknown>[];
 		}>('/sectores');
 		const rows = res.data?.data;
 		return (Array.isArray(rows) ? rows : [])
 			.map((r) => ({
-				IdSector: String(r.IdSector || r.id || ''),
-				Descripcion: String(r.Descripcion || r.descripcion || ''),
+				IdSector: String(r.IdSector ?? r.idSector ?? r.Valor ?? r.valor ?? r.id ?? '').trim(),
+				Descripcion: String(r.Descripcion ?? r.descripcion ?? '').trim(),
+				ValorServicio: String(r.ValorServicio ?? r.valorServicio ?? '').trim(),
+				DescripcionServicio: String(r.DescripcionServicio ?? r.descripcionServicio ?? '').trim(),
 			}))
 			.filter((r) => r.IdSector);
 	} catch {
@@ -548,6 +554,43 @@ export const getSyncFisicoEstado = async (): Promise<{ disponible: boolean }> =>
 	);
 	if (res.data.success && res.data.data) return res.data.data;
 	throw new Error(res.data.mensaje || 'Error al consultar sync físico');
+};
+
+export type CuentaSoloNube = {
+	valor: number;
+	nombreRed: string | null;
+	apellidoNombre: string;
+	numeroDocumento: number | null;
+	ocultoPorIdReservado?: boolean;
+};
+
+export const getCuentasSoloNube = async (): Promise<CuentaSoloNube[]> => {
+	const res = await apiService.get<ApiResponse<CuentaSoloNube[]>>(
+		'/personal/cuentas-solo-nube',
+	);
+	if (res.data.success && Array.isArray(res.data.data)) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al detectar cuentas sin ficha física');
+};
+
+export type RepararCuentasSoloNubeResult = {
+	total: number;
+	reparados: Array<{ valor: number; nombreRed: string | null; apellidoNombre: string }>;
+	errores: Array<{
+		valor: number;
+		nombreRed: string | null;
+		apellidoNombre: string;
+		error: string;
+	}>;
+};
+
+export const repararCuentasSoloNube = async (): Promise<RepararCuentasSoloNubeResult> => {
+	const res = await apiService.post<
+		ApiResponse<RepararCuentasSoloNubeResult> & { mensaje?: string }
+	>('/personal/reparar-cuentas-solo-nube');
+	if (!res.data.data) {
+		throw new Error(res.data.mensaje || 'Error al reparar cuentas sin ficha física');
+	}
+	return res.data.data;
 };
 
 export type SyncFisicoInformeItem = {
@@ -736,6 +779,8 @@ export const personalService = {
 	changePersonalCuentaPassword,
 	getExportFields,
 	getSyncFisicoEstado,
+	getCuentasSoloNube,
+	repararCuentasSoloNube,
 	syncDesdeFisico,
 	exportarPersonal,
 };

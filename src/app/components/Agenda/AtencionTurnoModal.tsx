@@ -479,7 +479,7 @@ export default function AtencionTurnoModal({
 		if (pedidosInterconsultasIncompletos)
 			errs.push({
 				step: 'interconsultas',
-				label: 'Servicio destino y motivo en interconsultas',
+				label: 'Sector destino y motivo en interconsultas',
 			});
 		return errs;
 	};
@@ -718,7 +718,11 @@ export default function AtencionTurnoModal({
 										const sectoresBase = matches.length > 0 ? matches : sectoresReceptor;
 										const sectoresOpts = sectoresBase.map((s) => ({
 											value: s.valor,
-											label: `${s.descripcion} (${s.valor})`,
+											label: `${s.descripcion} (${s.valor})${
+												s.descripcionServicio || s.valorServicio
+													? ` · ${s.descripcionServicio || s.valorServicio}`
+													: ''
+											}`,
 										}));
 										const sectorUnico = matches.length === 1;
 										const color = colorPorIndice(idx);
@@ -834,12 +838,12 @@ export default function AtencionTurnoModal({
 					{step === 'interconsultas' ? (
 						<div className={styles.hcForm}>
 							<p className={styles.sectionHint}>
-								Solicite interconsultas a un servicio destino (ej. Oftalmología). Se
+								Solicite interconsultas a un sector destino. Se
 								registran al finalizar la atención (tipo 33) y aparecen en la bandeja del
-								servicio receptor.
+								sector receptor.
 							</p>
 							<div className={styles.field}>
-								<label htmlFor='ic-destino'>Servicio destino</label>
+								<label htmlFor='ic-destino'>Sector destino</label>
 								<select
 									id='ic-destino'
 									value={icDestinoDraft}
@@ -850,6 +854,9 @@ export default function AtencionTurnoModal({
 									{sectoresReceptor.map((s) => (
 										<option key={s.valor} value={s.valor}>
 											{s.descripcion} ({s.valor})
+											{s.descripcionServicio || s.valorServicio
+												? ` · ${s.descripcionServicio || s.valorServicio}`
+												: ''}
 										</option>
 									))}
 								</select>

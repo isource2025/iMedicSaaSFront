@@ -3,7 +3,7 @@ import { getIdEmpresaFromToken } from './jwtSession';
 
 export const SERVICIOS_RECEPTOR_UPDATED_EVENT = 'imedic:servicios-receptor-updated';
 
-const PREFIX = 'imedic:serviciosReceptor:';
+const PREFIX = 'imedic:sectoresReceptor:';
 const COUNT_PREFIX = 'imedic:bandejaPedidosCount:';
 
 /** Mostrar cache viejo; el listado de servicios casi no cambia. */
@@ -110,6 +110,8 @@ function normalizeList(list: SectorReceptorEstudio[]): SectorReceptorEstudio[] {
 		.map((s) => ({
 			valor: String(s?.valor || '').trim(),
 			descripcion: String(s?.descripcion || '').trim(),
+			valorServicio: String(s?.valorServicio || '').trim(),
+			descripcionServicio: String(s?.descripcionServicio || '').trim(),
 			prefijos: Array.isArray(s?.prefijos) ? s.prefijos.map((p) => String(p).trim()).filter(Boolean) : [],
 		}))
 		.filter((s) => s.valor);
@@ -117,7 +119,7 @@ function normalizeList(list: SectorReceptorEstudio[]): SectorReceptorEstudio[] {
 
 export function sectoresReceptorSignature(list: SectorReceptorEstudio[]): string {
 	return normalizeList(list)
-		.map((s) => `${s.valor}|${s.descripcion}|${s.prefijos.join(',')}`)
+		.map((s) => `${s.valor}|${s.descripcion}|${s.valorServicio || ''}|${s.prefijos.join(',')}`)
 		.join(';');
 }
 

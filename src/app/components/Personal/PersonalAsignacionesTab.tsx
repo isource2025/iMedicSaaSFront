@@ -2,21 +2,23 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { personalService } from '@/app/services/personalService';
-import type {
-	CatalogoItemTexto,
-	PersonalSectorAsignado,
-	PersonalServicioAsignado,
-} from '@/app/types/personal';
+import type { PersonalSectorAsignado } from '@/app/types/personal';
 import { etiquetaCatalogo } from '@/app/utils/etiquetaCatalogo';
 import formStyles from './PersonalForm.module.css';
 import styles from './PersonalActionModals.module.css';
+
+type SectorCatalogo = {
+	IdSector: string;
+	Descripcion: string;
+	ValorServicio?: string;
+	DescripcionServicio?: string;
+};
 
 type Props = {
 	personalId?: number;
 	draft?: boolean;
 	draftSectores?: string[];
-	draftServicios?: string[];
-	onDraftChange?: (next: { sectores: string[]; servicios: string[] }) => void;
+	onDraftChange?: (next: { sectores: string[] }) => void;
 	onSaved?: () => void | Promise<void>;
 };
 
@@ -36,7 +38,6 @@ export default function PersonalAsignacionesTab({
 	personalId,
 	draft = false,
 	draftSectores = [],
-	draftServicios = [],
 	onDraftChange,
 	onSaved,
 }: Props) {
@@ -46,13 +47,9 @@ export default function PersonalAsignacionesTab({
 	const [error, setError] = useState('');
 
 	const [secAsignados, setSecAsignados] = useState<PersonalSectorAsignado[]>([]);
-	const [srvAsignados, setSrvAsignados] = useState<PersonalServicioAsignado[]>([]);
-	const [secCatalogo, setSecCatalogo] = useState<{ IdSector: string; Descripcion: string }[]>([]);
-	const [catServicios, setCatServicios] = useState<CatalogoItemTexto[]>([]);
+	const [secCatalogo, setSecCatalogo] = useState<SectorCatalogo[]>([]);
 	const [secSel, setSecSel] = useState<Set<string>>(new Set());
-	const [srvSel, setSrvSel] = useState<Set<string>>(new Set());
 	const [qSec, setQSec] = useState('');
-	const [qSrv, setQSrv] = useState('');
 
 	useEffect(() => {
 		let cancelled = false;
@@ -60,26 +57,15 @@ export default function PersonalAsignacionesTab({
 			setLoading(true);
 			setError('');
 			try {
+				const secCat = (await personalService.getSectoresCatalogo()).filter((c) =>
+					idValido(c.IdSector),
+				);
+				if (cancelled) return;
+				setSecCatalogo(secCat);
+
 				if (draft) {
-					const settled = await Promise.allSettled([
-						personalService.getSectoresCatalogo(),
-						personalService.getServicios(),
-					]);
-					if (cancelled) return;
-					const val = <T,>(i: number, fallback: T): T =>
-						settled[i].status === 'fulfilled'
-							? (settled[i] as PromiseFulfilledResult<T>).value
-							: fallback;
-					const secCat = val<{ IdSector: string; Descripcion: string }[]>(0, []).filter((c) =>
-						idValido(c.IdSector),
-					);
-					const srvCat = val<CatalogoItemTexto[]>(1, []).filter((c) => idValido(c.valor));
-					setSecCatalogo(secCat);
-					setCatServicios(srvCat);
 					setSecAsignados([]);
-					setSrvAsignados([]);
 					setSecSel(new Set(draftSectores.filter(idValido)));
-					setSrvSel(new Set(draftServicios.filter(idValido)));
 					setEditing(true);
 					return;
 				}
@@ -87,29 +73,14 @@ export default function PersonalAsignacionesTab({
 					setError('Personal inválido');
 					return;
 				}
-				const settled = await Promise.allSettled([
-					personalService.getPersonalSectores(personalId),
-					personalService.getSectoresCatalogo(),
-					personalService.getPersonalServiciosPedidos(personalId),
-					personalService.getServicios(),
-				]);
-				if (cancelled) return;
-				const val = <T,>(i: number, fallback: T): T =>
-					settled[i].status === 'fulfilled' ? (settled[i] as PromiseFulfilledResult<T>).value : fallback;
-				const secs = val<PersonalSectorAsignado[]>(0, []).filter((s) => idValido(s.idSector));
-				const secCat = val<{ IdSector: string; Descripcion: string }[]>(1, []).filter((c) =>
-					idValido(c.IdSector),
+				const secs = (await personalService.getPersonalSectores(personalId)).filter((s) =>
+					idValido(s.idSector),
 				);
-				const srvs = val<PersonalServicioAsignado[]>(2, []).filter((s) => idValido(s.idServicio));
-				const srvCat = val<CatalogoItemTexto[]>(3, []).filter((c) => idValido(c.valor));
+				if (cancelled) return;
 				setSecAsignados(secs);
-				setSrvAsignados(srvs);
-				setSecCatalogo(secCat);
-				setCatServicios(srvCat);
 				setSecSel(new Set(secs.map((s) => s.idSector)));
-				setSrvSel(new Set(srvs.map((s) => s.idServicio)));
 			} catch (e) {
-				if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar asignaciones');
+				if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar sectores');
 			} finally {
 				if (!cancelled) setLoading(false);
 			}
@@ -117,66 +88,51 @@ export default function PersonalAsignacionesTab({
 		return () => {
 			cancelled = true;
 		};
-		// draftSectores/Servicios solo inicializan el alta; no rehidratar en cada click.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [personalId, draft]);
 
 	const secsFiltrados = useMemo(() => {
 		const t = qSec.trim().toLowerCase();
 		if (!t) return secCatalogo;
-		return secCatalogo.filter(
-			(c) =>
-				c.IdSector.toLowerCase().includes(t) || (c.Descripcion || '').toLowerCase().includes(t),
-		);
+		return secCatalogo.filter((c) => {
+			const blob = `${c.IdSector} ${c.Descripcion || ''} ${c.ValorServicio || ''} ${c.DescripcionServicio || ''}`.toLowerCase();
+			return blob.includes(t);
+		});
 	}, [secCatalogo, qSec]);
 
-	const srvsFiltrados = useMemo(() => {
-		const t = qSrv.trim().toLowerCase();
-		if (!t) return catServicios;
-		return catServicios.filter(
-			(c) =>
-				(c.descripcion || '').toLowerCase().includes(t) || c.valor.toLowerCase().includes(t),
-		);
-	}, [catServicios, qSrv]);
-
-	const labelSector = (id: string, desc?: string | null) =>
-		etiquetaCatalogo(
+	const labelSector = (id: string, desc?: string | null, extra?: SectorCatalogo | PersonalSectorAsignado) => {
+		const nombre = etiquetaCatalogo(
 			secCatalogo.map((c) => ({ valor: c.IdSector, descripcion: c.Descripcion })),
 			id,
 			desc,
-		) || '—';
-
-	const labelServicio = (id: string, desc?: string | null) =>
-		etiquetaCatalogo(catServicios, id, desc) || '—';
+		) || id;
+		const cat = secCatalogo.find((c) => c.IdSector === id);
+		const svc =
+			cat?.DescripcionServicio ||
+			cat?.ValorServicio ||
+			(extra as SectorCatalogo | undefined)?.DescripcionServicio ||
+			(extra as SectorCatalogo | undefined)?.ValorServicio ||
+			'';
+		return svc && String(svc).trim().toUpperCase() !== String(nombre).trim().toUpperCase()
+			? `${nombre} · ${svc}`
+			: nombre;
+	};
 
 	const abrirEdicion = () => {
 		setSecSel(new Set(secAsignados.map((s) => s.idSector)));
-		setSrvSel(new Set(srvAsignados.map((s) => s.idServicio)));
 		setQSec('');
-		setQSrv('');
 		setEditing(true);
 	};
 
 	const cancelarEdicion = () => {
 		setSecSel(new Set(secAsignados.map((s) => s.idSector)));
-		setSrvSel(new Set(srvAsignados.map((s) => s.idServicio)));
 		setEditing(false);
 		setError('');
 	};
 
-	const emitDraft = (sec: Set<string>, srv: Set<string>) => {
-		if (!draft) return;
-		onDraftChange?.({ sectores: Array.from(sec), servicios: Array.from(srv) });
-	};
-
 	const setSecDraft = (next: Set<string>) => {
 		setSecSel(next);
-		emitDraft(next, srvSel);
-	};
-
-	const setSrvDraft = (next: Set<string>) => {
-		setSrvSel(next);
-		emitDraft(secSel, next);
+		if (draft) onDraftChange?.({ sectores: Array.from(next) });
 	};
 
 	const guardar = async () => {
@@ -186,10 +142,8 @@ export default function PersonalAsignacionesTab({
 		try {
 			const data = await personalService.replacePersonalAsignaciones(personalId as number, {
 				sectores: Array.from(secSel),
-				servicios: Array.from(srvSel),
 			});
 			setSecAsignados(data.sectores || []);
-			setSrvAsignados(data.servicios || []);
 			setEditing(false);
 			await onSaved?.();
 		} catch (e) {
@@ -201,13 +155,13 @@ export default function PersonalAsignacionesTab({
 
 	return (
 		<div>
-			{loading ? <p className={formStyles.usuarioHint}>Cargando asignaciones…</p> : null}
+			{loading ? <p className={formStyles.usuarioHint}>Cargando sectores…</p> : null}
 			{error ? <div className={formStyles.alertError}>{error}</div> : null}
 
 			{!editing && !draft ? (
 				<div className={formStyles.asignColHead} style={{ marginBottom: '0.75rem' }}>
 					<p className={formStyles.usuarioHint} style={{ margin: 0 }}>
-						Sectores y servicios asignados a esta persona.
+						Sectores de internación, login, camas y bandeja. El servicio sale de cada sector.
 					</p>
 					<button type="button" className={styles.btnPrimary} onClick={abrirEdicion}>
 						Editar / asignar
@@ -217,34 +171,50 @@ export default function PersonalAsignacionesTab({
 			{draft ? (
 				<p className={formStyles.usuarioHint}>
 					Opcional. Si no elige ninguno, el personal se crea igual. Se guardan al confirmar el alta.
+					El servicio de cada sector queda anexado (ValorServicio).
 				</p>
 			) : null}
 
-			<div className={formStyles.asignGrid}>
 			<section className={formStyles.asignCol}>
 				<div>
 					<h3 className={formStyles.subsectionTitle}>Sectores</h3>
-					<p className={formStyles.usuarioHint}>Internación, login y camas.</p>
+					<p className={formStyles.usuarioHint}>
+						Login, internación y bandeja de pedidos. El servicio va con el sector.
+					</p>
 				</div>
 				{editing ? (
 					<>
 						<div className={styles.addRow}>
 							<input
 								className={styles.select}
-								placeholder="Buscar…"
+								placeholder="Buscar sector o servicio…"
 								value={qSec}
 								onChange={(e) => setQSec(e.target.value)}
 							/>
-							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSecDraft(new Set(secCatalogo.map((c) => c.IdSector)))}>
+							<button
+								type="button"
+								className={styles.btnPrimary}
+								disabled={saving}
+								onClick={() => setSecDraft(new Set(secCatalogo.map((c) => c.IdSector)))}
+							>
 								Todos
 							</button>
-							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSecDraft(new Set())}>
+							<button
+								type="button"
+								className={styles.btnDanger}
+								disabled={saving}
+								onClick={() => setSecDraft(new Set())}
+							>
 								Ninguno
 							</button>
 						</div>
 						<div className={styles.list}>
 							{secsFiltrados.length === 0 ? (
-								<span className={styles.muted}>Sin sectores en el catálogo.</span>
+								<span className={styles.muted}>
+									{secCatalogo.length === 0
+										? 'Sin sectores en el catálogo.'
+										: 'Ningún sector coincide.'}
+								</span>
 							) : (
 								secsFiltrados.map((c) => (
 									<label key={c.IdSector} className={styles.listItem}>
@@ -254,7 +224,7 @@ export default function PersonalAsignacionesTab({
 											disabled={saving}
 											onChange={() => setSecDraft(toggle(secSel, c.IdSector))}
 										/>
-										<span>{labelSector(c.IdSector, c.Descripcion)}</span>
+										<span>{labelSector(c.IdSector, c.Descripcion, c)}</span>
 									</label>
 								))
 							)}
@@ -267,76 +237,26 @@ export default function PersonalAsignacionesTab({
 						) : (
 							secAsignados.map((s) => (
 								<div key={s.idSector} className={styles.listItem}>
-									<span>{labelSector(s.idSector, s.Descripcion || s.descripcion)}</span>
+									<span>{labelSector(s.idSector, s.Descripcion || s.descripcion, s)}</span>
 								</div>
 							))
 						)}
 					</div>
 				)}
 			</section>
-
-			<section className={formStyles.asignCol}>
-				<div>
-					<h3 className={formStyles.subsectionTitle}>Servicios de pedidos</h3>
-					<p className={formStyles.usuarioHint}>Bandeja de estudios e interconsultas.</p>
-				</div>
-				{editing ? (
-					<>
-						<div className={styles.addRow}>
-							<input
-								className={styles.select}
-								placeholder="Buscar…"
-								value={qSrv}
-								onChange={(e) => setQSrv(e.target.value)}
-							/>
-							<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => setSrvDraft(new Set(catServicios.map((c) => c.valor)))}>
-								Todos
-							</button>
-							<button type="button" className={styles.btnDanger} disabled={saving} onClick={() => setSrvDraft(new Set())}>
-								Ninguno
-							</button>
-						</div>
-						<div className={styles.list}>
-							{srvsFiltrados.length === 0 ? (
-								<span className={styles.muted}>Sin servicios en el catálogo.</span>
-							) : (
-								srvsFiltrados.map((o) => (
-									<label key={o.valor} className={styles.listItem}>
-										<input
-											type="checkbox"
-											checked={srvSel.has(o.valor)}
-											disabled={saving}
-											onChange={() => setSrvDraft(toggle(srvSel, o.valor))}
-										/>
-										<span>{labelServicio(o.valor, o.descripcion)}</span>
-									</label>
-								))
-							)}
-						</div>
-					</>
-				) : (
-					<div className={styles.list}>
-						{srvAsignados.length === 0 ? (
-							<span className={styles.muted}>Sin servicios asignados.</span>
-						) : (
-							srvAsignados.map((s) => (
-								<div key={s.idServicio} className={styles.listItem}>
-									<span>{labelServicio(s.idServicio, s.Descripcion || s.descripcion)}</span>
-								</div>
-							))
-						)}
-					</div>
-				)}
-			</section>
-			</div>
 
 			{editing && !draft ? (
 				<div className={styles.actions}>
 					<button type="button" className={styles.btn} disabled={saving} onClick={cancelarEdicion}>
 						Cancelar
 					</button>
-					<button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => void guardar()}>
-						{saving ? 'Guardando…' : 'Guardar asignaciones'}
+					<button
+						type="button"
+						className={styles.btnPrimary}
+						disabled={saving}
+						onClick={() => void guardar()}
+					>
+						{saving ? 'Guardando…' : 'Guardar sectores'}
 					</button>
 				</div>
 			) : null}

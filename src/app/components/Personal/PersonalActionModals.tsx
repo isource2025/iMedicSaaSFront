@@ -167,7 +167,7 @@ export default function PersonalActionModals({
 
 	const title =
 		kind === 'servicio'
-			? 'Servicio y bandeja de pedidos'
+			? 'Servicio / facturación'
 			: kind === 'empresas'
 			? 'Empresas asociadas'
 			: kind === 'firma'
@@ -405,11 +405,11 @@ export default function PersonalActionModals({
 				) : kind === 'servicio' ? (
 					<div className={styles.row}>
 						<p className={styles.muted}>
-							La bandeja de pedidos usa solo los servicios asignados acá, no los sectores de internación.
+							La bandeja de pedidos usa los sectores asignados al personal (solapa Sectores). Estos servicios son para facturación.
 						</p>
 						<div className={styles.addRow}>
 							<div style={{ flex: 1, minWidth: 200 }}>
-								<div className={styles.label}>Agregar servicio (bandeja)</div>
+								<div className={styles.label}>Agregar servicio (facturación)</div>
 								<select
 									className={styles.select}
 									value={srvPedidoSel}
@@ -434,7 +434,7 @@ export default function PersonalActionModals({
 								Agregar
 							</button>
 						</div>
-						<div className={styles.label}>Servicios de la bandeja</div>
+						<div className={styles.label}>Servicios de facturación</div>
 						<div className={styles.list}>
 							{srvPedidos.length === 0 ? (
 								<span className={styles.muted}>Sin servicios asignados.</span>

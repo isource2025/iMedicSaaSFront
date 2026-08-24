@@ -8,7 +8,7 @@ import {
 	SERVICIOS_RECEPTOR_UPDATED_EVENT,
 } from '@/app/utils/serviciosReceptorCache';
 
-/** Servicios receptor: hidrata desde localStorage y refresca en segundo plano. */
+/** Sectores receptor: hidrata desde localStorage y refresca en segundo plano. */
 export function useSectoresReceptor(opts?: { soloMios?: boolean; enabled?: boolean }): {
 	sectores: SectorReceptorEstudio[];
 	loading: boolean;
