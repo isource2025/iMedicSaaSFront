@@ -103,22 +103,74 @@ export default function PersonalAsignacionesTab({
 		});
 	}, [secCatalogo, qSec]);
 
-	const labelSector = (id: string, desc?: string | null, extra?: SectorCatalogo | PersonalSectorAsignado) => {
-		const nombre = etiquetaCatalogo(
+	const nombreSector = (id: string, desc?: string | null) =>
+		etiquetaCatalogo(
 			secCatalogo.map((c) => ({ valor: c.IdSector, descripcion: c.Descripcion })),
 			id,
 			desc,
 		) || id;
+
+	const servicioAnexado = (
+		id: string,
+		extra?: SectorCatalogo | PersonalSectorAsignado,
+	): { text: string; title: string } | null => {
 		const cat = secCatalogo.find((c) => c.IdSector === id);
-		const svc =
-			cat?.DescripcionServicio ||
-			cat?.ValorServicio ||
-			(extra as SectorCatalogo | undefined)?.DescripcionServicio ||
-			(extra as SectorCatalogo | undefined)?.ValorServicio ||
-			'';
-		return svc && String(svc).trim().toUpperCase() !== String(nombre).trim().toUpperCase()
-			? `${nombre} · ${svc}`
-			: nombre;
+		const code = String(
+			cat?.ValorServicio || extra?.ValorServicio || '',
+		).trim();
+		const desc = String(
+			cat?.DescripcionServicio || extra?.DescripcionServicio || '',
+		).trim();
+		if (code) {
+			return {
+				text: code,
+				title: desc && desc.toUpperCase() !== code.toUpperCase() ? `${desc} (${code})` : code,
+			};
+		}
+		if (desc) return { text: desc, title: desc };
+		return null;
+	};
+
+	const filaSector = (
+		id: string,
+		desc?: string | null,
+		extra?: SectorCatalogo | PersonalSectorAsignado,
+		opts?: { checkbox?: boolean; checked?: boolean; disabled?: boolean; onToggle?: () => void },
+	) => {
+		const svc = servicioAnexado(id, extra);
+		const name = nombreSector(id, desc);
+		const inner = (
+			<>
+				<span className={styles.listItemLeft}>
+					{opts?.checkbox ? (
+						<input
+							type="checkbox"
+							checked={Boolean(opts.checked)}
+							disabled={opts.disabled}
+							onChange={() => opts.onToggle?.()}
+						/>
+					) : null}
+					<span className={styles.listItemName}>{name}</span>
+				</span>
+				{svc ? (
+					<span className={styles.svcPill} title={svc.title}>
+						{svc.text}
+					</span>
+				) : null}
+			</>
+		);
+		if (opts?.checkbox) {
+			return (
+				<label key={id} className={styles.listItem}>
+					{inner}
+				</label>
+			);
+		}
+		return (
+			<div key={id} className={styles.listItem}>
+				{inner}
+			</div>
+		);
 	};
 
 	const abrirEdicion = () => {
@@ -219,17 +271,14 @@ export default function PersonalAsignacionesTab({
 										: 'Ningún sector coincide.'}
 								</span>
 							) : (
-								secsFiltrados.map((c) => (
-									<label key={c.IdSector} className={styles.listItem}>
-										<input
-											type="checkbox"
-											checked={secSel.has(c.IdSector)}
-											disabled={saving}
-											onChange={() => setSecDraft(toggle(secSel, c.IdSector))}
-										/>
-										<span>{labelSector(c.IdSector, c.Descripcion, c)}</span>
-									</label>
-								))
+								secsFiltrados.map((c) =>
+									filaSector(c.IdSector, c.Descripcion, c, {
+										checkbox: true,
+										checked: secSel.has(c.IdSector),
+										disabled: saving,
+										onToggle: () => setSecDraft(toggle(secSel, c.IdSector)),
+									}),
+								)
 							)}
 						</div>
 					</>
@@ -238,11 +287,9 @@ export default function PersonalAsignacionesTab({
 						{secAsignados.length === 0 ? (
 							<span className={styles.muted}>Sin sectores asignados.</span>
 						) : (
-							secAsignados.map((s) => (
-								<div key={s.idSector} className={styles.listItem}>
-									<span>{labelSector(s.idSector, s.Descripcion || s.descripcion, s)}</span>
-								</div>
-							))
+							secAsignados.map((s) =>
+								filaSector(s.idSector, s.Descripcion || s.descripcion, s),
+							)
 						)}
 					</div>
 				)}
