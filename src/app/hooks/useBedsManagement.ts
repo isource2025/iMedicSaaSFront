@@ -147,7 +147,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		const meta = getCachedBedMeta(undefined, idEmpresa);
 		void fetchBeds({ silent: hasCache });
 		if (!meta?.states?.length) void fetchBedStates();
-		if (!meta?.sectores?.length) void fetchSectores();
+		void fetchSectores();
 	}, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated, idEmpresa]);
 
 	// Sector: filtro de esta sesión > URL > sector de login > Todos

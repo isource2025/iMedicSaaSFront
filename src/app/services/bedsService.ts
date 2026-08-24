@@ -122,16 +122,22 @@ export const bedsService = {
 	getSectores: async (): Promise<{ id: string; valor: string; descripcion: string }[]> => {
 		try {
 			const { data: json } = await apiService.get<
-				ApiResp<{ valor: string; descripcion: string }[]>
+				ApiResp<Record<string, unknown>[]>
 			>('/beds/sectores');
 
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener sectores');
 
-			return (json.data || []).map((item) => ({
-				id: item.valor,
-				valor: item.valor,
-				descripcion: item.descripcion,
-			}));
+			return (json.data || [])
+				.map((item) => {
+					const row = item || {};
+					const valor = String(
+						row.valor ?? row.Valor ?? row.IdSector ?? row.idSector ?? '',
+					).trim();
+					if (!valor) return null;
+					const descripcion = String(row.descripcion ?? row.Descripcion ?? valor).trim();
+					return { id: valor, valor, descripcion: descripcion || valor };
+				})
+				.filter((s): s is { id: string; valor: string; descripcion: string } => Boolean(s));
 		} catch (error) {
 			console.error('Error fetching sectores:', error);
 			return [];
