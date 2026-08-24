@@ -1,9 +1,9 @@
 import { Nunito } from 'next/font/google';
 import styles from './ImedicBrand.module.css';
 
-const nunito = Nunito({
+export const loginNunito = Nunito({
   subsets: ['latin'],
-  weight: ['700', '800'],
+  weight: ['400', '500', '700', '800'],
 });
 
 type MarkProps = {
@@ -44,7 +44,7 @@ type WordmarkProps = {
 
 export function ImedicWordmark({ size = 'lg' }: WordmarkProps) {
   return (
-    <div className={`${styles.brand} ${styles[size]} ${nunito.className}`}>
+    <div className={`${styles.brand} ${styles[size]} ${loginNunito.className}`}>
       <HeartPulseMark size={size === 'lg' ? 42 : size === 'md' ? 34 : 28} />
       <span className={styles.word}>iMedic</span>
     </div>

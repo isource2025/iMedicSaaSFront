@@ -57,11 +57,10 @@ export default function LoginCarousel() {
 				))}
 				<div className={styles.veil} />
 
-				<div className={styles.mark}>
-					<HeartPulseMark size={34} title="iMedic" />
-				</div>
-
 				<div className={styles.copy} aria-live="polite">
+					<div className={styles.mark}>
+						<HeartPulseMark size={42} title="iMedic" />
+					</div>
 					<h2 className={styles.headline}>{slide.title}</h2>
 					<span className={styles.rule} aria-hidden />
 					<p className={styles.support}>{slide.text}</p>
