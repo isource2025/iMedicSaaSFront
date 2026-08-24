@@ -15,11 +15,12 @@ export default function LoginForm() {
     showPassword,
     loginStep,
     empresas,
+    sectores,
     handleInputChange,
     handleRememberMeChange,
     handleSubmit,
     togglePasswordVisibility,
-    volverACredenciales,
+    volverAtras,
   } = useLoginForm();
 
   return (
@@ -28,6 +29,9 @@ export default function LoginForm() {
 
       {loginStep === 'SELECT_EMPRESA' && (
         <h2 className={styles.title}>Seleccionar empresa</h2>
+      )}
+      {loginStep === 'SELECT_SECTOR' && (
+        <h2 className={styles.title}>Seleccionar sector</h2>
       )}
 
       {error && (
@@ -115,10 +119,43 @@ export default function LoginForm() {
             <button
               type="button"
               className={styles.backLink}
-              onClick={volverACredenciales}
+              onClick={volverAtras}
               disabled={loading}
             >
               ← Volver a credenciales
+            </button>
+          </div>
+        )}
+
+        {loginStep === 'SELECT_SECTOR' && (
+          <div className={styles.formGroup}>
+            <p className={styles.stepHint}>
+              Credenciales verificadas. Elija el sector con el que desea ingresar.
+            </p>
+            <label className={styles.label} htmlFor="sector">
+              Sector
+            </label>
+            <select
+              id="sector"
+              className={styles.inputField}
+              value={credentials.sector}
+              onChange={handleInputChange}
+              disabled={loading}
+            >
+              <option value="">Seleccione un sector</option>
+              {sectores.map((sector) => (
+                <option key={sector.idSector} value={sector.idSector}>
+                  {sectorLabel(sector)}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={styles.backLink}
+              onClick={volverAtras}
+              disabled={loading}
+            >
+              {empresas.length > 1 ? '← Volver a empresa' : '← Volver a credenciales'}
             </button>
           </div>
         )}
@@ -149,7 +186,7 @@ export default function LoginForm() {
         >
           {loading
             ? 'Procesando...'
-            : loginStep === 'SELECT_EMPRESA'
+            : loginStep === 'SELECT_EMPRESA' || loginStep === 'SELECT_SECTOR'
               ? 'Continuar'
               : 'Ingresar'}
         </button>
@@ -166,4 +203,16 @@ export default function LoginForm() {
 
 function empresaToValue(e: { idEmpresa: number; descripcionEmpresa: string }) {
   return `${e.idEmpresa}-${e.descripcionEmpresa}`;
+}
+
+function sectorLabel(s: { idSector: string; descripcion: string; valorServicio?: string }) {
+  const desc = String(s.descripcion || '').trim() || s.idSector;
+  const svc = String(s.valorServicio || '').trim();
+  if (svc && desc.toUpperCase() !== svc.toUpperCase()) {
+    return `${desc} (${s.idSector}) · ${svc}`;
+  }
+  if (desc.toUpperCase() !== String(s.idSector).toUpperCase()) {
+    return `${desc} (${s.idSector})`;
+  }
+  return desc;
 }

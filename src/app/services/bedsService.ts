@@ -89,10 +89,18 @@ export function normalizeBedFromApi(item: Record<string, unknown> | Bed): Bed {
 	return mapBedItem(item as Record<string, unknown>);
 }
 
+const BEDS_TIMEOUT_MS = 45000;
+
 export const bedsService = {
-	getAllBeds: async (): Promise<Bed[]> => {
+	getAllBeds: async (sector?: string | null): Promise<Bed[]> => {
+		const code = String(sector || '').trim();
+		const qs =
+			code && code.toLowerCase() !== 'all'
+				? `?sector=${encodeURIComponent(code)}`
+				: '';
 		const { data: json } = await apiService.get<ApiResp<Record<string, unknown>[]>>(
-			'/beds',
+			`/beds${qs}`,
+			{ timeout: BEDS_TIMEOUT_MS },
 		);
 
 		if (!json.success) throw new Error(json.mensaje || 'Error en la API de camas');
@@ -104,7 +112,7 @@ export const bedsService = {
 		try {
 			const { data: json } = await apiService.get<
 				ApiResp<{ valor: string; descripcion: string }[]>
-			>('/beds/estados');
+			>('/beds/estados', { timeout: BEDS_TIMEOUT_MS });
 
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener estados de cama');
 
@@ -123,7 +131,7 @@ export const bedsService = {
 		try {
 			const { data: json } = await apiService.get<
 				ApiResp<Record<string, unknown>[]>
-			>('/beds/sectores');
+			>('/beds/sectores', { timeout: BEDS_TIMEOUT_MS });
 
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener sectores');
 

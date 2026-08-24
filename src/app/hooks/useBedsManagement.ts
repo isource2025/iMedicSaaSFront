@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { bedsService } from '../services/bedsService';
 import { Bed, BedState, BedTipoRecurso } from '../types/beds';
 import { useAppContext } from '../contexts/AppContext';
+import { getIdSectorFromToken } from '../utils/jwtSession';
 import {
 	bedsListSignature,
 	getCachedBedMeta,
@@ -22,6 +23,68 @@ const ORDEN_TIPO_RECURSO: Record<BedTipoRecurso, number> = {
 	consultorio: 1,
 	insumos: 2,
 };
+
+function readSessionSector(): string {
+	if (typeof window === 'undefined') return '';
+	try {
+		const raw = localStorage.getItem('sectorSeleccionado');
+		if (raw) {
+			const parsed = JSON.parse(raw) as { idSector?: string; descripcion?: string };
+			const id = String(parsed?.idSector || '').trim();
+			if (id) return id;
+		}
+	} catch {
+		/* ignore */
+	}
+	try {
+		return String(getIdSectorFromToken() || '').trim();
+	} catch {
+		return '';
+	}
+}
+
+function readSessionSectorLabel(id: string): string {
+	if (typeof window === 'undefined') return id;
+	try {
+		const raw = localStorage.getItem('sectorSeleccionado');
+		if (raw) {
+			const parsed = JSON.parse(raw) as { idSector?: string; descripcion?: string };
+			const desc = String(parsed?.descripcion || '').trim();
+			if (desc) return desc;
+		}
+	} catch {
+		/* ignore */
+	}
+	return id;
+}
+
+function seedSectorFromSession(): { id: string; valor: string; descripcion: string }[] {
+	const id = readSessionSector();
+	if (!id) return [];
+	return [{ id, valor: id, descripcion: readSessionSectorLabel(id) }];
+}
+
+function readPreferredSector(urlSector?: string | null): string {
+	const url = String(urlSector || '').trim();
+	if (url && url.toLowerCase() !== 'all') return url;
+	if (typeof window === 'undefined') return 'all';
+	try {
+		const stored = String(getStoredBedsListFilters()?.sector || '').trim();
+		if (stored && stored.toLowerCase() !== 'all') return stored;
+	} catch {
+		/* ignore */
+	}
+	const session = readSessionSector();
+	return session || 'all';
+}
+
+function bedsErrorMessage(err: unknown): string {
+	const raw = err instanceof Error ? err.message : 'Error al cargar camas';
+	if (/timeout/i.test(raw) || /ECONNABORTED/i.test(raw)) {
+		return 'El hospital tardó en responder. Reintentá en unos segundos.';
+	}
+	return raw;
+}
 
 export type UseBedsManagementOptions = {
 	/**
@@ -57,27 +120,34 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 	const [loading, setLoading] = useState(() => !cachedBeds);
 	const [error, setError] = useState<string | null>(null);
 	const [filter, setFilter] = useState<string>('all');
-	const [sectorFilter, setSectorFilter] = useState<string>('all');
+	const [sectorFilter, setSectorFilter] = useState<string>(() => readPreferredSector(urlSector));
 	const [servicioFilter, setServicioFilter] = useState<string>('all');
 	const [searchTerm, setSearchTerm] = useState('');
 	const [tipoRecursoFilter, setTipoRecursoFilter] = useState<'all' | BedTipoRecurso>('all');
 	const [sectors, setSectors] = useState<{ id: string; valor: string; descripcion: string }[]>(
-		() => cachedMeta?.sectores || [],
+		() => cachedMeta?.sectores?.length ? cachedMeta.sectores : seedSectorFromSession(),
 	);
 	const [autoRefresh, setAutoRefresh] = useState<boolean>(enableAutoRefreshOpt);
 	const [refreshInterval, setRefreshInterval] = useState<number>(refreshIntervalMs);
 	const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const signatureRef = useRef<string>(cachedBeds ? bedsListSignature(cachedBeds) : '');
-	const inFlightRef = useRef(false);
+	const fetchGenRef = useRef(0);
 	const lastEmpresaRef = useRef<string | null>(idEmpresa != null ? String(idEmpresa) : null);
 
 	const fetchSectores = useCallback(async () => {
 		try {
 			const sectoresData = await bedsService.getSectores();
-			setSectors(sectoresData);
-			setCachedBedMeta({ sectores: sectoresData }, idEmpresa);
+			if (sectoresData.length) {
+				setSectors(sectoresData);
+				setCachedBedMeta({ sectores: sectoresData }, idEmpresa);
+				return;
+			}
+			const seeded = seedSectorFromSession();
+			if (seeded.length) setSectors(seeded);
 		} catch (err) {
 			console.error('Error al cargar sectores:', err);
+			const seeded = seedSectorFromSession();
+			if (seeded.length) setSectors(seeded);
 		}
 	}, [idEmpresa]);
 
@@ -92,26 +162,28 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 	}, [idEmpresa]);
 
 	const fetchBeds = useCallback(
-		async (opts?: { silent?: boolean }) => {
+		async (opts?: { silent?: boolean; sector?: string }) => {
 			const silent = opts?.silent === true;
-			if (inFlightRef.current) return;
-			inFlightRef.current = true;
+			const sector = String(opts?.sector ?? sectorFilter).trim() || 'all';
+			const gen = ++fetchGenRef.current;
 			if (!silent) setLoading(true);
 			setError(null);
 			try {
-				const data = applyIndicacionesNuevasVistoLocal(await bedsService.getAllBeds());
+				const data = applyIndicacionesNuevasVistoLocal(
+					await bedsService.getAllBeds(sector),
+				);
+				if (gen !== fetchGenRef.current) return;
 				signatureRef.current = bedsListSignature(data);
 				setBeds(data);
 				setCachedBedsList(data, undefined, idEmpresa);
 			} catch (err: unknown) {
-				const message = err instanceof Error ? err.message : 'Error al cargar camas';
-				setError(message);
+				if (gen !== fetchGenRef.current) return;
+				setError(bedsErrorMessage(err));
 			} finally {
-				inFlightRef.current = false;
-				if (!silent) setLoading(false);
+				if (gen === fetchGenRef.current && !silent) setLoading(false);
 			}
 		},
-		[idEmpresa],
+		[idEmpresa, sectorFilter],
 	);
 
 	// Carga inicial / cambio de empresa: invalidar UI si el tenant cambió
@@ -131,10 +203,9 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		if (empresaChanged) {
 			signatureRef.current = '';
 			setBeds([]);
-			setSectors([]);
+			setSectors(seedSectorFromSession());
 			setBedStates([]);
-			setSectorFilter('all');
-			setStoredBedsListFilters({ sector: 'all' });
+			setSectorFilter(readPreferredSector(urlSector));
 			setFilter('all');
 			setServicioFilter('all');
 			void fetchBeds({ silent: false });
@@ -162,10 +233,6 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		};
 
 		const storedRaw = String(getStoredBedsListFilters()?.sector || '').trim();
-		if (storedRaw.toLowerCase() === 'all') {
-			setSectorFilter('all');
-			return;
-		}
 		const stored = matchCatalog(storedRaw);
 		if (stored) {
 			setSectorFilter(stored);
@@ -180,7 +247,9 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		}
 
 		const fromLogin =
-			matchCatalog(idsector || '') || matchCatalog(sectorSeleccionado?.idSector || '');
+			matchCatalog(idsector || '') ||
+			matchCatalog(sectorSeleccionado?.idSector || '') ||
+			matchCatalog(readSessionSector());
 		if (fromLogin) {
 			setSectorFilter(fromLogin);
 			setStoredBedsListFilters({ sector: fromLogin });

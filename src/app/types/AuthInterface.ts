@@ -13,9 +13,10 @@ export interface LoginCredentials {
 
 export interface LoginResponse {
   success: boolean;
-  step?: 'SELECT_EMPRESA' | 'COMPLETE';
+  step?: 'SELECT_EMPRESA' | 'SELECT_SECTOR' | 'COMPLETE';
   tempToken?: string;
   empresas?: EmpresaLogin[];
+  sectores?: SectorLoginOption[];
   token?: string;
   usuario?: UserData;  // Cambiado de user a usuario para coincidir con el backend
   rol?: RolInfo | null; // Rol principal resuelto en el backend
@@ -25,6 +26,7 @@ export interface LoginResponse {
   mensaje?: string;    // Añadido para coincidir con el backend
   fuente?: string;     // Origen de la autenticación (base de datos o temporal)
   sectorSeleccionado?: SectorInfo;
+  sectoresAsignados?: SectorLoginOption[];
   idEmpresa?: number | null;
   empresaSeleccionada?: EmpresaInfoLogin | null;
   modulosEmpresa?: ModulosEmpresaLogin | null;
@@ -40,6 +42,13 @@ export interface ModulosEmpresaLogin {
 export interface EmpresaLogin {
   idEmpresa: number;
   descripcionEmpresa: string;
+}
+
+/** Sector en login (lista desplegable) */
+export interface SectorLoginOption {
+  idSector: string;
+  descripcion: string;
+  valorServicio?: string;
 }
 
 /** Datos completos de empresa devueltos tras el login */

@@ -2,18 +2,27 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { EmpresaLogin, LoginCredentials, LoginResponse } from '../types/AuthInterface';
+import {
+  EmpresaLogin,
+  LoginCredentials,
+  LoginResponse,
+  SectorLoginOption,
+} from '../types/AuthInterface';
 import { authService } from '../services/authService';
 import { useAppContext } from '../contexts/AppContext';
 import { guardarInfoEmpresaLocal, EmpresaInfo } from '../services/empresaService';
 import type { ModulosEmpresa } from '../types/superAdmin';
 import { startSessionActivityMonitor } from '../utils/sessionActivity';
 import { clearTenantUiCaches } from '../utils/sessionCaches';
+import { setCachedSectoresReceptor } from '../utils/serviciosReceptorCache';
+
+type LoginStep = 'CREDENTIALS' | 'SELECT_EMPRESA' | 'SELECT_SECTOR';
 
 type CredentialsState = {
   username: string;
   password: string;
   empresa: string;
+  sector: string;
 };
 
 function empresaToValue(e: EmpresaLogin) {
@@ -30,11 +39,58 @@ function uniqueEmpresasPorId(list: EmpresaLogin[]): EmpresaLogin[] {
   return Array.from(map.values());
 }
 
+function uniqueSectoresPorId(list: SectorLoginOption[]): SectorLoginOption[] {
+  const map = new Map<string, SectorLoginOption>();
+  for (const s of list || []) {
+    const id = String(s.idSector || '').trim();
+    if (!id) continue;
+    const k = id.toUpperCase();
+    if (!map.has(k)) map.set(k, { ...s, idSector: id });
+  }
+  return Array.from(map.values());
+}
+
+function parseIdEmpresa(empresaValue: string, pendiente: number | null): string | undefined {
+  if (empresaValue) {
+    const [idEmpresa] = empresaValue.split('-');
+    if (idEmpresa) return idEmpresa;
+  }
+  if (pendiente != null && Number.isFinite(pendiente) && pendiente > 0) {
+    return String(pendiente);
+  }
+  return undefined;
+}
+
+function seedSectoresCache(data: LoginResponse) {
+  const assigned = Array.isArray(data.sectoresAsignados) ? data.sectoresAsignados : [];
+  const list = assigned
+    .map((s) => ({
+      valor: String(s.idSector || '').trim(),
+      descripcion: String(s.descripcion || s.idSector || '').trim(),
+      valorServicio: String(s.valorServicio || '').trim(),
+      descripcionServicio: '',
+      prefijos: [] as string[],
+    }))
+    .filter((s) => s.valor);
+  if (!list.length && data.sectorSeleccionado?.idSector) {
+    list.push({
+      valor: String(data.sectorSeleccionado.idSector).trim(),
+      descripcion: String(data.sectorSeleccionado.descripcion || data.sectorSeleccionado.idSector).trim(),
+      valorServicio: '',
+      descripcionServicio: '',
+      prefijos: [],
+    });
+  }
+  if (!list.length) return;
+  setCachedSectoresReceptor(list, { soloMios: true });
+}
+
 export function useLoginForm() {
   const [credentials, setCredentials] = useState<CredentialsState>({
     username: '',
     password: '',
     empresa: '',
+    sector: '',
   });
 
   const [error, setError] = useState<string>('');
@@ -42,10 +98,11 @@ export function useLoginForm() {
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  /** Paso 2: solo tras validar usuario+contraseña */
-  const [loginStep, setLoginStep] = useState<'CREDENTIALS' | 'SELECT_EMPRESA'>('CREDENTIALS');
+  const [loginStep, setLoginStep] = useState<LoginStep>('CREDENTIALS');
   const [empresas, setEmpresas] = useState<EmpresaLogin[]>([]);
+  const [sectores, setSectores] = useState<SectorLoginOption[]>([]);
   const [tempToken, setTempToken] = useState<string>('');
+  const [idEmpresaPendiente, setIdEmpresaPendiente] = useState<number | null>(null);
 
   const { setSectorSeleccionado, setEmpresaInfo, setModulosEmpresa, setUsuario } = useAppContext();
   const router = useRouter();
@@ -85,12 +142,6 @@ export function useLoginForm() {
         localStorage.removeItem('permisos');
       }
 
-      if (data.sectorSeleccionado) {
-        setSectorSeleccionado(data.sectorSeleccionado);
-      } else {
-        setSectorSeleccionado(null);
-      }
-
       if (data.empresaSeleccionada) {
         const empresa = data.empresaSeleccionada as EmpresaInfo;
         setEmpresaInfo(empresa);
@@ -114,6 +165,14 @@ export function useLoginForm() {
         setModulosEmpresa(null);
       }
 
+      if (data.sectorSeleccionado) {
+        setSectorSeleccionado(data.sectorSeleccionado);
+      } else {
+        setSectorSeleccionado(null);
+      }
+
+      seedSectoresCache(data);
+
       if (rememberMe) {
         localStorage.setItem('rememberUser', 'true');
       }
@@ -133,17 +192,34 @@ export function useLoginForm() {
     setRememberMe(e.target.checked);
   };
 
-  const buildLoginPayload = (): LoginCredentials & { tempToken?: string } => {
-    const payload: LoginCredentials & { tempToken?: string } = {
+  const buildLoginPayload = (overrides?: Partial<LoginCredentials>): LoginCredentials => {
+    const payload: LoginCredentials = {
       username: credentials.username.trim(),
       password: credentials.password,
     };
-    if (loginStep === 'SELECT_EMPRESA' && credentials.empresa) {
-      const [idEmpresa] = credentials.empresa.split('-');
-      if (idEmpresa) payload.idEmpresa = idEmpresa;
-      if (tempToken) payload.tempToken = tempToken;
+    const idEmpresa = parseIdEmpresa(credentials.empresa, idEmpresaPendiente);
+    const needsEmpresa =
+      loginStep === 'SELECT_EMPRESA' || loginStep === 'SELECT_SECTOR' || Boolean(idEmpresa);
+    if (needsEmpresa && idEmpresa) {
+      payload.idEmpresa = idEmpresa;
     }
-    return payload;
+    if ((loginStep === 'SELECT_EMPRESA' || loginStep === 'SELECT_SECTOR') && tempToken) {
+      payload.tempToken = tempToken;
+    }
+    if (loginStep === 'SELECT_SECTOR' && credentials.sector) {
+      payload.idSector = credentials.sector;
+    }
+    return { ...payload, ...overrides };
+  };
+
+  const enterSectorStep = (data: LoginResponse, unique: SectorLoginOption[]) => {
+    setSectores(unique);
+    setTempToken(data.tempToken || tempToken || '');
+    if (data.idEmpresa != null && Number.isFinite(Number(data.idEmpresa))) {
+      setIdEmpresaPendiente(Number(data.idEmpresa));
+    }
+    setLoginStep('SELECT_SECTOR');
+    setCredentials((prev) => ({ ...prev, sector: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,6 +236,11 @@ export function useLoginForm() {
       return;
     }
 
+    if (loginStep === 'SELECT_SECTOR' && !credentials.sector) {
+      setError('Por favor, seleccione un sector');
+      return;
+    }
+
     setLoading(true);
     try {
       let data = await authService.login(buildLoginPayload());
@@ -167,17 +248,38 @@ export function useLoginForm() {
       if (data.step === 'SELECT_EMPRESA' && Array.isArray(data.empresas)) {
         const unique = uniqueEmpresasPorId(data.empresas);
         if (unique.length === 1) {
-          data = await authService.login({
-            username: credentials.username.trim(),
-            password: credentials.password,
-            idEmpresa: String(unique[0].idEmpresa),
-            tempToken: data.tempToken || tempToken || undefined,
-          });
+          setIdEmpresaPendiente(unique[0].idEmpresa);
+          setTempToken(data.tempToken || tempToken || '');
+          setCredentials((prev) => ({ ...prev, empresa: empresaToValue(unique[0]) }));
+          data = await authService.login(
+            buildLoginPayload({
+              idEmpresa: String(unique[0].idEmpresa),
+              tempToken: data.tempToken || tempToken || undefined,
+            }),
+          );
         } else if (unique.length > 1) {
           setEmpresas(unique);
           setTempToken(data.tempToken || '');
           setLoginStep('SELECT_EMPRESA');
-          setCredentials((prev) => ({ ...prev, empresa: '' }));
+          setCredentials((prev) => ({ ...prev, empresa: '', sector: '' }));
+          return;
+        }
+      }
+
+      if (data.step === 'SELECT_SECTOR' && Array.isArray(data.sectores)) {
+        const unique = uniqueSectoresPorId(data.sectores);
+        if (unique.length === 1) {
+          data = await authService.login(
+            buildLoginPayload({
+              idSector: unique[0].idSector,
+              tempToken: data.tempToken || tempToken || undefined,
+              idEmpresa:
+                parseIdEmpresa(credentials.empresa, idEmpresaPendiente) ||
+                (data.idEmpresa != null ? String(data.idEmpresa) : undefined),
+            }),
+          );
+        } else if (unique.length > 1) {
+          enterSectorStep(data, unique);
           return;
         }
       }
@@ -198,6 +300,8 @@ export function useLoginForm() {
         setLoginStep('CREDENTIALS');
         setTempToken('');
         setEmpresas([]);
+        setSectores([]);
+        setIdEmpresaPendiente(null);
       }
     } finally {
       setLoading(false);
@@ -206,12 +310,20 @@ export function useLoginForm() {
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
-  const volverACredenciales = () => {
+  const volverAtras = () => {
+    setError('');
+    if (loginStep === 'SELECT_SECTOR' && empresas.length > 1) {
+      setLoginStep('SELECT_EMPRESA');
+      setSectores([]);
+      setCredentials((prev) => ({ ...prev, sector: '' }));
+      return;
+    }
     setLoginStep('CREDENTIALS');
     setTempToken('');
     setEmpresas([]);
-    setCredentials((prev) => ({ ...prev, empresa: '' }));
-    setError('');
+    setSectores([]);
+    setIdEmpresaPendiente(null);
+    setCredentials((prev) => ({ ...prev, empresa: '', sector: '' }));
   };
 
   return {
@@ -222,10 +334,11 @@ export function useLoginForm() {
     showPassword,
     loginStep,
     empresas,
+    sectores,
     handleInputChange,
     handleRememberMeChange,
     handleSubmit,
     togglePasswordVisibility,
-    volverACredenciales,
+    volverAtras,
   };
-};
+}

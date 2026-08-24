@@ -8,7 +8,7 @@ import {
   guardarInfoEmpresaLocal,
   obtenerInfoEmpresa,
 } from '../services/empresaService';
-import { getIdEmpresaFromToken } from '../utils/jwtSession';
+import { getIdEmpresaFromToken, getIdSectorFromToken } from '../utils/jwtSession';
 import { clearTenantUiCaches } from '../utils/sessionCaches';
 import { authService } from '../services/authService';
 import { startSessionActivityMonitor, simulateIdleLogout } from '../utils/sessionActivity';
@@ -66,6 +66,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         const parsedSector = JSON.parse(storedSector);
         setSectorSeleccionado(parsedSector);
         setIdsector(parsedSector.idSector || '');
+      } else {
+        const fromJwt = getIdSectorFromToken();
+        if (fromJwt) setIdsector(fromJwt);
       }
     } catch (err) {
       console.error('Error al cargar sector desde localStorage:', err);
