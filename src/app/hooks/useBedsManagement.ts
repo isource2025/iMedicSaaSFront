@@ -150,33 +150,40 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		void fetchSectores();
 	}, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated, idEmpresa]);
 
-	// Sector: filtro de esta sesión > URL > sector de login > Todos
+	// Sector: filtro de esta sesión > URL > sector de login (principal) > Todos.
+	// El combo lista todos los I; el del personal solo preselecciona.
 	useEffect(() => {
 		if (sectors.length === 0) return;
-		const sectorExiste = (sectorId: string) =>
-			sectorId === 'all' || sectors.some((s) => s.valor === sectorId);
+		const norm = (v: string) => String(v || '').trim().toUpperCase();
+		const matchCatalog = (sectorId: string) => {
+			const k = norm(sectorId);
+			if (!k || k === 'ALL') return null;
+			return sectors.find((s) => norm(s.valor) === k)?.valor || null;
+		};
 
-		const stored = getStoredBedsListFilters()?.sector;
-		if (stored && sectorExiste(stored)) {
+		const storedRaw = String(getStoredBedsListFilters()?.sector || '').trim();
+		if (storedRaw.toLowerCase() === 'all') {
+			setSectorFilter('all');
+			return;
+		}
+		const stored = matchCatalog(storedRaw);
+		if (stored) {
 			setSectorFilter(stored);
 			return;
 		}
 
-		const fromUrl = String(urlSector || '').trim();
-		if (fromUrl && sectorExiste(fromUrl)) {
+		const fromUrl = matchCatalog(String(urlSector || '').trim());
+		if (fromUrl) {
 			setSectorFilter(fromUrl);
 			setStoredBedsListFilters({ sector: fromUrl });
 			return;
 		}
 
-		if (idsector && sectorExiste(idsector)) {
-			setSectorFilter(idsector);
-			setStoredBedsListFilters({ sector: idsector });
-			return;
-		}
-		if (sectorSeleccionado?.idSector && sectorExiste(sectorSeleccionado.idSector)) {
-			setSectorFilter(sectorSeleccionado.idSector);
-			setStoredBedsListFilters({ sector: sectorSeleccionado.idSector });
+		const fromLogin =
+			matchCatalog(idsector || '') || matchCatalog(sectorSeleccionado?.idSector || '');
+		if (fromLogin) {
+			setSectorFilter(fromLogin);
+			setStoredBedsListFilters({ sector: fromLogin });
 			return;
 		}
 		setSectorFilter('all');
@@ -238,7 +245,10 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		return beds
 			.filter((bed) => {
 				const estadoMatch = filter === 'all' || bed.valorEstadoOriginal === filter;
-				const sectorMatch = sectorFilter === 'all' || bed.sector === sectorFilter;
+				const sectorMatch =
+					sectorFilter === 'all' ||
+					String(bed.sector || '').trim().toUpperCase() ===
+						String(sectorFilter || '').trim().toUpperCase();
 				const servicioMatch =
 					servicioFilter === 'all' ||
 					bed.servicioMedicoDescripcion === servicioFilter;
