@@ -423,27 +423,64 @@ export const replacePersonalAsignaciones = async (
 	}
 };
 
+function pickCatalogoField(row: Record<string, unknown>, ...names: string[]): string {
+	const lower: Record<string, unknown> = {};
+	for (const [k, v] of Object.entries(row || {})) {
+		lower[String(k).toLowerCase().trim()] = v;
+	}
+	for (const n of names) {
+		const v = lower[n.toLowerCase()] ?? row[n];
+		if (v != null && String(v).trim() !== '') return String(v).trim();
+	}
+	return '';
+}
+
+function mapSectorCatalogoRow(row: Record<string, unknown> | null | undefined) {
+	const r = row || {};
+	const IdSector = pickCatalogoField(
+		r,
+		'IdSector',
+		'idSector',
+		'idsector',
+		'Valor',
+		'valor',
+	);
+	if (!IdSector || IdSector === '0') return null;
+	return {
+		IdSector,
+		Descripcion: pickCatalogoField(r, 'Descripcion', 'descripcion', 'descripcionSector') || IdSector,
+		ValorServicio: pickCatalogoField(r, 'ValorServicio', 'valorServicio'),
+		DescripcionServicio: pickCatalogoField(r, 'DescripcionServicio', 'descripcionServicio'),
+	};
+}
+
 /** Catálogo global de sectores (imSectores). */
 export const getSectoresCatalogo = async (): Promise<
 	{ IdSector: string; Descripcion: string; ValorServicio?: string; DescripcionServicio?: string }[]
 > => {
-	try {
-		const res = await apiService.get<{
-			success: boolean;
-			data: Record<string, unknown>[];
-		}>('/sectores');
-		const rows = res.data?.data;
-		return (Array.isArray(rows) ? rows : [])
-			.map((r) => ({
-				IdSector: String(r.IdSector ?? r.idSector ?? r.Valor ?? r.valor ?? r.id ?? '').trim(),
-				Descripcion: String(r.Descripcion ?? r.descripcion ?? '').trim(),
-				ValorServicio: String(r.ValorServicio ?? r.valorServicio ?? '').trim(),
-				DescripcionServicio: String(r.DescripcionServicio ?? r.descripcionServicio ?? '').trim(),
-			}))
-			.filter((r) => r.IdSector);
-	} catch {
-		return [];
+	const parse = (payload: unknown) => {
+		const body = payload as { data?: unknown; success?: boolean } | unknown[] | undefined;
+		const rows = Array.isArray(body)
+			? body
+			: Array.isArray((body as { data?: unknown })?.data)
+				? ((body as { data: unknown[] }).data)
+				: [];
+		return (rows as Record<string, unknown>[])
+			.map(mapSectorCatalogoRow)
+			.filter((s): s is NonNullable<typeof s> => Boolean(s));
+	};
+
+	const urls = ['/personal/catalogos/sectores', '/sectores', '/auth/sectores'];
+	for (const url of urls) {
+		try {
+			const res = await apiService.get<{ success: boolean; data: Record<string, unknown>[] }>(url);
+			const out = parse(res.data);
+			if (out.length) return out;
+		} catch (err) {
+			console.error(`[personal] catálogo sectores ${url}:`, err);
+		}
 	}
+	return [];
 };
 
 export const getPersonalCodigosFacturacion = async (

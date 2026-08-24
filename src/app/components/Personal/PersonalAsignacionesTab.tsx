@@ -62,6 +62,9 @@ export default function PersonalAsignacionesTab({
 				);
 				if (cancelled) return;
 				setSecCatalogo(secCat);
+				if (!secCat.length) {
+					setError('No se pudieron cargar los sectores del hospital. Probá de nuevo o revisá Configuración → Sectores.');
+				}
 
 				if (draft) {
 					setSecAsignados([]);
