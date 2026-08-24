@@ -37,6 +37,7 @@ const STEMS: { keys: string[]; stem: string }[] = [
 	{ keys: ['KINESIO', 'FISIOTER', 'REHABILIT'], stem: 'KINE' },
 	{ keys: ['NUTRIC'], stem: 'NUTRI' },
 	{ keys: ['HEMOTER'], stem: 'HEMO' },
+	{ keys: ['CIRUG'], stem: 'CIR' },
 	{ keys: ['GUARDIA', 'EMERGENC'], stem: 'GUARDIA' },
 	{ keys: ['CUIDADOS INTENS', 'TERAPIA INTENS'], stem: 'UTI' },
 ];
