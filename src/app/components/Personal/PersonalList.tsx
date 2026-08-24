@@ -76,7 +76,8 @@ export default function PersonalList({
 		v == null ? null : mapNum.byEsp.get(v) || null;
 	const descCat = (v: number | null) =>
 		v == null ? null : mapNum.byCat.get(v) || null;
-	const descSv = (v: string | null) => etiquetaCatalogo(mapSv, v) || null;
+	const descSv = (p: Personal) =>
+		etiquetaCatalogo(mapSv, p.ValorServicio, p.ServicioDescripcion) || null;
 
 	const toggleExpand = (id: number) =>
 		setExpandedId((prev) => (prev === id ? null : id));
@@ -147,7 +148,7 @@ export default function PersonalList({
 										: null;
 								const espDesc = descEsp(p.ValorEspecialidad);
 								const catDesc = descCat(p.ValorCategoria);
-								const svDesc = descSv(p.ValorServicio);
+								const svDesc = descSv(p);
 								return (
 									<tr
 										key={p.Valor}
@@ -318,10 +319,10 @@ export default function PersonalList({
 												<span>{p.Domicilio}</span>
 											</div>
 										) : null}
-										{descSv(p.ValorServicio) ? (
+										{descSv(p) ? (
 											<div className={styles.mobileDetail}>
 												<span className={styles.mobileDetailLabel}>Servicio</span>
-												<span>{descSv(p.ValorServicio)}</span>
+												<span>{descSv(p)}</span>
 											</div>
 										) : null}
 										{descCat(p.ValorCategoria) ? (

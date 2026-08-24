@@ -128,10 +128,15 @@ export const getServicios = async (): Promise<CatalogoItemTexto[]> => {
 		);
 		const rows = res.data.success && res.data.data ? res.data.data : [];
 		return rows
-			.map((r) => ({
-				valor: String(r?.valor ?? '').trim(),
-				descripcion: String(r?.descripcion ?? '').trim(),
-			}))
+			.map((r) => {
+				const row = (r || {}) as unknown as Record<string, unknown>;
+				return {
+					valor: String(
+						row.valor ?? row.Valor ?? row.id ?? row.IdServicio ?? row.idServicio ?? '',
+					).trim(),
+					descripcion: String(row.descripcion ?? row.Descripcion ?? '').trim(),
+				};
+			})
 			.filter((r) => r.valor);
 	} catch {
 		return [];
@@ -281,7 +286,9 @@ export const deletePersonalFirma = async (id: number): Promise<void> => {
 function mapServicioAsignado(s: Record<string, unknown> | null | undefined): PersonalServicioAsignado {
 	const row = s || {};
 	return {
-		idServicio: String(row.idServicio ?? row.IdServicio ?? '').trim(),
+		idServicio: String(
+			row.idServicio ?? row.IdServicio ?? row.id ?? row.valor ?? row.Valor ?? '',
+		).trim(),
 		Descripcion: String(row.Descripcion ?? row.descripcion ?? '').trim(),
 	};
 }

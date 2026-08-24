@@ -18,6 +18,8 @@ export interface Personal {
 	ValorEspecialidad: number | null;
 	ValorFunciones: number | null;
 	ValorServicio: string | null;
+	/** Descripción resuelta del servicio (nunca el código). */
+	ServicioDescripcion?: string | null;
 	/** Servicio para facturación (columna `ValorServicioParaFacturar` en BD). */
 	ValorServicioParaFacturar: string | null;
 	ValorCategoria: number | null;

@@ -23,7 +23,7 @@ export function clavesCatalogo(valor: string | number | null | undefined): strin
 		const sinCeros = compact.replace(/^0+/, '');
 		if (sinCeros) keys.add(sinCeros);
 	}
-	return [...keys];
+	return Array.from(keys);
 }
 
 function esMismoCodigo(desc: string, codigo: string): boolean {
@@ -35,8 +35,13 @@ function esMismoCodigo(desc: string, codigo: string): boolean {
 export function mapaCatalogoTexto(items: ItemCatalogoTexto[] | undefined | null): Map<string, string> {
 	const map = new Map<string, string>();
 	for (const item of items || []) {
-		const valor = limpio(item?.valor);
-		const desc = limpio(item?.descripcion);
+		const raw = item as ItemCatalogoTexto & {
+			id?: string | number | null;
+			Valor?: string | number | null;
+			Descripcion?: string | null;
+		};
+		const valor = limpio(raw?.valor ?? raw?.Valor ?? raw?.id);
+		const desc = limpio(raw?.descripcion ?? raw?.Descripcion);
 		if (!valor || !desc || esMismoCodigo(desc, valor)) continue;
 		for (const k of clavesCatalogo(valor)) {
 			if (!map.has(k)) map.set(k, desc);

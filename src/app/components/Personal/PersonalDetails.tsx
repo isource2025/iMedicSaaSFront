@@ -72,8 +72,8 @@ export default function PersonalDetails({
 
 	const descNum = (list: CatalogoItemNumerico[], val: number | null) =>
 		val == null ? '-' : list.find((i) => i.valor === val)?.descripcion || '-';
-	const descTxt = (list: CatalogoItemTexto[], val: string | null) =>
-		etiquetaCatalogo(list, val) || '-';
+	const descTxt = (list: CatalogoItemTexto[], val: string | null, extra?: string | null) =>
+		etiquetaCatalogo(list, val, extra) || '-';
 
 	return (
 		<div className={modalStyles.wrap}>
@@ -167,7 +167,9 @@ export default function PersonalDetails({
 					</div>
 					<div className={styles.item}>
 						<div className={modalStyles.label}>Servicio</div>
-						<div className={styles.value}>{descTxt(servicios, personal.ValorServicio)}</div>
+						<div className={styles.value}>
+							{descTxt(servicios, personal.ValorServicio, personal.ServicioDescripcion)}
+						</div>
 					</div>
 					<div className={styles.item}>
 						<div className={modalStyles.label}>Servicio (facturación)</div>

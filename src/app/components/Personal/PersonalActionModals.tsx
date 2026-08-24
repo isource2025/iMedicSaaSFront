@@ -420,7 +420,7 @@ export default function PersonalActionModals({
 										.filter((o) => !srvPedidos.some((a) => a.idServicio === o.valor))
 										.map((o) => (
 											<option key={o.valor} value={o.valor}>
-												{etiquetaCatalogo(catServicios, o.valor, o.descripcion) || o.descripcion}
+												{etiquetaCatalogo(catServicios, o.valor, o.descripcion) || '—'}
 											</option>
 										))}
 								</select>
