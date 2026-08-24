@@ -116,8 +116,15 @@ axiosInstance.interceptors.response.use(
 				console.error('Server error. Please try again later.');
 			}
 		} else {
-			// Handle network errors
-			console.error('Network error. Please check your connection.');
+			const code = String(error?.code || '');
+			const canceled =
+				error?.name === 'CanceledError' ||
+				error?.name === 'AbortError' ||
+				code === 'ERR_CANCELED' ||
+				code === 'ECONNABORTED';
+			if (!canceled) {
+				console.error('Network error. Please check your connection.');
+			}
 		}
 
 		return Promise.reject(error);

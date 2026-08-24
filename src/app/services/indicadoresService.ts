@@ -67,7 +67,7 @@ export const obtenerIndicadores = async (
         fechaInicio,
         fechaFin
       },
-      timeout: 10000
+      timeout: 30000
     });
 
     if (response.data.success) {
@@ -167,7 +167,7 @@ export const obtenerIndicadoresPorFecha = async (
 export const obtenerResumenPacientesHoy = async (): Promise<ResumenPacientesHoy> => {
   try {
     const response = await axiosInstance.get<ResumenPacientesHoyResponse>('/indicadores/pacientes/resumen-hoy', {
-      timeout: 10000
+      timeout: 30000
     });
 
     if (response.data.success) {

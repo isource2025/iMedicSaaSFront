@@ -106,7 +106,12 @@ export class InternacionActivityService extends ActivityService {
 
       return result.data || [];
     } catch (error) {
-      console.error('Error al obtener movimientos de internación:', error);
+      const aborted =
+        error instanceof Error &&
+        (error.name === 'AbortError' || error.name === 'CanceledError');
+      if (!aborted) {
+        console.error('Error al obtener movimientos de internación:', error);
+      }
       return FALLBACK_MOVIMIENTOS.slice(0, limite);
     }
   }

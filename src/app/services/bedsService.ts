@@ -158,7 +158,7 @@ export const bedsService = {
 					camasOcupadas?: number;
 					camasNoDisponibles?: number;
 				}>
-			>('/beds/total');
+			>('/beds/total', { timeout: 30000 });
 
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener total de camas');
 

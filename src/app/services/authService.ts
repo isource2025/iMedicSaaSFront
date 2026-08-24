@@ -7,7 +7,9 @@ import { clearTenantUiCaches } from '@/app/utils/sessionCaches';
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
-      const response = await apiService.post<LoginResponse>('/auth/login', credentials);
+      const response = await apiService.post<LoginResponse>('/auth/login', credentials, {
+        timeout: 45000,
+      });
       return response.data;
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error) {
