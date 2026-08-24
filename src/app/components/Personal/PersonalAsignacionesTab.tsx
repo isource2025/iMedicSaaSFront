@@ -115,20 +115,11 @@ export default function PersonalAsignacionesTab({
 		extra?: SectorCatalogo | PersonalSectorAsignado,
 	): { text: string; title: string } | null => {
 		const cat = secCatalogo.find((c) => c.IdSector === id);
-		const code = String(
-			cat?.ValorServicio || extra?.ValorServicio || '',
-		).trim();
-		const desc = String(
-			cat?.DescripcionServicio || extra?.DescripcionServicio || '',
-		).trim();
-		if (code) {
-			return {
-				text: code,
-				title: desc && desc.toUpperCase() !== code.toUpperCase() ? `${desc} (${code})` : code,
-			};
-		}
-		if (desc) return { text: desc, title: desc };
-		return null;
+		const code = String(cat?.ValorServicio || extra?.ValorServicio || '').trim();
+		const desc = String(cat?.DescripcionServicio || extra?.DescripcionServicio || '').trim();
+		if (!code && !desc) return null;
+		const title = [desc, code].filter(Boolean).join(' · ');
+		return { text: code || desc, title: title || code || desc };
 	};
 
 	const filaSector = (

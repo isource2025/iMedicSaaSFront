@@ -437,14 +437,8 @@ function pickCatalogoField(row: Record<string, unknown>, ...names: string[]): st
 
 function mapSectorCatalogoRow(row: Record<string, unknown> | null | undefined) {
 	const r = row || {};
-	const IdSector = pickCatalogoField(
-		r,
-		'IdSector',
-		'idSector',
-		'idsector',
-		'Valor',
-		'valor',
-	);
+	if (pickCatalogoField(r, 'IdServicio', 'idServicio')) return null;
+	const IdSector = pickCatalogoField(r, 'IdSector', 'idSector', 'idsector', 'Valor', 'valor', 'id');
 	if (!IdSector || IdSector === '0') return null;
 	return {
 		IdSector,
