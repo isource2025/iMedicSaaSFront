@@ -175,18 +175,22 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	/**
 	 * Visibilidad del GRUPO entero.
 	 *
-	 * Gestión Médica: se muestra si puede ESCRIBIR en HC / evoluciones / indicaciones
-	 * (enfermero con solo lectura clínica no ve el grupo médico).
+	 * Gestión Médica: se muestra con VER o CREAR en HC / evoluciones / indicaciones.
+	 * Administrativo tiene lectura clínica y debe ver el grupo; las acciones de
+	 * escritura siguen gated dentro de cada sección. Enfermero conserva solo
+	 * lectura clínica pero no el menú médico (sigue usando Gestión Enfermería).
 	 *
 	 * Gestión Enfermería: se muestra con VER o CREAR. El médico tiene lectura
 	 * de enfermería en la matriz; antes el grupo exigía CREAR y quedaba oculto.
 	 * Las acciones de escritura siguen gated dentro de cada sección.
 	 */
+	const esEnfermero = loaded && String(rol?.nombre || '').toUpperCase() === 'ENFERMERO';
 	const puedeGestionMedica = !loaded
 		? true
-		: puede('INTERNACION.HISTORIA_CLINICA.CREAR') ||
-		  puede('INTERNACION.EVOLUCIONES.CREAR') ||
-		  puede('INTERNACION.INDICACIONES.CREAR');
+		: !esEnfermero &&
+		  (puedeSubmodulo('INTERNACION', 'HISTORIA_CLINICA') ||
+			puedeSubmodulo('INTERNACION', 'EVOLUCIONES') ||
+			puedeSubmodulo('INTERNACION', 'INDICACIONES'));
 
 	const puedeGestionEnfermeria = !loaded
 		? true
