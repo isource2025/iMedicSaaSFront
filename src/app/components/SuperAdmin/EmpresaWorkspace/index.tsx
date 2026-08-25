@@ -21,8 +21,7 @@ import EmpresaResumen from './EmpresaResumen';
 import SeccionDatos from './SeccionDatos';
 import SeccionInfra from './SeccionInfra';
 import SeccionModulos from './SeccionModulos';
-import SeccionSectores from './SeccionSectores';
-import SeccionServicios from './SeccionServicios';
+import SeccionCatalogos from './SeccionCatalogos';
 import SeccionUsuarios from './SeccionUsuarios';
 import SeccionCobranza from './SeccionCobranza';
 import styles from '../superAdmin.module.css';
@@ -32,8 +31,7 @@ const SECCIONES: { id: EmpresaSeccion; label: string }[] = [
   { id: 'datos', label: 'Datos' },
   { id: 'infra', label: 'Infra' },
   { id: 'modulos', label: 'Módulos' },
-  { id: 'sectores', label: 'Sectores' },
-  { id: 'servicios', label: 'Servicios' },
+  { id: 'catalogos', label: 'Sectores y servicios' },
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'cobranza', label: 'Cobranza' },
 ];
@@ -46,8 +44,10 @@ export default function EmpresaWorkspace({ id }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const seccionParam = searchParams.get('seccion');
-  const seccion: EmpresaSeccion = SECCION_IDS.has(seccionParam as EmpresaSeccion)
-    ? (seccionParam as EmpresaSeccion)
+  const seccionMapped =
+    seccionParam === 'sectores' || seccionParam === 'servicios' ? 'catalogos' : seccionParam;
+  const seccion: EmpresaSeccion = SECCION_IDS.has(seccionMapped as EmpresaSeccion)
+    ? (seccionMapped as EmpresaSeccion)
     : 'resumen';
 
   const [empresa, setEmpresa] = useState<EmpresaAdmin | null>(null);
@@ -190,18 +190,10 @@ export default function EmpresaWorkspace({ id }: Props) {
       {seccion === 'modulos' && (
         <SeccionModulos empresa={empresa} catalogos={catalogos} onUpdated={(e) => void onUpdated(e)} onError={setError} />
       )}
-      {seccion === 'sectores' && (
-        <SeccionSectores
+      {seccion === 'catalogos' && (
+        <SeccionCatalogos
           empresa={empresa}
           sectores={sectores}
-          onRefresh={refreshCatalogos}
-          onUpdated={(e) => void onUpdated(e)}
-          onError={setError}
-        />
-      )}
-      {seccion === 'servicios' && (
-        <SeccionServicios
-          empresa={empresa}
           servicios={servicios}
           onRefresh={refreshCatalogos}
           onUpdated={(e) => void onUpdated(e)}
