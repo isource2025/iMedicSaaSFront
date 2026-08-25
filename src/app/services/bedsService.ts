@@ -23,12 +23,15 @@ export function normalizarTipoRecurso(raw: unknown): BedTipoRecurso {
 function mapBedItem(item: Record<string, unknown>): Bed {
 	const tipoRaw = item.Tipo ?? item.tipo ?? item.TIPO ?? '';
 	const numeroVisita = Number(item.NumeroVisita ?? item.numeroVisita ?? 0);
+	const sector = String(item.ValorSector ?? item.sector ?? '').trim();
+	const numeroCama = String(item.ValorHabitacionCama ?? item.numeroCama ?? '').trim();
+	const composed = sector && numeroCama ? `${sector}-${numeroCama}` : '';
+	const rawId = String(item.id || '').trim();
+	const id = composed || rawId;
 	return {
-		id:
-			String(item.id || '') ||
-			`${item.ValorSector ?? item.sector}-${item.ValorHabitacionCama ?? item.numeroCama}`,
-		sector: String(item.ValorSector ?? item.sector ?? ''),
-		numeroCama: String(item.ValorHabitacionCama ?? item.numeroCama ?? ''),
+		id,
+		sector,
+		numeroCama,
 		estado: parseEstado(String(item.ValorEstadoCama ?? item.estado ?? '')),
 		valorEstadoOriginal: String(item.ValorEstadoCama ?? item.valorEstadoOriginal ?? ''),
 		estadoDescripcion: String(item.EstadoDescripcion || item.estadoDescripcion || ''),
