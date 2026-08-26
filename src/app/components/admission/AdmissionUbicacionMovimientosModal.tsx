@@ -22,6 +22,7 @@ import styles from './AdmissionUbicacionMovimientosModal.module.css';
 import ConfirmationModal from '@/app/components/beds/shared/ConfirmationModal';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import type { EstadoRevertirEgreso } from '@/app/services/visitaMovimientoService';
+import ModalAsignarCamaAVisita from '@/app/components/modals/ModalAsignarCamaAVisita';
 
 type Props = {
   isOpen: boolean;
@@ -124,6 +125,7 @@ export default function AdmissionUbicacionMovimientosModal({
   const [estadoRevertir, setEstadoRevertir] = useState<EstadoRevertirEgreso | null>(null);
   const [confirmarLimpiar, setConfirmarLimpiar] = useState(false);
   const [aviso, setAviso] = useState<{ title: string; message: string; tone: MessageModalTone } | null>(null);
+  const [asignarCamaOpen, setAsignarCamaOpen] = useState(false);
   const puedeRevertirEgreso = esAdminClinico();
 
   const load = useCallback(async () => {
@@ -258,6 +260,7 @@ export default function AdmissionUbicacionMovimientosModal({
   const bedId = hab;
   const yaEgresado = Boolean(visita?.FechaEgreso);
   const canEgreso = Boolean(numeroVisita);
+  const sinCama = Boolean(numeroVisita) && !yaEgresado && !hab;
 
   const onEgresoRapido = async () => {
     if (!numeroVisita || !fechaEgreso || !horaEgreso) {
@@ -399,6 +402,18 @@ export default function AdmissionUbicacionMovimientosModal({
                   <input className={styles.readonly} value={servicio || '—'} readOnly />
                 </label>
               </div>
+              {sinCama ? (
+                <div className={styles.actions} style={{ marginTop: 10 }}>
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    disabled={loading}
+                    onClick={() => setAsignarCamaOpen(true)}
+                  >
+                    Asignar cama
+                  </button>
+                </div>
+              ) : null}
             </section>
           ) : null}
 
@@ -571,6 +586,20 @@ export default function AdmissionUbicacionMovimientosModal({
         tone={aviso?.tone || 'info'}
         onClose={() => setAviso(null)}
       />
+      {numeroVisita ? (
+        <ModalAsignarCamaAVisita
+          isOpen={asignarCamaOpen}
+          onClose={() => setAsignarCamaOpen(false)}
+          onSuccess={() => {
+            setAsignarCamaOpen(false);
+            void load();
+          }}
+          numeroVisita={numeroVisita}
+          pacienteNombre={String(visita?.ApellidoYNombre || '').trim()}
+          diagnostico={String(visita?.Diagnostico || '').trim()}
+          clasePacienteDefault={String(visita?.ClasePaciente || 'I').trim() || 'I'}
+        />
+      ) : null}
     </>
   );
 
