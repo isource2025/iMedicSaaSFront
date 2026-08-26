@@ -96,6 +96,26 @@ function etiquetaOperadorGuardado(visita: AdmissionDatosPrincipalesVisita | null
   return '';
 }
 
+/** Clarion 0 / null / época 1800-12-28 no cuentan como egreso real. */
+function tieneEgresoGuardado(visita: AdmissionDatosPrincipalesVisita | null | undefined): boolean {
+  if (!visita) return false;
+  const clarion = Number(visita.FechaEgresoClarion);
+  if (Number.isFinite(clarion) && visita.FechaEgresoClarion != null) return clarion > 0;
+  const raw = visita.FechaEgreso;
+  if (raw == null || raw === '') return false;
+  if (typeof raw === 'number') return Number(raw) > 0;
+  const iso = String(raw).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const y = Number(iso.slice(0, 4));
+  return y >= 1900;
+}
+
+function fechaEgresoFormularioValida(iso: string): boolean {
+  const fe = String(iso || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fe)) return false;
+  return Number(fe.slice(0, 4)) >= 1900;
+}
+
 export default function AdmissionUbicacionMovimientosModal({
   isOpen,
   numeroVisita,
@@ -163,7 +183,7 @@ export default function AdmissionUbicacionMovimientosModal({
       setDispCatalogo(catalogoDisposiciones(disp || []));
       const fe = String(payload.visita.FechaEgreso || '').slice(0, 10);
       const he = String(payload.visita.HoraEgreso || '').slice(0, 5);
-      const tieneEgreso = /^\d{4}-\d{2}-\d{2}$/.test(fe);
+      const tieneEgreso = fechaEgresoFormularioValida(fe) && tieneEgresoGuardado(payload.visita);
       if (tieneEgreso) {
         setFechaEgreso(fe);
         setHoraEgreso(/^\d{2}:\d{2}/.test(he) ? he.slice(0, 5) : '');
@@ -258,10 +278,42 @@ export default function AdmissionUbicacionMovimientosModal({
   ).trim();
 
   const bedId = hab;
-  const yaEgresado = Boolean(visita?.FechaEgreso);
+  const yaEgresado = tieneEgresoGuardado(visita);
   const canEgreso = Boolean(numeroVisita);
   /** Sin habitación/cama actual (cabecera o último movimiento). */
   const sinUbicacion = Boolean(numeroVisita) && !hab;
+
+  const bloqueAsignarCama = sinUbicacion ? (
+    <div className={styles.actions} style={{ marginTop: 10 }}>
+      {yaEgresado ? (
+        <>
+          <p className={styles.hintSinCama}>
+            Esta visita figura egresada y sin cama. Revertí el egreso para poder
+            asignarle una ubicación.
+          </p>
+          {puedeRevertirEgreso ? (
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              disabled={loading || revertBusy}
+              onClick={() => void onRevertirEgreso()}
+            >
+              {revertBusy ? 'Revisando…' : 'Revertir egreso y asignar cama'}
+            </button>
+          ) : null}
+        </>
+      ) : (
+        <button
+          type="button"
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          disabled={loading}
+          onClick={() => setAsignarCamaOpen(true)}
+        >
+          Asignar cama
+        </button>
+      )}
+    </div>
+  ) : null;
 
   const onEgresoRapido = async () => {
     if (!numeroVisita || !fechaEgreso || !horaEgreso) {
@@ -408,37 +460,7 @@ export default function AdmissionUbicacionMovimientosModal({
                   <input className={styles.readonly} value={servicio || '—'} readOnly />
                 </label>
               </div>
-              {sinUbicacion ? (
-                <div className={styles.actions} style={{ marginTop: 10 }}>
-                  {yaEgresado ? (
-                    <>
-                      <p className={styles.hintSinCama}>
-                        Esta visita figura egresada y sin cama. Revertí el egreso para poder
-                        asignarle una ubicación.
-                      </p>
-                      {puedeRevertirEgreso ? (
-                        <button
-                          type="button"
-                          className={`${styles.btn} ${styles.btnPrimary}`}
-                          disabled={loading || revertBusy}
-                          onClick={() => void onRevertirEgreso()}
-                        >
-                          {revertBusy ? 'Revisando…' : 'Revertir egreso y asignar cama'}
-                        </button>
-                      ) : null}
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className={`${styles.btn} ${styles.btnPrimary}`}
-                      disabled={loading}
-                      onClick={() => setAsignarCamaOpen(true)}
-                    >
-                      Asignar cama
-                    </button>
-                  )}
-                </div>
-              ) : null}
+              {showUbicacion ? bloqueAsignarCama : null}
             </section>
           ) : null}
 
@@ -456,6 +478,7 @@ export default function AdmissionUbicacionMovimientosModal({
           {showEgreso ? (
             <section className={embedded ? styles.sectionFlat : styles.section}>
               {!embedded ? <h3 className={styles.sectionTitle}>Egreso</h3> : null}
+              {!showUbicacion ? bloqueAsignarCama : null}
               <div className={styles.egresoGrid}>
                 <label className={styles.field}>
                   <span>Fecha de egreso</span>
