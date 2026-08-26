@@ -23,6 +23,7 @@ import ConfirmationModal from '@/app/components/beds/shared/ConfirmationModal';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import type { EstadoRevertirEgreso } from '@/app/services/visitaMovimientoService';
 import ModalAsignarCamaAVisita from '@/app/components/modals/ModalAsignarCamaAVisita';
+import ModalCambiarCama from '@/app/components/modals/ModalCambiarCama';
 
 type Props = {
   isOpen: boolean;
@@ -146,6 +147,7 @@ export default function AdmissionUbicacionMovimientosModal({
   const [confirmarLimpiar, setConfirmarLimpiar] = useState(false);
   const [aviso, setAviso] = useState<{ title: string; message: string; tone: MessageModalTone } | null>(null);
   const [asignarCamaOpen, setAsignarCamaOpen] = useState(false);
+  const [cambiarCamaOpen, setCambiarCamaOpen] = useState(false);
   const puedeRevertirEgreso = esAdminClinico();
 
   const load = useCallback(async () => {
@@ -312,6 +314,17 @@ export default function AdmissionUbicacionMovimientosModal({
           Asignar cama
         </button>
       )}
+    </div>
+  ) : !yaEgresado ? (
+    <div className={styles.actions} style={{ marginTop: 10 }}>
+      <button
+        type="button"
+        className={`${styles.btn} ${styles.btnPrimary}`}
+        disabled={loading}
+        onClick={() => setCambiarCamaOpen(true)}
+      >
+        Cambiar cama
+      </button>
     </div>
   ) : null;
 
@@ -646,6 +659,34 @@ export default function AdmissionUbicacionMovimientosModal({
           pacienteNombre={String(visita?.ApellidoYNombre || '').trim()}
           diagnostico={String(visita?.Diagnostico || '').trim()}
           clasePacienteDefault={String(visita?.ClasePaciente || 'I').trim() || 'I'}
+        />
+      ) : null}
+      {numeroVisita && hab ? (
+        <ModalCambiarCama
+          isOpen={cambiarCamaOpen}
+          onClose={() => setCambiarCamaOpen(false)}
+          onSuccess={() => {
+            setCambiarCamaOpen(false);
+            void load();
+          }}
+          numeroVisita={numeroVisita}
+          bedId={hab}
+          bedSector={sector}
+          sectorInfo={
+            sector
+              ? {
+                  id: sector,
+                  valor: sector,
+                  descripcion: sectorDesc || sector,
+                }
+              : null
+          }
+          header={{
+            nombre: String(visita?.ApellidoYNombre || '').trim() || undefined,
+            documento: visita?.NumeroDocumento != null ? String(visita.NumeroDocumento) : undefined,
+            sector: sector || undefined,
+            numeroCama: hab || undefined,
+          }}
         />
       ) : null}
     </>
