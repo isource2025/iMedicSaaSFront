@@ -76,6 +76,7 @@ export default function ModalAsignarCamaAVisita({
       return;
     }
 
+    let cancelled = false;
     const now = new Date();
     setFechaIngreso(fechaLocalISO(now));
     setHoraIngreso(horaLocalHHMM(now));
@@ -83,8 +84,9 @@ export default function ModalAsignarCamaAVisita({
     setSuccess(false);
     setError(null);
 
-    getClasesPaciente()
+    void getClasesPaciente()
       .then((rows) => {
+        if (cancelled) return;
         const list = Array.isArray(rows) ? rows : [];
         setClasesPaciente(list);
         const def = (clasePacienteDefault || CLASE_INTERNADO).trim().toUpperCase();
@@ -93,10 +95,20 @@ export default function ModalAsignarCamaAVisita({
           list.find((c) => /INTERN/i.test(String(c.Descripcion || '')));
         if (match?.Valor != null) setClasePaciente(String(match.Valor).trim());
       })
-      .catch(() => setError('No se pudieron cargar las clases de paciente'));
+      .catch(() => {
+        if (!cancelled) setError('No se pudieron cargar las clases de paciente');
+      });
 
-    void refreshBeds().then(() => setLastUpdateTime(Date.now()));
-  }, [isOpen, clasePacienteDefault, refreshBeds]);
+    void refreshBeds().then(() => {
+      if (!cancelled) setLastUpdateTime(Date.now());
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // Solo al abrir: refreshBeds estable vía useCallback; no re-disparar en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open gate
+  }, [isOpen, clasePacienteDefault]);
 
   const camasDisponibles = useMemo(
     () =>
@@ -290,12 +302,15 @@ export default function ModalAsignarCamaAVisita({
               <div className={styles.camasBox}>
                 <h3 className={styles.camasTitle}>
                   Camas disponibles ({camasDisponibles.length})
+                  {loadingBeds && camasDisponibles.length > 0 ? (
+                    <span className={styles.camasRefreshing}> · actualizando…</span>
+                  ) : null}
                 </h3>
-                {loadingBeds ? (
+                {loadingBeds && camasDisponibles.length === 0 ? (
                   <div className={styles.loadingWrap}>
                     <Loader />
                   </div>
-                ) : errorBeds ? (
+                ) : errorBeds && camasDisponibles.length === 0 ? (
                   <div className={styles.errorMessage}>{errorBeds}</div>
                 ) : camasDisponibles.length === 0 ? (
                   <div className={styles.emptyState}>

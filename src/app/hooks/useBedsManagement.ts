@@ -341,6 +341,8 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 			);
 	}, [beds, filter, sectorFilter, servicioFilter, searchTerm, tipoRecursoFilter]);
 
+	const refreshBeds = useCallback(() => fetchBeds({ silent: false }), [fetchBeds]);
+
 	return {
 		beds: filteredBeds,
 		allBeds: beds,
@@ -359,7 +361,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		setSearchTerm,
 		tipoRecursoFilter,
 		setTipoRecursoFilter,
-		refreshBeds: () => fetchBeds({ silent: false }),
+		refreshBeds,
 		autoRefresh,
 		setAutoRefresh,
 		refreshInterval,

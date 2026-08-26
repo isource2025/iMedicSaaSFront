@@ -10,8 +10,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export const getClasesPaciente = async (): Promise<ClasePaciente[]> => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
-    
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const response = await apiFetch(`${API_URL}/clases-paciente`, {
       method: 'GET',
       headers: {
@@ -19,17 +19,20 @@ export const getClasesPaciente = async (): Promise<ClasePaciente[]> => {
       },
       signal: controller.signal
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error al obtener clases de paciente:', error);
+    const name = error instanceof Error ? error.name : '';
+    if (name !== 'AbortError') {
+      console.error('Error al obtener clases de paciente:', error);
+    }
     return [];
   }
 };
