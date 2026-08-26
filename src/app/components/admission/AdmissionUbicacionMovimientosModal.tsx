@@ -260,7 +260,8 @@ export default function AdmissionUbicacionMovimientosModal({
   const bedId = hab;
   const yaEgresado = Boolean(visita?.FechaEgreso);
   const canEgreso = Boolean(numeroVisita);
-  const sinCama = Boolean(numeroVisita) && !yaEgresado && !hab;
+  /** Sin habitación/cama actual (cabecera o último movimiento). */
+  const sinUbicacion = Boolean(numeroVisita) && !hab;
 
   const onEgresoRapido = async () => {
     if (!numeroVisita || !fechaEgreso || !horaEgreso) {
@@ -322,12 +323,17 @@ export default function AdmissionUbicacionMovimientosModal({
       setError('');
       const res = await visitaMovimientoService.revertirEgreso(numeroVisita);
       setEstadoRevertir(null);
+      await load();
+      // Flujo típico post-Binaria: egreso anulado → elegir cama real
+      setAsignarCamaOpen(true);
       setAviso({
         title: 'Egreso anulado',
-        message: res.mensaje || res.message || 'Se anuló el egreso y el paciente volvió a internación.',
+        message:
+          res.mensaje ||
+          res.message ||
+          'Se anuló el egreso. Elegí una cama libre para ubicar al paciente.',
         tone: 'success',
       });
-      await load();
     } catch (e: unknown) {
       setEstadoRevertir(null);
       setAviso({
@@ -402,16 +408,35 @@ export default function AdmissionUbicacionMovimientosModal({
                   <input className={styles.readonly} value={servicio || '—'} readOnly />
                 </label>
               </div>
-              {sinCama ? (
+              {sinUbicacion ? (
                 <div className={styles.actions} style={{ marginTop: 10 }}>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnPrimary}`}
-                    disabled={loading}
-                    onClick={() => setAsignarCamaOpen(true)}
-                  >
-                    Asignar cama
-                  </button>
+                  {yaEgresado ? (
+                    <>
+                      <p className={styles.hintSinCama}>
+                        Esta visita figura egresada y sin cama. Revertí el egreso para poder
+                        asignarle una ubicación.
+                      </p>
+                      {puedeRevertirEgreso ? (
+                        <button
+                          type="button"
+                          className={`${styles.btn} ${styles.btnPrimary}`}
+                          disabled={loading || revertBusy}
+                          onClick={() => void onRevertirEgreso()}
+                        >
+                          {revertBusy ? 'Revisando…' : 'Revertir egreso y asignar cama'}
+                        </button>
+                      ) : null}
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      disabled={loading}
+                      onClick={() => setAsignarCamaOpen(true)}
+                    >
+                      Asignar cama
+                    </button>
+                  )}
                 </div>
               ) : null}
             </section>
