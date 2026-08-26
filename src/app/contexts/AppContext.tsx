@@ -51,6 +51,14 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
+/**
+ * El código de sector vive en columnas CHAR, así que puede llegar como "UTI ".
+ * Se recorta al entrar al contexto para que los filtros de camas y los ids
+ * compuestos "sector-cama" no arrastren el espacio.
+ */
+const normalizarSector = (sector: SectorInfo | null): SectorInfo | null =>
+  sector ? { ...sector, idSector: String(sector.idSector ?? '').trim() } : null;
+
 export const AppProvider = ({ children }: AppProviderProps) => {
   const [sectorSeleccionado, setSectorSeleccionado] = useState<SectorInfo | null>(null);
   const [idsector, setIdsector] = useState<string>('');
@@ -63,9 +71,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     try {
       const storedSector = localStorage.getItem('sectorSeleccionado');
       if (storedSector) {
-        const parsedSector = JSON.parse(storedSector);
+        const parsedSector = normalizarSector(JSON.parse(storedSector));
         setSectorSeleccionado(parsedSector);
-        setIdsector(parsedSector.idSector || '');
+        setIdsector(parsedSector?.idSector || '');
       } else {
         const fromJwt = getIdSectorFromToken();
         if (fromJwt) setIdsector(fromJwt);
@@ -184,7 +192,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     }
   }, [sectorSeleccionado]);
 
-  const handleSetSectorSeleccionado = (sector: SectorInfo | null) => {
+  const handleSetSectorSeleccionado = (sectorEntrante: SectorInfo | null) => {
+    const sector = normalizarSector(sectorEntrante);
     setSectorSeleccionado(sector);
 
     if (sector) {

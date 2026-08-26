@@ -205,6 +205,17 @@ export function clarionDateToISO(clarionDate: number | string | null | undefined
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * Extrae el sector si el id viene como "SECTOR-CAMA". Corta por el último guion
+ * porque el Valor del catálogo físico puede traer guiones propios, como "P-1".
+ */
+export function sectorDesdeCamaId(bedId: string | null | undefined): string | null {
+  const raw = String(bedId || '').trim();
+  const corte = raw.lastIndexOf('-');
+  if (corte <= 0) return null;
+  return raw.slice(0, corte).trim() || null;
+}
+
 /** Extrae el código de cama si el id viene como "SECTOR-CAMA". */
 export function codigoCamaDesdeId(bedId: string, sector?: string, fallback = ''): string {
   const raw = String(bedId || '').trim();
