@@ -114,6 +114,21 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		loadList();
 	}, [open, userId, loadList]);
 
+	const closePanel = useCallback(() => {
+		setOpen(false);
+		const vp = valorPersonalFromUser(authService.getCurrentUser() as Record<string, unknown> | null);
+		if (!vp) return;
+		void (async () => {
+			try {
+				await notificacionesService.marcarPedidosLeidas(vp);
+				setItems((prev) => prev.filter((n) => !esNotificacionPedido(n)));
+				await fetchCount();
+			} catch {
+				/* silencioso */
+			}
+		})();
+	}, [fetchCount]);
+
 	useEffect(() => {
 		if (!open) return;
 		const onDoc = (e: MouseEvent) => {
@@ -121,12 +136,12 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 			if (el && !el.contains(e.target as Node)) {
 				const fab = document.getElementById('notifications-fab-trigger');
 				if (fab && fab.contains(e.target as Node)) return;
-				setOpen(false);
+				closePanel();
 			}
 		};
 		document.addEventListener('mousedown', onDoc);
 		return () => document.removeEventListener('mousedown', onDoc);
-	}, [open]);
+	}, [open, closePanel]);
 
 	useEffect(() => {
 		const onOpenEvent = () => {
@@ -140,11 +155,15 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	const handleOpen = () => {
 		if (!userId) return;
-		setOpen((v) => !v);
+		if (open) {
+			closePanel();
+			return;
+		}
+		setOpen(true);
 	};
 
 	const irBandeja = (tab?: 'estudios' | 'interconsultas') => {
-		setOpen(false);
+		closePanel();
 		const qs = tab ? `?tab=${tab}` : '';
 		router.push(`${BANDEJA_PATH}${qs}`);
 	};
@@ -164,12 +183,12 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 			}
 		}
 		if (esNotificacionWhatsApp(n)) {
-			setOpen(false);
+			closePanel();
 			router.push('/dashboard/turnos/chats');
 			return;
 		}
 		if (esNotificacionPedido(n)) {
-			setOpen(false);
+			closePanel();
 			const datos = (n.DatosJSON || {}) as {
 				idSectorReceptor?: string;
 				idPedido?: number;
@@ -191,7 +210,7 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		if (!userId) return;
 		try {
 			await notificacionesService.marcarTodasLeidas(userId);
-			setItems((prev) => prev.map((x) => ({ ...x, Leida: 1 })));
+			setItems((prev) => prev.filter((n) => !esNotificacionPedido(n)).map((x) => ({ ...x, Leida: 1 })));
 			setCount(0);
 			setOpen(false);
 		} catch {

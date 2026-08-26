@@ -76,4 +76,10 @@ export const notificacionesService = {
       params: { userId },
     });
   },
+
+  async marcarPedidosLeidas(userId: number): Promise<void> {
+    await apiService.put('/notificaciones/mark-pedidos-read', {}, {
+      params: { userId },
+    });
+  },
 };
