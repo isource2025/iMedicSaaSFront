@@ -14,6 +14,7 @@ import {
 } from '../types/dashboard';
 import { FALLBACK_MOVIMIENTOS, FALLBACK_ACTIVIDADES } from '../utils/fallbackData';
 import { formatSqlDate, clarionDateToDate } from '../utils/dateUtils';
+import { motivoDeRespuesta } from '../utils/apiError';
 
 /**
  * Servicio base para actividades
@@ -95,7 +96,7 @@ export class InternacionActivityService extends ActivityService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(await motivoDeRespuesta(response));
       }
 
       const result: ApiResponse<MovimientoInternacion[]> = await response.json();

@@ -7,6 +7,7 @@ import {
     NuevaIndicacionPayload,
 } from "../types/indicaciones";
 import {Payload} from "@/app/components/indicaciones/AplicarIndicacion";
+import { motivoDeRespuesta } from '../utils/apiError';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -28,7 +29,7 @@ export const indicacionesService = {
 
             if (!res.ok) {
                 if (res.status === 404) return null;
-                throw new Error(`HTTP error! status: ${res.status}`);
+                throw new Error(await motivoDeRespuesta(res));
             }
 
             const json: IndicacionResponse = await res.json();
@@ -61,7 +62,7 @@ export const indicacionesService = {
                     headers: { "Content-Type": "application/json" },
                 }
             );
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            if (!res.ok) throw new Error(await motivoDeRespuesta(res));
             const json: IndicacionesResponse = await res.json();
             if (!json.success)
                 throw new Error(
@@ -99,7 +100,7 @@ export const indicacionesService = {
                     headers: { "Content-Type": "application/json" },
                 }
             );
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            if (!res.ok) throw new Error(await motivoDeRespuesta(res));
             const json: IndicacionesResponse = await res.json();
             if (!json.success)
                 throw new Error(
@@ -127,7 +128,7 @@ export const indicacionesService = {
                     headers: { "Content-Type": "application/json" },
                 }
             );
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            if (!res.ok) throw new Error(await motivoDeRespuesta(res));
             const json = await res.json();
             if (!json.success)
                 throw new Error(
@@ -196,7 +197,7 @@ export const indicacionesService = {
             );
             if (!res.ok) {
                 if (res.status === 404) return null;
-                throw new Error(`HTTP error! status: ${res.status}`);
+                throw new Error(await motivoDeRespuesta(res));
             }
             const json: IndicacionResponse = await res.json();
             if (!json.success)

@@ -6,6 +6,7 @@ import {
 	isSessionIdleOpen,
 	notifySessionIdle,
 } from '@/app/utils/sessionIdle';
+import { detalleDeError } from '@/app/utils/apiError';
 
 const envApiBase = getEnvApiBaseUrl();
 
@@ -108,12 +109,12 @@ axiosInstance.interceptors.response.use(
 
 			// Handle forbidden errors
 			if (response.status === 403) {
-				console.error('Permission denied.');
+				console.error('Permiso denegado:', detalleDeError(error));
 			}
 
 			// Handle server errors
 			if (response.status >= 500) {
-				console.error('Server error. Please try again later.');
+				console.error('Error del servidor:', detalleDeError(error));
 			}
 		} else {
 			const code = String(error?.code || '');

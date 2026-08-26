@@ -12,6 +12,7 @@ import diagnosticosService from '@/app/services/diagnosticosService';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import { esAdminClinico } from '@/app/hooks/useUsuarioActual';
+import { detalleDeError, mensajeDeError } from '@/app/utils/apiError';
 import {
   catalogoDisposiciones,
   ordenarMovimientos,
@@ -200,8 +201,8 @@ export default function AdmissionUbicacionMovimientosModal({
       setDiagQuery('');
       setDiagResults([]);
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      setError(err?.response?.data?.message || err?.message || 'Error al cargar ubicación / movimientos');
+      console.error('Error al cargar ubicación / movimientos:', detalleDeError(e));
+      setError(mensajeDeError(e, 'Error al cargar ubicación / movimientos'));
     } finally {
       setLoading(false);
     }

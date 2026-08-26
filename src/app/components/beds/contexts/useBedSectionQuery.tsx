@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useBedDetail, SidebarSection } from '../contexts/BedDetailContext';
 import { apiFetch } from '@/app/utils/authFetch';
+import { motivoDeRespuesta } from '@/app/utils/apiError';
 
 // ===== Helpers =====
 function toISODate(d: Date | null | undefined) {
@@ -177,7 +178,7 @@ export function useBedSectionFetch<T = unknown>(
 				...(opts?.fetchInit ?? {}),
 				signal: controller.signal,
 			});
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			if (!res.ok) throw new Error(await motivoDeRespuesta(res));
 			const json = (await res.json()) as T;
 			setData(json);
 			setLastUpdatedAt(now);

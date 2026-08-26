@@ -2,6 +2,7 @@
 
 import { OpcGrd, OpcGrdGroup, CreateOpcGrdDto, UpdateOpcGrdDto } from '../types/opcGrd.types';
 import { apiFetch } from '@/app/utils/authFetch';
+import { motivoDeRespuesta } from '../utils/apiError';
 
 // URL base de la API desde variables de entorno
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5006/api';
@@ -39,7 +40,7 @@ class OpcGrdService {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(await motivoDeRespuesta(response));
       }
       
       const data = await response.json();

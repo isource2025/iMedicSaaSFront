@@ -1,4 +1,5 @@
 import { apiFetch } from '@/app/utils/authFetch';
+import { motivoDeRespuesta } from '../utils/apiError';
 import {
 	Epicrisis,
 	EpicrisisIaDraft,
@@ -35,7 +36,7 @@ export const epicrisisService = {
 		});
 		if (!res.ok) {
 			if (res.status === 404) return [];
-			throw new Error(`HTTP error! status: ${res.status}`);
+			throw new Error(await motivoDeRespuesta(res));
 		}
 		const json: EpicrisisListResponse = await res.json();
 		if (!json.success) throw new Error(json.mensaje || 'Error al listar epicrisis');
@@ -49,7 +50,7 @@ export const epicrisisService = {
 		});
 		if (!res.ok) {
 			if (res.status === 404) return null;
-			throw new Error(`HTTP error! status: ${res.status}`);
+			throw new Error(await motivoDeRespuesta(res));
 		}
 		const json: EpicrisisResponse = await res.json();
 		if (!json.success) throw new Error(json.mensaje || 'Error al obtener epicrisis');
