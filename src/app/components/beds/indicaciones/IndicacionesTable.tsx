@@ -221,7 +221,7 @@ export default function IndicacionesTable({
     // ✅ Función para calcular el estado según el tiempo hasta la próxima aplicación
     const getEstadoIndicacion = (row: IndicacionRow): { color: 'verde' | 'celeste' | 'amarillo' | 'azul' | 'rojo' | 'suspendida' | 'unica'; label: string } => {
         // Estados especiales tienen prioridad
-        if (row.suspendida) {
+        if (row.suspendida || String(row.estado ?? '').trim().toUpperCase() === 'S') {
             return { color: 'suspendida', label: '✖' };
         }
         
