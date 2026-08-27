@@ -174,17 +174,6 @@ export default function AmbulatorioAnalytics() {
     [serie],
   );
 
-  const serieEspera = useMemo(
-    () =>
-      serie
-        .filter((p) => p.esperaProm != null)
-        .map((p) => {
-          const [, mes, dia] = p.fecha.split('-');
-          return { label: `${dia}/${mes}`, value: p.esperaProm as number, date: p.fecha };
-        }),
-    [serie],
-  );
-
   const heatmapData = useMemo(() => {
     const horas = Array.from(new Set(heatmap.map((c) => c.hora))).sort((a, b) => a - b);
     const porClave = new Map<string, CeldaHeatmap>();
@@ -414,7 +403,7 @@ export default function AmbulatorioAnalytics() {
             />
             <div>
               <p className={styles.coverageTitle}>
-                Cobertura de marcado: {pct(cobertura)} ({resumen.calidadDatos.conAmbos} de{' '}
+                Cobertura de marcado: {pct(cobertura)} ({resumen.calidadDatos.conIngreso} de{' '}
                 {resumen.calidadDatos.atendidos} turnos atendidos)
               </p>
               <p className={styles.coverageText}>
@@ -422,7 +411,7 @@ export default function AmbulatorioAnalytics() {
                   ? 'Los tiempos de espera se calculan sobre una muestra representativa.'
                   : cobertura >= 30
                     ? 'Los tiempos surgen de una muestra parcial: interpretarlos como tendencia, no como valor exacto.'
-                    : 'Hay muy pocos turnos con llegada e ingreso marcados. Los tiempos de esta pantalla no son representativos hasta que el marcado en la agenda sea sistemático.'}
+                    : 'Hay muy pocos turnos con ingreso marcado. Los tiempos de esta pantalla no son representativos hasta que el marcado en la agenda sea sistemático.'}
               </p>
             </div>
           </div>
@@ -446,7 +435,7 @@ export default function AmbulatorioAnalytics() {
               }}
             />
             <MetricCard
-              title="Espera en Sala"
+              title="Espera Promedio"
               value={tiemposConfiables ? minutos(resumen.tiempos.espera.promedio) : 'Sin datos'}
               detail={
                 tiemposConfiables
@@ -458,12 +447,36 @@ export default function AmbulatorioAnalytics() {
               backgroundColor="#E8F5E9"
               tooltipData={{
                 description:
-                  'Minutos entre la llegada del paciente a recepción y su ingreso al consultorio. Es el tiempo que el paciente percibe como espera.',
-                formula: 'HoraIngreso - Horallegada, promediado sobre los turnos con ambas marcas',
+                  'Minutos entre el horario asignado del turno y el ingreso al consultorio. Mide cuánto se demoró la atención respecto de lo pactado en la agenda.',
+                formula: 'HoraIngreso - HoraAsignada, promediado sobre turnos con ingreso marcado',
                 example:
-                  'Llega 09:55 e ingresa 10:20 → 25 minutos de espera. El P90 dice que el 10% peor esperó más que ese valor.',
+                  'Turno 10:00 e ingreso 10:25 → 25 minutos de espera. El P90 indica que el 10% peor superó ese valor.',
                 importance:
-                  'Es el indicador de calidad percibida más directo. La mediana y el P90 importan más que el promedio, porque las esperas largas se concentran en pocos casos.',
+                  'Refleja el cumplimiento operativo de la agenda. La mediana y el P90 importan más que el promedio, porque las demoras largas se concentran en pocos casos.',
+              }}
+            />
+            <MetricCard
+              title="Llegada vs. Turno"
+              value={
+                tiemposConfiables && resumen.tiempos.puntualidad.promedio != null
+                  ? minutos(resumen.tiempos.puntualidad.promedio)
+                  : 'Sin datos'
+              }
+              detail={
+                tiemposConfiables && resumen.tiempos.puntualidad.muestras > 0
+                  ? `${resumen.tiempos.puntualidad.muestras} turnos con llegada marcada`
+                  : 'Requiere marcado de llegada en recepción'
+              }
+              icon={ICONS.info}
+              iconColor="#7e57c2"
+              backgroundColor="#EDE7F6"
+              tooltipData={{
+                description:
+                  'Diferencia entre la llegada marcada en recepción y el horario del turno. Valores negativos indican que el paciente llegó antes de su hora.',
+                formula: 'Horallegada - HoraAsignada',
+                example: 'Turno 10:00 y llegada 09:50 → -10 min (llegó 10 min antes).',
+                importance:
+                  'Complementa la espera promedio: muestra si los pacientes llegan anticipados o tarde respecto de su cita.',
               }}
             />
             <MetricCard
@@ -586,23 +599,11 @@ export default function AmbulatorioAnalytics() {
             </Suspense>
           </div>
 
-          {tiemposConfiables && serieEspera.length > 0 && (
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Evolución de la Espera en Sala</h3>
-              <Suspense fallback={<ChartSkeleton />}>
-                <LineChartLazy
-                  data={serieEspera}
-                  title="Minutos de espera promedio por día"
-                  color="#D81B60"
-                />
-              </Suspense>
-            </div>
-          )}
-
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Espera por Franja Horaria</h3>
             <p className={styles.sectionHint}>
-              Minutos de espera promedio según día de la semana y hora del turno
+              Minutos de espera promedio (desde el horario del turno) según día de la semana y hora
+              asignada
             </p>
             {heatmapData.horas.length === 0 ? (
               <p className={styles.emptyState}>Sin turnos para construir el mapa horario.</p>

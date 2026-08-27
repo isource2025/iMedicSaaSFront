@@ -24,12 +24,10 @@ export interface EstadisticaTiempo {
 }
 
 export interface TiemposAmbulatorio {
-  /** Horallegada → HoraIngreso. El KPI central: cuánto espera el paciente en sala. */
+  /** HoraAsignada → HoraIngreso. Demora desde el horario del turno hasta el ingreso al consultorio. */
   espera: EstadisticaTiempo;
-  /** HoraAsignada → Horallegada. Negativo = el paciente llegó antes de su hora. */
+  /** HoraAsignada → Horallegada. Negativo = llegó antes de su hora; positivo = llegó tarde. */
   puntualidad: EstadisticaTiempo;
-  /** HoraAsignada → HoraIngreso. Cuánto se corre la atención respecto de lo pactado. */
-  retraso: EstadisticaTiempo;
   /** HoraIngreso → HoraSalida. */
   consulta: EstadisticaTiempo;
 }
