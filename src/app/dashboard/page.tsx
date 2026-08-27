@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { bedsService } from '../services/bedsService';
 import { indicadoresService, ResumenPacientesHoy } from '../services/indicadoresService';
 import { obtenerActividadReciente, ActividadReciente } from '../services/dashboardService';
+import { obtenerResumenAmbulatorioHoy } from '../services/ambulatorioService';
+import type { ResumenAmbulatorioHoy } from '../types/ambulatorio';
 import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
 import { useIndicadores } from '../hooks/useIndicadores';
 import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
@@ -107,9 +109,12 @@ export default function Dashboard() {
   });
   const [patientSummary, setPatientSummary] = useState<ResumenPacientesHoy>(initialPatientSummary);
   const [actividadReciente, setActividadReciente] = useState<ActividadReciente[]>([]);
+  const [ambulatorioHoy, setAmbulatorioHoy] = useState<ResumenAmbulatorioHoy | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingPatients, setLoadingPatients] = useState(true);
   const [loadingActividad, setLoadingActividad] = useState(true);
+  const [loadingAmbulatorio, setLoadingAmbulatorio] = useState(true);
+  const [errorAmbulatorio, setErrorAmbulatorio] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Configurar fechas para los últimos 30 días
@@ -168,9 +173,22 @@ export default function Dashboard() {
       }
     };
 
+    const fetchAmbulatorioHoy = async () => {
+      try {
+        setErrorAmbulatorio(false);
+        setAmbulatorioHoy(await obtenerResumenAmbulatorioHoy());
+      } catch (error) {
+        console.error('Error fetching ambulatory summary:', error);
+        setErrorAmbulatorio(true);
+      } finally {
+        setLoadingAmbulatorio(false);
+      }
+    };
+
     fetchBedStats();
     fetchPatientSummary();
     fetchActividadReciente();
+    fetchAmbulatorioHoy();
   }, []);
 
   return (
@@ -296,18 +314,53 @@ export default function Dashboard() {
           )}
         </div>
         
-        <div className={styles.cardAppointments}>
+        <div
+          className={styles.cardAppointments}
+          onClick={() => router.push('/dashboard/turnos/analytics')}
+        >
           <div className={styles.cardHeader}>
             <Icon path={ICONS.calendar} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
-            <h3 className={styles.cardLabel}>Citas del Día</h3>
+            <h3 className={styles.cardLabel}>Actividad Ambulatoria</h3>
+            <button className={styles.arrowButton} aria-label="Ver análisis ambulatorio">
+              <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
+            </button>
           </div>
-          <div className={styles.cardMainMetric}>
-            <p className={styles.cardValue}>28</p>
-            <span className={styles.cardMainLabel}>Programadas</span>
-          </div>
-          <div className={styles.cardStats}>
-            <span className={styles.statOrange}>12 Pendientes</span>
-          </div>
+          {loadingAmbulatorio ? (
+            <div className={styles.cardCenterLoader}>
+              <div className={styles.cardCenterSpinner}></div>
+            </div>
+          ) : errorAmbulatorio || !ambulatorioHoy ? (
+            <div className={styles.cardStats}>
+              <span className={styles.stat}>Sin datos disponibles</span>
+            </div>
+          ) : (
+            <div className={styles.cardStats}>
+              <div className={styles.statRow}>
+                <div className={styles.cardMainMetric}>
+                  <p className={styles.cardValue}>{ambulatorioHoy.programados}</p>
+                  <span className={styles.cardMainLabel}>Programadas</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
+                    {ambulatorioHoy.atendidos}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Atendidas</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#f57c00' }}>
+                    {ambulatorioHoy.pendientes}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Pendientes</span>
+                </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#d32f2f' }}>
+                    {ambulatorioHoy.ausentes}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Ausentes</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className={styles.cardStaff}>
@@ -427,7 +480,9 @@ export default function Dashboard() {
             onClick={() => router.push('/dashboard/turnos/agenda')}
           >
             <span className={styles.shortcutLabel}>Agenda del día</span>
-            <span className={styles.shortcutValue}>—</span>
+            <span className={styles.shortcutValue}>
+              {ambulatorioHoy ? ambulatorioHoy.programados : '—'}
+            </span>
             <span className={styles.shortcutHint}>Abrir agenda</span>
           </button>
         </div>

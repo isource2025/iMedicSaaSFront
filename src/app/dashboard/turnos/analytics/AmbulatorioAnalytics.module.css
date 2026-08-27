@@ -1,0 +1,589 @@
+.container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 0;
+}
+
+.header {
+  background: #ffffff;
+  padding: 24px 0;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 12px;
+}
+
+.headerContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.backButton:hover {
+  transform: scale(1.2);
+}
+
+.backIcon {
+  color: black;
+  width: 20px;
+  height: 20px;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #212529;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: #6c757d;
+  margin: 4px 0 0 0;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.filterTabs {
+  display: flex;
+  gap: 8px;
+  background-color: #e9ecef;
+  padding: 4px;
+  border-radius: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.filterTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabButton {
+  padding: 6px 16px;
+  border: none;
+  background-color: transparent;
+  color: #495057;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tabButton:hover {
+  background-color: #dee2e6;
+  color: #212529;
+}
+
+.activeTab,
+.activeTab:hover {
+  background-color: #ffffff;
+  color: #00B5E2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dateControls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dateGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #e9ecef;
+  padding-left: 12px;
+  border-radius: 8px;
+}
+
+.dateGroup label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.dateInput,
+.selectInput {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: #fff;
+  color: #495057;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dateInput:focus,
+.selectInput:focus {
+  outline: none;
+  border-color: #00B5E2;
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.25);
+}
+
+.error {
+  text-align: center;
+  padding: 40px 20px;
+  color: #d32f2f;
+  background: #ffebee;
+  margin: 20px;
+  border-radius: 8px;
+  border: 1px solid #ffcdd2;
+}
+
+.errorActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.retryButton {
+  padding: 10px 20px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.retryButton:hover {
+  background: #b71c1c;
+}
+
+.secondaryButton {
+  background: #f57c00;
+}
+
+.secondaryButton:hover {
+  background: #e65100;
+}
+
+/* Banda de estado del día */
+.estadoCard {
+  background: linear-gradient(135deg, #0395b9 100%, #06b8e9 0%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px auto;
+  max-width: 1200px;
+  color: white;
+  box-shadow: 0 8px 24px rgba(0, 181, 226, 0.2);
+}
+
+.estadoContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.estadoTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: white;
+}
+
+.estadoSubtitle {
+  font-size: 0.95rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.estadoMetrics {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.estadoMetric {
+  text-align: center;
+}
+
+.estadoMetricValueLarge {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.estadoMetricValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.estadoMetricLabel {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.summaryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 30px auto;
+}
+
+.section {
+  max-width: 1200px;
+  margin: 32px auto;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e0e0;
+}
+
+.sectionTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 6px 0;
+  text-align: center;
+}
+
+.sectionHint {
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+  margin: 0 0 20px 0;
+}
+
+.emptyState {
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+/* Aviso de cobertura de marcado */
+.coverageBanner {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 16px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.coverageOk {
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  color: #2e7d32;
+}
+
+.coverageWarn {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  color: #ef6c00;
+}
+
+.coverageBad {
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  color: #c62828;
+}
+
+.coverageIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.coverageTitle {
+  font-weight: 600;
+  margin: 0 0 2px 0;
+}
+
+.coverageText {
+  margin: 0;
+}
+
+/* Distribución con donut */
+.donutContent {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.donutLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.legendItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.legendInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.legendColor {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  color: #555;
+  font-weight: 500;
+}
+
+.legendValue {
+  color: #333;
+  font-weight: 600;
+}
+
+.donutContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Tabla de rankings */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: #666;
+  font-weight: 600;
+  border-bottom: 2px solid #00B5E2;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: #999;
+}
+
+.badgeAlto {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.badgeMedio {
+  color: #ef6c00;
+  font-weight: 600;
+}
+
+.badgeBajo {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+/* Heatmap de espera por franja horaria */
+.heatmapScroll {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.heatmapGrid {
+  display: grid;
+  gap: 4px;
+  min-width: 640px;
+}
+
+.heatmapCell {
+  height: 30px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  background: #f5f5f5;
+}
+
+.heatmapEmpty {
+  background: #fafafa;
+  color: #ccc;
+}
+
+.heatmapAxisY {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  padding-right: 8px;
+  justify-content: flex-end;
+}
+
+.heatmapAxisX {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #888;
+  height: 20px;
+}
+
+.heatmapLegend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: #666;
+}
+
+.heatmapScale {
+  display: flex;
+  gap: 2px;
+}
+
+.heatmapScaleStep {
+  width: 26px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+@media (max-width: 900px) {
+  .headerContent {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controls {
+    align-items: stretch;
+  }
+
+  .dateControls {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 24px;
+  }
+
+  .donutContent {
+    grid-template-columns: 1fr;
+  }
+
+  .estadoContainer {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .estadoMetrics {
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .estadoMetricValueLarge {
+    font-size: 2rem;
+  }
+
+  .estadoMetricValue {
+    font-size: 1.5rem;
+  }
+
+  .summaryCards {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .estadoMetrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
