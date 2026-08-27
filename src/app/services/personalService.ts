@@ -57,14 +57,23 @@ export const getPersonalById = async (id: number): Promise<Personal> => {
 	throw new Error(response.data.mensaje || 'Personal no encontrado');
 };
 
+const PERSONAL_SAVE_TIMEOUT_MS = 120_000;
+
 export const createPersonal = async (
 	data: PersonalFormData,
 ): Promise<Personal> => {
 	try {
-		const response = await apiService.post<ApiResponse<Personal>>('/personal', data);
+		const response = await apiService.post<ApiResponse<Personal>>('/personal', data, {
+			timeout: PERSONAL_SAVE_TIMEOUT_MS,
+		});
 		if (response.data.success && response.data.data) return response.data.data;
 		throw new Error(response.data.mensaje || 'Error al crear el personal');
 	} catch (error: any) {
+		if (error.code === 'ECONNABORTED') {
+			throw new Error(
+				'La operación tardó demasiado. Verificá en el listado si el personal se creó antes de reintentar.',
+			);
+		}
 		if (error.response) {
 			throw new Error(error.response.data?.mensaje || 'Error al crear el personal');
 		}
@@ -80,10 +89,16 @@ export const updatePersonal = async (
 		const response = await apiService.put<ApiResponse<Personal>>(
 			`/personal/${id}`,
 			data,
+			{ timeout: PERSONAL_SAVE_TIMEOUT_MS },
 		);
 		if (response.data.success && response.data.data) return response.data.data;
 		throw new Error(response.data.mensaje || 'Error al actualizar el personal');
 	} catch (error: any) {
+		if (error.code === 'ECONNABORTED') {
+			throw new Error(
+				'La operación tardó demasiado. Verificá en el listado si los cambios se guardaron antes de reintentar.',
+			);
+		}
 		if (error.response) {
 			throw new Error(error.response.data?.mensaje || 'Error al actualizar el personal');
 		}
