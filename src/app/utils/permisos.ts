@@ -81,7 +81,6 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			{ id: 'PACIENTES', label: 'Pacientes',           path: '/dashboard/patients',         acciones: [...CRUD] },
 			{ id: 'BUSQUEDA',  label: 'Consultar Historia Clínica',   path: '/dashboard/admission/search', acciones: [ACCIONES.VER] },
 			{ id: 'NUEVA',     label: 'Nueva Admisión',      path: '/dashboard/admission/new',    acciones: [ACCIONES.CREAR] },
-			{ id: 'VIGENTES',  label: 'Admisiones Vigentes', path: '/dashboard/admission/current',acciones: [...CRUD, ACCIONES.GESTIONAR] },
 			{ id: 'TABLA',     label: 'Tabla de Admisiones', path: '/dashboard/admission/tables', acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
 		],
 	},
@@ -90,7 +89,6 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		label: 'Internación',
 		submodulos: [
 			{ id: 'CAMAS',     label: 'Gestión de Camas',     path: '/dashboard/beds',           acciones: [...CRUD, ACCIONES.GESTIONAR] },
-			{ id: 'OCUPACION', label: 'Ocupación de Camas',   path: '/dashboard/beds/occupation',acciones: [ACCIONES.VER] },
 			{ id: 'TABLA',     label: 'Tabla de Internación', path: '/dashboard/beds/tables',    acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
 
 			// Funcionalidades clínicas (sidebar de la cama)
@@ -169,7 +167,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 	},
 	{
 		id: 'USUARIO',
-		label: 'Usuario',
+		label: 'Mi Perfil',
 		submodulos: [
 			{ id: 'PERFIL',     label: 'Mi Perfil',     path: '/dashboard/profile', acciones: [ACCIONES.VER, ACCIONES.EDITAR] },
 			{ id: 'PRODUCCION', label: 'Mi Producción',                              acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
@@ -225,13 +223,10 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'ADMISION.PACIENTES.CREAR',
 		'ADMISION.PACIENTES.EDITAR',
 		'ADMISION.BUSQUEDA.VER',
-		'ADMISION.VIGENTES.VER',
-		'ADMISION.VIGENTES.GESTIONAR',
 		'ADMISION.TABLA.VER',
 
 		'INTERNACION.CAMAS.VER',
 		'INTERNACION.CAMAS.GESTIONAR',
-		'INTERNACION.OCUPACION.VER',
 		'INTERNACION.TABLA.VER',
 		..._todas('INTERNACION', 'HISTORIA_CLINICA'),
 		// Médico: crea, edita y elimina indicaciones, pero NO las aplica (eso es enfermería)
@@ -278,11 +273,9 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 
 		'ADMISION.PACIENTES.VER',
 		'ADMISION.BUSQUEDA.VER',
-		'ADMISION.VIGENTES.VER',
 
 		'INTERNACION.CAMAS.VER',
 		'INTERNACION.CAMAS.GESTIONAR',
-		'INTERNACION.OCUPACION.VER',
 		'INTERNACION.HISTORIA_CLINICA.VER',
 		'INTERNACION.INDICACIONES.VER',
 		'INTERNACION.INDICACIONES.APLICAR',
@@ -326,7 +319,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		// Gestión de pacientes / admisión
 		..._todas('ADMISION', 'PACIENTES'),
 		'ADMISION.NUEVA.CREAR',
-		..._todas('ADMISION', 'VIGENTES'),
 		'ADMISION.TABLA.EXPORTAR',
 
 		// Flujo de internación (cama / traslado), no clínica
@@ -353,7 +345,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 
 		'ADMISION.PACIENTES.VER',
 		'ADMISION.BUSQUEDA.VER',
-		'ADMISION.VIGENTES.VER',
 		'ADMISION.TABLA.VER',
 
 		'INTERNACION.CAMAS.VER',
