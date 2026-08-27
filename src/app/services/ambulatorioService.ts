@@ -5,6 +5,7 @@ import type {
   ResumenAmbulatorioHoy,
 } from '../types/ambulatorio';
 import { GRACIA_MIN_DEFAULT } from '../types/ambulatorio';
+import { resolveTenantCacheId } from '../utils/tenantCache';
 
 interface CacheEntry<T> {
   data: T;
@@ -43,7 +44,7 @@ class DataCache {
       .sort()
       .map((k) => `${k}:${params[k] ?? ''}`)
       .join('|');
-    return `${prefix}:${sorted}`;
+    return `${prefix}:emp:${resolveTenantCacheId()}:${sorted}`;
   }
 }
 

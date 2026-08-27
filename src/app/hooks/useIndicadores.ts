@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { indicadoresService } from '../services/indicadoresService';
 import { IndicadorData, ResumenIndicadores, IndicadorPorFecha } from '../types/indicadores';
+import { useAppContext } from '../contexts/AppContext';
+import { getIdEmpresaFromToken } from '../utils/jwtSession';
 
 // Debounce personalizado para optimizar las consultas
 function useDebounce<T>(value: T, delay: number): T {
@@ -24,6 +26,9 @@ export const useIndicadores = (
   fechaInicio: string,
   fechaFin: string
 ) => {
+  const { empresaInfo } = useAppContext();
+  const tenantId = empresaInfo?.id ?? getIdEmpresaFromToken() ?? 0;
+
   const [indicadores, setIndicadores] = useState<IndicadorData[]>([]);
   const [resumen, setResumen] = useState<ResumenIndicadores | null>(null);
   const [indicadoresPorFecha, setIndicadoresPorFecha] = useState<IndicadorPorFecha[]>([]);
@@ -92,7 +97,15 @@ export const useIndicadores = (
       setLoading(false);
       setLoadingSteps({ indicadores: false, resumen: false, porFecha: false, estadoActual: false });
     }
-  }, [tipoIndicador, debouncedFechaInicio, debouncedFechaFin]);
+  }, [tipoIndicador, debouncedFechaInicio, debouncedFechaFin, tenantId]);
+
+  useEffect(() => {
+    setIndicadores([]);
+    setResumen(null);
+    setIndicadoresPorFecha([]);
+    setEstadoActual(null);
+    setError(null);
+  }, [tenantId]);
 
   // Efecto optimizado que solo se ejecuta cuando las fechas debounced cambian
   useEffect(() => {

@@ -10,6 +10,7 @@ import type { ResumenAmbulatorioHoy } from '../types/ambulatorio';
 import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
 import { useIndicadores } from '../hooks/useIndicadores';
 import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
+import { useAppContext } from '../contexts/AppContext';
 import styles from './DashboardPage.module.css';
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
@@ -100,6 +101,8 @@ const initialPatientSummary: ResumenPacientesHoy = {
 
 export default function Dashboard() {
   const router = useRouter();
+  const { empresaInfo } = useAppContext();
+  const tenantId = empresaInfo?.id ?? null;
   const { count: pedidosPendientes } = useBandejaPedidosCount(true, { poll: false });
   const [bedStats, setBedStats] = useState<BedStats>({
     totalCamas: 0,
@@ -140,6 +143,21 @@ export default function Dashboard() {
   } = useIndicadores('Ingresos', fechaInicio, fechaFin);
 
   useEffect(() => {
+    setLoading(true);
+    setLoadingPatients(true);
+    setLoadingActividad(true);
+    setLoadingAmbulatorio(true);
+    setBedStats({
+      totalCamas: 0,
+      camasDisponibles: 0,
+      camasOcupadas: 0,
+      camasNoDisponibles: 0,
+    });
+    setPatientSummary(initialPatientSummary);
+    setActividadReciente([]);
+    setAmbulatorioHoy(null);
+    setErrorAmbulatorio(false);
+
     const fetchBedStats = async () => {
       try {
         const stats = await bedsService.getTotalBeds();
@@ -189,7 +207,7 @@ export default function Dashboard() {
     fetchPatientSummary();
     fetchActividadReciente();
     fetchAmbulatorioHoy();
-  }, []);
+  }, [tenantId]);
 
   return (
     <div className={styles.container}>

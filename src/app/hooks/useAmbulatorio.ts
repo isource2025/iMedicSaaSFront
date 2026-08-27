@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from './useDebounce';
+import { useAppContext } from '../contexts/AppContext';
+import { getIdEmpresaFromToken } from '../utils/jwtSession';
 import {
   obtenerAnaliticaAmbulatoria,
   limpiarCacheAmbulatorio,
@@ -13,6 +15,9 @@ import { GRACIA_MIN_DEFAULT } from '../types/ambulatorio';
  * agregados, así que no hay cascada de pasos ni agregación en el cliente.
  */
 export function useAmbulatorio(filtros: FiltrosAmbulatorio) {
+  const { empresaInfo } = useAppContext();
+  const tenantId = empresaInfo?.id ?? getIdEmpresaFromToken() ?? 0;
+
   const {
     fechaInicio,
     fechaFin,
@@ -59,7 +64,12 @@ export function useAmbulatorio(filtros: FiltrosAmbulatorio) {
     } finally {
       if (id === requestId.current) setLoading(false);
     }
-  }, [debFechaInicio, debFechaFin, graciaMin, sector, profesional, especialidad]);
+  }, [debFechaInicio, debFechaFin, graciaMin, sector, profesional, especialidad, tenantId]);
+
+  useEffect(() => {
+    setData(null);
+    setError(null);
+  }, [tenantId]);
 
   useEffect(() => {
     fetchData();
