@@ -67,9 +67,9 @@ export interface ResumenAmbulatorio {
 export interface OrigenAmbulatorio {
   total: number;
   agenda: number;
-  espontaneo: number;
+  aDemanda: number;
   agendaPct: number;
-  espontaneoPct: number;
+  aDemandaPct: number;
 }
 
 export interface PuntoSerieAmbulatorio {
@@ -81,14 +81,19 @@ export interface PuntoSerieAmbulatorio {
   pendientes: number;
   esperaProm: number | null;
   ambulatoriasAgenda: number;
-  ambulatoriasEspontaneas: number;
+  ambulatoriasADemanda: number;
   ambulatoriasTotal: number;
 }
 
 export interface DimensionAmbulatorio {
   codigo: string;
   descripcion: string | null;
+  /** Turnos de agenda (imTurnos) en el período. */
   programados: number;
+  /** Visitas ambulatorias con turno vinculado (imVisita). */
+  conTurno?: number;
+  /** Visitas ambulatorias sin turno — atención a demanda (imVisita). */
+  aDemanda?: number;
   atendidos: number;
   ausentes: number;
   tasaAusentismo: number;
@@ -143,7 +148,7 @@ export interface ResumenAmbulatorioHoy {
   esperaPromedioMin: number | null;
   coberturaPct: number;
   ambulatoriasTotal: number;
-  ambulatoriasEspontaneas: number;
+  ambulatoriasADemanda: number;
   porcentajeCambioAtendidos: number;
 }
 

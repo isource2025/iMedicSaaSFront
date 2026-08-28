@@ -161,7 +161,7 @@ export default function AmbulatorioAnalytics() {
     if (!porOrigen || porOrigen.total === 0) return [];
     return [
       { label: 'Con turno (agenda)', value: porOrigen.agenda, color: PANTONE[0] },
-      { label: 'Espontáneas (sin turno)', value: porOrigen.espontaneo, color: PANTONE[2] },
+      { label: 'A demanda', value: porOrigen.aDemanda, color: PANTONE[2] },
     ].filter((d) => d.value > 0);
   }, [porOrigen]);
 
@@ -212,7 +212,9 @@ export default function AmbulatorioAnalytics() {
           <thead>
             <tr>
               <th>{etiquetaCodigo}</th>
-              <th className={styles.numeric}>Programados</th>
+              <th className={styles.numeric}>Turnos agenda</th>
+              <th className={styles.numeric}>Con turno</th>
+              <th className={styles.numeric}>A demanda</th>
               <th className={styles.numeric}>Atendidos</th>
               <th className={styles.numeric}>Ausentes</th>
               <th className={styles.numeric}>Ausentismo</th>
@@ -230,6 +232,8 @@ export default function AmbulatorioAnalytics() {
                   ) : null}
                 </td>
                 <td className={styles.numeric}>{f.programados}</td>
+                <td className={styles.numeric}>{f.conTurno ?? 0}</td>
+                <td className={styles.numeric}>{f.aDemanda ?? 0}</td>
                 <td className={styles.numeric}>{f.atendidos}</td>
                 <td className={styles.numeric}>{f.ausentes}</td>
                 <td className={`${styles.numeric} ${claseAusentismo(f.tasaAusentismo)}`}>
@@ -420,16 +424,16 @@ export default function AmbulatorioAnalytics() {
             <MetricCard
               title="Consultas Ambulatorias"
               value={(porOrigen?.total ?? 0).toLocaleString()}
-              detail={`${porOrigen?.agenda ?? 0} con turno · ${porOrigen?.espontaneo ?? 0} espontáneas`}
+              detail={`${porOrigen?.agenda ?? 0} con turno · ${porOrigen?.aDemanda ?? 0} a demanda`}
               icon={ICONS.calendar}
               iconColor="#0083A9"
               backgroundColor="#E0F7FA"
               tooltipData={{
                 description:
-                  'Visitas ambulatorias reales del período (imVisita con clase de paciente A), separadas según hayan nacido de un turno de agenda o de demanda espontánea.',
+                  'Visitas ambulatorias reales del período (imVisita con clase de paciente A), separadas según hayan nacido de un turno de agenda o de atención a demanda.',
                 formula: 'Visitas con turno asociado + visitas sin turno asociado',
                 example:
-                  'Si hubo 400 visitas y 320 tenían turno, 80 fueron espontáneas (20% de demanda no programada).',
+                  'Si hubo 400 visitas y 320 tenían turno, 80 fueron a demanda (20% sin cita previa).',
                 importance:
                   'Distinguir el origen muestra cuánta de la actividad real está bajo control de la agenda y cuánta llega sin programar.',
               }}
@@ -517,7 +521,7 @@ export default function AmbulatorioAnalytics() {
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Origen de la Consulta</h3>
             <p className={styles.sectionHint}>
-              Visitas ambulatorias según provengan de la agenda o de demanda espontánea
+              Visitas ambulatorias según provengan de la agenda o de demanda sin turno
             </p>
             {datosOrigen.length === 0 ? (
               <p className={styles.emptyState}>
@@ -540,9 +544,9 @@ export default function AmbulatorioAnalytics() {
                   ))}
                   <div className={styles.legendItem}>
                     <div className={styles.legendInfo}>
-                      <span className={styles.legendLabel}>Demanda no programada</span>
+                      <span className={styles.legendLabel}>Demanda sin turno</span>
                     </div>
-                    <span className={styles.legendValue}>{pct(porOrigen?.espontaneoPct)}</span>
+                    <span className={styles.legendValue}>{pct(porOrigen?.aDemandaPct)}</span>
                   </div>
                 </div>
                 <div className={styles.donutContainer}>
@@ -674,16 +678,28 @@ export default function AmbulatorioAnalytics() {
 
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Por Especialidad</h3>
+            <p className={styles.sectionHint}>
+              Turnos de agenda e ingresos ambulatorios reales (con turno / a demanda) por
+              especialidad
+            </p>
             {renderTabla(porEspecialidad, 'Especialidad')}
           </div>
 
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Por Sector</h3>
+            <p className={styles.sectionHint}>
+              Los turnos de agenda no reflejan la demanda espontánea: use la columna A demanda
+              para sectores como emergencia que atienden sin cita previa
+            </p>
             {renderTabla(porSector, 'Sector')}
           </div>
 
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Por Profesional</h3>
+            <p className={styles.sectionHint}>
+              Turnos de agenda e ingresos ambulatorios reales (con turno / a demanda) por
+              profesional
+            </p>
             {renderTabla(porProfesional, 'Profesional', {
               titulo: 'Consulta prom.',
               valor: (f) => minutos(f.consultaProm),

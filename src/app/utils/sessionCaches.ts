@@ -6,13 +6,11 @@ import { clearServiciosReceptorCache } from './serviciosReceptorCache';
 /** Evita dependencia circular estática con los servicios de métricas. */
 function clearMetricServiceCaches(): void {
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		require('../services/ambulatorioService').limpiarCacheAmbulatorio();
 	} catch {
 		/* ignore */
 	}
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		require('../services/camasIndicadoresService').camasIndicadoresService.clearCache();
 	} catch {
 		/* ignore */
