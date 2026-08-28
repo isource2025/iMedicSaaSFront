@@ -201,19 +201,62 @@
 .estadoCard {
   background: linear-gradient(135deg, #0395b9 100%, #06b8e9 0%);
   border-radius: 16px;
-  padding: 24px;
+  padding: 24px 28px;
   margin: 24px auto;
   max-width: 1200px;
   color: white;
   box-shadow: 0 8px 24px rgba(0, 181, 226, 0.2);
 }
 
-.estadoContainer {
+.estadoTop {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 24px;
   flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.estadoIntro {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.estadoTotalizer {
+  flex: 0 0 auto;
+  text-align: right;
+  min-width: 160px;
+}
+
+.totalizadorValue {
+  display: block;
+  font-size: 3.75rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transform: translateY(28px);
+  opacity: 0;
+  transition:
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.65s ease-out;
+  font-variant-numeric: tabular-nums;
+}
+
+.totalizadorVisible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.estadoTotalizerLabel {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .estadoTitle {
@@ -231,28 +274,45 @@
 
 .estadoMetrics {
   display: flex;
-  gap: 32px;
+  align-items: flex-end;
+  gap: 28px;
   flex-wrap: wrap;
 }
 
 .estadoMetric {
   text-align: center;
+  min-width: 72px;
 }
 
-.estadoMetricValueLarge {
-  font-size: 2.5rem;
+.estadoMetricPrimary {
+  flex: 1 1 120px;
+  max-width: 200px;
+}
+
+.estadoMetricValuePrimary {
+  font-size: 2.35rem;
   font-weight: 800;
   color: white;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
 }
 
 .estadoMetricValue {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: white;
   line-height: 1;
   margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.estadoMetricsDivider {
+  align-self: stretch;
+  width: 1px;
+  min-height: 52px;
+  background: rgba(255, 255, 255, 0.28);
+  margin: 0 4px;
 }
 
 .estadoMetricLabel {
@@ -262,11 +322,184 @@
 }
 
 .summaryCards {
+  display: contents;
+}
+
+/* Grilla de widgets dinámica (12 columnas) */
+.widgetGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(12, 1fr);
   gap: 20px;
   max-width: 1200px;
   margin: 30px auto;
+  align-items: stretch;
+}
+
+.widgetMetric {
+  grid-column: span 4;
+  min-width: 0;
+  display: flex;
+}
+
+.widgetMetric > div:first-child {
+  flex: 1;
+  width: 100%;
+  min-height: 280px;
+}
+
+.widgetMetricWide {
+  grid-column: span 6;
+}
+
+.chartWidget {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e8ecf0;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+  min-width: 0;
+}
+
+.chartWidgetHeader {
+  margin-bottom: 12px;
+}
+
+.chartWidgetTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chartWidgetTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.chartWidgetInfo {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.chartWidgetInfo:hover {
+  color: #00b5e2;
+  background: #e0f7fa;
+}
+
+.chartWidgetHint {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  line-height: 1.35;
+}
+
+.chartWidgetBody {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.chartWidgetLegend {
+  min-width: 0;
+}
+
+.chartWidgetCanvas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chartWidgetEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.chartLegendList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chartLegendItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.chartLegendInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chartLegendSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.chartLegendLabel {
+  color: #4b5563;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chartLegendValue {
+  color: #111827;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.compactChartWrap {
+  position: relative;
+}
+
+.compactChartCanvas {
+  display: block;
+  cursor: pointer;
+}
+
+.compactChartTooltip {
+  position: fixed;
+  z-index: 1000;
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .section {
@@ -534,6 +767,15 @@
   .dateControls {
     justify-content: flex-start;
   }
+
+  .chartWidget {
+    grid-column: span 12 !important;
+  }
+
+  .widgetMetric,
+  .widgetMetricWide {
+    grid-column: span 6;
+  }
 }
 
 @media (max-width: 768px) {
@@ -545,9 +787,19 @@
     grid-template-columns: 1fr;
   }
 
-  .estadoContainer {
+  .estadoTop {
     flex-direction: column;
     text-align: center;
+    align-items: center;
+  }
+
+  .estadoTotalizer {
+    text-align: center;
+    width: 100%;
+  }
+
+  .totalizadorValue {
+    font-size: 3rem;
   }
 
   .estadoMetrics {
@@ -555,16 +807,30 @@
     gap: 20px;
   }
 
-  .estadoMetricValueLarge {
+  .estadoMetricValuePrimary {
     font-size: 2rem;
   }
 
   .estadoMetricValue {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+  }
+
+  .estadoMetricsDivider {
+    display: none;
   }
 
   .summaryCards {
     grid-template-columns: 1fr;
+  }
+
+  .widgetMetric,
+  .widgetMetricWide {
+    grid-column: span 12;
+  }
+
+  .chartWidgetBody {
+    grid-template-columns: 1fr;
+    justify-items: center;
   }
 
   .section {
@@ -585,5 +851,13 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+  }
+
+  .estadoMetricPrimary {
+    max-width: none;
+  }
+
+  .totalizadorValue {
+    font-size: 2.5rem;
   }
 }

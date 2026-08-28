@@ -12,6 +12,9 @@ import {
   OPCIONES_GRACIA_MIN,
 } from '@/app/types/ambulatorio';
 import type { CeldaHeatmap, DimensionAmbulatorio } from '@/app/types/ambulatorio';
+import { AnimatedCounter } from './AnimatedCounter';
+import { ChartWidget, ChartLegend } from './ChartWidget';
+import { CompactBarChart } from './CompactBarChart';
 import styles from './AmbulatorioAnalytics.module.css';
 
 const DonutChartLazy = lazy(() => import('@/app/components/Charts/DonutChart'));
@@ -368,49 +371,60 @@ export default function AmbulatorioAnalytics() {
       {!loading && !error && resumen && (
         <>
           <div className={styles.estadoCard}>
-            <div className={styles.estadoContainer}>
-              <div>
+            <div className={styles.estadoTop}>
+              <div className={styles.estadoIntro}>
                 <h2 className={styles.estadoTitle}>Cumplimiento de Agenda</h2>
                 <p className={styles.estadoSubtitle}>
                   {fechaInicio} al {fechaFin} · un turno cuenta como ausente {graciaMin} min
                   después de su horario · la atención a demanda no entra en el ausentismo
                 </p>
               </div>
-              <div className={styles.estadoMetrics}>
-                <div className={styles.estadoMetric}>
-                  <div className={styles.estadoMetricValueLarge}>
-                    {resumen.programados.toLocaleString()}
-                  </div>
-                  <div className={styles.estadoMetricLabel}>Turnos de agenda</div>
+              <div className={styles.estadoTotalizer}>
+                <AnimatedCounter
+                  value={resumen.programados + resumen.turnosDemanda}
+                  animationKey={`${fechaInicio}-${fechaFin}-${graciaMin}`}
+                />
+                <div className={styles.estadoTotalizerLabel}>Total atenciones</div>
+              </div>
+            </div>
+
+            <div className={styles.estadoMetrics}>
+              <div className={`${styles.estadoMetric} ${styles.estadoMetricPrimary}`}>
+                <div className={styles.estadoMetricValuePrimary}>
+                  {resumen.programados.toLocaleString()}
                 </div>
-                <div className={styles.estadoMetric}>
-                  <div className={styles.estadoMetricValue}>
-                    {resumen.turnosDemanda.toLocaleString()}
-                  </div>
-                  <div className={styles.estadoMetricLabel}>A demanda</div>
+                <div className={styles.estadoMetricLabel}>Turnos de agenda</div>
+              </div>
+              <div className={`${styles.estadoMetric} ${styles.estadoMetricPrimary}`}>
+                <div className={styles.estadoMetricValuePrimary}>
+                  {resumen.turnosDemanda.toLocaleString()}
                 </div>
-                <div className={styles.estadoMetric}>
-                  <div className={styles.estadoMetricValue}>
-                    {resumen.atendidos.toLocaleString()}
-                  </div>
-                  <div className={styles.estadoMetricLabel}>Atendidos</div>
+                <div className={styles.estadoMetricLabel}>A demanda</div>
+              </div>
+
+              <div className={styles.estadoMetricsDivider} aria-hidden />
+
+              <div className={styles.estadoMetric}>
+                <div className={styles.estadoMetricValue}>
+                  {resumen.atendidos.toLocaleString()}
                 </div>
-                <div className={styles.estadoMetric}>
-                  <div className={styles.estadoMetricValue}>
-                    {resumen.ausentes.toLocaleString()}
-                  </div>
-                  <div className={styles.estadoMetricLabel}>Ausentes</div>
+                <div className={styles.estadoMetricLabel}>Atendidos</div>
+              </div>
+              <div className={styles.estadoMetric}>
+                <div className={styles.estadoMetricValue}>
+                  {resumen.ausentes.toLocaleString()}
                 </div>
-                <div className={styles.estadoMetric}>
-                  <div className={styles.estadoMetricValue}>
-                    {resumen.cancelados.toLocaleString()}
-                  </div>
-                  <div className={styles.estadoMetricLabel}>Cancelados</div>
+                <div className={styles.estadoMetricLabel}>Ausentes</div>
+              </div>
+              <div className={styles.estadoMetric}>
+                <div className={styles.estadoMetricValue}>
+                  {resumen.cancelados.toLocaleString()}
                 </div>
-                <div className={styles.estadoMetric}>
-                  <div className={styles.estadoMetricValue}>{pct(resumen.tasaAusentismo)}</div>
-                  <div className={styles.estadoMetricLabel}>Ausentismo</div>
-                </div>
+                <div className={styles.estadoMetricLabel}>Cancelados</div>
+              </div>
+              <div className={styles.estadoMetric}>
+                <div className={styles.estadoMetricValue}>{pct(resumen.tasaAusentismo)}</div>
+                <div className={styles.estadoMetricLabel}>Ausentismo</div>
               </div>
             </div>
           </div>
@@ -444,213 +458,153 @@ export default function AmbulatorioAnalytics() {
             </div>
           </div>
 
-          <div className={styles.summaryCards}>
-            <MetricCard
-              title="Consultas Ambulatorias"
-              value={(porOrigen?.total ?? 0).toLocaleString()}
-              detail={`${(porOrigen?.agenda ?? 0).toLocaleString()} con turno reservado · ${(porOrigen?.aDemanda ?? 0).toLocaleString()} a demanda`}
-              icon={ICONS.calendar}
-              iconColor="#0083A9"
-              backgroundColor="#E0F7FA"
+          <div className={styles.widgetGrid}>
+            <ChartWidget
+              title="Origen de la Consulta"
+              hint="Visitas ambulatorias según provengan de la agenda o de demanda"
+              span={7}
+              isEmpty={datosOrigen.length === 0}
+              emptyMessage="No hay visitas ambulatorias registradas en el período."
               tooltipData={{
                 description:
-                  'Visitas ambulatorias reales del período (imVisita con clase de paciente A), separadas según el paciente tuviera una cita reservada con antelación o llegara sin turno previo.',
+                  'Visitas ambulatorias reales del período (imVisita), separadas según el paciente tuviera una cita reservada con antelación o llegara sin turno previo.',
                 formula:
                   'A demanda = visitas sin turno + visitas cuyo turno se creó al momento de llegar (TipoTurno = 1)',
-                example:
-                  'En emergencia se registra un turno al admitir al paciente, pero con la hora del turno igual a la de llegada: esas atenciones cuentan como a demanda, no como agenda.',
                 importance:
-                  'Distinguir el origen muestra cuánta actividad está bajo control de la agenda y cuánta llega sin programar. Sin esta separación, los sectores de guardia aparecerían con miles de turnos "programados" inexistentes.',
+                  'Distinguir el origen muestra cuánta actividad está bajo control de la agenda y cuánta llega sin programar.',
               }}
-            />
-            <MetricCard
-              title="Espera Promedio"
-              value={tiemposConfiables ? minutos(resumen.tiempos.espera.promedio) : 'Sin datos'}
-              detail={
-                tiemposConfiables
-                  ? `Mediana ${minutos(resumen.tiempos.espera.p50)} · P90 ${minutos(resumen.tiempos.espera.p90)}`
-                  : 'Cobertura de marcado insuficiente'
-              }
-              icon={ICONS.clock}
-              iconColor="#00B5E2"
-              backgroundColor="#E8F5E9"
-              tooltipData={{
-                description:
-                  'Minutos entre el horario asignado del turno y el ingreso al consultorio. Mide cuánto se demoró la atención respecto de lo pactado en la agenda. Sólo turnos reservados con antelación: la demanda espontánea no tiene horario pactado.',
-                formula: 'HoraIngreso - HoraAsignada, promediado sobre turnos con ingreso marcado',
-                example:
-                  'Turno 10:00 e ingreso 10:25 → 25 minutos de espera. El P90 indica que el 10% peor superó ese valor.',
-                importance:
-                  'Refleja el cumplimiento operativo de la agenda. La mediana y el P90 importan más que el promedio, porque las demoras largas se concentran en pocos casos.',
-              }}
-            />
-            <MetricCard
-              title="Permanencia Promedio"
-              value={
-                resumen.tiempos.permanencia.muestras > 0
-                  ? minutos(resumen.tiempos.permanencia.promedio)
-                  : 'Sin datos'
-              }
-              detail={
-                resumen.tiempos.permanencia.muestras > 0
-                  ? `Mediana ${minutos(resumen.tiempos.permanencia.p50)} · P90 ${minutos(resumen.tiempos.permanencia.p90)}`
-                  : 'Requiere cierre de la atención'
-              }
-              icon={ICONS.clock}
-              iconColor="#0083A9"
-              backgroundColor="#E0F7FA"
-              tooltipData={{
-                description:
-                  'Tiempo total que el paciente estuvo en la institución, desde que se registró su llegada hasta que se cerró la atención. Incluye agenda y demanda espontánea.',
-                formula: 'HoraSalida - Horallegada',
-                example: 'Llega 09:40 y se cierra la atención 11:05 → 85 minutos de permanencia.',
-                importance:
-                  'Es la única métrica de tiempo disponible cuando no se marca el ingreso al consultorio, y es la más relevante en guardia, donde no hay horario pactado contra el cual medir la espera.',
-              }}
-            />
-            <MetricCard
-              title="Llegada vs. Turno"
-              value={
-                tiemposConfiables && resumen.tiempos.puntualidad.promedio != null
-                  ? minutos(resumen.tiempos.puntualidad.promedio)
-                  : 'Sin datos'
-              }
-              detail={
-                tiemposConfiables && resumen.tiempos.puntualidad.muestras > 0
-                  ? `${resumen.tiempos.puntualidad.muestras} turnos con llegada marcada`
-                  : 'Requiere marcado de llegada en recepción'
-              }
-              icon={ICONS.info}
-              iconColor="#7e57c2"
-              backgroundColor="#EDE7F6"
-              tooltipData={{
-                description:
-                  'Diferencia entre la llegada marcada en recepción y el horario del turno. Valores negativos indican que el paciente llegó antes de su hora.',
-                formula: 'Horallegada - HoraAsignada',
-                example: 'Turno 10:00 y llegada 09:50 → -10 min (llegó 10 min antes).',
-                importance:
-                  'Complementa la espera promedio: muestra si los pacientes llegan anticipados o tarde respecto de su cita.',
-              }}
-            />
-            <MetricCard
-              title="Tasa de Ausentismo"
-              value={resumen.programados > 0 ? pct(resumen.tasaAusentismo) : 'No aplica'}
-              detail={
-                resumen.programados > 0
-                  ? `${resumen.ausentes} ausentes de ${resumen.programados - resumen.cancelados} esperados`
-                  : 'El período seleccionado no tiene turnos de agenda'
-              }
-              icon={ICONS.userOff}
-              iconColor="#D81B60"
-              backgroundColor="#FCE4EC"
-              tooltipData={{
-                description:
-                  'Porcentaje de turnos reservados en los que el paciente nunca se atendió. La agenda no tiene un estado "ausente": se infiere cuando pasó la tolerancia configurada sin que la atención se cerrara ni quedara vinculada a una visita.',
-                formula: 'Ausentes / (Turnos de agenda - Cancelados)',
-                example:
-                  'Con 200 turnos, 20 cancelados y 27 ausentes: 27 / 180 = 15% de ausentismo.',
-                importance:
-                  'Los cancelados se excluyen del denominador porque avisaron y el slot pudo reasignarse. La atención a demanda también queda fuera: un paciente que se registra al llegar no puede faltar a su propia llegada.',
-              }}
-            />
-            <MetricCard
-              title="Duración de Consulta"
-              value={tiemposConfiables ? minutos(resumen.tiempos.consulta.promedio) : 'Sin datos'}
-              detail={`${resumen.tiempos.consulta.muestras} consultas con cierre registrado`}
-              icon={ICONS.checkCircle}
-              iconColor="#388e3c"
-              backgroundColor="#E8F5E9"
-              tooltipData={{
-                description:
-                  'Minutos entre el ingreso al consultorio y el cierre de la atención.',
-                formula: 'HoraSalida - HoraIngreso',
-                example: 'Ingresa 10:20 y cierra 10:38 → 18 minutos de consulta.',
-                importance:
-                  'Contrastada con el intervalo configurado en la agenda, indica si la grilla está bien dimensionada o si genera retrasos en cadena.',
-              }}
-            />
-          </div>
+              legend={<ChartLegend items={datosOrigen} />}
+            >
+              <Suspense fallback={<ChartSkeleton />}>
+                <DonutChartLazy data={datosOrigen} size={190} donutWidth={36} />
+              </Suspense>
+            </ChartWidget>
 
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Origen de la Consulta</h3>
-            <p className={styles.sectionHint}>
-              Visitas ambulatorias según provengan de la agenda o de demanda sin turno
-            </p>
-            {datosOrigen.length === 0 ? (
-              <p className={styles.emptyState}>
-                No hay visitas ambulatorias registradas en el período.
-              </p>
-            ) : (
-              <div className={styles.donutContent}>
-                <div className={styles.donutLegend}>
-                  {datosOrigen.map((item) => (
-                    <div key={item.label} className={styles.legendItem}>
-                      <div className={styles.legendInfo}>
-                        <div
-                          className={styles.legendColor}
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className={styles.legendLabel}>{item.label}</span>
-                      </div>
-                      <span className={styles.legendValue}>{item.value.toLocaleString()}</span>
-                    </div>
-                  ))}
-                  <div className={styles.legendItem}>
-                    <div className={styles.legendInfo}>
-                      <span className={styles.legendLabel}>Demanda sin turno</span>
-                    </div>
-                    <span className={styles.legendValue}>{pct(porOrigen?.aDemandaPct)}</span>
-                  </div>
-                </div>
-                <div className={styles.donutContainer}>
-                  <Suspense fallback={<ChartSkeleton />}>
-                    <DonutChartLazy data={datosOrigen} size={220} donutWidth={40} />
-                  </Suspense>
-                </div>
-              </div>
-            )}
-          </div>
+            <ChartWidget
+              title="Desenlace de los Turnos"
+              hint={`Sólo turnos de agenda (${resumen.programados.toLocaleString()} en el período)`}
+              span={5}
+              isEmpty={datosEstado.length === 0}
+              emptyMessage="No hay turnos de agenda en el período seleccionado."
+              tooltipData={{
+                description:
+                  'Cómo terminaron los turnos reservados con antelación. La atención a demanda queda fuera porque el paciente ya está presente al registrarse.',
+                formula: 'Atendidos + Ausentes + Cancelados + Pendientes + En curso',
+                importance:
+                  'Permite ver si el problema operativo es inasistencia, cancelación o demoras en la atención.',
+              }}
+              legend={<ChartLegend items={datosEstado} />}
+            >
+              <CompactBarChart data={datosEstado} width={200} height={170} />
+            </ChartWidget>
 
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Desenlace de los Turnos</h3>
-            <p className={styles.sectionHint}>
-              Cómo terminaron los {resumen.programados.toLocaleString()} turnos reservados del
-              período. La atención a demanda se cuenta aparte porque no tiene desenlace posible:
-              el paciente ya está presente cuando se registra.
-            </p>
-            {datosEstado.length === 0 ? (
-              <p className={styles.emptyState}>No hay turnos en el período seleccionado.</p>
-            ) : (
-              <div className={styles.donutContent}>
-                <div className={styles.donutLegend}>
-                  {datosEstado.map((item) => (
-                    <div key={item.label} className={styles.legendItem}>
-                      <div className={styles.legendInfo}>
-                        <div
-                          className={styles.legendColor}
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className={styles.legendLabel}>{item.label}</span>
-                      </div>
-                      <span className={styles.legendValue}>{item.value.toLocaleString()}</span>
-                    </div>
-                  ))}
-                  <div className={styles.legendItem}>
-                    <div className={styles.legendInfo}>
-                      <span className={styles.legendLabel}>A demanda (fuera de agenda)</span>
-                    </div>
-                    <span className={styles.legendValue}>
-                      {resumen.turnosDemanda.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-                <div className={styles.donutContainer}>
-                  <Suspense fallback={<ChartSkeleton />}>
-                    <DonutChartLazy data={datosEstado} size={220} donutWidth={40} />
-                  </Suspense>
-                </div>
-              </div>
-            )}
+            <div className={styles.widgetMetric}>
+              <MetricCard
+                title="Espera Promedio"
+                value={tiemposConfiables ? minutos(resumen.tiempos.espera.promedio) : 'Sin datos'}
+                detail={
+                  tiemposConfiables
+                    ? `Mediana ${minutos(resumen.tiempos.espera.p50)} · P90 ${minutos(resumen.tiempos.espera.p90)}`
+                    : 'Cobertura de marcado insuficiente'
+                }
+                icon={ICONS.clock}
+                iconColor="#00B5E2"
+                backgroundColor="#E8F5E9"
+                tooltipData={{
+                  description:
+                    'Minutos entre el horario asignado del turno y el ingreso al consultorio. Sólo turnos reservados con antelación.',
+                  formula: 'HoraIngreso - HoraAsignada',
+                  importance:
+                    'Refleja el cumplimiento operativo de la agenda.',
+                }}
+              />
+            </div>
+            <div className={styles.widgetMetric}>
+              <MetricCard
+                title="Permanencia Promedio"
+                value={
+                  resumen.tiempos.permanencia.muestras > 0
+                    ? minutos(resumen.tiempos.permanencia.promedio)
+                    : 'Sin datos'
+                }
+                detail={
+                  resumen.tiempos.permanencia.muestras > 0
+                    ? `Mediana ${minutos(resumen.tiempos.permanencia.p50)} · P90 ${minutos(resumen.tiempos.permanencia.p90)}`
+                    : 'Requiere cierre de la atención'
+                }
+                icon={ICONS.clock}
+                iconColor="#0083A9"
+                backgroundColor="#E0F7FA"
+                tooltipData={{
+                  description:
+                    'Tiempo total en la institución desde la llegada hasta el cierre de la atención.',
+                  formula: 'HoraSalida - Horallegada',
+                  importance:
+                    'Métrica clave en guardia, donde no hay horario pactado contra el cual medir la espera.',
+                }}
+              />
+            </div>
+            <div className={styles.widgetMetric}>
+              <MetricCard
+                title="Llegada vs. Turno"
+                value={
+                  tiemposConfiables && resumen.tiempos.puntualidad.promedio != null
+                    ? minutos(resumen.tiempos.puntualidad.promedio)
+                    : 'Sin datos'
+                }
+                detail={
+                  tiemposConfiables && resumen.tiempos.puntualidad.muestras > 0
+                    ? `${resumen.tiempos.puntualidad.muestras} turnos con llegada marcada`
+                    : 'Requiere marcado de llegada en recepción'
+                }
+                icon={ICONS.info}
+                iconColor="#7e57c2"
+                backgroundColor="#EDE7F6"
+                tooltipData={{
+                  description:
+                    'Diferencia entre la llegada marcada y el horario del turno. Valores negativos = llegó antes.',
+                  formula: 'Horallegada - HoraAsignada',
+                  importance: 'Complementa la espera promedio.',
+                }}
+              />
+            </div>
+            <div className={styles.widgetMetric}>
+              <MetricCard
+                title="Tasa de Ausentismo"
+                value={resumen.programados > 0 ? pct(resumen.tasaAusentismo) : 'No aplica'}
+                detail={
+                  resumen.programados > 0
+                    ? `${resumen.ausentes} ausentes de ${resumen.programados - resumen.cancelados} esperados`
+                    : 'Sin turnos de agenda en el período'
+                }
+                icon={ICONS.userOff}
+                iconColor="#D81B60"
+                backgroundColor="#FCE4EC"
+                tooltipData={{
+                  description:
+                    'Porcentaje de turnos reservados en los que el paciente nunca se atendió.',
+                  formula: 'Ausentes / (Turnos de agenda - Cancelados)',
+                  importance:
+                    'La demanda espontánea queda fuera del cálculo.',
+                }}
+              />
+            </div>
+            <div className={`${styles.widgetMetric} ${styles.widgetMetricWide}`}>
+              <MetricCard
+                title="Duración de Consulta"
+                value={tiemposConfiables ? minutos(resumen.tiempos.consulta.promedio) : 'Sin datos'}
+                detail={`${resumen.tiempos.consulta.muestras} consultas con cierre registrado`}
+                icon={ICONS.checkCircle}
+                iconColor="#388e3c"
+                backgroundColor="#E8F5E9"
+                tooltipData={{
+                  description: 'Minutos entre el ingreso al consultorio y el cierre de la atención.',
+                  formula: 'HoraSalida - HoraIngreso',
+                  importance:
+                    'Indica si la grilla de agenda está bien dimensionada.',
+                }}
+              />
+            </div>
           </div>
 
           <div className={styles.section}>
