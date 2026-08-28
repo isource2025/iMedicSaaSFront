@@ -1,28 +1,28 @@
 .container {
-  padding: 24px;
-  background-color: #ffffff;
-  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   color: #333;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: #374151;
   margin: 0;
 }
 
@@ -46,11 +46,11 @@
 
 .timeFilters {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  background-color: #f8f9fa;
-  padding: 4px;
-  border-radius: 8px;
+  gap: 6px;
+  margin-bottom: 10px;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   white-space: nowrap;
@@ -62,16 +62,16 @@
 }
 
 .filterButton {
-  padding: 8px 14px;
-  border: none;
-  background-color: transparent;
+  padding: 5px 10px;
+  border: 1px solid #e5e7eb;
+  background-color: #fff;
   color: #495057;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 36px;
+  min-height: 30px;
 }
 
 .filterButton:hover {
@@ -93,10 +93,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 0;
 }
 
 .zoomControls {
@@ -161,8 +161,12 @@
 
 .canvasContainer {
   width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
   overflow: hidden;
   border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fafbfc;
   cursor: grab;
 }
 
@@ -178,14 +182,14 @@
 }
 
 .chartDescription {
-  margin-top: 16px;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
+  margin-top: 10px;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 0;
   text-align: center;
-  font-size: 13px;
-  color: #666;
-  border: 1px solid #e9ecef;
+  font-size: 12px;
+  color: #9ca3af;
+  border: none;
 }
 
 .chartDescription span {
@@ -224,23 +228,23 @@
 }
 
 @media (max-width: 480px) {
-  .container {
-    padding: 16px;
-  }
-
   .title {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .filterButton {
-    padding: 10px 14px;
-    font-size: 14px;
-    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 12px;
+    min-height: 32px;
   }
 
   .controlButton {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .canvasContainer {
+    max-width: 100%;
   }
 }
 

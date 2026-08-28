@@ -607,28 +607,24 @@ export default function AmbulatorioAnalytics() {
             </div>
           </div>
 
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Volumen Diario de Atención</h3>
-            <p className={styles.sectionHint}>
+          <div className={styles.chartPanel}>
+            <h3 className={styles.chartPanelTitle}>Volumen Diario de Atención</h3>
+            <p className={styles.chartPanelHint}>
               Actividad ambulatoria total por día, sumando los turnos de agenda y la atención a
               demanda
             </p>
             <Suspense fallback={<ChartSkeleton />}>
-              <LineChartLazy
-                data={serieVolumen}
-                title="Atenciones ambulatorias por día"
-                color="#00B5E2"
-              />
+              <LineChartLazy data={serieVolumen} title="" color="#00B5E2" height={260} />
             </Suspense>
           </div>
 
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>
+          <div className={styles.chartPanel}>
+            <h3 className={styles.chartPanelTitle}>
               {heatmapData.metrica === 'espera'
                 ? 'Espera por Franja Horaria'
                 : 'Permanencia por Franja Horaria'}
             </h3>
-            <p className={styles.sectionHint}>
+            <p className={styles.chartPanelHint}>
               {heatmapData.metrica === 'espera'
                 ? 'Minutos de espera promedio (desde el horario del turno) según día de la semana y hora asignada'
                 : 'Minutos promedio entre la llegada y el cierre de la atención, según día de la semana y hora. Se muestra la permanencia porque no hay marcado de ingreso al consultorio.'}
@@ -636,12 +632,12 @@ export default function AmbulatorioAnalytics() {
             {heatmapData.horas.length === 0 ? (
               <p className={styles.emptyState}>Sin turnos para construir el mapa horario.</p>
             ) : (
-              <>
+              <div className={styles.heatmapPlot}>
                 <div className={styles.heatmapScroll}>
                   <div
                     className={styles.heatmapGrid}
                     style={{
-                      gridTemplateColumns: `56px repeat(${heatmapData.horas.length}, minmax(38px, 1fr))`,
+                      gridTemplateColumns: `44px repeat(${heatmapData.horas.length}, minmax(30px, 1fr))`,
                     }}
                   >
                     <div />
@@ -698,7 +694,7 @@ export default function AmbulatorioAnalytics() {
                     Mayor {heatmapData.metrica} ({minutos(heatmapData.maximo)})
                   </span>
                 </div>
-              </>
+              </div>
             )}
           </div>
 

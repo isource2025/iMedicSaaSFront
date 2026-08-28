@@ -408,7 +408,7 @@ export default function BedsAnalytics() {
                 data={lineChartData}
                 title={`Evolución de Camas Ocupadas por Fecha`}
                 color="#00B5E2"
-                height={350}
+                height={260}
                 maxValue={estadoActual?.totalCamas || undefined}
               />
             </Suspense>

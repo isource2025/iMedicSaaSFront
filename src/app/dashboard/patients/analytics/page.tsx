@@ -383,7 +383,7 @@ export default function PatientsAnalytics() {
                 data={lineChartData}
                 title={`Evolución de Ingresos por Fecha`}
                 color="#00B5E2"
-                height={350}
+                height={260}
               />
             </Suspense>
           </div>

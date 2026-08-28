@@ -24,7 +24,7 @@ export default function LineChart({
   data, 
   title, 
   color = '#007bff', 
-  height = 350,
+  height = 260,
   maxValue: customMaxValue
 }: LineChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -364,17 +364,19 @@ export default function LineChart({
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h4 className={styles.title}>{title}</h4>
-        <div className={styles.analysisInfo}>
-          <span className={styles.periodInfo}>
-            Período: {dataAnalysis.period} ({dataAnalysis.totalDays} días)
-          </span>
-          <span className={styles.dataCount}>
-            Mostrando: {displayData.length} de {filteredData.length} puntos
-          </span>
+      {title ? (
+        <div className={styles.header}>
+          <h4 className={styles.title}>{title}</h4>
+          <div className={styles.analysisInfo}>
+            <span className={styles.periodInfo}>
+              Período: {dataAnalysis.period} ({dataAnalysis.totalDays} días)
+            </span>
+            <span className={styles.dataCount}>
+              Mostrando: {displayData.length} de {filteredData.length} puntos
+            </span>
+          </div>
         </div>
-      </div>
+      ) : null}
       
       {/* Controles de filtrado de tiempo */}
       <div className={styles.timeFilters}>
