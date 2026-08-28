@@ -24,10 +24,16 @@ export interface EstadisticaTiempo {
 }
 
 export interface TiemposAmbulatorio {
-  /** HoraAsignada → HoraIngreso. Demora desde el horario del turno hasta el ingreso al consultorio. */
+  /**
+   * HoraAsignada → HoraIngreso. Demora desde el horario del turno hasta el
+   * ingreso al consultorio. Sólo turnos de agenda: la demanda espontánea no
+   * tiene horario pactado contra el cual medir.
+   */
   espera: EstadisticaTiempo;
-  /** HoraAsignada → Horallegada. Negativo = llegó antes de su hora; positivo = llegó tarde. */
+  /** HoraAsignada → Horallegada, sólo agenda. Negativo = llegó antes de su hora. */
   puntualidad: EstadisticaTiempo;
+  /** Horallegada → HoraSalida. Tiempo total en la institución, agenda y demanda. */
+  permanencia: EstadisticaTiempo;
   /** HoraIngreso → HoraSalida. */
   consulta: EstadisticaTiempo;
 }
@@ -40,12 +46,14 @@ export interface CalidadDatos {
   atendidos: number;
   conLlegada: number;
   conIngreso: number;
+  conSalida: number;
   conAmbos: number;
   coberturaPct: number;
 }
 
 export interface ResumenAmbulatorio {
   graciaMin: number;
+  /** Turnos reservados con antelación (TipoTurno = 0). */
   programados: number;
   atendidos: number;
   cancelados: number;
@@ -54,8 +62,10 @@ export interface ResumenAmbulatorio {
   enSala: number;
   enConsultorio: number;
   enCurso: number;
-  sobreturnos: number;
-  /** ausentes / (programados - cancelados) */
+  /** Registros creados al llegar el paciente (TipoTurno = 1). */
+  turnosDemanda: number;
+  atendidosDemanda: number;
+  /** ausentes / (programados - cancelados), sólo agenda */
   tasaAusentismo: number;
   tasaCancelacion: number;
   tasaAtencion: number;
@@ -63,7 +73,10 @@ export interface ResumenAmbulatorio {
   calidadDatos: CalidadDatos;
 }
 
-/** Consultas ambulatorias reales (imVisita) según hayan nacido o no de un turno. */
+/**
+ * Consultas ambulatorias reales (imVisita) según hayan nacido de un turno
+ * reservado con antelación o de una atención sin cita previa.
+ */
 export interface OrigenAmbulatorio {
   total: number;
   agenda: number;
@@ -79,6 +92,7 @@ export interface PuntoSerieAmbulatorio {
   cancelados: number;
   ausentes: number;
   pendientes: number;
+  turnosDemanda: number;
   esperaProm: number | null;
   ambulatoriasAgenda: number;
   ambulatoriasADemanda: number;
@@ -88,20 +102,25 @@ export interface PuntoSerieAmbulatorio {
 export interface DimensionAmbulatorio {
   codigo: string;
   descripcion: string | null;
-  /** Turnos de agenda (imTurnos) en el período. */
+  /** Turnos reservados con antelación (imTurnos, TipoTurno = 0). */
   programados: number;
-  /** Visitas ambulatorias con turno vinculado (imVisita). */
+  /** Atenciones nacidas de un turno de agenda (imVisita). */
   conTurno?: number;
-  /** Visitas ambulatorias sin turno — atención a demanda (imVisita). */
+  /** Atenciones sin cita previa: sobreturno del día o visita sin turno. */
   aDemanda?: number;
+  /** Turnos TipoTurno = 1, respaldo cuando la visita no registra la dimensión. */
+  turnosDemanda?: number;
   atendidos: number;
   ausentes: number;
-  tasaAusentismo: number;
+  /** null cuando la dimensión no tiene agenda y el ausentismo no aplica. */
+  tasaAusentismo: number | null;
   esperaProm: number | null;
+  /** Horallegada → HoraSalida. Disponible aunque no se marque el ingreso. */
+  permanenciaProm?: number | null;
   /** Sólo en porSector: 'A' ambulatorio, 'I' internación. */
   ambInt?: string | null;
-  /** Sólo en porProfesional. */
   cancelados?: number;
+  /** Sólo en porProfesional. */
   consultaProm?: number | null;
 }
 
@@ -112,6 +131,7 @@ export interface CeldaHeatmap {
   programados: number;
   ausentes: number;
   esperaProm: number | null;
+  permanenciaProm: number | null;
 }
 
 export interface AnaliticaAmbulatorio {

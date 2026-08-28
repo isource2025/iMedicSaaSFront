@@ -84,7 +84,8 @@ function pct(valor: number | null | undefined): string {
   return `${valor.toFixed(1).replace('.', ',')}%`;
 }
 
-function claseAusentismo(valor: number): string {
+function claseAusentismo(valor: number | null | undefined): string {
+  if (valor == null) return '';
   if (valor >= 20) return styles.badgeAlto;
   if (valor >= 10) return styles.badgeMedio;
   return styles.badgeBajo;
@@ -160,7 +161,7 @@ export default function AmbulatorioAnalytics() {
   const datosOrigen = useMemo(() => {
     if (!porOrigen || porOrigen.total === 0) return [];
     return [
-      { label: 'Con turno (agenda)', value: porOrigen.agenda, color: PANTONE[0] },
+      { label: 'Turno reservado', value: porOrigen.agenda, color: PANTONE[0] },
       { label: 'A demanda', value: porOrigen.aDemanda, color: PANTONE[2] },
     ].filter((d) => d.value > 0);
   }, [porOrigen]);
@@ -169,20 +170,32 @@ export default function AmbulatorioAnalytics() {
     () =>
       serie.map((p) => {
         const [, mes, dia] = p.fecha.split('-');
-        return { label: `${dia}/${mes}`, value: p.programados, date: p.fecha };
+        const total = p.ambulatoriasTotal || p.programados + p.turnosDemanda;
+        return { label: `${dia}/${mes}`, value: total, date: p.fecha };
       }),
     [serie],
   );
 
+  /**
+   * Sin marcado de ingreso la espera queda vacía y la grilla se vería en blanco,
+   * así que en ese caso se dibuja la permanencia, que sólo necesita la llegada y
+   * el cierre de la atención.
+   */
   const heatmapData = useMemo(() => {
     const horas = Array.from(new Set(heatmap.map((c) => c.hora))).sort((a, b) => a - b);
+    const hayEspera = heatmap.some((c) => c.esperaProm != null);
+    const metrica = hayEspera ? 'espera' : 'permanencia';
+    const valorDe = (c: CeldaHeatmap | undefined) =>
+      (hayEspera ? c?.esperaProm : c?.permanenciaProm) ?? null;
+
     const porClave = new Map<string, CeldaHeatmap>();
     let maximo = 0;
     for (const celda of heatmap) {
       porClave.set(`${celda.diaSemana}-${celda.hora}`, celda);
-      if (celda.esperaProm != null && celda.esperaProm > maximo) maximo = celda.esperaProm;
+      const v = valorDe(celda);
+      if (v != null && v > maximo) maximo = v;
     }
-    return { horas, porClave, maximo };
+    return { horas, porClave, maximo, metrica, valorDe };
   }, [heatmap]);
 
   const cobertura = resumen?.calidadDatos.coberturaPct ?? 0;
@@ -212,13 +225,13 @@ export default function AmbulatorioAnalytics() {
           <thead>
             <tr>
               <th>{etiquetaCodigo}</th>
-              <th className={styles.numeric}>Turnos agenda</th>
-              <th className={styles.numeric}>Con turno</th>
+              <th className={styles.numeric}>Agenda</th>
               <th className={styles.numeric}>A demanda</th>
               <th className={styles.numeric}>Atendidos</th>
               <th className={styles.numeric}>Ausentes</th>
               <th className={styles.numeric}>Ausentismo</th>
               <th className={styles.numeric}>Espera prom.</th>
+              <th className={styles.numeric}>Permanencia</th>
               {columnaExtra && <th className={styles.numeric}>{columnaExtra.titulo}</th>}
             </tr>
           </thead>
@@ -231,15 +244,19 @@ export default function AmbulatorioAnalytics() {
                     <span className={styles.muted}> · {f.codigo}</span>
                   ) : null}
                 </td>
-                <td className={styles.numeric}>{f.programados}</td>
-                <td className={styles.numeric}>{f.conTurno ?? 0}</td>
-                <td className={styles.numeric}>{f.aDemanda ?? 0}</td>
-                <td className={styles.numeric}>{f.atendidos}</td>
-                <td className={styles.numeric}>{f.ausentes}</td>
+                <td className={styles.numeric}>{f.programados.toLocaleString()}</td>
+                <td className={styles.numeric}>{(f.aDemanda ?? 0).toLocaleString()}</td>
+                <td className={styles.numeric}>{f.atendidos.toLocaleString()}</td>
+                <td className={styles.numeric}>{f.ausentes.toLocaleString()}</td>
                 <td className={`${styles.numeric} ${claseAusentismo(f.tasaAusentismo)}`}>
-                  {pct(f.tasaAusentismo)}
+                  {f.programados > 0 ? (
+                    pct(f.tasaAusentismo)
+                  ) : (
+                    <span className={styles.muted}>No aplica</span>
+                  )}
                 </td>
                 <td className={styles.numeric}>{minutos(f.esperaProm)}</td>
+                <td className={styles.numeric}>{minutos(f.permanenciaProm)}</td>
                 {columnaExtra && <td className={styles.numeric}>{columnaExtra.valor(f)}</td>}
               </tr>
             ))}
@@ -356,7 +373,7 @@ export default function AmbulatorioAnalytics() {
                 <h2 className={styles.estadoTitle}>Cumplimiento de Agenda</h2>
                 <p className={styles.estadoSubtitle}>
                   {fechaInicio} al {fechaFin} · un turno cuenta como ausente {graciaMin} min
-                  después de su horario
+                  después de su horario · la atención a demanda no entra en el ausentismo
                 </p>
               </div>
               <div className={styles.estadoMetrics}>
@@ -364,7 +381,13 @@ export default function AmbulatorioAnalytics() {
                   <div className={styles.estadoMetricValueLarge}>
                     {resumen.programados.toLocaleString()}
                   </div>
-                  <div className={styles.estadoMetricLabel}>Programados</div>
+                  <div className={styles.estadoMetricLabel}>Turnos de agenda</div>
+                </div>
+                <div className={styles.estadoMetric}>
+                  <div className={styles.estadoMetricValue}>
+                    {resumen.turnosDemanda.toLocaleString()}
+                  </div>
+                  <div className={styles.estadoMetricLabel}>A demanda</div>
                 </div>
                 <div className={styles.estadoMetric}>
                   <div className={styles.estadoMetricValue}>
@@ -407,15 +430,16 @@ export default function AmbulatorioAnalytics() {
             />
             <div>
               <p className={styles.coverageTitle}>
-                Cobertura de marcado: {pct(cobertura)} ({resumen.calidadDatos.conIngreso} de{' '}
-                {resumen.calidadDatos.atendidos} turnos atendidos)
+                Cobertura de marcado de ingreso: {pct(cobertura)} (
+                {resumen.calidadDatos.conIngreso} de {resumen.calidadDatos.atendidos} turnos de
+                agenda atendidos)
               </p>
               <p className={styles.coverageText}>
                 {cobertura >= 70
                   ? 'Los tiempos de espera se calculan sobre una muestra representativa.'
                   : cobertura >= 30
                     ? 'Los tiempos surgen de una muestra parcial: interpretarlos como tendencia, no como valor exacto.'
-                    : 'Hay muy pocos turnos con ingreso marcado. Los tiempos de esta pantalla no son representativos hasta que el marcado en la agenda sea sistemático.'}
+                    : 'Casi ningún turno tiene marcado el ingreso al consultorio, así que la espera y la duración de consulta quedan sin datos. La permanencia sí es utilizable: se calcula entre la llegada y el cierre de la atención.'}
               </p>
             </div>
           </div>
@@ -424,18 +448,19 @@ export default function AmbulatorioAnalytics() {
             <MetricCard
               title="Consultas Ambulatorias"
               value={(porOrigen?.total ?? 0).toLocaleString()}
-              detail={`${porOrigen?.agenda ?? 0} con turno · ${porOrigen?.aDemanda ?? 0} a demanda`}
+              detail={`${(porOrigen?.agenda ?? 0).toLocaleString()} con turno reservado · ${(porOrigen?.aDemanda ?? 0).toLocaleString()} a demanda`}
               icon={ICONS.calendar}
               iconColor="#0083A9"
               backgroundColor="#E0F7FA"
               tooltipData={{
                 description:
-                  'Visitas ambulatorias reales del período (imVisita con clase de paciente A), separadas según hayan nacido de un turno de agenda o de atención a demanda.',
-                formula: 'Visitas con turno asociado + visitas sin turno asociado',
+                  'Visitas ambulatorias reales del período (imVisita con clase de paciente A), separadas según el paciente tuviera una cita reservada con antelación o llegara sin turno previo.',
+                formula:
+                  'A demanda = visitas sin turno + visitas cuyo turno se creó al momento de llegar (TipoTurno = 1)',
                 example:
-                  'Si hubo 400 visitas y 320 tenían turno, 80 fueron a demanda (20% sin cita previa).',
+                  'En emergencia se registra un turno al admitir al paciente, pero con la hora del turno igual a la de llegada: esas atenciones cuentan como a demanda, no como agenda.',
                 importance:
-                  'Distinguir el origen muestra cuánta de la actividad real está bajo control de la agenda y cuánta llega sin programar.',
+                  'Distinguir el origen muestra cuánta actividad está bajo control de la agenda y cuánta llega sin programar. Sin esta separación, los sectores de guardia aparecerían con miles de turnos "programados" inexistentes.',
               }}
             />
             <MetricCard
@@ -451,12 +476,36 @@ export default function AmbulatorioAnalytics() {
               backgroundColor="#E8F5E9"
               tooltipData={{
                 description:
-                  'Minutos entre el horario asignado del turno y el ingreso al consultorio. Mide cuánto se demoró la atención respecto de lo pactado en la agenda.',
+                  'Minutos entre el horario asignado del turno y el ingreso al consultorio. Mide cuánto se demoró la atención respecto de lo pactado en la agenda. Sólo turnos reservados con antelación: la demanda espontánea no tiene horario pactado.',
                 formula: 'HoraIngreso - HoraAsignada, promediado sobre turnos con ingreso marcado',
                 example:
                   'Turno 10:00 e ingreso 10:25 → 25 minutos de espera. El P90 indica que el 10% peor superó ese valor.',
                 importance:
                   'Refleja el cumplimiento operativo de la agenda. La mediana y el P90 importan más que el promedio, porque las demoras largas se concentran en pocos casos.',
+              }}
+            />
+            <MetricCard
+              title="Permanencia Promedio"
+              value={
+                resumen.tiempos.permanencia.muestras > 0
+                  ? minutos(resumen.tiempos.permanencia.promedio)
+                  : 'Sin datos'
+              }
+              detail={
+                resumen.tiempos.permanencia.muestras > 0
+                  ? `Mediana ${minutos(resumen.tiempos.permanencia.p50)} · P90 ${minutos(resumen.tiempos.permanencia.p90)}`
+                  : 'Requiere cierre de la atención'
+              }
+              icon={ICONS.clock}
+              iconColor="#0083A9"
+              backgroundColor="#E0F7FA"
+              tooltipData={{
+                description:
+                  'Tiempo total que el paciente estuvo en la institución, desde que se registró su llegada hasta que se cerró la atención. Incluye agenda y demanda espontánea.',
+                formula: 'HoraSalida - Horallegada',
+                example: 'Llega 09:40 y se cierra la atención 11:05 → 85 minutos de permanencia.',
+                importance:
+                  'Es la única métrica de tiempo disponible cuando no se marca el ingreso al consultorio, y es la más relevante en guardia, donde no hay horario pactado contra el cual medir la espera.',
               }}
             />
             <MetricCard
@@ -485,19 +534,23 @@ export default function AmbulatorioAnalytics() {
             />
             <MetricCard
               title="Tasa de Ausentismo"
-              value={pct(resumen.tasaAusentismo)}
-              detail={`${resumen.ausentes} ausentes de ${resumen.programados - resumen.cancelados} esperados`}
+              value={resumen.programados > 0 ? pct(resumen.tasaAusentismo) : 'No aplica'}
+              detail={
+                resumen.programados > 0
+                  ? `${resumen.ausentes} ausentes de ${resumen.programados - resumen.cancelados} esperados`
+                  : 'El período seleccionado no tiene turnos de agenda'
+              }
               icon={ICONS.userOff}
               iconColor="#D81B60"
               backgroundColor="#FCE4EC"
               tooltipData={{
                 description:
-                  'Porcentaje de turnos en los que el paciente nunca se presentó. La agenda no tiene un estado "ausente": se infiere cuando pasó la tolerancia configurada sin que se marcara la llegada.',
-                formula: 'Ausentes / (Programados - Cancelados)',
+                  'Porcentaje de turnos reservados en los que el paciente nunca se atendió. La agenda no tiene un estado "ausente": se infiere cuando pasó la tolerancia configurada sin que la atención se cerrara ni quedara vinculada a una visita.',
+                formula: 'Ausentes / (Turnos de agenda - Cancelados)',
                 example:
                   'Con 200 turnos, 20 cancelados y 27 ausentes: 27 / 180 = 15% de ausentismo.',
                 importance:
-                  'Los cancelados se excluyen del denominador porque avisaron y el slot pudo reasignarse. El ausentismo puro es el que se pierde.',
+                  'Los cancelados se excluyen del denominador porque avisaron y el slot pudo reasignarse. La atención a demanda también queda fuera: un paciente que se registra al llegar no puede faltar a su propia llegada.',
               }}
             />
             <MetricCard
@@ -561,7 +614,9 @@ export default function AmbulatorioAnalytics() {
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Desenlace de los Turnos</h3>
             <p className={styles.sectionHint}>
-              Cómo terminaron los {resumen.programados.toLocaleString()} turnos del período
+              Cómo terminaron los {resumen.programados.toLocaleString()} turnos reservados del
+              período. La atención a demanda se cuenta aparte porque no tiene desenlace posible:
+              el paciente ya está presente cuando se registra.
             </p>
             {datosEstado.length === 0 ? (
               <p className={styles.emptyState}>No hay turnos en el período seleccionado.</p>
@@ -582,9 +637,11 @@ export default function AmbulatorioAnalytics() {
                   ))}
                   <div className={styles.legendItem}>
                     <div className={styles.legendInfo}>
-                      <span className={styles.legendLabel}>Sobreturnos</span>
+                      <span className={styles.legendLabel}>A demanda (fuera de agenda)</span>
                     </div>
-                    <span className={styles.legendValue}>{resumen.sobreturnos}</span>
+                    <span className={styles.legendValue}>
+                      {resumen.turnosDemanda.toLocaleString()}
+                    </span>
                   </div>
                 </div>
                 <div className={styles.donutContainer}>
@@ -597,17 +654,30 @@ export default function AmbulatorioAnalytics() {
           </div>
 
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Volumen Diario de Turnos</h3>
+            <h3 className={styles.sectionTitle}>Volumen Diario de Atención</h3>
+            <p className={styles.sectionHint}>
+              Actividad ambulatoria total por día, sumando los turnos de agenda y la atención a
+              demanda
+            </p>
             <Suspense fallback={<ChartSkeleton />}>
-              <LineChartLazy data={serieVolumen} title="Turnos programados por día" color="#00B5E2" />
+              <LineChartLazy
+                data={serieVolumen}
+                title="Atenciones ambulatorias por día"
+                color="#00B5E2"
+              />
             </Suspense>
           </div>
 
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Espera por Franja Horaria</h3>
+            <h3 className={styles.sectionTitle}>
+              {heatmapData.metrica === 'espera'
+                ? 'Espera por Franja Horaria'
+                : 'Permanencia por Franja Horaria'}
+            </h3>
             <p className={styles.sectionHint}>
-              Minutos de espera promedio (desde el horario del turno) según día de la semana y hora
-              asignada
+              {heatmapData.metrica === 'espera'
+                ? 'Minutos de espera promedio (desde el horario del turno) según día de la semana y hora asignada'
+                : 'Minutos promedio entre la llegada y el cierre de la atención, según día de la semana y hora. Se muestra la permanencia porque no hay marcado de ingreso al consultorio.'}
             </p>
             {heatmapData.horas.length === 0 ? (
               <p className={styles.emptyState}>Sin turnos para construir el mapa horario.</p>
@@ -631,7 +701,7 @@ export default function AmbulatorioAnalytics() {
                         <div className={styles.heatmapAxisY}>{dia}</div>
                         {heatmapData.horas.map((h) => {
                           const celda = heatmapData.porClave.get(`${idx}-${h}`);
-                          const espera = celda?.esperaProm ?? null;
+                          const espera = heatmapData.valorDe(celda);
                           return (
                             <div
                               key={`${dia}-${h}`}
@@ -645,7 +715,7 @@ export default function AmbulatorioAnalytics() {
                               }
                               title={
                                 celda
-                                  ? `${dia} ${String(h).padStart(2, '0')}h · ${celda.programados} turnos · espera ${minutos(espera)}`
+                                  ? `${dia} ${String(h).padStart(2, '0')}h · ${celda.programados} turnos · ${heatmapData.metrica} ${minutos(espera)}`
                                   : `${dia} ${String(h).padStart(2, '0')}h · sin turnos`
                               }
                             >
@@ -658,7 +728,7 @@ export default function AmbulatorioAnalytics() {
                   </div>
                 </div>
                 <div className={styles.heatmapLegend}>
-                  <span>Menor espera</span>
+                  <span>Menor {heatmapData.metrica}</span>
                   <div className={styles.heatmapScale}>
                     {[0, 0.25, 0.5, 0.75, 1].map((t) => (
                       <div
@@ -670,7 +740,9 @@ export default function AmbulatorioAnalytics() {
                       />
                     ))}
                   </div>
-                  <span>Mayor espera ({minutos(heatmapData.maximo)})</span>
+                  <span>
+                    Mayor {heatmapData.metrica} ({minutos(heatmapData.maximo)})
+                  </span>
                 </div>
               </>
             )}
@@ -679,8 +751,8 @@ export default function AmbulatorioAnalytics() {
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Por Especialidad</h3>
             <p className={styles.sectionHint}>
-              Turnos de agenda e ingresos ambulatorios reales (con turno / a demanda) por
-              especialidad
+              Agenda cuenta los turnos reservados con antelación; A demanda, las atenciones sin
+              cita previa. El ausentismo sólo aplica sobre la agenda.
             </p>
             {renderTabla(porEspecialidad, 'Especialidad')}
           </div>
@@ -688,8 +760,9 @@ export default function AmbulatorioAnalytics() {
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Por Sector</h3>
             <p className={styles.sectionHint}>
-              Los turnos de agenda no reflejan la demanda espontánea: use la columna A demanda
-              para sectores como emergencia que atienden sin cita previa
+              Los sectores que atienden sin cita previa (emergencia, rayos, consultorio de
+              atención inmediata) aparecen con la agenda en cero y todo su volumen en A demanda.
+              La permanencia es la métrica de tiempo útil para ellos.
             </p>
             {renderTabla(porSector, 'Sector')}
           </div>
@@ -697,8 +770,8 @@ export default function AmbulatorioAnalytics() {
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Por Profesional</h3>
             <p className={styles.sectionHint}>
-              Turnos de agenda e ingresos ambulatorios reales (con turno / a demanda) por
-              profesional
+              La agenda se atribuye al profesional del turno y la demanda al que admitió la
+              visita, así que un mismo equipo puede aparecer en dos filas.
             </p>
             {renderTabla(porProfesional, 'Profesional', {
               titulo: 'Consulta prom.',
