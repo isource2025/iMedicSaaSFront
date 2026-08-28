@@ -665,60 +665,6 @@
   align-items: center;
 }
 
-/* Tabla de rankings */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.table th {
-  text-align: left;
-  padding: 10px 12px;
-  color: #666;
-  font-weight: 600;
-  border-bottom: 2px solid #00B5E2;
-  white-space: nowrap;
-}
-
-.table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  color: #333;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.numeric {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.muted {
-  color: #999;
-}
-
-.badgeAlto {
-  color: #c62828;
-  font-weight: 600;
-}
-
-.badgeMedio {
-  color: #ef6c00;
-  font-weight: 600;
-}
-
-.badgeBajo {
-  color: #2e7d32;
-  font-weight: 600;
-}
-
-.tableScroll {
-  overflow-x: auto;
-}
-
 /* Heatmap de espera por franja horaria */
 .heatmapScroll {
   overflow-x: auto;

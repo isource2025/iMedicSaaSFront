@@ -11,10 +11,11 @@ import {
   GRACIA_MIN_DEFAULT,
   OPCIONES_GRACIA_MIN,
 } from '@/app/types/ambulatorio';
-import type { CeldaHeatmap, DimensionAmbulatorio } from '@/app/types/ambulatorio';
+import type { CeldaHeatmap } from '@/app/types/ambulatorio';
 import { AnimatedCounter } from './AnimatedCounter';
 import { ChartWidget, ChartLegend } from './ChartWidget';
 import { CompactBarChart } from './CompactBarChart';
+import { AmbulatorioDimensionTable } from './AmbulatorioDimensionTable';
 import styles from './AmbulatorioAnalytics.module.css';
 
 const DonutChartLazy = lazy(() => import('@/app/components/Charts/DonutChart'));
@@ -85,13 +86,6 @@ function minutos(valor: number | null | undefined): string {
 function pct(valor: number | null | undefined): string {
   if (valor == null) return '—';
   return `${valor.toFixed(1).replace('.', ',')}%`;
-}
-
-function claseAusentismo(valor: number | null | undefined): string {
-  if (valor == null) return '';
-  if (valor >= 20) return styles.badgeAlto;
-  if (valor >= 10) return styles.badgeMedio;
-  return styles.badgeBajo;
 }
 
 /** Verde → rojo según la espera relativa al peor valor de la grilla. */
@@ -213,61 +207,6 @@ export default function AmbulatorioAnalytics() {
       </div>
     );
   }
-
-  const renderTabla = (
-    filas: DimensionAmbulatorio[],
-    etiquetaCodigo: string,
-    columnaExtra?: { titulo: string; valor: (f: DimensionAmbulatorio) => string },
-  ) => {
-    if (filas.length === 0) {
-      return <p className={styles.emptyState}>Sin datos en el período seleccionado.</p>;
-    }
-    return (
-      <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>{etiquetaCodigo}</th>
-              <th className={styles.numeric}>Agenda</th>
-              <th className={styles.numeric}>A demanda</th>
-              <th className={styles.numeric}>Atendidos</th>
-              <th className={styles.numeric}>Ausentes</th>
-              <th className={styles.numeric}>Ausentismo</th>
-              <th className={styles.numeric}>Espera prom.</th>
-              <th className={styles.numeric}>Permanencia</th>
-              {columnaExtra && <th className={styles.numeric}>{columnaExtra.titulo}</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {filas.map((f) => (
-              <tr key={`${f.codigo}-${f.descripcion ?? ''}`}>
-                <td>
-                  {f.descripcion || <span className={styles.muted}>Sin identificar</span>}
-                  {f.codigo && f.descripcion ? (
-                    <span className={styles.muted}> · {f.codigo}</span>
-                  ) : null}
-                </td>
-                <td className={styles.numeric}>{f.programados.toLocaleString()}</td>
-                <td className={styles.numeric}>{(f.aDemanda ?? 0).toLocaleString()}</td>
-                <td className={styles.numeric}>{f.atendidos.toLocaleString()}</td>
-                <td className={styles.numeric}>{f.ausentes.toLocaleString()}</td>
-                <td className={`${styles.numeric} ${claseAusentismo(f.tasaAusentismo)}`}>
-                  {f.programados > 0 ? (
-                    pct(f.tasaAusentismo)
-                  ) : (
-                    <span className={styles.muted}>No aplica</span>
-                  )}
-                </td>
-                <td className={styles.numeric}>{minutos(f.esperaProm)}</td>
-                <td className={styles.numeric}>{minutos(f.permanenciaProm)}</td>
-                {columnaExtra && <td className={styles.numeric}>{columnaExtra.valor(f)}</td>}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
 
   return (
     <div className={styles.container}>
@@ -704,7 +643,7 @@ export default function AmbulatorioAnalytics() {
               Agenda cuenta los turnos reservados con antelación; A demanda, las atenciones sin
               cita previa. El ausentismo sólo aplica sobre la agenda.
             </p>
-            {renderTabla(porEspecialidad, 'Especialidad')}
+            <AmbulatorioDimensionTable filas={porEspecialidad} etiquetaCodigo="Especialidad" />
           </div>
 
           <div className={styles.section}>
@@ -714,7 +653,7 @@ export default function AmbulatorioAnalytics() {
               atención inmediata) aparecen con la agenda en cero y todo su volumen en A demanda.
               La permanencia es la métrica de tiempo útil para ellos.
             </p>
-            {renderTabla(porSector, 'Sector')}
+            <AmbulatorioDimensionTable filas={porSector} etiquetaCodigo="Sector" />
           </div>
 
           <div className={styles.section}>
@@ -723,10 +662,14 @@ export default function AmbulatorioAnalytics() {
               La agenda se atribuye al profesional del turno y la demanda al que admitió la
               visita, así que un mismo equipo puede aparecer en dos filas.
             </p>
-            {renderTabla(porProfesional, 'Profesional', {
-              titulo: 'Consulta prom.',
-              valor: (f) => minutos(f.consultaProm),
-            })}
+            <AmbulatorioDimensionTable
+              filas={porProfesional}
+              etiquetaCodigo="Profesional"
+              columnaExtra={{
+                titulo: 'Consulta prom.',
+                valor: (f) => minutos(f.consultaProm),
+              }}
+            />
           </div>
         </>
       )}
