@@ -6,6 +6,8 @@ import {
   buildHCIPhysicalExamSections,
   HCI_CAMPOS_TEXTO_LIBRE,
 } from '@/app/utils/hciIngresoDisplay';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacienteFields';
+import type { DatosFiliatoriosPaciente } from '@/app/types/pacienteDatos';
 import type { VisitDetailPayload, VisitDetailTabId } from './AdmissionVisitDetailModal';
 import AdmissionAdjuntosGrid from './AdmissionAdjuntosGrid';
 import styles from './AdmissionVisitDetailModal.module.css';
@@ -73,6 +75,10 @@ function HCIRecordPlain({ record, index }: { record: Record<string, unknown>; in
     a.titulo.localeCompare(b.titulo, 'es'),
   );
 
+  const filiatorios = buildPacienteFields(r as DatosFiliatoriosPaciente).filter(
+    (f) => f.label !== 'Atención' && f.value,
+  );
+
   const hasClinicalBody =
     Boolean(motivo) ||
     Boolean(enfermedad) ||
@@ -85,6 +91,18 @@ function HCIRecordPlain({ record, index }: { record: Record<string, unknown>; in
         <strong>{titleLine}</strong>
         {[sector, [fecha, hora].filter(Boolean).join(' ')].filter(Boolean).join(' · ') || '—'}
       </p>
+
+      {filiatorios.length ? (
+        <>
+          <hr className={styles.divider} />
+          <h4 className={styles.dividerTitle}>Datos del paciente</h4>
+          {filiatorios.map((f) => (
+            <p key={f.label} className={styles.fieldLine}>
+              <span className={styles.fieldLabel}>{f.label}:</span> {f.value}
+            </p>
+          ))}
+        </>
+      ) : null}
 
       {motivo ? (
         <>

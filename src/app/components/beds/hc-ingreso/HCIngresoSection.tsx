@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import styles from './HCIngresoSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
+import { buildPacienteFields } from '../shared/pacienteFields';
 import EmptyState from '../shared/EmptyState';
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";
@@ -662,8 +663,28 @@ export default function HCIngresoSection({
                         <div className={styles.detailContent}>
                             <h3 className={styles.detailTitle}>HC de Ingreso</h3>
                             <p className={styles.detailPatient}>
-                                {patientName || "PACIENTE"} - DNI: {documentoPaciente || "N/A"}
+                                {selectedRecord.PacienteNombre || patientName || "PACIENTE"} - DNI: {selectedRecord.PacienteDocumento || documentoPaciente || "N/A"}
                             </p>
+
+                            {(() => {
+                                const datos = buildPacienteFields(selectedRecord).filter(
+                                    (f) => f.label !== "Paciente" && f.label !== "Atención" && f.value,
+                                );
+                                if (!datos.length) return null;
+                                return (
+                                    <div className={styles.detailSectionGroup}>
+                                        <h4 className={styles.detailSectionTitle}>Datos del paciente</h4>
+                                        <div className={styles.detailFieldsGrid}>
+                                            {datos.map((f) => (
+                                                <div key={f.label} className={styles.detailField}>
+                                                    <span className={styles.detailFieldLabel}>{f.label}:</span>
+                                                    <span className={styles.detailFieldValue}>{f.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             <div className={styles.detailSection}>
                                 <div className={styles.detailRow}>

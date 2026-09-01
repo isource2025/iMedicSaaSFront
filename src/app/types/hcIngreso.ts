@@ -1,4 +1,6 @@
-export interface HCIngresoRecord {
+import type { DatosFiliatoriosPaciente } from './pacienteDatos';
+
+export interface HCIngresoRecord extends DatosFiliatoriosPaciente {
     IdHCIngreso: number;
     NumeroVisita: number;
     IdSector: string;

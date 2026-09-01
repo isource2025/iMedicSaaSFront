@@ -1,6 +1,7 @@
 import { EmpresaInfo } from '@/app/services/empresaService';
 import { HCI_CAMPOS_TEXTO_LIBRE, buildHCIPhysicalExamSections } from './hciIngresoDisplay';
 import { exportToPDF, type PDFPart, type ProfesionalFirmaInfo } from './pdfExport';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacienteFields';
 
 type HCIngresoData = Record<string, any>;
 
@@ -22,7 +23,19 @@ export const generarPDFHistoriaClinica = async (
 		idPersonal: data.IdPersonal ?? data.IdProfecional ?? undefined,
 	};
 
+	const filiatorios = buildPacienteFields(data).filter(
+		(f) => f.label !== 'Paciente' && f.label !== 'Atención' && f.value,
+	);
+
 	const parts: PDFPart[] = [
+		...(filiatorios.length
+			? [
+					{
+						title: 'Datos del paciente',
+						fields: filiatorios.map((f) => ({ label: f.label, value: f.value })),
+					},
+				]
+			: []),
 		{
 			title: 'Datos de la HC',
 			fields: [
