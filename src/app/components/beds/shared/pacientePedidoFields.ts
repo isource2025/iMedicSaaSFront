@@ -1,4 +1,4 @@
-import type { DatosFiliatoriosPaciente } from '@/app/types/pacienteDatos';
+import type { DatosPacientePedido } from '@/app/types/estudios';
 import type { DetailField } from './PedidoDetalleModal';
 
 function txt(value?: string | number | null) {
@@ -6,7 +6,7 @@ function txt(value?: string | number | null) {
 	return s === '' ? null : s;
 }
 
-function formatDocumento(row: DatosFiliatoriosPaciente) {
+function formatDocumento(row: DatosPacientePedido) {
 	const numero = txt(row.PacienteDocumento);
 	if (!numero) return null;
 	const digits = numero.replace(/\D/g, '');
@@ -15,7 +15,7 @@ function formatDocumento(row: DatosFiliatoriosPaciente) {
 	return tipo ? `${tipo} ${formateado}` : formateado;
 }
 
-function formatFechaNacimiento(row: DatosFiliatoriosPaciente) {
+function formatFechaNacimiento(row: DatosPacientePedido) {
 	const iso = txt(row.PacienteFechaNacimiento);
 	if (!iso) return null;
 	const [y, m, d] = iso.slice(0, 10).split('-');
@@ -23,7 +23,7 @@ function formatFechaNacimiento(row: DatosFiliatoriosPaciente) {
 	return row.PacienteEdad != null ? `${fecha} (${row.PacienteEdad} años)` : fecha;
 }
 
-function formatAtencion(row: DatosFiliatoriosPaciente) {
+function formatAtencion(row: DatosPacientePedido) {
 	if (row.TipoAtencion === 'INTERNADO') {
 		const ubic = txt(row.Ubicacion);
 		return ubic ? `Internado · ${ubic}` : 'Internado';
@@ -33,11 +33,10 @@ function formatAtencion(row: DatosFiliatoriosPaciente) {
 }
 
 /**
- * Datos filiatorios del paciente (imPacientes) para el detalle de un pedido,
- * de una interconsulta o de la HC de ingreso. Se devuelven todos los campos:
- * cada vista descarta los vacíos.
+ * Datos filiatorios del paciente (imPacientes) para el detalle de un pedido.
+ * El modal descarta los campos vacíos, por eso se devuelven todos.
  */
-export function buildPacienteFields(row: DatosFiliatoriosPaciente): DetailField[] {
+export function buildPacienteFields(row: DatosPacientePedido): DetailField[] {
 	return [
 		{ label: 'Paciente', value: txt(row.PacienteNombre), full: true },
 		{ label: 'Documento', value: formatDocumento(row) },

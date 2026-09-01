@@ -1,11 +1,11 @@
 'use client';
 
 import { IoFemale, IoMale } from 'react-icons/io5';
-import type { DatosFiliatoriosPaciente } from '@/app/types/pacienteDatos';
+import type { DatosPacientePedido } from '@/app/types/estudios';
 import formStyles from './PedidoEstudioForms.module.css';
 
 type Props = {
-	paciente: DatosFiliatoriosPaciente;
+	paciente: DatosPacientePedido;
 	idVisita?: number | null;
 };
 

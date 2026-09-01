@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import styles from './HCIngresoSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
-import { buildPacienteFields } from '../shared/pacienteFields';
+import { buildPacienteFields } from '../shared/pacientePedidoFields';
 import EmptyState from '../shared/EmptyState';
 import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";

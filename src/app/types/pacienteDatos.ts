@@ -1,6 +1,7 @@
 /**
  * Datos filiatorios del paciente (imPacientes) que el backend adjunta a la HC
- * de ingreso, a los pedidos de estudios y a las interconsultas.
+ * de ingreso. Coincide campo por campo con los que viajan en los pedidos, para
+ * poder reutilizar el mismo armado de etiquetas.
  */
 export interface DatosFiliatoriosPaciente {
 	IdPaciente?: number | null;

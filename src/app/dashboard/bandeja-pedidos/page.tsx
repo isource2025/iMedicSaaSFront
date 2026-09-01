@@ -16,7 +16,7 @@ import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioMo
 import PedidoAdjuntosField from '@/app/components/beds/estudios/PedidoAdjuntosField';
 import PacientePedidoHeader from '@/app/components/beds/estudios/PacientePedidoHeader';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
-import { buildPacienteFields } from '@/app/components/beds/shared/pacienteFields';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
 import { autorRespuesta } from '@/app/components/beds/shared/pedidoResponsable';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from './bandejaPedidos.module.css';

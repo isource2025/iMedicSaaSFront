@@ -8,7 +8,7 @@ import {
 import { usePermiso } from '@/app/hooks/usePermiso';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
-import { buildPacienteFields } from '../shared/pacienteFields';
+import { buildPacienteFields } from '../shared/pacientePedidoFields';
 import { autorRespuesta } from '../shared/pedidoResponsable';
 import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';

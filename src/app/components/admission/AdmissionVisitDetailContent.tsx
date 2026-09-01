@@ -6,7 +6,7 @@ import {
   buildHCIPhysicalExamSections,
   HCI_CAMPOS_TEXTO_LIBRE,
 } from '@/app/utils/hciIngresoDisplay';
-import { buildPacienteFields } from '@/app/components/beds/shared/pacienteFields';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
 import type { DatosFiliatoriosPaciente } from '@/app/types/pacienteDatos';
 import type { VisitDetailPayload, VisitDetailTabId } from './AdmissionVisitDetailModal';
 import AdmissionAdjuntosGrid from './AdmissionAdjuntosGrid';

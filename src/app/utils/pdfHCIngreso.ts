@@ -1,7 +1,7 @@
 import { EmpresaInfo } from '@/app/services/empresaService';
 import { HCI_CAMPOS_TEXTO_LIBRE, buildHCIPhysicalExamSections } from './hciIngresoDisplay';
 import { exportToPDF, type PDFPart, type ProfesionalFirmaInfo } from './pdfExport';
-import { buildPacienteFields } from '@/app/components/beds/shared/pacienteFields';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
 
 type HCIngresoData = Record<string, any>;
 
