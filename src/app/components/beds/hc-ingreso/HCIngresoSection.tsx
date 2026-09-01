@@ -8,6 +8,7 @@ import { useBedDetail } from "../contexts/BedDetailContext";
 import { HCIngresoRecord } from "@/app/types/hcIngreso";
 import { 
     obtenerHCIngresoPorVisita, 
+    obtenerHCIngresoPorId,
     crearHCIngreso, 
     actualizarHCIngreso, 
     eliminarHCIngreso 
@@ -80,6 +81,9 @@ import PlanDiagnosticoForm from "./examen-fisico/PlanDiagnostico";
 import PlanTerapeuticoForm from "./examen-fisico/PlanTerapeutico";
 import ExamenesComplementariosForm from "./examen-fisico/ExamenesComplementarios";
 import AntecedentesPersonalesForm from "./examen-fisico/AntecedentesPersonales";
+import AuditoriaHciModal from "./AuditoriaHciModal";
+import { SECCIONES_CONFIG, getNombreCampo } from "./camposHci";
+import { usePermiso } from "@/app/hooks/usePermiso";
 
 // Secciones de la HC de Ingreso para el modo edición
 const HC_SECTIONS = [
@@ -105,72 +109,6 @@ const HC_SECTIONS = [
     { id: "planTerapeutico", label: "Plan Terapéutico" },
     { id: "examenesComplementarios", label: "Exámenes Complementarios" },
 ];
-
-// Configuración de secciones para vista de detalle
-const SECCIONES_CONFIG: Record<string, string> = {
-    'SV': 'Signos Vitales',
-    'PF': 'Piel y Faneras',
-    'TCS': 'Tejido Celular Subcutáneo',
-    'SL': 'Sistema Linfático',
-    'SOAM': 'Sistema Osteoarticulomuscular',
-    'C': 'Cabeza',
-    'CU': 'Cuello',
-    'M': 'Mamas',
-    'AR': 'Aparato Respiratorio',
-    'AC': 'Aparato Cardiovascular',
-    'ACV': 'Aparato Cardiovascular',
-    'A': 'Abdomen',
-    'AUG': 'Aparato Urogenital',
-    'SN': 'Sistema Nervioso',
-    'EO': 'Examen Oftalmológico',
-    'EC': 'Electrocardiograma',
-    'RDT': 'Radiografía de Tórax',
-    'PD': 'Plan Diagnóstico',
-    'PT': 'Plan Terapéutico',
-    'ID': 'Impresión Diagnóstica',
-};
-
-// Función para obtener el nombre legible de un campo
-const getNombreCampo = (key: string): string => {
-    const sinPrefijo = key.replace(/^[A-Z]+_/, '');
-    
-    // Diccionario de abreviaturas a expandir
-    const abreviaturas: Record<string, string> = {
-        'PR': 'Pulso Radial',
-        'QT': 'QT',
-        'QRS': 'QRS',
-        'OndaP': 'Onda P',
-        'OndaT': 'Onda T',
-        'ST': 'ST',
-        'ICT': 'Índice Cardiotorácico',
-        'Duracion': 'Duración',
-        'Amplitud': 'Amplitud',
-        'Conformacion': 'Conformación',
-        'Ritmo': 'Ritmo',
-        'Frecuencia': 'Frecuencia',
-        'Conclusiones': 'Conclusiones',
-        'Tecnica': 'Técnica',
-        'PartesBlandas': 'Partes Blandas',
-        'PartesOseas': 'Partes Óseas',
-        'Hemidiafragmas': 'Hemidiafragmas',
-        'SenosCostoFrenicos': 'Senos Costofrenicos',
-        'Mediastino': 'Mediastino',
-        'SiluetaCardiovascular': 'Silueta Cardiovascular',
-        'CamposPulmonares': 'Campos Pulmonares',
-        'Hilios': 'Hilios',
-    };
-    
-    // Verificar si el campo sin prefijo está en el diccionario
-    if (abreviaturas[sinPrefijo]) {
-        return abreviaturas[sinPrefijo];
-    }
-    
-    // Si no está en el diccionario, aplicar formato estándar
-    return sinPrefijo
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^./, str => str.toUpperCase())
-        .trim();
-};
 
 // Función para agrupar campos por sección
 const getSecciones = (record: any): Record<string, Array<{campo: string, valor: any}>> => {
@@ -269,6 +207,9 @@ export default function HCIngresoSection({
 }: HCIngresoSectionProps) {
     const { selectedDate } = useBedDetail();
     const { usuario, sectorSeleccionado } = useAppContext();
+    const { puede, loaded: permisosCargados } = usePermiso();
+    // El historial dice quién tocó cada HC: solo lo ven ADMIN y SUPER_ADMIN.
+    const puedeVerAuditoria = permisosCargados && puede('INTERNACION.AUDITORIA_HC.VER');
     
     // Estado del componente
     const [mode, setMode] = useState<ViewMode>("view");
@@ -280,6 +221,7 @@ export default function HCIngresoSection({
     const [error, setError] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [empresaInfo, setEmpresaInfo] = useState<EmpresaInfo | undefined>(undefined);
+    const [auditoriaAbierta, setAuditoriaAbierta] = useState(false);
     
     // Estado del formulario (para modo add/edit)
     const [formData, setFormData] = useState({
@@ -315,29 +257,40 @@ export default function HCIngresoSection({
 
     // Cargar datos desde el backend
     useEffect(() => {
+        // Cambió el paciente: descartar la edición en curso para no guardarla sobre la visita nueva
+        setMode("view");
+        setEditBaseline(null);
+        setExamenFisico(getEmptyExamenFisico());
+        setSelectedRecordId(null);
+        setRecords([]);
+        setError(null);
+
         if (!numeroVisita) {
             setLoading(false);
             return;
         }
 
+        let vigente = true;
         const cargarDatos = async () => {
             setLoading(true);
-            setError(null);
             try {
                 const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                if (!vigente) return;
                 setRecords(data);
-                if (data.length > 0 && !selectedRecordId) {
-                    setSelectedRecordId(data[0].IdHCIngreso);
-                }
+                setSelectedRecordId(data.length > 0 ? data[0].IdHCIngreso : null);
             } catch (err) {
+                if (!vigente) return;
                 console.error("Error al cargar HC de Ingreso:", err);
                 setError("Error al cargar la historia clínica de ingreso");
             } finally {
-                setLoading(false);
+                if (vigente) setLoading(false);
             }
         };
 
         cargarDatos();
+        return () => {
+            vigente = false;
+        };
     }, [numeroVisita]);
 
     // Filtrar registros por fecha si está activo el checkbox
@@ -402,29 +355,48 @@ export default function HCIngresoSection({
         });
         setExamenFisico(getEmptyExamenFisico());
         setEditBaseline(null);
+        setError(null);
         setActiveSection("motivo");
         setMode("add");
     };
 
-    const handleEdit = () => {
-        if (!selectedRecord || !numeroVisita) return;
-        
-        const desdeRecord = fechaHoraDesdeRecord(selectedRecord);
+    const handleEdit = async () => {
+        if (!selectedRecord || !selectedRecordId || !numeroVisita) return;
+
+        setError(null);
+
+        // Releer antes de editar: el registro en memoria puede estar viejo si el Clarion
+        // de escritorio u otro usuario modificó la fila, y el guardado parcial se calcula
+        // contra este snapshot.
+        let registro = selectedRecord;
+        try {
+            const fresco = await obtenerHCIngresoPorId(selectedRecordId);
+            if (fresco) {
+                registro = fresco;
+                setRecords((prev) =>
+                    prev.map((r) => (r.IdHCIngreso === selectedRecordId ? fresco : r)),
+                );
+            }
+        } catch (err) {
+            console.error("No se pudo releer la HC antes de editar:", err);
+        }
+
+        const desdeRecord = fechaHoraDesdeRecord(registro);
         const ahora = fechaHoraLocal();
         
         const newFormData: HcFormBasics & { profesionalNombre: string; sectorDescripcion: string; antecedentes: string } = {
             fecha: desdeRecord?.fecha || ahora.fecha,
             hora: ahora.hora,
-            profesionalId: String(selectedRecord.IdProfecional || ""),
-            profesionalNombre: selectedRecord.ProfesionalNombre || "",
-            sector: selectedRecord.IdSector,
-            sectorDescripcion: selectedRecord.SectorDescripcion || selectedRecord.IdSector,
-            motivoConsulta: selectedRecord.MotivoConsulta || "",
-            enfermedadActual: selectedRecord.EnfermedadActual || "",
-            antecedentes: (selectedRecord as { Antecedentes?: string }).Antecedentes || "",
+            profesionalId: String(registro.IdProfecional || ""),
+            profesionalNombre: registro.ProfesionalNombre || "",
+            sector: registro.IdSector,
+            sectorDescripcion: registro.SectorDescripcion || registro.IdSector,
+            motivoConsulta: registro.MotivoConsulta || "",
+            enfermedadActual: registro.EnfermedadActual || "",
+            antecedentes: (registro as { Antecedentes?: string }).Antecedentes || "",
         };
         
-        const examenFisicoMapeado = mapearHCIaExamenFisico(selectedRecord);
+        const examenFisicoMapeado = mapearHCIaExamenFisico(registro);
         setFormData(newFormData);
         setExamenFisico(examenFisicoMapeado);
         setEditBaseline(buildHcPayloadFromForm(newFormData, examenFisicoMapeado, numeroVisita));
@@ -436,6 +408,7 @@ export default function HCIngresoSection({
     const handleCancel = () => {
         setEditBaseline(null);
         setExamenFisico(getEmptyExamenFisico());
+        setError(null);
         setMode("view");
     };
 
@@ -645,6 +618,15 @@ export default function HCIngresoSection({
                             >
                                 <span className={styles.btnIcon}>✕</span> Eliminar
                             </button>
+                            {puedeVerAuditoria && numeroVisita && (
+                                <button
+                                    className={styles.btnSecondary}
+                                    onClick={() => setAuditoriaAbierta(true)}
+                                    title="Ver quién modificó o borró las HC de esta visita"
+                                >
+                                    <span className={styles.btnIcon}>🕓</span> Historial
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -741,6 +723,15 @@ export default function HCIngresoSection({
                         />
                     ) : null}
                 </div>
+                )}
+
+                {puedeVerAuditoria && numeroVisita && (
+                    <AuditoriaHciModal
+                        isOpen={auditoriaAbierta}
+                        onClose={() => setAuditoriaAbierta(false)}
+                        numeroVisita={numeroVisita}
+                        idHCIngresoActual={selectedRecordId}
+                    />
                 )}
             </div>
         );
@@ -1102,10 +1093,17 @@ export default function HCIngresoSection({
                 </div>
             </div>
 
+            {error && (
+                <div className={styles.errorMessage} role="alert">
+                    <span>⚠️</span>
+                    <span>No se pudo guardar: {error}. No cierres ni cambies de sección, volvé a intentar.</span>
+                </div>
+            )}
+
             {/* Footer de acciones */}
             <div className={styles.editFooter}>
-                <button className={styles.footerBtnPrimary} onClick={handleSave}>
-                    <span className={styles.footerIcon}>✓</span> Guardar
+                <button className={styles.footerBtnPrimary} onClick={handleSave} disabled={loading}>
+                    <span className={styles.footerIcon}>✓</span> {loading ? "Guardando..." : "Guardar"}
                 </button>
                 <button className={styles.footerBtnSecondary} onClick={handleCancel}>
                     <span className={styles.footerIcon}>✕</span> Cancelar

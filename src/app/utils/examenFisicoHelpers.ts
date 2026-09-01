@@ -1,5 +1,4 @@
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
-import { calcularIMC } from "@/app/utils/antropometria";
 
 /**
  * Mapea datos de BD (imHCI) al estado del formulario
@@ -49,7 +48,7 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
         },
         cabeza: {
             forma: record.C_FORMA || "",
-            tamano: record.C_TAMANO || "",
+            tamano: record.C_TAMANIO || "",
             ojos: record.C_OJOS || "",
             pupilas: record.C_PUPILAS || "",
             conjuntivas: record.C_CONJUNTIVAS || "",
@@ -64,7 +63,7 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             lengua: record.C_LENGUA || "",
             dientes: record.C_DIENTES || "",
             glandulasSalivales: record.C_GLANDULASSALIVALES || "",
-            pabellonesAuricularesCAE: record.C_PABELLONESAURICULARESCAE || "",
+            pabellonesAuricularesCAE: record.C_PABELLONESAURICULARESYCAE || "",
         },
         aparatoRespiratorio: {
             torax: record.AR_TORAX || "",
@@ -73,25 +72,25 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             tipoRespiratorio: record.AR_TIPORESPIRATORIO || "",
             expansionDeVertices: record.AR_EXPANSIONDEVERTICES || "",
             vibracionesVocales: record.AR_VIBRACIONESVOCALES || "",
-            expansionDeBases: record.AR_EXPANSIONDEBASES || "",
+            expansionDeBases: record.AR_BASES || "",
             percusion: record.AR_PERCUSION || "",
             auscultacion: record.AR_AUSCULTACION || "",
-            observaciones: record.AR_OBSERVACIONES || record.AR_TEXTO || "",
+            observaciones: record.AR_TEXTO || "",
         },
         aparatoCardiovascular: {
             frecuenciaCardiaca: record.AC_FRECUENCIACARDIACA || "",
             central: record.AC_CENTRAL || "",
             periferica: record.AC_PERIFERICA || "",
             pulsoradialCaracteristicas: record.AC_PULSORADIAL || "",
-            rellenoCapilar: record.AC_RELLENOCAPILAR || "",
+            rellenoCapilar: record.AC_RELLENOAPILAR || "",
             latidoApexiano: record.AC_LATIDOAPEXIANO || "",
-            latidosPalpables: record.AC_LATIDOSPALPABLES || "",
+            latidosPalpables: record.AC_LATIDOPALPABLES || "",
             r1: record.AC_R1 || "",
             r2: record.AC_R2 || "",
-            rudosAgregados: record.AC_RUDOSAGREGADOS || "",
+            rudosAgregados: record.AC_RUIDOSAGREGADOS || "",
             frotes: record.AC_FROTES || "",
             soplos: record.AC_SOPLOS || "",
-            observaciones: record.AC_OBSERVACIONES || record.AC_TEXTO || "",
+            observaciones: record.AC_TEXTO || "",
         },
         cuello: {
             conformacion: record.CU_CONFORMACION || "",
@@ -157,15 +156,15 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             celdaEsplenica: record.A_CELDAESPLENICA || "",
             bazo: record.A_BAZO || "",
             perimetro: record.A_PERIMETRO || "",
-            observaciones: record.A_OBSERVACIONES || record.A_TEXTO || "",
+            observaciones: record.A_TEXTO || "",
         },
         aparatoUrogenital: {
             genitalesExternos: record.AUG_GENITALESEXTERNOS || "",
             tactoVaginal: record.AUG_TACTOVAGINAL || "",
-            tactoRectal: record.AUG_TACTORECTAL || "",
-            punoPercusion: record.AUG_PUNOPERCUSION || "",
+            tactoRectal: record.AIG_TACTORECTAL || "",
+            punoPercusion: record.AUG_PUNIOPERCUSION || "",
             puntosUretrales: record.AUG_PUNTOSURETRALES || "",
-            observaciones: record.AUG_OBSERVACIONES || "",
+            observaciones: record.AUG_TEXTO || "",
         },
         examenGinecologico: {
             montedevenus: record.EG_MONTEDEVENUS || "",
@@ -177,9 +176,9 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             cervix: record.EG_CERVIX || "",
             utero: record.EG_UTERO || "",
             anexos: record.EG_ANEXOS || "",
-            examenAbVaRe: record.EG_EXAMENABVARE || "",
+            examenAbVaRe: record.EG_EXAMENAB_VA_RE || "",
             especuloscopia: record.EG_ESPECULOSCOPIA || "",
-            observaciones: record.EG_OBSERVACIONES || "",
+            observaciones: record.EG_TEXTO || "",
         },
         examenObstetrico: {
             au: record.EO_AU || "",
@@ -189,13 +188,13 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             tono: record.EO_TONO || "",
             leopold: record.EO_LEOPOLD || "",
             tactoVaginal: record.EO_TACTOVAGINAL || "",
-            bishopP: record.EO_BISHOPP || "",
-            bishopR: record.EO_BISHOPR || "",
-            bishopE: record.EO_BISHOPE || "",
-            bishopL: record.EO_BISHOPL || "",
-            bishopD: record.EO_BISHOPD || "",
+            bishopP: record.EO_BISHOP_P || "",
+            bishopR: record.EO_BISHOP_R || "",
+            bishopE: record.EO_BISHOP_E || "",
+            bishopL: record.EO_BISHOP_L || "",
+            bishopD: record.EO_BISHOP_D || "",
             membranasOvulares: record.EO_MEMBRANASOVULARES || "",
-            maniobraDeTamer: record.EO_MANIOBRATAMER || "",
+            maniobraDeTamer: record.EO_MANIOBRADETAMIER || "",
             plano: record.EO_PLANO || "",
             pelvimetria: record.EO_PELVIMETRIA || "",
             hidrorrea: record.EO_HIDRORREA || "",
@@ -223,39 +222,39 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
         },
         examenOftalmologico: {
             fondoDeOjo: record.EO_FONDODEOJO || "",
-            mediosBirefringentes: record.EO_MEDIOSBIREFRINGENTES || "",
+            mediosBirefringentes: record.EO_MEDIOSBIREFRIGENTES || "",
             cruces: record.EO_CRUCES || "",
             relacion: record.EO_RELACION || "",
             hemorragiaExudados: record.EO_HEMORRAGIAEXUDADOS || "",
         },
         electrocardiograma: {
-            ritmo: record.ECG_RITMO || "",
-            frecuencia: record.ECG_FRECUENCIA || "",
-            pr: record.ECG_PR || "",
-            qt: record.ECG_QT || "",
-            ondapEje: record.ECG_ONDAPEJE || "",
-            duracion: record.ECG_DURACION || "",
-            amplitud: record.ECG_AMPLITUD || "",
-            conformacion: record.ECG_CONFORMACION || "",
-            qrsEje: record.ECG_QRSEJE || "",
-            duracionQrs: record.ECG_DURACIONQRS || "",
-            ondat: record.ECG_ONDAT || "",
-            st: record.ECG_ST || "",
-            conclusiones: record.ECG_CONCLUSIONES || "",
+            ritmo: record.EC_RITMO || "",
+            frecuencia: record.EC_FRECUENCIA || "",
+            pr: record.EC_PR || "",
+            qt: record.EC_QT || "",
+            ondapEje: record.EC_ONDAP || "",
+            duracion: record.EC_DURACION || "",
+            amplitud: record.EC_AMPLITUD || "",
+            conformacion: record.EC_CONFORMACION || "",
+            qrsEje: record.EC_QRS || "",
+            duracionQrs: record.EC_DURACION1 || "",
+            ondat: record.EC_ONDAT || "",
+            st: record.EC_ST || "",
+            conclusiones: record.EC_CONCLUSIONES || "",
         },
         radiografiaTorax: {
-            tecnica: record.RT_TECNICA || "",
-            partesBlandas: record.RT_PARTESBLANDAS || "",
-            partesOseas: record.RT_PARTESOSEAS || "",
-            hemidiafragmas: record.RT_HEMIDIAFRAGMAS || "",
-            ict: record.RT_ICT || "",
-            senosCostofrenicos: record.RT_SENOSCOSTOFRENICOS || "",
-            mediastino: record.RT_MEDIASTINO || "",
-            siluetaCardiovascular: record.RT_SILUETACARDIOVASCULAR || "",
-            hilios: record.RT_HILIOS || "",
-            camposPulmonares: record.RT_CAMPOSPULMONARES || "",
-            conclusiones: record.RT_CONCLUSIONES || "",
-            laboratorio: record.RT_LABORATORIO || "",
+            tecnica: record.RDT_TECNICA || "",
+            partesBlandas: record.RDT_PARTESBLANDAS || "",
+            partesOseas: record.RDT_PARTESOSEAS || "",
+            hemidiafragmas: record.RDT_HEMIDIAFRAGMAS || "",
+            ict: record.RDT_ICT || "",
+            senosCostofrenicos: record.RDT_SENOSCOSTOFRENICOS || "",
+            mediastino: record.RDT_MEDIASTINO || "",
+            siluetaCardiovascular: record.RDT_SILUETACARDIOVASCULAR || "",
+            hilios: record.RDT_HILIOS || "",
+            camposPulmonares: record.RDT_CAMPOSPULMONARES || "",
+            conclusiones: record.RDT_CONCLUSIONES || "",
+            laboratorio: record.RDT_LABORATORIO || "",
         },
         impresionDiagnostica: {
             impresionDiagnostica: record.IMPRESIONDIAGNOSTICA || "",
@@ -292,7 +291,7 @@ export const mapearHCIaExamenFisico = (record: any): ExamenFisicoCompleto => {
             pt15: record.PT_15 || "",
         },
         examenesComplementarios: {
-            detalle: record.EC_DETALLE || "",
+            detalle: record.EXAMENCOMPLEMENTARIO || "",
         },
     };
 };
@@ -312,8 +311,7 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.signosVitales.glucemia) datos.SV_GLUCEMIA = examenFisico.signosVitales.glucemia;
     if (examenFisico.signosVitales.talla) datos.SV_TALLA = examenFisico.signosVitales.talla;
     if (examenFisico.signosVitales.pesoActual) datos.SV_PESOACTUAL = examenFisico.signosVitales.pesoActual;
-    const imc = calcularIMC(examenFisico.signosVitales.pesoActual, examenFisico.signosVitales.talla);
-    if (imc != null) datos.IMC = String(imc);
+    // El IMC no es columna de imHCI: el backend lo calcula al grabar el control de enfermería
     if (examenFisico.signosVitales.pesoHabitual) datos.SV_PESOHABITUAL = examenFisico.signosVitales.pesoHabitual;
     if (examenFisico.signosVitales.estadoNutricional) datos.SV_ESTADONUTRICIONAL = examenFisico.signosVitales.estadoNutricional;
     if (examenFisico.signosVitales.impresionGeneral) datos.SV_IMPRESIONGENERAL = examenFisico.signosVitales.impresionGeneral;
@@ -343,7 +341,7 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     
     // Cabeza
     if (examenFisico.cabeza.forma) datos.C_FORMA = examenFisico.cabeza.forma;
-    if (examenFisico.cabeza.tamano) datos.C_TAMANO = examenFisico.cabeza.tamano;
+    if (examenFisico.cabeza.tamano) datos.C_TAMANIO = examenFisico.cabeza.tamano;
     if (examenFisico.cabeza.ojos) datos.C_OJOS = examenFisico.cabeza.ojos;
     if (examenFisico.cabeza.pupilas) datos.C_PUPILAS = examenFisico.cabeza.pupilas;
     if (examenFisico.cabeza.conjuntivas) datos.C_CONJUNTIVAS = examenFisico.cabeza.conjuntivas;
@@ -358,7 +356,7 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.cabeza.lengua) datos.C_LENGUA = examenFisico.cabeza.lengua;
     if (examenFisico.cabeza.dientes) datos.C_DIENTES = examenFisico.cabeza.dientes;
     if (examenFisico.cabeza.glandulasSalivales) datos.C_GLANDULASSALIVALES = examenFisico.cabeza.glandulasSalivales;
-    if (examenFisico.cabeza.pabellonesAuricularesCAE) datos.C_PABELLONESAURICULARESCAE = examenFisico.cabeza.pabellonesAuricularesCAE;
+    if (examenFisico.cabeza.pabellonesAuricularesCAE) datos.C_PABELLONESAURICULARESYCAE = examenFisico.cabeza.pabellonesAuricularesCAE;
     
     // Aparato Respiratorio
     if (examenFisico.aparatoRespiratorio.torax) datos.AR_TORAX = examenFisico.aparatoRespiratorio.torax;
@@ -367,25 +365,25 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.aparatoRespiratorio.tipoRespiratorio) datos.AR_TIPORESPIRATORIO = examenFisico.aparatoRespiratorio.tipoRespiratorio;
     if (examenFisico.aparatoRespiratorio.expansionDeVertices) datos.AR_EXPANSIONDEVERTICES = examenFisico.aparatoRespiratorio.expansionDeVertices;
     if (examenFisico.aparatoRespiratorio.vibracionesVocales) datos.AR_VIBRACIONESVOCALES = examenFisico.aparatoRespiratorio.vibracionesVocales;
-    if (examenFisico.aparatoRespiratorio.expansionDeBases) datos.AR_EXPANSIONDEBASES = examenFisico.aparatoRespiratorio.expansionDeBases;
+    if (examenFisico.aparatoRespiratorio.expansionDeBases) datos.AR_BASES = examenFisico.aparatoRespiratorio.expansionDeBases;
     if (examenFisico.aparatoRespiratorio.percusion) datos.AR_PERCUSION = examenFisico.aparatoRespiratorio.percusion;
     if (examenFisico.aparatoRespiratorio.auscultacion) datos.AR_AUSCULTACION = examenFisico.aparatoRespiratorio.auscultacion;
-    if (examenFisico.aparatoRespiratorio.observaciones) datos.AR_OBSERVACIONES = examenFisico.aparatoRespiratorio.observaciones;
+    if (examenFisico.aparatoRespiratorio.observaciones) datos.AR_TEXTO = examenFisico.aparatoRespiratorio.observaciones;
     
     // Aparato Cardiovascular
     if (examenFisico.aparatoCardiovascular.frecuenciaCardiaca) datos.AC_FRECUENCIACARDIACA = examenFisico.aparatoCardiovascular.frecuenciaCardiaca;
     if (examenFisico.aparatoCardiovascular.central) datos.AC_CENTRAL = examenFisico.aparatoCardiovascular.central;
     if (examenFisico.aparatoCardiovascular.periferica) datos.AC_PERIFERICA = examenFisico.aparatoCardiovascular.periferica;
     if (examenFisico.aparatoCardiovascular.pulsoradialCaracteristicas) datos.AC_PULSORADIAL = examenFisico.aparatoCardiovascular.pulsoradialCaracteristicas;
-    if (examenFisico.aparatoCardiovascular.rellenoCapilar) datos.AC_RELLENOCAPILAR = examenFisico.aparatoCardiovascular.rellenoCapilar;
+    if (examenFisico.aparatoCardiovascular.rellenoCapilar) datos.AC_RELLENOAPILAR = examenFisico.aparatoCardiovascular.rellenoCapilar;
     if (examenFisico.aparatoCardiovascular.latidoApexiano) datos.AC_LATIDOAPEXIANO = examenFisico.aparatoCardiovascular.latidoApexiano;
-    if (examenFisico.aparatoCardiovascular.latidosPalpables) datos.AC_LATIDOSPALPABLES = examenFisico.aparatoCardiovascular.latidosPalpables;
+    if (examenFisico.aparatoCardiovascular.latidosPalpables) datos.AC_LATIDOPALPABLES = examenFisico.aparatoCardiovascular.latidosPalpables;
     if (examenFisico.aparatoCardiovascular.r1) datos.AC_R1 = examenFisico.aparatoCardiovascular.r1;
     if (examenFisico.aparatoCardiovascular.r2) datos.AC_R2 = examenFisico.aparatoCardiovascular.r2;
-    if (examenFisico.aparatoCardiovascular.rudosAgregados) datos.AC_RUDOSAGREGADOS = examenFisico.aparatoCardiovascular.rudosAgregados;
+    if (examenFisico.aparatoCardiovascular.rudosAgregados) datos.AC_RUIDOSAGREGADOS = examenFisico.aparatoCardiovascular.rudosAgregados;
     if (examenFisico.aparatoCardiovascular.frotes) datos.AC_FROTES = examenFisico.aparatoCardiovascular.frotes;
     if (examenFisico.aparatoCardiovascular.soplos) datos.AC_SOPLOS = examenFisico.aparatoCardiovascular.soplos;
-    if (examenFisico.aparatoCardiovascular.observaciones) datos.AC_OBSERVACIONES = examenFisico.aparatoCardiovascular.observaciones;
+    if (examenFisico.aparatoCardiovascular.observaciones) datos.AC_TEXTO = examenFisico.aparatoCardiovascular.observaciones;
     
     // Cuello
     if (examenFisico.cuello.conformacion) datos.CU_CONFORMACION = examenFisico.cuello.conformacion;
@@ -447,15 +445,15 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.abdomen.celdaEsplenica) datos.A_CELDAESPLENICA = examenFisico.abdomen.celdaEsplenica;
     if (examenFisico.abdomen.bazo) datos.A_BAZO = examenFisico.abdomen.bazo;
     if (examenFisico.abdomen.perimetro) datos.A_PERIMETRO = examenFisico.abdomen.perimetro;
-    if (examenFisico.abdomen.observaciones) datos.A_OBSERVACIONES = examenFisico.abdomen.observaciones;
+    if (examenFisico.abdomen.observaciones) datos.A_TEXTO = examenFisico.abdomen.observaciones;
     
     // Aparato Urogenital
     if (examenFisico.aparatoUrogenital.genitalesExternos) datos.AUG_GENITALESEXTERNOS = examenFisico.aparatoUrogenital.genitalesExternos;
     if (examenFisico.aparatoUrogenital.tactoVaginal) datos.AUG_TACTOVAGINAL = examenFisico.aparatoUrogenital.tactoVaginal;
-    if (examenFisico.aparatoUrogenital.tactoRectal) datos.AUG_TACTORECTAL = examenFisico.aparatoUrogenital.tactoRectal;
-    if (examenFisico.aparatoUrogenital.punoPercusion) datos.AUG_PUNOPERCUSION = examenFisico.aparatoUrogenital.punoPercusion;
+    if (examenFisico.aparatoUrogenital.tactoRectal) datos.AIG_TACTORECTAL = examenFisico.aparatoUrogenital.tactoRectal;
+    if (examenFisico.aparatoUrogenital.punoPercusion) datos.AUG_PUNIOPERCUSION = examenFisico.aparatoUrogenital.punoPercusion;
     if (examenFisico.aparatoUrogenital.puntosUretrales) datos.AUG_PUNTOSURETRALES = examenFisico.aparatoUrogenital.puntosUretrales;
-    if (examenFisico.aparatoUrogenital.observaciones) datos.AUG_OBSERVACIONES = examenFisico.aparatoUrogenital.observaciones;
+    if (examenFisico.aparatoUrogenital.observaciones) datos.AUG_TEXTO = examenFisico.aparatoUrogenital.observaciones;
     
     // Examen Ginecológico
     if (examenFisico.examenGinecologico.montedevenus) datos.EG_MONTEDEVENUS = examenFisico.examenGinecologico.montedevenus;
@@ -467,9 +465,9 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.examenGinecologico.cervix) datos.EG_CERVIX = examenFisico.examenGinecologico.cervix;
     if (examenFisico.examenGinecologico.utero) datos.EG_UTERO = examenFisico.examenGinecologico.utero;
     if (examenFisico.examenGinecologico.anexos) datos.EG_ANEXOS = examenFisico.examenGinecologico.anexos;
-    if (examenFisico.examenGinecologico.examenAbVaRe) datos.EG_EXAMENABVARE = examenFisico.examenGinecologico.examenAbVaRe;
+    if (examenFisico.examenGinecologico.examenAbVaRe) datos.EG_EXAMENAB_VA_RE = examenFisico.examenGinecologico.examenAbVaRe;
     if (examenFisico.examenGinecologico.especuloscopia) datos.EG_ESPECULOSCOPIA = examenFisico.examenGinecologico.especuloscopia;
-    if (examenFisico.examenGinecologico.observaciones) datos.EG_OBSERVACIONES = examenFisico.examenGinecologico.observaciones;
+    if (examenFisico.examenGinecologico.observaciones) datos.EG_TEXTO = examenFisico.examenGinecologico.observaciones;
     
     // Examen Obstétrico
     if (examenFisico.examenObstetrico.au) datos.EO_AU = examenFisico.examenObstetrico.au;
@@ -479,13 +477,13 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.examenObstetrico.tono) datos.EO_TONO = examenFisico.examenObstetrico.tono;
     if (examenFisico.examenObstetrico.leopold) datos.EO_LEOPOLD = examenFisico.examenObstetrico.leopold;
     if (examenFisico.examenObstetrico.tactoVaginal) datos.EO_TACTOVAGINAL = examenFisico.examenObstetrico.tactoVaginal;
-    if (examenFisico.examenObstetrico.bishopP) datos.EO_BISHOPP = examenFisico.examenObstetrico.bishopP;
-    if (examenFisico.examenObstetrico.bishopR) datos.EO_BISHOPR = examenFisico.examenObstetrico.bishopR;
-    if (examenFisico.examenObstetrico.bishopE) datos.EO_BISHOPE = examenFisico.examenObstetrico.bishopE;
-    if (examenFisico.examenObstetrico.bishopL) datos.EO_BISHOPL = examenFisico.examenObstetrico.bishopL;
-    if (examenFisico.examenObstetrico.bishopD) datos.EO_BISHOPD = examenFisico.examenObstetrico.bishopD;
+    if (examenFisico.examenObstetrico.bishopP) datos.EO_BISHOP_P = examenFisico.examenObstetrico.bishopP;
+    if (examenFisico.examenObstetrico.bishopR) datos.EO_BISHOP_R = examenFisico.examenObstetrico.bishopR;
+    if (examenFisico.examenObstetrico.bishopE) datos.EO_BISHOP_E = examenFisico.examenObstetrico.bishopE;
+    if (examenFisico.examenObstetrico.bishopL) datos.EO_BISHOP_L = examenFisico.examenObstetrico.bishopL;
+    if (examenFisico.examenObstetrico.bishopD) datos.EO_BISHOP_D = examenFisico.examenObstetrico.bishopD;
     if (examenFisico.examenObstetrico.membranasOvulares) datos.EO_MEMBRANASOVULARES = examenFisico.examenObstetrico.membranasOvulares;
-    if (examenFisico.examenObstetrico.maniobraDeTamer) datos.EO_MANIOBRATAMER = examenFisico.examenObstetrico.maniobraDeTamer;
+    if (examenFisico.examenObstetrico.maniobraDeTamer) datos.EO_MANIOBRADETAMIER = examenFisico.examenObstetrico.maniobraDeTamer;
     if (examenFisico.examenObstetrico.plano) datos.EO_PLANO = examenFisico.examenObstetrico.plano;
     if (examenFisico.examenObstetrico.pelvimetria) datos.EO_PELVIMETRIA = examenFisico.examenObstetrico.pelvimetria;
     if (examenFisico.examenObstetrico.hidrorrea) datos.EO_HIDRORREA = examenFisico.examenObstetrico.hidrorrea;
@@ -513,39 +511,39 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     
     // Examen Oftalmológico
     if (examenFisico.examenOftalmologico.fondoDeOjo) datos.EO_FONDODEOJO = examenFisico.examenOftalmologico.fondoDeOjo;
-    if (examenFisico.examenOftalmologico.mediosBirefringentes) datos.EO_MEDIOSBIREFRINGENTES = examenFisico.examenOftalmologico.mediosBirefringentes;
+    if (examenFisico.examenOftalmologico.mediosBirefringentes) datos.EO_MEDIOSBIREFRIGENTES = examenFisico.examenOftalmologico.mediosBirefringentes;
     if (examenFisico.examenOftalmologico.cruces) datos.EO_CRUCES = examenFisico.examenOftalmologico.cruces;
     if (examenFisico.examenOftalmologico.relacion) datos.EO_RELACION = examenFisico.examenOftalmologico.relacion;
     if (examenFisico.examenOftalmologico.hemorragiaExudados) datos.EO_HEMORRAGIAEXUDADOS = examenFisico.examenOftalmologico.hemorragiaExudados;
     
     // Electrocardiograma
-    if (examenFisico.electrocardiograma.ritmo) datos.ECG_RITMO = examenFisico.electrocardiograma.ritmo;
-    if (examenFisico.electrocardiograma.frecuencia) datos.ECG_FRECUENCIA = examenFisico.electrocardiograma.frecuencia;
-    if (examenFisico.electrocardiograma.pr) datos.ECG_PR = examenFisico.electrocardiograma.pr;
-    if (examenFisico.electrocardiograma.qt) datos.ECG_QT = examenFisico.electrocardiograma.qt;
-    if (examenFisico.electrocardiograma.ondapEje) datos.ECG_ONDAPEJE = examenFisico.electrocardiograma.ondapEje;
-    if (examenFisico.electrocardiograma.duracion) datos.ECG_DURACION = examenFisico.electrocardiograma.duracion;
-    if (examenFisico.electrocardiograma.amplitud) datos.ECG_AMPLITUD = examenFisico.electrocardiograma.amplitud;
-    if (examenFisico.electrocardiograma.conformacion) datos.ECG_CONFORMACION = examenFisico.electrocardiograma.conformacion;
-    if (examenFisico.electrocardiograma.qrsEje) datos.ECG_QRSEJE = examenFisico.electrocardiograma.qrsEje;
-    if (examenFisico.electrocardiograma.duracionQrs) datos.ECG_DURACIONQRS = examenFisico.electrocardiograma.duracionQrs;
-    if (examenFisico.electrocardiograma.ondat) datos.ECG_ONDAT = examenFisico.electrocardiograma.ondat;
-    if (examenFisico.electrocardiograma.st) datos.ECG_ST = examenFisico.electrocardiograma.st;
-    if (examenFisico.electrocardiograma.conclusiones) datos.ECG_CONCLUSIONES = examenFisico.electrocardiograma.conclusiones;
+    if (examenFisico.electrocardiograma.ritmo) datos.EC_RITMO = examenFisico.electrocardiograma.ritmo;
+    if (examenFisico.electrocardiograma.frecuencia) datos.EC_FRECUENCIA = examenFisico.electrocardiograma.frecuencia;
+    if (examenFisico.electrocardiograma.pr) datos.EC_PR = examenFisico.electrocardiograma.pr;
+    if (examenFisico.electrocardiograma.qt) datos.EC_QT = examenFisico.electrocardiograma.qt;
+    if (examenFisico.electrocardiograma.ondapEje) datos.EC_ONDAP = examenFisico.electrocardiograma.ondapEje;
+    if (examenFisico.electrocardiograma.duracion) datos.EC_DURACION = examenFisico.electrocardiograma.duracion;
+    if (examenFisico.electrocardiograma.amplitud) datos.EC_AMPLITUD = examenFisico.electrocardiograma.amplitud;
+    if (examenFisico.electrocardiograma.conformacion) datos.EC_CONFORMACION = examenFisico.electrocardiograma.conformacion;
+    if (examenFisico.electrocardiograma.qrsEje) datos.EC_QRS = examenFisico.electrocardiograma.qrsEje;
+    if (examenFisico.electrocardiograma.duracionQrs) datos.EC_DURACION1 = examenFisico.electrocardiograma.duracionQrs;
+    if (examenFisico.electrocardiograma.ondat) datos.EC_ONDAT = examenFisico.electrocardiograma.ondat;
+    if (examenFisico.electrocardiograma.st) datos.EC_ST = examenFisico.electrocardiograma.st;
+    if (examenFisico.electrocardiograma.conclusiones) datos.EC_CONCLUSIONES = examenFisico.electrocardiograma.conclusiones;
     
     // Radiografía Tórax
-    if (examenFisico.radiografiaTorax.tecnica) datos.RT_TECNICA = examenFisico.radiografiaTorax.tecnica;
-    if (examenFisico.radiografiaTorax.partesBlandas) datos.RT_PARTESBLANDAS = examenFisico.radiografiaTorax.partesBlandas;
-    if (examenFisico.radiografiaTorax.partesOseas) datos.RT_PARTESOSEAS = examenFisico.radiografiaTorax.partesOseas;
-    if (examenFisico.radiografiaTorax.hemidiafragmas) datos.RT_HEMIDIAFRAGMAS = examenFisico.radiografiaTorax.hemidiafragmas;
-    if (examenFisico.radiografiaTorax.ict) datos.RT_ICT = examenFisico.radiografiaTorax.ict;
-    if (examenFisico.radiografiaTorax.senosCostofrenicos) datos.RT_SENOSCOSTOFRENICOS = examenFisico.radiografiaTorax.senosCostofrenicos;
-    if (examenFisico.radiografiaTorax.mediastino) datos.RT_MEDIASTINO = examenFisico.radiografiaTorax.mediastino;
-    if (examenFisico.radiografiaTorax.siluetaCardiovascular) datos.RT_SILUETACARDIOVASCULAR = examenFisico.radiografiaTorax.siluetaCardiovascular;
-    if (examenFisico.radiografiaTorax.hilios) datos.RT_HILIOS = examenFisico.radiografiaTorax.hilios;
-    if (examenFisico.radiografiaTorax.camposPulmonares) datos.RT_CAMPOSPULMONARES = examenFisico.radiografiaTorax.camposPulmonares;
-    if (examenFisico.radiografiaTorax.conclusiones) datos.RT_CONCLUSIONES = examenFisico.radiografiaTorax.conclusiones;
-    if (examenFisico.radiografiaTorax.laboratorio) datos.RT_LABORATORIO = examenFisico.radiografiaTorax.laboratorio;
+    if (examenFisico.radiografiaTorax.tecnica) datos.RDT_TECNICA = examenFisico.radiografiaTorax.tecnica;
+    if (examenFisico.radiografiaTorax.partesBlandas) datos.RDT_PARTESBLANDAS = examenFisico.radiografiaTorax.partesBlandas;
+    if (examenFisico.radiografiaTorax.partesOseas) datos.RDT_PARTESOSEAS = examenFisico.radiografiaTorax.partesOseas;
+    if (examenFisico.radiografiaTorax.hemidiafragmas) datos.RDT_HEMIDIAFRAGMAS = examenFisico.radiografiaTorax.hemidiafragmas;
+    if (examenFisico.radiografiaTorax.ict) datos.RDT_ICT = examenFisico.radiografiaTorax.ict;
+    if (examenFisico.radiografiaTorax.senosCostofrenicos) datos.RDT_SENOSCOSTOFRENICOS = examenFisico.radiografiaTorax.senosCostofrenicos;
+    if (examenFisico.radiografiaTorax.mediastino) datos.RDT_MEDIASTINO = examenFisico.radiografiaTorax.mediastino;
+    if (examenFisico.radiografiaTorax.siluetaCardiovascular) datos.RDT_SILUETACARDIOVASCULAR = examenFisico.radiografiaTorax.siluetaCardiovascular;
+    if (examenFisico.radiografiaTorax.hilios) datos.RDT_HILIOS = examenFisico.radiografiaTorax.hilios;
+    if (examenFisico.radiografiaTorax.camposPulmonares) datos.RDT_CAMPOSPULMONARES = examenFisico.radiografiaTorax.camposPulmonares;
+    if (examenFisico.radiografiaTorax.conclusiones) datos.RDT_CONCLUSIONES = examenFisico.radiografiaTorax.conclusiones;
+    if (examenFisico.radiografiaTorax.laboratorio) datos.RDT_LABORATORIO = examenFisico.radiografiaTorax.laboratorio;
     
     // Impresión Diagnóstica
     if (examenFisico.impresionDiagnostica.impresionDiagnostica) datos.IMPRESIONDIAGNOSTICA = examenFisico.impresionDiagnostica.impresionDiagnostica;
@@ -582,7 +580,7 @@ export const mapearExamenFisicoAHCI = (examenFisico: ExamenFisicoCompleto): Reco
     if (examenFisico.planTerapeutico.pt15) datos.PT_15 = examenFisico.planTerapeutico.pt15;
     
     // Exámenes Complementarios
-    if (examenFisico.examenesComplementarios.detalle) datos.EC_DETALLE = examenFisico.examenesComplementarios.detalle;
+    if (examenFisico.examenesComplementarios.detalle) datos.EXAMENCOMPLEMENTARIO = examenFisico.examenesComplementarios.detalle;
     
     return datos;
 };
