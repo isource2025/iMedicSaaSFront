@@ -110,6 +110,9 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			{ id: 'MOVIMIENTOS',          label: 'Movimientos / traslados',    acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
 			{ id: 'ADJUNTOS',             label: 'Adjuntos',                   acciones: [...CRUD] },
 			{ id: 'EPICRISIS',            label: 'Epicrisis',                  acciones: [...CRUD, ACCIONES.IMPRIMIR] },
+			// Historial de cambios de la HC (quién modificó o borró qué). Solo lectura
+			// y reservado a ADMIN: se excluye a mano de la plantilla ADMINISTRATIVO.
+			{ id: 'AUDITORIA_HC',         label: 'Auditoría de historia clínica', acciones: [ACCIONES.VER] },
 		],
 	},
 	{
@@ -185,12 +188,12 @@ function _todas(modId: string, subId: string): string[] {
 	return sub.acciones.map((a) => `${modId}.${subId}.${a}`);
 }
 
-/** Solo VER en todos los submódulos del módulo que lo exponen. */
-function _soloVer(modId: string): string[] {
+/** Solo VER en los submódulos del módulo que lo exponen, menos los excluidos. */
+function _soloVer(modId: string, excluir: string[] = []): string[] {
 	const mod = MODULOS.find((m) => m.id === modId);
 	if (!mod) return [];
 	return mod.submodulos
-		.filter((s) => s.acciones.includes(ACCIONES.VER))
+		.filter((s) => s.acciones.includes(ACCIONES.VER) && !excluir.includes(s.id))
 		.map((s) => `${modId}.${s.id}.${ACCIONES.VER}`);
 }
 
@@ -317,7 +320,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		..._soloVer('DASHBOARD'),
 		..._soloVer('TURNOS'),
 		..._soloVer('ADMISION'),
-		..._soloVer('INTERNACION'),
+		..._soloVer('INTERNACION', ['AUDITORIA_HC']),
 		..._soloVer('FACTURACION'),
 		..._soloVer('ALMACEN'),
 		..._soloVer('REPORTES'),
