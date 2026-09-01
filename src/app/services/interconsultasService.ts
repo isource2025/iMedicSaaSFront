@@ -1,4 +1,5 @@
 import { apiFetch } from '@/app/utils/authFetch';
+import type { DatosPacientePedido } from '@/app/types/estudios';
 
 export type SectorDestinoInterconsulta = {
 	valor: string;
@@ -6,7 +7,7 @@ export type SectorDestinoInterconsulta = {
 	prefijos?: string[];
 };
 
-export type InterconsultaRow = {
+export type InterconsultaRow = DatosPacientePedido & {
 	IdInterconsulta: number;
 	IdPedido?: number;
 	IdVisita: number;
@@ -36,17 +37,13 @@ export type InterconsultaRow = {
 	Tomado?: boolean;
 	MatriculaToma?: number | null;
 	NombreToma?: string | null;
+	FechaToma?: string | null;
+	MatriculaRealizador?: number | null;
+	/** Profesional que respondió la interconsulta. */
+	RealizadorNombre?: string | null;
 	Cumplido?: boolean;
 	EstadoWorkflow?: string;
 	Origen?: 'LEGACY' | 'WEB';
-	PacienteNombre?: string | null;
-	PacienteDocumento?: string | null;
-	PacienteSexo?: string | null;
-	PacienteSexoDescripcion?: string | null;
-	ObraSocial?: string | null;
-	TipoAtencion?: string | null;
-	Ubicacion?: string | null;
-	IdPaciente?: number | null;
 };
 
 async function parseJson<T>(res: Response): Promise<T | null> {

@@ -129,6 +129,34 @@
 	border-color: #a7f3d0;
 }
 
+.pacienteDatos {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.15rem 1rem;
+	margin: 0.55rem 0 0;
+}
+
+.pacienteDato {
+	display: flex;
+	align-items: baseline;
+	gap: 0.3rem;
+	min-width: 0;
+	font-size: 0.78rem;
+	line-height: 1.35;
+}
+
+.pacienteDato dt {
+	font-weight: 700;
+	color: #0f4c5c;
+	opacity: 0.72;
+}
+
+.pacienteDato dd {
+	margin: 0;
+	color: #1e293b;
+	overflow-wrap: anywhere;
+}
+
 .pacienteRight {
 	display: flex;
 	flex-direction: column;

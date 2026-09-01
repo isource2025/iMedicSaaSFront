@@ -2,7 +2,7 @@
 
 import styles from './PedidoDetalleModal.module.css';
 
-type DetailField = {
+export type DetailField = {
 	label: string;
 	value?: string | number | null;
 	full?: boolean;

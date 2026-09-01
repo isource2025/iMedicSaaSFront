@@ -1,18 +1,18 @@
 'use client';
 
 import { IoFemale, IoMale } from 'react-icons/io5';
+import type { DatosPacientePedido } from '@/app/types/estudios';
 import formStyles from './PedidoEstudioForms.module.css';
 
 type Props = {
-	nombre?: string | null;
-	documento?: string | null;
-	sexo?: string | null;
-	sexoDescripcion?: string | null;
-	tipoAtencion?: string | null;
-	ubicacion?: string | null;
+	paciente: DatosPacientePedido;
 	idVisita?: number | null;
-	obraSocial?: string | null;
 };
+
+function txt(value?: string | number | null) {
+	const s = value == null ? '' : String(value).trim();
+	return s === '' ? null : s;
+}
 
 function formatDoc(doc?: string | null) {
 	const digits = String(doc || '').replace(/\D/g, '');
@@ -31,34 +31,39 @@ function SexoIcon({ sexo, desc }: { sexo?: string | null; desc?: string | null }
 	return null;
 }
 
-export default function PacientePedidoHeader({
-	nombre,
-	documento,
-	sexo,
-	sexoDescripcion,
-	tipoAtencion,
-	ubicacion,
-	idVisita,
-	obraSocial,
-}: Props) {
-	const docFmt = formatDoc(documento);
-	const chipsUbicacion = String(ubicacion || '')
+export default function PacientePedidoHeader({ paciente, idVisita }: Props) {
+	const docFmt = formatDoc(paciente.PacienteDocumento);
+	const chipsUbicacion = String(paciente.Ubicacion || '')
 		.split('·')
 		.map((p) => p.trim())
 		.filter(Boolean);
+
+	const domicilio = [txt(paciente.PacienteDomicilio), txt(paciente.PacienteLocalidad)]
+		.filter(Boolean)
+		.join(', ');
+
+	const datos = [
+		paciente.PacienteEdad != null ? { label: 'Edad', value: `${paciente.PacienteEdad} años` } : null,
+		{ label: 'HC', value: txt(paciente.PacienteNumeroHC) },
+		{ label: 'Afiliado', value: txt(paciente.PacienteAfiliado) },
+		{ label: 'Domicilio', value: domicilio || null },
+		{ label: 'Tel.', value: txt(paciente.PacienteTelefono) || txt(paciente.PacienteTelefonoAlternativo) },
+	].filter((d): d is { label: string; value: string } => !!d && !!d.value);
 
 	return (
 		<div className={formStyles.pacienteCard}>
 			<div className={formStyles.pacienteLeft}>
 				<div className={formStyles.pacienteDocRow}>
-					<SexoIcon sexo={sexo} desc={sexoDescripcion} />
+					<SexoIcon sexo={paciente.PacienteSexo} desc={paciente.PacienteSexoDescripcion} />
 					{docFmt ? <span className={formStyles.pacienteDoc}>Doc. {docFmt}</span> : null}
 				</div>
-				<p className={formStyles.pacienteNombre}>{nombre || 'Paciente sin datos'}</p>
+				<p className={formStyles.pacienteNombre}>
+					{paciente.PacienteNombre || 'Paciente sin datos'}
+				</p>
 				<div className={formStyles.pacienteChips}>
-					{tipoAtencion === 'INTERNADO' ? (
+					{paciente.TipoAtencion === 'INTERNADO' ? (
 						<span className={`${formStyles.chip} ${formStyles.chipInternado}`}>Internado</span>
-					) : tipoAtencion === 'AMBULATORIO' ? (
+					) : paciente.TipoAtencion === 'AMBULATORIO' ? (
 						<span className={`${formStyles.chip} ${formStyles.chipAmbu}`}>Ambulatorio</span>
 					) : null}
 					{chipsUbicacion.map((chip) => (
@@ -67,6 +72,16 @@ export default function PacientePedidoHeader({
 						</span>
 					))}
 				</div>
+				{datos.length > 0 ? (
+					<dl className={formStyles.pacienteDatos}>
+						{datos.map((d) => (
+							<div key={d.label} className={formStyles.pacienteDato}>
+								<dt>{d.label}</dt>
+								<dd>{d.value}</dd>
+							</div>
+						))}
+					</dl>
+				) : null}
 			</div>
 			<div className={formStyles.pacienteRight}>
 				{idVisita != null ? (
@@ -75,9 +90,9 @@ export default function PacientePedidoHeader({
 						<span className={formStyles.visitaLbl}>N° de visita</span>
 					</>
 				) : null}
-				{obraSocial ? (
+				{paciente.ObraSocial ? (
 					<>
-						<span className={formStyles.coberturaVal}>{obraSocial}</span>
+						<span className={formStyles.coberturaVal}>{paciente.ObraSocial}</span>
 						<span className={formStyles.coberturaLbl}>Cobertura</span>
 					</>
 				) : null}

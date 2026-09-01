@@ -110,16 +110,7 @@ export default function CumplirEstudioModal({
 				<div className={styles.modalBody}>
 					{error && <div className={formStyles.error}>{error}</div>}
 
-					<PacientePedidoHeader
-						nombre={pedido.PacienteNombre}
-						documento={pedido.PacienteDocumento}
-						sexo={pedido.PacienteSexo}
-						sexoDescripcion={pedido.PacienteSexoDescripcion}
-						tipoAtencion={pedido.TipoAtencion}
-						ubicacion={pedido.Ubicacion}
-						idVisita={pedido.IdVisita}
-						obraSocial={pedido.ObraSocial}
-					/>
+					<PacientePedidoHeader paciente={pedido} idVisita={pedido.IdVisita} />
 
 					<div className={formStyles.solicitudBox}>
 						<strong className={formStyles.solicitudDe}>

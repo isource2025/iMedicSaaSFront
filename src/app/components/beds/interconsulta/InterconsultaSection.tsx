@@ -8,6 +8,8 @@ import {
 import { usePermiso } from '@/app/hooks/usePermiso';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
+import { buildPacienteFields } from '../shared/pacientePedidoFields';
+import { autorRespuesta } from '../shared/pedidoResponsable';
 import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
@@ -45,23 +47,32 @@ function previewText(value?: string | null, max = 100) {
 	return t.length > max ? `${t.slice(0, max)}…` : t;
 }
 
+function esCumplida(row: InterconsultaRow) {
+	return !!row.Cumplido || (row.IdProtocolo != null && row.IdProtocolo > 0) || !!row.Respuesta;
+}
+
 function buildInterconsultaFields(row: InterconsultaRow) {
 	if (row.Origen === 'WEB') {
 		return [
+			...buildPacienteFields(row),
 			{ label: 'Especialidad', value: row.Especialidad, full: true },
 			{ label: 'Matrícula', value: row.MedicoSolicitante },
 			{ label: 'Origen', value: 'Registro web' },
 		];
 	}
 
+	const cumplido = esCumplida(row);
 	return [
+		...buildPacienteFields(row),
 		{
 			label: 'Destino',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.Especialidad,
 			full: true,
 		},
+		{ label: 'Solicitado por', value: row.MedicoSolicitanteNombre },
 		{ label: 'Matrícula', value: row.MedicoSolicitante },
 		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
+		{ label: 'Respondido por', value: cumplido ? autorRespuesta(row) : null },
 		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{ label: 'Cód. práctica', value: row.CodigoPractica },
 		{ label: 'Id pedido', value: row.IdPedido || row.IdInterconsulta },
@@ -70,7 +81,7 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 }
 
 function buildInterconsultaTextBlocks(row: InterconsultaRow) {
-	const cumplido = !!row.Cumplido || (row.IdProtocolo != null && row.IdProtocolo > 0) || !!row.Respuesta;
+	const cumplido = esCumplida(row);
 	return [
 		{
 			label: 'Pedido',
@@ -82,7 +93,7 @@ function buildInterconsultaTextBlocks(row: InterconsultaRow) {
 		{
 			label: 'Respuesta',
 			value: cumplido ? row.Respuesta || '(sin texto de respuesta)' : row.Respuesta || null,
-			autor: row.NombreToma || null,
+			autor: cumplido ? autorRespuesta(row) : null,
 			fecha: row.FechaRespuesta || null,
 		},
 	];
@@ -161,7 +172,7 @@ export default function InterconsultaSection({
 			const empresaInfo = await obtenerInfoEmpresa();
 			const parts = filtered.map((r, idx) => {
 				const tomado = !!r.Tomado;
-				const cumplido = !!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0) || !!r.Respuesta;
+				const cumplido = esCumplida(r);
 				return {
 					title: `Interconsulta ${idx + 1}`,
 					fields: [
@@ -177,6 +188,10 @@ export default function InterconsultaSection({
 								(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente'),
 						},
 						{ label: 'Fecha respuesta', value: r.FechaRespuesta || '—' },
+						{
+							label: 'Respondido por',
+							value: (cumplido && autorRespuesta(r)) || '—',
+						},
 					],
 					textBlocks: [
 						{ label: 'Pedido', value: r.Motivo || '—' },
@@ -299,8 +314,12 @@ export default function InterconsultaSection({
 								{filtered.map((r) => {
 									const id = r.IdPedido || r.IdInterconsulta;
 									const tomado = !!r.Tomado;
-									const cumplido =
-										!!r.Cumplido || (r.IdProtocolo != null && r.IdProtocolo > 0) || !!r.Respuesta;
+									const cumplido = esCumplida(r);
+									const responsable = cumplido
+										? autorRespuesta(r)
+										: tomado
+											? r.NombreToma || null
+											: null;
 									return (
 										<tr key={`${r.Origen || 'LEGACY'}-${id}`} className={tableStyles.row}>
 											<td>
@@ -333,7 +352,7 @@ export default function InterconsultaSection({
 											<td className={tableStyles.meta}>
 												{r.EstadoWorkflow ||
 													(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
-												{tomado && r.NombreToma ? ` · ${r.NombreToma}` : ''}
+												{responsable ? ` · ${responsable}` : ''}
 											</td>
 											<td>
 												<button

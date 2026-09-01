@@ -15,6 +15,8 @@ import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioMo
 import PedidoAdjuntosField from '@/app/components/beds/estudios/PedidoAdjuntosField';
 import PacientePedidoHeader from '@/app/components/beds/estudios/PacientePedidoHeader';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
+import { autorRespuesta } from '@/app/components/beds/shared/pedidoResponsable';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from './bandejaPedidos.module.css';
 
@@ -939,25 +941,9 @@ function BandejaPedidosContent() {
 					title={tituloPracticaEstudio(selectedEstudio)}
 					urgencia={selectedEstudio.EstadoUrgencia}
 					fields={[
-						{ label: 'Código práctica', value: selectedEstudio.CodigoPractica },
-						{ label: 'Paciente', value: selectedEstudio.PacienteNombre },
-						{ label: 'Documento', value: selectedEstudio.PacienteDocumento },
-						{
-							label: 'Sexo',
-							value:
-								selectedEstudio.PacienteSexoDescripcion || selectedEstudio.PacienteSexo,
-						},
-						{ label: 'Obra social', value: selectedEstudio.ObraSocial },
-						{
-							label: 'Atención',
-							value:
-								selectedEstudio.TipoAtencion === 'INTERNADO'
-									? `Internado${selectedEstudio.Ubicacion ? ` · ${selectedEstudio.Ubicacion}` : ''}`
-									: selectedEstudio.TipoAtencion === 'AMBULATORIO'
-										? 'Ambulatorio'
-										: selectedEstudio.TipoAtencion,
-						},
+						...buildPacienteFields(selectedEstudio),
 						{ label: 'Visita', value: selectedEstudio.IdVisita },
+						{ label: 'Código práctica', value: selectedEstudio.CodigoPractica },
 						{ label: 'Fecha', value: formatFechaEstudio(selectedEstudio) },
 						{
 							label: 'Servicio origen',
@@ -967,6 +953,10 @@ function BandejaPedidosContent() {
 						},
 						{ label: 'Profesional', value: selectedEstudio.MedicoSolicitanteNombre },
 						{ label: 'Aceptado por', value: selectedEstudio.NombreToma },
+						{
+							label: 'Realizado por',
+							value: selectedEstudio.Cumplido ? autorRespuesta(selectedEstudio) : null,
+						},
 						{
 							label: 'Destino',
 							value: selectedEstudio.ServicioDescripcion || selectedEstudio.SectorReceptor,
@@ -979,6 +969,8 @@ function BandejaPedidosContent() {
 							value:
 								selectedEstudio.TextoResultado ||
 								(selectedEstudio.Cumplido ? '(sin texto)' : null),
+							autor: selectedEstudio.Cumplido ? autorRespuesta(selectedEstudio) : null,
+							fecha: selectedEstudio.FechaResultado,
 						},
 					]}
 					onClose={() => setSelectedEstudio(null)}
@@ -998,22 +990,7 @@ function BandejaPedidosContent() {
 					title={(selectedIc.Motivo || selectedIc.NotasObservacion || 'Interconsulta').slice(0, 120)}
 					urgencia={selectedIc.EstadoUrgencia}
 					fields={[
-						{ label: 'Paciente', value: selectedIc.PacienteNombre },
-						{ label: 'Documento', value: selectedIc.PacienteDocumento },
-						{
-							label: 'Sexo',
-							value: selectedIc.PacienteSexoDescripcion || selectedIc.PacienteSexo,
-						},
-						{ label: 'Obra social', value: selectedIc.ObraSocial },
-						{
-							label: 'Atención',
-							value:
-								selectedIc.TipoAtencion === 'INTERNADO'
-									? `Internado${selectedIc.Ubicacion ? ` · ${selectedIc.Ubicacion}` : ''}`
-									: selectedIc.TipoAtencion === 'AMBULATORIO'
-										? 'Ambulatorio'
-										: selectedIc.TipoAtencion,
-						},
+						...buildPacienteFields(selectedIc),
 						{ label: 'Visita', value: selectedIc.IdVisita },
 						{ label: 'Fecha', value: formatFechaIc(selectedIc) },
 						{
@@ -1023,6 +1000,10 @@ function BandejaPedidosContent() {
 						{ label: 'Profesional', value: selectedIc.MedicoSolicitanteNombre },
 						{ label: 'Aceptado por', value: selectedIc.NombreToma },
 						{
+							label: 'Respondido por',
+							value: selectedIc.Cumplido ? autorRespuesta(selectedIc) : null,
+						},
+						{
 							label: 'Destino',
 							value: selectedIc.ServicioDescripcion || selectedIc.SectorReceptor,
 						},
@@ -1031,10 +1012,14 @@ function BandejaPedidosContent() {
 						{
 							label: 'Pedido',
 							value: selectedIc.Motivo || selectedIc.NotasObservacion,
+							autor: selectedIc.MedicoSolicitanteNombre,
+							fecha: formatFechaIc(selectedIc),
 						},
 						{
 							label: 'Respuesta',
 							value: selectedIc.Respuesta || (selectedIc.Cumplido ? '(sin texto)' : null),
+							autor: selectedIc.Cumplido ? autorRespuesta(selectedIc) : null,
+							fecha: selectedIc.FechaRespuesta,
 						},
 					]}
 					onClose={() => setSelectedIc(null)}
@@ -1052,16 +1037,7 @@ function BandejaPedidosContent() {
 								'Interconsulta'
 							).trim()}
 						</h3>
-						<PacientePedidoHeader
-							nombre={cumplirIc.PacienteNombre}
-							documento={cumplirIc.PacienteDocumento}
-							sexo={cumplirIc.PacienteSexo}
-							sexoDescripcion={cumplirIc.PacienteSexoDescripcion}
-							tipoAtencion={cumplirIc.TipoAtencion}
-							ubicacion={cumplirIc.Ubicacion}
-							idVisita={cumplirIc.IdVisita}
-							obraSocial={cumplirIc.ObraSocial}
-						/>
+						<PacientePedidoHeader paciente={cumplirIc} idVisita={cumplirIc.IdVisita} />
 						<div className={formStyles.solicitudBox}>
 							<strong className={formStyles.solicitudDe}>
 								{cumplirIc.MedicoSolicitanteNombre

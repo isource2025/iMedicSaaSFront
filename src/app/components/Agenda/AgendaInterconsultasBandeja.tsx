@@ -10,6 +10,8 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
+import { autorRespuesta } from '@/app/components/beds/shared/pedidoResponsable';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from '@/app/components/beds/estudios/EstudiosSection.module.css';
 import modalStyles from '@/app/components/beds/shared/PedidoDetalleModal.module.css';
@@ -177,6 +179,11 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 								{rows.map((r) => {
 									const id = pedidoId(r);
 									const tomado = !!r.Tomado;
+									const responsable = r.Cumplido
+										? autorRespuesta(r)
+										: tomado
+											? r.NombreToma || null
+											: null;
 									return (
 										<tr key={id} className={styles.clickableRow} onClick={() => setSelected(r)}>
 											<td>{formatFecha(r)}</td>
@@ -186,7 +193,10 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 												{(r.Motivo || '').length > 80 ? '…' : ''}
 											</td>
 											<td>{r.MedicoSolicitanteNombre || '—'}</td>
-											<td>{r.EstadoWorkflow || (tomado ? 'Tomado' : 'Pendiente')}</td>
+											<td>
+												{r.EstadoWorkflow || (tomado ? 'Tomado' : 'Pendiente')}
+												{responsable ? ` · ${responsable}` : ''}
+											</td>
 											<td onClick={(e) => e.stopPropagation()}>
 												{!tomado && (
 													<button
@@ -235,17 +245,29 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 						title={selected.ServicioDescripcion || selected.Especialidad || 'Interconsulta'}
 						urgencia={selected.EstadoUrgencia}
 						fields={[
+							...buildPacienteFields(selected),
 							{ label: 'Fecha', value: formatFecha(selected) },
 							{ label: 'Visita', value: selected.IdVisita },
 							{ label: 'Solicitado por', value: selected.MedicoSolicitanteNombre },
 							{ label: 'Destino', value: selected.ServicioDescripcion || selected.SectorReceptor },
 							{ label: 'Estado', value: selected.EstadoWorkflow || selected.Estado },
+							{
+								label: 'Respondido por',
+								value: selected.Cumplido ? autorRespuesta(selected) : null,
+							},
 						]}
 						textBlocks={[
-							{ label: 'Pedido', value: selected.Motivo },
+							{
+								label: 'Pedido',
+								value: selected.Motivo,
+								autor: selected.MedicoSolicitanteNombre,
+								fecha: formatFecha(selected),
+							},
 							{
 								label: 'Respuesta',
 								value: selected.Respuesta || (selected.Cumplido ? '(sin texto)' : null),
+								autor: selected.Cumplido ? autorRespuesta(selected) : null,
+								fecha: selected.FechaRespuesta,
 							},
 						]}
 						onClose={() => setSelected(null)}
