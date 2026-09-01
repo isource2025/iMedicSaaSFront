@@ -63,7 +63,7 @@ function Movimiento({ mov, esActual }: { mov: MovimientoAuditoria; esActual: boo
                     {mov.usuario || "usuario desconocido"}
                 </span>
                 <span className={styles.origen} title={[mov.aplicacion, mov.host].filter(Boolean).join(" · ")}>
-                    {mov.origen === "WEB" ? "Web" : "Sistema de escritorio"}
+                    {mov.origen === "WEB" ? "Web" : mov.aplicacion || "Fuera de la web"}
                 </span>
                 <span className={styles.hcId}>
                     HC #{mov.idHCIngreso}
