@@ -10,7 +10,7 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
-import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
+import { buildPacienteFields } from '@/app/components/beds/shared/pacienteFields';
 import { autorRespuesta } from '@/app/components/beds/shared/pedidoResponsable';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from '@/app/components/beds/estudios/EstudiosSection.module.css';

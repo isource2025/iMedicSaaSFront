@@ -1,4 +1,4 @@
-import type { DatosPacientePedido } from '@/app/types/estudios';
+import type { DatosFiliatoriosPaciente } from '@/app/types/pacienteDatos';
 import type { DetailField } from './PedidoDetalleModal';
 
 function txt(value?: string | number | null) {
@@ -6,7 +6,7 @@ function txt(value?: string | number | null) {
 	return s === '' ? null : s;
 }
 
-function formatDocumento(row: DatosPacientePedido) {
+function formatDocumento(row: DatosFiliatoriosPaciente) {
 	const numero = txt(row.PacienteDocumento);
 	if (!numero) return null;
 	const digits = numero.replace(/\D/g, '');
@@ -15,7 +15,7 @@ function formatDocumento(row: DatosPacientePedido) {
 	return tipo ? `${tipo} ${formateado}` : formateado;
 }
 
-function formatFechaNacimiento(row: DatosPacientePedido) {
+function formatFechaNacimiento(row: DatosFiliatoriosPaciente) {
 	const iso = txt(row.PacienteFechaNacimiento);
 	if (!iso) return null;
 	const [y, m, d] = iso.slice(0, 10).split('-');
@@ -23,7 +23,7 @@ function formatFechaNacimiento(row: DatosPacientePedido) {
 	return row.PacienteEdad != null ? `${fecha} (${row.PacienteEdad} años)` : fecha;
 }
 
-function formatAtencion(row: DatosPacientePedido) {
+function formatAtencion(row: DatosFiliatoriosPaciente) {
 	if (row.TipoAtencion === 'INTERNADO') {
 		const ubic = txt(row.Ubicacion);
 		return ubic ? `Internado · ${ubic}` : 'Internado';
@@ -33,10 +33,11 @@ function formatAtencion(row: DatosPacientePedido) {
 }
 
 /**
- * Datos filiatorios del paciente (imPacientes) para el detalle de un pedido.
- * El modal descarta los campos vacíos, por eso se devuelven todos.
+ * Datos filiatorios del paciente (imPacientes) para el detalle de un pedido,
+ * de una interconsulta o de la HC de ingreso. Se devuelven todos los campos:
+ * cada vista descarta los vacíos.
  */
-export function buildPacienteFields(row: DatosPacientePedido): DetailField[] {
+export function buildPacienteFields(row: DatosFiliatoriosPaciente): DetailField[] {
 	return [
 		{ label: 'Paciente', value: txt(row.PacienteNombre), full: true },
 		{ label: 'Documento', value: formatDocumento(row) },

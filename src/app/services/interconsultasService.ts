@@ -1,5 +1,5 @@
 import { apiFetch } from '@/app/utils/authFetch';
-import type { DatosPacientePedido } from '@/app/types/estudios';
+import type { DatosFiliatoriosPaciente } from '@/app/types/pacienteDatos';
 
 export type SectorDestinoInterconsulta = {
 	valor: string;
@@ -7,7 +7,7 @@ export type SectorDestinoInterconsulta = {
 	prefijos?: string[];
 };
 
-export type InterconsultaRow = DatosPacientePedido & {
+export type InterconsultaRow = DatosFiliatoriosPaciente & {
 	IdInterconsulta: number;
 	IdPedido?: number;
 	IdVisita: number;

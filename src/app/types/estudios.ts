@@ -1,26 +1,6 @@
-/** Datos del paciente (imPacientes) que viajan con cada pedido/interconsulta. */
-export interface DatosPacientePedido {
-  IdPaciente?: number | null;
-  PacienteNombre?: string | null;
-  PacienteDocumento?: string | null;
-  PacienteTipoDocumento?: string | null;
-  PacienteSexo?: string | null;
-  PacienteSexoDescripcion?: string | null;
-  PacienteFechaNacimiento?: string | null;
-  PacienteEdad?: number | null;
-  PacienteNumeroHC?: string | null;
-  ObraSocial?: string | null;
-  PacienteAfiliado?: string | null;
-  PacienteDomicilio?: string | null;
-  PacienteLocalidad?: string | null;
-  PacienteTelefono?: string | null;
-  PacienteTelefonoAlternativo?: string | null;
-  PacienteEmail?: string | null;
-  TipoAtencion?: 'AMBULATORIO' | 'INTERNADO' | string | null;
-  Ubicacion?: string | null;
-}
+import type { DatosFiliatoriosPaciente } from './pacienteDatos';
 
-export interface PedidoEstudio extends DatosPacientePedido {
+export interface PedidoEstudio extends DatosFiliatoriosPaciente {
   IdPedido: number;
   IdVisita: number;
   FechaPedido?: string;
