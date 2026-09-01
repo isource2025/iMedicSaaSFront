@@ -1,4 +1,5 @@
 import { apiFetch } from '@/app/utils/authFetch';
+import { motivoDeRespuesta } from '../utils/apiError';
 import {
     Evolucion,
     EvolucionResponse,
@@ -25,7 +26,7 @@ export const evolucionesService = {
 
             if (!res.ok) {
                 if (res.status === 404) return [];
-                throw new Error(`HTTP error! status: ${res.status}`);
+                throw new Error(await motivoDeRespuesta(res));
             }
 
             const json: EvolucionesResponse = await res.json();
@@ -79,7 +80,7 @@ export const evolucionesService = {
 
             if (!res.ok) {
                 if (res.status === 404) return null;
-                throw new Error(`HTTP error! status: ${res.status}`);
+                throw new Error(await motivoDeRespuesta(res));
             }
 
             const json: EvolucionResponse = await res.json();
@@ -106,7 +107,7 @@ export const evolucionesService = {
             });
 
             if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
+                throw new Error(await motivoDeRespuesta(res));
             }
 
             const json = await res.json();

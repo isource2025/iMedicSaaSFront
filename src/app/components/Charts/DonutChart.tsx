@@ -133,7 +133,7 @@ export default function DonutChart({ data, size = 200, donutWidth = 30 }: DonutC
           visible: true,
           x: e.clientX,
           y: e.clientY,
-          content: `${segment.item.label}: ${segment.item.value.toFixed(1)} (${percentage}%)`
+          content: `${segment.item.label}: ${segment.item.value.toLocaleString('es-AR')} (${percentage}%)`
         });
       } else {
         setTooltip(prev => ({ ...prev, visible: false }));
@@ -151,7 +151,7 @@ export default function DonutChart({ data, size = 200, donutWidth = 30 }: DonutC
     ctx.font = `bold ${radius / 5}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(total.toFixed(1), centerX, centerY);
+    ctx.fillText(total.toLocaleString('es-AR'), centerX, centerY);
 
     // Cleanup
     return () => {

@@ -86,12 +86,55 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	gap: 0.6rem;
 	padding: 0.5rem 0.7rem;
 	background: #f8fafc;
 	border: 1.5px solid #e2e8f0;
 	border-radius: 8px;
 	font-size: 0.9rem;
 	color: #1e293b;
+	cursor: default;
+}
+
+label.listItem {
+	cursor: pointer;
+}
+
+.listItem input[type='checkbox'] {
+	flex-shrink: 0;
+	margin: 0;
+}
+
+.listItemLeft {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	min-width: 0;
+	flex: 1;
+}
+
+.listItemName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.svcPill {
+	flex-shrink: 0;
+	max-width: 42%;
+	padding: 0.14rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	background: #e0f4fa;
+	color: #0083a9;
+	border: 1px solid #b8e4f0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .preview {

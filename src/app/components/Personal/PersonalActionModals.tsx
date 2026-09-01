@@ -15,6 +15,7 @@ import {
 	PersonalCodigoFacturacion,
 } from '@/app/types/personal';
 import { personalService } from '@/app/services/personalService';
+import { etiquetaCatalogo } from '@/app/utils/etiquetaCatalogo';
 import { rolesService, type Rol } from '@/app/services/rolesService';
 import styles from './PersonalActionModals.module.css';
 
@@ -166,7 +167,7 @@ export default function PersonalActionModals({
 
 	const title =
 		kind === 'servicio'
-			? 'Servicio y bandeja de pedidos'
+			? 'Servicio / facturación'
 			: kind === 'empresas'
 			? 'Empresas asociadas'
 			: kind === 'firma'
@@ -404,11 +405,11 @@ export default function PersonalActionModals({
 				) : kind === 'servicio' ? (
 					<div className={styles.row}>
 						<p className={styles.muted}>
-							La bandeja de pedidos usa solo los servicios asignados acá, no los sectores de internación.
+							La bandeja de pedidos usa los sectores asignados al personal (solapa Sectores). Estos servicios son para facturación.
 						</p>
 						<div className={styles.addRow}>
 							<div style={{ flex: 1, minWidth: 200 }}>
-								<div className={styles.label}>Agregar servicio (bandeja)</div>
+								<div className={styles.label}>Agregar servicio (facturación)</div>
 								<select
 									className={styles.select}
 									value={srvPedidoSel}
@@ -419,7 +420,7 @@ export default function PersonalActionModals({
 										.filter((o) => !srvPedidos.some((a) => a.idServicio === o.valor))
 										.map((o) => (
 											<option key={o.valor} value={o.valor}>
-												{o.descripcion}
+												{etiquetaCatalogo(catServicios, o.valor, o.descripcion) || '—'}
 											</option>
 										))}
 								</select>
@@ -433,14 +434,20 @@ export default function PersonalActionModals({
 								Agregar
 							</button>
 						</div>
-						<div className={styles.label}>Servicios de la bandeja</div>
+						<div className={styles.label}>Servicios de facturación</div>
 						<div className={styles.list}>
 							{srvPedidos.length === 0 ? (
 								<span className={styles.muted}>Sin servicios asignados.</span>
 							) : (
 								srvPedidos.map((s) => (
 									<div key={s.idServicio} className={styles.listItem}>
-										<span>{s.Descripcion || s.idServicio}</span>
+										<span>
+											{etiquetaCatalogo(
+												catServicios,
+												s.idServicio,
+												s.Descripcion || s.descripcion,
+											) || '—'}
+										</span>
 										<button
 											type="button"
 											className={styles.btnDanger}
@@ -552,7 +559,7 @@ export default function PersonalActionModals({
 										.filter((c) => !secAsignados.some((a) => a.idSector === c.IdSector))
 										.map((c) => (
 											<option key={c.IdSector} value={c.IdSector}>
-												{c.Descripcion || c.IdSector}
+												{c.Descripcion || '—'}
 											</option>
 										))}
 								</select>
@@ -573,7 +580,16 @@ export default function PersonalActionModals({
 							) : (
 								secAsignados.map((s) => (
 									<div key={s.idSector} className={styles.listItem}>
-										<span>{s.Descripcion || s.idSector}</span>
+										<span>
+											{etiquetaCatalogo(
+												secCatalogo.map((c) => ({
+													valor: c.IdSector,
+													descripcion: c.Descripcion,
+												})),
+												s.idSector,
+												s.Descripcion || s.descripcion,
+											) || '—'}
+										</span>
 										<button
 											type='button'
 											className={styles.btnDanger}

@@ -59,6 +59,8 @@ export interface PedidoEstudio extends DatosPacientePedido {
 export interface SectorReceptorEstudio {
   valor: string;
   descripcion: string;
+  valorServicio?: string;
+  descripcionServicio?: string;
   prefijos: string[];
 }
 

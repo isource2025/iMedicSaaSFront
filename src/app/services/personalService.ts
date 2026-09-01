@@ -57,14 +57,23 @@ export const getPersonalById = async (id: number): Promise<Personal> => {
 	throw new Error(response.data.mensaje || 'Personal no encontrado');
 };
 
+const PERSONAL_SAVE_TIMEOUT_MS = 120_000;
+
 export const createPersonal = async (
 	data: PersonalFormData,
 ): Promise<Personal> => {
 	try {
-		const response = await apiService.post<ApiResponse<Personal>>('/personal', data);
+		const response = await apiService.post<ApiResponse<Personal>>('/personal', data, {
+			timeout: PERSONAL_SAVE_TIMEOUT_MS,
+		});
 		if (response.data.success && response.data.data) return response.data.data;
 		throw new Error(response.data.mensaje || 'Error al crear el personal');
 	} catch (error: any) {
+		if (error.code === 'ECONNABORTED') {
+			throw new Error(
+				'La operación tardó demasiado. Verificá en el listado si el personal se creó antes de reintentar.',
+			);
+		}
 		if (error.response) {
 			throw new Error(error.response.data?.mensaje || 'Error al crear el personal');
 		}
@@ -80,10 +89,16 @@ export const updatePersonal = async (
 		const response = await apiService.put<ApiResponse<Personal>>(
 			`/personal/${id}`,
 			data,
+			{ timeout: PERSONAL_SAVE_TIMEOUT_MS },
 		);
 		if (response.data.success && response.data.data) return response.data.data;
 		throw new Error(response.data.mensaje || 'Error al actualizar el personal');
 	} catch (error: any) {
+		if (error.code === 'ECONNABORTED') {
+			throw new Error(
+				'La operación tardó demasiado. Verificá en el listado si los cambios se guardaron antes de reintentar.',
+			);
+		}
 		if (error.response) {
 			throw new Error(error.response.data?.mensaje || 'Error al actualizar el personal');
 		}
@@ -126,7 +141,18 @@ export const getServicios = async (): Promise<CatalogoItemTexto[]> => {
 		const res = await apiService.get<ApiResponse<CatalogoItemTexto[]>>(
 			'/personal/catalogos/servicios',
 		);
-		return res.data.success && res.data.data ? res.data.data : [];
+		const rows = res.data.success && res.data.data ? res.data.data : [];
+		return rows
+			.map((r) => {
+				const row = (r || {}) as unknown as Record<string, unknown>;
+				return {
+					valor: String(
+						row.valor ?? row.Valor ?? row.id ?? row.IdServicio ?? row.idServicio ?? '',
+					).trim(),
+					descripcion: String(row.descripcion ?? row.Descripcion ?? '').trim(),
+				};
+			})
+			.filter((r) => r.valor);
 	} catch {
 		return [];
 	}
@@ -272,10 +298,34 @@ export const deletePersonalFirma = async (id: number): Promise<void> => {
 	if (!res.data.success) throw new Error(res.data.mensaje || 'Error al eliminar firma');
 };
 
+function mapServicioAsignado(s: Record<string, unknown> | null | undefined): PersonalServicioAsignado {
+	const row = s || {};
+	return {
+		idServicio: String(
+			row.idServicio ?? row.IdServicio ?? row.id ?? row.valor ?? row.Valor ?? '',
+		).trim(),
+		Descripcion: String(row.Descripcion ?? row.descripcion ?? '').trim(),
+	};
+}
+
+function mapSectorAsignado(s: Record<string, unknown> | null | undefined): PersonalSectorAsignado {
+	const row = s || {};
+	return {
+		idSector: String(row.idSector ?? row.IdSector ?? '').trim(),
+		Descripcion: String(row.Descripcion ?? row.descripcion ?? '').trim(),
+		ValorServicio: String(row.ValorServicio ?? row.valorServicio ?? '').trim() || undefined,
+		DescripcionServicio: String(row.DescripcionServicio ?? row.descripcionServicio ?? '').trim() || undefined,
+	};
+}
+
 export const getPersonalSectores = async (id: number): Promise<PersonalSectorAsignado[]> => {
 	try {
 		const res = await apiService.get<ApiResponse<PersonalSectorAsignado[]>>(`/personal/${id}/sectores`);
-		if (res.data.success && res.data.data) return res.data.data;
+		if (res.data.success && res.data.data) {
+			return (res.data.data as unknown as Record<string, unknown>[])
+				.map(mapSectorAsignado)
+				.filter((s) => s.idSector);
+		}
 		return [];
 	} catch {
 		return [];
@@ -289,7 +339,11 @@ export const addPersonalSector = async (
 	const res = await apiService.post<ApiResponse<PersonalSectorAsignado[]>>(`/personal/${id}/sectores`, {
 		idSector,
 	});
-	if (res.data.success && res.data.data) return res.data.data;
+	if (res.data.success && res.data.data) {
+		return (res.data.data as unknown as Record<string, unknown>[])
+			.map(mapSectorAsignado)
+			.filter((s) => s.idSector);
+	}
 	throw new Error(res.data.mensaje || 'Error al asignar sector');
 };
 
@@ -301,7 +355,9 @@ export const removePersonalSector = async (
 	const res = await apiService.delete<ApiResponse<PersonalSectorAsignado[]>>(
 		`/personal/${id}/sectores?idSector=${q}`,
 	);
-	if (res.data.success && res.data.data) return res.data.data;
+	if (res.data.success && res.data.data) {
+		return (res.data.data as unknown as Record<string, unknown>[]).map(mapSectorAsignado).filter((s) => s.idSector);
+	}
 	throw new Error(res.data.mensaje || 'Error al quitar sector');
 };
 
@@ -310,7 +366,11 @@ export const getPersonalServiciosPedidos = async (id: number): Promise<PersonalS
 		const res = await apiService.get<ApiResponse<PersonalServicioAsignado[]>>(
 			`/personal/${id}/servicios-pedidos`,
 		);
-		if (res.data.success && res.data.data) return res.data.data;
+		if (res.data.success && res.data.data) {
+			return (res.data.data as unknown as Record<string, unknown>[])
+				.map(mapServicioAsignado)
+				.filter((s) => s.idServicio);
+		}
 		return [];
 	} catch {
 		return [];
@@ -327,7 +387,9 @@ export const addPersonalServicioPedido = async (
 	);
 	if (res.data.success && res.data.data) {
 		clearServiciosReceptorCache();
-		return res.data.data;
+		return (res.data.data as unknown as Record<string, unknown>[])
+			.map(mapServicioAsignado)
+			.filter((s) => s.idServicio);
 	}
 	throw new Error(res.data.mensaje || 'Error al asignar servicio');
 };
@@ -342,14 +404,16 @@ export const removePersonalServicioPedido = async (
 	);
 	if (res.data.success && res.data.data) {
 		clearServiciosReceptorCache();
-		return res.data.data;
+		return (res.data.data as unknown as Record<string, unknown>[])
+			.map(mapServicioAsignado)
+			.filter((s) => s.idServicio);
 	}
 	throw new Error(res.data.mensaje || 'Error al quitar servicio');
 };
 
 export const replacePersonalAsignaciones = async (
 	id: number,
-	body: { sectores: string[]; servicios: string[] },
+	body: { sectores: string[]; servicios?: string[] },
 ): Promise<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }> => {
 	try {
 		const res = await apiService.put<
@@ -357,7 +421,15 @@ export const replacePersonalAsignaciones = async (
 		>(`/personal/${id}/asignaciones`, body);
 		if (res.data.success && res.data.data) {
 			clearServiciosReceptorCache();
-			return res.data.data;
+			const d = res.data.data;
+			return {
+				sectores: ((d.sectores || []) as unknown as Record<string, unknown>[])
+					.map(mapSectorAsignado)
+					.filter((s) => s.idSector),
+				servicios: ((d.servicios || []) as unknown as Record<string, unknown>[])
+					.map(mapServicioAsignado)
+					.filter((s) => s.idServicio),
+			};
 		}
 		throw new Error(res.data.mensaje || 'Error al guardar asignaciones');
 	} catch (error: unknown) {
@@ -366,21 +438,61 @@ export const replacePersonalAsignaciones = async (
 	}
 };
 
+function pickCatalogoField(row: Record<string, unknown>, ...names: string[]): string {
+	const lower: Record<string, unknown> = {};
+	for (const [k, v] of Object.entries(row || {})) {
+		lower[String(k).toLowerCase().trim()] = v;
+	}
+	for (const n of names) {
+		const v = lower[n.toLowerCase()] ?? row[n];
+		if (v != null && String(v).trim() !== '') return String(v).trim();
+	}
+	return '';
+}
+
+function mapSectorCatalogoRow(row: Record<string, unknown> | null | undefined) {
+	const r = row || {};
+	if (pickCatalogoField(r, 'IdServicio', 'idServicio')) return null;
+	const IdSector = pickCatalogoField(r, 'IdSector', 'idSector', 'idsector', 'Valor', 'valor', 'id');
+	if (!IdSector || IdSector === '0') return null;
+	return {
+		IdSector,
+		Descripcion: pickCatalogoField(r, 'Descripcion', 'descripcion', 'descripcionSector') || IdSector,
+		ValorServicio: pickCatalogoField(r, 'ValorServicio', 'valorServicio'),
+		DescripcionServicio: pickCatalogoField(r, 'DescripcionServicio', 'descripcionServicio'),
+	};
+}
+
 /** Catálogo global de sectores (imSectores). */
-export const getSectoresCatalogo = async (): Promise<{ IdSector: string; Descripcion: string }[]> => {
+export const getSectoresCatalogo = async (): Promise<
+	{ IdSector: string; Descripcion: string; ValorServicio?: string; DescripcionServicio?: string }[]
+> => {
+	const parse = (payload: unknown) => {
+		const body = payload as { data?: unknown; success?: boolean } | unknown[] | undefined;
+		const rows = Array.isArray(body)
+			? body
+			: Array.isArray((body as { data?: unknown })?.data)
+				? ((body as { data: unknown[] }).data)
+				: [];
+		return (rows as Record<string, unknown>[])
+			.map(mapSectorCatalogoRow)
+			.filter((s): s is NonNullable<typeof s> => Boolean(s));
+	};
+
 	try {
-		const res = await apiService.get<{
-			success: boolean;
-			data: { IdSector?: string; id?: string; Descripcion?: string; descripcion?: string }[];
-		}>('/sectores');
-		const rows = res.data?.data;
-		return (Array.isArray(rows) ? rows : [])
-			.map((r) => ({
-				IdSector: String(r.IdSector || r.id || ''),
-				Descripcion: String(r.Descripcion || r.descripcion || ''),
-			}))
-			.filter((r) => r.IdSector);
-	} catch {
+		const res = await apiService.get<{ success: boolean; data: Record<string, unknown>[] }>(
+			'/personal/catalogos/sectores',
+			{ timeout: 20000 },
+		);
+		return parse(res.data);
+	} catch (err) {
+		const ax = err as { code?: string; message?: string; response?: { status?: number; data?: { mensaje?: string } } };
+		console.error('[personal] catálogo sectores:', {
+			status: ax?.response?.status,
+			mensaje: ax?.response?.data?.mensaje,
+			code: ax?.code,
+			message: ax?.message || (err instanceof Error ? err.message : String(err)),
+		});
 		return [];
 	}
 };
@@ -493,6 +605,43 @@ export const getSyncFisicoEstado = async (): Promise<{ disponible: boolean }> =>
 	);
 	if (res.data.success && res.data.data) return res.data.data;
 	throw new Error(res.data.mensaje || 'Error al consultar sync físico');
+};
+
+export type CuentaSoloNube = {
+	valor: number;
+	nombreRed: string | null;
+	apellidoNombre: string;
+	numeroDocumento: number | null;
+	ocultoPorIdReservado?: boolean;
+};
+
+export const getCuentasSoloNube = async (): Promise<CuentaSoloNube[]> => {
+	const res = await apiService.get<ApiResponse<CuentaSoloNube[]>>(
+		'/personal/cuentas-solo-nube',
+	);
+	if (res.data.success && Array.isArray(res.data.data)) return res.data.data;
+	throw new Error(res.data.mensaje || 'Error al detectar cuentas sin ficha física');
+};
+
+export type RepararCuentasSoloNubeResult = {
+	total: number;
+	reparados: Array<{ valor: number; nombreRed: string | null; apellidoNombre: string }>;
+	errores: Array<{
+		valor: number;
+		nombreRed: string | null;
+		apellidoNombre: string;
+		error: string;
+	}>;
+};
+
+export const repararCuentasSoloNube = async (): Promise<RepararCuentasSoloNubeResult> => {
+	const res = await apiService.post<
+		ApiResponse<RepararCuentasSoloNubeResult> & { mensaje?: string }
+	>('/personal/reparar-cuentas-solo-nube');
+	if (!res.data.data) {
+		throw new Error(res.data.mensaje || 'Error al reparar cuentas sin ficha física');
+	}
+	return res.data.data;
 };
 
 export type SyncFisicoInformeItem = {
@@ -681,6 +830,8 @@ export const personalService = {
 	changePersonalCuentaPassword,
 	getExportFields,
 	getSyncFisicoEstado,
+	getCuentasSoloNube,
+	repararCuentasSoloNube,
 	syncDesdeFisico,
 	exportarPersonal,
 };

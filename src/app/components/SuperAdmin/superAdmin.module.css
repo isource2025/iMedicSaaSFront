@@ -669,6 +669,12 @@ a.btnSecondary {
   margin-bottom: 0.75rem;
 }
 
+.catalogStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .stepTitle {
   font-weight: 700;
   font-size: 0.9rem;

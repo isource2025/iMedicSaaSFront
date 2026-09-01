@@ -17,6 +17,7 @@ import BedFilters from '../beds/BedFilters';
 import { formatDate, formatTime, dateToClarionDate, timeToClarionTime, fechaLocalISO, horaLocalHHMM, codigoCamaDesdeId, clarionDateToISO } from '../../utils/dateUtils';
 import type { PatientHeaderSnapshot } from '../../utils/bedHeader';
 import { getSessionUser, getUserCodOperador } from '../../utils/sessionUser';
+import { detalleDeError, mensajeDeError } from '../../utils/apiError';
 
 interface ModalCambiarCamaProps {
   isOpen: boolean;
@@ -493,20 +494,12 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       }, 800);
       
     } catch (err: any) {
-      console.error('Error en el cambio de cama:', err);
-      const status = err?.response?.status;
-      const apiMsg =
-        err?.response?.data?.mensaje ||
-        err?.response?.data?.message ||
-        err?.message;
-      if (status === 403) {
-        setError(
-          apiMsg ||
-            'No tiene permiso para mover camas (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)',
-        );
-      } else {
-        setError(apiMsg || 'Ocurrió un error durante el cambio de cama');
-      }
+      console.error('Error en el cambio de cama:', detalleDeError(err));
+      const generico =
+        err?.response?.status === 403
+          ? 'No tiene permiso para mover camas (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)'
+          : 'Ocurrió un error durante el cambio de cama';
+      setError(mensajeDeError(err, generico));
       setSuccess(false);
     } finally {
       setLoading(false);

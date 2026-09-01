@@ -475,10 +475,10 @@
 
 .lineChartSection {
   max-width: 1200px;
-  margin: 40px auto;
-  padding: 24px;
-  background-color: #fff;
-  border-radius: 16px;
+  margin: 28px auto;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 0;
 }
 
 .insightsSection {

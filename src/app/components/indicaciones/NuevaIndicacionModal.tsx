@@ -11,6 +11,7 @@ import CustomSelect from "../Patients/AddPatient/LoadingSelect";
 import { useParams } from "next/navigation";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { parseValorPersonalId } from "@/app/utils/valorPersonal";
+import { sectorDesdeCamaId } from "@/app/utils/dateUtils";
 import SlideDrawer from "../UI/SlideDrawer";
 
 interface IndicacionHija {
@@ -247,7 +248,7 @@ export default function IndicacionForm({
 
             try {
                 // Usar idSector prop si está disponible, sino extraer de params.id
-                const sectorId = idSector || (params.id ? (params.id as string).split("-")[0] : null);
+                const sectorId = idSector || sectorDesdeCamaId(params.id as string | undefined);
                 if (sectorId) {
                     set("IdSector", sectorId);
                 }

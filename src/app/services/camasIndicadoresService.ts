@@ -1,4 +1,5 @@
 import axiosInstance from './axios';
+import { resolveTenantCacheId } from '../utils/tenantCache';
 
 // Cache para optimizar las consultas
 interface CacheEntry<T> {
@@ -40,7 +41,7 @@ class DataCache {
       .sort()
       .map(key => `${key}:${params[key]}`)
       .join('|');
-    return `${prefix}:${sortedParams}`;
+    return `${prefix}:emp:${resolveTenantCacheId()}:${sortedParams}`;
   }
 }
 
@@ -270,7 +271,7 @@ export const camasIndicadoresService = {
   },
 
   obtenerEstadoActual: async (): Promise<EstadoActualCamas> => {
-    const cacheKey = 'estado-actual-camas';
+    const cacheKey = cache.generateKey('estado-actual-camas', {});
     
     // Cache más corto para estado actual (30 segundos)
     const cachedData = cache.get<EstadoActualCamas>(cacheKey);

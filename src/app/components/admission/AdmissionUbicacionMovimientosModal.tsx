@@ -12,6 +12,7 @@ import diagnosticosService from '@/app/services/diagnosticosService';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import { esAdminClinico } from '@/app/hooks/useUsuarioActual';
+import { detalleDeError, mensajeDeError } from '@/app/utils/apiError';
 import {
   catalogoDisposiciones,
   ordenarMovimientos,
@@ -21,6 +22,8 @@ import styles from './AdmissionUbicacionMovimientosModal.module.css';
 import ConfirmationModal from '@/app/components/beds/shared/ConfirmationModal';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import type { EstadoRevertirEgreso } from '@/app/services/visitaMovimientoService';
+import ModalAsignarCamaAVisita from '@/app/components/modals/ModalAsignarCamaAVisita';
+import ModalCambiarCama from '@/app/components/modals/ModalCambiarCama';
 
 type Props = {
   isOpen: boolean;
@@ -94,6 +97,26 @@ function etiquetaOperadorGuardado(visita: AdmissionDatosPrincipalesVisita | null
   return '';
 }
 
+/** Clarion 0 / null / época 1800-12-28 no cuentan como egreso real. */
+function tieneEgresoGuardado(visita: AdmissionDatosPrincipalesVisita | null | undefined): boolean {
+  if (!visita) return false;
+  const clarion = Number(visita.FechaEgresoClarion);
+  if (Number.isFinite(clarion) && visita.FechaEgresoClarion != null) return clarion > 0;
+  const raw = visita.FechaEgreso;
+  if (raw == null || raw === '') return false;
+  if (typeof raw === 'number') return Number(raw) > 0;
+  const iso = String(raw).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const y = Number(iso.slice(0, 4));
+  return y >= 1900;
+}
+
+function fechaEgresoFormularioValida(iso: string): boolean {
+  const fe = String(iso || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fe)) return false;
+  return Number(fe.slice(0, 4)) >= 1900;
+}
+
 export default function AdmissionUbicacionMovimientosModal({
   isOpen,
   numeroVisita,
@@ -123,6 +146,8 @@ export default function AdmissionUbicacionMovimientosModal({
   const [estadoRevertir, setEstadoRevertir] = useState<EstadoRevertirEgreso | null>(null);
   const [confirmarLimpiar, setConfirmarLimpiar] = useState(false);
   const [aviso, setAviso] = useState<{ title: string; message: string; tone: MessageModalTone } | null>(null);
+  const [asignarCamaOpen, setAsignarCamaOpen] = useState(false);
+  const [cambiarCamaOpen, setCambiarCamaOpen] = useState(false);
   const puedeRevertirEgreso = esAdminClinico();
 
   const load = useCallback(async () => {
@@ -160,7 +185,7 @@ export default function AdmissionUbicacionMovimientosModal({
       setDispCatalogo(catalogoDisposiciones(disp || []));
       const fe = String(payload.visita.FechaEgreso || '').slice(0, 10);
       const he = String(payload.visita.HoraEgreso || '').slice(0, 5);
-      const tieneEgreso = /^\d{4}-\d{2}-\d{2}$/.test(fe);
+      const tieneEgreso = fechaEgresoFormularioValida(fe) && tieneEgresoGuardado(payload.visita);
       if (tieneEgreso) {
         setFechaEgreso(fe);
         setHoraEgreso(/^\d{2}:\d{2}/.test(he) ? he.slice(0, 5) : '');
@@ -200,8 +225,8 @@ export default function AdmissionUbicacionMovimientosModal({
       setDiagQuery('');
       setDiagResults([]);
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string };
-      setError(err?.response?.data?.message || err?.message || 'Error al cargar ubicación / movimientos');
+      console.error('Error al cargar ubicación / movimientos:', detalleDeError(e));
+      setError(mensajeDeError(e, 'Error al cargar ubicación / movimientos'));
     } finally {
       setLoading(false);
     }
@@ -255,8 +280,53 @@ export default function AdmissionUbicacionMovimientosModal({
   ).trim();
 
   const bedId = hab;
-  const yaEgresado = Boolean(visita?.FechaEgreso);
+  const yaEgresado = tieneEgresoGuardado(visita);
   const canEgreso = Boolean(numeroVisita);
+  /** Sin habitación/cama actual (cabecera o último movimiento). */
+  const sinUbicacion = Boolean(numeroVisita) && !hab;
+
+  const bloqueAsignarCama = sinUbicacion ? (
+    <div className={styles.actions} style={{ marginTop: 10 }}>
+      {yaEgresado ? (
+        <>
+          <p className={styles.hintSinCama}>
+            Esta visita figura egresada y sin cama. Revertí el egreso para poder
+            asignarle una ubicación.
+          </p>
+          {puedeRevertirEgreso ? (
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              disabled={loading || revertBusy}
+              onClick={() => void onRevertirEgreso()}
+            >
+              {revertBusy ? 'Revisando…' : 'Revertir egreso y asignar cama'}
+            </button>
+          ) : null}
+        </>
+      ) : (
+        <button
+          type="button"
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          disabled={loading}
+          onClick={() => setAsignarCamaOpen(true)}
+        >
+          Asignar cama
+        </button>
+      )}
+    </div>
+  ) : !yaEgresado ? (
+    <div className={styles.actions} style={{ marginTop: 10 }}>
+      <button
+        type="button"
+        className={`${styles.btn} ${styles.btnPrimary}`}
+        disabled={loading}
+        onClick={() => setCambiarCamaOpen(true)}
+      >
+        Cambiar cama
+      </button>
+    </div>
+  ) : null;
 
   const onEgresoRapido = async () => {
     if (!numeroVisita || !fechaEgreso || !horaEgreso) {
@@ -318,12 +388,17 @@ export default function AdmissionUbicacionMovimientosModal({
       setError('');
       const res = await visitaMovimientoService.revertirEgreso(numeroVisita);
       setEstadoRevertir(null);
+      await load();
+      // Flujo típico post-Binaria: egreso anulado → elegir cama real
+      setAsignarCamaOpen(true);
       setAviso({
         title: 'Egreso anulado',
-        message: res.mensaje || res.message || 'Se anuló el egreso y el paciente volvió a internación.',
+        message:
+          res.mensaje ||
+          res.message ||
+          'Se anuló el egreso. Elegí una cama libre para ubicar al paciente.',
         tone: 'success',
       });
-      await load();
     } catch (e: unknown) {
       setEstadoRevertir(null);
       setAviso({
@@ -398,6 +473,7 @@ export default function AdmissionUbicacionMovimientosModal({
                   <input className={styles.readonly} value={servicio || '—'} readOnly />
                 </label>
               </div>
+              {showUbicacion ? bloqueAsignarCama : null}
             </section>
           ) : null}
 
@@ -415,6 +491,7 @@ export default function AdmissionUbicacionMovimientosModal({
           {showEgreso ? (
             <section className={embedded ? styles.sectionFlat : styles.section}>
               {!embedded ? <h3 className={styles.sectionTitle}>Egreso</h3> : null}
+              {!showUbicacion ? bloqueAsignarCama : null}
               <div className={styles.egresoGrid}>
                 <label className={styles.field}>
                   <span>Fecha de egreso</span>
@@ -570,6 +647,48 @@ export default function AdmissionUbicacionMovimientosModal({
         tone={aviso?.tone || 'info'}
         onClose={() => setAviso(null)}
       />
+      {numeroVisita ? (
+        <ModalAsignarCamaAVisita
+          isOpen={asignarCamaOpen}
+          onClose={() => setAsignarCamaOpen(false)}
+          onSuccess={() => {
+            setAsignarCamaOpen(false);
+            void load();
+          }}
+          numeroVisita={numeroVisita}
+          pacienteNombre={String(visita?.ApellidoYNombre || '').trim()}
+          diagnostico={String(visita?.Diagnostico || '').trim()}
+          clasePacienteDefault={String(visita?.ClasePaciente || 'I').trim() || 'I'}
+        />
+      ) : null}
+      {numeroVisita && hab ? (
+        <ModalCambiarCama
+          isOpen={cambiarCamaOpen}
+          onClose={() => setCambiarCamaOpen(false)}
+          onSuccess={() => {
+            setCambiarCamaOpen(false);
+            void load();
+          }}
+          numeroVisita={numeroVisita}
+          bedId={hab}
+          bedSector={sector}
+          sectorInfo={
+            sector
+              ? {
+                  id: sector,
+                  valor: sector,
+                  descripcion: sectorDesc || sector,
+                }
+              : null
+          }
+          header={{
+            nombre: String(visita?.ApellidoYNombre || '').trim() || undefined,
+            documento: visita?.NumeroDocumento != null ? String(visita.NumeroDocumento) : undefined,
+            sector: sector || undefined,
+            numeroCama: hab || undefined,
+          }}
+        />
+      ) : null}
     </>
   );
 

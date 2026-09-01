@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { camasIndicadoresService, CamasRawData, ResumenCamas, EstadoActualCamas, CamasPorFecha } from '../services/camasIndicadoresService';
+import { useAppContext } from '../contexts/AppContext';
+import { getIdEmpresaFromToken } from '../utils/jwtSession';
 
 // Debounce personalizado para optimizar las consultas
 function useDebounce<T>(value: T, delay: number): T {
@@ -22,6 +24,9 @@ export const useCamasIndicadores = (
   fechaInicio: string,
   fechaFin: string
 ) => {
+  const { empresaInfo } = useAppContext();
+  const tenantId = empresaInfo?.id ?? getIdEmpresaFromToken() ?? 0;
+
   const [indicadores, setIndicadores] = useState<CamasRawData[]>([]);
   const [resumen, setResumen] = useState<ResumenCamas | null>(null);
   const [indicadoresPorFecha, setIndicadoresPorFecha] = useState<CamasPorFecha[]>([]);
@@ -95,7 +100,15 @@ export const useCamasIndicadores = (
       setLoading(false);
       setLoadingSteps({ indicadores: false, resumen: false, porFecha: false, estadoActual: false });
     }
-  }, [debouncedFechaInicio, debouncedFechaFin]);
+  }, [debouncedFechaInicio, debouncedFechaFin, tenantId]);
+
+  useEffect(() => {
+    setIndicadores([]);
+    setResumen(null);
+    setIndicadoresPorFecha([]);
+    setEstadoActual(null);
+    setError(null);
+  }, [tenantId]);
 
   // Efecto optimizado que solo se ejecuta cuando las fechas debounced cambian
   useEffect(() => {

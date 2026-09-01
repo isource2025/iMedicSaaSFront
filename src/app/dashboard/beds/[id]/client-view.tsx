@@ -18,27 +18,10 @@ import {
 
 type Props = { id: string };
 
-function getBaseUrl() {
-	return (process.env.NEXT_PUBLIC_API_URL ?? window.location.origin).replace(/\/$/, '');
-}
-function getTokenFromLocalStorage(): string | undefined {
-	try {
-		const raw = localStorage.getItem('auth_token') ?? localStorage.getItem('token');
-		if (!raw) return;
-		try {
-			const parsed = JSON.parse(raw);
-			if (typeof parsed === 'string') return parsed;
-			if (parsed?.token) return parsed.token;
-		} catch {
-			return raw;
-		}
-	} catch {}
-}
-
 export default function ClientBedView({ id }: Props) {
 	const router = useRouter();
-	const url = useMemo(
-		() => (id ? `${getBaseUrl()}/beds/${encodeURIComponent(id)}` : null),
+	const path = useMemo(
+		() => (id ? `/beds/${encodeURIComponent(id)}` : null),
 		[id],
 	);
 
@@ -48,7 +31,7 @@ export default function ClientBedView({ id }: Props) {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		if (!url) return;
+		if (!path) return;
 		const ctrl = new AbortController();
 		const hasSeed = Boolean(getBedSnapshot(id));
 
@@ -58,23 +41,23 @@ export default function ClientBedView({ id }: Props) {
 			}
 			setError(null);
 			try {
-				const token = getTokenFromLocalStorage();
-				const res = await apiFetch(url, {
+				const res = await apiFetch(path, {
 					signal: ctrl.signal,
-					headers: {
-						accept: 'application/json',
-						...(token ? { Authorization: `Bearer ${token}` } : {}),
-					},
+					headers: { accept: 'application/json' },
 					cache: 'no-store',
 				});
 
 				if (res.status === 404) {
+					if (hasSeed) {
+						setLoading(false);
+						return;
+					}
 					router.replace(`/dashboard/beds/${id}?nf=1`);
 					return;
 				}
 				if (!res.ok) {
 					const body = await res.text().catch(() => '');
-					throw new Error(`GET ${url} → ${res.status} ${res.statusText}\n${body}`);
+					throw new Error(`GET ${path} → ${res.status} ${res.statusText}\n${body}`);
 				}
 
 				const json = await res.json();
@@ -98,7 +81,7 @@ export default function ClientBedView({ id }: Props) {
 		})();
 
 		return () => ctrl.abort();
-	}, [url, id, router]);
+	}, [path, id, router]);
 
 	if (loading && !bed) {
 		return (

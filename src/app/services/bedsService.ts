@@ -23,12 +23,15 @@ export function normalizarTipoRecurso(raw: unknown): BedTipoRecurso {
 function mapBedItem(item: Record<string, unknown>): Bed {
 	const tipoRaw = item.Tipo ?? item.tipo ?? item.TIPO ?? '';
 	const numeroVisita = Number(item.NumeroVisita ?? item.numeroVisita ?? 0);
+	const sector = String(item.ValorSector ?? item.sector ?? '').trim();
+	const numeroCama = String(item.ValorHabitacionCama ?? item.numeroCama ?? '').trim();
+	const composed = sector && numeroCama ? `${sector}-${numeroCama}` : '';
+	const rawId = String(item.id || '').trim();
+	const id = composed || rawId;
 	return {
-		id:
-			String(item.id || '') ||
-			`${item.ValorSector ?? item.sector}-${item.ValorHabitacionCama ?? item.numeroCama}`,
-		sector: String(item.ValorSector ?? item.sector ?? ''),
-		numeroCama: String(item.ValorHabitacionCama ?? item.numeroCama ?? ''),
+		id,
+		sector,
+		numeroCama,
 		estado: parseEstado(String(item.ValorEstadoCama ?? item.estado ?? '')),
 		valorEstadoOriginal: String(item.ValorEstadoCama ?? item.valorEstadoOriginal ?? ''),
 		estadoDescripcion: String(item.EstadoDescripcion || item.estadoDescripcion || ''),
@@ -89,10 +92,18 @@ export function normalizeBedFromApi(item: Record<string, unknown> | Bed): Bed {
 	return mapBedItem(item as Record<string, unknown>);
 }
 
+const BEDS_TIMEOUT_MS = 45000;
+
 export const bedsService = {
-	getAllBeds: async (): Promise<Bed[]> => {
+	getAllBeds: async (sector?: string | null): Promise<Bed[]> => {
+		const code = String(sector || '').trim();
+		const qs =
+			code && code.toLowerCase() !== 'all'
+				? `?sector=${encodeURIComponent(code)}`
+				: '';
 		const { data: json } = await apiService.get<ApiResp<Record<string, unknown>[]>>(
-			'/beds',
+			`/beds${qs}`,
+			{ timeout: BEDS_TIMEOUT_MS },
 		);
 
 		if (!json.success) throw new Error(json.mensaje || 'Error en la API de camas');
@@ -104,7 +115,7 @@ export const bedsService = {
 		try {
 			const { data: json } = await apiService.get<
 				ApiResp<{ valor: string; descripcion: string }[]>
-			>('/beds/estados');
+			>('/beds/estados', { timeout: BEDS_TIMEOUT_MS });
 
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener estados de cama');
 
@@ -122,18 +133,32 @@ export const bedsService = {
 	getSectores: async (): Promise<{ id: string; valor: string; descripcion: string }[]> => {
 		try {
 			const { data: json } = await apiService.get<
-				ApiResp<{ valor: string; descripcion: string }[]>
-			>('/beds/sectores');
+				ApiResp<Record<string, unknown>[]>
+			>('/beds/sectores', { timeout: BEDS_TIMEOUT_MS });
 
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener sectores');
 
-			return (json.data || []).map((item) => ({
-				id: item.valor,
-				valor: item.valor,
-				descripcion: item.descripcion,
-			}));
+			return (json.data || [])
+				.map((item) => {
+					const row = item || {};
+					const valor = String(
+						row.valor ?? row.Valor ?? row.IdSector ?? row.idSector ?? '',
+					).trim();
+					if (!valor) return null;
+					const descripcion = String(row.descripcion ?? row.Descripcion ?? valor).trim();
+					return { id: valor, valor, descripcion: descripcion || valor };
+				})
+				.filter((s): s is { id: string; valor: string; descripcion: string } => Boolean(s));
 		} catch (error) {
-			console.error('Error fetching sectores:', error);
+			const ax = error && typeof error === 'object' && 'response' in error
+				? (error as { response?: { status?: number; data?: { mensaje?: string } }; code?: string; message?: string })
+				: null;
+			console.error('Error fetching sectores:', {
+				status: ax?.response?.status,
+				mensaje: ax?.response?.data?.mensaje,
+				code: ax?.code || (error as { code?: string })?.code,
+				message: error instanceof Error ? error.message : String(error),
+			});
 			return [];
 		}
 	},
@@ -152,7 +177,7 @@ export const bedsService = {
 					camasOcupadas?: number;
 					camasNoDisponibles?: number;
 				}>
-			>('/beds/total');
+			>('/beds/total', { timeout: 30000 });
 
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener total de camas');
 

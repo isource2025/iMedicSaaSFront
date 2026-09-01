@@ -104,5 +104,5 @@ export interface EndpointConfig {
 export const DEFAULT_CONFIG: EndpointConfig = {
   baseUrl: '',
   visitaMovimientos: '/visita-movimientos',
-  timeout: 10000
+  timeout: 30000
 };

@@ -3,6 +3,20 @@ import { clearBedSnapshot } from './bedSnapshotCache';
 import { clearStoredBedsListFilters } from './bedsListFilters';
 import { clearServiciosReceptorCache } from './serviciosReceptorCache';
 
+/** Evita dependencia circular estática con los servicios de métricas. */
+function clearMetricServiceCaches(): void {
+	try {
+		require('../services/ambulatorioService').limpiarCacheAmbulatorio();
+	} catch {
+		/* ignore */
+	}
+	try {
+		require('../services/camasIndicadoresService').camasIndicadoresService.clearCache();
+	} catch {
+		/* ignore */
+	}
+}
+
 /**
  * Limpia caches de UI atados al tenant (empresa).
  * Llamar en logout, login exitoso y 401.
@@ -26,6 +40,7 @@ export function clearTenantUiCaches(): void {
 	try {
 		if (typeof localStorage !== 'undefined') {
 			localStorage.removeItem('sectorSeleccionado');
+			localStorage.removeItem('sectoresAsignados');
 		}
 	} catch {
 		/* ignore */
@@ -35,4 +50,5 @@ export function clearTenantUiCaches(): void {
 	} catch {
 		/* ignore */
 	}
+	clearMetricServiceCaches();
 }

@@ -116,7 +116,7 @@ export default function SolicitarEstudioModal({
 			return;
 		}
 		if (!idSectorReceptor.trim()) {
-			setError('Seleccione el servicio receptor');
+			setError('Seleccione el sector receptor');
 			return;
 		}
 		setSubmitting(true);
@@ -204,7 +204,7 @@ export default function SolicitarEstudioModal({
 					</label>
 
 					<label className={formStyles.label}>
-						Servicio receptor
+						Sector receptor
 						<select
 							className={formStyles.input}
 							value={idSectorReceptor}
@@ -214,6 +214,9 @@ export default function SolicitarEstudioModal({
 							{sectores.map((s) => (
 								<option key={s.valor} value={s.valor}>
 									{s.descripcion} ({s.valor})
+									{s.descripcionServicio || s.valorServicio
+										? ` · ${s.descripcionServicio || s.valorServicio}`
+										: ''}
 								</option>
 							))}
 						</select>

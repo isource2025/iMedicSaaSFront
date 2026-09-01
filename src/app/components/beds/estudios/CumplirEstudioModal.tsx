@@ -9,6 +9,7 @@ import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
 import PedidoAdjuntosField, { sugerirTipoImagen } from './PedidoAdjuntosField';
 import PacientePedidoHeader from './PacientePedidoHeader';
+import { getIdSectorFromToken } from '@/app/utils/jwtSession';
 
 type Props = {
 	open: boolean;
@@ -84,7 +85,8 @@ export default function CumplirEstudioModal({
 		try {
 			const updated = await estudiosService.cumplir(pedido.IdPedido, {
 				textoInforme: texto.trim(),
-				sectorServicio: sectorServicio || pedido.SectorReceptor || undefined,
+				sectorServicio:
+					getIdSectorFromToken() || sectorServicio || pedido.SectorReceptor || undefined,
 			});
 			if (archivos.length > 0 && pedido.IdVisita > 0) {
 				await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());

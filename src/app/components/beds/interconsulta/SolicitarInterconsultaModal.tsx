@@ -42,7 +42,7 @@ export default function SolicitarInterconsultaModal({
 
 	const submit = async () => {
 		if (!idSectorReceptor.trim()) {
-			setError('Seleccione el servicio destino');
+			setError('Seleccione el sector destino');
 			return;
 		}
 		if (!motivo.trim()) {
@@ -81,7 +81,7 @@ export default function SolicitarInterconsultaModal({
 					{error && <div className={formStyles.error}>{error}</div>}
 
 					<label className={formStyles.label}>
-						Servicio destino
+						Sector destino
 						<select
 							className={formStyles.input}
 							value={idSectorReceptor}
@@ -91,6 +91,9 @@ export default function SolicitarInterconsultaModal({
 							{sectores.map((s) => (
 								<option key={s.valor} value={s.valor}>
 									{s.descripcion} ({s.valor})
+									{s.descripcionServicio || s.valorServicio
+										? ` · ${s.descripcionServicio || s.valorServicio}`
+										: ''}
 								</option>
 							))}
 						</select>

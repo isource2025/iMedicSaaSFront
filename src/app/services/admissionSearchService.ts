@@ -99,6 +99,7 @@ export interface AdmissionDatosPrincipalesVisita {
   SectorDescripcion?: string;
   ServicioHospital?: string;
   ServicioHospitalDescripcion?: string;
+  FechaEgresoClarion?: number | null;
   FechaEgreso?: string | null;
   HoraEgreso?: string | null;
   DisposicionEgreso?: number | null;

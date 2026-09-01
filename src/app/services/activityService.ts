@@ -14,6 +14,7 @@ import {
 } from '../types/dashboard';
 import { FALLBACK_MOVIMIENTOS, FALLBACK_ACTIVIDADES } from '../utils/fallbackData';
 import { formatSqlDate, clarionDateToDate } from '../utils/dateUtils';
+import { motivoDeRespuesta } from '../utils/apiError';
 
 /**
  * Servicio base para actividades
@@ -95,7 +96,7 @@ export class InternacionActivityService extends ActivityService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(await motivoDeRespuesta(response));
       }
 
       const result: ApiResponse<MovimientoInternacion[]> = await response.json();
@@ -106,7 +107,12 @@ export class InternacionActivityService extends ActivityService {
 
       return result.data || [];
     } catch (error) {
-      console.error('Error al obtener movimientos de internación:', error);
+      const aborted =
+        error instanceof Error &&
+        (error.name === 'AbortError' || error.name === 'CanceledError');
+      if (!aborted) {
+        console.error('Error al obtener movimientos de internación:', error);
+      }
       return FALLBACK_MOVIMIENTOS.slice(0, limite);
     }
   }

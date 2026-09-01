@@ -148,7 +148,10 @@ export default function IndicacionesSection({
 
 
         const rows = list
-            .filter((x) => !x.suspendida && x.estado !== 'S')
+            .filter((x) => {
+                const estado = String(x.estado ?? '').trim().toUpperCase();
+                return !x.suspendida && estado !== 'S';
+            })
             .map((x) => ({
             id: x.id,
             cantidad: x.cantidad,

@@ -26,6 +26,8 @@ async function parseJson<T>(res: Response): Promise<T | null> {
 export type BandejaServicioConteo = {
   valor: string;
   descripcion: string;
+  valorServicio?: string;
+  descripcionServicio?: string;
   estudios: number;
   interconsultas: number;
   urgentes: number;
@@ -88,9 +90,9 @@ const estudiosService = {
     opts?: { limit?: number; paciente?: string; fechaDesde?: string; fechaHasta?: string },
   ): Promise<PedidoEstudio[]> {
     const q = new URLSearchParams({
-      sector: sector.trim(),
       limit: String(opts?.limit ?? 100),
     });
+    if (sector.trim()) q.set('sector', sector.trim());
     if (opts?.paciente?.trim()) q.set('paciente', opts.paciente.trim());
     if (opts?.fechaDesde?.trim()) q.set('fechaDesde', opts.fechaDesde.trim());
     if (opts?.fechaHasta?.trim()) q.set('fechaHasta', opts.fechaHasta.trim());
@@ -279,6 +281,8 @@ const estudiosService = {
           ? json.data.porServicio.map((s) => ({
               valor: String(s.valor || '').trim(),
               descripcion: String(s.descripcion || s.valor || '').trim(),
+              valorServicio: String(s.valorServicio || '').trim(),
+              descripcionServicio: String(s.descripcionServicio || '').trim(),
               estudios: Number(s.estudios) || 0,
               interconsultas: Number(s.interconsultas) || 0,
               urgentes: Number(s.urgentes) || 0,

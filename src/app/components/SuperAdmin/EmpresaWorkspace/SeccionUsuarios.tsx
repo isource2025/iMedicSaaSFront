@@ -419,7 +419,7 @@ export default function SeccionUsuarios({
                     {sectoresFiltrados.length === 0 ? (
                       <p className={styles.assignEmpty}>
                         {sectores.length === 0
-                          ? 'No hay sectores. Cargalos en la pestaña Sectores.'
+                          ? 'No hay sectores. Cargalos en Sectores y servicios.'
                           : 'Ningún sector coincide con la búsqueda.'}
                       </p>
                     ) : (
@@ -465,7 +465,7 @@ export default function SeccionUsuarios({
                     {serviciosFiltrados.length === 0 ? (
                       <p className={styles.assignEmpty}>
                         {servicios.length === 0
-                          ? 'No hay servicios cargados. Agregá uno abajo o usá la pestaña Servicios.'
+                          ? 'No hay servicios cargados. Agregá uno abajo o usá Sectores y servicios.'
                           : 'Ningún servicio coincide con la búsqueda.'}
                       </p>
                     ) : (

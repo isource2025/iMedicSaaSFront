@@ -16,6 +16,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import type { PatientHeaderSnapshot } from '../../utils/bedHeader';
 import { fechaLocalISO, horaLocalHHMM, codigoCamaDesdeId } from '../../utils/dateUtils';
 import { admissionSearchService } from '../../services/admissionSearchService';
+import { detalleDeError, mensajeDeError } from '../../utils/apiError';
 
 interface ModalEgresoPacienteProps {
   isOpen: boolean;
@@ -354,20 +355,12 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
         }
       }, 800);
     } catch (err: any) {
-      console.error('Error al procesar el egreso:', err);
-      const status = err?.response?.status;
-      const apiMsg =
-        err?.response?.data?.mensaje ||
-        err?.response?.data?.message ||
-        err?.message;
-      if (status === 403) {
-        setError(
-          apiMsg ||
-            'No tiene permiso para registrar egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)',
-        );
-      } else {
-        setError(apiMsg || 'Error al procesar el egreso');
-      }
+      console.error('Error al procesar el egreso:', detalleDeError(err));
+      const generico =
+        err?.response?.status === 403
+          ? 'No tiene permiso para registrar egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)'
+          : 'Error al procesar el egreso';
+      setError(mensajeDeError(err, generico));
     } finally {
       setLoading(false);
     }

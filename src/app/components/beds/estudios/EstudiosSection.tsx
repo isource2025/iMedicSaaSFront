@@ -16,6 +16,7 @@ import styles from './EstudiosSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
 import { IoEyeOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
+import { getIdSectorFromToken } from '@/app/utils/jwtSession';
 import ConfirmationModal from '../shared/ConfirmationModal';
 
 type Props = {
@@ -116,6 +117,7 @@ export default function EstudiosSection({
 }: Props) {
 	const { puede } = usePermiso();
 	const usuarioActual = useUsuarioActual();
+	const origenPedido = String(sectorSolicitante || getIdSectorFromToken() || '').trim();
 	const puedeCrear = puede('INTERNACION.ESTUDIOS.CREAR');
 	const puedeEditar =
 		puede('INTERNACION.ESTUDIOS.EDITAR') || puedeCrear;
@@ -259,8 +261,8 @@ export default function EstudiosSection({
 				subtitle="Pedidos de este paciente · el servicio destino los atiende en la bandeja"
 				addLabel={puedeCrear ? 'Estudio' : undefined}
 				onAdd={puedeCrear ? () => setShowSolicitar(true) : undefined}
-				addDisabled={!sectorSolicitante}
-				addTitle={!sectorSolicitante ? 'Sin sector de la cama' : undefined}
+				addDisabled={!origenPedido}
+				addTitle={!origenPedido ? 'Sin sector de sesión' : undefined}
 				exportSlot={
 					<ExportButton
 						data={filtered}
@@ -396,11 +398,11 @@ export default function EstudiosSection({
 				/>
 			)}
 
-			{showSolicitar && sectorSolicitante && (
+			{showSolicitar && origenPedido && (
 				<SolicitarEstudioModal
 					open={showSolicitar}
 					idVisita={numeroVisita}
-					sectorSolicitante={sectorSolicitante}
+					sectorSolicitante={origenPedido}
 					onClose={() => setShowSolicitar(false)}
 					onCreated={() => {
 						void loadVisita();
@@ -412,7 +414,7 @@ export default function EstudiosSection({
 				<SolicitarEstudioModal
 					open={Boolean(editing)}
 					idVisita={numeroVisita}
-					sectorSolicitante={sectorSolicitante || editing.SectorSolicitante || ''}
+					sectorSolicitante={origenPedido || editing.SectorSolicitante || ''}
 					pedido={editing}
 					onClose={() => setEditing(null)}
 					onCreated={() => {

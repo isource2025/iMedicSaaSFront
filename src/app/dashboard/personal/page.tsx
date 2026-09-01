@@ -160,7 +160,7 @@ export default function PersonalPage() {
 						<SearchInput
 							searchTerm={searchTerm}
 							setSearchTerm={handleSearch}
-							placeholder='Buscar por nombre, DNI o ID...'
+							placeholder='Buscar por nombre, DNI, ID o usuario...'
 							loading={loading}
 							error={error}
 							isSearching={!!searchTerm}
@@ -171,6 +171,7 @@ export default function PersonalPage() {
 										<li>Apellido y nombre</li>
 										<li>Número de documento (DNI)</li>
 										<li>ID interno</li>
+										<li>Usuario de acceso (NombreRed)</li>
 									</ul>
 								</>
 							}

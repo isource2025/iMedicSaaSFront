@@ -12,6 +12,7 @@ import type {
   EmpresaUsuario,
   PreviewTabla,
   ResultadoImport,
+  ResultadoSyncCatalogos,
   SectorBody,
   SuperAdminCatalogos,
   SuperAdminDashboard,
@@ -147,6 +148,23 @@ export const superAdminService = {
       const msg = importarTablasError(e);
       if (msg) throw new Error(msg);
       throw e;
+    }
+  },
+
+  async syncCatalogosDesdeFisico(id: string | number): Promise<ResultadoSyncCatalogos> {
+    try {
+      const res = await apiService.post<{
+        success: boolean;
+        data: ResultadoSyncCatalogos;
+        mensaje?: string;
+      }>(`${BASE}/empresas/${id}/catalogos/sync-fisico`, {}, { timeout: 180_000 });
+      if (!res.data.success) {
+        throw new Error(res.data.mensaje || 'Error al traer la configuración');
+      }
+      return res.data.data;
+    } catch (error) {
+      const ax = error as { response?: { data?: { mensaje?: string } }; message?: string };
+      throw new Error(ax.response?.data?.mensaje || ax.message || 'Error al traer la configuración');
     }
   },
 

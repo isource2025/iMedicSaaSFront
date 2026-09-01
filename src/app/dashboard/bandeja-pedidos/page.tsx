@@ -9,6 +9,7 @@ import {
 } from '@/app/services/interconsultasService';
 import type { PedidoEstudio } from '@/app/types/estudios';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
+import { usePermiso } from '@/app/hooks/usePermiso';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
@@ -166,11 +167,16 @@ function fingerprintIc(rows: InterconsultaRow[]) {
 function BandejaPedidosContent() {
 	const searchParams = useSearchParams();
 	const usuario = useUsuarioActual();
+	const { puede } = usePermiso();
 	const matriculaSesion = usuario?.matricula ?? null;
+	const puedeInterconsultas =
+		puede('INTERNACION.INTERCONSULTAS.VER') || puede('TURNOS.AGENDA.VER');
 
 	const tabParam = String(searchParams.get('tab') || '').toLowerCase();
 	const [tab, setTab] = useState<Tab>(
-		tabParam === 'interconsultas' || tabParam === 'interconsulta' ? 'interconsultas' : 'estudios',
+		puedeInterconsultas && (tabParam === 'interconsultas' || tabParam === 'interconsulta')
+			? 'interconsultas'
+			: 'estudios',
 	);
 
 	const { sectores, loading: loadingSectores } = useSectoresReceptor({ soloMios: true });
@@ -217,10 +223,16 @@ function BandejaPedidosContent() {
 	};
 
 	useEffect(() => {
+		if (!puedeInterconsultas && tab !== 'estudios') setTab('estudios');
+	}, [puedeInterconsultas, tab]);
+
+	useEffect(() => {
 		const t = String(searchParams.get('tab') || '').toLowerCase();
-		if (t === 'interconsultas' || t === 'interconsulta') setTab('interconsultas');
+		if (puedeInterconsultas && (t === 'interconsultas' || t === 'interconsulta')) {
+			setTab('interconsultas');
+		}
 		if (t === 'estudios' || t === 'estudio') setTab('estudios');
-	}, [searchParams]);
+	}, [searchParams, puedeInterconsultas]);
 
 	useEffect(() => {
 		const qSector = String(searchParams.get('sector') || '').trim();
@@ -254,13 +266,6 @@ function BandejaPedidosContent() {
 	const load = useCallback(async (opts?: { silent?: boolean }) => {
 		const sec = sectorRef.current.trim();
 		const currentTab = tabRef.current;
-		if (!sec) {
-			setEstudios([]);
-			setInterconsultas([]);
-			setLoading(false);
-			void loadResumen();
-			return;
-		}
 		const silent = Boolean(opts?.silent);
 		if (!silent) setLoading(true);
 		setError(null);
@@ -321,12 +326,12 @@ function BandejaPedidosContent() {
 		const id = window.setInterval(() => {
 			if (document.visibilityState !== 'visible') return;
 			void loadResumen();
-			if (sectorRef.current.trim()) void load({ silent: true });
+			void load({ silent: true });
 		}, POLL_MS);
 		const onVis = () => {
 			if (document.visibilityState !== 'visible') return;
 			void loadResumen();
-			if (sectorRef.current.trim()) void load({ silent: true });
+			void load({ silent: true });
 		};
 		document.addEventListener('visibilitychange', onVis);
 		return () => {
@@ -439,13 +444,36 @@ function BandejaPedidosContent() {
 	const total = tab === 'estudios' ? rowsEstudio.length : rowsIc.length;
 	const vistaPanorama = !sector.trim() && sectores.length > 1;
 	const servicioActual = sectores.find((s) => s.valor === sector);
-	const pendientesServicios = (resumen.porServicio || []).filter((s) => s.total > 0);
+	const baseConteo =
+		(resumen.porServicio || []).length > 0
+			? resumen.porServicio
+			: sectores.map((s) => ({
+					valor: s.valor,
+					descripcion: s.descripcion || s.valor,
+					valorServicio: s.valorServicio || '',
+					descripcionServicio: s.descripcionServicio || '',
+					estudios: 0,
+					interconsultas: 0,
+					urgentes: 0,
+					total: 0,
+				}));
+	const pendientesServicios = baseConteo.map((s) => {
+		const extra = sectores.find((x) => x.valor === s.valor);
+		return {
+			...s,
+			valorServicio: s.valorServicio || extra?.valorServicio || '',
+			descripcionServicio: s.descripcionServicio || extra?.descripcionServicio || '',
+			descripcion: s.descripcion || extra?.descripcion || s.valor,
+		};
+	});
 	const qSvc = qServicio.trim().toLowerCase();
 	const serviciosVisibles = pendientesServicios.filter(
 		(s) =>
 			!qSvc ||
 			s.descripcion.toLowerCase().includes(qSvc) ||
-			s.valor.toLowerCase().includes(qSvc),
+			s.valor.toLowerCase().includes(qSvc) ||
+			String(s.valorServicio || '').toLowerCase().includes(qSvc) ||
+			String(s.descripcionServicio || '').toLowerCase().includes(qSvc),
 	);
 	const serviciosSinPendiente = (resumen.porServicio || []).filter((s) => s.total <= 0).length;
 	const totalPendientes = resumen.estudios + resumen.interconsultas;
@@ -485,11 +513,14 @@ function BandejaPedidosContent() {
 						<span className={styles.backBarIcon} aria-hidden>
 							←
 						</span>
-						Volver a todos los servicios
+						Volver a todos los sectores
 					</button>
 					<p className={styles.queueWhere}>
-						Estás en <strong>{servicioActual?.descripcion || 'este servicio'}</strong>
+						Estás en <strong>{servicioActual?.descripcion || 'este sector'}</strong>
 						{servicioActual?.valor ? ` · ${servicioActual.valor}` : ''}
+						{servicioActual?.descripcionServicio || servicioActual?.valorServicio
+							? ` · ${servicioActual.descripcionServicio || servicioActual.valorServicio}`
+							: ''}
 					</p>
 				</div>
 			) : null}
@@ -502,9 +533,9 @@ function BandejaPedidosContent() {
 					</h1>
 					<p className={styles.subtitle}>
 						{vistaPanorama
-							? 'Elegí el servicio al que querés entrar. Después podés volver acá con un clic.'
+							? 'Elegí el sector al que querés entrar. Después podés volver acá con un clic.'
 							: servicioActual
-								? 'Cola de este servicio. Un pedido, una persona.'
+								? 'Cola de este sector. Un pedido, una persona.'
 								: 'Estudios e interconsultas. Un pedido, una persona.'}
 					</p>
 				</div>
@@ -539,12 +570,12 @@ function BandejaPedidosContent() {
 						<div className={`${styles.kpi} ${styles.kpiEst}`}>
 							<span className={styles.kpiValue}>{resumen.estudios}</span>
 							<span className={styles.kpiLabel}>Estudios</span>
-							<span className={styles.kpiHint}>Todos los servicios</span>
+							<span className={styles.kpiHint}>Todos los sectores</span>
 						</div>
 						<div className={`${styles.kpi} ${styles.kpiIc}`}>
 							<span className={styles.kpiValue}>{resumen.interconsultas}</span>
 							<span className={styles.kpiLabel}>Interconsultas</span>
-							<span className={styles.kpiHint}>Todos los servicios</span>
+							<span className={styles.kpiHint}>Todos los sectores</span>
 						</div>
 						<div className={`${styles.kpi} ${styles.kpiUrg}`}>
 							<span className={styles.kpiValue}>{resumen.urgentes}</span>
@@ -554,11 +585,11 @@ function BandejaPedidosContent() {
 					</div>
 					<div className={styles.overviewHead}>
 						<div>
-							<h2 className={styles.overviewTitle}>Por servicio</h2>
+							<h2 className={styles.overviewTitle}>Por sector</h2>
 							<p className={styles.overviewMeta}>
 								Tocá una tarjeta para abrir la cola
-								{pendientesServicios.length > 0
-									? ` · ${pendientesServicios.length} con pedidos`
+								{pendientesServicios.filter((s) => s.total > 0).length > 0
+									? ` · ${pendientesServicios.filter((s) => s.total > 0).length} con pedidos`
 									: ''}
 								{serviciosSinPendiente > 0 ? ` · ${serviciosSinPendiente} sin pendientes` : ''}
 							</p>
@@ -566,17 +597,17 @@ function BandejaPedidosContent() {
 						<input
 							className={styles.svcSearch}
 							type="search"
-							placeholder="Buscar servicio…"
+							placeholder="Buscar sector…"
 							value={qServicio}
 							onChange={(e) => setQServicio(e.target.value)}
 						/>
 					</div>
 					{loadingSectores && sectores.length === 0 ? (
-						<p className={styles.empty}>Cargando servicios…</p>
+						<p className={styles.empty}>Cargando sectores…</p>
 					) : serviciosVisibles.length === 0 ? (
 						<div className={styles.emptyCard}>
 							<p className={styles.emptyTitle}>
-								{qSvc ? 'Ningún servicio coincide' : 'Nada pendiente'}
+								{qSvc ? 'Ningún sector coincide' : 'Nada pendiente'}
 							</p>
 							<p className={styles.emptyHint}>
 								{qSvc
@@ -602,7 +633,12 @@ function BandejaPedidosContent() {
 									<div className={styles.svcTop}>
 										<div>
 											<p className={styles.svcName}>{s.descripcion}</p>
-											<p className={styles.svcCode}>{s.valor}</p>
+											<p className={styles.svcCode}>
+												{s.valor}
+												{s.descripcionServicio || s.valorServicio
+													? ` · ${s.descripcionServicio || s.valorServicio}`
+													: ''}
+											</p>
 										</div>
 										<span className={styles.svcTotal}>{s.total}</span>
 									</div>
@@ -633,7 +669,7 @@ function BandejaPedidosContent() {
 
 			<div className={styles.toolbar}>
 				<label className={styles.field}>
-					<span>{sectores.length > 1 ? 'Cambiar servicio' : 'Servicio'}</span>
+					<span>{sectores.length > 1 ? 'Cambiar sector' : 'Sector'}</span>
 					<select
 						className={styles.select}
 						value={sector}
@@ -644,12 +680,15 @@ function BandejaPedidosContent() {
 							{loadingSectores && sectores.length === 0
 								? 'Cargando…'
 								: sectores.length > 1
-									? 'Todos los servicios'
+									? 'Todos los sectores'
 									: 'Seleccionar…'}
 						</option>
 						{sectores.map((s) => (
 							<option key={s.valor} value={s.valor}>
 								{s.descripcion} ({s.valor})
+								{s.descripcionServicio || s.valorServicio
+									? ` · ${s.descripcionServicio || s.valorServicio}`
+									: ''}
 							</option>
 						))}
 					</select>
@@ -698,15 +737,17 @@ function BandejaPedidosContent() {
 					>
 						Estudios
 					</button>
-					<button
-						type="button"
-						role="tab"
-						aria-selected={tab === 'interconsultas'}
-						className={`${styles.tab} ${tab === 'interconsultas' ? styles.tabActive : ''}`}
-						onClick={() => setTab('interconsultas')}
-					>
-						Interconsultas
-					</button>
+					{puedeInterconsultas ? (
+						<button
+							type="button"
+							role="tab"
+							aria-selected={tab === 'interconsultas'}
+							className={`${styles.tab} ${tab === 'interconsultas' ? styles.tabActive : ''}`}
+							onClick={() => setTab('interconsultas')}
+						>
+							Interconsultas
+						</button>
+					) : null}
 				</div>
 				<button
 					type="button"
@@ -737,12 +778,12 @@ function BandejaPedidosContent() {
 			</div>
 
 			{loadingSectores && sectores.length === 0 ? (
-				<p className={styles.empty}>Cargando servicios…</p>
+				<p className={styles.empty}>Cargando sectores…</p>
 			) : !loading && sectores.length === 0 ? (
 				<div className={styles.emptyCard}>
-					<p className={styles.emptyTitle}>Sin servicios asignados</p>
+					<p className={styles.emptyTitle}>Sin sectores asignados</p>
 					<p className={styles.emptyHint}>
-						Tu usuario no tiene servicios de pedidos asignados. Un administrador puede cargarlos en Personal → Servicio / facturación.
+						Tu usuario no tiene sectores asignados. Un administrador puede cargarlos en Personal → Sectores.
 					</p>
 				</div>
 			) : loading ? (
@@ -751,7 +792,7 @@ function BandejaPedidosContent() {
 				rowsEstudio.length === 0 ? (
 					<div className={styles.emptyCard}>
 						<p className={styles.emptyTitle}>Sin estudios pendientes</p>
-						<p className={styles.emptyHint}>Cuando llegue un pedido para este servicio, aparece acá.</p>
+						<p className={styles.emptyHint}>Cuando llegue un pedido para este sector, aparece acá.</p>
 					</div>
 				) : (
 					<ul className={styles.cardList}>
@@ -840,7 +881,7 @@ function BandejaPedidosContent() {
 			) : rowsIc.length === 0 ? (
 				<div className={styles.emptyCard}>
 					<p className={styles.emptyTitle}>Sin interconsultas pendientes</p>
-					<p className={styles.emptyHint}>Cuando llegue una solicitud para este servicio, aparece acá.</p>
+					<p className={styles.emptyHint}>Cuando llegue una solicitud para este sector, aparece acá.</p>
 				</div>
 			) : (
 				<ul className={styles.cardList}>
@@ -946,7 +987,7 @@ function BandejaPedidosContent() {
 						{ label: 'Código práctica', value: selectedEstudio.CodigoPractica },
 						{ label: 'Fecha', value: formatFechaEstudio(selectedEstudio) },
 						{
-							label: 'Servicio origen',
+							label: 'Sector origen',
 							value:
 								selectedEstudio.SectorSolicitanteNombre ||
 								selectedEstudio.SectorSolicitante,
@@ -994,7 +1035,7 @@ function BandejaPedidosContent() {
 						{ label: 'Visita', value: selectedIc.IdVisita },
 						{ label: 'Fecha', value: formatFechaIc(selectedIc) },
 						{
-							label: 'Servicio origen',
+							label: 'Sector origen',
 							value: selectedIc.SectorSolicitanteNombre || selectedIc.SectorSolicitante,
 						},
 						{ label: 'Profesional', value: selectedIc.MedicoSolicitanteNombre },

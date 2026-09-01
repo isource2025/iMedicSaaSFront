@@ -72,9 +72,9 @@ export const interconsultasService = {
 		opts?: { limit?: number; paciente?: string; fechaDesde?: string; fechaHasta?: string },
 	): Promise<InterconsultaRow[]> {
 		const q = new URLSearchParams({
-			sector: sector.trim(),
 			limit: String(opts?.limit ?? 100),
 		});
+		if (sector.trim()) q.set('sector', sector.trim());
 		if (opts?.paciente?.trim()) q.set('paciente', opts.paciente.trim());
 		if (opts?.fechaDesde?.trim()) q.set('fechaDesde', opts.fechaDesde.trim());
 		if (opts?.fechaHasta?.trim()) q.set('fechaHasta', opts.fechaHasta.trim());

@@ -73,14 +73,13 @@ const menuItems: MenuItem[] = [
     subItems: [
       { submoduloId: 'PACIENTES', label: 'Pacientes',           path: '/dashboard/patients' },
       { submoduloId: 'NUEVA',     label: 'Nueva Admisión',      path: '/dashboard/admission/new' },
-      { submoduloId: 'VIGENTES',  label: 'Admisiones Vigentes', path: '/dashboard/admission/current' },
     ]
   },
   {
     id: 'internacion', moduloId: 'INTERNACION', label: 'Internación', icon: Bed,
     subItems: [
       { submoduloId: 'CAMAS',     label: 'Gestión de Camas',   path: '/dashboard/beds' },
-      { submoduloId: 'OCUPACION', label: 'Ocupación de Camas', path: '/dashboard/beds/occupation' },
+      { submoduloId: 'ESTUDIOS',  label: 'Bandeja de pedidos', path: '/dashboard/bandeja-pedidos' },
     ]
   },
   {
@@ -127,16 +126,18 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'PERSONAL', label: 'Personal', path: '/dashboard/personal' },
       { submoduloId: 'TABLA', permisoModuloId: 'TURNOS',      label: 'Tabla de Turnos',      path: '/dashboard/turnos/tabla' },
       { submoduloId: 'TABLA', permisoModuloId: 'ADMISION',    label: 'Tabla de Admisiones',  path: '/dashboard/admission/tables' },
+      { submoduloId: 'TABLA', permisoModuloId: 'INTERNACION', label: 'Tabla de Internación', path: '/dashboard/beds/tables' },
       { submoduloId: 'TABLA', permisoModuloId: 'FACTURACION', label: 'Tabla de Facturación', path: '/dashboard/billing/tables' },
     ]
   },
   {
-    id: 'usuario', moduloId: 'USUARIO', label: 'Usuario', icon: User, alwaysVisible: true,
-    subItems: [
-      { submoduloId: 'PERFIL', label: 'Mi Perfil',     path: '/dashboard/profile' },
-      { label: 'Configuración', path: '/settings' },
-      { label: 'Ayuda',         path: '/help' },
-    ]
+    id: 'usuario',
+    moduloId: 'USUARIO',
+    label: 'Mi Perfil',
+    icon: User,
+    path: '/dashboard/profile',
+    alwaysVisible: true,
+    subItems: [],
   },
   {
     id: 'logout',
@@ -198,17 +199,17 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
    *
    * Reglas:
    * - Si los permisos aún no cargaron (SSR inicial) → lista vacía (evita flash).
-   * - Si cargaron pero el usuario no tiene rol asignado → sólo Dashboard + Usuario.
+   * - Si cargaron pero el usuario no tiene rol asignado → sólo Dashboard + Mi Perfil + logout.
    * - Si tiene rol → permisos del rol (módulo y submódulo).
    */
   const visibleMenu = useMemo(() => {
     // SSR: no sabemos nada todavía — devolvemos vacío para no mostrar items incorrectos
     if (!loaded) return []
 
-    // SUPER_ADMIN: Plataforma + perfil (Usuario) + cerrar sesión al mismo nivel
+    // SUPER_ADMIN: Plataforma + Mi Perfil + cerrar sesión al mismo nivel
     if (rol?.nombre === 'SUPER_ADMIN') {
       const plataforma = menuItems.find((item) => item.moduloId === 'PLATAFORMA')
-      const usuario = menuItems.find((item) => item.id === 'usuario')
+      const perfil = menuItems.find((item) => item.id === 'usuario')
       const logout = menuItems.find((item) => item.id === 'logout')
       const out: MenuItem[] = []
       if (plataforma) {
@@ -218,12 +219,12 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
           path: '/dashboard/super-admin',
         })
       }
-      if (usuario) out.push(usuario)
+      if (perfil) out.push(perfil)
       if (logout) out.push(logout)
       return out
     }
 
-    // Sin rol asignado: sólo Dashboard y el menú de usuario (siempre visibles)
+    // Sin rol asignado: sólo Dashboard, Mi Perfil y cerrar sesión (siempre visibles)
     if (!rol) {
       return menuItems.filter((item) => item.id === 'dashboard' || item.alwaysVisible)
     }

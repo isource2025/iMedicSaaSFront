@@ -186,10 +186,28 @@ export type EmpresaSeccion =
   | 'datos'
   | 'infra'
   | 'modulos'
+  | 'catalogos'
   | 'sectores'
   | 'servicios'
   | 'usuarios'
   | 'cobranza';
+
+export interface ResultadoSyncCatalogos {
+  mensaje: string;
+  sinCambios: boolean;
+  sectores: {
+    catalogo: number;
+    cambios: number;
+    asignaciones: number;
+    detalle: { valor: string; descripcion: string; accion: string }[];
+  };
+  servicios: {
+    catalogo: number;
+    cambios: number;
+    asignaciones: number;
+    detalle: { valor: string; descripcion: string; accion: string }[];
+  };
+}
 
 export interface AltaEmpresaBody {
   descripcion: string;

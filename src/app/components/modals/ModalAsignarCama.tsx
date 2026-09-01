@@ -8,6 +8,7 @@ import { getClasesPaciente } from '../../services/clasePacienteService';
 import { ClasePaciente } from '../../types/clasePaciente.types';
 import { dateToClarionDate, timeToClarionTime, fechaLocalISO, horaLocalHHMM, codigoCamaDesdeId } from '../../utils/dateUtils';
 import { getSessionUser, getUserCodOperador } from '../../utils/sessionUser';
+import { detalleDeError, mensajeDeError } from '../../utils/apiError';
 
 interface ModalAsignarCamaProps {
   isOpen: boolean;
@@ -151,12 +152,8 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
         onClose();
       }, 1200);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.mensaje ||
-        err?.response?.data?.error ||
-        err?.message ||
-        'Error al asignar la cama';
-      setError(msg);
+      console.error('Error al asignar la cama:', detalleDeError(err));
+      setError(mensajeDeError(err, 'Error al asignar la cama'));
     } finally {
       setLoading(false);
     }
