@@ -7,6 +7,7 @@ import {
 	notifySessionIdle,
 } from '@/app/utils/sessionIdle';
 import { detalleDeError } from '@/app/utils/apiError';
+import { repararStringsDeepUi } from '@/app/utils/repararTextoUi';
 
 const envApiBase = getEnvApiBaseUrl();
 
@@ -78,7 +79,9 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
 	(response: any) => {
-		// Any status code that lie within the range of 2xx
+		if (response?.data != null) {
+			response.data = repararStringsDeepUi(response.data);
+		}
 		return response;
 	},
 	(error: any) => {

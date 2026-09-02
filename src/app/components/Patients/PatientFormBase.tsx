@@ -14,6 +14,7 @@ import coberturaService from '../../services/coberturaService';
 import { apiService } from '../../services/axios';
 import type { PersonaResponse, LocalidadResponse, LocalidadData } from './typesForRenaper';
 import { mapRenaperToPatientFields } from '@/app/utils/renaperMapper';
+import { repararTextoUi } from '@/app/utils/repararTextoUi';
 
 interface PatientFormBaseProps {
 	onSubmit: (data: any) => Promise<boolean> | boolean;
@@ -33,7 +34,8 @@ const tiposDocumento = [
 	{ value: 'PAS', label: 'PAS' },
 ];
 
-const toStr = (v: any, def = '') => (v === undefined || v === null ? def : String(v));
+const toStr = (v: any, def = '') =>
+	v === undefined || v === null ? def : repararTextoUi(String(v));
 const normalizeHora = (raw: any): string => {
 	if (raw === undefined || raw === null) return '';
 	const str = String(raw).trim();

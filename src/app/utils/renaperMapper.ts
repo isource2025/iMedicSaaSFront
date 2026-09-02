@@ -1,10 +1,12 @@
 /** Normaliza la respuesta cruda de RENAPER (MSAL) a campos del formulario de paciente. */
 
+import { repararTextoUi } from '@/app/utils/repararTextoUi';
+
 export type RenaperPersonaRaw = Record<string, unknown>;
 
 function str(v: unknown): string {
 	if (v === undefined || v === null) return '';
-	return String(v).trim();
+	return repararTextoUi(String(v).trim());
 }
 
 export function mapRenaperSexo(persona: RenaperPersonaRaw): string | undefined {
