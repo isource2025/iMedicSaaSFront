@@ -216,8 +216,8 @@
 	}
 
 	.controls {
-		flex-direction: row;
-		align-items: center;
+		flex-direction: column;
+		align-items: stretch;
 		gap: 10px;
 	}
 
@@ -245,5 +245,22 @@
 		font-size: 1.3rem;
 		font-weight: 700;
 		line-height: 1;
+	}
+
+	.toolbarActions {
+		width: 100%;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 8px;
+		margin-top: 4px;
+	}
+
+	.toolbarActions .secondaryButton {
+		width: 100%;
+		justify-content: center;
+		padding: 10px 14px;
+		font-size: 0.76rem;
+		white-space: normal;
+		text-align: center;
 	}
 }

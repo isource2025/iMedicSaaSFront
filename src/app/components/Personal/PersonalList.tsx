@@ -18,6 +18,10 @@ import {
 	IoBriefcaseOutline,
 	IoRibbonOutline,
 	IoCardOutline,
+	IoEllipsisVertical,
+	IoEyeOutline,
+	IoPencil,
+	IoTrashOutline,
 } from 'react-icons/io5';
 
 interface PersonalListProps {
@@ -27,6 +31,9 @@ interface PersonalListProps {
 	currentPage: number;
 	totalPages: number;
 	onEdit: (p: Personal) => void;
+	onView: (p: Personal) => void;
+	onDelete: (p: Personal) => void;
+	onOpenMenu: (p: Personal, anchor?: { x: number; y: number }) => void;
 	onPageChange: (page: number) => void;
 }
 
@@ -38,6 +45,9 @@ export default function PersonalList({
 	totalPages,
 	onPageChange,
 	onEdit,
+	onView,
+	onDelete,
+	onOpenMenu,
 }: PersonalListProps) {
 	const [expandedId, setExpandedId] = useState<number | null>(null);
 	const [especialidades, setEspecialidades] = useState<CatalogoItemNumerico[]>([]);
@@ -125,18 +135,19 @@ export default function PersonalList({
 							<th scope='col'>Especialidad / Categoría</th>
 							<th scope='col'>Servicio</th>
 							<th scope='col'>Estado</th>
+							<th scope='col' className={styles.colActions}>Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
 						{loading ? (
 							<tr>
-								<td colSpan={5} className={styles.loadingContainer}>
+								<td colSpan={6} className={styles.loadingContainer}>
 									<Loader />
 								</td>
 							</tr>
 						) : personalList.length === 0 ? (
 							<tr>
-								<td colSpan={5} className={styles.noResults}>
+								<td colSpan={6} className={styles.noResults}>
 									No se encontró personal
 								</td>
 							</tr>
@@ -153,9 +164,9 @@ export default function PersonalList({
 									<tr
 										key={p.Valor}
 										className={styles.tableRow}
-										onClick={() => onEdit(p)}
+										onClick={() => onView(p)}
 										style={{ cursor: 'pointer' }}
-										title='Editar'
+										title='Ver detalle'
 									>
 										<td className={styles.cellId}>
 											<div className={styles.idPrimary}>{p.Valor}</div>
@@ -225,6 +236,39 @@ export default function PersonalList({
 											</div>
 										</td>
 										<td>{renderEstadoBadge(p.Estado)}</td>
+										<td className={styles.actionCell} onClick={(e) => e.stopPropagation()}>
+											<div className={styles.actionToolbar}>
+												<button
+													type='button'
+													className={styles.extraActionBtn}
+													title='Ver detalle'
+													aria-label={`Ver ${p.ApellidoNombre}`}
+													onClick={() => onView(p)}
+												>
+													<IoEyeOutline size={16} />
+												</button>
+												<button
+													type='button'
+													className={styles.editButton}
+													title='Editar'
+													aria-label={`Editar ${p.ApellidoNombre}`}
+													onClick={() => onEdit(p)}
+												>
+													<IoPencil size={16} />
+												</button>
+												<button
+													type='button'
+													className={styles.extraActionBtn}
+													title='Más opciones'
+													aria-label={`Opciones de ${p.ApellidoNombre}`}
+													onClick={(e) =>
+														onOpenMenu(p, { x: e.clientX, y: e.clientY })
+													}
+												>
+													<IoEllipsisVertical size={18} />
+												</button>
+											</div>
+										</td>
 									</tr>
 								);
 							})
@@ -258,8 +302,9 @@ export default function PersonalList({
 									<button
 										type='button'
 										className={styles.mobileItemMain}
-										onClick={() => onEdit(p)}
-										aria-label={`Editar ${p.ApellidoNombre}`}
+										onClick={() => toggleExpand(p.Valor)}
+										aria-expanded={isOpen}
+										aria-label={`Detalle de ${p.ApellidoNombre}`}
 									>
 										<div className={styles.avatar}>{iniciales(p.ApellidoNombre)}</div>
 										<div className={styles.mobileItemLeft}>
@@ -281,8 +326,17 @@ export default function PersonalList({
 														{descEsp(p.ValorEspecialidad)}
 													</span>
 												) : null}
+												{renderEstadoBadge(p.Estado)}
 											</div>
 										</div>
+									</button>
+									<button
+										type='button'
+										className={styles.mobileMenuBtn}
+										onClick={() => onOpenMenu(p)}
+										aria-label={`Opciones de ${p.ApellidoNombre}`}
+									>
+										<IoEllipsisVertical size={20} />
 									</button>
 									<button
 										type='button'
@@ -335,6 +389,39 @@ export default function PersonalList({
 											<span className={styles.mobileDetailLabel}>Estado</span>
 											{renderEstadoBadge(p.Estado)}
 										</div>
+									</div>
+									<div className={styles.mobileActionToolbar}>
+										<button
+											type='button'
+											className={styles.historyButton}
+											title='Ver detalle'
+											onClick={() => onView(p)}
+										>
+											<IoEyeOutline size={18} />
+										</button>
+										<button
+											type='button'
+											className={styles.editButton}
+											title='Editar'
+											onClick={() => onEdit(p)}
+										>
+											<IoPencil size={16} />
+										</button>
+										<button
+											type='button'
+											className={styles.deleteButton}
+											title='Eliminar'
+											onClick={() => onDelete(p)}
+										>
+											<IoTrashOutline size={16} />
+										</button>
+										<button
+											type='button'
+											className={styles.mobileMoreBtn}
+											onClick={() => onOpenMenu(p)}
+										>
+											Más opciones
+										</button>
 									</div>
 								</div>
 							</div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { usePersonal } from '@/app/hooks/usePersonal';
 import { Personal } from '@/app/types/personal';
 import PersonalList from '@/app/components/Personal/PersonalList';
@@ -8,7 +8,14 @@ import PersonalExportModal, {
 	type ExportFieldOption,
 } from '@/app/components/Personal/PersonalExportModal';
 import PersonalForm from '@/app/components/Personal/PersonalForm';
+import PersonalDetails from '@/app/components/Personal/PersonalDetails';
 import DeletePersonalConfirmation from '@/app/components/Personal/DeletePersonalConfirmation';
+import PersonalRowMenu, {
+	type PersonalMenuAction,
+} from '@/app/components/Personal/PersonalRowMenu';
+import PersonalActionModals, {
+	type PersonalExtraKind,
+} from '@/app/components/Personal/PersonalActionModals';
 import SyncFisicoInforme from '@/app/components/Personal/SyncFisicoInforme';
 import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
@@ -16,6 +23,18 @@ import { personalService } from '@/app/services/personalService';
 import type { SyncFisicoInforme as SyncFisicoInformeData } from '@/app/services/personalService';
 import { downloadPersonalExcel } from '@/app/utils/downloadPersonalExcel';
 import styles from './personal.module.css';
+
+type MenuState = {
+	personal: Personal;
+	variant: 'context' | 'sheet';
+	x?: number;
+	y?: number;
+} | null;
+
+type ExtraModalState = {
+	kind: PersonalExtraKind;
+	personal: Personal;
+} | null;
 
 export default function PersonalPage() {
 	const {
@@ -30,6 +49,7 @@ export default function PersonalPage() {
 		isAddModalOpen,
 		isEditModalOpen,
 		isDeleteModalOpen,
+		isViewModalOpen,
 		initialize,
 		handlePageChange,
 		handleSearch,
@@ -42,10 +62,14 @@ export default function PersonalPage() {
 		closeEditModal,
 		openDeleteModal,
 		closeDeleteModal,
+		openViewModal,
+		closeViewModal,
 		refreshList,
 	} = usePersonal();
 
 	const [fullPersonalEditing, setFullPersonalEditing] = useState<Personal | null>(null);
+	const [menuState, setMenuState] = useState<MenuState>(null);
+	const [extraModal, setExtraModal] = useState<ExtraModalState>(null);
 	const [syncDisponible, setSyncDisponible] = useState(false);
 	const [syncing, setSyncing] = useState(false);
 	const [syncResult, setSyncResult] = useState<{
@@ -141,6 +165,44 @@ export default function PersonalPage() {
 		}
 	};
 
+	const closeMenu = useCallback(() => setMenuState(null), []);
+
+	const handleOpenMenu = useCallback(
+		(p: Personal, anchor?: { x: number; y: number }) => {
+			if (anchor) {
+				setMenuState({
+					personal: p,
+					variant: 'context',
+					x: anchor.x,
+					y: anchor.y,
+				});
+			} else {
+				setMenuState({ personal: p, variant: 'sheet' });
+			}
+		},
+		[],
+	);
+
+	const handleMenuAction = useCallback(
+		(action: PersonalMenuAction, p: Personal) => {
+			closeMenu();
+			switch (action) {
+				case 'ver':
+					openViewModal(p);
+					break;
+				case 'editar':
+					openEditModal(p);
+					break;
+				case 'eliminar':
+					openDeleteModal(p);
+					break;
+				default:
+					setExtraModal({ kind: action, personal: p });
+			}
+		},
+		[closeMenu, openViewModal, openEditModal, openDeleteModal],
+	);
+
 	return (
 		<div className={styles.container}>
 			<div className={styles.titleRow}>
@@ -213,6 +275,27 @@ export default function PersonalPage() {
 					totalPages={totalPages}
 					onPageChange={handlePageChange}
 					onEdit={openEditModal}
+					onView={openViewModal}
+					onDelete={openDeleteModal}
+					onOpenMenu={handleOpenMenu}
+				/>
+
+				<PersonalRowMenu
+					open={!!menuState}
+					variant={menuState?.variant}
+					x={menuState?.x}
+					y={menuState?.y}
+					personal={menuState?.personal ?? null}
+					onClose={closeMenu}
+					onAction={handleMenuAction}
+				/>
+
+				<PersonalActionModals
+					open={!!extraModal}
+					kind={extraModal?.kind ?? null}
+					personal={extraModal?.personal ?? null}
+					onClose={() => setExtraModal(null)}
+					onSaved={refreshList}
 				/>
 
 				<Modal
@@ -306,6 +389,24 @@ export default function PersonalPage() {
 							onConfirm={() => deletePersonal(selected.Valor)}
 							onCancel={closeDeleteModal}
 							isDeleting={loading}
+						/>
+					</Modal>
+				)}
+
+				{selected && (
+					<Modal
+						isOpen={isViewModalOpen}
+						onClose={closeViewModal}
+						title='Detalle del Personal'
+						size='large'
+					>
+						<PersonalDetails
+							personal={selected}
+							onClose={closeViewModal}
+							onEdit={() => {
+								closeViewModal();
+								openEditModal(selected);
+							}}
 						/>
 					</Modal>
 				)}

@@ -426,6 +426,25 @@
 		color: #64748b;
 	}
 
+	.mobileMenuBtn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		flex-shrink: 0;
+		background: #fff;
+		border: none;
+		border-left: 1px solid #f1f5f9;
+		cursor: pointer;
+		color: #64748b;
+		transition: background 0.15s ease, color 0.15s ease;
+	}
+
+	.mobileMenuBtn:active {
+		background: #e0f2fe;
+		color: #0083a9;
+	}
+
 	.mobileItemLeft {
 		flex: 1;
 		min-width: 0;
@@ -498,7 +517,7 @@
 	}
 
 	.mobileItemBodyOpen {
-		max-height: 420px;
+		max-height: 520px;
 	}
 
 	.mobileDetailGrid {
@@ -535,6 +554,27 @@
 		border-top: 1px solid #f1f5f9;
 		background: #f8fafc;
 		border-radius: 0 0 12px 12px;
+	}
+
+	.mobileMoreBtn {
+		flex: 1 1 100%;
+		min-height: 40px;
+		margin-top: 2px;
+		padding: 0.55rem 0.75rem;
+		border: 1.5px solid #e2e8f0;
+		border-radius: 10px;
+		background: #fff;
+		font-size: 0.78rem;
+		font-weight: 700;
+		color: #0083a9;
+		cursor: pointer;
+		font-family: inherit;
+		letter-spacing: 0.02em;
+	}
+
+	.mobileMoreBtn:active {
+		background: #e0f2fe;
+		border-color: #7dd3fc;
 	}
 
 	.mobileActionToolbar .historyButton,
