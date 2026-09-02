@@ -14,6 +14,7 @@ import {
 import { agendaConfigService } from '@/app/services/agendaConfigService';
 import { esFechaPasada, toIsoLocal } from '@/app/utils/agendaFecha';
 import { horaWallArgentina, fechaCalendarioArgentina } from '@/app/utils/dateUtils';
+import { mensajeErrorUi } from '@/app/utils/mensajeErrorUi';
 import { useModalLayer } from '@/app/hooks/useModalLayer';
 import styles from './AsignarTurnoModal.module.css';
 
@@ -164,13 +165,7 @@ export default function AsignarTurnoModal({
 			onAssigned();
 			onClose();
 		} catch (e: unknown) {
-			const err = e as {
-				response?: { data?: { mensaje?: string } };
-				message?: string;
-			};
-			setError(
-				err?.response?.data?.mensaje || err?.message || 'Error al asignar el turno',
-			);
+			setError(mensajeErrorUi(e, 'No se pudo asignar el turno. Intentá de nuevo.'));
 		} finally {
 			setSubmitting(false);
 		}

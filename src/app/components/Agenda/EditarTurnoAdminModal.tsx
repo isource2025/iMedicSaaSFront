@@ -5,6 +5,7 @@ import { searchPatients } from '@/app/services/patientService';
 import { agendaService } from '@/app/services/agendaService';
 import type { TurnoAdminRow } from '@/app/services/turnosAdminService';
 import AgregarPacienteEnAgenda from '@/app/components/Agenda/AgregarPacienteEnAgenda';
+import { mensajeErrorUi } from '@/app/utils/mensajeErrorUi';
 import styles from './AsignarTurnoModal.module.css';
 
 interface PacienteRow {
@@ -91,13 +92,7 @@ export default function EditarTurnoAdminModal({ open, turno, onClose, onSaved }:
 			onSaved();
 			onClose();
 		} catch (e: unknown) {
-			const err = e as {
-				response?: { data?: { mensaje?: string } };
-				message?: string;
-			};
-			setError(
-				err?.response?.data?.mensaje || err?.message || 'Error al actualizar el turno',
-			);
+			setError(mensajeErrorUi(e, 'No se pudo actualizar el turno. Intentá de nuevo.'));
 		} finally {
 			setSubmitting(false);
 		}
