@@ -43,6 +43,8 @@ export interface ProduccionFila {
 	porcentajeFacturado: number;
 	importeUnitario: number;
 	total: number;
+	/** Importe que la obra social liquidó, del último Excel importado. null = sin liquidar. */
+	liquidado?: number | null;
 	noFacturable?: boolean;
 	nroRendicion?: number | null;
 }

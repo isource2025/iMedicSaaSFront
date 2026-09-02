@@ -1031,6 +1031,7 @@ export default function MiPerfilPage() {
 															<th className={styles.num}>% Fact.</th>
 															<th className={styles.num}>Imp. unitario</th>
 															<th className={styles.num}>Total</th>
+															<th className={styles.num}>Liquidado</th>
 														</tr>
 													</thead>
 													<tbody>
@@ -1114,6 +1115,15 @@ export default function MiPerfilPage() {
 																			<span className={styles.badgeNoFact}>No facturable</span>
 																		) : (
 																			<span className={styles.badgePending}>Sin valorizar</span>
+																		)}
+																	</td>
+																	<td className={styles.num}>
+																		{row.liquidado != null ? (
+																			<span className={styles.amountStrong}>
+																				${formatImporte(Number(row.liquidado))}
+																			</span>
+																		) : (
+																			<span className={styles.badgePending}>Sin liquidar</span>
 																		)}
 																	</td>
 																</tr>
