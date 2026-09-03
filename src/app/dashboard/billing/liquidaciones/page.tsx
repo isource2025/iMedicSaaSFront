@@ -2,15 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-	AlertTriangle,
+	BadgeCheck,
 	CheckCircle2,
+	ChevronLeft,
+	ChevronRight,
+	ClipboardList,
 	FileSpreadsheet,
+	Filter,
 	History,
-	Info,
-	Loader2,
+	Receipt,
+	RefreshCw,
 	RotateCcw,
 	Upload,
 } from 'lucide-react';
+import Loader from '@/app/components/Loader/Loader';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { mensajeDeError } from '@/app/utils/apiError';
 import {
@@ -20,24 +25,20 @@ import {
 	type ImportacionResumen,
 	type PreviewLiquidacion,
 } from '@/app/services/liquidacionImportService';
+import ui from '../../profile/profile.module.css';
 import styles from './liquidaciones.module.css';
+
+type TabId = 'importar' | 'historial';
 
 const ETIQUETA_ESTADO: Record<EstadoFilaLiquidacion, string> = {
 	APLICADO: 'Coincide',
 	SIN_CAMBIO: 'Ya estaba',
 	AMBIGUA: 'Ambigua',
 	SIN_MATCH: 'Sin coincidencia',
-	DUPLICADA_EXCEL: 'Repetida en el archivo',
+	DUPLICADA_EXCEL: 'Repetida',
 };
 
-const CLASE_ESTADO: Record<EstadoFilaLiquidacion, string> = {
-	APLICADO: styles.badgeOk,
-	SIN_CAMBIO: styles.badgeNeutro,
-	AMBIGUA: styles.badgeAlerta,
-	SIN_MATCH: styles.badgeError,
-	DUPLICADA_EXCEL: styles.badgeAlerta,
-};
-
+const FILAS_POR_PAGINA = 50;
 
 function formatImporte(n: number | null | undefined) {
 	if (n == null || Number.isNaN(Number(n))) return '—';
@@ -60,12 +61,20 @@ function formatFechaHora(valor: string | null | undefined) {
 	});
 }
 
+function claseEstado(estado: EstadoFilaLiquidacion) {
+	if (estado === 'APLICADO') return ui.amountStrong;
+	if (estado === 'SIN_CAMBIO') return ui.badgePending;
+	if (estado === 'AMBIGUA' || estado === 'DUPLICADA_EXCEL') return ui.badgePending;
+	return ui.badgeNoFact;
+}
+
 export default function LiquidacionesPage() {
 	const { puede, loaded } = usePermiso();
 	const puedeVer = puede('FACTURACION.LIQUIDACIONES.VER');
 	const puedeImportar = puede('FACTURACION.LIQUIDACIONES.GESTIONAR');
 
 	const inputRef = useRef<HTMLInputElement | null>(null);
+	const [tab, setTab] = useState<TabId>('importar');
 	const [archivo, setArchivo] = useState<File | null>(null);
 	const [preview, setPreview] = useState<PreviewLiquidacion | null>(null);
 	const [filtroEstado, setFiltroEstado] = useState<'TODOS' | EstadoFilaLiquidacion>('TODOS');
@@ -76,6 +85,7 @@ export default function LiquidacionesPage() {
 	const [aviso, setAviso] = useState<string | null>(null);
 	const [historial, setHistorial] = useState<ImportacionResumen[]>([]);
 	const [revirtiendo, setRevirtiendo] = useState<number | null>(null);
+	const [paginaActual, setPaginaActual] = useState(1);
 
 	const aplicado = preview?.aplicado ?? null;
 
@@ -84,7 +94,6 @@ export default function LiquidacionesPage() {
 		try {
 			setHistorial(await liquidacionImportService.listarImportaciones(20));
 		} catch (e) {
-			// El historial es informativo: no debe tapar la pantalla de importación.
 			console.error('[liquidaciones] historial:', e);
 		}
 	}, [puedeVer]);
@@ -100,6 +109,7 @@ export default function LiquidacionesPage() {
 		setConfirmarParcial(false);
 		setError(null);
 		setAviso(null);
+		setPaginaActual(1);
 		if (inputRef.current) inputRef.current.value = '';
 	};
 
@@ -108,6 +118,7 @@ export default function LiquidacionesPage() {
 		setConfirmarParcial(false);
 		setError(null);
 		setAviso(null);
+		setPaginaActual(1);
 		setArchivo(file);
 		if (!file) return;
 
@@ -149,7 +160,9 @@ export default function LiquidacionesPage() {
 			const r = await liquidacionImportService.revertir(idImport);
 			setAviso(
 				`Importación ${idImport} revertida: ${r.revertidas} prestaciones volvieron al importe anterior` +
-					(r.omitidas > 0 ? `, ${r.omitidas} quedaron como estaban por tener un valor más nuevo` : '') +
+					(r.omitidas > 0
+						? `, ${r.omitidas} quedaron como estaban por tener un valor más nuevo`
+						: '') +
 					'.',
 			);
 			await cargarHistorial();
@@ -166,11 +179,25 @@ export default function LiquidacionesPage() {
 		return preview.filas.filter((f) => f.estado === filtroEstado);
 	}, [preview, filtroEstado]);
 
+	const totalPaginas = Math.max(1, Math.ceil(filasVisibles.length / FILAS_POR_PAGINA));
+	const filasPaginadas = useMemo(() => {
+		const inicio = (paginaActual - 1) * FILAS_POR_PAGINA;
+		return filasVisibles.slice(inicio, inicio + FILAS_POR_PAGINA);
+	}, [filasVisibles, paginaActual]);
+
+	useEffect(() => {
+		setPaginaActual(1);
+	}, [filtroEstado]);
+
+	useEffect(() => {
+		if (paginaActual > totalPaginas) setPaginaActual(totalPaginas);
+	}, [paginaActual, totalPaginas]);
+
 	if (!loaded) {
 		return (
-			<div className={styles.container}>
-				<div className={styles.cargando}>
-					<Loader2 className={styles.spin} size={18} /> Cargando…
+			<div className={ui.container}>
+				<div className={ui.loaderWrap}>
+					<Loader />
 				</div>
 			</div>
 		);
@@ -178,381 +205,463 @@ export default function LiquidacionesPage() {
 
 	if (!puedeVer) {
 		return (
-			<div className={styles.container}>
-				<div className={styles.mensajeVacio}>
-					<AlertTriangle size={20} />
-					<span>No tenés permiso para ver las liquidaciones.</span>
-				</div>
+			<div className={ui.container}>
+				<div className={ui.empty}>No tenés permiso para ver las liquidaciones.</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className={styles.container}>
-			<header className={styles.header}>
-				<span className={styles.eyebrow}>Facturación</span>
-				<h1 className={styles.title}>Liquidaciones</h1>
-				<p className={styles.subtitle}>
-					Importá el Excel que manda la obra social para registrar el importe liquidado de
-					cada prestación. Ese valor es el que ve el profesional en la columna
-					&ldquo;Liquidado&rdquo; de su producción.
-				</p>
-			</header>
-
-			{error && (
-				<div className={`${styles.alerta} ${styles.alertaError}`}>
-					<AlertTriangle size={18} />
-					<span>{error}</span>
-				</div>
-			)}
+		<div className={ui.container}>
+			{error && <p className={ui.err}>{error}</p>}
 			{aviso && (
-				<div className={`${styles.alerta} ${styles.alertaOk}`}>
-					<CheckCircle2 size={18} />
-					<span>{aviso}</span>
-				</div>
+				<p className={ui.err} style={{ color: '#166534', background: '#f0fdf4', borderColor: '#bbf7d0' }}>
+					{aviso}
+				</p>
 			)}
 
-			{puedeImportar ? (
-				<section className={styles.card}>
-					<h2 className={styles.cardTitle}>
-						<Upload size={18} /> Importar liquidación
-					</h2>
+			<div className={ui.tabBar}>
+				<button
+					type="button"
+					className={`${ui.tabBtn} ${tab === 'importar' ? ui.tabBtnActive : ''}`}
+					onClick={() => setTab('importar')}
+				>
+					<Upload size={15} strokeWidth={2.2} />
+					Importar
+				</button>
+				<button
+					type="button"
+					className={`${ui.tabBtn} ${tab === 'historial' ? ui.tabBtnActive : ''}`}
+					onClick={() => setTab('historial')}
+				>
+					<History size={15} strokeWidth={2.2} />
+					Historial
+				</button>
+			</div>
 
-					<div className={styles.zonaArchivo}>
-						<input
-							ref={inputRef}
-							type="file"
-							accept=".xlsx,.xlsm,.xls"
-							className={styles.inputArchivo}
-							onChange={(e) => void elegirArchivo(e.target.files?.[0] ?? null)}
-							disabled={cargando || aplicando}
-						/>
-						<button
-							type="button"
-							className={styles.botonPrimario}
-							onClick={() => inputRef.current?.click()}
-							disabled={cargando || aplicando}
-						>
-							<FileSpreadsheet size={16} />
-							{archivo ? 'Elegir otro archivo' : 'Elegir archivo Excel'}
-						</button>
-						{archivo && (
-							<span className={styles.nombreArchivo}>
-								{archivo.name}
-								{preview && (
-									<em className={styles.hojaArchivo}>
-										hoja &ldquo;{preview.hoja}&rdquo;, encabezado en la fila{' '}
-										{preview.filaEncabezado}
-									</em>
-								)}
-							</span>
-						)}
-						{archivo && (
-							<button
-								type="button"
-								className={styles.botonTexto}
-								onClick={limpiar}
-								disabled={cargando || aplicando}
-							>
-								Descartar
-							</button>
-						)}
-					</div>
+			{tab === 'importar' && (
+				<div className={ui.stack}>
+					<section className={ui.productionShell}>
+						{puedeImportar ? (
+							<div className={ui.filtersBar}>
+								<div className={ui.filtersBarLeft}>
+									<div className={ui.filtersIcon}>
+										<Filter size={16} />
+									</div>
+									<span className={ui.filtersPanelTitle}>Archivo</span>
+								</div>
 
-					{cargando && (
-						<div className={styles.cargando}>
-							<Loader2 className={styles.spin} size={16} /> Cruzando el archivo con la
-							facturación…
-						</div>
-					)}
+								<input
+									ref={inputRef}
+									type="file"
+									accept=".xlsx,.xlsm,.xls"
+									className={styles.inputArchivo}
+									onChange={(e) => void elegirArchivo(e.target.files?.[0] ?? null)}
+									disabled={cargando || aplicando}
+								/>
 
-					<p className={styles.ayuda}>
-						El cruce es por <strong>IdPrestacion</strong>. Si un IdPrestacion aparece en más
-						de una fila de facturación se toma la de honorarios; si ni así queda una sola,
-						el renglón se informa y no se toca.
-					</p>
-				</section>
-			) : (
-				<div className={styles.alerta}>
-					<Info size={18} />
-					<span>
-						Podés consultar el historial, pero importar liquidaciones requiere el permiso
-						administrativo.
-					</span>
-				</div>
-			)}
-
-			{preview && (
-				<section className={styles.card}>
-					<h2 className={styles.cardTitle}>
-						<Info size={18} /> Resultado del cruce
-					</h2>
-
-					<div className={styles.resumenGrid}>
-						<div className={styles.resumenItem}>
-							<span className={styles.resumenLabel}>Renglones</span>
-							<span className={styles.resumenValor}>{preview.resumen.filas}</span>
-						</div>
-						<div className={`${styles.resumenItem} ${styles.resumenOk}`}>
-							<span className={styles.resumenLabel}>Coinciden</span>
-							<span className={styles.resumenValor}>{preview.resumen.aplicables}</span>
-						</div>
-						<div className={styles.resumenItem}>
-							<span className={styles.resumenLabel}>Ya estaban</span>
-							<span className={styles.resumenValor}>{preview.resumen.sinCambio}</span>
-						</div>
-						<div
-							className={`${styles.resumenItem} ${
-								preview.resumen.rechazadas > 0 ? styles.resumenAlerta : ''
-							}`}
-						>
-							<span className={styles.resumenLabel}>Sin aplicar</span>
-							<span className={styles.resumenValor}>{preview.resumen.rechazadas}</span>
-						</div>
-						<div className={styles.resumenItem}>
-							<span className={styles.resumenLabel}>
-								{aplicado ? 'Importe aplicado' : 'Importe a aplicar'}
-							</span>
-							<span className={styles.resumenValor}>
-								${formatImporte(aplicado?.importeAplicado ?? preview.resumen.importeAplicable)}
-							</span>
-						</div>
-					</div>
-
-					{preview.resumen.importeDistintoAlFacturado > 0 && (
-						<div className={styles.alerta}>
-							<AlertTriangle size={18} />
-							<span>
-								{preview.resumen.importeDistintoAlFacturado} renglones traen un importe
-								distinto al facturado. Se guarda el del Excel, que es lo que la obra social
-								liquidó.
-							</span>
-						</div>
-					)}
-
-					{preview.importacionPrevia && !aplicado && (
-						<div className={styles.alerta}>
-							<History size={18} />
-							<span>
-								Este mismo archivo ya se importó el{' '}
-								{formatFechaHora(preview.importacionPrevia.FechaHora)}
-								{preview.importacionPrevia.Usuario
-									? ` por ${preview.importacionPrevia.Usuario}`
-									: ''}
-								. Si lo aplicás otra vez, se vuelve a escribir el mismo importe.
-							</span>
-						</div>
-					)}
-
-					{aplicado ? (
-						<div className={`${styles.alerta} ${styles.alertaOk}`}>
-							<CheckCircle2 size={18} />
-							<span>
-								Importación {aplicado.idImport} aplicada: {aplicado.filasAplicadas}{' '}
-								prestaciones actualizadas.
-							</span>
-						</div>
-					) : (
-						puedeImportar && (
-							<div className={styles.acciones}>
-								{preview.resumen.rechazadas > 0 && (
-									<label className={styles.checkbox}>
-										<input
-											type="checkbox"
-											checked={confirmarParcial}
-											onChange={(e) => setConfirmarParcial(e.target.checked)}
-										/>
-										<span>
-											Aplicar solo los {preview.resumen.aplicables} renglones que coinciden
-											e ignorar los {preview.resumen.rechazadas} restantes
-										</span>
-									</label>
-								)}
 								<button
 									type="button"
-									className={styles.botonPrimario}
-									onClick={() => void aplicar()}
+									className={`${ui.btnApply} ${ui.filterBarBtn}`}
+									onClick={() => inputRef.current?.click()}
+									disabled={cargando || aplicando}
+								>
+									<FileSpreadsheet size={13} />
+									{archivo ? 'Elegir otro' : 'Elegir Excel'}
+								</button>
+
+								<div className={ui.filterField}>
+									<label className={ui.filterFieldLabel}>
+										<FileSpreadsheet size={11} strokeWidth={2.5} aria-hidden />
+										Archivo
+									</label>
+									<div className={ui.dateInput} title={archivo?.name || ''}>
+										{archivo?.name || 'Ninguno'}
+									</div>
+								</div>
+
+								<div className={ui.filterField}>
+									<label className={ui.filterFieldLabel}>
+										<BadgeCheck size={11} strokeWidth={2.5} aria-hidden />
+										Estado
+									</label>
+									<select
+										className={ui.dateInput}
+										value={filtroEstado}
+										onChange={(e) =>
+											setFiltroEstado(e.target.value as 'TODOS' | EstadoFilaLiquidacion)
+										}
+										disabled={!preview}
+									>
+										<option value="TODOS">Todos</option>
+										{(Object.keys(ETIQUETA_ESTADO) as EstadoFilaLiquidacion[]).map((estado) => {
+											const cantidad = preview?.filas.filter((f) => f.estado === estado).length ?? 0;
+											if (!preview || cantidad === 0) return null;
+											return (
+												<option key={estado} value={estado}>
+													{ETIQUETA_ESTADO[estado]} ({cantidad})
+												</option>
+											);
+										})}
+									</select>
+								</div>
+
+								<button
+									type="button"
+									className={`${ui.btnApply} ${ui.filterBarBtn}`}
 									disabled={
 										aplicando ||
+										!preview ||
+										!!aplicado ||
 										preview.resumen.aplicables === 0 ||
 										(preview.resumen.rechazadas > 0 && !confirmarParcial)
 									}
+									onClick={() => void aplicar()}
 								>
-									{aplicando ? (
-										<Loader2 className={styles.spin} size={16} />
-									) : (
-										<CheckCircle2 size={16} />
-									)}
-									Aplicar a la facturación
+									<RefreshCw size={13} /> Aplicar
+								</button>
+								<button
+									type="button"
+									className={`${ui.btnGhost} ${ui.filterBarBtn}`}
+									disabled={cargando || aplicando || !archivo}
+									onClick={limpiar}
+								>
+									Limpiar
 								</button>
 							</div>
-						)
-					)}
+						) : (
+							<div className={ui.empty}>
+								Podés consultar el historial, pero importar requiere permiso de gestión.
+							</div>
+						)}
 
-					<div className={styles.filtros}>
-						<button
-							type="button"
-							className={`${styles.chip} ${filtroEstado === 'TODOS' ? styles.chipActivo : ''}`}
-							onClick={() => setFiltroEstado('TODOS')}
-						>
-							Todos ({preview.resumen.filas})
-						</button>
-						{(Object.keys(ETIQUETA_ESTADO) as EstadoFilaLiquidacion[]).map((estado) => {
-							const cantidad = preview.filas.filter((f) => f.estado === estado).length;
-							if (cantidad === 0) return null;
-							return (
-								<button
-									key={estado}
-									type="button"
-									className={`${styles.chip} ${
-										filtroEstado === estado ? styles.chipActivo : ''
-									}`}
-									onClick={() => setFiltroEstado(estado)}
-								>
-									{ETIQUETA_ESTADO[estado]} ({cantidad})
-								</button>
-							);
-						})}
-					</div>
+						<div className={ui.productionMain}>
+							{(cargando || aplicando) && (
+								<div className={ui.loaderWrap}>
+									<Loader />
+								</div>
+							)}
 
-					<div className={styles.tablaWrap}>
-						<table className={styles.tabla}>
-							<thead>
-								<tr>
-									<th>Fila</th>
-									<th>IdPrestacion</th>
-									<th>Matrícula</th>
-									<th>Visita</th>
-									<th>Práctica</th>
-									<th className={styles.num}>Facturado</th>
-									<th className={styles.num}>Liquidado anterior</th>
-									<th className={styles.num}>Liquidado nuevo</th>
-									<th>Estado</th>
-								</tr>
-							</thead>
-							<tbody>
-								{filasVisibles.map((f: FilaLiquidacion) => (
-									<tr key={`${f.fila}-${f.idPrestacion ?? 'sin'}`}>
-										<td>{f.fila}</td>
-										<td>{f.idPrestacion ?? '—'}</td>
-										<td>
-											{f.matricula ?? '—'}
-											{f.coincideMatricula === false && (
-												<span className={styles.marcaDistinta} title="No coincide con la facturación">
-													!
-												</span>
-											)}
-										</td>
-										<td>
-											{f.numeroVisita ?? '—'}
-											{f.coincideVisita === false && (
-												<span className={styles.marcaDistinta} title="No coincide con la facturación">
-													!
-												</span>
-											)}
-										</td>
-										<td>{f.codigo || '—'}</td>
-										<td className={styles.num}>
-											{f.importeFinal != null ? `$${formatImporte(f.importeFinal)}` : '—'}
-										</td>
-										<td className={styles.num}>
-											{f.importeAnterior != null
-												? `$${formatImporte(f.importeAnterior)}`
-												: '—'}
-										</td>
-										<td className={styles.num}>
-											{f.importeExcel != null ? (
-												<strong>${formatImporte(f.importeExcel)}</strong>
-											) : (
-												'—'
-											)}
-										</td>
-										<td>
-											<span className={`${styles.badge} ${CLASE_ESTADO[f.estado]}`}>
-												{ETIQUETA_ESTADO[f.estado]}
+							{!cargando && !aplicando && !preview && (
+								<div className={ui.empty}>Elegí el Excel de liquidación para cruzarlo con la facturación.</div>
+							)}
+
+							{preview && !cargando && !aplicando && (
+								<>
+									<div className={ui.productionHeader}>
+										<div>
+											<span className={ui.sectionBadge}>
+												<Receipt size={14} strokeWidth={2.5} aria-hidden />
+												Cruce del archivo
 											</span>
-											{f.detalle && <div className={styles.detalleFila}>{f.detalle}</div>}
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				</section>
+											<h2>Prácticas unificadas</h2>
+											<p>
+												Hoja <strong>{preview.hoja}</strong>
+												{aplicado
+													? ` · importación ${aplicado.idImport} aplicada`
+													: ' · todavía no se escribió nada'}
+											</p>
+										</div>
+									</div>
+
+									<div className={ui.statsRow}>
+										<div className={`${ui.statCard} ${ui.statCardPrimary}`}>
+											<div className={ui.statIcon}>
+												<Receipt size={18} />
+											</div>
+											<div className={ui.statBody}>
+												<div className={ui.statLabel}>
+													{aplicado ? 'Importe aplicado' : 'Importe a aplicar'}
+												</div>
+												<div className={`${ui.statValue} ${ui.statValueLarge}`}>
+													$
+													{formatImporte(
+														aplicado?.importeAplicado ?? preview.resumen.importeAplicable,
+													)}
+												</div>
+												<div className={ui.statHint}>
+													{preview.resumen.aplicables} de {preview.resumen.filas} renglones
+												</div>
+											</div>
+										</div>
+
+										<div className={ui.statCard}>
+											<div className={ui.statIcon}>
+												<CheckCircle2 size={18} />
+											</div>
+											<div className={ui.statBody}>
+												<div className={ui.statLabel}>Coinciden</div>
+												<div className={ui.statValue}>{preview.resumen.aplicables}</div>
+												<div className={ui.statHint}>
+													{preview.resumen.sinCambio} ya tenían el importe
+												</div>
+											</div>
+										</div>
+
+										<div
+											className={`${ui.statCard} ${
+												preview.resumen.rechazadas > 0 ? ui.statCardDanger : ''
+											}`}
+										>
+											<div className={ui.statIcon}>
+												<ClipboardList size={18} />
+											</div>
+											<div className={ui.statBody}>
+												<div className={ui.statLabel}>Sin aplicar</div>
+												<div className={ui.statValue}>{preview.resumen.rechazadas}</div>
+												<div className={ui.statHint}>
+													Ambigüas, sin coincidencia o repetidas
+												</div>
+											</div>
+										</div>
+									</div>
+
+									{preview.resumen.rechazadas > 0 && !aplicado && puedeImportar && (
+										<label className={styles.checkbox}>
+											<input
+												type="checkbox"
+												checked={confirmarParcial}
+												onChange={(e) => setConfirmarParcial(e.target.checked)}
+											/>
+											<span>
+												Aplicar solo los {preview.resumen.aplicables} renglones que coinciden e
+												ignorar los {preview.resumen.rechazadas} restantes
+											</span>
+										</label>
+									)}
+
+									<div className={ui.tableHeaderRow}>
+										<div>
+											<h3 className={ui.tableSectionTitle}>Detalle de prácticas</h3>
+											<p className={ui.tableSubtitle}>
+												{filasVisibles.length} de {preview.resumen.filas} renglones del archivo
+											</p>
+										</div>
+										<span className={ui.tableCount}>
+											Mostrando {filasPaginadas.length} de {filasVisibles.length}
+										</span>
+									</div>
+
+									{filasVisibles.length === 0 ? (
+										<div className={ui.empty}>Sin renglones para ese filtro.</div>
+									) : (
+										<>
+											<div className={ui.tableWrap}>
+												<table className={ui.table}>
+													<thead>
+														<tr>
+															<th>Profesional</th>
+															<th>Visita</th>
+															<th>Práctica</th>
+															<th className={ui.num}>Facturado</th>
+															<th className={ui.num}>Liquidado anterior</th>
+															<th className={ui.num}>Liquidado</th>
+															<th>Estado</th>
+														</tr>
+													</thead>
+													<tbody>
+														{filasPaginadas.map((f: FilaLiquidacion) => (
+															<tr
+																key={`${f.fila}-${f.idPrestacion ?? 'sin'}`}
+																className={
+																	f.estado === 'APLICADO' ? ui.rowValor : ui.rowSinValor
+																}
+															>
+																<td>
+																	<div className={ui.pacienteCell}>
+																		<span className={ui.pacienteNombre}>
+																			{f.profesional || 'Sin nombre'}
+																		</span>
+																		<span className={ui.pacienteDni}>
+																			Mat. {f.matricula ?? '—'}
+																		</span>
+																	</div>
+																</td>
+																<td>
+																	{f.numeroVisita ? (
+																		<span className={ui.pacienteMeta}>
+																			Visita {f.numeroVisita}
+																		</span>
+																	) : (
+																		<span className={ui.amountMuted}>—</span>
+																	)}
+																</td>
+																<td>
+																	<div className={ui.practicaCell}>
+																		<span className={ui.practicaCodeWrap}>
+																			<span className={ui.practicaCode}>
+																				{f.codigo || '—'}
+																			</span>
+																		</span>
+																		{f.idPrestacion != null && (
+																			<span className={ui.practicaFunc}>
+																				IdPrestacion {f.idPrestacion}
+																			</span>
+																		)}
+																	</div>
+																</td>
+																<td className={ui.num}>
+																	{f.importeFinal != null ? (
+																		<span className={ui.amount}>
+																			${formatImporte(f.importeFinal)}
+																		</span>
+																	) : (
+																		<span className={ui.amountMuted}>—</span>
+																	)}
+																</td>
+																<td className={ui.num}>
+																	{f.importeAnterior != null ? (
+																		<span className={ui.amount}>
+																			${formatImporte(f.importeAnterior)}
+																		</span>
+																	) : (
+																		<span className={ui.amountMuted}>—</span>
+																	)}
+																</td>
+																<td className={ui.num}>
+																	{f.importeExcel != null ? (
+																		<span className={ui.amountStrong}>
+																			${formatImporte(f.importeExcel)}
+																		</span>
+																	) : (
+																		<span className={ui.badgePending}>Sin liquidar</span>
+																	)}
+																</td>
+																<td>
+																	<span className={claseEstado(f.estado)}>
+																		{ETIQUETA_ESTADO[f.estado]}
+																	</span>
+																</td>
+															</tr>
+														))}
+													</tbody>
+												</table>
+											</div>
+											<div className={ui.pagination}>
+												<button
+													type="button"
+													className={ui.pageButton}
+													disabled={paginaActual <= 1}
+													onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+												>
+													<ChevronLeft size={15} /> Anterior
+												</button>
+												<span className={ui.pageInfo}>
+													Página {paginaActual} de {totalPaginas}
+												</span>
+												<button
+													type="button"
+													className={ui.pageButton}
+													disabled={paginaActual >= totalPaginas}
+													onClick={() =>
+														setPaginaActual((p) => Math.min(totalPaginas, p + 1))
+													}
+												>
+													Siguiente <ChevronRight size={15} />
+												</button>
+											</div>
+										</>
+									)}
+								</>
+							)}
+						</div>
+					</section>
+				</div>
 			)}
 
-			<section className={styles.card}>
-				<h2 className={styles.cardTitle}>
-					<History size={18} /> Últimas importaciones
-				</h2>
-				{historial.length === 0 ? (
-					<div className={styles.mensajeVacio}>
-						<Info size={18} />
-						<span>Todavía no se importó ninguna liquidación en esta empresa.</span>
-					</div>
-				) : (
-					<div className={styles.tablaWrap}>
-						<table className={styles.tabla}>
-							<thead>
-								<tr>
-									<th>#</th>
-									<th>Fecha</th>
-									<th>Archivo</th>
-									<th>Usuario</th>
-									<th className={styles.num}>Aplicadas</th>
-									<th className={styles.num}>Sin aplicar</th>
-									<th className={styles.num}>Importe</th>
-									<th>Estado</th>
-									{puedeImportar && <th />}
-								</tr>
-							</thead>
-							<tbody>
-								{historial.map((imp) => (
-									<tr key={imp.IdImport}>
-										<td>{imp.IdImport}</td>
-										<td>{formatFechaHora(imp.FechaHora)}</td>
-										<td className={styles.celdaArchivo} title={imp.Archivo}>
-											{imp.Archivo}
-										</td>
-										<td>{imp.Usuario || '—'}</td>
-										<td className={styles.num}>{imp.FilasAplicadas}</td>
-										<td className={styles.num}>{imp.FilasRechazadas}</td>
-										<td className={styles.num}>${formatImporte(imp.ImporteAplicado)}</td>
-										<td>
-											<span
-												className={`${styles.badge} ${
-													imp.Estado === 'REVERTIDO' ? styles.badgeNeutro : styles.badgeOk
-												}`}
-											>
-												{imp.Estado === 'REVERTIDO' ? 'Revertida' : 'Aplicada'}
-											</span>
-										</td>
-										{puedeImportar && (
-											<td>
-												{imp.Estado === 'APLICADO' && (
-													<button
-														type="button"
-														className={styles.botonTexto}
-														onClick={() => void revertir(imp.IdImport)}
-														disabled={revirtiendo === imp.IdImport}
-													>
-														{revirtiendo === imp.IdImport ? (
-															<Loader2 className={styles.spin} size={14} />
-														) : (
-															<RotateCcw size={14} />
-														)}
-														Revertir
-													</button>
-												)}
-											</td>
-										)}
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				)}
-			</section>
+			{tab === 'historial' && (
+				<div className={ui.stack}>
+					<section className={ui.productionShell}>
+						<div className={ui.productionMain}>
+							<div className={ui.productionHeader}>
+								<div>
+									<span className={ui.sectionBadge}>
+										<History size={14} strokeWidth={2.5} aria-hidden />
+										Importaciones
+									</span>
+									<h2>Últimas liquidaciones</h2>
+									<p>Archivos aplicados en esta empresa, con opción de revertir.</p>
+								</div>
+							</div>
+
+							{historial.length === 0 ? (
+								<div className={ui.empty}>Todavía no se importó ninguna liquidación en esta empresa.</div>
+							) : (
+								<div className={ui.tableWrap}>
+									<table className={ui.table}>
+										<thead>
+											<tr>
+												<th>Fecha</th>
+												<th>Archivo</th>
+												<th>Usuario</th>
+												<th className={ui.num}>Aplicadas</th>
+												<th className={ui.num}>Sin aplicar</th>
+												<th className={ui.num}>Importe</th>
+												<th>Estado</th>
+												{puedeImportar && <th />}
+											</tr>
+										</thead>
+										<tbody>
+											{historial.map((imp) => (
+												<tr key={imp.IdImport} className={ui.rowValor}>
+													<td>
+														<div className={ui.fechaCell}>
+															<span>{formatFechaHora(imp.FechaHora)}</span>
+														</div>
+													</td>
+													<td>
+														<div className={ui.practicaCell}>
+															<span className={ui.practicaDesc} title={imp.Archivo}>
+																{imp.Archivo}
+															</span>
+															<span className={ui.practicaFunc}>#{imp.IdImport}</span>
+														</div>
+													</td>
+													<td>
+														<span className={ui.pacienteNombre}>{imp.Usuario || '—'}</span>
+													</td>
+													<td className={ui.num}>
+														<span className={ui.qtyPill}>{imp.FilasAplicadas}</span>
+													</td>
+													<td className={ui.num}>{imp.FilasRechazadas}</td>
+													<td className={ui.num}>
+														<span className={ui.amountStrong}>
+															${formatImporte(imp.ImporteAplicado)}
+														</span>
+													</td>
+													<td>
+														<span
+															className={
+																imp.Estado === 'REVERTIDO' ? ui.badgePending : ui.amountStrong
+															}
+														>
+															{imp.Estado === 'REVERTIDO' ? 'Revertida' : 'Aplicada'}
+														</span>
+													</td>
+													{puedeImportar && (
+														<td>
+															{imp.Estado === 'APLICADO' && (
+																<button
+																	type="button"
+																	className={ui.btnGhost}
+																	onClick={() => void revertir(imp.IdImport)}
+																	disabled={revirtiendo === imp.IdImport}
+																>
+																	<RotateCcw size={14} /> Revertir
+																</button>
+															)}
+														</td>
+													)}
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							)}
+						</div>
+					</section>
+				</div>
+			)}
 		</div>
 	);
 }
