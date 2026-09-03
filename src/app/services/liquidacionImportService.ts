@@ -80,6 +80,8 @@ export interface ImportacionDetalleFila {
 	Estado: string;
 	Detalle: string | null;
 	profesional?: string | null;
+	codigo?: string | null;
+	importeFinal?: number | null;
 }
 
 export interface ImportacionDetalle extends ImportacionResumen {

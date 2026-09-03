@@ -97,7 +97,7 @@ export default function ImportarLiquidacionModal({
 			isOpen={isOpen}
 			onClose={onClose}
 			title={file ? `Importar · ${nombreVisible}` : 'Importar liquidación'}
-			size="xlarge"
+			size="wide"
 			priority="high"
 		>
 			<div className={styles.modalBody}>

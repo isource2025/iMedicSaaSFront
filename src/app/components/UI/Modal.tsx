@@ -6,7 +6,7 @@ interface ModalProps {
 	onClose: () => void;
 	title: string;
 	children: React.ReactNode;
-	size?: 'small' | 'medium' | 'large' | 'xlarge' | 'full';
+	size?: 'small' | 'medium' | 'large' | 'xlarge' | 'wide' | 'full';
 	/** Eleva el overlay por encima de otros modales (ej. asignar turno). */
 	priority?: 'default' | 'high';
 }
@@ -62,6 +62,8 @@ export default function Modal({
 			? styles.modalLarge
 			: size === 'xlarge'
 			? styles.modalXLarge
+			: size === 'wide'
+			? styles.modalWide
 			: size === 'full'
 			? styles.modalFull
 			: styles.modalMedium;

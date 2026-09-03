@@ -88,9 +88,9 @@ export default function DetalleLiquidacionModal({
 				profesional: f.profesional ?? null,
 				matricula: f.Matricula,
 				numeroVisita: f.NumeroVisita,
-				codigo: null,
+				codigo: f.codigo ?? null,
 				idPrestacion: f.IdPrestacion,
-				importeFinal: null,
+				importeFinal: f.importeFinal ?? null,
 				importeAnterior: f.ImporteAnterior,
 				importeNuevo: f.ImporteNuevo ?? f.ImporteExcel,
 				estado: f.Estado,
@@ -134,7 +134,7 @@ export default function DetalleLiquidacionModal({
 			isOpen={isOpen}
 			onClose={onClose}
 			title={cab ? `Liquidación #${cab.IdImport}` : 'Detalle'}
-			size="xlarge"
+			size="wide"
 			priority="high"
 		>
 			<div className={styles.modalBody}>
