@@ -222,6 +222,7 @@ export default function MiPerfilPage() {
 	const [estadoValorizacion, setEstadoValorizacion] = useState<'todas' | 'valorizadas' | 'no-valorizadas'>(
 		'todas',
 	);
+	const [estadoLiquidacion, setEstadoLiquidacion] = useState<'todas' | 'liquidadas' | 'sin-liquidar'>('todas');
 	const [paginaActual, setPaginaActual] = useState(1);
 
 	const [loadProd, setLoadProd] = useState(false);
@@ -266,6 +267,7 @@ export default function MiPerfilPage() {
 				setProd(prodRes.data);
 				setSelectedCobertura('');
 				setEstadoValorizacion('todas');
+				setEstadoLiquidacion('todas');
 				setPaginaActual(1);
 			} catch (e: unknown) {
 				setProdErr(apiErrorMessage(e, 'No se pudo cargar la producción'));
@@ -317,9 +319,12 @@ export default function MiPerfilPage() {
 			if (cob && normalizarCobertura(r) !== cob) return false;
 			if (estadoValorizacion === 'valorizadas' && !tieneValorEconomico(r)) return false;
 			if (estadoValorizacion === 'no-valorizadas' && tieneValorEconomico(r)) return false;
+			const liquidada = r.liquidado != null && !Number.isNaN(Number(r.liquidado));
+			if (estadoLiquidacion === 'liquidadas' && !liquidada) return false;
+			if (estadoLiquidacion === 'sin-liquidar' && liquidada) return false;
 			return true;
 		});
-	}, [prod?.registros, selectedCobertura, estadoValorizacion]);
+	}, [prod?.registros, selectedCobertura, estadoValorizacion, estadoLiquidacion]);
 
 	const totalesFiltrados = useMemo(
 		() =>
@@ -500,7 +505,7 @@ export default function MiPerfilPage() {
 
 	useEffect(() => {
 		setPaginaActual(1);
-	}, [selectedCobertura, estadoValorizacion]);
+	}, [selectedCobertura, estadoValorizacion, estadoLiquidacion]);
 
 	useEffect(() => {
 		if (paginaActual > totalPaginas) setPaginaActual(totalPaginas);
@@ -733,6 +738,26 @@ export default function MiPerfilPage() {
 								</select>
 							</div>
 
+							<div className={styles.filterField}>
+								<label className={styles.filterFieldLabel}>
+									<Receipt size={11} strokeWidth={2.5} aria-hidden />
+									Liquidación
+								</label>
+								<select
+									className={styles.dateInput}
+									value={estadoLiquidacion}
+									onChange={(e) =>
+										setEstadoLiquidacion(
+											e.target.value as 'todas' | 'liquidadas' | 'sin-liquidar',
+										)
+									}
+								>
+									<option value="todas">Todas</option>
+									<option value="liquidadas">Liquidadas</option>
+									<option value="sin-liquidar">Sin liquidar</option>
+								</select>
+							</div>
+
 							<button
 								type="button"
 								className={`${styles.btnApply} ${styles.filterBarBtn}`}
@@ -748,6 +773,7 @@ export default function MiPerfilPage() {
 								onClick={() => {
 									setSelectedCobertura('');
 									setEstadoValorizacion('todas');
+									setEstadoLiquidacion('todas');
 									setPaginaActual(1);
 								}}
 							>
