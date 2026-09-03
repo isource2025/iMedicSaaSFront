@@ -66,6 +66,26 @@ export interface ImportacionResumen {
 	Estado: 'APLICADO' | 'REVERTIDO';
 }
 
+export interface ImportacionDetalleFila {
+	FilaExcel: number | null;
+	IdPrestacion: number | null;
+	IdDetalleExcel: number | null;
+	Matricula: number | null;
+	NumeroVisita: number | null;
+	ImporteExcel: number | null;
+	IdDetalle: number | null;
+	TipoPrestacion: string | null;
+	ImporteAnterior: number | null;
+	ImporteNuevo: number | null;
+	Estado: string;
+	Detalle: string | null;
+	profesional?: string | null;
+}
+
+export interface ImportacionDetalle extends ImportacionResumen {
+	detalle: ImportacionDetalleFila[];
+}
+
 export interface PreviewLiquidacion {
 	archivo: string;
 	hoja: string;
@@ -100,29 +120,58 @@ export const liquidacionImportService = {
 		const res = await apiService.post<{ success: boolean; data: PreviewLiquidacion }>(
 			'/liquidaciones/importe-liquidado/preview',
 			fd,
-			configMultipart,
+			{ ...configMultipart, timeout: 60000 },
 		);
 		return res.data.data;
 	},
 
-	async aplicar(file: File, confirmarParcial = false): Promise<PreviewLiquidacion> {
+	async aplicar(
+		file: File,
+		opts: { confirmarParcial?: boolean; nombreArchivo?: string } = {},
+	): Promise<PreviewLiquidacion> {
 		const fd = new FormData();
 		fd.append('archivo', file);
-		if (confirmarParcial) fd.append('confirmarParcial', 'true');
+		if (opts.confirmarParcial) fd.append('confirmarParcial', 'true');
+		if (opts.nombreArchivo?.trim()) fd.append('nombreArchivo', opts.nombreArchivo.trim());
 		const res = await apiService.post<{ success: boolean; data: PreviewLiquidacion }>(
 			'/liquidaciones/importe-liquidado/aplicar',
 			fd,
-			configMultipart,
+			{ ...configMultipart, timeout: 120000 },
 		);
 		return res.data.data;
 	},
 
-	async listarImportaciones(limite = 20): Promise<ImportacionResumen[]> {
+	async listarImportaciones(query?: {
+		limite?: number;
+		desde?: string;
+		hasta?: string;
+	}): Promise<ImportacionResumen[]> {
+		const params: Record<string, string | number> = { limite: query?.limite ?? 200 };
+		if (query?.desde) params.desde = query.desde;
+		if (query?.hasta) params.hasta = query.hasta;
 		const res = await apiService.get<{ success: boolean; data: ImportacionResumen[] }>(
 			'/liquidaciones/importaciones',
-			{ params: { limite } },
+			{ params },
 		);
 		return res.data.data || [];
+	},
+
+	async obtenerImportacion(idImport: number): Promise<ImportacionDetalle> {
+		const res = await apiService.get<{ success: boolean; data: ImportacionDetalle }>(
+			`/liquidaciones/importaciones/${idImport}`,
+		);
+		return res.data.data;
+	},
+
+	async renombrar(
+		idImport: number,
+		archivo: string,
+	): Promise<{ IdImport: number; Archivo: string }> {
+		const res = await apiService.patch<{
+			success: boolean;
+			data: { IdImport: number; Archivo: string };
+		}>(`/liquidaciones/importaciones/${idImport}`, { archivo });
+		return res.data.data;
 	},
 
 	async revertir(

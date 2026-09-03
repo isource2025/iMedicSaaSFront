@@ -1101,6 +1101,11 @@
 	background: #f8fafc;
 }
 
+.btnGhost:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
 .btnProduction {
 	display: inline-flex;
 	align-items: center;
