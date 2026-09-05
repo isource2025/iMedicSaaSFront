@@ -55,6 +55,7 @@ export interface ResumenAmbulatorio {
   graciaMin: number;
   /** Turnos reservados con antelación (TipoTurno = 0). */
   programados: number;
+  /** Atendidos de agenda (TipoTurno = 0). */
   atendidos: number;
   cancelados: number;
   ausentes: number;
@@ -62,9 +63,13 @@ export interface ResumenAmbulatorio {
   enSala: number;
   enConsultorio: number;
   enCurso: number;
-  /** Registros creados al llegar el paciente (TipoTurno = 1). */
+  /** Registros a demanda no cancelados (TipoTurno = 1). */
   turnosDemanda: number;
+  /** A demanda efectivamente atendidos. */
   atendidosDemanda: number;
+  /** atendidos + atendidosDemanda — coincide con Admin Turnos (Estado=Atendido). */
+  atendidosTotal: number;
+  canceladosDemanda?: number;
   /** ausentes / (programados - cancelados), sólo agenda */
   tasaAusentismo: number;
   tasaCancelacion: number;
@@ -159,7 +164,10 @@ export interface ResumenAmbulatorioHoy {
   fecha: string;
   graciaMin: number;
   programados: number;
+  /** Consultas atendidas del día (agenda + demanda). */
   atendidos: number;
+  atendidosAgenda?: number;
+  atendidosDemanda?: number;
   pendientes: number;
   ausentes: number;
   cancelados: number;

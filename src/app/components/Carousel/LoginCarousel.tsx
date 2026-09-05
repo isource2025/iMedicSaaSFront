@@ -27,7 +27,7 @@ const SLIDES = [
 const FEATURES = [
 	{ Icon: Shield, label: "Seguridad y privacidad" },
 	{ Icon: Clock, label: "Acceso 24/7" },
-	{ Icon: Users, label: "Gestión integral de tu consultorio" },
+	{ Icon: Users, label: "Gestión integral de centros de salud" },
 ];
 
 let loginPageTracked = false;

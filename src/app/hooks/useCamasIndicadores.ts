@@ -44,6 +44,12 @@ export const useCamasIndicadores = (
   const debouncedFechaInicio = useDebounce(fechaInicio, 500);
   const debouncedFechaFin = useDebounce(fechaFin, 500);
 
+  // Al cambiar el rango (antes del debounce) marcar carga y evitar mostrar datos viejos
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+  }, [fechaInicio, fechaFin]);
+
   // Función optimizada con carga progresiva y manejo de errores mejorado
   const fetchAll = useCallback(async () => {
     if (!debouncedFechaInicio || !debouncedFechaFin) return;
@@ -52,50 +58,25 @@ export const useCamasIndicadores = (
     setError(null);
     setLoadingSteps({ indicadores: true, resumen: false, porFecha: false, estadoActual: false });
     
-    console.log('🚀 Iniciando carga optimizada de datos de camas:', { 
-      fechaInicio: debouncedFechaInicio, 
-      fechaFin: debouncedFechaFin 
-    });
-    
     try {
-      // 1. Cargar datos crudos primero (base para todo)
-      console.log('📊 Cargando datos crudos...');
-      const indicadoresData = await camasIndicadoresService.obtenerDatosCrudos(debouncedFechaInicio, debouncedFechaFin);
-      setIndicadores(indicadoresData);
-      setLoadingSteps(prev => ({ ...prev, indicadores: false, resumen: true }));
-      
-      // 2. Cargar resumen
-      console.log('📈 Procesando resumen...');
-      const resumenData = await camasIndicadoresService.obtenerResumenCamas(debouncedFechaInicio, debouncedFechaFin);
+      // Cargar en paralelo: resumen, serie diaria y estado actual
+      setLoadingSteps({ indicadores: false, resumen: true, porFecha: true, estadoActual: true });
+
+      const [resumenData, indicadoresPorFechaData, estadoActualData] = await Promise.all([
+        camasIndicadoresService.obtenerResumenCamas(debouncedFechaInicio, debouncedFechaFin),
+        camasIndicadoresService.obtenerIndicadoresPorFecha(debouncedFechaInicio, debouncedFechaFin),
+        camasIndicadoresService.obtenerEstadoActual(),
+      ]);
+
       setResumen(resumenData);
-      setLoadingSteps(prev => ({ ...prev, resumen: false, porFecha: true }));
-      
-      // 3. Cargar indicadores por fecha
-      console.log('📊 Procesando indicadores por fecha...');
-      const indicadoresPorFechaData = await camasIndicadoresService.obtenerIndicadoresPorFecha(debouncedFechaInicio, debouncedFechaFin);
       setIndicadoresPorFecha(indicadoresPorFechaData);
-      setLoadingSteps(prev => ({ ...prev, porFecha: false, estadoActual: true }));
-      
-      // 4. Cargar estado actual
-      console.log('⏰ Obteniendo estado actual...');
-      const estadoActualData = await camasIndicadoresService.obtenerEstadoActual();
       setEstadoActual(estadoActualData);
-      setLoadingSteps(prev => ({ ...prev, estadoActual: false }));
-      
-      console.log('✅ Todos los datos cargados exitosamente');
+      setIndicadores([]);
+      setLoadingSteps({ indicadores: false, resumen: false, porFecha: false, estadoActual: false });
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido al cargar datos';
       setError(errorMessage);
       console.error('❌ Error al cargar indicadores de camas:', err);
-      
-      // Información detallada para debugging
-      if (err.code === 'ECONNABORTED') {
-        console.error('⏰ Timeout detectado - Consulta SQL tardando demasiado');
-      } else if (err.response?.status === 500) {
-        console.error('🔥 Error del servidor - Problema con fn_OcupacionPromedioCamas');
-      } else if (err.name === 'NetworkError') {
-        console.error('🌐 Error de red - Verificar conexión');
-      }
     } finally {
       setLoading(false);
       setLoadingSteps({ indicadores: false, resumen: false, porFecha: false, estadoActual: false });

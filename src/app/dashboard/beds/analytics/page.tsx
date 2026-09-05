@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense, useMemo, useEffect, lazy } from 'react';
+import React, { useState, Suspense, useMemo, lazy } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCamasIndicadores } from '@/app/hooks/useCamasIndicadores';
 
@@ -28,7 +28,7 @@ import { InsightCard } from '@/app/components/InsightCard';
 import { MetricTooltipModal } from '@/app/components/modals/MetricTooltipModal';
 import { MetricTooltip } from '@/app/components/MetricTooltip';
 import { AnalyticsLoader } from '@/app/components/AnalyticsLoader';
-import { analyzePeakOccupancy, analyzeSectorDemand, analyzeOperationalEfficiency, AnalysisResult } from '@/app/utils/analyticsEngine';
+import { AnalysisResult } from '@/app/utils/analyticsEngine';
 import styles from './BedsAnalytics.module.css';
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
@@ -49,7 +49,12 @@ const ICONS = {
 export default function BedsAnalytics() {
   const router = useRouter();
   
-  const toYYYYMMDD = (d: Date) => d.toISOString().split('T')[0];
+  const toYYYYMMDD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
   const today = new Date();
   const defaultStart = new Date();
   defaultStart.setDate(today.getDate() - 30);
@@ -87,16 +92,10 @@ export default function BedsAnalytics() {
       }));
   };
 
-  // Datos para gráficos de torta
+  // Distribución por sector: días-cama ocupados en el período seleccionado
   const sectorData = resumen ? prepareChartData(resumen.resumenPorSector, 'Por Sector') : [];
-  
-  // Donut: Ocupadas vs Disponibles promedio
-  const donutData = [
-    { label: 'Ocupadas', value: resumen?.ocupadasPromedio || 0, color: pantoneColors[0] },
-    { label: 'Disponibles', value: resumen?.disponiblesPromedio || 0, color: pantoneColors[2] }
-  ];
 
-  // Datos para gráfico de línea - camas ocupadas día por día
+  // Datos para gráfico de línea - camas ocupadas día por día (datos reales del API)
   const lineChartData = indicadoresPorFecha.map(item => {
     const [year, month, day] = item.fecha.split('T')[0].split('-');
     return {
@@ -106,11 +105,6 @@ export default function BedsAnalytics() {
     };
   });
 
-  // Calcular el día de mayor ocupación una sola vez para reutilizarlo
-  const diaMayorOcupacion = indicadoresPorFecha.length > 0
-    ? indicadoresPorFecha.reduce((max: any, current: any) => current.ocupadas > max.ocupadas ? current : max)
-    : null;
-
   // Nuevos cálculos para las cards actualizadas
   const ocupacionPromedioGlobal = useMemo(() => {
     if (!resumen) return 0;
@@ -118,24 +112,25 @@ export default function BedsAnalytics() {
   }, [resumen]);
 
   const variabilidadOcupacion = useMemo(() => {
-    if (!resumen || !resumen.resumenPorSector || Object.keys(resumen.resumenPorSector).length === 0) {
+    const tasas =
+      resumen?.ocupacionPorSector && Object.keys(resumen.ocupacionPorSector).length > 0
+        ? Object.values(resumen.ocupacionPorSector)
+        : [];
+
+    if (tasas.length === 0) {
       return { valor: 0, rango: '', tipo: 'baja' };
     }
-    
-    const ocupacionesSectores = Object.values(resumen.resumenPorSector);
-    const min = Math.min(...ocupacionesSectores);
-    const max = Math.max(...ocupacionesSectores);
-    const rango = max - min;
-    
-    // Calcular desviación estándar
-    const promedio = ocupacionesSectores.reduce((sum, val) => sum + val, 0) / ocupacionesSectores.length;
-    const varianza = ocupacionesSectores.reduce((sum, val) => sum + Math.pow(val - promedio, 2), 0) / ocupacionesSectores.length;
+
+    const min = Math.min(...tasas);
+    const max = Math.max(...tasas);
+    const promedio = tasas.reduce((sum, val) => sum + val, 0) / tasas.length;
+    const varianza = tasas.reduce((sum, val) => sum + Math.pow(val - promedio, 2), 0) / tasas.length;
     const desviacionEstandar = Math.sqrt(varianza);
-    
+
     let tipo = 'baja';
     if (desviacionEstandar > 20) tipo = 'alta';
     else if (desviacionEstandar > 10) tipo = 'media';
-    
+
     return {
       valor: desviacionEstandar,
       rango: `${min.toFixed(2)}% - ${max.toFixed(2)}%`,
@@ -168,24 +163,23 @@ export default function BedsAnalytics() {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
+    setPeakAnalysis(null);
+    setEfficiencyAnalysis(null);
+    setSectorAnalysis(null);
     const endDate = new Date();
     let startDate = new Date(endDate);
     
     switch (tab) {
       case 'día': 
-        // Para "día" mostrar solo el día actual
         startDate = new Date(endDate);
         break;
       case 'semana': 
-        // Para "semana" mostrar últimos 7 días
         startDate.setDate(endDate.getDate() - 6); 
         break;
       case 'mes': 
-        // Para "mes" mostrar últimos 30 días
         startDate.setDate(endDate.getDate() - 29); 
         break;
       case 'año': 
-        // Para "año" mostrar últimos 365 días
         startDate.setDate(endDate.getDate() - 364); 
         break;
       default: return;
@@ -198,6 +192,9 @@ export default function BedsAnalytics() {
   const handleCustomDateChange = (value: string, setDate: (d: string) => void) => {
     setDate(value);
     setActiveTab('custom');
+    setPeakAnalysis(null);
+    setEfficiencyAnalysis(null);
+    setSectorAnalysis(null);
   };
 
   return (
@@ -351,23 +348,23 @@ export default function BedsAnalytics() {
             <MetricCard
               title="Índice de Rotación"
               value={(() => {
-                if (!indicadoresPorFecha.length || !estadoActual) return "0.0";
-                // Calcular índice de rotación: Total movimientos / Camas disponibles promedio
-                const totalMovimientos = indicadoresPorFecha.reduce((sum, item) => sum + item.ocupadas, 0);
-                const camasDisponibles = estadoActual.totalCamas;
-                const diasPeriodo = indicadoresPorFecha.length;
-                const indiceRotacion = camasDisponibles > 0 ? (totalMovimientos / (camasDisponibles * diasPeriodo)).toFixed(1) : "0.0";
-                return indiceRotacion;
+                if (!indicadoresPorFecha.length || !estadoActual?.totalCamas) return "0.0";
+                // Promedio de ocupación diaria / camas = intensidad de uso en el período
+                const ocupadasPromedioDia =
+                  indicadoresPorFecha.reduce((sum, item) => sum + item.ocupadas, 0) /
+                  indicadoresPorFecha.length;
+                const indiceRotacion = ocupadasPromedioDia / estadoActual.totalCamas;
+                return indiceRotacion.toFixed(2);
               })()}
-              detail="Movimientos por cama por día"
+              detail="Ocupación media / camas totales"
               icon={ICONS.trendingUp}
               iconColor="#D81B60"
               backgroundColor="#FCE4EC"
               tooltipData={{
-                description: "Mide la intensidad de uso de las camas considerando todos los movimientos hospitalarios (ingresos, egresos, traslados). Un índice alto indica alta rotación de pacientes.",
-                formula: "Índice = Total Movimientos / (Camas Totales × Días del Período)",
-                example: "Si hay 1,500 movimientos en 30 días con 100 camas: 1,500 / (100 × 30) = 0.5 movimientos por cama por día",
-                importance: "0.3-0.7 es normal. Menos de 0.3 indica baja utilización. Más de 0.7 indica alta rotación y eficiencia operativa."
+                description: "Relación entre la ocupación media del período y la capacidad instalada. Coincide con la tasa de ocupación expresada como proporción (0–1).",
+                formula: "Índice = (Promedio diario de camas ocupadas) / (Total de camas)",
+                example: "Si en promedio hay 75 camas ocupadas de 100: 75/100 = 0.75",
+                importance: "0.75–0.85 es un rango operativo habitual. Valores muy bajos indican subutilización; cercanos a 1 indican saturación."
               }}
             />
           </div>
@@ -375,6 +372,9 @@ export default function BedsAnalytics() {
           {/* Distribución por Sector con Donut Chart */}
           <div className={styles.donutChartSection}>
             <h3 className={styles.sectionTitle}>Distribución por Sector</h3>
+            <p style={{ margin: '0 0 12px', color: '#666', fontSize: 13 }}>
+              Días-cama ocupados en el período seleccionado
+            </p>
             <div className={styles.donutChartContent}>
               <div className={styles.donutLegend}>
                 {sectorData.map((item, index) => (
@@ -383,7 +383,12 @@ export default function BedsAnalytics() {
                       <div className={styles.legendColor} style={{ backgroundColor: item.color }} />
                       <span className={styles.legendLabel}>{item.label}</span>
                     </div>
-                    <span className={styles.legendValue}>{typeof item.value === 'number' ? item.value.toFixed(2) : item.value}</span>
+                    <span className={styles.legendValue}>
+                      {typeof item.value === 'number' ? item.value.toLocaleString('es-AR', { maximumFractionDigits: 1 }) : item.value}
+                      {resumen?.ocupacionPorSector?.[item.label] != null
+                        ? ` (${resumen.ocupacionPorSector[item.label].toFixed(1)}%)`
+                        : ''}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -499,16 +504,16 @@ export default function BedsAnalytics() {
                   importance: "Permite identificar oportunidades de redistribución de recursos y pacientes para optimizar la utilización global del hospital."
                 }}
                 onAnalyze={() => {
-                  const sectoresData = resumen?.resumenPorSector || {};
+                  const sectoresData = resumen?.ocupacionPorSector || {};
                   const sectoresOrdenados = Object.entries(sectoresData)
-                    .sort(([,a], [,b]) => (b as number) - (a as number));
-                  
+                    .sort(([, a], [, b]) => (b as number) - (a as number));
+
                   const analysis = {
                     title: 'Análisis de Variabilidad de Ocupación',
                     insights: [
                       `Equilibrio operativo: ${variabilidadOcupacion.tipo === 'alta' ? 'La ocupación hospitalaria NO está homogénea' : 'La ocupación está relativamente equilibrada'}.`,
-                      variabilidadOcupacion.tipo === 'alta' 
-                        ? `Desequilibrio significativo: mientras ${sectoresOrdenados[0]?.[0]} está al ${sectoresOrdenados[0]?.[1].toFixed(1)}%, otros sectores permanecen subutilizados.`
+                      variabilidadOcupacion.tipo === 'alta'
+                        ? `Desequilibrio significativo: mientras ${sectoresOrdenados[0]?.[0]} está al ${Number(sectoresOrdenados[0]?.[1] || 0).toFixed(1)}%, otros sectores permanecen subutilizados.`
                         : `Distribución equilibrada: los sectores mantienen niveles similares de ocupación.`,
                       variabilidadOcupacion.tipo === 'alta'
                         ? 'Perspectiva útil: Esto habilita decisiones de gestión sobre redistribución de pacientes y recursos entre sectores.'

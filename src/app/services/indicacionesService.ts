@@ -149,11 +149,15 @@ export const indicacionesService = {
         });
         const json = await resp.json();
         if (!resp.ok || json?.success === false) {
-            const msg = json?.message || "No se pudo crear la indicación";
+            const msg =
+                json?.mensaje ||
+                json?.message ||
+                json?.error ||
+                "No se pudo crear la indicación";
             const detail = json?.invalidFields
                 ? `\nDetalles: ${JSON.stringify(json.invalidFields)}`
                 : "";
-            throw new Error(msg + detail);
+            throw new Error(String(msg) + detail);
         }
         return json?.data;
     },

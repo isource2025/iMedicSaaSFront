@@ -167,7 +167,9 @@ export default function AmbulatorioAnalytics() {
     () =>
       serie.map((p) => {
         const [, mes, dia] = p.fecha.split('-');
-        const total = p.ambulatoriasTotal || p.programados + p.turnosDemanda;
+        // Preferir visitas reales; si no hay, sumar agenda + demanda no cancelada
+        const total =
+          p.ambulatoriasTotal > 0 ? p.ambulatoriasTotal : p.atendidos + (p.turnosDemanda || 0);
         return { label: `${dia}/${mes}`, value: total, date: p.fecha };
       }),
     [serie],
@@ -312,31 +314,31 @@ export default function AmbulatorioAnalytics() {
           <div className={styles.estadoCard}>
             <div className={styles.estadoTop}>
               <div className={styles.estadoIntro}>
-                <h2 className={styles.estadoTitle}>Cumplimiento de Agenda</h2>
+                <h2 className={styles.estadoTitle}>Consultas del período</h2>
                 <p className={styles.estadoSubtitle}>
-                  {fechaInicio} al {fechaFin} · un turno cuenta como ausente {graciaMin} min
-                  después de su horario · la atención a demanda no entra en el ausentismo
+                  {fechaInicio} al {fechaFin} · atendidos = agenda cerrada + a demanda (mismo
+                  criterio que Admin de turnos) · ausente tras {graciaMin} min sin cierre
                 </p>
               </div>
               <div className={styles.estadoTotalizer}>
                 <AnimatedCounter
-                  value={resumen.programados + resumen.turnosDemanda}
+                  value={resumen.atendidosTotal ?? resumen.atendidos + resumen.atendidosDemanda}
                   animationKey={`${fechaInicio}-${fechaFin}-${graciaMin}`}
                 />
-                <div className={styles.estadoTotalizerLabel}>Total atenciones</div>
+                <div className={styles.estadoTotalizerLabel}>Consultas atendidas</div>
               </div>
             </div>
 
             <div className={styles.estadoMetrics}>
               <div className={`${styles.estadoMetric} ${styles.estadoMetricPrimary}`}>
                 <div className={styles.estadoMetricValuePrimary}>
-                  {resumen.programados.toLocaleString()}
+                  {resumen.atendidos.toLocaleString()}
                 </div>
-                <div className={styles.estadoMetricLabel}>Turnos de agenda</div>
+                <div className={styles.estadoMetricLabel}>Atendidos agenda</div>
               </div>
               <div className={`${styles.estadoMetric} ${styles.estadoMetricPrimary}`}>
                 <div className={styles.estadoMetricValuePrimary}>
-                  {resumen.turnosDemanda.toLocaleString()}
+                  {resumen.atendidosDemanda.toLocaleString()}
                 </div>
                 <div className={styles.estadoMetricLabel}>A demanda</div>
               </div>
@@ -345,15 +347,21 @@ export default function AmbulatorioAnalytics() {
 
               <div className={styles.estadoMetric}>
                 <div className={styles.estadoMetricValue}>
-                  {resumen.atendidos.toLocaleString()}
+                  {resumen.programados.toLocaleString()}
                 </div>
-                <div className={styles.estadoMetricLabel}>Atendidos</div>
+                <div className={styles.estadoMetricLabel}>Turnos de agenda</div>
               </div>
               <div className={styles.estadoMetric}>
                 <div className={styles.estadoMetricValue}>
                   {resumen.ausentes.toLocaleString()}
                 </div>
                 <div className={styles.estadoMetricLabel}>Ausentes</div>
+              </div>
+              <div className={styles.estadoMetric}>
+                <div className={styles.estadoMetricValue}>
+                  {(resumen.enCurso || 0).toLocaleString()}
+                </div>
+                <div className={styles.estadoMetricLabel}>En curso</div>
               </div>
               <div className={styles.estadoMetric}>
                 <div className={styles.estadoMetricValue}>
@@ -400,17 +408,17 @@ export default function AmbulatorioAnalytics() {
           <div className={styles.widgetGrid}>
             <ChartWidget
               title="Origen de la Consulta"
-              hint="Visitas ambulatorias según provengan de la agenda o de demanda"
+              hint="Consultas atendidas según agenda o demanda (alineado al Admin de turnos)"
               span={7}
               isEmpty={datosOrigen.length === 0}
               emptyMessage="No hay visitas ambulatorias registradas en el período."
               tooltipData={{
                 description:
-                  'Visitas ambulatorias reales del período (imVisita), separadas según el paciente tuviera una cita reservada con antelación o llegara sin turno previo.',
+                  'Misma base que el filtro Estado=Atendido del Administrador de turnos: visitas ambulatorias (imVisita) o turnos cerrados, separadas por origen (reservado vs a demanda/sobreturno).',
                 formula:
-                  'A demanda = visitas sin turno + visitas cuyo turno se creó al momento de llegar (TipoTurno = 1)',
+                  'Atendidos agenda (TipoTurno=0) + Atendidos a demanda (TipoTurno=1) = total del donut',
                 importance:
-                  'Distinguir el origen muestra cuánta actividad está bajo control de la agenda y cuánta llega sin programar.',
+                  'El centro del gráfico debe coincidir con la cantidad de turnos “Atendido” del administrador para el mismo día.',
               }}
               legend={<ChartLegend items={datosOrigen} />}
             >
