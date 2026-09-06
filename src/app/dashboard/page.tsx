@@ -11,6 +11,7 @@ import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
 import { useIndicadores } from '../hooks/useIndicadores';
 import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
 import { useAppContext } from '../contexts/AppContext';
+import { authService } from '../services/authService';
 import styles from './DashboardPage.module.css';
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
@@ -119,6 +120,14 @@ export default function Dashboard() {
   const [loadingAmbulatorio, setLoadingAmbulatorio] = useState(true);
   const [errorAmbulatorio, setErrorAmbulatorio] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    const rol = authService.getCurrentRol();
+    const home = authService.getHomePath(rol?.nombre);
+    if (home !== '/dashboard') {
+      router.replace(home);
+    }
+  }, [router]);
 
   // Configurar fechas para los últimos 30 días
   const today = new Date();

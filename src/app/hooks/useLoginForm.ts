@@ -124,6 +124,9 @@ export function useLoginForm() {
         setUsuario(data.usuario);
       }
 
+      const rolNombre = String(data.rol?.nombre || '').trim().toUpperCase();
+      const esSuperAdmin = rolNombre === 'SUPER_ADMIN';
+
       if (data.rol) {
         localStorage.setItem('rol', JSON.stringify(data.rol));
       } else {
@@ -142,7 +145,13 @@ export function useLoginForm() {
         localStorage.removeItem('permisos');
       }
 
-      if (data.empresaSeleccionada) {
+      if (esSuperAdmin) {
+        localStorage.removeItem('empresaSeleccionada');
+        localStorage.removeItem('empresaInfo');
+        localStorage.removeItem('empresaModulos');
+        setEmpresaInfo(null);
+        setModulosEmpresa(null);
+      } else if (data.empresaSeleccionada) {
         const empresa = data.empresaSeleccionada as EmpresaInfo;
         setEmpresaInfo(empresa);
         guardarInfoEmpresaLocal(empresa);
@@ -157,10 +166,10 @@ export function useLoginForm() {
         localStorage.setItem('empresaSeleccionada', JSON.stringify({ idEmpresa: data.idEmpresa }));
       }
 
-      if (data.modulosEmpresa) {
+      if (!esSuperAdmin && data.modulosEmpresa) {
         setModulosEmpresa(data.modulosEmpresa as ModulosEmpresa);
         localStorage.setItem('empresaModulos', JSON.stringify(data.modulosEmpresa));
-      } else {
+      } else if (!esSuperAdmin) {
         localStorage.removeItem('empresaModulos');
         setModulosEmpresa(null);
       }
@@ -295,8 +304,7 @@ export function useLoginForm() {
 
       if (data.success && (data.step === 'COMPLETE' || !data.step)) {
         persistLoginSuccess(data);
-        const rolNombre = data.rol?.nombre?.toUpperCase?.() || '';
-        router.push(rolNombre === 'SUPER_ADMIN' ? '/dashboard/super-admin' : '/dashboard');
+        router.push(authService.getHomePath(data.rol?.nombre));
         return;
       }
 

@@ -76,6 +76,21 @@ export const authService = {
     return null;
   },
 
+  /**
+   * Ruta inicial post-login / home:
+   * - SUPER_ADMIN → panel plataforma
+   * - ADMIN → dashboard Inicio
+   * - resto → Mi Perfil
+   */
+  getHomePath: (rolNombre?: string | null): string => {
+    const n = String(rolNombre ?? authService.getCurrentRol()?.nombre ?? '')
+      .trim()
+      .toUpperCase();
+    if (n === 'SUPER_ADMIN') return '/dashboard/super-admin';
+    if (n === 'ADMIN') return '/dashboard';
+    return '/dashboard/profile';
+  },
+
   getCurrentPermisos: (): string[] => {
     if (typeof window === 'undefined') return [];
     const raw = localStorage.getItem('permisos');

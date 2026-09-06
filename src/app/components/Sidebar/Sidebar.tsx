@@ -381,10 +381,16 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
           />
           <div className={styles.companyInfo}>
             <span className={`${styles.companyName} notranslate`} translate="no">
-              {empresaInfo?.descripcion || ''}
+              {rol?.nombre === 'SUPER_ADMIN'
+                ? 'Plataforma iMedic'
+                : empresaInfo?.descripcion || ''}
             </span>
             <span className={`${styles.sectorName} notranslate`} translate="no">
-              {sectorSeleccionado ? `Sector: ${sectorSeleccionado.descripcion}` : ''}
+              {rol?.nombre === 'SUPER_ADMIN'
+                ? 'Sector: Plataforma'
+                : sectorSeleccionado
+                  ? `Sector: ${sectorSeleccionado.descripcion}`
+                  : ''}
             </span>
           </div>
         </div>

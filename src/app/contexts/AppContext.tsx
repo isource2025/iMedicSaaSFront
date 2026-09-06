@@ -112,6 +112,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    if (authService.getCurrentRol()?.nombre === 'SUPER_ADMIN') {
+      setEmpresaInfoState(null);
+      return;
+    }
+
     const localEmpresaInfo = obtenerInfoEmpresaLocal();
     if (localEmpresaInfo?.id) {
       setEmpresaInfoState(localEmpresaInfo);
@@ -119,6 +124,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
     const fetchEmpresaInfo = async () => {
       try {
+        if (authService.getCurrentRol()?.nombre === 'SUPER_ADMIN') return;
         const stored = localStorage.getItem('empresaSeleccionada');
         const idFromLogin = stored
           ? (JSON.parse(stored) as { idEmpresa?: string | number })?.idEmpresa
@@ -141,6 +147,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     if (!isAuthenticated) return;
     const refreshModulos = async () => {
       try {
+        if (authService.getCurrentRol()?.nombre === 'SUPER_ADMIN') return;
         const me = await authService.me();
         if (me.modulosEmpresa) {
           setModulosEmpresaState(me.modulosEmpresa);

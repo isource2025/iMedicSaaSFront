@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { authService } from '@/app/services/authService';
 import Loader from '../Loader/Loader';
 import styles from './superAdmin.module.css';
 
@@ -13,8 +14,8 @@ export default function SuperAdminGuard({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!loaded) return;
-    if (!puedeAcceder) router.replace('/dashboard');
-  }, [loaded, puedeAcceder, router]);
+    if (!puedeAcceder) router.replace(authService.getHomePath(rol?.nombre));
+  }, [loaded, puedeAcceder, rol?.nombre, router]);
 
   if (!loaded || !puedeAcceder) {
     return (
