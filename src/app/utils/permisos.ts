@@ -461,6 +461,14 @@ export function tieneAccesoASubmodulo(
 	return permisosDeRol(rol, permisosUsuario).some((p) => p.startsWith(prefijo));
 }
 
+/**
+ * Inbox WhatsApp (Conversaciones): comparte permiso TURNOS.AGENDA,
+ * pero no se muestra a MEDICO (solo ve su agenda).
+ */
+export function rolTieneAccesoConversaciones(nombreRol?: string | null): boolean {
+	return Boolean(nombreRol) && nombreRol !== 'MEDICO';
+}
+
 /** Árbol MODULOS filtrado a lo que el rol/permisos pueden ver. */
 export function modulosVisibles(
 	rol: { nombre?: string } | string | null | undefined,

@@ -22,6 +22,7 @@ import {
 import styles from './Sidebar.module.css'
 import { useAppContext } from '../../contexts/AppContext'
 import { usePermiso } from '@/app/hooks/usePermiso'
+import { rolTieneAccesoConversaciones } from '@/app/utils/permisos'
 import { useWhatsAppInboxUnread } from '@/app/hooks/useWhatsAppInboxUnread'
 import { authService } from '@/app/services/authService'
 import type { UserData } from '@/app/types/AuthInterface'
@@ -162,7 +163,10 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const pathname = usePathname()
   const { empresaInfo, sectorSeleccionado, logout: clearAppSession } = useAppContext()
   const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
-  const puedeVerChats = loaded && puedeSubmodulo('TURNOS', 'AGENDA')
+  const puedeVerChats =
+    loaded &&
+    rolTieneAccesoConversaciones(rol?.nombre) &&
+    puedeSubmodulo('TURNOS', 'AGENDA')
   const { count: chatsUnread } = useWhatsAppInboxUnread(puedeVerChats)
 
   useEffect(() => {
@@ -251,7 +255,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
 
         // Filtrar subitems: si el subitem no tiene submoduloId siempre se muestra
         const subs = item.subItems.filter((sub) => {
-          if (rol?.nombre === 'MEDICO' && sub.path === CHATS_PATH) return false
+          if (sub.path === CHATS_PATH && !puedeVerChats) return false
           if (!sub.submoduloId) return true
           return puedeSubmodulo(permisoModulo(sub), sub.submoduloId)
         })
@@ -264,7 +268,7 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       .filter((x): x is MenuItem => x !== null)
   // puedeModulo y puedeSubmodulo son closures que cambian cuando cambia el estado del hook
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rol, loaded, puedeModulo, puedeSubmodulo])
+  }, [rol, loaded, puedeModulo, puedeSubmodulo, puedeVerChats])
 
   const pathBase = (p: string) => p.split('?')[0]
 

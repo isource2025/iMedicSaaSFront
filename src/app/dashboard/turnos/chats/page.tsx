@@ -1,12 +1,14 @@
 'use client';
 
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { rolTieneAccesoConversaciones } from '@/app/utils/permisos';
 import AgendaWhatsAppInbox from '@/app/components/Agenda/AgendaWhatsAppInbox';
 import styles from '../agenda/agenda.module.css';
 
 export default function ConversacionesPage() {
-	const { puedeSubmodulo, puede } = usePermiso();
-	const puedeVer = puedeSubmodulo('TURNOS', 'AGENDA');
+	const { puedeSubmodulo, puede, rol } = usePermiso();
+	const puedeVer =
+		rolTieneAccesoConversaciones(rol?.nombre) && puedeSubmodulo('TURNOS', 'AGENDA');
 	const puedeEditar = puede('TURNOS.AGENDA.EDITAR');
 
 	if (!puedeVer) {
@@ -41,4 +43,4 @@ export default function ConversacionesPage() {
 		</div>
 	);
 }
-
+
