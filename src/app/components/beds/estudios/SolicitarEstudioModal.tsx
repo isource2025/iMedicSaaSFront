@@ -8,6 +8,7 @@ import {
 	resolveReceptorPorTipo,
 	resolveServicioDestinoEnLista,
 } from '@/app/utils/resolveSectorReceptor';
+import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
 
@@ -129,6 +130,23 @@ export default function SolicitarEstudioModal({
 		if (servicioAuto && !idServicioDestino) setIdServicioDestino(servicioAuto);
 	}, [servicioAuto, idServicioDestino]);
 
+	const opcionesServicio = useMemo(() => {
+		const opts = servicios.map((s) => ({
+			value: s.valor,
+			label: `${s.descripcion} (${s.valor})`,
+		}));
+		if (
+			idServicioDestino &&
+			!opts.some((o) => String(o.value) === String(idServicioDestino))
+		) {
+			opts.unshift({
+				value: idServicioDestino,
+				label: `${idServicioDestino} (actual)`,
+			});
+		}
+		return opts;
+	}, [servicios, idServicioDestino]);
+
 	if (!open) return null;
 
 	const submit = async () => {
@@ -233,27 +251,15 @@ export default function SolicitarEstudioModal({
 
 					<label className={formStyles.label}>
 						Servicio destino
-						<select
-							className={formStyles.input}
+						<CustomSelect
+							label=""
+							name="servicioDestino"
+							isLoading={loadingServicios}
+							disabled={bloqueado}
 							value={idServicioDestino}
-							onChange={(e) => setIdServicioDestino(e.target.value)}
-							disabled={loadingServicios || bloqueado}
-						>
-							<option value="">
-								{loadingServicios ? 'Cargando servicios…' : 'Seleccionar…'}
-							</option>
-							{idServicioDestino &&
-								!servicios.some((s) => s.valor === idServicioDestino) && (
-									<option value={idServicioDestino}>
-										{idServicioDestino} (actual)
-									</option>
-								)}
-							{servicios.map((s) => (
-								<option key={s.valor} value={s.valor}>
-									{s.descripcion} ({s.valor})
-								</option>
-							))}
-						</select>
+							onChange={(val) => setIdServicioDestino(String(val))}
+							options={opcionesServicio}
+						/>
 						{!loadingServicios && servicios.length === 0 ? (
 							<div className={formStyles.hint}>
 								No hay servicios en el catálogo. Configúrelos en Personal / Servicios.
