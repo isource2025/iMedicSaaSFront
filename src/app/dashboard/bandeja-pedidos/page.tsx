@@ -513,14 +513,11 @@ function BandejaPedidosContent() {
 						<span className={styles.backBarIcon} aria-hidden>
 							←
 						</span>
-						Volver a todos los sectores
+						Volver a todos los servicios
 					</button>
 					<p className={styles.queueWhere}>
-						Estás en <strong>{servicioActual?.descripcion || 'este sector'}</strong>
+						Estás en <strong>{servicioActual?.descripcion || 'este servicio'}</strong>
 						{servicioActual?.valor ? ` · ${servicioActual.valor}` : ''}
-						{servicioActual?.descripcionServicio || servicioActual?.valorServicio
-							? ` · ${servicioActual.descripcionServicio || servicioActual.valorServicio}`
-							: ''}
 					</p>
 				</div>
 			) : null}
@@ -533,9 +530,9 @@ function BandejaPedidosContent() {
 					</h1>
 					<p className={styles.subtitle}>
 						{vistaPanorama
-							? 'Elegí el sector al que querés entrar. Después podés volver acá con un clic.'
+							? 'Elegí el servicio al que querés entrar. Después podés volver acá con un clic.'
 							: servicioActual
-								? 'Cola de este sector. Un pedido, una persona.'
+								? 'Cola de este servicio. Un pedido, una persona.'
 								: 'Estudios e interconsultas. Un pedido, una persona.'}
 					</p>
 				</div>
@@ -570,12 +567,12 @@ function BandejaPedidosContent() {
 						<div className={`${styles.kpi} ${styles.kpiEst}`}>
 							<span className={styles.kpiValue}>{resumen.estudios}</span>
 							<span className={styles.kpiLabel}>Estudios</span>
-							<span className={styles.kpiHint}>Todos los sectores</span>
+							<span className={styles.kpiHint}>Todos los servicios</span>
 						</div>
 						<div className={`${styles.kpi} ${styles.kpiIc}`}>
 							<span className={styles.kpiValue}>{resumen.interconsultas}</span>
 							<span className={styles.kpiLabel}>Interconsultas</span>
-							<span className={styles.kpiHint}>Todos los sectores</span>
+							<span className={styles.kpiHint}>Todos los servicios</span>
 						</div>
 						<div className={`${styles.kpi} ${styles.kpiUrg}`}>
 							<span className={styles.kpiValue}>{resumen.urgentes}</span>
@@ -585,7 +582,7 @@ function BandejaPedidosContent() {
 					</div>
 					<div className={styles.overviewHead}>
 						<div>
-							<h2 className={styles.overviewTitle}>Por sector</h2>
+							<h2 className={styles.overviewTitle}>Por servicio</h2>
 							<p className={styles.overviewMeta}>
 								Tocá una tarjeta para abrir la cola
 								{pendientesServicios.filter((s) => s.total > 0).length > 0
@@ -597,17 +594,17 @@ function BandejaPedidosContent() {
 						<input
 							className={styles.svcSearch}
 							type="search"
-							placeholder="Buscar sector…"
+							placeholder="Buscar servicio…"
 							value={qServicio}
 							onChange={(e) => setQServicio(e.target.value)}
 						/>
 					</div>
 					{loadingSectores && sectores.length === 0 ? (
-						<p className={styles.empty}>Cargando sectores…</p>
+						<p className={styles.empty}>Cargando servicios…</p>
 					) : serviciosVisibles.length === 0 ? (
 						<div className={styles.emptyCard}>
 							<p className={styles.emptyTitle}>
-								{qSvc ? 'Ningún sector coincide' : 'Nada pendiente'}
+								{qSvc ? 'Ningún servicio coincide' : 'Nada pendiente'}
 							</p>
 							<p className={styles.emptyHint}>
 								{qSvc
@@ -669,7 +666,7 @@ function BandejaPedidosContent() {
 
 			<div className={styles.toolbar}>
 				<label className={styles.field}>
-					<span>{sectores.length > 1 ? 'Cambiar sector' : 'Sector'}</span>
+					<span>{sectores.length > 1 ? 'Cambiar servicio' : 'Servicio'}</span>
 					<select
 						className={styles.select}
 						value={sector}
@@ -680,15 +677,12 @@ function BandejaPedidosContent() {
 							{loadingSectores && sectores.length === 0
 								? 'Cargando…'
 								: sectores.length > 1
-									? 'Todos los sectores'
+									? 'Todos los servicios'
 									: 'Seleccionar…'}
 						</option>
 						{sectores.map((s) => (
 							<option key={s.valor} value={s.valor}>
 								{s.descripcion} ({s.valor})
-								{s.descripcionServicio || s.valorServicio
-									? ` · ${s.descripcionServicio || s.valorServicio}`
-									: ''}
 							</option>
 						))}
 					</select>
@@ -778,12 +772,12 @@ function BandejaPedidosContent() {
 			</div>
 
 			{loadingSectores && sectores.length === 0 ? (
-				<p className={styles.empty}>Cargando sectores…</p>
+				<p className={styles.empty}>Cargando servicios…</p>
 			) : !loading && sectores.length === 0 ? (
 				<div className={styles.emptyCard}>
-					<p className={styles.emptyTitle}>Sin sectores asignados</p>
+					<p className={styles.emptyTitle}>Sin servicios asignados</p>
 					<p className={styles.emptyHint}>
-						Tu usuario no tiene sectores asignados. Un administrador puede cargarlos en Personal → Sectores.
+						Tu usuario no tiene servicios destino. Un administrador puede cargarlos en Personal → Servicios.
 					</p>
 				</div>
 			) : loading ? (
@@ -792,7 +786,7 @@ function BandejaPedidosContent() {
 				rowsEstudio.length === 0 ? (
 					<div className={styles.emptyCard}>
 						<p className={styles.emptyTitle}>Sin estudios pendientes</p>
-						<p className={styles.emptyHint}>Cuando llegue un pedido para este sector, aparece acá.</p>
+						<p className={styles.emptyHint}>Cuando llegue un pedido para este servicio, aparece acá.</p>
 					</div>
 				) : (
 					<ul className={styles.cardList}>
@@ -881,7 +875,7 @@ function BandejaPedidosContent() {
 			) : rowsIc.length === 0 ? (
 				<div className={styles.emptyCard}>
 					<p className={styles.emptyTitle}>Sin interconsultas pendientes</p>
-					<p className={styles.emptyHint}>Cuando llegue una solicitud para este sector, aparece acá.</p>
+					<p className={styles.emptyHint}>Cuando llegue una solicitud para este servicio, aparece acá.</p>
 				</div>
 			) : (
 				<ul className={styles.cardList}>
@@ -999,7 +993,7 @@ function BandejaPedidosContent() {
 							value: selectedEstudio.Cumplido ? autorRespuesta(selectedEstudio) : null,
 						},
 						{
-							label: 'Destino',
+							label: 'Servicio destino',
 							value: selectedEstudio.ServicioDescripcion || selectedEstudio.SectorReceptor,
 						},
 					]}
@@ -1045,7 +1039,7 @@ function BandejaPedidosContent() {
 							value: selectedIc.Cumplido ? autorRespuesta(selectedIc) : null,
 						},
 						{
-							label: 'Destino',
+							label: 'Servicio destino',
 							value: selectedIc.ServicioDescripcion || selectedIc.SectorReceptor,
 						},
 					]}

@@ -367,7 +367,7 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 												<tr>
 													<th>Estudio</th>
 													<th>Estado</th>
-													<th>Sector receptor</th>
+													<th>Servicio destino</th>
 													<th>Urgencia</th>
 													<th>Fecha pedido</th>
 													<th>Pedido</th>

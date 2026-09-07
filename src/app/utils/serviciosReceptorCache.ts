@@ -3,8 +3,9 @@ import { getIdEmpresaFromToken } from './jwtSession';
 
 export const SERVICIOS_RECEPTOR_UPDATED_EVENT = 'imedic:servicios-receptor-updated';
 
-const PREFIX = 'imedic:sectoresReceptor:';
-const COUNT_PREFIX = 'imedic:bandejaPedidosCount:';
+const PREFIX = 'imedic:serviciosReceptor:v2:';
+const COUNT_PREFIX = 'imedic:bandejaPedidosCount:v2:';
+const LEGACY_PREFIXES = ['imedic:sectoresReceptor:', 'imedic:bandejaPedidosCount:'];
 
 /** Mostrar cache viejo; el listado de servicios casi no cambia. */
 const STALE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -219,4 +220,5 @@ export function clearServiciosReceptorCache(): void {
 	memoryCount.clear();
 	lsRemovePrefix(PREFIX);
 	lsRemovePrefix(COUNT_PREFIX);
+	for (const p of LEGACY_PREFIXES) lsRemovePrefix(p);
 }

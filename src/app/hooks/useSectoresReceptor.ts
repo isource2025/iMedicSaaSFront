@@ -3,50 +3,30 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import type { SectorReceptorEstudio } from '@/app/types/estudios';
-import { getSectoresFromToken } from '@/app/utils/jwtSession';
 import {
 	peekCachedSectoresReceptor,
 	setCachedSectoresReceptor,
 	SERVICIOS_RECEPTOR_UPDATED_EVENT,
 } from '@/app/utils/serviciosReceptorCache';
 
-function sectoresDesdeLogin(): SectorReceptorEstudio[] {
-	const fromJwt = getSectoresFromToken();
-	if (fromJwt.length) {
-		return fromJwt.map((s) => ({
-			valor: s.valor,
-			descripcion: s.descripcion,
-			valorServicio: s.valorServicio,
-			descripcionServicio: '',
-			prefijos: [],
-		}));
-	}
-	try {
-		const raw = localStorage.getItem('sectoresAsignados');
-		const arr = raw ? JSON.parse(raw) : [];
-		if (!Array.isArray(arr)) return [];
-		return arr
-			.map((s: { idSector?: string; descripcion?: string; valorServicio?: string }) => ({
-				valor: String(s.idSector || '').trim(),
-				descripcion: String(s.descripcion || s.idSector || '').trim(),
-				valorServicio: String(s.valorServicio || '').trim(),
-				descripcionServicio: '',
-				prefijos: [] as string[],
-			}))
-			.filter((s: SectorReceptorEstudio) => s.valor);
-	} catch {
-		return [];
-	}
-}
-
-/** Sectores receptor: fuente = login (JWT / sectoresAsignados). Catálogo completo solo si no es soloMios. */
-export function useSectoresReceptor(opts?: { soloMios?: boolean; enabled?: boolean }): {
+/**
+ * Destinos de pedidos (estudios / interconsultas) = SERVICIOS (imServicios), no sectores.
+ * soloMios → servicios asignados al personal (imPersonalServicios + fallbacks).
+ */
+export function useSectoresReceptor(opts?: {
+	soloMios?: boolean;
+	enabled?: boolean;
+	force?: boolean;
+}): {
+	/** @deprecated Alias de `servicios` (compat). */
 	sectores: SectorReceptorEstudio[];
+	servicios: SectorReceptorEstudio[];
 	loading: boolean;
 } {
 	const soloMios = Boolean(opts?.soloMios);
 	const enabled = opts?.enabled !== false;
-	const [sectores, setSectores] = useState<SectorReceptorEstudio[]>([]);
+	const force = Boolean(opts?.force);
+	const [servicios, setServicios] = useState<SectorReceptorEstudio[]>([]);
 	const [loading, setLoading] = useState(enabled);
 
 	useLayoutEffect(() => {
@@ -54,46 +34,38 @@ export function useSectoresReceptor(opts?: { soloMios?: boolean; enabled?: boole
 			setLoading(false);
 			return;
 		}
-		if (soloMios) {
-			const login = sectoresDesdeLogin();
-			if (login.length) {
-				setSectores(login);
-				setCachedSectoresReceptor(login, { soloMios: true });
-				setLoading(false);
-				return;
-			}
+		if (force) {
+			setLoading(true);
+			return;
 		}
 		const cached = peekCachedSectoresReceptor({ soloMios, allowStale: true });
 		if (cached !== null) {
-			setSectores(cached);
+			setServicios(cached);
 			setLoading(false);
 		} else {
 			setLoading(true);
 		}
-	}, [enabled, soloMios]);
+	}, [enabled, soloMios, force]);
 
 	useEffect(() => {
 		if (!enabled) return;
-		if (soloMios && sectoresDesdeLogin().length) {
-			setLoading(false);
-			return;
-		}
 		let cancelled = false;
-		void estudiosService.listarSectoresReceptor({ soloMios }).then((list) => {
+		void estudiosService.listarSectoresReceptor({ soloMios, force }).then((list) => {
 			if (cancelled) return;
-			setSectores(list);
+			setServicios(list);
+			setCachedSectoresReceptor(list, { soloMios });
 			setLoading(false);
 		});
 		const onUpd = () => {
 			const next = peekCachedSectoresReceptor({ soloMios, allowStale: true });
-			if (next !== null) setSectores(next);
+			if (next !== null) setServicios(next);
 		};
 		window.addEventListener(SERVICIOS_RECEPTOR_UPDATED_EVENT, onUpd);
 		return () => {
 			cancelled = true;
 			window.removeEventListener(SERVICIOS_RECEPTOR_UPDATED_EVENT, onUpd);
 		};
-	}, [enabled, soloMios]);
+	}, [enabled, soloMios, force]);
 
-	return { sectores, loading };
+	return { sectores: servicios, servicios, loading };
 }

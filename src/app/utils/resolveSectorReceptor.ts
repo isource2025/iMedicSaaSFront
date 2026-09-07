@@ -1,6 +1,6 @@
 /**
- * Código de sector receptor = imSectores.Valor (ya abreviado: CIRA, CM1, AUD).
- * ValorServicio es la etiqueta de servicio anexada (CIR, CLI), no un alias a inventar.
+ * Destino de pedidos = código de SERVICIO (imServicios.Valor) en IdSectorReceptor.
+ * PrefijosPractica del servicio permiten auto-sugerir destino por práctica.
  */
 export type SectorLoginLike = {
 	idSector?: string | null;
@@ -30,16 +30,43 @@ function compact(v: unknown): string {
 	return fold(v).replace(/\s+/g, '');
 }
 
-/** Login / URL: mismo código de sector (CM1 → CM1, CIRA → CIRA). */
+function matchEnLista(code: string, list: ReceptorLike[]): ReceptorLike | undefined {
+	const id = compact(code);
+	if (!id || !list?.length) return undefined;
+	return list.find(
+		(s) => compact(s.valor) === id || compact(s.valorServicio) === id,
+	);
+}
+
+/** Coincide código de servicio del catálogo con un valor de sesión/login (legado). */
 export function resolveSectorReceptor(
 	sectorLogin: SectorLoginLike,
 	list: ReceptorLike[],
 ): string {
 	if (!list?.length) return '';
-	const id = compact(sectorLogin?.idSector);
+	const id = String(sectorLogin?.idSector || '').trim();
 	if (!id) return '';
-	const hit = list.find((s) => compact(s.valor) === id);
+	const hit = matchEnLista(id, list);
 	return hit ? String(hit.valor || '').trim() : '';
+}
+
+/**
+ * Resuelve el valor a seleccionar en el combo de servicio destino.
+ * Prioriza ServicioCodigo; si el pedido tiene un código legado de sector, lo mapea al servicio de la lista.
+ */
+export function resolveServicioDestinoEnLista(
+	stored: string | null | undefined,
+	list: ReceptorLike[],
+	servicioCodigo?: string | null,
+): string {
+	const candidates = [servicioCodigo, stored]
+		.map((c) => String(c || '').trim())
+		.filter(Boolean);
+	for (const c of candidates) {
+		const hit = matchEnLista(c, list);
+		if (hit) return String(hit.valor || '').trim();
+	}
+	return String(servicioCodigo || stored || '').trim();
 }
 
 /**
@@ -66,6 +93,7 @@ export function sectorCoincideServicio(
 	return needle.length >= 4 && blob.includes(needle);
 }
 
+/** Auto-destino: descripción del tipo o PrefijosPractica del servicio. */
 export function resolveReceptorPorTipo(
 	tipo: { descripcion?: string | null; idPractica?: number | string | null } | null,
 	list: ReceptorLike[],
@@ -86,8 +114,6 @@ export function resolveReceptorPorTipo(
 
 export function etiquetaSectorReceptor(s: ReceptorLike | null | undefined): string {
 	if (!s?.valor) return '';
-	const nombre = String(s.descripcion || s.valor).trim();
-	const svc = String(s.descripcionServicio || s.valorServicio || '').trim();
-	if (svc && compact(svc) !== compact(nombre)) return `${nombre} (${s.valor}) · ${svc}`;
+	const nombre = String(s.descripcion || s.descripcionServicio || s.valor).trim();
 	return `${nombre} (${s.valor})`;
 }

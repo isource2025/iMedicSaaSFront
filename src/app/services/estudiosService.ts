@@ -58,7 +58,18 @@ async function fetchSectoresReceptor(soloMios: boolean): Promise<SectorReceptorE
       return peekCachedSectoresReceptor({ soloMios, allowStale: true }) ?? [];
     }
     const json = await parseJson<{ success?: boolean; data?: SectorReceptorEstudio[] }>(res);
-    const list = Array.isArray(json?.data) ? json.data : [];
+    const list = (Array.isArray(json?.data) ? json.data : []).map((s) => ({
+      valor: String(s?.valor || '').trim(),
+      descripcion: String(s?.descripcion || '').trim(),
+      valorServicio: String(s?.valorServicio || s?.valor || '').trim(),
+      descripcionServicio: String(s?.descripcionServicio || s?.descripcion || '').trim(),
+      prefijos: Array.isArray(s?.prefijos)
+        ? s.prefijos.map((p) => String(p).trim()).filter(Boolean)
+        : String((s as { prefijosPractica?: string })?.prefijosPractica || '')
+            .split(',')
+            .map((p) => p.trim())
+            .filter(Boolean),
+    })).filter((s) => s.valor);
     setCachedSectoresReceptor(list, { soloMios });
     return list;
   })().finally(() => {

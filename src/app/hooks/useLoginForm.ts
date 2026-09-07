@@ -14,7 +14,6 @@ import { guardarInfoEmpresaLocal, EmpresaInfo } from '../services/empresaService
 import type { ModulosEmpresa } from '../types/superAdmin';
 import { startSessionActivityMonitor } from '../utils/sessionActivity';
 import { clearTenantUiCaches } from '../utils/sessionCaches';
-import { setCachedSectoresReceptor } from '../utils/serviciosReceptorCache';
 
 type LoginStep = 'CREDENTIALS' | 'SELECT_EMPRESA' | 'SELECT_SECTOR';
 
@@ -59,30 +58,6 @@ function parseIdEmpresa(empresaValue: string, pendiente: number | null): string 
     return String(pendiente);
   }
   return undefined;
-}
-
-function seedSectoresCache(data: LoginResponse) {
-  const assigned = Array.isArray(data.sectoresAsignados) ? data.sectoresAsignados : [];
-  const list = assigned
-    .map((s) => ({
-      valor: String(s.idSector || '').trim(),
-      descripcion: String(s.descripcion || s.idSector || '').trim(),
-      valorServicio: String(s.valorServicio || '').trim(),
-      descripcionServicio: '',
-      prefijos: [] as string[],
-    }))
-    .filter((s) => s.valor);
-  if (!list.length && data.sectorSeleccionado?.idSector) {
-    list.push({
-      valor: String(data.sectorSeleccionado.idSector).trim(),
-      descripcion: String(data.sectorSeleccionado.descripcion || data.sectorSeleccionado.idSector).trim(),
-      valorServicio: '',
-      descripcionServicio: '',
-      prefijos: [],
-    });
-  }
-  if (!list.length) return;
-  setCachedSectoresReceptor(list, { soloMios: true });
 }
 
 export function useLoginForm() {
@@ -188,8 +163,6 @@ export function useLoginForm() {
       } catch {
         /* ignore */
       }
-
-      seedSectoresCache(data);
 
       if (rememberMe) {
         localStorage.setItem('rememberUser', 'true');

@@ -31,8 +31,12 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 	const usuario = useUsuarioActual();
 	const { sectorSeleccionado } = useAppContext();
 	const matriculaSesion = usuario?.matricula ?? null;
-	const { sectores } = useSectoresReceptor({ soloMios: true, enabled: open });
-	const [sector, setSector] = useState('');
+	const { servicios, loading: loadingServicios } = useSectoresReceptor({
+		soloMios: true,
+		enabled: open,
+		force: open,
+	});
+	const [servicio, setServicio] = useState('');
 	const [rows, setRows] = useState<InterconsultaRow[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [busyId, setBusyId] = useState<number | null>(null);
@@ -45,29 +49,30 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 		if (!open) return;
 		const init = String(sectorInicial || '').trim();
 		const resolved = resolveSectorReceptor(
-			init ? { idSector: init, descripcion: sectorSeleccionado?.descripcion } : sectorSeleccionado,
-			sectores,
+			init ? { idSector: init, descripcion: sectorSeleccionado?.descripcion } : null,
+			servicios,
 		);
-		if (resolved) setSector(resolved);
-		else if (sectores[0]?.valor) setSector(sectores[0].valor);
-	}, [open, sectorInicial, sectorSeleccionado, sectores]);
+		if (resolved) setServicio(resolved);
+		else if (servicios[0]?.valor) setServicio(servicios[0].valor);
+		else setServicio('');
+	}, [open, sectorInicial, sectorSeleccionado, servicios]);
 
 	const load = useCallback(async () => {
-		if (!sector.trim()) {
+		if (!servicio.trim()) {
 			setRows([]);
 			return;
 		}
 		setLoading(true);
 		setError(null);
 		try {
-			setRows(await interconsultasService.listarPendientes(sector.trim()));
+			setRows(await interconsultasService.listarPendientes(servicio.trim()));
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'Error al cargar');
 			setRows([]);
 		} finally {
 			setLoading(false);
 		}
-	}, [sector]);
+	}, [servicio]);
 
 	useEffect(() => {
 		if (open) void load();
@@ -142,13 +147,17 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 				</div>
 
 				<label className={formStyles.label}>
-					Sector receptor
+					Servicio destino
 					<select
 						className={formStyles.input}
-						value={sector}
-						onChange={(e) => setSector(e.target.value)}
+						value={servicio}
+						onChange={(e) => setServicio(e.target.value)}
+						disabled={loadingServicios}
 					>
-						{sectores.map((s) => (
+						<option value="">
+							{loadingServicios ? 'Cargando…' : 'Seleccionar…'}
+						</option>
+						{servicios.map((s) => (
 							<option key={s.valor} value={s.valor}>
 								{s.descripcion} ({s.valor})
 							</option>
@@ -158,10 +167,16 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 
 				{error && <div className={formStyles.error}>{error}</div>}
 
-				{loading ? (
+				{loadingServicios && servicios.length === 0 ? (
+					<p className={styles.empty}>Cargando servicios…</p>
+				) : !loadingServicios && servicios.length === 0 ? (
+					<p className={styles.empty}>
+						Sin servicios asignados. Configúrelos en Personal → Servicios.
+					</p>
+				) : loading ? (
 					<p className={styles.empty}>Cargando…</p>
 				) : rows.length === 0 ? (
-					<p className={styles.empty}>No hay interconsultas pendientes para este sector.</p>
+					<p className={styles.empty}>No hay interconsultas pendientes para este servicio.</p>
 				) : (
 					<div className={styles.tableWrap}>
 						<table className={styles.table}>
@@ -249,7 +264,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 							{ label: 'Fecha', value: formatFecha(selected) },
 							{ label: 'Visita', value: selected.IdVisita },
 							{ label: 'Solicitado por', value: selected.MedicoSolicitanteNombre },
-							{ label: 'Destino', value: selected.ServicioDescripcion || selected.SectorReceptor },
+							{ label: 'Servicio destino', value: selected.ServicioDescripcion || selected.SectorReceptor },
 							{ label: 'Estado', value: selected.EstadoWorkflow || selected.Estado },
 							{
 								label: 'Respondido por',

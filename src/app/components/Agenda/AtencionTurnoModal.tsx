@@ -13,7 +13,7 @@ import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveReceptorPorTipo, sectorCoincideServicio } from '@/app/utils/resolveSectorReceptor';
 import styles from './AtencionTurnoModal.module.css';
 
-/** Prefijo (primeros 2 dígitos) del código de práctica, para filtrar sector receptor. */
+/** Prefijo (primeros 2 dígitos) del código de práctica, para filtrar servicio destino. */
 function prefijoPractica(idPractica: number | string | null | undefined): string {
 	const s = String(idPractica ?? '').replace(/\D/g, '');
 	return s.slice(0, 2);
@@ -152,8 +152,9 @@ export default function AtencionTurnoModal({
 	const [icDestinoDraft, setIcDestinoDraft] = useState('');
 	const [icMotivoDraft, setIcMotivoDraft] = useState('');
 	const [icUrgenciaDraft, setIcUrgenciaDraft] = useState<'Normal' | 'Urgente' | 'Medio'>('Normal');
-	const { sectores: sectoresReceptor, loading: loadingSectores } = useSectoresReceptor({
+	const { servicios: serviciosDestino, loading: loadingServicios } = useSectoresReceptor({
 		enabled: open,
+		force: open,
 	});
 
 	const [visited, setVisited] = useState<Record<WizardStep, boolean>>({
@@ -329,14 +330,14 @@ export default function AtencionTurnoModal({
 		};
 	}, [diagTerm]);
 
-	// Auto-selecciona el sector receptor cuando la práctica tiene un único sector posible
+	// Auto-selecciona el servicio destino cuando la práctica tiene un único servicio posible
 	useEffect(() => {
-		if (loadingSectores || sectoresReceptor.length === 0) return;
+		if (loadingServicios || serviciosDestino.length === 0) return;
 		setPedidosEstudios((prev) => {
 			let changed = false;
 			const next = prev.map((p) => {
 				if (p.idSectorReceptor) return p;
-				const auto = resolveReceptorPorTipo(p.tipo, sectoresReceptor);
+				const auto = resolveReceptorPorTipo(p.tipo, serviciosDestino);
 				if (auto) {
 					changed = true;
 					return { ...p, idSectorReceptor: auto };
@@ -345,7 +346,7 @@ export default function AtencionTurnoModal({
 			});
 			return changed ? next : prev;
 		});
-	}, [pedidosEstudios, sectoresReceptor, loadingSectores]);
+	}, [pedidosEstudios, serviciosDestino, loadingServicios]);
 
 	const pedidosEstudiosIncompletos = pedidosEstudios.some((p) => !p.idSectorReceptor.trim());
 	const pedidosInterconsultasIncompletos = pedidosInterconsultas.some(
@@ -474,12 +475,12 @@ export default function AtencionTurnoModal({
 		if (pedidosEstudiosIncompletos)
 			errs.push({
 				step: 'estudios',
-				label: 'Sector receptor en la solicitud de estudios',
+				label: 'Servicio destino en la solicitud de estudios',
 			});
 		if (pedidosInterconsultasIncompletos)
 			errs.push({
 				step: 'interconsultas',
-				label: 'Sector destino y motivo en interconsultas',
+				label: 'Servicio destino y motivo en interconsultas',
 			});
 		return errs;
 	};
@@ -687,7 +688,7 @@ export default function AtencionTurnoModal({
 					{step === 'estudios' ? (
 						<div className={styles.hcForm}>
 							<p className={styles.sectionHint}>
-								Solicite estudios para realizar en otro sector. Puede agregar uno o
+								Solicite estudios para realizar en otro servicio. Puede agregar uno o
 								varios pedidos; se guardarán al finalizar la atención.
 							</p>
 							<TipoPedidoEstudioPicker
@@ -710,21 +711,17 @@ export default function AtencionTurnoModal({
 								<div className={styles.itemGrid}>
 									{pedidosEstudios.map((p, idx) => {
 										const pref = prefijoPractica(p.tipo.idPractica);
-										const matches = sectoresReceptor.filter(
+										const matches = serviciosDestino.filter(
 											(s) =>
 												sectorCoincideServicio({ descripcion: p.tipo.descripcion }, s) ||
 												(pref ? s.prefijos.includes(pref) : false),
 										);
-										const sectoresBase = matches.length > 0 ? matches : sectoresReceptor;
-										const sectoresOpts = sectoresBase.map((s) => ({
+										const serviciosBase = matches.length > 0 ? matches : serviciosDestino;
+										const serviciosOpts = serviciosBase.map((s) => ({
 											value: s.valor,
-											label: `${s.descripcion} (${s.valor})${
-												s.descripcionServicio || s.valorServicio
-													? ` · ${s.descripcionServicio || s.valorServicio}`
-													: ''
-											}`,
+											label: `${s.descripcion} (${s.valor})`,
 										}));
-										const sectorUnico = matches.length === 1;
+										const servicioUnico = matches.length === 1;
 										const color = colorPorIndice(idx);
 										return (
 										<article key={p.key} className={styles.itemCard} style={{ borderTopColor: color }}>
@@ -758,12 +755,12 @@ export default function AtencionTurnoModal({
 											</div>
 											<div className={styles.itemCardBody}>
 												<CustomSelect
-													label='Sector receptor *'
-													name={`sector-${p.key}`}
+													label='Servicio destino *'
+													name={`servicio-${p.key}`}
 													value={p.idSectorReceptor}
-													isLoading={loadingSectores}
-													disabled={sectorUnico}
-													options={sectoresOpts}
+													isLoading={loadingServicios}
+													disabled={servicioUnico}
+													options={serviciosOpts}
 													onChange={(v) =>
 														setPedidosEstudios((prev) =>
 															prev.map((x) =>
@@ -774,9 +771,9 @@ export default function AtencionTurnoModal({
 														)
 													}
 												/>
-												{sectorUnico ? (
+												{servicioUnico ? (
 													<p className={styles.itemHintSmall}>
-														Sector asignado automáticamente según el tipo de estudio.
+														Servicio asignado automáticamente según el tipo de estudio.
 													</p>
 												) : null}
 												<CustomSelect
@@ -829,7 +826,7 @@ export default function AtencionTurnoModal({
 							)}
 							{pedidosEstudiosIncompletos ? (
 								<p className={styles.error}>
-									Seleccione el sector receptor de cada pedido de estudio.
+									Seleccione el servicio destino de cada pedido de estudio.
 								</p>
 							) : null}
 						</div>
@@ -838,28 +835,32 @@ export default function AtencionTurnoModal({
 					{step === 'interconsultas' ? (
 						<div className={styles.hcForm}>
 							<p className={styles.sectionHint}>
-								Solicite interconsultas a un sector destino. Se
+								Solicite interconsultas a un servicio destino. Se
 								registran al finalizar la atención (tipo 33) y aparecen en la bandeja del
-								sector receptor.
+								servicio receptor.
 							</p>
 							<div className={styles.field}>
-								<label htmlFor='ic-destino'>Sector destino</label>
+								<label htmlFor='ic-destino'>Servicio destino</label>
 								<select
 									id='ic-destino'
 									value={icDestinoDraft}
 									onChange={(e) => setIcDestinoDraft(e.target.value)}
-									disabled={loadingSectores}
+									disabled={loadingServicios}
 								>
-									<option value=''>Seleccione…</option>
-									{sectoresReceptor.map((s) => (
+									<option value=''>
+										{loadingServicios ? 'Cargando…' : 'Seleccione…'}
+									</option>
+									{serviciosDestino.map((s) => (
 										<option key={s.valor} value={s.valor}>
 											{s.descripcion} ({s.valor})
-											{s.descripcionServicio || s.valorServicio
-												? ` · ${s.descripcionServicio || s.valorServicio}`
-												: ''}
 										</option>
 									))}
 								</select>
+								{!loadingServicios && serviciosDestino.length === 0 ? (
+									<p className={styles.itemHintSmall}>
+										No hay servicios en el catálogo.
+									</p>
+								) : null}
 							</div>
 							<div className={styles.field}>
 								<label htmlFor='ic-urg'>Urgencia</label>
@@ -911,7 +912,7 @@ export default function AtencionTurnoModal({
 							{pedidosInterconsultas.length > 0 ? (
 								<div className={styles.itemList}>
 									{pedidosInterconsultas.map((p) => {
-										const dest = sectoresReceptor.find((s) => s.valor === p.idSectorReceptor);
+										const dest = serviciosDestino.find((s) => s.valor === p.idSectorReceptor);
 										return (
 											<article key={p.key} className={styles.itemCard}>
 												<div className={styles.itemCardHeader}>
