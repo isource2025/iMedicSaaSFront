@@ -27,6 +27,7 @@ type Props = {
 	onClose: () => void;
 	onExportPdf?: () => void | Promise<void>;
 	exporting?: boolean;
+	onEditarRespuesta?: () => void;
 };
 
 function urgenciaClass(estado?: string) {
@@ -106,6 +107,7 @@ export default function PedidoDetalleModal({
 	onClose,
 	onExportPdf,
 	exporting = false,
+	onEditarRespuesta,
 }: Props) {
 	const visibleFields = fields.filter((f) => hasValue(f.value));
 	// Mostrar bloques aunque el texto esté vacío (p. ej. sin respuesta aún)
@@ -177,6 +179,11 @@ export default function PedidoDetalleModal({
 				</div>
 
 				<div className={styles.footer}>
+					{onEditarRespuesta ? (
+						<button type="button" className={styles.btnPrimary} onClick={onEditarRespuesta}>
+							Editar respuesta
+						</button>
+					) : null}
 					{onExportPdf ? (
 						<button
 							type="button"

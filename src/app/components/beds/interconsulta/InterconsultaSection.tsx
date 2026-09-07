@@ -9,7 +9,7 @@ import { usePermiso } from '@/app/hooks/usePermiso';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import { buildPacienteFields } from '../shared/pacientePedidoFields';
-import { autorRespuesta } from '../shared/pedidoResponsable';
+import { autorRespuesta, esAutorRespuesta } from '../shared/pedidoResponsable';
 import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
@@ -19,7 +19,10 @@ import { generarPDFInterconsulta } from '../../../utils/pdfInterconsulta';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
-import { IoEyeOutline } from 'react-icons/io5';
+import { IoEyeOutline, IoPencilOutline } from 'react-icons/io5';
+import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
+import CumplirEstudioModal from '../estudios/CumplirEstudioModal';
+import type { PedidoEstudio } from '@/app/types/estudios';
 
 type Props = {
 	numeroVisita: number | null;
@@ -99,6 +102,47 @@ function buildInterconsultaTextBlocks(row: InterconsultaRow) {
 	];
 }
 
+function interconsultaComoPedido(row: InterconsultaRow): PedidoEstudio {
+	return {
+		IdPedido: Number(row.IdPedido || row.IdInterconsulta) || 0,
+		IdVisita: row.IdVisita,
+		FechaPedidoISO: row.FechaSolicitud,
+		HoraPedido: row.HoraSolicitud,
+		PracticaSolicitada:
+			row.PracticaSolicitada ||
+			row.ServicioDescripcion ||
+			row.Especialidad ||
+			'Interconsulta',
+		NotasObservacion: row.Motivo,
+		MedicoSolicitanteNombre: row.MedicoSolicitanteNombre,
+		MatriculaSolicitante: row.MedicoSolicitante,
+		TextoResultado: row.Respuesta || null,
+		SectorSolicitante: row.SectorSolicitante,
+		SectorSolicitanteNombre: row.SectorSolicitanteNombre,
+		SectorReceptor: row.SectorReceptor,
+		SectorReceptorNombre: row.SectorReceptorNombre,
+		ServicioDescripcion: row.ServicioDescripcion,
+		Cumplido: true,
+		MatriculaRealizador: row.MatriculaRealizador,
+		RealizadorNombre: row.RealizadorNombre,
+		MatriculaToma: row.MatriculaToma,
+		NombreToma: row.NombreToma,
+		CodOperadorResultado: row.CodOperadorResultado,
+		CodOperadorToma: row.CodOperadorToma,
+		PacienteNombre: row.PacienteNombre,
+		PacienteDocumento: row.PacienteDocumento,
+		PacienteTipoDocumento: row.PacienteTipoDocumento,
+		PacienteSexo: row.PacienteSexo,
+		PacienteSexoDescripcion: row.PacienteSexoDescripcion,
+		PacienteFechaNacimiento: row.PacienteFechaNacimiento,
+		PacienteEdad: row.PacienteEdad,
+		ObraSocial: row.ObraSocial,
+		Ubicacion: row.Ubicacion,
+		TipoAtencion: row.TipoAtencion,
+		IdPaciente: row.IdPaciente,
+	};
+}
+
 export default function InterconsultaSection({
 	numeroVisita,
 	sectorSolicitante,
@@ -107,6 +151,7 @@ export default function InterconsultaSection({
 	patientLocation,
 }: Props) {
 	const { puede } = usePermiso();
+	const usuarioActual = useUsuarioActual();
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
 
 	const [rows, setRows] = useState<InterconsultaRow[]>([]);
@@ -115,6 +160,7 @@ export default function InterconsultaSection({
 	const [exportingDetail, setExportingDetail] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
+	const [editingRespuesta, setEditingRespuesta] = useState<InterconsultaRow | null>(null);
 	const [query, setQuery] = useState('');
 
 	const loadVisita = useCallback(async () => {
@@ -155,6 +201,14 @@ export default function InterconsultaSection({
 
 	const handleRowClick = (row: InterconsultaRow) => {
 		setSelected(row);
+	};
+
+	const puedeEditarRespuesta = (row: InterconsultaRow) =>
+		row.Origen !== 'WEB' && esCumplida(row) && esAutorRespuesta(row, usuarioActual);
+
+	const abrirEdicionRespuesta = (row: InterconsultaRow) => {
+		setSelected(null);
+		setEditingRespuesta(row);
 	};
 
 	const selectedTextBlocks = selected ? buildInterconsultaTextBlocks(selected) : [];
@@ -355,6 +409,7 @@ export default function InterconsultaSection({
 												{responsable ? ` · ${responsable}` : ''}
 											</td>
 											<td>
+												<div className={tableStyles.actionBtns}>
 												<button
 													type="button"
 													className={tableStyles.btnAction}
@@ -363,6 +418,17 @@ export default function InterconsultaSection({
 												>
 													<IoEyeOutline color="#5BC0DE" size={18} />
 												</button>
+												{puedeEditarRespuesta(r) && (
+													<button
+														type="button"
+														className={tableStyles.btnAction}
+														title="Editar respuesta"
+														onClick={() => abrirEdicionRespuesta(r)}
+													>
+														<IoPencilOutline color="#5BC0DE" size={18} />
+													</button>
+												)}
+												</div>
 											</td>
 										</tr>
 									);
@@ -390,8 +456,35 @@ export default function InterconsultaSection({
 					onClose={() => setSelected(null)}
 					onExportPdf={handleExportDetail}
 					exporting={exportingDetail}
+					onEditarRespuesta={
+						puedeEditarRespuesta(selected)
+							? () => abrirEdicionRespuesta(selected)
+							: undefined
+					}
 				/>
 			)}
+
+			{editingRespuesta ? (
+				<CumplirEstudioModal
+					open={Boolean(editingRespuesta)}
+					pedido={interconsultaComoPedido(editingRespuesta)}
+					modoEdicion
+					guardarInforme={async (texto) => {
+						const id = Number(
+							editingRespuesta.IdPedido || editingRespuesta.IdInterconsulta,
+						);
+						if (!Number.isFinite(id) || id <= 0) {
+							throw new Error('Interconsulta inválida');
+						}
+						await interconsultasService.actualizarRespuesta(id, texto);
+					}}
+					onClose={() => setEditingRespuesta(null)}
+					onCumplido={() => {
+						setEditingRespuesta(null);
+						void loadVisita();
+					}}
+				/>
+			) : null}
 
 			{showSolicitar ? (
 				<SolicitarInterconsultaModal

@@ -3,6 +3,14 @@ export type PedidoResponsable = {
 	MatriculaRealizador?: number | null;
 	NombreToma?: string | null;
 	MatriculaToma?: number | null;
+	CodOperadorResultado?: number | null;
+	CodOperadorToma?: number | null;
+};
+
+export type UsuarioSesionIds = {
+	matricula: number | null;
+	valorPersonal: number | null;
+	codOperador: number | null;
 };
 
 /**
@@ -16,4 +24,33 @@ export function autorRespuesta(row: PedidoResponsable): string | null {
 	if (nombre && String(nombre).trim()) return String(nombre).trim();
 	const matricula = row.MatriculaRealizador ?? row.MatriculaToma;
 	return matricula ? `Matrícula ${matricula}` : null;
+}
+
+export function idsSesionUsuario(usuario: UsuarioSesionIds | null | undefined): number[] {
+	if (!usuario) return [];
+	const ids: number[] = [];
+	for (const v of [usuario.matricula, usuario.valorPersonal, usuario.codOperador]) {
+		if (v != null && Number.isFinite(v) && v > 0 && !ids.includes(v)) ids.push(v);
+	}
+	return ids;
+}
+
+/** True si el usuario de sesión es quien dio la respuesta (estudio o interconsulta). */
+export function esAutorRespuesta(
+	row: PedidoResponsable | null | undefined,
+	usuario: UsuarioSesionIds | null | undefined,
+): boolean {
+	if (!row) return false;
+	const ids = idsSesionUsuario(usuario);
+	if (!ids.length) return false;
+	const autores = [
+		row.MatriculaRealizador,
+		row.MatriculaToma,
+		row.CodOperadorResultado,
+		row.CodOperadorToma,
+	];
+	return autores.some((a) => {
+		const n = Number(a);
+		return Number.isFinite(n) && n > 0 && ids.includes(n);
+	});
 }

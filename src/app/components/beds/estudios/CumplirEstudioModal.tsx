@@ -15,6 +15,8 @@ type Props = {
 	open: boolean;
 	pedido: PedidoEstudio | null;
 	sectorServicio?: string;
+	modoEdicion?: boolean;
+	guardarInforme?: (texto: string) => Promise<void>;
 	onClose: () => void;
 	onCumplido: (pedido: PedidoEstudio) => void;
 };
@@ -31,6 +33,8 @@ export default function CumplirEstudioModal({
 	open,
 	pedido,
 	sectorServicio,
+	modoEdicion = false,
+	guardarInforme,
 	onClose,
 	onCumplido,
 }: Props) {
@@ -43,14 +47,15 @@ export default function CumplirEstudioModal({
 	const [solicitanteNombre, setSolicitanteNombre] = useState('');
 
 	useEffect(() => {
-		if (!open) return;
-		setTexto('');
+		if (!open || !pedido) return;
+		// Init al abrir/cambiar pedido (no resetear si el padre refresca TextoResultado).
+		setTexto(modoEdicion ? String(pedido.TextoResultado || '') : '');
 		setError(null);
 		setArchivos([]);
 		setTipoImagen('');
-		const nombreInicial = String(pedido?.MedicoSolicitanteNombre || '').trim();
+		const nombreInicial = String(pedido.MedicoSolicitanteNombre || '').trim();
 		setSolicitanteNombre(nombreInicial);
-		const practica = (pedido?.PracticaSolicitada || pedido?.NomencladorDescripcion || '').trim();
+		const practica = (pedido.PracticaSolicitada || pedido.NomencladorDescripcion || '').trim();
 		void adjuntosService
 			.getTiposImagenes()
 			.then((list) => {
@@ -58,7 +63,7 @@ export default function CumplirEstudioModal({
 				setTipoImagen(sugerirTipoImagen(list, practica));
 			})
 			.catch(() => setTipos([]));
-	}, [open, pedido?.IdPedido, pedido?.PracticaSolicitada, pedido?.NomencladorDescripcion, pedido?.MedicoSolicitanteNombre]);
+	}, [open, modoEdicion, pedido?.IdPedido]);
 
 	if (!open || !pedido) return null;
 
@@ -83,15 +88,31 @@ export default function CumplirEstudioModal({
 		setSubmitting(true);
 		setError(null);
 		try {
-			const updated = await estudiosService.cumplir(pedido.IdPedido, {
-				textoInforme: texto.trim(),
-				sectorServicio:
-					getIdSectorFromToken() || sectorServicio || pedido.SectorReceptor || undefined,
-			});
-			if (archivos.length > 0 && pedido.IdVisita > 0) {
-				await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
+			if (guardarInforme) {
+				await guardarInforme(texto.trim());
+				if (archivos.length > 0 && pedido.IdVisita > 0) {
+					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
+				}
+				onCumplido(pedido);
+			} else if (modoEdicion) {
+				const updated = await estudiosService.actualizarResultado(pedido.IdPedido, {
+					textoInforme: texto.trim(),
+				});
+				if (archivos.length > 0 && pedido.IdVisita > 0) {
+					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
+				}
+				onCumplido(updated);
+			} else {
+				const updated = await estudiosService.cumplir(pedido.IdPedido, {
+					textoInforme: texto.trim(),
+					sectorServicio:
+						getIdSectorFromToken() || sectorServicio || pedido.SectorReceptor || undefined,
+				});
+				if (archivos.length > 0 && pedido.IdVisita > 0) {
+					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
+				}
+				onCumplido(updated);
 			}
-			onCumplido(updated);
 			onClose();
 		} catch (e: unknown) {
 			setError(e instanceof Error ? e.message : 'Error al cumplir');
@@ -104,7 +125,7 @@ export default function CumplirEstudioModal({
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<h3>Completar · {practica}</h3>
+					<h3>{modoEdicion ? 'Editar informe' : 'Completar'} · {practica}</h3>
 					<button type="button" className={styles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>
@@ -129,13 +150,17 @@ export default function CumplirEstudioModal({
 					</div>
 
 					<label className={`${formStyles.label} ${formStyles.informeLabel}`}>
-						Tu informe / resultado
+						Tu {modoEdicion ? 'informe / resultado (edición)' : 'informe / resultado'}
 						<textarea
 							className={formStyles.textarea}
 							value={texto}
 							onChange={(e) => setTexto(e.target.value)}
 							rows={8}
-							placeholder="Redacte el resultado del estudio…"
+							placeholder={
+								modoEdicion
+									? 'Actualizá el resultado…'
+									: 'Redacte el resultado del estudio…'
+							}
 						/>
 					</label>
 
@@ -154,7 +179,7 @@ export default function CumplirEstudioModal({
 							Cancelar
 						</button>
 						<button type="button" className={formStyles.btnPrimary} onClick={() => void submit()} disabled={submitting}>
-							{submitting ? 'Guardando…' : 'Completar'}
+							{submitting ? 'Guardando…' : modoEdicion ? 'Guardar cambios' : 'Completar'}
 						</button>
 					</div>
 				</div>

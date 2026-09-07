@@ -49,6 +49,8 @@ export interface PedidoEstudio extends DatosPacientePedido {
   PracticaFacturada?: number | null;
   MatriculaRealizador?: number | null;
   RealizadorNombre?: string | null;
+  CodOperadorResultado?: number | null;
+  CodOperadorToma?: number | null;
   Tomado?: boolean;
   MatriculaToma?: number | null;
   NombreToma?: string | null;

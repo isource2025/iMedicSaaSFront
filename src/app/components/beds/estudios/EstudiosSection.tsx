@@ -18,6 +18,8 @@ import { IoEyeOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { getIdSectorFromToken } from '@/app/utils/jwtSession';
 import ConfirmationModal from '../shared/ConfirmationModal';
+import { esAutorRespuesta } from '../shared/pedidoResponsable';
+import CumplirEstudioModal from './CumplirEstudioModal';
 
 type Props = {
 	numeroVisita: number | null;
@@ -128,6 +130,7 @@ export default function EstudiosSection({
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<PedidoEstudio | null>(null);
 	const [editing, setEditing] = useState<PedidoEstudio | null>(null);
+	const [editingRespuesta, setEditingRespuesta] = useState<PedidoEstudio | null>(null);
 	const [deleting, setDeleting] = useState<PedidoEstudio | null>(null);
 	const [deletingBusy, setDeletingBusy] = useState(false);
 	const [showSolicitar, setShowSolicitar] = useState(false);
@@ -174,6 +177,14 @@ export default function EstudiosSection({
 
 	const puedeGestionarPedido = (row: PedidoEstudio) =>
 		pedidoPendiente(row) && esCreadorPedido(row, usuarioActual);
+
+	const puedeEditarRespuesta = (row: PedidoEstudio) =>
+		!!(row.Cumplido || Number(row.IdProtocolo) > 0) && esAutorRespuesta(row, usuarioActual);
+
+	const abrirEdicionRespuesta = (row: PedidoEstudio) => {
+		setSelected(null);
+		setEditingRespuesta(row);
+	};
 
 	const handleConfirmDelete = async () => {
 		if (!deleting) return;
@@ -356,8 +367,18 @@ export default function EstudiosSection({
 												<button
 													type="button"
 													className={tableStyles.btnAction}
-													title="Editar"
+													title="Editar pedido"
 													onClick={() => setEditing(r)}
+												>
+													<IoPencilOutline color="#5BC0DE" size={18} />
+												</button>
+											)}
+											{puedeEditarRespuesta(r) && (
+												<button
+													type="button"
+													className={tableStyles.btnAction}
+													title="Editar respuesta"
+													onClick={() => abrirEdicionRespuesta(r)}
 												>
 													<IoPencilOutline color="#5BC0DE" size={18} />
 												</button>
@@ -395,6 +416,9 @@ export default function EstudiosSection({
 					fields={buildEstudioFields(selected)}
 					textBlocks={buildEstudioTextBlocks(selected)}
 					onClose={() => setSelected(null)}
+					onEditarRespuesta={
+						puedeEditarRespuesta(selected) ? () => abrirEdicionRespuesta(selected) : undefined
+					}
 				/>
 			)}
 
@@ -405,6 +429,19 @@ export default function EstudiosSection({
 					sectorSolicitante={origenPedido}
 					onClose={() => setShowSolicitar(false)}
 					onCreated={() => {
+						void loadVisita();
+					}}
+				/>
+			)}
+
+			{editingRespuesta && (
+				<CumplirEstudioModal
+					open={Boolean(editingRespuesta)}
+					pedido={editingRespuesta}
+					modoEdicion
+					onClose={() => setEditingRespuesta(null)}
+					onCumplido={() => {
+						setEditingRespuesta(null);
 						void loadVisita();
 					}}
 				/>

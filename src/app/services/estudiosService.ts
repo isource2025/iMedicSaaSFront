@@ -192,6 +192,26 @@ const estudiosService = {
     return json.data;
   },
 
+  async actualizarResultado(
+    idPedido: number,
+    payload: CumplirPedidoPayload,
+  ): Promise<PedidoEstudio> {
+    const res = await apiFetch(`/estudios/${idPedido}/resultado`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await parseJson<{
+      success?: boolean;
+      data?: PedidoEstudio;
+      mensaje?: string;
+    }>(res);
+    if (!res.ok || !json?.success || !json.data) {
+      throw new Error(json?.mensaje || 'No se pudo actualizar el resultado');
+    }
+    return json.data;
+  },
+
   async tomar(idPedido: number): Promise<PedidoEstudio> {
     const res = await apiFetch(`/estudios/${idPedido}/tomar`, {
       method: 'POST',

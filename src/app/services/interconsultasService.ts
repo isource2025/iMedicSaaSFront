@@ -41,6 +41,8 @@ export type InterconsultaRow = DatosPacientePedido & {
 	MatriculaRealizador?: number | null;
 	/** Profesional que respondió la interconsulta. */
 	RealizadorNombre?: string | null;
+	CodOperadorResultado?: number | null;
+	CodOperadorToma?: number | null;
 	Cumplido?: boolean;
 	EstadoWorkflow?: string;
 	Origen?: 'LEGACY' | 'WEB';
@@ -159,6 +161,23 @@ export const interconsultasService = {
 		}>(res);
 		if (!res.ok || !json?.success) {
 			throw new Error(json?.mensaje || 'No se pudo cumplir la interconsulta');
+		}
+		return json.data as InterconsultaRow;
+	},
+
+	async actualizarRespuesta(idPedido: number, textoRespuesta: string): Promise<InterconsultaRow> {
+		const res = await apiFetch(`/interconsultas/${idPedido}/respuesta`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ textoRespuesta }),
+		});
+		const json = await parseJson<{
+			success?: boolean;
+			data?: InterconsultaRow;
+			mensaje?: string;
+		}>(res);
+		if (!res.ok || !json?.success) {
+			throw new Error(json?.mensaje || 'No se pudo actualizar la respuesta');
 		}
 		return json.data as InterconsultaRow;
 	},
