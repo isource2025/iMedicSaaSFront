@@ -120,6 +120,8 @@ export interface AgendaSlot {
 	numeroDocumento?: number | null;
 	observaciones?: string | null;
 	motivoCancelacion?: string | null;
+	canceladoPor?: string | null;
+	origenCancelacion?: string | null;
 	idClasificacionTriage?: number | null;
 	horaLlegada?: string | null;
 	horaIngreso?: string | null;

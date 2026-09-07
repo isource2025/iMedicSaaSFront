@@ -42,6 +42,7 @@ export function opcionesMenuTurnoAdmin(
 	const cancelado = row.estado === 'CANCELADO';
 	const ocupado = row.estado === 'OCUPADO';
 	const conPac = tienePaciente(row);
+	if (row.esLog) return list;
 
 	if (opts.puedeEditar && !atendido) {
 		list.push({

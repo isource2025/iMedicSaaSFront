@@ -33,6 +33,9 @@ export interface TurnoAdminRow {
 	tipoTurnoLabel: string;
 	numeroVisita: number | null;
 	motivoCancelacion: string | null;
+	canceladoPor?: string | null;
+	origenCancelacion?: string | null;
+	esLog?: boolean;
 	idClasificacionTriage: number | null;
 	diagnostico: string | null;
 	personalAtendio: string | null;

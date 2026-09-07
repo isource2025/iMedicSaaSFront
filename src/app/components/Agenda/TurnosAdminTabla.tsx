@@ -71,6 +71,7 @@ export default function TurnosAdminTabla({ rows, permisos, onRowClick }: Props) 
 					<th rowSpan={2}>Sector</th>
 					<th colSpan={3}>Horarios</th>
 					<th rowSpan={2}>Estado</th>
+					<th rowSpan={2}>Canceló</th>
 					<th rowSpan={2}>Motivo cancelación</th>
 					<th rowSpan={2}>Personal atendió</th>
 					<th rowSpan={2}>Observaciones</th>
@@ -170,6 +171,13 @@ export default function TurnosAdminTabla({ rows, permisos, onRowClick }: Props) 
 							<td>
 								<span className={badgeClass(row.estado, esSt)}>
 									{badgeLabel(row.estado, esSt)}
+								</span>
+							</td>
+							<td>
+								<span className={cellStyles.obsCol}>
+									{cancelado
+										? row.canceladoPor || 'Sin registro'
+										: '—'}
 								</span>
 							</td>
 							<td>

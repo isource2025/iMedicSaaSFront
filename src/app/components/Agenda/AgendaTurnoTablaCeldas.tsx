@@ -19,6 +19,9 @@ export type FilaTurnoAgenda = {
 	pacienteNombre?: string | null;
 	numeroDocumento?: number | null;
 	observaciones?: string | null;
+	motivoCancelacion?: string | null;
+	canceladoPor?: string | null;
+	origenCancelacion?: string | null;
 	sector: string;
 	idClasificacionTriage?: number | null;
 	horaAtencion?: string | null;

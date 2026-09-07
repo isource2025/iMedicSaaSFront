@@ -52,7 +52,14 @@ function formatFechaLarga(d: Date): string {
 		.replace(/^\w/, (c) => c.toUpperCase());
 }
 
-type FiltroSlots = 'TODOS' | 'LIBRES' | 'OCUPADOS';
+type FiltroSlots =
+	| 'TODOS'
+	| 'LIBRES'
+	| 'OCUPADOS'
+	| 'LLEGADA'
+	| 'INGRESO'
+	| 'ATENDIDO'
+	| 'CANCELADO';
 
 function badge(estado: string, esSobreturno?: boolean): string {
 	if (estado === 'LIBRE') return `${styles.badge} ${styles.badgeLibre}`;
@@ -77,9 +84,119 @@ function esCancelado(s: AgendaSlot): boolean {
 	return s.estado === 'CANCELADO' || s.status === 1;
 }
 
-/** Cupo disponible para asignar (libre o cancelado). */
-function cupoDisponible(s: AgendaSlot): boolean {
-	return esLibre(s) || esCancelado(s);
+function categoriaSlot(s: AgendaSlot): Exclude<FiltroSlots, 'TODOS'> {
+	if (esCancelado(s)) return 'CANCELADO';
+	if (esLibre(s)) return 'LIBRES';
+	if (s.estado === 'ATENDIDO' || s.horaSalida) return 'ATENDIDO';
+	if (s.horaIngreso) return 'INGRESO';
+	if (s.horaLlegada) return 'LLEGADA';
+	return 'OCUPADOS';
+}
+
+function ordenarSlotsAgenda(slots: AgendaSlot[]): AgendaSlot[] {
+	return [...slots].sort((a, b) => {
+		const ca = esCancelado(a) ? 1 : 0;
+		const cb = esCancelado(b) ? 1 : 0;
+		if (ca !== cb) return ca - cb;
+		return (a.horaClarion ?? 0) - (b.horaClarion ?? 0);
+	});
+}
+
+const KPI_FILTROS: { id: FiltroSlots; label: string; key: keyof StatsAgenda }[] = [
+	{ id: 'TODOS', label: 'Total', key: 'total' },
+	{ id: 'LIBRES', label: 'Libres', key: 'libres' },
+	{ id: 'OCUPADOS', label: 'Ocupados', key: 'ocupados' },
+	{ id: 'LLEGADA', label: 'Llegada', key: 'llegada' },
+	{ id: 'INGRESO', label: 'En consultorio', key: 'ingreso' },
+	{ id: 'ATENDIDO', label: 'Atendidos', key: 'atendido' },
+	{ id: 'CANCELADO', label: 'Cancelados', key: 'cancelado' },
+];
+
+type StatsAgenda = {
+	total: number;
+	libres: number;
+	ocupados: number;
+	llegada: number;
+	ingreso: number;
+	atendido: number;
+	cancelado: number;
+};
+
+function emptyFiltroCopy(filtro: FiltroSlots): { title: string; description: string } | null {
+	if (filtro === 'TODOS') return null;
+	const map: Record<Exclude<FiltroSlots, 'TODOS'>, { title: string; description: string }> = {
+		LIBRES: {
+			title: 'Sin turnos libres',
+			description:
+				'No hay cupos libres con el filtro actual. Probá ver «Total» u «Ocupados», o elegí otra fecha.',
+		},
+		OCUPADOS: {
+			title: 'Sin turnos ocupados',
+			description:
+				'No hay turnos ocupados pendientes de llegada. Revisá «Llegada», «Atendidos» o «Total».',
+		},
+		LLEGADA: {
+			title: 'Sin llegadas',
+			description: 'Ningún paciente de esta agenda tiene llegada marcada.',
+		},
+		INGRESO: {
+			title: 'Nadie en consultorio',
+			description: 'No hay pacientes con ingreso a consultorio en esta agenda.',
+		},
+		ATENDIDO: {
+			title: 'Sin atendidos',
+			description: 'Todavía no hay turnos cerrados / atendidos en esta fecha.',
+		},
+		CANCELADO: {
+			title: 'Sin cancelados',
+			description: 'No hay turnos cancelados para esta fecha.',
+		},
+	};
+	return map[filtro];
+}
+
+function AgendaKpis({
+	filtro,
+	onFiltro,
+	stats,
+}: {
+	filtro: FiltroSlots;
+	onFiltro: (f: FiltroSlots) => void;
+	stats: StatsAgenda;
+}) {
+	return (
+		<div className={styles.kpis}>
+			{KPI_FILTROS.map((k) => (
+				<button
+					key={k.id}
+					type='button'
+					className={`${styles.kpi} ${filtro === k.id ? styles.kpiActive : ''}`}
+					onClick={() =>
+						onFiltro(k.id === 'TODOS' ? 'TODOS' : filtro === k.id ? 'TODOS' : k.id)
+					}
+				>
+					<div className={styles.kpiValue}>{stats[k.key]}</div>
+					<div className={styles.kpiLabel}>{k.label}</div>
+				</button>
+			))}
+		</div>
+	);
+}
+
+function BadgeEstadoSlot({ s }: { s: AgendaSlot }) {
+	return (
+		<div className={styles.estadoCelda}>
+			<span className={badge(s.estado, s.esSobreturno)}>
+				{badgeText(s.estado, s.esSobreturno)}
+			</span>
+			{esCancelado(s) ? (
+				<span className={styles.canceloPor}>
+					{s.canceladoPor ? `Canceló: ${s.canceladoPor}` : 'Canceló: sin registro'}
+					{s.motivoCancelacion ? ` · ${s.motivoCancelacion}` : ''}
+				</span>
+			) : null}
+		</div>
+	);
 }
 
 function descServicioCatalogo(
@@ -671,21 +788,38 @@ function AgendaPageContent() {
 	};
 
 	const slotsDeJornada = useMemo(() => {
-		if (jornadas.length <= 1) return todosSlots;
-		return todosSlots.filter((s) => (s.jornadaIndex ?? 0) === jornadaSel);
+		const base =
+			jornadas.length <= 1
+				? todosSlots
+				: todosSlots.filter((s) => (s.jornadaIndex ?? 0) === jornadaSel);
+		return ordenarSlotsAgenda(base);
 	}, [todosSlots, jornadas, jornadaSel]);
 
 	const statsSlots = useMemo(() => {
-		const total = slotsDeJornada.length;
-		const libres = slotsDeJornada.filter(cupoDisponible).length;
-		return { total, libres, ocupados: total - libres };
+		const counts: StatsAgenda = {
+			total: slotsDeJornada.length,
+			libres: 0,
+			ocupados: 0,
+			llegada: 0,
+			ingreso: 0,
+			atendido: 0,
+			cancelado: 0,
+		};
+		for (const s of slotsDeJornada) {
+			const c = categoriaSlot(s);
+			if (c === 'LIBRES') counts.libres += 1;
+			else if (c === 'OCUPADOS') counts.ocupados += 1;
+			else if (c === 'LLEGADA') counts.llegada += 1;
+			else if (c === 'INGRESO') counts.ingreso += 1;
+			else if (c === 'ATENDIDO') counts.atendido += 1;
+			else if (c === 'CANCELADO') counts.cancelado += 1;
+		}
+		return counts;
 	}, [slotsDeJornada]);
 
 	const slotsFiltrados = useMemo(() => {
-		if (filtroSlots === 'LIBRES') return slotsDeJornada.filter(cupoDisponible);
-		if (filtroSlots === 'OCUPADOS')
-			return slotsDeJornada.filter((s) => !cupoDisponible(s));
-		return slotsDeJornada;
+		if (filtroSlots === 'TODOS') return slotsDeJornada;
+		return slotsDeJornada.filter((s) => categoriaSlot(s) === filtroSlots);
 	}, [slotsDeJornada, filtroSlots]);
 
 	const servicioLabel = useMemo(() => {
@@ -731,9 +865,9 @@ function AgendaPageContent() {
 	}, [medicos, matriculaSel, profesionalAgenda?.nombre]);
 
 	const tituloAgendaAdmin = useMemo(() => {
-		if (filtroSlots === 'LIBRES') return 'Turnos libres';
-		if (filtroSlots === 'OCUPADOS') return 'Turnos ocupados';
-		return 'Agenda del día';
+		const item = KPI_FILTROS.find((k) => k.id === filtroSlots);
+		if (filtroSlots === 'TODOS') return 'Agenda del día';
+		return item ? `Turnos: ${item.label.toLowerCase()}` : 'Agenda del día';
 	}, [filtroSlots]);
 
 	if (!puedeVer) {
@@ -931,38 +1065,11 @@ function AgendaPageContent() {
 											))}
 										</div>
 									)}
-									<div className={styles.kpis}>
-										<button
-											type='button'
-											className={`${styles.kpi} ${filtroSlots === 'TODOS' ? styles.kpiActive : ''}`}
-											onClick={() => setFiltroSlots('TODOS')}
-										>
-											<div className={styles.kpiValue}>{statsSlots.total}</div>
-											<div className={styles.kpiLabel}>Total</div>
-										</button>
-										<button
-											type='button'
-											className={`${styles.kpi} ${filtroSlots === 'LIBRES' ? styles.kpiActive : ''}`}
-											onClick={() =>
-												setFiltroSlots((f) => (f === 'LIBRES' ? 'TODOS' : 'LIBRES'))
-											}
-										>
-											<div className={styles.kpiValue}>{statsSlots.libres}</div>
-											<div className={styles.kpiLabel}>Libres</div>
-										</button>
-										<button
-											type='button'
-											className={`${styles.kpi} ${filtroSlots === 'OCUPADOS' ? styles.kpiActive : ''}`}
-											onClick={() =>
-												setFiltroSlots((f) =>
-													f === 'OCUPADOS' ? 'TODOS' : 'OCUPADOS',
-												)
-											}
-										>
-											<div className={styles.kpiValue}>{statsSlots.ocupados}</div>
-											<div className={styles.kpiLabel}>Ocupados</div>
-										</button>
-									</div>
+									<AgendaKpis
+										filtro={filtroSlots}
+										onFiltro={setFiltroSlots}
+										stats={statsSlots}
+									/>
 									{loadingSlots ? (
 										<div className={styles.loading}>
 											<span className={styles.spinner} aria-hidden /> Cargando…
@@ -971,20 +1078,22 @@ function AgendaPageContent() {
 										<AgendaEmptyState
 											icon='📋'
 											title={
-												diaMotivo === 'feriado'
+												emptyFiltroCopy(filtroSlots)?.title ||
+												(diaMotivo === 'feriado'
 													? diaMotivoLabel
 														? `Feriado: ${diaMotivoLabel}`
 														: 'Feriado nacional'
 													: diaMotivo === 'sin_horario'
 														? 'Sin horario configurado'
-														: 'Sin turnos en la agenda'
+														: 'Sin turnos en la agenda')
 											}
 											description={
-												diaMotivo === 'feriado'
+												emptyFiltroCopy(filtroSlots)?.description ||
+												(diaMotivo === 'feriado'
 													? 'Este día no está disponible para turnos.'
 													: diaMotivo === 'sin_horario'
 														? 'Este día no tiene grilla de turnos. Podés agregar un sobreturno igualmente.'
-														: 'No hay cupos para esta fecha con el filtro actual.'
+														: 'No hay cupos para esta fecha con el filtro actual.')
 											}
 											action={
 												!fechaPasada &&
@@ -1023,11 +1132,7 @@ function AgendaPageContent() {
 															trStyle={{
 																cursor: puedeMenu ? 'pointer' : 'default',
 															}}
-															badgeEstado={
-																<span className={badge(s.estado, s.esSobreturno)}>
-																	{badgeText(s.estado, s.esSobreturno)}
-																</span>
-															}
+															badgeEstado={<BadgeEstadoSlot s={s} />}
 														/>
 													);
 												})}
@@ -1131,38 +1236,11 @@ function AgendaPageContent() {
 							</div>
 
 							{(matriculaSel || recursoSel) && (
-								<div className={styles.kpis}>
-									<button
-										type='button'
-										className={`${styles.kpi} ${filtroSlots === 'TODOS' ? styles.kpiActive : ''}`}
-										onClick={() => setFiltroSlots('TODOS')}
-									>
-										<div className={styles.kpiValue}>{statsSlots.total}</div>
-										<div className={styles.kpiLabel}>Total</div>
-									</button>
-									<button
-										type='button'
-										className={`${styles.kpi} ${filtroSlots === 'LIBRES' ? styles.kpiActive : ''}`}
-										onClick={() =>
-											setFiltroSlots((f) => (f === 'LIBRES' ? 'TODOS' : 'LIBRES'))
-										}
-									>
-										<div className={styles.kpiValue}>{statsSlots.libres}</div>
-										<div className={styles.kpiLabel}>Libres</div>
-									</button>
-									<button
-										type='button'
-										className={`${styles.kpi} ${filtroSlots === 'OCUPADOS' ? styles.kpiActive : ''}`}
-										onClick={() =>
-											setFiltroSlots((f) =>
-												f === 'OCUPADOS' ? 'TODOS' : 'OCUPADOS',
-											)
-										}
-									>
-										<div className={styles.kpiValue}>{statsSlots.ocupados}</div>
-										<div className={styles.kpiLabel}>Ocupados</div>
-									</button>
-								</div>
+								<AgendaKpis
+									filtro={filtroSlots}
+									onFiltro={setFiltroSlots}
+									stats={statsSlots}
+								/>
 							)}
 
 							<div className={styles.agendaSection}>
@@ -1230,28 +1308,22 @@ function AgendaPageContent() {
 											compact
 											icon='📅'
 											title={
-												filtroSlots === 'LIBRES'
-													? 'Sin turnos libres'
-													: filtroSlots === 'OCUPADOS'
-														? 'Sin turnos ocupados'
-														: diaMotivo === 'feriado'
-															? diaMotivoLabel
-																? `Feriado: ${diaMotivoLabel}`
-																: 'Feriado nacional'
-															: diaMotivo === 'sin_horario'
-																? 'Sin horario configurado'
-																: 'Sin turnos en la agenda'
+												emptyFiltroCopy(filtroSlots)?.title ||
+												(diaMotivo === 'feriado'
+													? diaMotivoLabel
+														? `Feriado: ${diaMotivoLabel}`
+														: 'Feriado nacional'
+													: diaMotivo === 'sin_horario'
+														? 'Sin horario configurado'
+														: 'Sin turnos en la agenda')
 											}
 											description={
-												filtroSlots === 'LIBRES'
-													? 'No hay cupos libres con el filtro actual. Probá ver «Total» u «Ocupados», o elegí otra fecha.'
-													: filtroSlots === 'OCUPADOS'
-														? 'No hay turnos ocupados con el filtro actual. Los cupos libres aparecen en «Libres» o «Total».'
-														: diaMotivo === 'feriado'
-															? 'Este día no está disponible para turnos.'
-															: diaMotivo === 'sin_horario'
-																? 'Este profesional no tiene grilla ese día. Podés agregar un sobreturno.'
-																: 'Este profesional no tiene turnos generados para la fecha seleccionada.'
+												emptyFiltroCopy(filtroSlots)?.description ||
+												(diaMotivo === 'feriado'
+													? 'Este día no está disponible para turnos.'
+													: diaMotivo === 'sin_horario'
+														? 'Este profesional no tiene grilla ese día. Podés agregar un sobreturno.'
+														: 'Este profesional no tiene turnos generados para la fecha seleccionada.')
 											}
 											action={
 												!fechaPasada &&
@@ -1291,11 +1363,7 @@ function AgendaPageContent() {
 															trStyle={{
 																cursor: puedeMenu ? 'pointer' : 'default',
 															}}
-															badgeEstado={
-																<span className={badge(s.estado, s.esSobreturno)}>
-																	{badgeText(s.estado, s.esSobreturno)}
-																</span>
-															}
+															badgeEstado={<BadgeEstadoSlot s={s} />}
 														/>
 													);
 												})}
