@@ -9,7 +9,7 @@ import { usePermiso } from '@/app/hooks/usePermiso';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import { buildPacienteFields } from '../shared/pacientePedidoFields';
-import { autorRespuesta, esAutorRespuesta } from '../shared/pedidoResponsable';
+import { autorRespuesta, esAutorRespuesta, esSolicitante } from '../shared/pedidoResponsable';
 import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
@@ -68,7 +68,7 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 	return [
 		...buildPacienteFields(row),
 		{
-			label: 'Destino',
+			label: 'Servicio destino',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.Especialidad,
 			full: true,
 		},
@@ -153,6 +153,7 @@ export default function InterconsultaSection({
 	const { puede } = usePermiso();
 	const usuarioActual = useUsuarioActual();
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
+	const canEdit = puede('INTERNACION.INTERCONSULTAS.EDITAR') || canCreate;
 
 	const [rows, setRows] = useState<InterconsultaRow[]>([]);
 	const [showSolicitar, setShowSolicitar] = useState(false);
@@ -160,6 +161,7 @@ export default function InterconsultaSection({
 	const [exportingDetail, setExportingDetail] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
+	const [editingPedido, setEditingPedido] = useState<InterconsultaRow | null>(null);
 	const [editingRespuesta, setEditingRespuesta] = useState<InterconsultaRow | null>(null);
 	const [query, setQuery] = useState('');
 
@@ -203,8 +205,16 @@ export default function InterconsultaSection({
 		setSelected(row);
 	};
 
+	const puedeEditarPedido = (row: InterconsultaRow) =>
+		canEdit && row.Origen !== 'WEB' && esSolicitante(row, usuarioActual);
+
 	const puedeEditarRespuesta = (row: InterconsultaRow) =>
 		row.Origen !== 'WEB' && esCumplida(row) && esAutorRespuesta(row, usuarioActual);
+
+	const abrirEdicionPedido = (row: InterconsultaRow) => {
+		setSelected(null);
+		setEditingPedido(row);
+	};
 
 	const abrirEdicionRespuesta = (row: InterconsultaRow) => {
 		setSelected(null);
@@ -232,7 +242,7 @@ export default function InterconsultaSection({
 					fields: [
 						{ label: 'Fecha / hora', value: formatFecha(r) },
 						{
-							label: 'Destino',
+							label: 'Servicio destino',
 							value: r.ServicioDescripcion || r.SectorReceptorNombre || r.Especialidad || '—',
 						},
 						{
@@ -356,7 +366,7 @@ export default function InterconsultaSection({
 								<tr>
 									<th>Urg.</th>
 									<th>Fecha / hora</th>
-									<th>Destino</th>
+									<th>Servicio destino</th>
 									<th>Pedido</th>
 									<th>Respuesta</th>
 									<th>Solicitado por</th>
@@ -418,6 +428,16 @@ export default function InterconsultaSection({
 												>
 													<IoEyeOutline color="#5BC0DE" size={18} />
 												</button>
+												{puedeEditarPedido(r) && (
+													<button
+														type="button"
+														className={tableStyles.btnAction}
+														title="Editar pedido"
+														onClick={() => abrirEdicionPedido(r)}
+													>
+														<IoPencilOutline color="#5BC0DE" size={18} />
+													</button>
+												)}
 												{puedeEditarRespuesta(r) && (
 													<button
 														type="button"
@@ -456,6 +476,9 @@ export default function InterconsultaSection({
 					onClose={() => setSelected(null)}
 					onExportPdf={handleExportDetail}
 					exporting={exportingDetail}
+					onEditarPedido={
+						puedeEditarPedido(selected) ? () => abrirEdicionPedido(selected) : undefined
+					}
 					onEditarRespuesta={
 						puedeEditarRespuesta(selected)
 							? () => abrirEdicionRespuesta(selected)
@@ -463,6 +486,20 @@ export default function InterconsultaSection({
 					}
 				/>
 			)}
+
+			{editingPedido ? (
+				<SolicitarInterconsultaModal
+					open={Boolean(editingPedido)}
+					idVisita={numeroVisita}
+					sectorSolicitante={sectorSolicitante}
+					pedido={editingPedido}
+					onClose={() => setEditingPedido(null)}
+					onCreated={() => {
+						setEditingPedido(null);
+						void loadVisita();
+					}}
+				/>
+			) : null}
 
 			{editingRespuesta ? (
 				<CumplirEstudioModal

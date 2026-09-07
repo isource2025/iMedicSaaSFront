@@ -27,6 +27,7 @@ type Props = {
 	onClose: () => void;
 	onExportPdf?: () => void | Promise<void>;
 	exporting?: boolean;
+	onEditarPedido?: () => void;
 	onEditarRespuesta?: () => void;
 };
 
@@ -107,6 +108,7 @@ export default function PedidoDetalleModal({
 	onClose,
 	onExportPdf,
 	exporting = false,
+	onEditarPedido,
 	onEditarRespuesta,
 }: Props) {
 	const visibleFields = fields.filter((f) => hasValue(f.value));
@@ -179,6 +181,11 @@ export default function PedidoDetalleModal({
 				</div>
 
 				<div className={styles.footer}>
+					{onEditarPedido ? (
+						<button type="button" className={styles.btnPrimary} onClick={onEditarPedido}>
+							Editar pedido
+						</button>
+					) : null}
 					{onEditarRespuesta ? (
 						<button type="button" className={styles.btnPrimary} onClick={onEditarRespuesta}>
 							Editar respuesta

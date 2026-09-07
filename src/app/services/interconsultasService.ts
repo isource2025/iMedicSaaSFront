@@ -181,4 +181,28 @@ export const interconsultasService = {
 		}
 		return json.data as InterconsultaRow;
 	},
+
+	async actualizar(
+		idPedido: number,
+		payload: {
+			idSectorReceptor: string;
+			motivo: string;
+			estadoUrgencia?: string;
+		},
+	): Promise<InterconsultaRow> {
+		const res = await apiFetch(`/interconsultas/${idPedido}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload),
+		});
+		const json = await parseJson<{
+			success?: boolean;
+			data?: InterconsultaRow;
+			mensaje?: string;
+		}>(res);
+		if (!res.ok || !json?.success) {
+			throw new Error(json?.mensaje || 'No se pudo actualizar la interconsulta');
+		}
+		return json.data as InterconsultaRow;
+	},
 };

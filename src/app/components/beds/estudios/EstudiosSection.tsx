@@ -18,7 +18,7 @@ import { IoEyeOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { getIdSectorFromToken } from '@/app/utils/jwtSession';
 import ConfirmationModal from '../shared/ConfirmationModal';
-import { esAutorRespuesta } from '../shared/pedidoResponsable';
+import { esAutorRespuesta, esSolicitante } from '../shared/pedidoResponsable';
 import CumplirEstudioModal from './CumplirEstudioModal';
 
 type Props = {
@@ -55,14 +55,7 @@ function esCreadorPedido(
 	row: PedidoEstudio,
 	usuario: { matricula: number | null; valorPersonal: number | null; codOperador: number | null } | null,
 ) {
-	if (!usuario) return false;
-	const autor = Number(row.MatriculaSolicitante);
-	if (!Number.isFinite(autor) || autor <= 0) return false;
-	return (
-		(usuario.matricula != null && autor === usuario.matricula) ||
-		(usuario.valorPersonal != null && autor === usuario.valorPersonal) ||
-		(usuario.codOperador != null && autor === usuario.codOperador)
-	);
+	return esSolicitante(row, usuario);
 }
 
 function previewText(value?: string | null, max = 100) {
@@ -80,7 +73,7 @@ function buildEstudioFields(row: PedidoEstudio) {
 		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
 		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{
-			label: 'Destino',
+			label: 'Servicio destino',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.SectorReceptor,
 			full: true,
 		},
@@ -178,8 +171,16 @@ export default function EstudiosSection({
 	const puedeGestionarPedido = (row: PedidoEstudio) =>
 		pedidoPendiente(row) && esCreadorPedido(row, usuarioActual);
 
+	const puedeEditarPedido = (row: PedidoEstudio) =>
+		puedeEditar && esCreadorPedido(row, usuarioActual);
+
 	const puedeEditarRespuesta = (row: PedidoEstudio) =>
 		!!(row.Cumplido || Number(row.IdProtocolo) > 0) && esAutorRespuesta(row, usuarioActual);
+
+	const abrirEdicionPedido = (row: PedidoEstudio) => {
+		setSelected(null);
+		setEditing(row);
+	};
 
 	const abrirEdicionRespuesta = (row: PedidoEstudio) => {
 		setSelected(null);
@@ -215,7 +216,7 @@ export default function EstudiosSection({
 					{ label: 'Código', value: r.CodigoPractica ?? '—' },
 					{ label: 'Práctica', value: r.PracticaSolicitada || '—' },
 					{
-						label: 'Destino',
+						label: 'Servicio destino',
 						value: r.ServicioDescripcion || r.SectorReceptorNombre || '—',
 					},
 					{ label: 'Fecha resultado', value: r.FechaResultado || '—' },
@@ -340,7 +341,7 @@ export default function EstudiosSection({
 											<div className={tableStyles.practica}>{r.PracticaSolicitada}</div>
 											{(r.ServicioDescripcion || r.SectorReceptorNombre) && (
 												<div className={tableStyles.meta}>
-													Destino: {r.ServicioDescripcion || r.SectorReceptorNombre}
+													Servicio: {r.ServicioDescripcion || r.SectorReceptorNombre}
 												</div>
 											)}
 										</td>
@@ -363,12 +364,12 @@ export default function EstudiosSection({
 											>
 												<IoEyeOutline color="#5BC0DE" size={18} />
 											</button>
-											{puedeEditar && puedeGestionarPedido(r) && (
+											{puedeEditarPedido(r) && (
 												<button
 													type="button"
 													className={tableStyles.btnAction}
 													title="Editar pedido"
-													onClick={() => setEditing(r)}
+													onClick={() => abrirEdicionPedido(r)}
 												>
 													<IoPencilOutline color="#5BC0DE" size={18} />
 												</button>
@@ -416,6 +417,9 @@ export default function EstudiosSection({
 					fields={buildEstudioFields(selected)}
 					textBlocks={buildEstudioTextBlocks(selected)}
 					onClose={() => setSelected(null)}
+					onEditarPedido={
+						puedeEditarPedido(selected) ? () => abrirEdicionPedido(selected) : undefined
+					}
 					onEditarRespuesta={
 						puedeEditarRespuesta(selected) ? () => abrirEdicionRespuesta(selected) : undefined
 					}

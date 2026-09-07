@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import type { PedidoEstudio, TipoPedidoEstudio } from '@/app/types/estudios';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
-import { resolveReceptorPorTipo } from '@/app/utils/resolveSectorReceptor';
+import {
+	resolveReceptorPorTipo,
+	resolveServicioDestinoEnLista,
+} from '@/app/utils/resolveSectorReceptor';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
 
@@ -28,6 +31,10 @@ function tipoDePedido(pedido: PedidoEstudio): TipoPedidoEstudio | null {
 	};
 }
 
+function pedidoBloqueado(pedido: PedidoEstudio) {
+	return !!(pedido.Cumplido || Number(pedido.IdProtocolo) > 0 || pedido.Tomado);
+}
+
 type Props = {
 	open: boolean;
 	sectorSolicitante: string;
@@ -46,12 +53,16 @@ export default function SolicitarEstudioModal({
 	onCreated,
 }: Props) {
 	const editando = Boolean(pedido?.IdPedido);
+	const bloqueado = editando && pedido ? pedidoBloqueado(pedido) : false;
 	const [term, setTerm] = useState('');
 	const [tipos, setTipos] = useState<TipoPedidoEstudio[]>([]);
 	const [loadingTipos, setLoadingTipos] = useState(false);
 	const [tipo, setTipo] = useState<TipoPedidoEstudio | null>(null);
-	const { sectores } = useSectoresReceptor({ enabled: open });
-	const [idSectorReceptor, setIdSectorReceptor] = useState('');
+	const { servicios, loading: loadingServicios } = useSectoresReceptor({
+		enabled: open,
+		force: open,
+	});
+	const [idServicioDestino, setIdServicioDestino] = useState('');
 	const [urgencia, setUrgencia] = useState<Urgencia>('Normal');
 	const [notas, setNotas] = useState('');
 	const [submitting, setSubmitting] = useState(false);
@@ -64,16 +75,26 @@ export default function SolicitarEstudioModal({
 		setError(null);
 		if (pedido) {
 			setTipo(tipoDePedido(pedido));
-			setIdSectorReceptor(String(pedido.SectorReceptor || '').trim());
 			setUrgencia(urgenciaDePedido(pedido.EstadoUrgencia));
 			setNotas(pedido.NotasObservacion || '');
 		} else {
 			setTipo(null);
-			setIdSectorReceptor('');
+			setIdServicioDestino('');
 			setUrgencia('Normal');
 			setNotas('');
 		}
 	}, [open, pedido]);
+
+	useEffect(() => {
+		if (!open || !pedido || !servicios.length) return;
+		setIdServicioDestino(
+			resolveServicioDestinoEnLista(
+				pedido.SectorReceptor,
+				servicios,
+				pedido.ServicioCodigo,
+			),
+		);
+	}, [open, pedido, servicios]);
 
 	useEffect(() => {
 		const t = term.trim();
@@ -99,14 +120,14 @@ export default function SolicitarEstudioModal({
 		};
 	}, [term, tipo]);
 
-	const sectorAuto = useMemo(() => {
-		if (!tipo || !sectores.length) return '';
-		return resolveReceptorPorTipo(tipo, sectores);
-	}, [tipo, sectores]);
+	const servicioAuto = useMemo(() => {
+		if (editando || !tipo || !servicios.length) return '';
+		return resolveReceptorPorTipo(tipo, servicios);
+	}, [editando, tipo, servicios]);
 
 	useEffect(() => {
-		if (sectorAuto && !idSectorReceptor) setIdSectorReceptor(sectorAuto);
-	}, [sectorAuto, idSectorReceptor]);
+		if (servicioAuto && !idServicioDestino) setIdServicioDestino(servicioAuto);
+	}, [servicioAuto, idServicioDestino]);
 
 	if (!open) return null;
 
@@ -115,8 +136,8 @@ export default function SolicitarEstudioModal({
 			setError('Seleccione un tipo de estudio');
 			return;
 		}
-		if (!idSectorReceptor.trim()) {
-			setError('Seleccione el sector receptor');
+		if (!idServicioDestino.trim()) {
+			setError('Seleccione el servicio destino');
 			return;
 		}
 		setSubmitting(true);
@@ -125,7 +146,7 @@ export default function SolicitarEstudioModal({
 			const payload = {
 				idTipoPedido: tipo.idTipoPedido,
 				idPractica: tipo.idPractica,
-				idSectorReceptor: idSectorReceptor.trim(),
+				idSectorReceptor: idServicioDestino.trim(),
 				notas: notas.trim() || undefined,
 				estadoUrgencia: urgencia,
 			};
@@ -158,6 +179,11 @@ export default function SolicitarEstudioModal({
 				</div>
 				<div className={styles.modalBody}>
 					{error && <div className={formStyles.error}>{error}</div>}
+					{bloqueado ? (
+						<p className={formStyles.hint}>
+							Ya fue tomado o respondido: solo podés editar las notas y la urgencia.
+						</p>
+					) : null}
 
 					<label className={formStyles.label}>
 						Tipo de estudio
@@ -166,9 +192,11 @@ export default function SolicitarEstudioModal({
 								<span>
 									<strong>{tipo.descripcion}</strong> · {tipo.idPractica}
 								</span>
-								<button type="button" onClick={() => setTipo(null)}>
-									Cambiar
-								</button>
+								{!bloqueado ? (
+									<button type="button" onClick={() => setTipo(null)}>
+										Cambiar
+									</button>
+								) : null}
 							</div>
 						) : (
 							<>
@@ -204,22 +232,33 @@ export default function SolicitarEstudioModal({
 					</label>
 
 					<label className={formStyles.label}>
-						Sector receptor
+						Servicio destino
 						<select
 							className={formStyles.input}
-							value={idSectorReceptor}
-							onChange={(e) => setIdSectorReceptor(e.target.value)}
+							value={idServicioDestino}
+							onChange={(e) => setIdServicioDestino(e.target.value)}
+							disabled={loadingServicios || bloqueado}
 						>
-							<option value="">Seleccionar…</option>
-							{sectores.map((s) => (
+							<option value="">
+								{loadingServicios ? 'Cargando servicios…' : 'Seleccionar…'}
+							</option>
+							{idServicioDestino &&
+								!servicios.some((s) => s.valor === idServicioDestino) && (
+									<option value={idServicioDestino}>
+										{idServicioDestino} (actual)
+									</option>
+								)}
+							{servicios.map((s) => (
 								<option key={s.valor} value={s.valor}>
 									{s.descripcion} ({s.valor})
-									{s.descripcionServicio || s.valorServicio
-										? ` · ${s.descripcionServicio || s.valorServicio}`
-										: ''}
 								</option>
 							))}
 						</select>
+						{!loadingServicios && servicios.length === 0 ? (
+							<div className={formStyles.hint}>
+								No hay servicios en el catálogo. Configúrelos en Personal / Servicios.
+							</div>
+						) : null}
 					</label>
 
 					<label className={formStyles.label}>
@@ -250,7 +289,15 @@ export default function SolicitarEstudioModal({
 						<button type="button" className={formStyles.btnSecondary} onClick={onClose} disabled={submitting}>
 							Cancelar
 						</button>
-						<button type="button" className={formStyles.btnPrimary} onClick={() => void submit()} disabled={submitting}>
+						<button
+							type="button"
+							className={formStyles.btnPrimary}
+							onClick={() => void submit()}
+							disabled={
+								submitting ||
+								(!bloqueado && (loadingServicios || servicios.length === 0))
+							}
+						>
 							{submitting ? 'Guardando…' : editando ? 'Guardar' : 'Solicitar'}
 						</button>
 					</div>

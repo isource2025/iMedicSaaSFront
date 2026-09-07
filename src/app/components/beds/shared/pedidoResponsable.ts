@@ -7,6 +7,11 @@ export type PedidoResponsable = {
 	CodOperadorToma?: number | null;
 };
 
+export type PedidoSolicitante = {
+	MatriculaSolicitante?: number | null;
+	MedicoSolicitante?: number | null;
+};
+
 export type UsuarioSesionIds = {
 	matricula: number | null;
 	valorPersonal: number | null;
@@ -53,4 +58,16 @@ export function esAutorRespuesta(
 		const n = Number(a);
 		return Number.isFinite(n) && n > 0 && ids.includes(n);
 	});
+}
+
+/** True si el usuario de sesión es quien solicitó el pedido / interconsulta. */
+export function esSolicitante(
+	row: PedidoSolicitante | null | undefined,
+	usuario: UsuarioSesionIds | null | undefined,
+): boolean {
+	if (!row) return false;
+	const ids = idsSesionUsuario(usuario);
+	if (!ids.length) return false;
+	const autor = Number(row.MatriculaSolicitante ?? row.MedicoSolicitante);
+	return Number.isFinite(autor) && autor > 0 && ids.includes(autor);
 }
