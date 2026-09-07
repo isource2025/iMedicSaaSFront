@@ -46,24 +46,37 @@ export default function CumplirEstudioModal({
 	const [tipoImagen, setTipoImagen] = useState('');
 	const [solicitanteNombre, setSolicitanteNombre] = useState('');
 
+	const pedidoId = pedido?.IdPedido ?? 0;
+	const textoInicialEdicion = modoEdicion ? String(pedido?.TextoResultado || '') : '';
+	const nombreSolicitanteInit = String(pedido?.MedicoSolicitanteNombre || '').trim();
+	const practicaInit = (
+		pedido?.PracticaSolicitada ||
+		pedido?.NomencladorDescripcion ||
+		''
+	).trim();
+
 	useEffect(() => {
-		if (!open || !pedido) return;
-		// Init al abrir/cambiar pedido (no resetear si el padre refresca TextoResultado).
-		setTexto(modoEdicion ? String(pedido.TextoResultado || '') : '');
+		if (!open || !pedidoId) return;
+		setTexto(modoEdicion ? textoInicialEdicion : '');
 		setError(null);
 		setArchivos([]);
 		setTipoImagen('');
-		const nombreInicial = String(pedido.MedicoSolicitanteNombre || '').trim();
-		setSolicitanteNombre(nombreInicial);
-		const practica = (pedido.PracticaSolicitada || pedido.NomencladorDescripcion || '').trim();
+		setSolicitanteNombre(nombreSolicitanteInit);
 		void adjuntosService
 			.getTiposImagenes()
 			.then((list) => {
 				setTipos(list);
-				setTipoImagen(sugerirTipoImagen(list, practica));
+				setTipoImagen(sugerirTipoImagen(list, practicaInit));
 			})
 			.catch(() => setTipos([]));
-	}, [open, modoEdicion, pedido?.IdPedido]);
+	}, [
+		open,
+		modoEdicion,
+		pedidoId,
+		textoInicialEdicion,
+		nombreSolicitanteInit,
+		practicaInit,
+	]);
 
 	if (!open || !pedido) return null;
 
@@ -106,7 +119,11 @@ export default function CumplirEstudioModal({
 				const updated = await estudiosService.cumplir(pedido.IdPedido, {
 					textoInforme: texto.trim(),
 					sectorServicio:
-						getIdSectorFromToken() || sectorServicio || pedido.SectorReceptor || undefined,
+						pedido.ServicioCodigo ||
+						sectorServicio ||
+						pedido.SectorReceptor ||
+						getIdSectorFromToken() ||
+						undefined,
 				});
 				if (archivos.length > 0 && pedido.IdVisita > 0) {
 					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
