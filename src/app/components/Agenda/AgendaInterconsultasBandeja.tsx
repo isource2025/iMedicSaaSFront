@@ -10,7 +10,7 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
-import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
+import { buildAtencionField } from '@/app/components/beds/shared/pacientePedidoFields';
 import { autorRespuesta } from '@/app/components/beds/shared/pedidoResponsable';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from '@/app/components/beds/estudios/EstudiosSection.module.css';
@@ -260,7 +260,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 						title={selected.ServicioDescripcion || selected.Especialidad || 'Interconsulta'}
 						urgencia={selected.EstadoUrgencia}
 						fields={[
-							...buildPacienteFields(selected),
+							buildAtencionField(selected),
 							{ label: 'Fecha', value: formatFecha(selected) },
 							{ label: 'Visita', value: selected.IdVisita },
 							{ label: 'Solicitado por', value: selected.MedicoSolicitanteNombre },

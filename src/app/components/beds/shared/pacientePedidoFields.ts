@@ -32,8 +32,13 @@ function formatAtencion(row: DatosPacientePedido) {
 	return txt(row.TipoAtencion);
 }
 
+/** Ubicación / tipo de atención del pedido (internado, cama, ambulatorio). */
+export function buildAtencionField(row: DatosPacientePedido): DetailField {
+	return { label: 'Atención', value: formatAtencion(row) };
+}
+
 /**
- * Datos filiatorios del paciente (imPacientes) para el detalle de un pedido.
+ * Datos filiatorios del paciente (imPacientes) para HC / admisión.
  * El modal descarta los campos vacíos, por eso se devuelven todos.
  */
 export function buildPacienteFields(row: DatosPacientePedido): DetailField[] {
@@ -53,6 +58,6 @@ export function buildPacienteFields(row: DatosPacientePedido): DetailField[] {
 		{ label: 'Teléfono', value: txt(row.PacienteTelefono) },
 		{ label: 'Teléfono alternativo', value: txt(row.PacienteTelefonoAlternativo) },
 		{ label: 'Email', value: txt(row.PacienteEmail) },
-		{ label: 'Atención', value: formatAtencion(row) },
+		buildAtencionField(row),
 	];
 }

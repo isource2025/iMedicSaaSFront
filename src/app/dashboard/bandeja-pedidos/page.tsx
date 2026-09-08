@@ -16,7 +16,7 @@ import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioMo
 import PedidoAdjuntosField from '@/app/components/beds/estudios/PedidoAdjuntosField';
 import PacientePedidoHeader from '@/app/components/beds/estudios/PacientePedidoHeader';
 import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
-import { buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
+import { buildAtencionField, buildPacienteFields } from '@/app/components/beds/shared/pacientePedidoFields';
 import { autorRespuesta } from '@/app/components/beds/shared/pedidoResponsable';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from './bandejaPedidos.module.css';
@@ -1025,7 +1025,7 @@ function BandejaPedidosContent() {
 					title={(selectedIc.Motivo || selectedIc.NotasObservacion || 'Interconsulta').slice(0, 120)}
 					urgencia={selectedIc.EstadoUrgencia}
 					fields={[
-						...buildPacienteFields(selectedIc),
+						buildAtencionField(selectedIc),
 						{ label: 'Visita', value: selectedIc.IdVisita },
 						{ label: 'Fecha', value: formatFechaIc(selectedIc) },
 						{

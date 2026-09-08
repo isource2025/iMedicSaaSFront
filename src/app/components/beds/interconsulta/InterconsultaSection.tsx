@@ -8,7 +8,7 @@ import {
 import { usePermiso } from '@/app/hooks/usePermiso';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
-import { buildPacienteFields } from '../shared/pacientePedidoFields';
+import { buildAtencionField } from '../shared/pacientePedidoFields';
 import { autorRespuesta, esAutorRespuesta, esSolicitante } from '../shared/pedidoResponsable';
 import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -57,7 +57,7 @@ function esCumplida(row: InterconsultaRow) {
 function buildInterconsultaFields(row: InterconsultaRow) {
 	if (row.Origen === 'WEB') {
 		return [
-			...buildPacienteFields(row),
+			buildAtencionField(row),
 			{ label: 'Especialidad', value: row.Especialidad, full: true },
 			{ label: 'Matrícula', value: row.MedicoSolicitante },
 			{ label: 'Origen', value: 'Registro web' },
@@ -66,7 +66,7 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 
 	const cumplido = esCumplida(row);
 	return [
-		...buildPacienteFields(row),
+		buildAtencionField(row),
 		{
 			label: 'Servicio destino',
 			value: row.ServicioDescripcion || row.SectorReceptorNombre || row.Especialidad,
