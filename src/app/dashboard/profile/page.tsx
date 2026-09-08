@@ -11,16 +11,13 @@ import {
 	Hammer,
 	HeartPulse,
 	IdCard,
-	Pencil,
 	ClipboardList,
 	Receipt,
 	RefreshCw,
-	Save,
 	ShieldCheck,
 	Stethoscope,
 	TrendingUp,
 	User,
-	X,
 } from 'lucide-react';
 import {
 	Bar,
@@ -164,7 +161,7 @@ function formatLabel(key: string) {
 	return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-const EDITABLE_PROFILE_FIELDS = [
+const PROFILE_FIELDS = [
 	'ApellidoNombre',
 	'NumeroDocumento',
 	'Telefono',
@@ -212,8 +209,6 @@ export default function MiPerfilPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [perfil, setPerfil] = useState<MiPerfilResponse['data'] | null>(null);
-	const [editing, setEditing] = useState(false);
-	const [savingProfile, setSavingProfile] = useState(false);
 	const [profileForm, setProfileForm] = useState<Record<string, string>>({});
 
 	const [fechaDesde, setFechaDesde] = useState(def.desde);
@@ -244,7 +239,7 @@ export default function MiPerfilPage() {
 					r.ApellidoNombrePersonal ||
 					[r.Apellido, r.Nombres].filter(Boolean).join(', ');
 			}
-			for (const key of EDITABLE_PROFILE_FIELDS) {
+			for (const key of PROFILE_FIELDS) {
 				initialForm[key] = p[key] == null || p[key] === '' ? '' : String(p[key]);
 			}
 			setProfileForm(initialForm);
@@ -296,7 +291,7 @@ export default function MiPerfilPage() {
 	const matriculaPerfil = profileForm.MatriculaProvincial || resumen?.Matricula || '—';
 	const profileRows = useMemo(
 		() =>
-			EDITABLE_PROFILE_FIELDS.map((key) => ({
+			PROFILE_FIELDS.map((key) => ({
 				key,
 				label: formatLabel(key),
 				value: profileForm[key] ?? '',
@@ -511,25 +506,6 @@ export default function MiPerfilPage() {
 		if (paginaActual > totalPaginas) setPaginaActual(totalPaginas);
 	}, [paginaActual, totalPaginas]);
 
-	const onChangeProfileField = (key: string, value: string) => {
-		setProfileForm((prev) => ({ ...prev, [key]: value }));
-	};
-
-	const guardarPerfil = async () => {
-		setSavingProfile(true);
-		setError(null);
-		try {
-			const res = await miPerfilService.actualizarPerfil(profileForm);
-			if (!res.success) throw new Error('No se pudo guardar el perfil');
-			setPerfil(res.data);
-			setEditing(false);
-		} catch (e: unknown) {
-			setError(apiErrorMessage(e, 'No se pudo guardar el perfil'));
-		} finally {
-			setSavingProfile(false);
-		}
-	};
-
 	return (
 		<div className={styles.container}>
 
@@ -602,7 +578,6 @@ export default function MiPerfilPage() {
 								<div className={styles.detailGroupHead}>
 									<h3>{group.title}</h3>
 									<p>{group.description}</p>
-									{/* Botón editar solo aquí, en la primera sección del grupo */}
 								</div>
 								<div className={styles.profileRows}>
 									{profileRows
@@ -610,52 +585,13 @@ export default function MiPerfilPage() {
 										.map((row) => (
 											<div className={styles.profileRow} key={row.key}>
 												<div className={styles.profileRowLabel}>{row.label}</div>
-												<div className={styles.profileRowValue}>
-													{editing ? (
-														<input
-															className={styles.profileInput}
-															value={row.value}
-															onChange={(ev) => onChangeProfileField(row.key, ev.target.value)}
-														/>
-													) : (
-														row.value || '—'
-													)}
-												</div>
-												<div className={styles.profileRowEdit}>{editing && <Pencil size={13} />}</div>
+												<div className={styles.profileRowValue}>{row.value || '—'}</div>
 											</div>
 										))}
 								</div>
 							</div>
 						))}
 					</section>
-
-					{/* Botones de edición al pie */}
-					<div className={styles.editFooter}>
-						{editing ? (
-							<>
-								<button
-									type="button"
-									className={styles.btnApply}
-									disabled={savingProfile}
-									onClick={() => void guardarPerfil()}
-								>
-									<Save size={14} /> Guardar cambios
-								</button>
-								<button
-									type="button"
-									className={styles.btnGhost}
-									disabled={savingProfile}
-									onClick={() => setEditing(false)}
-								>
-									<X size={14} /> Cancelar
-								</button>
-							</>
-						) : (
-							<button type="button" className={styles.btnGhost} onClick={() => setEditing(true)}>
-								<Pencil size={14} /> Editar datos
-							</button>
-						)}
-					</div>
 				</div>
 			)}
 

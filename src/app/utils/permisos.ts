@@ -172,7 +172,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		id: 'USUARIO',
 		label: 'Mi Perfil',
 		submodulos: [
-			{ id: 'PERFIL',     label: 'Mi Perfil',     path: '/dashboard/profile', acciones: [ACCIONES.VER, ACCIONES.EDITAR] },
+			{ id: 'PERFIL',     label: 'Mi Perfil',     path: '/dashboard/profile', acciones: [ACCIONES.VER] },
 			{ id: 'PRODUCCION', label: 'Mi Producción',                              acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
 		],
 	},
@@ -263,7 +263,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'REPORTES.OCUPACION.VER',
 
 		'USUARIO.PERFIL.VER',
-		'USUARIO.PERFIL.EDITAR',
 		'USUARIO.PRODUCCION.VER',
 		'USUARIO.PRODUCCION.EXPORTAR',
 	],
@@ -302,7 +301,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'REPORTES.OCUPACION.VER',
 
 		'USUARIO.PERFIL.VER',
-		'USUARIO.PERFIL.EDITAR',
 	],
 
 	/**
@@ -343,7 +341,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'FACTURACION.LIQUIDACIONES.GESTIONAR',
 
 		'USUARIO.PERFIL.VER',
-		'USUARIO.PERFIL.EDITAR',
 	],
 
 	/** Código interno: CARGA_HC — "Carga de adjuntos". Bandeja de estudios para adjuntar resultados. */
@@ -364,7 +361,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.ADJUNTOS.ELIMINAR',
 
 		'USUARIO.PERFIL.VER',
-		'USUARIO.PERFIL.EDITAR',
 	],
 };
 

@@ -83,32 +83,8 @@ export const miPerfilService = {
 		return res.data;
 	},
 
-	async actualizarPerfil(payload: Record<string, unknown>): Promise<MiPerfilResponse> {
-		const res = await apiService.put<MiPerfilResponse>('/mi-perfil', payload);
-		return res.data;
-	},
-
 	async obtenerFotoPerfil(): Promise<{ success: boolean; data: PersonalFotoResponse }> {
 		const res = await apiService.get<{ success: boolean; data: PersonalFotoResponse }>('/mi-perfil/foto');
-		return res.data;
-	},
-
-	async actualizarFotoPerfil(file: File): Promise<{ success: boolean; mensaje?: string }> {
-		const fd = new FormData();
-		fd.append('archivo', file);
-		const res = await apiService.put<{ success: boolean; mensaje?: string }>('/mi-perfil/foto', fd, {
-			transformRequest: [
-				(data: unknown, headers: Record<string, string>) => {
-					if (data instanceof FormData) delete headers['Content-Type'];
-					return data;
-				},
-			],
-		});
-		return res.data;
-	},
-
-	async eliminarFotoPerfil(): Promise<{ success: boolean; mensaje?: string }> {
-		const res = await apiService.delete<{ success: boolean; mensaje?: string }>('/mi-perfil/foto');
 		return res.data;
 	},
 
