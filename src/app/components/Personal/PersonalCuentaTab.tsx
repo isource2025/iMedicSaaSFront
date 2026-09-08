@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import { personalService } from '@/app/services/personalService';
 import { rolesService, type Rol } from '@/app/services/rolesService';
 import type { PersonalCuentaEstado } from '@/app/types/personal';
+import PersonalAccesoYRolesFields from './PersonalAccesoYRolesFields';
 import formStyles from './PersonalForm.module.css';
 import styles from './PersonalActionModals.module.css';
 
@@ -12,8 +13,14 @@ type Props = {
 	apellidoNombre?: string;
 	matriculaProvincial?: number | string | null;
 	variant?: 'form' | 'modal';
+	hideActions?: boolean;
 	onSaved?: () => void | Promise<void>;
 	onClose?: () => void;
+	onBusyChange?: (busy: boolean) => void;
+};
+
+export type PersonalCuentaTabHandle = {
+	guardar: () => Promise<boolean>;
 };
 
 function extractError(err: unknown, fallback: string): string {
@@ -37,14 +44,19 @@ function codOperadorDisplay(
 	return String(personalId);
 }
 
-export default function PersonalCuentaTab({
-	personalId,
-	apellidoNombre,
-	matriculaProvincial,
-	variant = 'form',
-	onSaved,
-	onClose,
-}: Props) {
+const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function PersonalCuentaTab(
+	{
+		personalId,
+		apellidoNombre,
+		matriculaProvincial,
+		variant = 'form',
+		hideActions = false,
+		onSaved,
+		onClose,
+		onBusyChange,
+	},
+	ref,
+) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState('');
@@ -74,7 +86,7 @@ export default function PersonalCuentaTab({
 			setPassword('');
 			setConfirmPassword('');
 			setNewPassword('');
-			setRoles(cat);
+			setRoles((cat || []).filter((r) => r.Activo !== false));
 			const ids = (pack.roles || []).map((r) => r.IdRol);
 			setRolesAsignados(ids);
 			const principal =
@@ -93,6 +105,10 @@ export default function PersonalCuentaTab({
 	useEffect(() => {
 		void cargar();
 	}, [cargar]);
+
+	useEffect(() => {
+		onBusyChange?.(saving);
+	}, [saving, onBusyChange]);
 
 	const tieneCuenta = !!estado?.tieneCuenta;
 	const codOperador = codOperadorDisplay(
@@ -115,22 +131,28 @@ export default function PersonalCuentaTab({
 		});
 	};
 
-	const handleGuardar = async () => {
+	const handleGuardar = async (): Promise<boolean> => {
 		setSaving(true);
 		setError('');
 		setSuccess('');
 		try {
+			if (rolesAsignados.length === 0) {
+				throw new Error('Marcá al menos un rol');
+			}
 			if (!tieneCuenta) {
-				if (!nombreRed.trim()) throw new Error('El usuario es obligatorio');
-				if (password !== confirmPassword) throw new Error('Las contraseñas no coinciden');
-				if (password.length < 4) throw new Error('La contraseña debe tener al menos 4 caracteres');
-				const cuenta = await personalService.createPersonalCuenta(personalId, {
-					nombreRed: nombreRed.trim(),
-					password,
-				});
-				setEstado({ tieneCuenta: true, cuenta });
-				setPassword('');
-				setConfirmPassword('');
+				const intentoLogin = !!(nombreRed.trim() || password || confirmPassword);
+				if (intentoLogin) {
+					if (!nombreRed.trim()) throw new Error('El usuario es obligatorio');
+					if (password !== confirmPassword) throw new Error('Las contraseñas no coinciden');
+					if (password.length < 4) throw new Error('La contraseña debe tener al menos 4 caracteres');
+					const cuenta = await personalService.createPersonalCuenta(personalId, {
+						nombreRed: nombreRed.trim(),
+						password,
+					});
+					setEstado({ tieneCuenta: true, cuenta });
+					setPassword('');
+					setConfirmPassword('');
+				}
 			} else {
 				if (!nombreRed.trim()) throw new Error('El usuario es obligatorio');
 				const cuenta = await personalService.updatePersonalCuenta(personalId, {
@@ -148,160 +170,79 @@ export default function PersonalCuentaTab({
 			await rolesService.asignarRolesAPersonal(personalId, rolesAsignados, principal);
 			setSuccess('Acceso y roles guardados.');
 			await onSaved?.();
+			return true;
 		} catch (e) {
 			setError(extractError(e, 'Error al guardar'));
+			return false;
 		} finally {
 			setSaving(false);
 		}
 	};
 
-	const wrapClass = variant === 'form' ? formStyles.usuarioSection : styles.row;
+	useImperativeHandle(ref, () => ({
+		guardar: handleGuardar,
+	}));
+
 	const primaryBtnClass = variant === 'form' ? formStyles.submitButton : styles.btnPrimary;
 	const secondaryBtnClass = variant === 'form' ? formStyles.cancelButton : styles.btn;
+	const showActions = !hideActions;
 
 	return (
-		<div className={wrapClass}>
+		<div className={variant === 'modal' ? styles.row : undefined}>
 			{apellidoNombre && variant === 'modal' ? (
 				<p className={styles.muted}>
 					<strong>{apellidoNombre}</strong> — ID {personalId}
 				</p>
 			) : null}
 
-			<div className={formStyles.usuarioHead}>
-				<p className={formStyles.usuarioHint}>
-					{loading
-						? 'Cargando acceso y roles…'
-						: 'Usuario de login, contraseña y roles en un solo lugar.'}
-				</p>
-				{tieneCuenta ? (
-					<span className={formStyles.statusBadgeActive}>Con cuenta</span>
-				) : (
-					<span className={formStyles.statusBadgeInactive}>Sin cuenta</span>
-				)}
-			</div>
+			<PersonalAccesoYRolesFields
+				mode='edicion'
+				loading={loading}
+				saving={saving}
+				tieneCuenta={tieneCuenta}
+				nombreRed={nombreRed}
+				onNombreRed={setNombreRed}
+				codOperador={codOperador}
+				password={password}
+				onPassword={setPassword}
+				confirmPassword={confirmPassword}
+				onConfirmPassword={setConfirmPassword}
+				newPassword={newPassword}
+				onNewPassword={setNewPassword}
+				roles={roles}
+				rolesAsignados={rolesAsignados}
+				onToggleRol={toggleRol}
+				rolPrincipal={rolPrincipal}
+				onRolPrincipal={setRolPrincipal}
+				alertError={error}
+				alertSuccess={success}
+			/>
 
-			{error ? <div className={formStyles.alertError}>{error}</div> : null}
-			{success ? <div className={formStyles.alertSuccess}>{success}</div> : null}
-
-			<div className={formStyles.asignGrid}>
-				<section className={formStyles.asignCol}>
-					<h3 className={formStyles.subsectionTitle}>Login</h3>
-					<div className={formStyles.loginStack}>
-						<div className={formStyles.field}>
-							<label className={formStyles.label}>Usuario *</label>
-							<input
-								type="text"
-								value={nombreRed}
-								onChange={(e) => setNombreRed(e.target.value)}
-								className={formStyles.input}
-								autoComplete="off"
-								disabled={saving || loading}
-							/>
-						</div>
-						<div className={formStyles.field}>
-							<label className={formStyles.label}>Cód. operador</label>
-							<input
-								type="text"
-								value={codOperador}
-								readOnly
-								disabled
-								className={`${formStyles.input} ${formStyles.readOnly}`}
-							/>
-						</div>
-						{!tieneCuenta ? (
-							<>
-								<div className={formStyles.field}>
-									<label className={formStyles.label}>Contraseña *</label>
-									<input
-										type="password"
-										value={password}
-										onChange={(e) => setPassword(e.target.value)}
-										className={formStyles.input}
-										autoComplete="new-password"
-										disabled={saving || loading}
-									/>
-								</div>
-								<div className={formStyles.field}>
-									<label className={formStyles.label}>Confirmar *</label>
-									<input
-										type="password"
-										value={confirmPassword}
-										onChange={(e) => setConfirmPassword(e.target.value)}
-										className={formStyles.input}
-										autoComplete="new-password"
-										disabled={saving || loading}
-									/>
-								</div>
-							</>
-						) : (
-							<div className={formStyles.field}>
-								<label className={formStyles.label}>Nueva contraseña</label>
-								<input
-									type="password"
-									value={newPassword}
-									onChange={(e) => setNewPassword(e.target.value)}
-									className={formStyles.input}
-									autoComplete="new-password"
-									placeholder="Dejar vacío para no cambiar"
-									disabled={saving || loading}
-								/>
-							</div>
-						)}
-					</div>
-				</section>
-
-				<section className={formStyles.asignCol}>
-					<h3 className={formStyles.subsectionTitle}>Roles</h3>
-					<div className={styles.list}>
-						{roles.map((r) => {
-							const checked = rolesAsignados.includes(r.IdRol);
-							return (
-								<label key={r.IdRol} className={styles.checkRow}>
-									<input
-										type="checkbox"
-										checked={checked}
-										onChange={() => toggleRol(r.IdRol)}
-										disabled={saving || loading}
-									/>
-									<span>{r.Descripcion || r.Nombre}</span>
-								</label>
-							);
-						})}
-					</div>
-					{rolesAsignados.length > 0 ? (
-						<div className={formStyles.field} style={{ marginTop: 8 }}>
-							<label className={formStyles.label}>Rol principal</label>
-							<select
-								className={formStyles.input}
-								value={rolPrincipal}
-								onChange={(e) => setRolPrincipal(e.target.value)}
-								disabled={saving || loading}
-							>
-								{roles
-									.filter((r) => rolesAsignados.includes(r.IdRol))
-									.map((r) => (
-										<option key={r.IdRol} value={String(r.IdRol)}>
-											{r.Descripcion || r.Nombre}
-										</option>
-									))}
-							</select>
-						</div>
-					) : (
-						<p className={styles.muted}>Marcá al menos un rol.</p>
-					)}
-				</section>
-			</div>
-
-			<div className={variant === 'form' ? `${formStyles.actions} ${formStyles.cuentaActions}` : styles.actions}>
-				{variant === 'modal' && onClose ? (
-					<button type="button" className={secondaryBtnClass} onClick={onClose} disabled={saving}>
-						Cerrar
+			{showActions ? (
+				<div
+					className={
+						variant === 'form' ? `${formStyles.actions} ${formStyles.cuentaActions}` : styles.actions
+					}
+				>
+					{variant === 'modal' && onClose ? (
+						<button type='button' className={secondaryBtnClass} onClick={onClose} disabled={saving}>
+							Cerrar
+						</button>
+					) : null}
+					<button
+						type='button'
+						className={primaryBtnClass}
+						onClick={() => void handleGuardar()}
+						disabled={saving}
+					>
+						{saving ? 'Guardando…' : 'Guardar acceso y roles'}
 					</button>
-				) : null}
-				<button type="button" className={primaryBtnClass} onClick={() => void handleGuardar()} disabled={saving}>
-					{saving ? 'Guardando…' : tieneCuenta ? 'Guardar acceso y roles' : 'Crear cuenta y roles'}
-				</button>
-			</div>
+				</div>
+			) : null}
 		</div>
 	);
-}
+});
+
+PersonalCuentaTab.displayName = 'PersonalCuentaTab';
+
+export default PersonalCuentaTab;

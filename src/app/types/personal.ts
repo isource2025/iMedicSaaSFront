@@ -67,8 +67,10 @@ export interface PersonalFormData {
 	Password?: string;
 	ConfirmPassword?: string;
 	CodOperador?: string;
-	/** Alta: IdRol de imRoles (obligatorio al crear). */
+	/** Alta: IdRol principal de imRoles (obligatorio al crear). */
 	IdRol?: string;
+	/** Alta: roles asignados (el principal va en IdRol). */
+	IdRoles?: number[];
 	/** Alta: sectores opcionales (imPersonalSectores). El servicio sale de imSectores.ValorServicio. */
 	Sectores?: string[];
 	/** @deprecated Alta ya no asigna imPersonalServicios; se ignora. */

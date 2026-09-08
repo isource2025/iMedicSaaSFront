@@ -21,14 +21,13 @@ import type {
 import styles from './PersonalForm.module.css';
 import { nacionalidadDescripcionACodigo } from '../../utils/nacionalidadCodigo';
 import AgendaTab from './AgendaTab/AgendaTab';
-import PersonalCuentaTab from './PersonalCuentaTab';
+import PersonalCuentaTab, { type PersonalCuentaTabHandle } from './PersonalCuentaTab';
+import PersonalAccesoYRolesFields from './PersonalAccesoYRolesFields';
 import PersonalAsignacionesTab from './PersonalAsignacionesTab';
 import PersonalFirmaTab from './PersonalFirmaTab';
 import PersonalFirmaPad, { type PersonalFirmaPadRef } from './PersonalFirmaPad';
 import { usePermiso } from '../../hooks/usePermiso';
 import { rolesService, type Rol } from '../../services/rolesService';
-import { etiquetaRol } from '../../utils/permisos';
-import { Eye, EyeOff } from 'lucide-react';
 
 interface EstadoCivil {
 	valor: string;
@@ -85,6 +84,7 @@ const buildInitial = (d?: Partial<Personal> | null): PersonalFormData => ({
 	ConfirmPassword: '',
 	CodOperador: '',
 	IdRol: '',
+	IdRoles: [],
 	Sectores: [],
 	Servicios: [],
 });
@@ -119,10 +119,10 @@ export default function PersonalForm({
 	const [internalSubmitting, setInternalSubmitting] = useState(false);
 	const [nextId, setNextId] = useState<number | null>(null);
 	const [rolesCatalogo, setRolesCatalogo] = useState<Rol[]>([]);
-	const [showPassword, setShowPassword] = useState(false);
-	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+	const [cuentaBusy, setCuentaBusy] = useState(false);
 	const [firmaDraftUrl, setFirmaDraftUrl] = useState<string | null>(null);
 	const firmaPadRef = useRef<PersonalFirmaPadRef>(null);
+	const cuentaTabRef = useRef<PersonalCuentaTabHandle>(null);
 	const pendingFirmaRef = useRef<File | null>(null);
 
 	useEffect(() => {
@@ -198,6 +198,19 @@ export default function PersonalForm({
 			}
 		})();
 	}, [isEditing]);
+
+	useEffect(() => {
+		if (isEditing || !formData.CrearUsuario) return;
+		const dni = String(formData.NumeroDocumento || '').trim();
+		if (!dni) return;
+		setFormData((prev) => {
+			const current = String(prev.NombreRed || '').trim();
+			if (!current || current === dni) {
+				return current === dni ? prev : { ...prev, NombreRed: dni };
+			}
+			return prev;
+		});
+	}, [formData.CrearUsuario, formData.NumeroDocumento, isEditing]);
 
 	useEffect(() => {
 		const val = formData.FechaNacimiento;
@@ -304,6 +317,41 @@ export default function PersonalForm({
 		}
 	};
 
+	const toggleRolAlta = (idRol: number) => {
+		setFormData((prev) => {
+			const current = Array.isArray(prev.IdRoles)
+				? prev.IdRoles.map(Number).filter((n) => Number.isFinite(n) && n > 0)
+				: prev.IdRol
+					? [Number(prev.IdRol)]
+					: [];
+			const has = current.includes(idRol);
+			const next = has ? current.filter((x) => x !== idRol) : [...current, idRol];
+			let principal = prev.IdRol || '';
+			const cur = principal === '' ? null : Number(principal);
+			if (has && cur === idRol) principal = next.length ? String(next[0]) : '';
+			else if (!has && (principal === '' || cur == null)) principal = String(idRol);
+			return { ...prev, IdRoles: next, IdRol: principal };
+		});
+		if (errors.IdRol) {
+			setErrors((prev) => {
+				const n = { ...prev };
+				delete n.IdRol;
+				return n;
+			});
+		}
+	};
+
+	const setCrearUsuario = (checked: boolean) => {
+		setFormData((prev) => ({
+			...prev,
+			CrearUsuario: checked,
+			NombreRed:
+				checked && !String(prev.NombreRed || '').trim()
+					? String(prev.NumeroDocumento || '').trim()
+					: prev.NombreRed,
+		}));
+	};
+
 	async function safeFetchLocalidad(ciudad: string): Promise<LocalidadData | null> {
 		const query = encodeURIComponent(normalizeCity(ciudad));
 		try {
@@ -381,8 +429,11 @@ export default function PersonalForm({
 		if (formData.MatriculaNacional && isNaN(Number(formData.MatriculaNacional)))
 			newErrors.MatriculaNacional = 'Matrícula inválida';
 		if (!isEditing) {
-			if (!String(formData.IdRol || '').trim() || Number(formData.IdRol) <= 0) {
-				newErrors.IdRol = 'El rol es obligatorio';
+			const rolesAlta = Array.isArray(formData.IdRoles)
+				? formData.IdRoles.map(Number).filter((n) => Number.isFinite(n) && n > 0)
+				: [];
+			if (!rolesAlta.length || !String(formData.IdRol || '').trim() || Number(formData.IdRol) <= 0) {
+				newErrors.IdRol = 'Marcá al menos un rol';
 			}
 			if (formData.CrearUsuario) {
 				if (!String(formData.NombreRed || '').trim()) {
@@ -441,10 +492,13 @@ export default function PersonalForm({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if (isEditing && activeTab === 'cuenta') {
+			await cuentaTabRef.current?.guardar();
+			return;
+		}
 		if (
 			isEditing &&
 			(activeTab === 'firma' ||
-				activeTab === 'cuenta' ||
 				activeTab === 'agenda' ||
 				activeTab === 'asignaciones')
 		) {
@@ -465,6 +519,7 @@ export default function PersonalForm({
 				delete payload.ConfirmPassword;
 				delete payload.CodOperador;
 				delete payload.IdRol;
+				delete payload.IdRoles;
 				delete payload.Sectores;
 				delete payload.Servicios;
 			} else if (!payload.CrearUsuario) {
@@ -990,153 +1045,68 @@ export default function PersonalForm({
 			{isEditing && formData.Valor ? (
 				<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
 					<PersonalCuentaTab
+						ref={cuentaTabRef}
 						personalId={formData.Valor}
 						apellidoNombre={formData.ApellidoNombre}
 						matriculaProvincial={formData.MatriculaProvincial || null}
 						variant='form'
+						hideActions
+						onBusyChange={setCuentaBusy}
 					/>
 				</div>
 			) : (
 				<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
-					<div className={styles.usuarioSection}>
-						<h3 className={styles.subsectionTitle}>Rol *</h3>
-						<p className={styles.usuarioHint}>
-							Obligatorio. Define los permisos del personal en el sistema.
-						</p>
-						<div className={styles.field}>
-							<label className={styles.label}>Rol</label>
-							<select
-								name='IdRol'
-								value={formData.IdRol || ''}
-								onChange={handleChange}
-								className={`${styles.input} ${errors.IdRol ? styles.inputError : ''}`}
-							>
-								<option value=''>Seleccione un rol</option>
-								{rolesCatalogo.map((r) => (
-									<option key={r.IdRol} value={String(r.IdRol)}>
-										{etiquetaRol({ nombre: r.Nombre, descripcion: r.Descripcion }) || r.Nombre}
-									</option>
-								))}
-							</select>
-							{errors.IdRol ? <span className={styles.error}>{errors.IdRol}</span> : null}
-							{!isEditing && rolesCatalogo.length === 0 ? (
-								<span className={styles.fieldHint}>
-									No hay roles disponibles. Verificá el catálogo de roles de la empresa.
-								</span>
-							) : null}
-						</div>
-					</div>
-					<div className={styles.usuarioSection}>
-						<div className={styles.usuarioHead}>
-							<label className={styles.checkboxLabel}>
-								<input
-									type='checkbox'
-									checked={!!formData.CrearUsuario}
-									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											CrearUsuario: e.target.checked,
-										}))
-									}
-								/>
-								Crear usuario de acceso al sistema
-							</label>
-							<p className={styles.usuarioHint}>
-								Opcional. Genera el usuario de login con el mismo ID del personal.
-							</p>
-						</div>
-						{formData.CrearUsuario ? (
-							<div className={styles.usuarioGrid}>
-								<div className={`${styles.field} ${styles.fieldHalf}`}>
-									<label className={styles.label}>Usuario (NombreRed) *</label>
-									<input
-										type='text'
-										name='NombreRed'
-										value={formData.NombreRed || ''}
-										onChange={handleChange}
-										className={`${styles.input} ${errors.NombreRed ? styles.inputError : ''}`}
-										autoComplete='off'
-										placeholder='Ej. jperez'
-									/>
-									{errors.NombreRed ? (
-										<span className={styles.error}>{errors.NombreRed}</span>
-									) : null}
-								</div>
-								<div className={`${styles.field} ${styles.fieldHalf}`}>
-									<label className={styles.label}>Código operador</label>
-									<input
-										type='text'
-										value={
-											formData.MatriculaProvincial
-												? String(formData.MatriculaProvincial)
-												: displayId
-													? String(displayId)
-													: '—'
-										}
-										readOnly
-										disabled
-										className={`${styles.input} ${styles.readOnly}`}
-										tabIndex={-1}
-									/>
-									<span className={styles.fieldHint}>
-										Se asigna automáticamente desde la matrícula provincial.
-									</span>
-								</div>
-								<div className={`${styles.field} ${styles.fieldHalf}`}>
-									<label className={styles.label}>Contraseña *</label>
-									<div className={styles.passwordWrap}>
-										<input
-											type={showPassword ? 'text' : 'password'}
-											name='Password'
-											value={formData.Password || ''}
-											onChange={handleChange}
-											className={`${styles.input} ${errors.Password ? styles.inputError : ''}`}
-											autoComplete='new-password'
-										/>
-										<button
-											type='button'
-											className={styles.passwordToggle}
-											onClick={() => setShowPassword((v) => !v)}
-											tabIndex={-1}
-											aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-										>
-											{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-										</button>
-									</div>
-									{errors.Password ? (
-										<span className={styles.error}>{errors.Password}</span>
-									) : null}
-								</div>
-								<div className={`${styles.field} ${styles.fieldHalf}`}>
-									<label className={styles.label}>Confirmar contraseña *</label>
-									<div className={styles.passwordWrap}>
-										<input
-											type={showConfirmPassword ? 'text' : 'password'}
-											name='ConfirmPassword'
-											value={formData.ConfirmPassword || ''}
-											onChange={handleChange}
-											className={`${styles.input} ${errors.ConfirmPassword ? styles.inputError : ''}`}
-											autoComplete='new-password'
-										/>
-										<button
-											type='button'
-											className={styles.passwordToggle}
-											onClick={() => setShowConfirmPassword((v) => !v)}
-											tabIndex={-1}
-											aria-label={
-												showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
-											}
-										>
-											{showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-										</button>
-									</div>
-									{errors.ConfirmPassword ? (
-										<span className={styles.error}>{errors.ConfirmPassword}</span>
-									) : null}
-								</div>
-							</div>
-						) : null}
-					</div>
+					<PersonalAccesoYRolesFields
+						mode='alta'
+						crearUsuario={!!formData.CrearUsuario}
+						onCrearUsuario={setCrearUsuario}
+						nombreRed={formData.NombreRed || ''}
+						onNombreRed={(value) => {
+							setFormData((prev) => ({ ...prev, NombreRed: value }));
+							if (errors.NombreRed) {
+								setErrors((prev) => {
+									const n = { ...prev };
+									delete n.NombreRed;
+									return n;
+								});
+							}
+						}}
+						codOperador={
+							formData.MatriculaProvincial
+								? String(formData.MatriculaProvincial)
+								: displayId
+									? String(displayId)
+									: '—'
+						}
+						password={formData.Password || ''}
+						onPassword={(value) => {
+							setFormData((prev) => ({ ...prev, Password: value }));
+							if (errors.Password) {
+								setErrors((prev) => {
+									const n = { ...prev };
+									delete n.Password;
+									return n;
+								});
+							}
+						}}
+						confirmPassword={formData.ConfirmPassword || ''}
+						onConfirmPassword={(value) => {
+							setFormData((prev) => ({ ...prev, ConfirmPassword: value }));
+							if (errors.ConfirmPassword) {
+								setErrors((prev) => {
+									const n = { ...prev };
+									delete n.ConfirmPassword;
+									return n;
+								});
+							}
+						}}
+						roles={rolesCatalogo}
+						rolesAsignados={formData.IdRoles || []}
+						onToggleRol={toggleRolAlta}
+						rolPrincipal={formData.IdRol || ''}
+						onRolPrincipal={(value) => setFormData((prev) => ({ ...prev, IdRol: value }))}
+						errors={errors}
+					/>
 				</div>
 			)}
 
@@ -1148,8 +1118,8 @@ export default function PersonalForm({
 			</div>
 
 			{(!isEditing ||
-				(activeTab !== 'cuenta' &&
-					activeTab !== 'agenda' &&
+				activeTab === 'cuenta' ||
+				(activeTab !== 'agenda' &&
 					activeTab !== 'asignaciones' &&
 					activeTab !== 'firma')) ? (
 			<div className={styles.actions}>
@@ -1159,7 +1129,7 @@ export default function PersonalForm({
 						type='button'
 						onClick={onDelete}
 						className={styles.cancelButton}
-						disabled={internalSubmitting}
+						disabled={internalSubmitting || (activeTab === 'cuenta' && cuentaBusy)}
 						style={{ color: '#b91c1c', borderColor: '#fecaca' }}
 					>
 						Eliminar
@@ -1169,19 +1139,29 @@ export default function PersonalForm({
 					type='button'
 					onClick={onCancel}
 					className={styles.cancelButton}
-					disabled={internalSubmitting}
+					disabled={internalSubmitting || (activeTab === 'cuenta' && cuentaBusy)}
 					tabIndex={50}
 				>
 					Cancelar
 				</button>
 				<button
 					type='submit'
-					className={`${styles.submitButton} ${internalSubmitting ? styles.loading : ''}`}
-					disabled={internalSubmitting || isSubmitting}
+					className={`${styles.submitButton} ${
+						internalSubmitting || (activeTab === 'cuenta' && cuentaBusy) ? styles.loading : ''
+					}`}
+					disabled={internalSubmitting || isSubmitting || (activeTab === 'cuenta' && cuentaBusy)}
 					tabIndex={51}
 				>
-					{internalSubmitting && <span className={styles.inlineSpinner} aria-hidden='true' />}
-					{internalSubmitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
+					{(internalSubmitting || (isEditing && activeTab === 'cuenta' && cuentaBusy)) && (
+						<span className={styles.inlineSpinner} aria-hidden='true' />
+					)}
+					{internalSubmitting || (isEditing && activeTab === 'cuenta' && cuentaBusy)
+						? 'Guardando...'
+						: isEditing && activeTab === 'cuenta'
+							? 'Guardar acceso y roles'
+							: isEditing
+								? 'Actualizar'
+								: 'Guardar'}
 				</button>
 				</div>
 			</div>
