@@ -71,6 +71,16 @@ export function repararTextoUi(texto: unknown): string {
 	}
 }
 
+function isBinaryLike(value: unknown): boolean {
+	if (value == null || typeof value !== 'object') return false;
+	if (typeof Blob !== 'undefined' && value instanceof Blob) return true;
+	if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) return true;
+	if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView(value)) return true;
+	if (typeof FormData !== 'undefined' && value instanceof FormData) return true;
+	if (value instanceof Date) return true;
+	return false;
+}
+
 /** Recorre objetos/arrays de API y repara strings corruptos (nombres, domicilios, etc.). */
 export function repararStringsDeepUi<T>(value: T, depth = 0): T {
 	if (depth > 8) return value;
@@ -81,6 +91,7 @@ export function repararStringsDeepUi<T>(value: T, depth = 0): T {
 	if (Array.isArray(value)) {
 		return value.map((v) => repararStringsDeepUi(v, depth + 1)) as T;
 	}
+	if (isBinaryLike(value)) return value;
 	if (value && typeof value === 'object') {
 		const out: Record<string, unknown> = {};
 		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {

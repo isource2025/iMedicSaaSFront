@@ -79,6 +79,13 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
 	(response: any) => {
+		const rt = String(response?.config?.responseType || '');
+		if (rt === 'blob' || rt === 'arraybuffer' || rt === 'stream') {
+			return response;
+		}
+		if (response?.data instanceof Blob || response?.data instanceof ArrayBuffer) {
+			return response;
+		}
 		if (response?.data != null) {
 			response.data = repararStringsDeepUi(response.data);
 		}

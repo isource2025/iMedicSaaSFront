@@ -266,6 +266,9 @@ export default function AdmissionVisitExportModal({
       const blob = modeGeneral
         ? await admissionSearchService.exportGeneralPaciente(idp, body)
         : await admissionSearchService.exportSelectivo(nv, body);
+      if (!(blob instanceof Blob)) {
+        throw new Error('No se pudo generar el PDF (respuesta inválida del servidor)');
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

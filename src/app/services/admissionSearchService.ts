@@ -191,6 +191,20 @@ async function parseBlobError(blob: Blob): Promise<string> {
   }
 }
 
+function asPdfBlob(data: unknown): Blob {
+  if (typeof Blob !== 'undefined' && data instanceof Blob) return data;
+  if (typeof ArrayBuffer !== 'undefined' && data instanceof ArrayBuffer) {
+    return new Blob([data], { type: 'application/pdf' });
+  }
+  if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView(data)) {
+    const view = data as ArrayBufferView;
+    const copy = new Uint8Array(view.byteLength);
+    copy.set(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+    return new Blob([copy], { type: 'application/pdf' });
+  }
+  throw new Error('No se pudo generar el PDF (respuesta inválida del servidor)');
+}
+
 export function admissionApiErrorMessage(e: unknown, fallback: string): string {
   const err = e as {
     response?: { data?: { message?: string; detail?: string; mensaje?: string } };
@@ -288,7 +302,7 @@ export const admissionSearchService = {
         body,
         { responseType: 'blob', timeout: 120000 },
       );
-      return response.data as Blob;
+      return asPdfBlob(response.data);
     } catch (e: unknown) {
       const err = e as { response?: { data?: Blob } };
       const blob = err.response?.data;
@@ -306,7 +320,7 @@ export const admissionSearchService = {
         body,
         { responseType: 'blob', timeout: 300000 },
       );
-      return response.data as Blob;
+      return asPdfBlob(response.data);
     } catch (e: unknown) {
       const err = e as { response?: { data?: Blob } };
       const blob = err.response?.data;
