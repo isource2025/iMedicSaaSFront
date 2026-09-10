@@ -46,6 +46,7 @@ function RolAvatar() {
 		ENFERMERO:      { Icon: HeartPulse,   bg: '#fff1f2', color: '#e11d48', label: 'Enfermero' },
 		ADMINISTRATIVO: { Icon: Hammer,       bg: '#fffbeb', color: '#d97706', label: 'Administrativo' },
 		CARGA_HC:       { Icon: IdCard,         bg: '#f0fdf4', color: '#15803d', label: 'Carga de adjuntos' },
+		PANEL_DATOS:    { Icon: ClipboardList,  bg: '#f8fafc', color: '#475569', label: 'Panel de datos' },
 	};
 	const cfg = configs[nombre] ?? { Icon: User, bg: '#f1f5f9', color: '#64748b', label: rol?.nombre || 'Usuario' };
 	return (

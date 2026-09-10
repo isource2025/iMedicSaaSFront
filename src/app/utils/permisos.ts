@@ -11,7 +11,7 @@
  *   1 = ADMIN (administrador del sistema),
  *   2 = MEDICO, 3 = ENFERMERO,
  *   4 = ADMINISTRATIVO (ver todo; gestiona pacientes; sin escritura clínica),
- *   5 = SUPER_ADMIN, 6 = CARGA_HC
+ *   5 = SUPER_ADMIN, 6 = CARGA_HC, 7 = PANEL_DATOS
  *
  * Un usuario puede tener varios roles: los permisos efectivos son la unión
  * de las plantillas (el login envía la lista en `permisos`).
@@ -49,7 +49,7 @@ export interface ModuloDef {
 	submodulos: ReadonlyArray<SubmoduloDef>;
 }
 
-export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO' | 'SUPER_ADMIN' | 'CARGA_HC';
+export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO' | 'SUPER_ADMIN' | 'CARGA_HC' | 'PANEL_DATOS';
 
 // ============================================================================
 // Estructura de módulos (alineada con el sidebar)
@@ -357,6 +357,12 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 
 		'USUARIO.PERFIL.VER',
 	],
+
+	/** Código interno: PANEL_DATOS — "Panel de datos". Solo panel de control; sumable a otro rol. */
+	PANEL_DATOS: [
+		'DASHBOARD.INICIO.VER',
+		'USUARIO.PERFIL.VER',
+	],
 };
 
 // ============================================================================
@@ -367,28 +373,50 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 	if (!rol) return null;
 	const n = typeof rol === 'string' ? rol : rol.nombre || '';
 	const up = String(n).trim().toUpperCase();
-	if (up === 'ADMIN' || up === 'MEDICO' || up === 'ENFERMERO' || up === 'ADMINISTRATIVO' || up === 'SUPER_ADMIN' || up === 'CARGA_HC') {
+	if (
+		up === 'ADMIN' ||
+		up === 'MEDICO' ||
+		up === 'ENFERMERO' ||
+		up === 'ADMINISTRATIVO' ||
+		up === 'SUPER_ADMIN' ||
+		up === 'CARGA_HC' ||
+		up === 'PANEL_DATOS'
+	) {
 		return up as RolNombre;
 	}
 	return null;
 }
 
-/** Etiqueta de catálogo (Personal / Super Admin). CARGA_HC se muestra como "Carga de adjuntos". */
+/** Etiqueta de catálogo (Personal / Super Admin). */
 export function etiquetaRol(
 	rol: { nombre?: string; descripcion?: string } | string | null | undefined,
 ): string {
 	if (!rol) return '';
 	const nombre = typeof rol === 'string' ? rol : String(rol.nombre || '');
 	const descripcion = typeof rol === 'string' ? '' : String(rol.descripcion || '').trim();
-	const esCargaHc = (s: string) => {
-		const n = String(s || '')
+	const normalizar = (s: string) =>
+		String(s || '')
 			.trim()
 			.toUpperCase()
 			.replace(/\s+/g, '_');
+	const esCargaHc = (s: string) => {
+		const n = normalizar(s);
 		return n === 'CARGA_HC' || n === 'CARGAHC';
+	};
+	const esPanelDatos = (s: string) => {
+		const n = normalizar(s);
+		return n === 'PANEL_DATOS' || n === 'PANELDATOS';
 	};
 	if (esCargaHc(nombre) || esCargaHc(descripcion) || /^carga\s*hc$/i.test(nombre) || /^carga\s*hc$/i.test(descripcion)) {
 		return 'Carga de adjuntos';
+	}
+	if (
+		esPanelDatos(nombre) ||
+		esPanelDatos(descripcion) ||
+		/^panel\s*de\s*datos$/i.test(nombre) ||
+		/^panel\s*de\s*datos$/i.test(descripcion)
+	) {
+		return 'Panel de datos';
 	}
 	return descripcion || nombre.trim();
 }

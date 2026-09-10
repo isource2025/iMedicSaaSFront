@@ -72,8 +72,8 @@ export interface EmpresaInfoLogin {
 }
 
 export interface RolInfo {
-  id: number;        // IdRol (1=ADMIN, 2=MEDICO, 3=ENFERMERO, 4=ADMINISTRATIVO)
-  nombre: string;    // 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO'
+  id: number;        // IdRol (1=ADMIN … 6=CARGA_HC, 7=PANEL_DATOS)
+  nombre: string;    // 'ADMIN' | 'MEDICO' | … | 'PANEL_DATOS'
   nivel: number;     // 100 / 50 / 40 / 20
 }
 

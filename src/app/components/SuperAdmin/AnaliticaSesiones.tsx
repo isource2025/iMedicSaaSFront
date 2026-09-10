@@ -19,7 +19,7 @@ import Loader from '../Loader/Loader';
 import SuperAdminShell from './SuperAdminShell';
 import styles from './superAdmin.module.css';
 
-const ROLES = ['ADMIN', 'ADMINISTRATIVO', 'MEDICO', 'ENFERMERO', 'CARGA_HC', 'SUPER_ADMIN'];
+const ROLES = ['ADMIN', 'ADMINISTRATIVO', 'MEDICO', 'ENFERMERO', 'CARGA_HC', 'PANEL_DATOS', 'SUPER_ADMIN'];
 
 function isoDate(d = new Date()) {
   const y = d.getFullYear();
