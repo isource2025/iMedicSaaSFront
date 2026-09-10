@@ -3,6 +3,7 @@ import { apiService } from './axios';
 import { apiFetch } from '@/app/utils/authFetch';
 import { stopSessionActivityMonitor } from '@/app/utils/sessionActivity';
 import { clearTenantUiCaches } from '@/app/utils/sessionCaches';
+import { tienePermiso } from '@/app/utils/permisos';
 
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
@@ -79,7 +80,7 @@ export const authService = {
   /**
    * Ruta inicial post-login / home:
    * - SUPER_ADMIN → panel plataforma
-   * - ADMIN → dashboard Inicio
+   * - con permiso DASHBOARD.INICIO.VER → panel de control
    * - resto → Mi Perfil
    */
   getHomePath: (rolNombre?: string | null): string => {
@@ -87,8 +88,16 @@ export const authService = {
       .trim()
       .toUpperCase();
     if (n === 'SUPER_ADMIN') return '/dashboard/super-admin';
-    if (n === 'ADMIN') return '/dashboard';
+    if (authService.puedeVerPanel(n)) return '/dashboard';
     return '/dashboard/profile';
+  },
+
+  /** Acceso al panel de control (`/dashboard`). Se otorga por plantilla de rol. */
+  puedeVerPanel: (rolNombre?: string | null): boolean => {
+    const n = String(rolNombre ?? authService.getCurrentRol()?.nombre ?? '')
+      .trim()
+      .toUpperCase();
+    return tienePermiso(n, 'DASHBOARD.INICIO.VER', authService.getCurrentPermisos());
   },
 
   getCurrentPermisos: (): string[] => {

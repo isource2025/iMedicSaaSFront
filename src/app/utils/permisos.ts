@@ -59,6 +59,8 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		id: 'DASHBOARD',
 		label: 'Inicio',
 		path: '/dashboard',
+		// Panel de control con métricas de la clínica. Solo está en la plantilla
+		// ADMIN: para habilitárselo a otro rol, agregarle 'DASHBOARD.INICIO.VER'.
 		submodulos: [
 			{ id: 'INICIO', label: 'Inicio', path: '/dashboard', acciones: [ACCIONES.VER] },
 		],
@@ -208,8 +210,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	),
 
 	MEDICO: [
-		'DASHBOARD.INICIO.VER',
-
 		// Agenda propia
 		'TURNOS.AGENDA.VER',
 		'TURNOS.AGENDA.CREAR',
@@ -268,8 +268,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	],
 
 	ENFERMERO: [
-		'DASHBOARD.INICIO.VER',
-
 		'TURNOS.AGENDA.VER',
 		'TURNOS.AGENDA.EDITAR',
 
@@ -308,7 +306,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	 * No crea ni edita lo médico ni de enfermería. Distinto de ADMIN.
 	 */
 	ADMINISTRATIVO: [
-		..._soloVer('DASHBOARD'),
 		..._soloVer('TURNOS'),
 		..._soloVer('ADMISION'),
 		..._soloVer('INTERNACION', ['AUDITORIA_HC']),
@@ -345,8 +342,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 
 	/** Código interno: CARGA_HC — "Carga de adjuntos". Bandeja de estudios para adjuntar resultados. */
 	CARGA_HC: [
-		'DASHBOARD.INICIO.VER',
-
 		'ADMISION.PACIENTES.VER',
 		'ADMISION.BUSQUEDA.VER',
 		'ADMISION.TABLA.VER',
