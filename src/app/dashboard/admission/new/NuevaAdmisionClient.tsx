@@ -10,6 +10,7 @@ import PacienteSelector, {
 import RequisitosDocumentos from '@/app/components/admission/NuevaAdmision/RequisitosDocumentos';
 import CamaSelector from '@/app/components/admission/NuevaAdmision/CamaSelector';
 import { useBorradorAdmision } from '@/app/components/admission/NuevaAdmision/useBorradorAdmision';
+import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 
 import admisionNuevaService from '@/app/services/admisionNuevaService';
 import { admissionApiErrorMessage, type AdmissionCatalogOption } from '@/app/services/admissionSearchService';
@@ -90,10 +91,18 @@ function formInicial(): FormState {
   };
 }
 
-function opcion(o: AdmissionCatalogOption): { valor: string; label: string } {
-  const valor = String(o.Valor ?? '').trim();
-  const desc = String(o.Descripcion ?? '').trim();
-  return { valor, label: desc || valor || '—' };
+function opcionesSelect(
+  lista: AdmissionCatalogOption[] | undefined,
+  vacio: string,
+): { value: string; label: string }[] {
+  return [
+    { value: '', label: vacio },
+    ...(lista ?? []).map((o) => {
+      const value = String(o.Valor ?? '').trim();
+      const desc = String(o.Descripcion ?? '').trim();
+      return { value, label: desc || value || '—' };
+    }),
+  ];
 }
 
 function requisitoDesdeCatalogo(r: RequisitoCobertura): RequisitoFormulario {
@@ -379,8 +388,8 @@ export default function NuevaAdmisionClient() {
     }
   };
 
-  const opciones = (lista?: AdmissionCatalogOption[]) => (lista ?? []).map(opcion);
   const hayFallidos = requisitos.some((r) => r.estado === 'error');
+  const cargandoCatalogos = !catalogos;
 
   if (creada) {
     return (
@@ -508,69 +517,53 @@ export default function NuevaAdmisionClient() {
             />
           </label>
 
-          <label className={styles.campo}>
-            <span>Clase de paciente *</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Clase de paciente *"
+              name="clasePaciente"
               value={form.clasePaciente}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado}
-              onChange={(e) => setCampo('clasePaciente', e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {opciones(catalogos?.clasesPaciente).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setCampo('clasePaciente', String(v ?? ''))}
+              options={opcionesSelect(catalogos?.clasesPaciente, 'Seleccionar…')}
+            />
+          </div>
 
-          <label className={styles.campo}>
-            <span>Tipo de admisión</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Tipo de admisión"
+              name="tipoAdmision"
               value={form.tipoAdmision}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado}
-              onChange={(e) => setCampo('tipoAdmision', e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {opciones(catalogos?.tiposAdmision).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setCampo('tipoAdmision', String(v ?? ''))}
+              options={opcionesSelect(catalogos?.tiposAdmision, 'Seleccionar…')}
+            />
+          </div>
 
-          <label className={styles.campo}>
-            <span>Lugar del episodio</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Lugar del episodio"
+              name="idLugarEpisodio"
               value={form.idLugarEpisodio}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado}
-              onChange={(e) => setCampo('idLugarEpisodio', e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {opciones(catalogos?.lugaresEpisodio).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setCampo('idLugarEpisodio', String(v ?? ''))}
+              options={opcionesSelect(catalogos?.lugaresEpisodio, 'Seleccionar…')}
+            />
+          </div>
 
-          <label className={styles.campo}>
-            <span>Derivado de</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Derivado de"
+              name="centroSalud"
               value={form.centroSalud}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado}
-              onChange={(e) => setCampo('centroSalud', e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {opciones(catalogos?.centrosSalud).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setCampo('centroSalud', String(v ?? ''))}
+              options={opcionesSelect(catalogos?.centrosSalud, 'Seleccionar…')}
+            />
+          </div>
 
           <div className={`${styles.campo} ${styles.campoAncho}`}>
             <span>Diagnóstico</span>
@@ -619,21 +612,17 @@ export default function NuevaAdmisionClient() {
             </div>
           </div>
 
-          <label className={styles.campo}>
-            <span>Estado ambulatorio</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Estado ambulatorio"
+              name="estadoAmbulatorio"
               value={form.estadoAmbulatorio}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado}
-              onChange={(e) => setCampo('estadoAmbulatorio', e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {opciones(catalogos?.estadosAmbulatorios).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setCampo('estadoAmbulatorio', String(v ?? ''))}
+              options={opcionesSelect(catalogos?.estadosAmbulatorios, 'Seleccionar…')}
+            />
+          </div>
 
           {(['doctorAdmisor', 'doctorAsistiendo', 'doctorCabecera'] as CampoProfesional[]).map(
             (campo) => {
@@ -684,53 +673,46 @@ export default function NuevaAdmisionClient() {
             },
           )}
 
-          <label className={styles.campo}>
-            <span>Cobertura</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Cobertura"
+              name="cliente"
               value={form.cliente}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado}
-              onChange={(e) => setForm((f) => ({ ...f, cliente: e.target.value, contrato: '' }))}
-            >
-              <option value="">Sin cobertura</option>
-              {opciones(catalogos?.coberturas).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) =>
+                setForm((f) => ({ ...f, cliente: String(v ?? ''), contrato: '' }))
+              }
+              options={opcionesSelect(catalogos?.coberturas, 'Sin cobertura')}
+            />
+          </div>
 
-          <label className={styles.campo}>
-            <span>Convenio / plan</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Convenio / plan"
+              name="contrato"
               value={form.contrato}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado || !form.cliente}
-              onChange={(e) => setCampo('contrato', e.target.value)}
-            >
-              <option value="">{form.cliente ? 'Seleccionar…' : 'Elegí una cobertura'}</option>
-              {opciones(catalogos?.convenios).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setCampo('contrato', String(v ?? ''))}
+              options={opcionesSelect(
+                catalogos?.convenios,
+                form.cliente ? 'Seleccionar…' : 'Elegí una cobertura',
+              )}
+            />
+          </div>
 
-          <label className={styles.campo}>
-            <span>Tipo de paciente</span>
-            <select
+          <div className={styles.campo}>
+            <CustomSelect
+              label="Tipo de paciente"
+              name="tipoPaciente"
               value={form.tipoPaciente}
+              isLoading={cargandoCatalogos}
               disabled={bloqueado}
-              onChange={(e) => setCampo('tipoPaciente', e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {opciones(catalogos?.tiposPaciente).map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(v) => setCampo('tipoPaciente', String(v ?? ''))}
+              options={opcionesSelect(catalogos?.tiposPaciente, 'Seleccionar…')}
+            />
+          </div>
 
           {esInternado && (
             <label className={styles.campo}>

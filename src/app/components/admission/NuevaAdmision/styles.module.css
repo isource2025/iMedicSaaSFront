@@ -342,19 +342,14 @@
 
 .agregarRequisito {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-.agregarRequisito select {
+.agregarRequisitoSelect {
   flex: 1;
   min-width: 220px;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  background: #fff;
 }
 
 /* Botones ----------------------------------------------------------------- */

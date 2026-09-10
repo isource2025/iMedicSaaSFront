@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BedDouble } from 'lucide-react';
 import { bedsService } from '@/app/services/bedsService';
+import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import type { Bed } from '@/app/types/beds';
 import type { CamaSeleccionada } from '@/app/types/admisionNueva';
 import styles from './styles.module.css';
@@ -17,17 +18,20 @@ export default function CamaSelector({ seleccion, onSeleccionar, disabled }: Pro
   const [sectores, setSectores] = useState<{ valor: string; descripcion: string }[]>([]);
   const [sector, setSector] = useState(seleccion?.valorSector ?? '');
   const [camas, setCamas] = useState<Bed[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const [cargandoSectores, setCargandoSectores] = useState(true);
+  const [cargandoCamas, setCargandoCamas] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let vivo = true;
+    setCargandoSectores(true);
     bedsService
       .getSectores()
       .then((rows) => {
         if (vivo) setSectores(rows.map((s) => ({ valor: s.valor, descripcion: s.descripcion })));
       })
-      .catch(() => setError('No se pudieron cargar los sectores'));
+      .catch(() => vivo && setError('No se pudieron cargar los sectores'))
+      .finally(() => vivo && setCargandoSectores(false));
     return () => {
       vivo = false;
     };
@@ -39,7 +43,7 @@ export default function CamaSelector({ seleccion, onSeleccionar, disabled }: Pro
       return;
     }
     let vivo = true;
-    setCargando(true);
+    setCargandoCamas(true);
     setError('');
     bedsService
       .getAllBeds(sector)
@@ -47,7 +51,7 @@ export default function CamaSelector({ seleccion, onSeleccionar, disabled }: Pro
         if (vivo) setCamas(rows);
       })
       .catch(() => vivo && setError('No se pudieron cargar las camas del sector'))
-      .finally(() => vivo && setCargando(false));
+      .finally(() => vivo && setCargandoCamas(false));
     return () => {
       vivo = false;
     };
@@ -62,6 +66,34 @@ export default function CamaSelector({ seleccion, onSeleccionar, disabled }: Pro
           String(c.valorEstadoOriginal || '').trim().toUpperCase() === 'U',
       ),
     [camas],
+  );
+
+  const opcionesSector = useMemo(
+    () => [
+      { value: '', label: 'Sin asignar' },
+      ...sectores.map((s) => ({
+        value: s.valor,
+        label: s.descripcion || s.valor,
+      })),
+    ],
+    [sectores],
+  );
+
+  const vacioCama = !sector
+    ? 'Elegí un sector'
+    : libres.length === 0
+      ? 'Sin camas libres en el sector'
+      : 'Sin asignar';
+
+  const opcionesCama = useMemo(
+    () => [
+      { value: '', label: vacioCama },
+      ...libres.map((c) => ({
+        value: c.numeroCama,
+        label: c.estadoDescripcion ? `${c.numeroCama} — ${c.estadoDescripcion}` : c.numeroCama,
+      })),
+    ],
+    [libres, vacioCama],
   );
 
   return (
@@ -91,51 +123,35 @@ export default function CamaSelector({ seleccion, onSeleccionar, disabled }: Pro
       </p>
 
       <div className={styles.grillaCampos}>
-        <label className={styles.campo}>
-          <span>Sector</span>
-          <select
+        <div className={styles.campo}>
+          <CustomSelect
+            label="Sector"
+            name="sectorCama"
             value={sector}
+            isLoading={cargandoSectores}
             disabled={disabled}
-            onChange={(e) => {
-              setSector(e.target.value);
+            onChange={(v) => {
+              setSector(String(v ?? ''));
               onSeleccionar(null);
             }}
-          >
-            <option value="">Sin asignar</option>
-            {sectores.map((s) => (
-              <option key={s.valor} value={s.valor}>
-                {s.descripcion || s.valor}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={opcionesSector}
+          />
+        </div>
 
-        <label className={styles.campo}>
-          <span>Cama libre</span>
-          <select
+        <div className={styles.campo}>
+          <CustomSelect
+            label="Cama libre"
+            name="camaLibre"
             value={seleccion?.bedId ?? ''}
-            disabled={disabled || !sector || cargando}
-            onChange={(e) =>
-              onSeleccionar(e.target.value ? { bedId: e.target.value, valorSector: sector } : null)
-            }
-          >
-            <option value="">
-              {cargando
-                ? 'Cargando…'
-                : !sector
-                  ? 'Elegí un sector'
-                  : libres.length === 0
-                    ? 'Sin camas libres en el sector'
-                    : 'Sin asignar'}
-            </option>
-            {libres.map((c) => (
-              <option key={c.id} value={c.numeroCama}>
-                {c.numeroCama}
-                {c.estadoDescripcion ? ` — ${c.estadoDescripcion}` : ''}
-              </option>
-            ))}
-          </select>
-        </label>
+            isLoading={cargandoCamas}
+            disabled={disabled || !sector}
+            onChange={(v) => {
+              const bedId = String(v ?? '');
+              onSeleccionar(bedId ? { bedId, valorSector: sector } : null);
+            }}
+            options={opcionesCama}
+          />
+        </div>
       </div>
 
       {error && <p className={styles.errorInline}>{error}</p>}

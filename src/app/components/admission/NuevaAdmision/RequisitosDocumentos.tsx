@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { AlertCircle, Check, FileUp, Paperclip, Plus, Trash2 } from 'lucide-react';
+import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import type { RequisitoCobertura, RequisitoFormulario } from '@/app/types/admisionNueva';
 import styles from './styles.module.css';
 
@@ -33,6 +34,23 @@ export default function RequisitosDocumentos({
     const yaEstan = new Set(requisitos.map((r) => r.valor));
     return catalogo.filter((c) => !yaEstan.has(c.Valor));
   }, [catalogo, requisitos]);
+
+  const opcionesAgregar = useMemo(
+    () => [
+      {
+        value: '',
+        label:
+          disponibles.length === 0
+            ? 'No quedan requisitos por agregar'
+            : 'Agregar requisito…',
+      },
+      ...disponibles.map((c) => ({
+        value: String(c.Valor),
+        label: c.Descripcion,
+      })),
+    ],
+    [disponibles],
+  );
 
   const conArchivo = requisitos.filter((r) => r.archivo || r.estado === 'ok').length;
 
@@ -128,20 +146,17 @@ export default function RequisitosDocumentos({
       )}
 
       <div className={styles.agregarRequisito}>
-        <select
-          value={aAgregar}
-          onChange={(e) => setAAgregar(e.target.value)}
-          disabled={bloqueado || disponibles.length === 0}
-        >
-          <option value="">
-            {disponibles.length === 0 ? 'No quedan requisitos por agregar' : 'Agregar requisito…'}
-          </option>
-          {disponibles.map((c) => (
-            <option key={c.Valor} value={c.Valor}>
-              {c.Descripcion}
-            </option>
-          ))}
-        </select>
+        <div className={styles.agregarRequisitoSelect}>
+          <CustomSelect
+            label=""
+            name="agregarRequisito"
+            value={aAgregar}
+            isLoading={cargando}
+            disabled={bloqueado || disponibles.length === 0}
+            onChange={(v) => setAAgregar(String(v ?? ''))}
+            options={opcionesAgregar}
+          />
+        </div>
         <button
           type="button"
           className={styles.botonSecundario}
