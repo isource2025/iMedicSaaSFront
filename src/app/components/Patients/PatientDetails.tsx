@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation';
 import { Patient } from '../../types/PatientInterface';
 import styles from './PatientDetails.module.css';
 
@@ -8,6 +9,8 @@ interface PatientDetailsProps {
 }
 
 export default function PatientDetails({ patient, onClose, onEdit }: PatientDetailsProps) {
+  const router = useRouter();
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -75,7 +78,9 @@ export default function PatientDetails({ patient, onClose, onEdit }: PatientDeta
         <button 
           className={styles.admissionButton} 
           type="button"
-          onClick={() => alert('Funcionalidad en construcción: Nueva Admisión')}
+          onClick={() =>
+            router.push(`/dashboard/admission/new?idPaciente=${patient.IDPaciente}`)
+          }
         >
           🏥 Nueva Admisión
         </button>
