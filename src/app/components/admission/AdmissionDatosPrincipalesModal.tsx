@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import ModalBusquedaDiagnosticos from '@/app/components/modals/ModalBusquedaDiagnosticos';
 import Loader from '@/app/components/Loader/Loader';
 import AdmissionUbicacionMovimientosModal from './AdmissionUbicacionMovimientosModal';
+import AdmissionAcompanantesNovedades from './AdmissionAcompanantesNovedades';
 import {
   admissionSearchService,
   type AdmissionCatalogOption,
@@ -17,20 +18,26 @@ import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import type { Personal } from '@/app/types/personal';
 import styles from './AdmissionDatosPrincipalesModal.module.css';
 
-type NavSection = 'datos' | 'ubicacion_movimientos' | 'egreso';
+type NavSection = 'datos' | 'ubicacion_egreso' | 'acompanantes_novedades';
 
 const NAV_ITEMS: { id: NavSection; label: string }[] = [
   { id: 'datos', label: 'Datos principales' },
-  { id: 'ubicacion_movimientos', label: 'Ubicación y movimientos' },
-  { id: 'egreso', label: 'Egreso' },
+  { id: 'ubicacion_egreso', label: 'Ubicación, movimientos y egreso' },
+  { id: 'acompanantes_novedades', label: 'Acompañantes y novedades' },
 ];
 
-/** Compat: callers antiguos podían abrir en ubicacion/movimientos por separado */
+/** Compat: callers antiguos abrían ubicación, movimientos y egreso por separado. */
 function normalizeSection(section: string | undefined): NavSection {
-  if (section === 'ubicacion' || section === 'movimientos' || section === 'ubicacion_movimientos') {
-    return 'ubicacion_movimientos';
+  if (
+    section === 'ubicacion' ||
+    section === 'movimientos' ||
+    section === 'ubicacion_movimientos' ||
+    section === 'egreso' ||
+    section === 'ubicacion_egreso'
+  ) {
+    return 'ubicacion_egreso';
   }
-  if (section === 'egreso') return 'egreso';
+  if (section === 'acompanantes_novedades') return 'acompanantes_novedades';
   return 'datos';
 }
 
@@ -41,8 +48,8 @@ type Props = {
   onSaved?: () => void;
   /** @deprecated La navegación ahora es interna (sidebar) */
   onOpenUbicacion?: (numeroVisita: number) => void;
-  /** También acepta 'ubicacion' | 'movimientos' (legacy → ubicacion_movimientos) */
-  initialSection?: NavSection | 'ubicacion' | 'movimientos';
+  /** También acepta 'ubicacion' | 'movimientos' | 'egreso' (legacy → ubicacion_egreso) */
+  initialSection?: NavSection | 'ubicacion' | 'movimientos' | 'ubicacion_movimientos' | 'egreso';
 };
 
 type FormState = {
@@ -352,15 +359,15 @@ export default function AdmissionDatosPrincipalesModal({
   const sectionTitle =
     section === 'datos'
       ? 'Datos principales'
-      : section === 'ubicacion_movimientos'
-        ? 'Ubicación y movimientos'
-        : 'Egreso';
+      : section === 'ubicacion_egreso'
+        ? 'Ubicación, movimientos y egreso'
+        : 'Acompañantes y novedades';
 
   const sectionSubtitle =
-    section === 'ubicacion_movimientos'
-      ? 'Sector, habitación e historial de cambios de cama'
-      : section === 'egreso'
-        ? 'Registrar o asistir el egreso de la visita'
+    section === 'ubicacion_egreso'
+      ? 'Sector y cama, historial de movimientos y datos de egreso'
+      : section === 'acompanantes_novedades'
+        ? 'Acompañantes del paciente, observación de la visita y novedades'
         : '';
 
   return (
@@ -852,13 +859,17 @@ export default function AdmissionDatosPrincipalesModal({
                     {sectionSubtitle ? <p className={styles.panelSubtitle}>{sectionSubtitle}</p> : null}
                   </div>
                   <div className={`${styles.panelBody} ${styles.embeddedHost}`}>
-                    <AdmissionUbicacionMovimientosModal
-                      isOpen={Boolean(numeroVisita)}
-                      numeroVisita={numeroVisita}
-                      onClose={onClose}
-                      embedded
-                      focusSection={section === 'egreso' ? 'egreso' : 'ubicacion_movimientos'}
-                    />
+                    {section === 'ubicacion_egreso' ? (
+                      <AdmissionUbicacionMovimientosModal
+                        isOpen={Boolean(numeroVisita)}
+                        numeroVisita={numeroVisita}
+                        onClose={onClose}
+                        embedded
+                        focusSection="all"
+                      />
+                    ) : (
+                      <AdmissionAcompanantesNovedades numeroVisita={numeroVisita} onSaved={onSaved} />
+                    )}
                   </div>
                 </div>
               )}

@@ -434,6 +434,8 @@ export default function AdmissionUbicacionMovimientosModal({
     focusSection === 'movimientos' ||
     focusSection === 'ubicacion_movimientos';
   const showEgreso = focusSection === 'all' || focusSection === 'egreso';
+  /** Embebido y con los tres bloques juntos hacen falta títulos para separarlos. */
+  const mostrarTitulos = !embedded || focusSection === 'all';
 
   const body = (
     <div className={embedded ? styles.embeddedBody : styles.body}>
@@ -454,7 +456,7 @@ export default function AdmissionUbicacionMovimientosModal({
         <>
           {showUbicacion ? (
             <section className={embedded ? styles.sectionFlat : styles.section}>
-              {!embedded ? <h3 className={styles.sectionTitle}>Ubicación actual</h3> : null}
+              {mostrarTitulos ? <h3 className={styles.sectionTitle}>Ubicación actual</h3> : null}
               <div className={styles.ubicacionGrid}>
                 <label className={styles.field}>
                   <span>Sector</span>
@@ -490,7 +492,7 @@ export default function AdmissionUbicacionMovimientosModal({
 
           {showEgreso ? (
             <section className={embedded ? styles.sectionFlat : styles.section}>
-              {!embedded ? <h3 className={styles.sectionTitle}>Egreso</h3> : null}
+              {mostrarTitulos ? <h3 className={styles.sectionTitle}>Egreso</h3> : null}
               {!showUbicacion ? bloqueAsignarCama : null}
               <div className={styles.egresoGrid}>
                 <label className={styles.field}>
