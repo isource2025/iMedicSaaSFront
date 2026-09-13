@@ -617,7 +617,7 @@ const AdmissionTables: React.FC = () => {
     try {
       // Crear objeto genérico y adaptarlo a lo que espera cada servicio
       switch (currentTableTitle) {
-        case 'Clases de Pacientes':
+        case 'Clases de Paciente':
           // Añadir nueva clase de paciente
           await createClasePaciente({
             Valor: values.Valor,
@@ -799,6 +799,10 @@ const AdmissionTables: React.FC = () => {
           await createTipoPaciente(nuevoTipoPaciente);
           await handleShowTiposPacienteData();
           break;
+        // El switch enruta por el título visible: sin este default, un título que
+        // no coincida deja el alta sin efecto y sin aviso.
+        default:
+          throw new Error(`Alta no implementada para la tabla "${currentTableTitle}"`);
       }
     } catch (error) {
       console.error(`Error al añadir ítem en ${currentTableTitle}:`, error);
@@ -810,7 +814,7 @@ const AdmissionTables: React.FC = () => {
     try {
       // Adaptamos el formato del key y los valores según lo que espera cada servicio
       switch (currentTableTitle) {
-        case 'Clases de Pacientes':
+        case 'Clases de Paciente':
           // Actualizar clase de paciente - espera string
           await updateClasePaciente(key, {
             Valor: values.Valor,
@@ -973,6 +977,8 @@ const AdmissionTables: React.FC = () => {
           const updatedTiposPaciente = await getTiposPaciente();
           setCurrentTableData(updatedTiposPaciente);
           break;
+        default:
+          throw new Error(`Edición no implementada para la tabla "${currentTableTitle}"`);
       }
     } catch (error) {
       console.error(`Error al actualizar ítem en ${currentTableTitle}:`, error);
@@ -984,7 +990,7 @@ const AdmissionTables: React.FC = () => {
   const handleDeleteCurrentTableItem = async (key: string) => {
     try {
       switch (currentTableTitle) {
-        case 'Clases de Pacientes':
+        case 'Clases de Paciente':
           // Espera string
           await deleteClasePaciente(key);
           await handleShowClasesPacienteData();
@@ -1093,6 +1099,8 @@ const AdmissionTables: React.FC = () => {
           await deleteTipoPaciente(key);
           await handleShowTiposPacienteData();
           break;
+        default:
+          throw new Error(`Baja no implementada para la tabla "${currentTableTitle}"`);
       }
     } catch (error) {
       console.error(`Error al eliminar ítem en ${currentTableTitle}:`, error);

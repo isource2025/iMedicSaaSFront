@@ -303,7 +303,7 @@ export default function AdmissionSearchPage() {
       <section className={styles.resultsPanel}>
         {viewMode === 'admisiones' ? (
           <div className={styles.admisionesResult}>
-            <div className={sharedStyles.tableContainer}>
+            <div className={`${styles.tablaDesktop} ${sharedStyles.tableContainer}`}>
             <table className={sharedStyles.table}>
               <thead>
                 <tr>
@@ -427,7 +427,8 @@ export default function AdmissionSearchPage() {
                       <span className={styles.admissionCardDate}>{ingresoLabel(row)}</span>
                     </div>
                     <p className={styles.admissionCardMeta}>
-                      Int. {String(row.NumeroInternacion || '').trim() || '—'}
+                      Int. {String(row.NumeroInternacion || '').trim() || '—'} · Egr.{' '}
+                      {egresoLabel(row) || '—'}
                     </p>
                     <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
                     <p className={styles.admissionCardMeta}>

@@ -724,7 +724,9 @@
     padding: 8px;
   }
 
-  .admisionesResult :global(.tableContainer) {
+  /* La tabla trae la clase hasheada de tables.module.css, así que se oculta
+     por esta clase propia del módulo y no por el nombre de la importada. */
+  .tablaDesktop {
     display: none;
   }
 
