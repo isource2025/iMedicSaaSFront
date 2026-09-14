@@ -25,12 +25,32 @@ export const admisionNuevaService = {
     return data.data;
   },
 
-  /** Requisitos de la cobertura más los de base. Cliente 0 devuelve solo los de base. */
-  async getRequisitosCobertura(cliente: number): Promise<RequisitoCobertura[]> {
+  /**
+   * Requisitos de la cobertura más los de base. Cliente 0 devuelve solo los de base.
+   * Con idPaciente marca los que ese paciente ya presentó en visitas anteriores.
+   */
+  async getRequisitosCobertura(
+    cliente: number,
+    idPaciente?: number | null,
+  ): Promise<RequisitoCobertura[]> {
+    const q = Number(idPaciente) > 0 ? `?idPaciente=${Number(idPaciente)}` : '';
     const { data } = await apiService.get<Envelope<RequisitoCobertura[]>>(
-      `${BASE}/requisitos/cobertura/${Number(cliente) || 0}`,
+      `${BASE}/requisitos/cobertura/${Number(cliente) || 0}${q}`,
     );
     return data.data ?? [];
+  },
+
+  /** Archivo ya subido de un requisito, como blob para el visor. */
+  async getArchivoRequisito(
+    numeroVisita: number,
+    valor: number,
+  ): Promise<{ blob: Blob; blobUrl: string }> {
+    const { data } = await apiService.get<Blob>(
+      `${BASE}/${Number(numeroVisita)}/requisitos/${Number(valor)}/archivo`,
+      { responseType: 'blob' },
+    );
+    if (!data.size) throw new Error('El archivo está vacío o no se pudo obtener');
+    return { blob: data, blobUrl: URL.createObjectURL(data) };
   },
 
   /** Catálogo completo de imRequisitos, para agregar uno que la cobertura no trae. */

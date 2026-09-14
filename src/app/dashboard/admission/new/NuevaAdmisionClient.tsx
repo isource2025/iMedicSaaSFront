@@ -113,7 +113,9 @@ function requisitoDesdeCatalogo(r: RequisitoCobertura): RequisitoFormulario {
     aplicable: r.Aplicable,
     deCobertura: r.DeCobertura,
     archivo: null,
-    estado: 'pendiente',
+    // Si ya lo presentó en otra visita, el archivo se hereda al crear la admisión.
+    estado: r.Presentado ? 'ok' : 'pendiente',
+    presentado: r.Presentado,
   };
 }
 
@@ -189,10 +191,10 @@ export default function NuevaAdmisionClient() {
       .catch(() => {});
   }, [idPacienteUrl]);
 
-  const cargarRequisitos = useCallback(async (cliente: number) => {
+  const cargarRequisitos = useCallback(async (cliente: number, idPaciente: number) => {
     try {
       setCargandoRequisitos(true);
-      const rows = await admisionNuevaService.getRequisitosCobertura(cliente);
+      const rows = await admisionNuevaService.getRequisitosCobertura(cliente, idPaciente);
       setRequisitos(rows.map(requisitoDesdeCatalogo));
     } catch (e) {
       setError(admissionApiErrorMessage(e, 'Error al cargar los requisitos de la cobertura'));
@@ -201,16 +203,18 @@ export default function NuevaAdmisionClient() {
     }
   }, []);
 
-  // Requisitos y convenios dependen de la cobertura: cambian juntos.
+  // Requisitos y convenios dependen de la cobertura: cambian juntos. Los requisitos
+  // dependen además del paciente, porque hay documentos suyos que ya están presentados.
   const clienteActual = form.cliente;
+  const idPacienteRequisitos = paciente?.idPaciente ?? 0;
   useEffect(() => {
     const cli = Number(clienteActual) || 0;
-    void cargarRequisitos(cli);
+    void cargarRequisitos(cli, idPacienteRequisitos);
     admisionNuevaService
       .getCatalogos(cli)
       .then((c) => setCatalogos((prev) => (prev ? { ...prev, convenios: c.convenios } : c)))
       .catch(() => {});
-  }, [clienteActual, cargarRequisitos]);
+  }, [clienteActual, idPacienteRequisitos, cargarRequisitos]);
 
   useEffect(() => {
     if (!paciente?.cobertura) return;
@@ -323,10 +327,31 @@ export default function NuevaAdmisionClient() {
     limpiarBorrador();
   };
 
-  const onArchivo = (valor: number, archivo: File | null) =>
+  const subirArchivo = useCallback(async (numeroVisita: number, valor: number, archivo: File) => {
     setRequisitos((rs) =>
-      rs.map((r) => (r.valor === valor ? { ...r, archivo, estado: 'pendiente', error: undefined } : r)),
+      rs.map((x) => (x.valor === valor ? { ...x, estado: 'subiendo', error: undefined } : x)),
     );
+    try {
+      await admisionNuevaService.subirArchivoRequisito(numeroVisita, valor, archivo);
+      setRequisitos((rs) => rs.map((x) => (x.valor === valor ? { ...x, estado: 'ok' } : x)));
+    } catch (e) {
+      const mensaje = admissionApiErrorMessage(e, 'No se pudo subir el archivo');
+      setRequisitos((rs) =>
+        rs.map((x) => (x.valor === valor ? { ...x, estado: 'error', error: mensaje } : x)),
+      );
+    }
+  }, []);
+
+  // Elegir un archivo lo deja pendiente hasta guardar. Si la visita ya se creó,
+  // se sube en el momento para poder reemplazar un adjunto sin rehacer el alta.
+  const onArchivo = (valor: number, archivo: File | null) => {
+    setRequisitos((rs) =>
+      rs.map((r) =>
+        r.valor === valor ? { ...r, archivo, estado: 'pendiente', error: undefined } : r,
+      ),
+    );
+    if (archivo && creada) void subirArchivo(creada.numeroVisita, valor, archivo);
+  };
 
   const onQuitarRequisito = (valor: number) =>
     setRequisitos((rs) => rs.filter((r) => r.valor !== valor));
@@ -388,24 +413,7 @@ export default function NuevaAdmisionClient() {
       // una sola sin repetir el alta.
       const pendientes = requisitos.filter((r) => r.archivo);
       for (const r of pendientes) {
-        setRequisitos((rs) =>
-          rs.map((x) => (x.valor === r.valor ? { ...x, estado: 'subiendo' } : x)),
-        );
-        try {
-          await admisionNuevaService.subirArchivoRequisito(
-            resultado.numeroVisita,
-            r.valor,
-            r.archivo!,
-          );
-          setRequisitos((rs) =>
-            rs.map((x) => (x.valor === r.valor ? { ...x, estado: 'ok' } : x)),
-          );
-        } catch (e) {
-          const mensaje = admissionApiErrorMessage(e, 'No se pudo subir el archivo');
-          setRequisitos((rs) =>
-            rs.map((x) => (x.valor === r.valor ? { ...x, estado: 'error', error: mensaje } : x)),
-          );
-        }
+        await subirArchivo(resultado.numeroVisita, r.valor, r.archivo!);
       }
     } catch (e) {
       setError(admissionApiErrorMessage(e, 'Error al crear la admisión'));
@@ -418,16 +426,7 @@ export default function NuevaAdmisionClient() {
     if (!creada) return;
     const fallidos = requisitos.filter((r) => r.estado === 'error' && r.archivo);
     for (const r of fallidos) {
-      setRequisitos((rs) => rs.map((x) => (x.valor === r.valor ? { ...x, estado: 'subiendo' } : x)));
-      try {
-        await admisionNuevaService.subirArchivoRequisito(creada.numeroVisita, r.valor, r.archivo!);
-        setRequisitos((rs) => rs.map((x) => (x.valor === r.valor ? { ...x, estado: 'ok' } : x)));
-      } catch (e) {
-        const mensaje = admissionApiErrorMessage(e, 'No se pudo subir el archivo');
-        setRequisitos((rs) =>
-          rs.map((x) => (x.valor === r.valor ? { ...x, estado: 'error', error: mensaje } : x)),
-        );
-      }
+      await subirArchivo(creada.numeroVisita, r.valor, r.archivo!);
     }
   };
 
@@ -454,12 +453,16 @@ export default function NuevaAdmisionClient() {
             </p>
           )}
 
+          {/* La visita ya existe: se puede reemplazar un adjunto, pero la lista
+              de requisitos queda fija. */}
           <RequisitosDocumentos
             requisitos={requisitos}
             catalogo={catalogoRequisitos}
             cargando={false}
-            bloqueado
-            onArchivo={() => {}}
+            bloqueado={false}
+            soloArchivos
+            numeroVisita={creada.numeroVisita}
+            onArchivo={onArchivo}
             onQuitar={() => {}}
             onAgregar={() => {}}
           />

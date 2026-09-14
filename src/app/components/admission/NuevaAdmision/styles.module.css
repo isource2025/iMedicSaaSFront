@@ -248,6 +248,12 @@
   color: #0369a1;
 }
 
+.yaPresentado {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #047857;
+}
+
 .sugerenciaUltimaVisita {
   margin: 0.6rem 0 0;
   padding: 0.5rem 0.7rem;

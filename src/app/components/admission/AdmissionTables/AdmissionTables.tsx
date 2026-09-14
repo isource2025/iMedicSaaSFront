@@ -40,6 +40,7 @@ import { getRazas, getRaza, createRaza, updateRaza, deleteRaza } from '../../../
 import { getReligiones, getReligion, createReligion, updateReligion, deleteReligion } from '../../../services/religion.service';
 import { getFeriadosTabla, createFeriadoTabla, updateFeriadoTabla, deleteFeriadoTabla } from '../../../services/feriadosTabla.service';
 import { getRequisitos, getRequisito, createRequisito, updateRequisito, deleteRequisito } from '../../../services/requisito.service';
+import RequisitosCoberturaModal from './RequisitosCoberturaModal';
 import { getRolesContacto, getRolContacto, createRolContacto, updateRolContacto, deleteRolContacto } from '../../../services/rolContacto.service';
 import { getTiposAdmision, getTipoAdmision, createTipoAdmision, updateTipoAdmision, deleteTipoAdmision } from '../../../services/tipoAdmision.service';
 import { getTiposPaciente, getTipoPaciente, createTipoPaciente, updateTipoPaciente, deleteTipoPaciente } from '../../../services/tipoPaciente.service';
@@ -66,6 +67,10 @@ const AdmissionTables: React.FC = () => {
   const [currentTableColumns, setCurrentTableColumns] = useState<{key: string; label: string; editable?: boolean; type?: string}[]>([]);
   const [currentKeyField, setCurrentKeyField] = useState<string>('Valor');
   const [isLoadingTableData, setIsLoadingTableData] = useState<boolean>(false);
+
+  // imClientesRequisitos no entra en el CRUD genérico: es una relación entre dos
+  // tablas, así que tiene su propio modal de selección.
+  const [showRequisitosCobertura, setShowRequisitosCobertura] = useState<boolean>(false);
 
   // Estados para opciones dinámicas de la API
   const [dynamicOptions, setDynamicOptions] = useState<TableOption[]>([]);
@@ -591,6 +596,10 @@ const AdmissionTables: React.FC = () => {
     }
     else if (normalizedType.includes('feriado')) {
       handleShowFeriadosData();
+    }
+    // Antes que el catálogo de requisitos: si no, "Requisitos por Cobertura" caería ahí.
+    else if (normalizedType.includes('requisito') && normalizedType.includes('cobertura')) {
+      setShowRequisitosCobertura(true);
     }
     else if (normalizedType.includes('requisito') || normalizedType.includes('requisitos')) {
       handleShowRequisitosData();
@@ -1186,6 +1195,19 @@ const AdmissionTables: React.FC = () => {
             orden: 999,
           });
         }
+
+        const hayRequisitosCobertura = filteredOptions.some((o) => {
+          const d = o.descripcion.toLowerCase();
+          return d.includes('requisito') && d.includes('cobertura');
+        });
+        if (!hayRequisitosCobertura) {
+          filteredOptions.push({
+            rubro: 'ADMISION',
+            descripcion: 'Requisitos por Cobertura',
+            icono: '',
+            orden: 1000,
+          });
+        }
         
         // Actualizamos el estado
         setDynamicOptions(filteredOptions);
@@ -1265,6 +1287,11 @@ const AdmissionTables: React.FC = () => {
         onUpdateItem={handleUpdateCurrentTableItem}
         onDeleteItem={handleDeleteCurrentTableItem}
         keyField={currentKeyField}
+      />
+
+      <RequisitosCoberturaModal
+        isOpen={showRequisitosCobertura}
+        onClose={() => setShowRequisitosCobertura(false)}
       />
     </div>
   );

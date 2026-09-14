@@ -12,6 +12,13 @@ export interface AdmisionNuevaCatalogos {
   convenios: AdmissionCatalogOption[];
 }
 
+/** Archivo que el paciente ya presentó de este requisito, en otra visita. */
+export interface PresentacionPrevia {
+  numeroVisita: number;
+  fecha: string | null;
+  ruta: string;
+}
+
 /** Un requisito documental de imRequisitos aplicado a una cobertura. */
 export interface RequisitoCobertura {
   Valor: number;
@@ -20,6 +27,8 @@ export interface RequisitoCobertura {
   Aplicable: string;
   /** false = viene del set base (imClientesRequisitos con Cliente = 0) */
   DeCobertura: boolean;
+  /** Solo para los 'Paciente': el escaneo se hereda de la visita anterior. */
+  Presentado: PresentacionPrevia | null;
 }
 
 export interface RequisitoVisita {
@@ -96,4 +105,6 @@ export interface RequisitoFormulario {
   archivo: File | null;
   estado: EstadoArchivoRequisito;
   error?: string;
+  /** Presentación heredada de otra visita: se copia sola al crear la admisión. */
+  presentado: PresentacionPrevia | null;
 }
