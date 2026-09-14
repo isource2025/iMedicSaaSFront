@@ -133,7 +133,7 @@ export default function PatientList({
                     </div>
                   </td>
                   <td className={styles.coverageColumn}>
-                    {patient.Cobertura || '-'}
+                    {patient.CoberturaDescripcion || '-'}
                   </td>
                   <td>
                     <div className={styles.actionButtons}>
@@ -201,7 +201,7 @@ export default function PatientList({
                     <div className={styles.mobileItemTags}>
                       {String(patient.NumeroDocumento || '').trim() && String(patient.NumeroDocumento).trim() !== '0' ? <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>DNI</span> {patient.NumeroDocumento}</span> : null}
                       {String(patient.NumeroHC || '').trim() && String(patient.NumeroHC).trim() !== '0' ? <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>HC</span> {patient.NumeroHC}</span> : null}
-                      {patient.Cobertura && <span className={styles.mobileTagAccent}>{patient.Cobertura}</span>}
+                      {patient.CoberturaDescripcion && <span className={styles.mobileTagAccent}>{patient.CoberturaDescripcion}</span>}
                     </div>
                   </div>
                   <IoChevronDown size={14} className={`${styles.mobileChevron} ${isOpen ? styles.mobileChevronOpen : ''}`} />

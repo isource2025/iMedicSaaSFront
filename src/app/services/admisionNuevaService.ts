@@ -5,6 +5,7 @@ import type {
   AdmisionNuevaPayload,
   RequisitoCobertura,
   RequisitoVisita,
+  UltimaVisitaPaciente,
 } from '../types/admisionNueva';
 
 const BASE = '/admision-nueva';
@@ -36,6 +37,14 @@ export const admisionNuevaService = {
   async getRequisitosCatalogo(): Promise<RequisitoCobertura[]> {
     const { data } = await apiService.get<Envelope<RequisitoCobertura[]>>(`${BASE}/requisitos`);
     return data.data ?? [];
+  },
+
+  /** Última admisión del paciente, para sugerir valores. null si es su primera vez. */
+  async getUltimaVisita(idPaciente: number): Promise<UltimaVisitaPaciente | null> {
+    const { data } = await apiService.get<Envelope<UltimaVisitaPaciente | null>>(
+      `${BASE}/paciente/${Number(idPaciente)}/ultima-visita`,
+    );
+    return data.data ?? null;
   },
 
   async crear(payload: AdmisionNuevaPayload): Promise<AdmisionCreada> {

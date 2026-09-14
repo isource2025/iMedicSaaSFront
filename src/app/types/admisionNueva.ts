@@ -30,6 +30,25 @@ export interface RequisitoVisita {
   tieneArchivo: boolean;
 }
 
+/**
+ * Datos de la última admisión del paciente. Se usan como sugerencia al abrir el
+ * formulario: nunca pisan un valor que el usuario ya haya cargado.
+ */
+export interface UltimaVisitaPaciente {
+  numeroVisita: number;
+  fechaAdmision: string;
+  cliente: number;
+  clienteDescripcion: string;
+  contrato: number;
+  contratoDescripcion: string;
+  tipoPaciente: string;
+  tipoPacienteDescripcion: string;
+  idLugarEpisodio: number;
+  lugarEpisodioDescripcion: string;
+  doctorCabecera: number;
+  doctorCabeceraDescripcion: string;
+}
+
 export interface CamaSeleccionada {
   bedId: string;
   valorSector: string;

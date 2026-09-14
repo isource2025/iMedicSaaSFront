@@ -12,6 +12,7 @@ export interface PacienteCreadoMin {
 	NumeroHC?: string | null;
 	FechaNacimiento?: string | null;
 	Cobertura?: string | null;
+	CoberturaDescripcion?: string | null;
 }
 
 interface Props {
@@ -44,8 +45,9 @@ export default function AgregarPacienteEnAgenda({
 					NumeroDocumento: created.NumeroDocumento,
 					NumeroHC: created.NumeroHC,
 					FechaNacimiento: created.FechaNacimiento,
-					Cobertura:
-						(created as { Cobertura?: string }).Cobertura ??
+					Cobertura: (created as { Cobertura?: string }).Cobertura,
+					CoberturaDescripcion:
+						created.CoberturaDescripcion ??
 						(created as { RazonSocial?: string }).RazonSocial,
 				});
 				return true;

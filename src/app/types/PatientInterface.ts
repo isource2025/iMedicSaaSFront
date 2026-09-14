@@ -18,7 +18,11 @@ export interface Patient {
 	TelefonoParticular: string;
 	TelefonoCelular: string;
 	Mail: string;
+	/** imClientes.Valor. Para mostrarla en pantalla usar CoberturaDescripcion. */
 	Cobertura: string;
+	/** imClientes.RazonSocial */
+	CoberturaDescripcion?: string | null;
+	NumeroCuenta?: string | number | null;
 	nAfiliado: string;
 	FotoURL?: string | null;
 	LicenciaConducir?: string | null;

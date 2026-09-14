@@ -25,6 +25,7 @@ interface PacienteRow {
 	NumeroHC?: string | null;
 	FechaNacimiento?: string | null;
 	Cobertura?: string | null;
+	CoberturaDescripcion?: string | null;
 }
 
 export type ModalAsignarModo = 'asignar' | 'sobreturno';
@@ -245,7 +246,7 @@ export default function AsignarTurnoModal({
 									<div className={styles.pacienteMeta}>
 										DNI {paciente.NumeroDocumento ?? '—'} · HC{' '}
 										{paciente.NumeroHC || '—'}
-										{paciente.Cobertura ? ` · ${paciente.Cobertura}` : ''}
+										{paciente.CoberturaDescripcion ? ` · ${paciente.CoberturaDescripcion}` : ''}
 									</div>
 								</div>
 								<button

@@ -11,8 +11,12 @@ export interface PacienteElegido {
   apellidoyNombre: string;
   documento: string;
   numeroHC: string;
-  /** imPacientes.NumeroCuenta: precarga la cobertura del formulario */
+  /** imClientes.Valor: precarga la cobertura del formulario */
   cobertura: string;
+  /** imClientes.RazonSocial, solo para mostrar */
+  coberturaDescripcion: string;
+  /** imPacientes.NumeroSSN. Informativo: no se persiste en imVisita. */
+  nAfiliado: string;
 }
 
 interface Props {
@@ -29,6 +33,8 @@ function aPacienteElegido(p: Patient): PacienteElegido {
     documento: String(p.NumeroDocumento || '').trim(),
     numeroHC: String(p.NumeroHC || '').trim(),
     cobertura: String(p.Cobertura || '').trim(),
+    coberturaDescripcion: String(p.CoberturaDescripcion || '').trim(),
+    nAfiliado: String(p.nAfiliado || '').trim(),
   };
 }
 
@@ -83,6 +89,8 @@ export default function PacienteSelector({
             DNI {paciente.documento || '—'}
             {paciente.numeroHC ? ` · HC ${paciente.numeroHC}` : ''}
             {` · ID ${paciente.idPaciente}`}
+            {paciente.coberturaDescripcion ? ` · ${paciente.coberturaDescripcion}` : ''}
+            {paciente.nAfiliado ? ` · Afiliado ${paciente.nAfiliado}` : ''}
           </span>
         </div>
         {!disabled && (

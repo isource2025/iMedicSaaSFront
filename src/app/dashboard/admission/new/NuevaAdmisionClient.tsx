@@ -25,6 +25,7 @@ import type {
   CamaSeleccionada,
   RequisitoCobertura,
   RequisitoFormulario,
+  UltimaVisitaPaciente,
 } from '@/app/types/admisionNueva';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import type { Personal } from '@/app/types/personal';
@@ -123,6 +124,7 @@ export default function NuevaAdmisionClient() {
 
   const [form, setForm] = useState<FormState>(formInicial);
   const [paciente, setPaciente] = useState<PacienteElegido | null>(null);
+  const [ultimaVisita, setUltimaVisita] = useState<UltimaVisitaPaciente | null>(null);
   const [cama, setCama] = useState<CamaSeleccionada | null>(null);
 
   const [catalogos, setCatalogos] = useState<AdmisionNuevaCatalogos | null>(null);
@@ -180,6 +182,8 @@ export default function NuevaAdmisionClient() {
           documento: String(p.NumeroDocumento || '').trim(),
           numeroHC: String(p.NumeroHC || '').trim(),
           cobertura: String(p.Cobertura || '').trim(),
+          coberturaDescripcion: String(p.CoberturaDescripcion || '').trim(),
+          nAfiliado: String(p.nAfiliado || '').trim(),
         }),
       )
       .catch(() => {});
@@ -213,6 +217,45 @@ export default function NuevaAdmisionClient() {
     const cob = String(paciente.cobertura).trim();
     if (cob && Number(cob) > 0) setForm((f) => (f.cliente ? f : { ...f, cliente: cob }));
   }, [paciente]);
+
+  // Sugerencias de la última admisión del paciente. Solo completan campos vacíos:
+  // lo que el usuario ya cargó (o restauró del borrador) nunca se pisa.
+  const idPacienteElegido = paciente?.idPaciente ?? 0;
+  useEffect(() => {
+    if (!idPacienteElegido) {
+      setUltimaVisita(null);
+      return;
+    }
+    let vigente = true;
+    admisionNuevaService
+      .getUltimaVisita(idPacienteElegido)
+      .then((uv) => {
+        if (!vigente || !uv) return;
+        setUltimaVisita(uv);
+        setForm((f) => {
+          const sug: Partial<FormState> = {};
+          if (!f.cliente && uv.cliente > 0) sug.cliente = String(uv.cliente);
+          // El convenio pertenece a una cobertura: solo se sugiere si coincide.
+          const clienteResultante = f.cliente || (sug.cliente ?? '');
+          if (!f.contrato && uv.contrato > 0 && clienteResultante === String(uv.cliente)) {
+            sug.contrato = String(uv.contrato);
+          }
+          if (!f.tipoPaciente && uv.tipoPaciente) sug.tipoPaciente = uv.tipoPaciente;
+          if (!f.idLugarEpisodio && uv.idLugarEpisodio > 0) {
+            sug.idLugarEpisodio = String(uv.idLugarEpisodio);
+          }
+          if (!f.doctorCabecera && uv.doctorCabecera > 0) {
+            sug.doctorCabecera = String(uv.doctorCabecera);
+            sug.doctorCabeceraNombre = uv.doctorCabeceraDescripcion;
+          }
+          return Object.keys(sug).length ? { ...f, ...sug } : f;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      vigente = false;
+    };
+  }, [idPacienteElegido]);
 
   useEffect(() => {
     const q = profBusqueda.trim();
@@ -487,6 +530,12 @@ export default function NuevaAdmisionClient() {
           onLimpiar={() => setPaciente(null)}
           disabled={bloqueado}
         />
+        {paciente && ultimaVisita && (
+          <p className={styles.sugerenciaUltimaVisita}>
+            Se completaron datos con la última admisión del {ultimaVisita.fechaAdmision} (visita{' '}
+            {ultimaVisita.numeroVisita}). Revisalos antes de guardar.
+          </p>
+        )}
       </div>
 
       <div className={styles.bloque}>
