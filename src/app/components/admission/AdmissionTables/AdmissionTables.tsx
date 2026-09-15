@@ -11,7 +11,6 @@ import { getClasesPaciente, createClasePaciente, updateClasePaciente, deleteClas
 import { getDisposicionesEgreso, createDisposicionEgreso, updateDisposicionEgreso, deleteDisposicionEgreso } from '../../../services/disposicionEgresoService';
 import { getEstadosAmbulatorios, createEstadoAmbulatorio, updateEstadoAmbulatorio, deleteEstadoAmbulatorio } from '../../../services/estadoAmbulatorioService';
 import { getEstadosCiviles, createEstadoCivil, updateEstadoCivil, deleteEstadoCivil } from '../../../services/estadoCivilService';
-import DataTableModal from '../../admission/DataTableModal';
 import CatalogoCrudModal from '../../admission/CatalogoCrudModal';
 import TableHeader from './TableHeader';
 import CreateOptionForm from './CreateOptionForm';
@@ -1333,33 +1332,18 @@ const AdmissionTables: React.FC = () => {
       )}
       
       
-      {/* Pilot sobrio: Ocupaciones + Clases de Paciente. Si queda bien, se aplica al resto. */}
-      {['Ocupaciones', 'Clases de Paciente'].includes(currentTableTitle) ? (
-        <CatalogoCrudModal
-          isOpen={showDataModal}
-          onClose={handleCloseDataModal}
-          title={currentTableTitle}
-          help="Catálogo de referencia usado en admisión. Podés buscar, agregar, editar o eliminar."
-          data={currentTableData}
-          columns={currentTableColumns}
-          onAddItem={handleAddCurrentTableItem}
-          onUpdateItem={handleUpdateCurrentTableItem}
-          onDeleteItem={handleDeleteCurrentTableItem}
-          keyField={currentKeyField}
-        />
-      ) : (
-        <DataTableModal
-          isOpen={showDataModal}
-          onClose={handleCloseDataModal}
-          title={currentTableTitle}
-          data={currentTableData}
-          columns={currentTableColumns}
-          onAddItem={handleAddCurrentTableItem}
-          onUpdateItem={handleUpdateCurrentTableItem}
-          onDeleteItem={handleDeleteCurrentTableItem}
-          keyField={currentKeyField}
-        />
-      )}
+      <CatalogoCrudModal
+        isOpen={showDataModal}
+        onClose={handleCloseDataModal}
+        title={currentTableTitle}
+        help="Catálogo de referencia. Podés buscar, agregar, editar o eliminar registros."
+        data={currentTableData}
+        columns={currentTableColumns}
+        onAddItem={handleAddCurrentTableItem}
+        onUpdateItem={handleUpdateCurrentTableItem}
+        onDeleteItem={handleDeleteCurrentTableItem}
+        keyField={currentKeyField}
+      />
 
       <RequisitosCoberturaModal
         isOpen={showRequisitosCobertura}

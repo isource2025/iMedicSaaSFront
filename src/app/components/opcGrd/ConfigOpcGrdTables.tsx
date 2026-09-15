@@ -11,8 +11,8 @@ import {
 	TablaIconRubro,
 } from '@/app/utils/tablaIcons';
 import { catalogoSqlPorEtiqueta } from '@/app/utils/catalogosSql';
+import CatalogoCrudModal from '@/app/components/admission/CatalogoCrudModal';
 import catalogoSqlService, { type CatalogoSqlColumn } from '@/app/services/catalogoSqlService';
-import DataTableModal from '@/app/components/admission/DataTableModal';
 import Loader from '@/app/components/Loader/Loader';
 import styles from './OpcGrdTables.module.css';
 
@@ -324,13 +324,14 @@ export default function ConfigOpcGrdTables({
 					})}
 				</div>
 			)}
-			<DataTableModal
+			<CatalogoCrudModal
 				isOpen={sqlOpen}
 				onClose={() => {
 					setSqlOpen(false);
 					setSqlId(null);
 				}}
 				title={sqlTitle}
+				help="Catálogo de referencia. Podés buscar, agregar, editar o eliminar registros."
 				data={sqlRows}
 				columns={sqlColumns}
 				keyField={sqlKey}
