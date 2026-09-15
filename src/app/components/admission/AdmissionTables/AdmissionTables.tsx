@@ -12,6 +12,7 @@ import { getDisposicionesEgreso, createDisposicionEgreso, updateDisposicionEgres
 import { getEstadosAmbulatorios, createEstadoAmbulatorio, updateEstadoAmbulatorio, deleteEstadoAmbulatorio } from '../../../services/estadoAmbulatorioService';
 import { getEstadosCiviles, createEstadoCivil, updateEstadoCivil, deleteEstadoCivil } from '../../../services/estadoCivilService';
 import DataTableModal from '../../admission/DataTableModal';
+import CatalogoCrudModal from '../../admission/CatalogoCrudModal';
 import TableHeader from './TableHeader';
 import CreateOptionForm from './CreateOptionForm';
 import styles from '../../opcGrd/OpcGrdTables.module.css';
@@ -1332,18 +1333,33 @@ const AdmissionTables: React.FC = () => {
       )}
       
       
-      {/* Modal de datos para mostrar contenido de tablas */}
-      <DataTableModal
-        isOpen={showDataModal}
-        onClose={handleCloseDataModal}
-        title={currentTableTitle}
-        data={currentTableData}
-        columns={currentTableColumns}
-        onAddItem={handleAddCurrentTableItem}
-        onUpdateItem={handleUpdateCurrentTableItem}
-        onDeleteItem={handleDeleteCurrentTableItem}
-        keyField={currentKeyField}
-      />
+      {/* Pilot sobrio: Ocupaciones + Clases de Paciente. Si queda bien, se aplica al resto. */}
+      {['Ocupaciones', 'Clases de Paciente'].includes(currentTableTitle) ? (
+        <CatalogoCrudModal
+          isOpen={showDataModal}
+          onClose={handleCloseDataModal}
+          title={currentTableTitle}
+          help="Catálogo de referencia usado en admisión. Podés buscar, agregar, editar o eliminar."
+          data={currentTableData}
+          columns={currentTableColumns}
+          onAddItem={handleAddCurrentTableItem}
+          onUpdateItem={handleUpdateCurrentTableItem}
+          onDeleteItem={handleDeleteCurrentTableItem}
+          keyField={currentKeyField}
+        />
+      ) : (
+        <DataTableModal
+          isOpen={showDataModal}
+          onClose={handleCloseDataModal}
+          title={currentTableTitle}
+          data={currentTableData}
+          columns={currentTableColumns}
+          onAddItem={handleAddCurrentTableItem}
+          onUpdateItem={handleUpdateCurrentTableItem}
+          onDeleteItem={handleDeleteCurrentTableItem}
+          keyField={currentKeyField}
+        />
+      )}
 
       <RequisitosCoberturaModal
         isOpen={showRequisitosCobertura}
