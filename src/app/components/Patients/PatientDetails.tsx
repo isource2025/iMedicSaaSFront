@@ -70,7 +70,13 @@ export default function PatientDetails({ patient, onClose, onEdit }: PatientDeta
         <button 
           className={styles.historyButton} 
           type="button"
-          onClick={() => alert('Funcionalidad en construcción: Ver Historia Clínica')}
+          onClick={() => {
+            const dni = String(patient.NumeroDocumento || '').replace(/\D+/g, '');
+            const q = new URLSearchParams();
+            if (dni) q.set('termino', dni);
+            else if (patient.ApellidoyNombre) q.set('termino', String(patient.ApellidoyNombre).trim());
+            router.push(`/dashboard/admission/search?${q.toString()}`);
+          }}
         >
           📋 Ver Historia Clínica
         </button>

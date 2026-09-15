@@ -136,9 +136,9 @@ export default function RequisitosDocumentos({
       </div>
 
       <p className={styles.ayuda}>
-        Se cargan solos según la cobertura elegida. Podés agregar cualquier otro requisito y subir
-        una imagen o PDF por cada uno (DNI, hoja de derivación, recibo de sueldo, carnet de obra
-        social).
+        Se cargan solos según la cobertura elegida (imClientesRequisitos). Si la cobertura no tiene
+        requisitos, se usan los de base. Podés agregar cualquier otro y subir una imagen o PDF por
+        cada uno (DNI, hoja de derivación, recibo de sueldo, carnet de obra social).
       </p>
 
       {errorViewer && <p className={styles.errorInline}>{errorViewer}</p>}
@@ -163,7 +163,11 @@ export default function RequisitosDocumentos({
                   <span className={styles.requisitoNombre}>{r.descripcion}</span>
                   <span className={styles.requisitoMeta}>
                     {r.aplicable || '—'}
-                    {!r.deCobertura && <em className={styles.tagBase}> · agregado</em>}
+                    {r.deCobertura ? null : r.deBase ? (
+                      <em className={styles.tagBase}> · base</em>
+                    ) : (
+                      <em className={styles.tagBase}> · agregado</em>
+                    )}
                   </span>
                 </div>
 

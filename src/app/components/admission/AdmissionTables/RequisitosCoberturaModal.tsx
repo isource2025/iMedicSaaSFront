@@ -108,8 +108,9 @@ export default function RequisitosCoberturaModal({ isOpen, onClose }: Props) {
         </div>
 
         <p className={styles.ayuda}>
-          Elegí una cobertura para definir qué documentación pide al admitir un paciente. Los
-          requisitos marcados como de base los pide toda admisión, sin importar la cobertura.
+          Elegí una cobertura para definir qué documentación pide al admitir. La entrada «Base»
+          (Cliente 0) aplica solo cuando la cobertura no tiene requisitos propios. No se mezclan
+          con los de cada cobertura.
         </p>
 
         {error && <div className={styles.error}>{error}</div>}

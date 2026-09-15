@@ -52,13 +52,15 @@ function PatientsPageContent() {
 	} = usePatients();
 
 	const handleViewHistory = (patient: Patient) => {
-		alert(
-			`Ver historia clínica de ${patient.ApellidoyNombre} (Funcionalidad en desarrollo)`,
-		);
+		const dni = String(patient.NumeroDocumento || '').replace(/\D+/g, '');
+		const q = new URLSearchParams();
+		if (dni) q.set('termino', dni);
+		else if (patient.ApellidoyNombre) q.set('termino', String(patient.ApellidoyNombre).trim());
+		router.push(`/dashboard/admission/search?${q.toString()}`);
 	};
 
 	const handleNewAdmission = (patient: Patient) => {
-		alert(`Nueva admisión para ${patient.ApellidoyNombre} (Funcionalidad en desarrollo)`);
+		router.push(`/dashboard/admission/new?idPaciente=${patient.IDPaciente}`);
 	};
 
 	// Estado para paciente completo (cuando se edita se fuerza re-fetch para tener campos relacionados a selects)

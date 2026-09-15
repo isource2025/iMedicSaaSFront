@@ -27,6 +27,8 @@ export interface RequisitoCobertura {
   Aplicable: string;
   /** false = viene del set base (imClientesRequisitos con Cliente = 0) */
   DeCobertura: boolean;
+  /** true si solo está en el set base, no en la cobertura elegida */
+  DeBase?: boolean;
   /** Solo para los 'Paciente': el escaneo se hereda de la visita anterior. */
   Presentado: PresentacionPrevia | null;
 }
@@ -102,6 +104,8 @@ export interface RequisitoFormulario {
   descripcion: string;
   aplicable: string;
   deCobertura: boolean;
+  /** Solo en el set base (Cliente = 0), no en la cobertura. */
+  deBase: boolean;
   archivo: File | null;
   estado: EstadoArchivoRequisito;
   error?: string;

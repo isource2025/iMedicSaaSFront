@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { admissionSearchService, AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import AdmissionVisitDetailModal from '@/app/components/admission/AdmissionVisitDetailModal';
 import AdmissionDatosPrincipalesModal from '@/app/components/admission/AdmissionDatosPrincipalesModal';
@@ -12,6 +13,7 @@ import {
 	type ClinicalBadgeKind,
 } from '@/app/components/admission/AdmissionSearchClinicalBadges';
 import { useAdmissionVisitDetail } from '@/app/hooks/useAdmissionVisitDetail';
+import Loader from '@/app/components/Loader/Loader';
 import styles from './search.module.css';
 import sharedStyles from '../tables/tables.module.css';
 import {
@@ -61,7 +63,27 @@ function diagnosticoLabel(row: AdmissionSearchRow): string {
 }
 
 export default function AdmissionSearchPage() {
-  const [filters, setFilters] = useState(initialFilters);
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.container}>
+          <Loader />
+        </div>
+      }
+    >
+      <AdmissionSearchPageContent />
+    </Suspense>
+  );
+}
+
+function AdmissionSearchPageContent() {
+  const searchParams = useSearchParams();
+  const terminoUrl = (searchParams.get('termino') || searchParams.get('dni') || '').trim();
+
+  const [filters, setFilters] = useState({
+    ...initialFilters,
+    termino: terminoUrl,
+  });
   const [periodoActivo, setPeriodoActivo] = useState<AdmissionPeriodo | null>(null);
   const [rows, setRows] = useState<AdmissionSearchRow[]>([]);
   const [page, setPage] = useState(1);
@@ -90,12 +112,12 @@ export default function AdmissionSearchPage() {
     reloadVisitDetail,
   } = useAdmissionVisitDetail();
 
-  const runSearch = async (targetPage = 1) => {
+  const runSearch = async (targetPage = 1, filtros = filters) => {
     try {
       setLoading(true);
       setError('');
       const response = await admissionSearchService.buscar({
-        ...filters,
+        ...filtros,
         page: targetPage,
         limit: 25,
       });
@@ -105,8 +127,8 @@ export default function AdmissionSearchPage() {
       setTotalPages(response.pagination?.totalPages || 0);
       setTotal(response.pagination?.total || 0);
 
-      if (targetPage === 1 && filters.termino.trim()) {
-        const resultado = interpretarBusquedaUnificada(filters.termino, data);
+      if (targetPage === 1 && filtros.termino.trim()) {
+        const resultado = interpretarBusquedaUnificada(filtros.termino, data);
         if (resultado.tipo === 'visita') {
           void openVisitDetail(resultado.visita.NumeroVisita);
         }
@@ -120,8 +142,10 @@ export default function AdmissionSearchPage() {
   };
 
   useEffect(() => {
-    runSearch(1);
-  }, []);
+    void runSearch(1, { ...initialFilters, termino: terminoUrl });
+    // Solo al montar / cambiar el query de URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terminoUrl]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +175,7 @@ export default function AdmissionSearchPage() {
     setFolderModal(null);
     setEditVisita(null);
     setUbicacionVisita(null);
-    await runSearch(1);
+    await runSearch(1, initialFilters);
   };
 
   const groupedByPatient = useMemo(() => groupRowsByPatient(rows), [rows]);

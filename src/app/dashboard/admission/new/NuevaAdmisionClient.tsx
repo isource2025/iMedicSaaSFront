@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClipboardPlus, RotateCcw, Save, Stethoscope, UserRound } from 'lucide-react';
 
@@ -8,11 +8,15 @@ import PacienteSelector, {
   type PacienteElegido,
 } from '@/app/components/admission/NuevaAdmision/PacienteSelector';
 import RequisitosDocumentos from '@/app/components/admission/NuevaAdmision/RequisitosDocumentos';
+import AcompanantesNovedadesAlta, {
+  type AcompanantePendiente,
+} from '@/app/components/admission/NuevaAdmision/AcompanantesNovedadesAlta';
 import CamaSelector from '@/app/components/admission/NuevaAdmision/CamaSelector';
 import { useBorradorAdmision } from '@/app/components/admission/NuevaAdmision/useBorradorAdmision';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 
 import admisionNuevaService from '@/app/services/admisionNuevaService';
+import visitaAcompanantesService from '@/app/services/visitaAcompanantesService';
 import { admissionApiErrorMessage, type AdmissionCatalogOption } from '@/app/services/admissionSearchService';
 import { getPersonalList } from '@/app/services/personalService';
 import diagnosticosService from '@/app/services/diagnosticosService';
@@ -112,6 +116,7 @@ function requisitoDesdeCatalogo(r: RequisitoCobertura): RequisitoFormulario {
     descripcion: r.Descripcion,
     aplicable: r.Aplicable,
     deCobertura: r.DeCobertura,
+    deBase: Boolean(r.DeBase),
     archivo: null,
     // Si ya lo presentó en otra visita, el archivo se hereda al crear la admisión.
     estado: r.Presentado ? 'ok' : 'pendiente',
@@ -132,6 +137,8 @@ export default function NuevaAdmisionClient() {
   const [catalogos, setCatalogos] = useState<AdmisionNuevaCatalogos | null>(null);
   const [catalogoRequisitos, setCatalogoRequisitos] = useState<RequisitoCobertura[]>([]);
   const [requisitos, setRequisitos] = useState<RequisitoFormulario[]>([]);
+  const [acompanantesPendientes, setAcompanantesPendientes] = useState<AcompanantePendiente[]>([]);
+  const [novedadesPendientes, setNovedadesPendientes] = useState<string[]>([]);
   const [cargandoRequisitos, setCargandoRequisitos] = useState(false);
 
   const [guardando, setGuardando] = useState(false);
@@ -216,14 +223,25 @@ export default function NuevaAdmisionClient() {
       .catch(() => {});
   }, [clienteActual, idPacienteRequisitos, cargarRequisitos]);
 
+  // Al elegir/cambiar paciente, la cobertura sigue a imPacientes.NumeroCuenta y se
+  // limpia el convenio. Al restaurar borrador se omite un ciclo para no pisar el form.
+  const omitirSyncCobertura = useRef(false);
   useEffect(() => {
-    if (!paciente?.cobertura) return;
-    const cob = String(paciente.cobertura).trim();
-    if (cob && Number(cob) > 0) setForm((f) => (f.cliente ? f : { ...f, cliente: cob }));
-  }, [paciente]);
+    if (!paciente) return;
+    if (omitirSyncCobertura.current) {
+      omitirSyncCobertura.current = false;
+      return;
+    }
+    const cob = String(paciente.cobertura || '').trim();
+    setForm((f) => ({
+      ...f,
+      cliente: cob && Number(cob) > 0 ? cob : '',
+      contrato: '',
+    }));
+  }, [paciente?.idPaciente]);
 
   // Sugerencias de la última admisión del paciente. Solo completan campos vacíos:
-  // lo que el usuario ya cargó (o restauró del borrador) nunca se pisa.
+  // cobertura del paciente (efecto de arriba) tiene prioridad sobre la última visita.
   const idPacienteElegido = paciente?.idPaciente ?? 0;
   useEffect(() => {
     if (!idPacienteElegido) {
@@ -239,7 +257,6 @@ export default function NuevaAdmisionClient() {
         setForm((f) => {
           const sug: Partial<FormState> = {};
           if (!f.cliente && uv.cliente > 0) sug.cliente = String(uv.cliente);
-          // El convenio pertenece a una cobertura: solo se sugiere si coincide.
           const clienteResultante = f.cliente || (sug.cliente ?? '');
           if (!f.contrato && uv.contrato > 0 && clienteResultante === String(uv.cliente)) {
             sug.contrato = String(uv.contrato);
@@ -312,6 +329,7 @@ export default function NuevaAdmisionClient() {
 
   const restaurarBorrador = () => {
     if (!borradorGuardado) return;
+    omitirSyncCobertura.current = true;
     setForm(borradorGuardado.form);
     setPaciente(borradorGuardado.paciente);
     setCama(borradorGuardado.cama);
@@ -323,6 +341,8 @@ export default function NuevaAdmisionClient() {
     setPaciente(null);
     setCama(null);
     setRequisitos([]);
+    setAcompanantesPendientes([]);
+    setNovedadesPendientes([]);
     setError('');
     limpiarBorrador();
   };
@@ -362,7 +382,7 @@ export default function NuevaAdmisionClient() {
     setRequisitos((rs) =>
       rs.some((r) => r.valor === valor)
         ? rs
-        : [...rs, { ...requisitoDesdeCatalogo(encontrado), deCobertura: false }],
+        : [...rs, { ...requisitoDesdeCatalogo(encontrado), deCobertura: false, deBase: false }],
     );
   };
 
@@ -414,6 +434,31 @@ export default function NuevaAdmisionClient() {
       const pendientes = requisitos.filter((r) => r.archivo);
       for (const r of pendientes) {
         await subirArchivo(resultado.numeroVisita, r.valor, r.archivo!);
+      }
+
+      // Acompañantes y novedades: la visita ya existe; un fallo acá no deshace el alta.
+      const extrasFallidos: string[] = [];
+      for (const a of acompanantesPendientes) {
+        try {
+          const { idLocal: _id, ...datos } = a;
+          await visitaAcompanantesService.agregarAcompanante(resultado.numeroVisita, datos);
+        } catch {
+          extrasFallidos.push('acompañante');
+        }
+      }
+      for (const texto of novedadesPendientes) {
+        try {
+          await visitaAcompanantesService.agregarNovedad(resultado.numeroVisita, texto);
+        } catch {
+          extrasFallidos.push('novedad');
+        }
+      }
+      setAcompanantesPendientes([]);
+      setNovedadesPendientes([]);
+      if (extrasFallidos.length) {
+        setError(
+          'La admisión se creó, pero no se pudieron guardar todos los acompañantes o novedades. Completalos desde la visita.',
+        );
       }
     } catch (e) {
       setError(admissionApiErrorMessage(e, 'Error al crear la admisión'));
@@ -800,6 +845,14 @@ export default function NuevaAdmisionClient() {
         onArchivo={onArchivo}
         onQuitar={onQuitarRequisito}
         onAgregar={onAgregarRequisito}
+      />
+
+      <AcompanantesNovedadesAlta
+        acompanantes={acompanantesPendientes}
+        novedades={novedadesPendientes}
+        disabled={bloqueado}
+        onAcompanantesChange={setAcompanantesPendientes}
+        onNovedadesChange={setNovedadesPendientes}
       />
 
       {esInternado && (

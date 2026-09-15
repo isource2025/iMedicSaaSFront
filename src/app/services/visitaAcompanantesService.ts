@@ -1,6 +1,7 @@
 import { apiService } from './axios';
 import type {
   Acompanante,
+  CatalogosAcompanantes,
   ClaveAcompanante,
   Novedad,
   NuevoAcompanante,
@@ -16,6 +17,11 @@ interface Envelope<T> {
 }
 
 export const visitaAcompanantesService = {
+  async getCatalogos(): Promise<CatalogosAcompanantes> {
+    const { data } = await apiService.get<Envelope<CatalogosAcompanantes>>(`${BASE}/catalogos`);
+    return data.data;
+  },
+
   async getPanel(numeroVisita: number): Promise<PanelAcompanantes> {
     const { data } = await apiService.get<Envelope<PanelAcompanantes>>(`${BASE}/${numeroVisita}`);
     return data.data;

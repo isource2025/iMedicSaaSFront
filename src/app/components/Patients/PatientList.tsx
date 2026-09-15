@@ -213,10 +213,10 @@ export default function PatientList({
                     {patient.Domicilio && <span className={styles.mobileTag}><span className={styles.mobileTagLabel}>Dir.</span> {patient.Domicilio}</span>}
                   </div>
                   <div className={styles.mobileActions}>
-                    <button onClick={() => onView(patient)} className={styles.historyButton} title="Ver detalles">
+                    <button onClick={() => onViewHistory(patient)} className={styles.historyButton} title="Historia clínica">
                       <IoDocumentTextOutline size={18} />
                     </button>
-                    <button onClick={() => onViewHistory(patient)} className={styles.historyButton} title="Historia clínica">
+                    <button onClick={() => onAdmission(patient)} className={styles.admissionButton} title="Nueva admisión">
                       <IoMedicalOutline size={18} />
                     </button>
                     <button onClick={() => onEdit(patient)} className={styles.editButton} title="Editar">

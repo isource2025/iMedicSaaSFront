@@ -26,7 +26,7 @@ export const admisionNuevaService = {
   },
 
   /**
-   * Requisitos de la cobertura más los de base. Cliente 0 devuelve solo los de base.
+   * Requisitos de la cobertura. Si no tiene ninguno, el back responde con los de base.
    * Con idPaciente marca los que ese paciente ya presentó en visitas anteriores.
    */
   async getRequisitosCobertura(

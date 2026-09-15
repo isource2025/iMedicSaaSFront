@@ -873,11 +873,7 @@ const AdmissionTables: React.FC = () => {
           break;
           
         case 'Dadores de Órganos':
-          // Actualizar dador de órganos - espera string
-          await updateDadorOrganos(key, {
-            Valor: values.Valor,
-            Descripcion: values.Descripcion || ''
-          } as any);
+          await updateDadorOrganos(key, String(values.Descripcion || ''));
           await handleShowDadoresOrganosData();
           break;
           
