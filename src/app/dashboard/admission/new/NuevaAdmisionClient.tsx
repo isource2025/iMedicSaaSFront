@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClipboardPlus, RotateCcw, Save, Stethoscope, UserRound } from 'lucide-react';
 
@@ -12,7 +12,6 @@ import AcompanantesNovedadesAlta, {
   type AcompanantePendiente,
 } from '@/app/components/admission/NuevaAdmision/AcompanantesNovedadesAlta';
 import CamaSelector from '@/app/components/admission/NuevaAdmision/CamaSelector';
-import { useBorradorAdmision } from '@/app/components/admission/NuevaAdmision/useBorradorAdmision';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 
 import admisionNuevaService from '@/app/services/admisionNuevaService';
@@ -21,7 +20,6 @@ import { admissionApiErrorMessage, type AdmissionCatalogOption } from '@/app/ser
 import { getPersonalList } from '@/app/services/personalService';
 import diagnosticosService from '@/app/services/diagnosticosService';
 import { getPatientById } from '@/app/services/patientService';
-import { useAppContext } from '@/app/contexts/AppContext';
 
 import type {
   AdmisionCreada,
@@ -110,6 +108,19 @@ function opcionesSelect(
   ];
 }
 
+function opcionesCobertura(
+  lista: AdmissionCatalogOption[] | undefined,
+  paciente: PacienteElegido | null,
+): { value: string; label: string }[] {
+  const base = opcionesSelect(lista, 'Sin cobertura');
+  if (!paciente?.cobertura) return base;
+  const cob = String(paciente.cobertura).trim();
+  if (!cob || Number(cob) <= 0) return base;
+  if (base.some((o) => o.value === cob)) return base;
+  const label = String(paciente.coberturaDescripcion || '').trim() || cob;
+  return [...base, { value: cob, label }];
+}
+
 function requisitoDesdeCatalogo(r: RequisitoCobertura): RequisitoFormulario {
   return {
     valor: r.Valor,
@@ -127,7 +138,6 @@ function requisitoDesdeCatalogo(r: RequisitoCobertura): RequisitoFormulario {
 export default function NuevaAdmisionClient() {
   const router = useRouter();
   const params = useSearchParams();
-  const { usuario } = useAppContext();
 
   const [form, setForm] = useState<FormState>(formInicial);
   const [paciente, setPaciente] = useState<PacienteElegido | null>(null);
@@ -156,19 +166,18 @@ export default function NuevaAdmisionClient() {
   const esInternado = form.clasePaciente.trim().toUpperCase() === 'I';
   const bloqueado = guardando || Boolean(creada);
 
-  const snapshot = useMemo(() => ({ form, paciente, cama, requisitos: requisitos.map((r) => r.valor) }), [
-    form,
-    paciente,
-    cama,
-    requisitos,
-  ]);
-
-  const idUsuario = usuario?.idValorpersonal ?? usuario?.valorPersonal ?? usuario?.idCodOperador ?? null;
-  const { borradorGuardado, limpiar: limpiarBorrador, descartarAviso } = useBorradorAdmision(
-    idUsuario,
-    snapshot,
-    !creada,
-  );
+  // Limpia borradores viejos de sesiones anteriores (ya no se usan).
+  useEffect(() => {
+    try {
+      const prefijo = 'imedic:admision-nueva:';
+      for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefijo)) localStorage.removeItem(k);
+      }
+    } catch {
+      /* localStorage no disponible */
+    }
+  }, []);
 
   useEffect(() => {
     admisionNuevaService
@@ -178,27 +187,58 @@ export default function NuevaAdmisionClient() {
     admisionNuevaService.getRequisitosCatalogo().then(setCatalogoRequisitos).catch(() => {});
   }, []);
 
-  // Alta iniciada desde la ficha del paciente: /dashboard/admission/new?idPaciente=123
+  // Alta desde pacientes: /dashboard/admission/new?idPaciente=123
+  // Resetea el formulario para no arrastrar datos de otra admisión abierta.
   const idPacienteUrl = params.get('idPaciente');
   useEffect(() => {
     const id = Number(idPacienteUrl);
-    if (!Number.isFinite(id) || id <= 0) return;
+    setCreada(null);
+    setError('');
+    setCama(null);
+    setRequisitos([]);
+    setAcompanantesPendientes([]);
+    setNovedadesPendientes([]);
+    setUltimaVisita(null);
+    setForm(formInicial());
+
+    if (!Number.isFinite(id) || id <= 0) {
+      setPaciente(null);
+      return;
+    }
+
+    let vigente = true;
     getPatientById(id)
-      .then((p) =>
+      .then((p) => {
+        if (!vigente) return;
+        const cob = String(p.Cobertura || '').trim();
         setPaciente({
           idPaciente: Number(p.IDPaciente),
           apellidoyNombre: String(p.ApellidoyNombre || '').trim(),
           documento: String(p.NumeroDocumento || '').trim(),
           numeroHC: String(p.NumeroHC || '').trim(),
-          cobertura: String(p.Cobertura || '').trim(),
+          cobertura: cob,
           coberturaDescripcion: String(p.CoberturaDescripcion || '').trim(),
           nAfiliado: String(p.nAfiliado || '').trim(),
-        }),
-      )
-      .catch(() => {});
+        });
+        setForm((f) => ({
+          ...f,
+          cliente: cob && Number(cob) > 0 ? cob : '',
+          contrato: '',
+        }));
+      })
+      .catch(() => {
+        if (vigente) setError('No se pudo cargar el paciente');
+      });
+    return () => {
+      vigente = false;
+    };
   }, [idPacienteUrl]);
 
   const cargarRequisitos = useCallback(async (cliente: number, idPaciente: number) => {
+    if (!cliente || cliente <= 0) {
+      setRequisitos([]);
+      return;
+    }
     try {
       setCargandoRequisitos(true);
       const rows = await admisionNuevaService.getRequisitosCobertura(cliente, idPaciente);
@@ -210,38 +250,32 @@ export default function NuevaAdmisionClient() {
     }
   }, []);
 
-  // Requisitos y convenios dependen de la cobertura: cambian juntos. Los requisitos
-  // dependen además del paciente, porque hay documentos suyos que ya están presentados.
   const clienteActual = form.cliente;
   const idPacienteRequisitos = paciente?.idPaciente ?? 0;
   useEffect(() => {
     const cli = Number(clienteActual) || 0;
     void cargarRequisitos(cli, idPacienteRequisitos);
-    admisionNuevaService
-      .getCatalogos(cli)
-      .then((c) => setCatalogos((prev) => (prev ? { ...prev, convenios: c.convenios } : c)))
-      .catch(() => {});
+    if (cli > 0) {
+      admisionNuevaService
+        .getCatalogos(cli)
+        .then((c) => setCatalogos((prev) => (prev ? { ...prev, convenios: c.convenios } : c)))
+        .catch(() => {});
+    }
   }, [clienteActual, idPacienteRequisitos, cargarRequisitos]);
 
-  // Al elegir/cambiar paciente, la cobertura sigue a imPacientes.NumeroCuenta y se
-  // limpia el convenio. Al restaurar borrador se omite un ciclo para no pisar el form.
-  const omitirSyncCobertura = useRef(false);
+  // Al elegir paciente en el buscador (sin venir por URL), sincroniza cobertura.
   useEffect(() => {
     if (!paciente) return;
-    if (omitirSyncCobertura.current) {
-      omitirSyncCobertura.current = false;
-      return;
-    }
+    // Si llegó por URL, el efecto de idPacienteUrl ya setea cliente.
+    if (idPacienteUrl && Number(idPacienteUrl) === paciente.idPaciente) return;
     const cob = String(paciente.cobertura || '').trim();
     setForm((f) => ({
       ...f,
       cliente: cob && Number(cob) > 0 ? cob : '',
       contrato: '',
     }));
-  }, [paciente?.idPaciente]);
+  }, [paciente?.idPaciente, idPacienteUrl]);
 
-  // Sugerencias de la última admisión del paciente. Solo completan campos vacíos:
-  // cobertura del paciente (efecto de arriba) tiene prioridad sobre la última visita.
   const idPacienteElegido = paciente?.idPaciente ?? 0;
   useEffect(() => {
     if (!idPacienteElegido) {
@@ -327,15 +361,6 @@ export default function NuevaAdmisionClient() {
     setProfResultados([]);
   };
 
-  const restaurarBorrador = () => {
-    if (!borradorGuardado) return;
-    omitirSyncCobertura.current = true;
-    setForm(borradorGuardado.form);
-    setPaciente(borradorGuardado.paciente);
-    setCama(borradorGuardado.cama);
-    descartarAviso();
-  };
-
   const limpiarFormulario = () => {
     setForm(formInicial());
     setPaciente(null);
@@ -343,8 +368,8 @@ export default function NuevaAdmisionClient() {
     setRequisitos([]);
     setAcompanantesPendientes([]);
     setNovedadesPendientes([]);
+    setUltimaVisita(null);
     setError('');
-    limpiarBorrador();
   };
 
   const subirArchivo = useCallback(async (numeroVisita: number, valor: number, archivo: File) => {
@@ -427,7 +452,6 @@ export default function NuevaAdmisionClient() {
       });
 
       setCreada(resultado);
-      limpiarBorrador();
 
       // La visita ya existe: cada imagen se sube aparte para poder reintentar
       // una sola sin repetir el alta.
@@ -549,20 +573,6 @@ export default function NuevaAdmisionClient() {
         </h1>
         <p>Admisión ambulatoria o internación sobre la historia clínica del paciente.</p>
       </header>
-
-      {borradorGuardado && (
-        <div className={styles.avisoBorrador}>
-          <span>Tenés una admisión sin terminar. Los archivos adjuntos hay que elegirlos de nuevo.</span>
-          <div>
-            <button type="button" className={styles.botonSecundario} onClick={restaurarBorrador}>
-              Retomar
-            </button>
-            <button type="button" className={styles.botonTexto} onClick={limpiarBorrador}>
-              Descartar
-            </button>
-          </div>
-        </div>
-      )}
 
       {error && <div className={styles.errorBanner}>{error}</div>}
 
@@ -780,7 +790,7 @@ export default function NuevaAdmisionClient() {
               onChange={(v) =>
                 setForm((f) => ({ ...f, cliente: String(v ?? ''), contrato: '' }))
               }
-              options={opcionesSelect(catalogos?.coberturas, 'Sin cobertura')}
+              options={opcionesCobertura(catalogos?.coberturas, paciente)}
             />
           </div>
 

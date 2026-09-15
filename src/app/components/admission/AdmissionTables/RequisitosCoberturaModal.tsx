@@ -13,9 +13,6 @@ interface Props {
   onClose: () => void;
 }
 
-/** Cliente 0 de imClientesRequisitos: los requisitos que pide toda admisión. */
-const CLIENTE_BASE = 0;
-
 export default function RequisitosCoberturaModal({ isOpen, onClose }: Props) {
   const [coberturas, setCoberturas] = useState<CoberturaConRequisitos[]>([]);
   const [busqueda, setBusqueda] = useState('');
@@ -95,8 +92,6 @@ export default function RequisitosCoberturaModal({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
-  const esBase = elegida?.Valor === CLIENTE_BASE;
-
   return (
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
@@ -108,9 +103,8 @@ export default function RequisitosCoberturaModal({ isOpen, onClose }: Props) {
         </div>
 
         <p className={styles.ayuda}>
-          Elegí una cobertura para definir qué documentación pide al admitir. La entrada «Base»
-          (Cliente 0) aplica solo cuando la cobertura no tiene requisitos propios. No se mezclan
-          con los de cada cobertura.
+          Elegí una cobertura para definir qué documentación pide al admitir. Cada cobertura tiene
+          su propio set en imClientesRequisitos.
         </p>
 
         {error && <div className={styles.error}>{error}</div>}
@@ -170,12 +164,7 @@ export default function RequisitosCoberturaModal({ isOpen, onClose }: Props) {
                           onChange={() => alternar(r.Valor)}
                         />
                         <span className={styles.nombreRequisito}>{r.Descripcion}</span>
-                        <span className={styles.metaRequisito}>
-                          {r.Aplicable || '—'}
-                          {r.EsDeBase && !esBase && (
-                            <em className={styles.tagBase}> · de base</em>
-                          )}
-                        </span>
+                        <span className={styles.metaRequisito}>{r.Aplicable || '—'}</span>
                       </label>
                     </li>
                   ))}
