@@ -1,6 +1,8 @@
 import { apiService } from './axios';
 
 export interface AdmissionSearchFilters {
+  /** Nombre, DNI o número de visita. El back prueba los tres a la vez. */
+  termino?: string;
   dni?: string;
   nombreApellido?: string;
   fechaInicio?: string;

@@ -10,6 +10,9 @@ import {
 	getTablaIconColor,
 	TablaIconRubro,
 } from '@/app/utils/tablaIcons';
+import { catalogoSqlPorEtiqueta } from '@/app/utils/catalogosSql';
+import catalogoSqlService, { type CatalogoSqlColumn } from '@/app/services/catalogoSqlService';
+import DataTableModal from '@/app/components/admission/DataTableModal';
 import Loader from '@/app/components/Loader/Loader';
 import styles from './OpcGrdTables.module.css';
 
@@ -35,6 +38,13 @@ export default function ConfigOpcGrdTables({
 	const [nuevaDescripcion, setNuevaDescripcion] = useState('');
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [createDescripcion, setCreateDescripcion] = useState('');
+	const [sqlId, setSqlId] = useState<string | null>(null);
+	const [sqlTitle, setSqlTitle] = useState('');
+	const [sqlRows, setSqlRows] = useState<Record<string, unknown>[]>([]);
+	const [sqlColumns, setSqlColumns] = useState<CatalogoSqlColumn[]>([]);
+	const [sqlKey, setSqlKey] = useState('Valor');
+	const [sqlOpen, setSqlOpen] = useState(false);
+	const [sqlError, setSqlError] = useState('');
 
 	useEffect(() => {
 		const grupo = opcionesAgrupadas.find((g) => g.rubro.trim().toUpperCase() === rubro);
@@ -43,6 +53,33 @@ export default function ConfigOpcGrdTables({
 
 	const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
 		e.currentTarget.src = getTablaIconFallback();
+	};
+
+	const abrirCatalogo = async (descripcion: string) => {
+		const meta = catalogoSqlPorEtiqueta(descripcion);
+		if (!meta) {
+			setSqlError(`"${descripcion}" todavía no tiene CRUD directo a SQL.`);
+			return;
+		}
+		setSqlError('');
+		try {
+			const r = await catalogoSqlService.listar(meta.id);
+			setSqlId(r.id);
+			setSqlTitle(r.title);
+			setSqlRows(r.rows);
+			setSqlColumns(r.columns);
+			setSqlKey(r.keyField);
+			setSqlOpen(true);
+		} catch (err: unknown) {
+			setSqlError(err instanceof Error ? err.message : 'No se pudo abrir el catálogo');
+		}
+	};
+
+	const aplicarSql = (r: Awaited<ReturnType<typeof catalogoSqlService.listar>>) => {
+		setSqlRows(r.rows);
+		setSqlColumns(r.columns);
+		setSqlKey(r.keyField);
+		setSqlTitle(r.title);
 	};
 
 	const handleSaveEdit = async (opcion: OpcGrd) => {
@@ -156,7 +193,10 @@ export default function ConfigOpcGrdTables({
 				</div>
 			) : error ? (
 				<div className={styles.error}>{error}</div>
-			) : opciones.length === 0 ? (
+			) : (
+				<>
+			{sqlError ? <div className={styles.error}>{sqlError}</div> : null}
+			{opciones.length === 0 ? (
 				<div className={styles.empty}>No hay opciones configuradas</div>
 			) : (
 				<div className={styles.optionsGrid}>
@@ -239,15 +279,21 @@ export default function ConfigOpcGrdTables({
 								className={`${styles.card} ${styles.cardStatic}`}
 								style={{ ['--icon-tint' as string]: getTablaIconColor(rubro) }}
 							>
-								<div className={styles.iconWrap}>
-									<img
-										src={getTablaIconSrc(rubro, index, opciones)}
-										alt=""
-										className={styles.icon}
-										onError={handleImageError}
-									/>
-								</div>
-								<p className={styles.label}>{opcion.descripcion}</p>
+								<button
+									type="button"
+									className={styles.cardOpen}
+									onClick={() => void abrirCatalogo(opcion.descripcion)}
+								>
+									<div className={styles.iconWrap}>
+										<img
+											src={getTablaIconSrc(rubro, index, opciones)}
+											alt=""
+											className={styles.icon}
+											onError={handleImageError}
+										/>
+									</div>
+									<p className={styles.label}>{opcion.descripcion}</p>
+								</button>
 								{!editingOpcion && !deletingOpcion && (
 									<div className={styles.cardActions}>
 										<button
@@ -277,6 +323,31 @@ export default function ConfigOpcGrdTables({
 						);
 					})}
 				</div>
+			)}
+			<DataTableModal
+				isOpen={sqlOpen}
+				onClose={() => {
+					setSqlOpen(false);
+					setSqlId(null);
+				}}
+				title={sqlTitle}
+				data={sqlRows}
+				columns={sqlColumns}
+				keyField={sqlKey}
+				onAddItem={async (values) => {
+					if (!sqlId) return;
+					aplicarSql(await catalogoSqlService.crear(sqlId, values));
+				}}
+				onUpdateItem={async (key, values) => {
+					if (!sqlId) return;
+					aplicarSql(await catalogoSqlService.actualizar(sqlId, key, values));
+				}}
+				onDeleteItem={async (key) => {
+					if (!sqlId) return;
+					aplicarSql(await catalogoSqlService.borrar(sqlId, key));
+				}}
+			/>
+				</>
 			)}
 		</div>
 	);

@@ -122,7 +122,7 @@ export default function AgendaPacienteBusqueda() {
 				id='buscar-paciente-agenda'
 				type='text'
 				className={styles.input}
-				placeholder='DNI, nombre o nº de historia clínica…'
+				placeholder='DNI, nombre, HC o nº de visita…'
 				value={term}
 				onChange={(e) => setTerm(e.target.value)}
 				disabled={Boolean(paciente)}

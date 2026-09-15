@@ -233,7 +233,7 @@ export default function AsignarTurnoModal({
 						<input
 							type='text'
 							className={styles.input}
-							placeholder='Buscar por DNI, nombre o nº historia…'
+							placeholder='Buscar por DNI, nombre, HC o nº de visita…'
 							value={term}
 							onChange={(e) => setTerm(e.target.value)}
 							autoFocus

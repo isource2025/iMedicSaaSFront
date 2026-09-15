@@ -104,13 +104,12 @@ export default function RequisitosDocumentos({
     abrirViewer(URL.createObjectURL(archivo), archivo.name, archivo.type);
   };
 
-  const verArchivoSubido = async (r: RequisitoFormulario) => {
-    if (!numeroVisita) return;
+  const verArchivoSubido = async (r: RequisitoFormulario, visita: number) => {
     setErrorViewer('');
     setCargandoViewer(true);
     try {
       const { blob, blobUrl } = await admisionNuevaService.getArchivoRequisito(
-        numeroVisita,
+        visita,
         r.valor,
       );
       const nombre = r.presentado ? nombreDeRuta(r.presentado.ruta) : r.descripcion;
@@ -154,9 +153,10 @@ export default function RequisitosDocumentos({
       ) : (
         <ul className={styles.listaRequisitos}>
           {requisitos.map((r) => {
-            // Se puede ver el del servidor si ya se subió en esta sesión o si viene
-            // heredado de una visita anterior del mismo paciente.
-            const verSubido = Boolean(numeroVisita) && (r.estado === 'ok' || r.presentado);
+            const visitaParaVer =
+              r.presentado?.numeroVisita ||
+              (r.estado === 'ok' && numeroVisita ? numeroVisita : 0);
+            const verSubido = visitaParaVer > 0;
             return (
               <li key={r.valor} className={styles.filaRequisito}>
                 <div className={styles.requisitoInfo}>
@@ -221,7 +221,9 @@ export default function RequisitosDocumentos({
                       title="Ver archivo"
                       disabled={cargandoViewer}
                       onClick={() =>
-                        r.archivo ? verArchivoLocal(r.archivo) : void verArchivoSubido(r)
+                        r.archivo
+                          ? verArchivoLocal(r.archivo)
+                          : void verArchivoSubido(r, visitaParaVer)
                       }
                     >
                       <Eye size={15} />

@@ -20,10 +20,10 @@ import {
   rangoDesdePeriodo,
 } from '@/app/utils/admissionDatePeriod';
 import { groupRowsByPatient } from '@/app/utils/admissionSearchUtils';
+import { interpretarBusquedaUnificada } from '@/app/utils/busquedaPaciente';
 
 const initialFilters = {
-  dni: '',
-  nombreApellido: '',
+  termino: '',
   fechaInicio: '',
   fechaFin: '',
 };
@@ -99,10 +99,18 @@ export default function AdmissionSearchPage() {
         page: targetPage,
         limit: 25,
       });
-      setRows(response.data || []);
+      const data = response.data || [];
+      setRows(data);
       setPage(response.pagination?.page || targetPage);
       setTotalPages(response.pagination?.totalPages || 0);
       setTotal(response.pagination?.total || 0);
+
+      if (targetPage === 1 && filters.termino.trim()) {
+        const resultado = interpretarBusquedaUnificada(filters.termino, data);
+        if (resultado.tipo === 'visita') {
+          void openVisitDetail(resultado.visita.NumeroVisita);
+        }
+      }
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       setError(err?.response?.data?.message || err?.message || 'Error al buscar admisiones');
@@ -154,8 +162,7 @@ export default function AdmissionSearchPage() {
 
   const filtrosActivos = useMemo(() => {
     const out: string[] = [];
-    if (filters.dni.trim()) out.push(`DNI: ${filters.dni.trim()}`);
-    if (filters.nombreApellido.trim()) out.push(`Paciente: ${filters.nombreApellido.trim()}`);
+    if (filters.termino.trim()) out.push(filters.termino.trim());
     if (filters.fechaInicio || filters.fechaFin) {
       out.push(`Rango: ${formatDMY(filters.fechaInicio || '') || '—'} — ${formatDMY(filters.fechaFin || '') || '—'}`);
     }
@@ -188,7 +195,9 @@ export default function AdmissionSearchPage() {
       <form className={styles.searchPanel} onSubmit={onSubmit}>
         <div className={styles.searchPanelHead}>
           <h2 className={styles.panelTitle}>Filtros</h2>
-          <span className={styles.panelSubtitle}>Podés buscar globalmente sin filtros o acotar por DNI, paciente y período.</span>
+          <span className={styles.panelSubtitle}>
+            Buscá por nombre, DNI o número de visita. Un número de visita abre el detalle.
+          </span>
         </div>
         <div className={styles.toolbar}>
           <div className={styles.modeToggle} role="group" aria-label="Modo de vista">
@@ -208,21 +217,12 @@ export default function AdmissionSearchPage() {
             </button>
           </div>
 
-          <label className={styles.inlineField}>
-            <span>DNI</span>
-            <input
-              value={filters.dni}
-              onChange={(e) => setFilters((f) => ({ ...f, dni: e.target.value }))}
-              placeholder="Ej: 32123456"
-            />
-          </label>
-
           <label className={styles.inlineFieldWide}>
-            <span>Nombre y apellido</span>
+            <span>Nombre, DNI o nº de visita</span>
             <input
-              value={filters.nombreApellido}
-              onChange={(e) => setFilters((f) => ({ ...f, nombreApellido: e.target.value }))}
-              placeholder="Ej: Pérez Juan"
+              value={filters.termino}
+              onChange={(e) => setFilters((f) => ({ ...f, termino: e.target.value }))}
+              placeholder="Ej: Pérez, 32123456 o 236396"
             />
           </label>
 

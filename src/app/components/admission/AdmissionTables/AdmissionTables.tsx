@@ -45,6 +45,8 @@ import { getRolesContacto, getRolContacto, createRolContacto, updateRolContacto,
 import { getTiposAdmision, getTipoAdmision, createTipoAdmision, updateTipoAdmision, deleteTipoAdmision } from '../../../services/tipoAdmision.service';
 import { getTiposPaciente, getTipoPaciente, createTipoPaciente, updateTipoPaciente, deleteTipoPaciente } from '../../../services/tipoPaciente.service';
 import { getSexos, getSexo, createSexo, updateSexo, deleteSexo } from '../../../services/sexo.service';
+import catalogoSqlService from '../../../services/catalogoSqlService';
+import { catalogoSqlPorEtiqueta, etiquetaVisibleOpcgrd } from '../../../utils/catalogosSql';
 
 const AdmissionTables: React.FC = () => {
   // Utilizamos el custom hook para gestionar las opciones de grilla
@@ -71,6 +73,7 @@ const AdmissionTables: React.FC = () => {
   // imClientesRequisitos no entra en el CRUD genérico: es una relación entre dos
   // tablas, así que tiene su propio modal de selección.
   const [showRequisitosCobertura, setShowRequisitosCobertura] = useState<boolean>(false);
+  const [sqlCatalogId, setSqlCatalogId] = useState<string | null>(null);
 
   // Estados para opciones dinámicas de la API
   const [dynamicOptions, setDynamicOptions] = useState<TableOption[]>([]);
@@ -543,9 +546,33 @@ const AdmissionTables: React.FC = () => {
     }
   };
 
+  const abrirCatalogoSql = async (id: string) => {
+    try {
+      setIsLoadingTableData(true);
+      setSqlCatalogId(id);
+      const r = await catalogoSqlService.listar(id);
+      setCurrentTableTitle(r.title);
+      setCurrentTableColumns(r.columns);
+      setCurrentKeyField(r.keyField);
+      setCurrentTableData(r.rows);
+      setShowDataModal(true);
+    } catch (error) {
+      console.error('Error al cargar catálogo SQL:', error);
+      alert((error as Error).message || 'Error al cargar el catálogo');
+      setSqlCatalogId(null);
+    } finally {
+      setIsLoadingTableData(false);
+    }
+  };
+
   // Funciones para gestionar las opciones de tablas
   const handleShowDataForOption = (optionType: string) => {
-    // Normalización del texto para manejar tanto formatos camelCase como texto descriptivo
+    const sql = catalogoSqlPorEtiqueta(optionType);
+    if (sql) {
+      void abrirCatalogoSql(sql.id);
+      return;
+    }
+    setSqlCatalogId(null);
     const normalizedType = optionType.toLowerCase().trim();
     setCurrentKeyField('Valor');
     
@@ -622,9 +649,19 @@ const AdmissionTables: React.FC = () => {
   };
   
   // Funciones CRUD para la tabla actual mostrada en el modal
+  const aplicarSql = (r: Awaited<ReturnType<typeof catalogoSqlService.listar>>) => {
+    setCurrentTableData(r.rows);
+    setCurrentTableColumns(r.columns);
+    setCurrentKeyField(r.keyField);
+    setCurrentTableTitle(r.title);
+  };
+
   const handleAddCurrentTableItem = async (values: Record<string, string>) => {
     try {
-      // Crear objeto genérico y adaptarlo a lo que espera cada servicio
+      if (sqlCatalogId) {
+        aplicarSql(await catalogoSqlService.crear(sqlCatalogId, values));
+        return;
+      }
       switch (currentTableTitle) {
         case 'Clases de Paciente':
           // Añadir nueva clase de paciente
@@ -821,7 +858,10 @@ const AdmissionTables: React.FC = () => {
 
   const handleUpdateCurrentTableItem = async (key: string, values: Record<string, string>) => {
     try {
-      // Adaptamos el formato del key y los valores según lo que espera cada servicio
+      if (sqlCatalogId) {
+        aplicarSql(await catalogoSqlService.actualizar(sqlCatalogId, key, values));
+        return;
+      }
       switch (currentTableTitle) {
         case 'Clases de Paciente':
           // Actualizar clase de paciente - espera string
@@ -998,6 +1038,10 @@ const AdmissionTables: React.FC = () => {
   // Función para eliminar un ítem de la tabla actual
   const handleDeleteCurrentTableItem = async (key: string) => {
     try {
+      if (sqlCatalogId) {
+        aplicarSql(await catalogoSqlService.borrar(sqlCatalogId, key));
+        return;
+      }
       switch (currentTableTitle) {
         case 'Clases de Paciente':
           // Espera string
@@ -1119,6 +1163,7 @@ const AdmissionTables: React.FC = () => {
 
   const handleCloseDataModal = () => {
     setShowDataModal(false);
+    setSqlCatalogId(null);
   };
 
   const handleCreateOption = async () => {
@@ -1208,6 +1253,21 @@ const AdmissionTables: React.FC = () => {
             orden: 1000,
           });
         }
+
+        const extras = [
+          { descripcion: 'Lugares de episodio', orden: 1001 },
+          { descripcion: 'Centros asistenciales', orden: 1002 },
+        ];
+        for (const extra of extras) {
+          if (!filteredOptions.some((o) => catalogoSqlPorEtiqueta(o.descripcion)?.title === extra.descripcion)) {
+            filteredOptions.push({
+              rubro: 'ADMISION',
+              descripcion: extra.descripcion,
+              icono: '',
+              orden: extra.orden,
+            });
+          }
+        }
         
         // Actualizamos el estado
         setDynamicOptions(filteredOptions);
@@ -1267,7 +1327,7 @@ const AdmissionTables: React.FC = () => {
                   onError={(e) => handleImageError(e as React.SyntheticEvent<HTMLImageElement>)}
                 />
               </span>
-              <span className={styles.label}>{option.descripcion}</span>
+              <span className={styles.label}>{etiquetaVisibleOpcgrd(option.descripcion)}</span>
             </button>
           ))}
         </div>

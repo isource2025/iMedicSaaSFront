@@ -109,7 +109,7 @@ export default function PacienteSelector({
         <input
           type="text"
           value={query}
-          placeholder="Buscar por apellido, nombre o documento (mínimo 3 caracteres)"
+          placeholder="Buscar por apellido, nombre, documento o nº de visita (mínimo 3 caracteres)"
           onChange={(e) => {
             setQuery(e.target.value);
             setAbierto(true);
