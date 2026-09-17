@@ -65,17 +65,29 @@ export default function EmpresaWorkspace({ id }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const [det, cat, check] = await Promise.all([
+      // La ficha y los catálogos globales viven en plataforma: deben mostrarse
+      // aunque el SQL físico de la clínica esté caído o tarde en responder.
+      const [det, catBase] = await Promise.all([
         superAdminService.getEmpresa(id),
-        superAdminService.getCatalogosEmpresa(id),
-        superAdminService.getChecklist(id),
+        superAdminService.getCatalogos(),
       ]);
       setEmpresa(det);
-      setCatalogos(cat);
-      setChecklist(check);
-      setSectores(cat.sectores || []);
-      setServicios(cat.servicios || []);
-      setRoles(cat.roles || []);
+      setCatalogos(catBase);
+      setSectores(catBase.sectores || []);
+      setServicios(catBase.servicios || []);
+      setRoles(catBase.roles || []);
+      setLoading(false);
+
+      // Lo que depende del tenant físico se completa sin bloquear la ficha.
+      void Promise.allSettled([
+        superAdminService.getCatalogosEmpresa(id).then((cat) => {
+          setCatalogos(cat);
+          setSectores(cat.sectores || []);
+          setServicios(cat.servicios || []);
+          setRoles(cat.roles || []);
+        }),
+        superAdminService.getChecklist(id).then(setChecklist),
+      ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al abrir la empresa');
     } finally {
@@ -143,11 +155,26 @@ export default function EmpresaWorkspace({ id }: Props) {
     }
   };
 
-  if (loading || !empresa || !catalogos) {
+  if (loading) {
     return (
       <div className={styles.superAdmin}>
         <Loader />
       </div>
+    );
+  }
+
+  if (!empresa || !catalogos) {
+    return (
+      <SuperAdminShell
+        title="Empresa"
+        subtitle="No se pudo cargar la ficha"
+        crumbs={[
+          { label: 'Plataforma', href: '/dashboard/super-admin' },
+          { label: 'Empresas', href: '/dashboard/super-admin/empresas' },
+        ]}
+        error={error || 'No se pudo cargar la empresa'}
+        onDismissError={() => setError(null)}
+      />
     );
   }
 
