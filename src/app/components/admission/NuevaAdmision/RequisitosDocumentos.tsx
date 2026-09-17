@@ -121,7 +121,9 @@ export default function RequisitosDocumentos({
     }
   };
 
-  const conArchivo = requisitos.filter((r) => r.archivo || r.estado === 'ok').length;
+  const conArchivo = requisitos.filter(
+    (r) => r.archivo || r.estado === 'ok' || r.presentado,
+  ).length;
   const sinTocarRequisitos = bloqueado || soloArchivos;
 
   return (
