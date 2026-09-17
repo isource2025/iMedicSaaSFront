@@ -7,7 +7,6 @@ import AdjuntoFileViewer, {
   type AdjuntoViewerState,
 } from '@/app/components/beds/adjuntos/AdjuntoFileViewer';
 import admisionNuevaService from '@/app/services/admisionNuevaService';
-import { admissionApiErrorMessage } from '@/app/services/admissionSearchService';
 import type { RequisitoCobertura, RequisitoFormulario } from '@/app/types/admisionNueva';
 import styles from './styles.module.css';
 
@@ -53,6 +52,8 @@ export default function RequisitosDocumentos({
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
   const [cargandoViewer, setCargandoViewer] = useState(false);
   const [errorViewer, setErrorViewer] = useState('');
+  /** Falló al abrir un documento ya guardado / presentado. */
+  const [errorObtener, setErrorObtener] = useState<Record<number, string>>({});
   const inputs = useRef<Record<number, HTMLInputElement | null>>({});
 
   useEffect(
@@ -113,9 +114,17 @@ export default function RequisitosDocumentos({
         r.valor,
       );
       const nombre = r.presentado ? nombreDeRuta(r.presentado.ruta) : r.descripcion;
+      setErrorObtener((prev) => {
+        if (!prev[r.valor]) return prev;
+        const next = { ...prev };
+        delete next[r.valor];
+        return next;
+      });
       abrirViewer(blobUrl, nombre, blob.type);
-    } catch (e) {
-      setErrorViewer(admissionApiErrorMessage(e, 'No se pudo abrir el archivo'));
+    } catch {
+      const msg = 'Error al obtener documento';
+      setErrorObtener((prev) => ({ ...prev, [r.valor]: msg }));
+      setErrorViewer(msg);
     } finally {
       setCargandoViewer(false);
     }
@@ -133,7 +142,7 @@ export default function RequisitosDocumentos({
           <Paperclip size={18} /> Documentos y requisitos
         </h2>
         <span className={styles.contador}>
-          {conArchivo} de {requisitos.length} con imagen
+          {conArchivo} de {requisitos.length} presentados
         </span>
       </div>
 
@@ -176,6 +185,13 @@ export default function RequisitosDocumentos({
                     <span className={styles.nombreArchivo} title={r.archivo.name}>
                       {r.archivo.name}
                     </span>
+                  ) : errorObtener[r.valor] || r.estado === 'error' ? (
+                    <span
+                      className={styles.estadoError}
+                      title={r.error || errorObtener[r.valor] || undefined}
+                    >
+                      <AlertCircle size={14} /> Error al obtener documento
+                    </span>
                   ) : r.presentado ? (
                     <span
                       className={styles.yaPresentado}
@@ -185,20 +201,15 @@ export default function RequisitosDocumentos({
                       {r.presentado.fecha ? ` el ${fechaCorta(r.presentado.fecha)}` : ''}
                     </span>
                   ) : (
-                    <span className={styles.sinArchivo}>Sin imagen</span>
+                    <span className={styles.sinArchivo}>No presentado</span>
                   )}
 
                   {r.estado === 'subiendo' && (
                     <span className={styles.estadoSubiendo}>Subiendo…</span>
                   )}
-                  {r.estado === 'ok' && !r.presentado && (
+                  {r.estado === 'ok' && !r.presentado && !errorObtener[r.valor] && (
                     <span className={styles.estadoOk}>
                       <Check size={14} /> Subida
-                    </span>
-                  )}
-                  {r.estado === 'error' && (
-                    <span className={styles.estadoError} title={r.error}>
-                      <AlertCircle size={14} /> {r.error || 'Error'}
                     </span>
                   )}
                 </div>

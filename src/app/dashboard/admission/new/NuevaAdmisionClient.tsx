@@ -874,9 +874,15 @@ export default function NuevaAdmisionClient() {
           type="button"
           className={styles.botonTexto}
           disabled={guardando}
-          onClick={limpiarFormulario}
+          onClick={() => {
+            if (typeof window !== 'undefined' && window.history.length > 1) {
+              router.back();
+              return;
+            }
+            router.push('/dashboard/patients');
+          }}
         >
-          Limpiar
+          Cerrar
         </button>
         <button
           type="button"

@@ -88,6 +88,87 @@
   background: #fff;
 }
 
+.zoomWrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.zoomBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.zoomBtn,
+.zoomLevel {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 8px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.zoomBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.zoomLevel {
+  min-width: 64px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.zoomStage {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  background: #0f172a;
+  user-select: none;
+}
+
+.zoomStageGrabbing {
+  cursor: grabbing;
+}
+
+.zoomImage,
+.zoomFrame {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center center;
+  background: #fff;
+}
+
+.zoomImage {
+  pointer-events: none;
+}
+
+.zoomFrame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 .fallback {
   height: 100%;
   display: flex;
