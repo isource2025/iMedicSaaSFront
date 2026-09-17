@@ -20,8 +20,6 @@ interface Props {
   soloArchivos?: boolean;
   /** Necesario para ver los archivos que ya están subidos al servidor. */
   numeroVisita?: number | null;
-  /** Para ver requisitos Paciente descubiertos en disco (sin NumeroVisita). */
-  idPaciente?: number | null;
   onArchivo: (valor: number, archivo: File | null) => void;
   onQuitar: (valor: number) => void;
   onAgregar: (valor: number) => void;
@@ -47,7 +45,6 @@ export default function RequisitosDocumentos({
   bloqueado,
   soloArchivos = false,
   numeroVisita,
-  idPaciente,
   onArchivo,
   onQuitar,
   onAgregar,
@@ -111,10 +108,10 @@ export default function RequisitosDocumentos({
     setErrorViewer('');
     setCargandoViewer(true);
     try {
-      const desdePaciente = visita <= 0 && Number(idPaciente) > 0;
-      const { blob, blobUrl } = desdePaciente
-        ? await admisionNuevaService.getArchivoRequisitoPaciente(Number(idPaciente), r.valor)
-        : await admisionNuevaService.getArchivoRequisito(visita, r.valor);
+      const { blob, blobUrl } = await admisionNuevaService.getArchivoRequisito(
+        visita,
+        r.valor,
+      );
       const nombre = r.presentado ? nombreDeRuta(r.presentado.ruta) : r.descripcion;
       abrirViewer(blobUrl, nombre, blob.type);
     } catch (e) {
@@ -161,9 +158,7 @@ export default function RequisitosDocumentos({
             const visitaParaVer =
               r.presentado?.numeroVisita ||
               (r.estado === 'ok' && numeroVisita ? numeroVisita : 0);
-            const verSubido =
-              visitaParaVer > 0 ||
-              (Boolean(r.presentado) && Number(idPaciente) > 0);
+            const verSubido = visitaParaVer > 0;
             return (
               <li key={r.valor} className={styles.filaRequisito}>
                 <div className={styles.requisitoInfo}>
@@ -184,11 +179,7 @@ export default function RequisitosDocumentos({
                   ) : r.presentado ? (
                     <span
                       className={styles.yaPresentado}
-                      title={
-                        r.presentado.numeroVisita > 0
-                          ? `Presentado en la visita ${r.presentado.numeroVisita}`
-                          : `Archivo en disco: ${r.presentado.ruta}`
-                      }
+                      title={`Presentado en la visita ${r.presentado.numeroVisita}`}
                     >
                       Ya presentado
                       {r.presentado.fecha ? ` el ${fechaCorta(r.presentado.fecha)}` : ''}
