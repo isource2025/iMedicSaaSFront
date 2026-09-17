@@ -53,6 +53,22 @@ export const admisionNuevaService = {
     return { blob: data, blobUrl: URL.createObjectURL(data) };
   },
 
+  /**
+   * Archivo de requisito Paciente sin visita (presentación previa o disco
+   * PERSONALES\{DNI}\ vía file server).
+   */
+  async getArchivoRequisitoPaciente(
+    idPaciente: number,
+    valor: number,
+  ): Promise<{ blob: Blob; blobUrl: string }> {
+    const { data } = await apiService.get<Blob>(
+      `${BASE}/paciente/${Number(idPaciente)}/requisitos/${Number(valor)}/archivo`,
+      { responseType: 'blob' },
+    );
+    if (!data.size) throw new Error('El archivo está vacío o no se pudo obtener');
+    return { blob: data, blobUrl: URL.createObjectURL(data) };
+  },
+
   /** Catálogo completo de imRequisitos, para agregar uno que la cobertura no trae. */
   async getRequisitosCatalogo(): Promise<RequisitoCobertura[]> {
     const { data } = await apiService.get<Envelope<RequisitoCobertura[]>>(`${BASE}/requisitos`);

@@ -242,8 +242,22 @@ export default function NuevaAdmisionClient() {
     try {
       setCargandoRequisitos(true);
       const rows = await admisionNuevaService.getRequisitosCobertura(cliente, idPaciente);
+      const presentados = rows.filter((r) => r.Presentado);
+      console.log('[admision] requisitos cobertura', {
+        cliente,
+        idPaciente,
+        total: rows.length,
+        presentados: presentados.length,
+        detalle: rows.map((r) => ({
+          valor: r.Valor,
+          desc: r.Descripcion,
+          aplicable: r.Aplicable,
+          presentado: r.Presentado,
+        })),
+      });
       setRequisitos(rows.map(requisitoDesdeCatalogo));
     } catch (e) {
+      console.error('[admision] error requisitos cobertura', e);
       setError(admissionApiErrorMessage(e, 'Error al cargar los requisitos de la cobertura'));
     } finally {
       setCargandoRequisitos(false);
@@ -531,6 +545,7 @@ export default function NuevaAdmisionClient() {
             bloqueado={false}
             soloArchivos
             numeroVisita={creada.numeroVisita}
+            idPaciente={creada.idPaciente || paciente?.idPaciente}
             onArchivo={onArchivo}
             onQuitar={() => {}}
             onAgregar={() => {}}
@@ -852,6 +867,7 @@ export default function NuevaAdmisionClient() {
         catalogo={catalogoRequisitos}
         cargando={cargandoRequisitos}
         bloqueado={bloqueado}
+        idPaciente={paciente?.idPaciente}
         onArchivo={onArchivo}
         onQuitar={onQuitarRequisito}
         onAgregar={onAgregarRequisito}
