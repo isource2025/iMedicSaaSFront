@@ -174,7 +174,9 @@ export default function EmpresaWorkspace({ id }: Props) {
         ]}
         error={error || 'No se pudo cargar la empresa'}
         onDismissError={() => setError(null)}
-      />
+      >
+        <p className={styles.muted}>No se pudo abrir la empresa. Volvé al listado e intentá de nuevo.</p>
+      </SuperAdminShell>
     );
   }
 
