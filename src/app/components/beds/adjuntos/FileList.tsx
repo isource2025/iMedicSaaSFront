@@ -223,8 +223,10 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
     setPendingDeleteId(null);
   };
 
-  const formatearFecha = (fecha: string): string => {
-    const date = new Date(fecha);
+  const formatearFecha = (fecha: string | Date | null | undefined): string => {
+    if (fecha == null || fecha === '') return '';
+    const date = fecha instanceof Date ? fecha : new Date(fecha);
+    if (Number.isNaN(date.getTime())) return '';
     return date.toLocaleDateString('es-AR', {
       day: '2-digit',
       month: '2-digit',
@@ -415,32 +417,40 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
               </ul>
             ) : (
               <div className={styles.thumbGrid}>
-                {visibles.map((adjunto) => (
-                  <article key={adjunto.IdAdjunto} className={styles.thumbCard}>
-                    <div
-                      className={styles.thumbHit}
-                      onClick={() => handleView(adjunto)}
-                      title={adjunto.NombreArchivo}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          void handleView(adjunto);
-                        }
-                      }}
-                    >
-                      <AdjuntoThumb adjunto={adjunto} />
-                    </div>
-                    <div className={styles.thumbName} title={adjunto.NombreArchivo}>
-                      {adjunto.NombreArchivo}
-                    </div>
-                    <div className={styles.thumbMeta}>
-                      {adjunto.TipoImagenNombre || 'Sin categoría'}
-                    </div>
-                    {renderActions(adjunto)}
-                  </article>
-                ))}
+                {visibles.map((adjunto) => {
+                  const fecha = formatearFecha(adjunto.FechaCarga);
+                  return (
+                    <article key={adjunto.IdAdjunto} className={styles.thumbCard}>
+                      <div
+                        className={styles.thumbHit}
+                        onClick={() => handleView(adjunto)}
+                        title={adjunto.NombreArchivo}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            void handleView(adjunto);
+                          }
+                        }}
+                      >
+                        <AdjuntoThumb adjunto={adjunto} />
+                      </div>
+                      <div className={styles.thumbName} title={adjunto.NombreArchivo}>
+                        {adjunto.NombreArchivo}
+                      </div>
+                      <div className={styles.thumbMeta}>
+                        {adjunto.TipoImagenNombre || 'Sin categoría'}
+                      </div>
+                      {fecha ? (
+                        <div className={styles.thumbFecha} title={fecha}>
+                          {fecha}
+                        </div>
+                      ) : null}
+                      {renderActions(adjunto)}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
