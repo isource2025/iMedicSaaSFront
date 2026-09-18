@@ -17,6 +17,8 @@ import styles from './AdmissionAcompanantesNovedades.module.css';
 type Props = {
   numeroVisita: number | null;
   onSaved?: () => void;
+  /** La observación se edita en el bloque principal del formulario de admisión. */
+  ocultarObservacion?: boolean;
 };
 
 const TIPOS_DOCUMENTO = [
@@ -55,7 +57,11 @@ function fechaHora(fechaISO: string, horaISO: string): string {
   return horaISO ? `${dia} ${horaISO}` : dia;
 }
 
-export default function AdmissionAcompanantesNovedades({ numeroVisita, onSaved }: Props) {
+export default function AdmissionAcompanantesNovedades({
+  numeroVisita,
+  onSaved,
+  ocultarObservacion = false,
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -383,42 +389,46 @@ export default function AdmissionAcompanantesNovedades({ numeroVisita, onSaved }
         )}
       </section>
 
-      <hr className={styles.divider} />
+      {!ocultarObservacion ? (
+        <>
+          <hr className={styles.divider} />
 
-      <section className={styles.section}>
-        <h4 className={styles.sectionTitle}>Observación de la visita</h4>
-        <p className={styles.sectionHint}>
-          Texto libre que queda asociado a la visita. Se pisa cada vez que se guarda.
-        </p>
-        <textarea
-          className={styles.textarea}
-          maxLength={1000}
-          value={observaciones}
-          onChange={(e) => setObservaciones(e.target.value)}
-          placeholder="Ej.: no tiene DNI, se extravió recientemente."
-        />
-        <div className={styles.contador}>{observaciones.length} / 1000</div>
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={() => void onGuardarObservacion()}
-            disabled={guardandoObservacion || !observacionSucia}
-          >
-            {guardandoObservacion ? 'Guardando…' : 'Guardar observación'}
-          </button>
-          {observacionSucia ? (
-            <button
-              type="button"
-              className={styles.btn}
-              onClick={() => setObservaciones(observacionesGuardadas)}
-              disabled={guardandoObservacion}
-            >
-              Descartar cambios
-            </button>
-          ) : null}
-        </div>
-      </section>
+          <section className={styles.section}>
+            <h4 className={styles.sectionTitle}>Observación de la visita</h4>
+            <p className={styles.sectionHint}>
+              Texto libre que queda asociado a la visita. Se pisa cada vez que se guarda.
+            </p>
+            <textarea
+              className={styles.textarea}
+              maxLength={1000}
+              value={observaciones}
+              onChange={(e) => setObservaciones(e.target.value)}
+              placeholder="Ej.: no tiene DNI, se extravió recientemente."
+            />
+            <div className={styles.contador}>{observaciones.length} / 1000</div>
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={() => void onGuardarObservacion()}
+                disabled={guardandoObservacion || !observacionSucia}
+              >
+                {guardandoObservacion ? 'Guardando…' : 'Guardar observación'}
+              </button>
+              {observacionSucia ? (
+                <button
+                  type="button"
+                  className={styles.btn}
+                  onClick={() => setObservaciones(observacionesGuardadas)}
+                  disabled={guardandoObservacion}
+                >
+                  Descartar cambios
+                </button>
+              ) : null}
+            </div>
+          </section>
+        </>
+      ) : null}
 
       <hr className={styles.divider} />
 

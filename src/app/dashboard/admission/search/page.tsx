@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { admissionSearchService, AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import AdmissionVisitDetailModal from '@/app/components/admission/AdmissionVisitDetailModal';
-import AdmissionDatosPrincipalesModal from '@/app/components/admission/AdmissionDatosPrincipalesModal';
-import AdmissionUbicacionMovimientosModal from '@/app/components/admission/AdmissionUbicacionMovimientosModal';
 import PatientFolderVisitsModal from '@/app/components/admission/PatientFolderVisitsModal';
 import {
 	VisitClinicalBadges,
@@ -77,6 +75,7 @@ export default function AdmissionSearchPage() {
 }
 
 function AdmissionSearchPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const terminoUrl = (searchParams.get('termino') || searchParams.get('dni') || '').trim();
 
@@ -96,9 +95,6 @@ function AdmissionSearchPageContent() {
     patient: AdmissionSearchRow;
     visits: AdmissionSearchRow[];
   } | null>(null);
-
-  const [editVisita, setEditVisita] = useState<number | null>(null);
-  const [ubicacionVisita, setUbicacionVisita] = useState<number | null>(null);
 
   const {
     selectedVisit,
@@ -173,8 +169,6 @@ function AdmissionSearchPageContent() {
     setError('');
     closeVisitDetail();
     setFolderModal(null);
-    setEditVisita(null);
-    setUbicacionVisita(null);
     await runSearch(1, initialFilters);
   };
 
@@ -182,6 +176,10 @@ function AdmissionSearchPageContent() {
 
   const handleBadgeClick = (kind: ClinicalBadgeKind, numeroVisita: number) => {
     void openVisitDetail(numeroVisita, clinicalBadgeToTab(kind));
+  };
+
+  const irAModificar = (numeroVisita: number) => {
+    router.push(`/dashboard/admission/new?numeroVisita=${numeroVisita}`);
   };
 
   const filtrosActivos = useMemo(() => {
@@ -420,7 +418,7 @@ function AdmissionSearchPageContent() {
                           <button
                             type="button"
                             className={styles.modifyBtn}
-                            onClick={() => setEditVisita(row.NumeroVisita)}
+                            onClick={() => irAModificar(row.NumeroVisita)}
                           >
                             Modificar
                           </button>
@@ -470,7 +468,7 @@ function AdmissionSearchPageContent() {
                       <button
                         type="button"
                         className={styles.modifyBtn}
-                        onClick={() => setEditVisita(row.NumeroVisita)}
+                        onClick={() => irAModificar(row.NumeroVisita)}
                       >
                         Modificar
                       </button>
@@ -559,23 +557,6 @@ function AdmissionSearchPageContent() {
         error={detailError}
         initialTab={detailInitialTab}
         onReloadData={() => void reloadVisitDetail()}
-      />
-
-      <AdmissionDatosPrincipalesModal
-        isOpen={editVisita != null}
-        numeroVisita={editVisita}
-        onClose={() => setEditVisita(null)}
-        onSaved={() => void runSearch(page)}
-        onOpenUbicacion={(nv) => {
-          setEditVisita(null);
-          setUbicacionVisita(nv);
-        }}
-      />
-
-      <AdmissionUbicacionMovimientosModal
-        isOpen={ubicacionVisita != null}
-        numeroVisita={ubicacionVisita}
-        onClose={() => setUbicacionVisita(null)}
       />
     </div>
   );

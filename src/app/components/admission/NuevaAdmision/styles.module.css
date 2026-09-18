@@ -1,7 +1,5 @@
 .pagina {
   padding: 1.5rem;
-  max-width: 1180px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -21,6 +19,17 @@
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
   color: #64748b;
+}
+
+.cargandoCaja {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 240px;
+  color: #64748b;
+  font-size: 0.9rem;
 }
 
 .bloque {

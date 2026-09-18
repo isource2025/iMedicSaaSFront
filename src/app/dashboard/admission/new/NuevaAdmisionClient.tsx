@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ClipboardPlus, RotateCcw, Save, Stethoscope, UserRound } from 'lucide-react';
+import { ClipboardPlus, Pencil, RotateCcw, Save, Stethoscope, UserRound } from 'lucide-react';
 
 import PacienteSelector, {
   type PacienteElegido,
@@ -12,11 +12,18 @@ import AcompanantesNovedadesAlta, {
   type AcompanantePendiente,
 } from '@/app/components/admission/NuevaAdmision/AcompanantesNovedadesAlta';
 import CamaSelector from '@/app/components/admission/NuevaAdmision/CamaSelector';
+import AdmissionAcompanantesNovedades from '@/app/components/admission/AdmissionAcompanantesNovedades';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
+import Loader from '@/app/components/Loader/Loader';
 
 import admisionNuevaService from '@/app/services/admisionNuevaService';
 import visitaAcompanantesService from '@/app/services/visitaAcompanantesService';
-import { admissionApiErrorMessage, type AdmissionCatalogOption } from '@/app/services/admissionSearchService';
+import {
+  admissionApiErrorMessage,
+  admissionSearchService,
+  type AdmissionCatalogOption,
+  type AdmissionDatosPrincipalesVisita,
+} from '@/app/services/admissionSearchService';
 import { getPersonalList } from '@/app/services/personalService';
 import diagnosticosService from '@/app/services/diagnosticosService';
 import { getPatientById } from '@/app/services/patientService';
@@ -27,6 +34,7 @@ import type {
   CamaSeleccionada,
   RequisitoCobertura,
   RequisitoFormulario,
+  RequisitoVisita,
   UltimaVisitaPaciente,
 } from '@/app/types/admisionNueva';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
@@ -121,6 +129,45 @@ function opcionesCobertura(
   return [...base, { value: cob, label }];
 }
 
+function formDesdeVisita(v: AdmissionDatosPrincipalesVisita, observaciones = ''): FormState {
+  const numPositivo = (n: unknown) => (n != null && Number(n) > 0 ? String(n) : '');
+  return {
+    fechaAdmision: String(v.FechaAdmision || '').slice(0, 10),
+    horaAdmision: String(v.HoraAdmision || '').slice(0, 5),
+    clasePaciente: String(v.ClasePaciente || '').trim(),
+    tipoAdmision: String(v.TipoAdmision || '').trim(),
+    idLugarEpisodio: v.IdLugarEpisodio != null && Number(v.IdLugarEpisodio) > 0 ? String(v.IdLugarEpisodio) : '',
+    centroSalud: numPositivo(v.OrigenAdmision),
+    diagnostico: String(v.Diagnostico || '').trim(),
+    diagnosticoDescripcion: String(v.DiagnosticoDescripcion || '').trim(),
+    estadoAmbulatorio: String(v.EstadoAmbulatorio || '').trim(),
+    doctorAdmisor: numPositivo(v.DoctorAdmisor),
+    doctorAdmisorNombre: String(v.DoctorAdmisorNombre || '').trim(),
+    doctorAsistiendo: numPositivo(v.DoctorAsistiendo),
+    doctorAsistiendoNombre: String(v.DoctorAsistiendoNombre || '').trim(),
+    doctorCabecera: numPositivo(v.DoctorCabecera),
+    doctorCabeceraNombre: String(v.DoctorCabeceraNombre || '').trim(),
+    cliente: numPositivo(v.Cliente),
+    contrato: v.Contrato != null && Number(v.Contrato) > 0 ? String(v.Contrato) : '',
+    tipoPaciente: String(v.TipoPaciente || '').trim(),
+    numeroInternacion: String(v.NumeroInternacion || '').trim(),
+    observaciones,
+  };
+}
+
+function requisitoDesdeVisita(r: RequisitoVisita): RequisitoFormulario {
+  return {
+    valor: r.Valor,
+    descripcion: r.Descripcion,
+    aplicable: r.Aplicable,
+    deCobertura: true,
+    deBase: false,
+    archivo: null,
+    estado: r.tieneArchivo ? 'ok' : 'pendiente',
+    presentado: null,
+  };
+}
+
 function requisitoDesdeCatalogo(r: RequisitoCobertura): RequisitoFormulario {
   return {
     valor: r.Valor,
@@ -139,10 +186,18 @@ export default function NuevaAdmisionClient() {
   const router = useRouter();
   const params = useSearchParams();
 
+  const numeroVisitaUrl = Number(params.get('numeroVisita') || 0);
+  const enEdicion = Number.isFinite(numeroVisitaUrl) && numeroVisitaUrl > 0;
+  const idPacienteUrl = enEdicion ? null : params.get('idPaciente');
+
   const [form, setForm] = useState<FormState>(formInicial);
   const [paciente, setPaciente] = useState<PacienteElegido | null>(null);
   const [ultimaVisita, setUltimaVisita] = useState<UltimaVisitaPaciente | null>(null);
   const [cama, setCama] = useState<CamaSeleccionada | null>(null);
+  const [ubicacionActual, setUbicacionActual] = useState<{
+    sector: string;
+    habitacion: string;
+  } | null>(null);
 
   const [catalogos, setCatalogos] = useState<AdmisionNuevaCatalogos | null>(null);
   const [catalogoRequisitos, setCatalogoRequisitos] = useState<RequisitoCobertura[]>([]);
@@ -150,10 +205,12 @@ export default function NuevaAdmisionClient() {
   const [acompanantesPendientes, setAcompanantesPendientes] = useState<AcompanantePendiente[]>([]);
   const [novedadesPendientes, setNovedadesPendientes] = useState<string[]>([]);
   const [cargandoRequisitos, setCargandoRequisitos] = useState(false);
+  const [cargandoEdicion, setCargandoEdicion] = useState(enEdicion);
 
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const [creada, setCreada] = useState<AdmisionCreada | null>(null);
+  const [modoExito, setModoExito] = useState<'alta' | 'edicion' | null>(null);
 
   const [profBusqueda, setProfBusqueda] = useState('');
   const [profCampo, setProfCampo] = useState<CampoProfesional | null>(null);
@@ -187,20 +244,69 @@ export default function NuevaAdmisionClient() {
     admisionNuevaService.getRequisitosCatalogo().then(setCatalogoRequisitos).catch(() => {});
   }, []);
 
-  // Alta desde pacientes: /dashboard/admission/new?idPaciente=123
-  // Resetea el formulario para no arrastrar datos de otra admisión abierta.
-  const idPacienteUrl = params.get('idPaciente');
+  // Alta: /new?idPaciente=123 — Edición: /new?numeroVisita=456
   useEffect(() => {
-    const id = Number(idPacienteUrl);
     setCreada(null);
+    setModoExito(null);
     setError('');
     setCama(null);
-    setRequisitos([]);
     setAcompanantesPendientes([]);
     setNovedadesPendientes([]);
     setUltimaVisita(null);
+    setUbicacionActual(null);
+
+    if (enEdicion) {
+      let vigente = true;
+      setCargandoEdicion(true);
+      setRequisitos([]);
+      void (async () => {
+        try {
+          const payload = await admissionSearchService.getDatosPrincipales(numeroVisitaUrl);
+          if (!vigente) return;
+          const v = payload.visita;
+          const [panel, requisitosVisita, pacienteDb] = await Promise.all([
+            visitaAcompanantesService.getPanel(numeroVisitaUrl).catch(() => null),
+            admisionNuevaService.getRequisitosVisita(numeroVisitaUrl).catch(() => []),
+            getPatientById(Number(v.IdPaciente)).catch(() => null),
+          ]);
+          if (!vigente) return;
+
+          const cob = v.Cliente != null && Number(v.Cliente) > 0 ? String(v.Cliente) : '';
+          setPaciente({
+            idPaciente: Number(v.IdPaciente),
+            apellidoyNombre: String(v.ApellidoYNombre || pacienteDb?.ApellidoyNombre || '').trim(),
+            documento: String(v.NumeroDocumento || pacienteDb?.NumeroDocumento || '').trim(),
+            numeroHC: String(v.NumeroHC || pacienteDb?.NumeroHC || '').trim(),
+            cobertura: cob || String(pacienteDb?.Cobertura || '').trim(),
+            coberturaDescripcion: String(
+              v.CoberturaOS || pacienteDb?.CoberturaDescripcion || '',
+            ).trim(),
+            nAfiliado: String(pacienteDb?.nAfiliado || v.NumeroSSN || '').trim(),
+          });
+          setForm(formDesdeVisita(v, panel?.observaciones || ''));
+          setRequisitos((requisitosVisita || []).map(requisitoDesdeVisita));
+          const sector = String(v.SectorDescripcion || v.Sector || '').trim();
+          const habitacion = String(v.Habitacion || '').trim();
+          setUbicacionActual(sector || habitacion ? { sector, habitacion } : null);
+        } catch (e) {
+          if (!vigente) return;
+          setPaciente(null);
+          setForm(formInicial());
+          setError(admissionApiErrorMessage(e, 'No se pudo cargar la admisión'));
+        } finally {
+          if (vigente) setCargandoEdicion(false);
+        }
+      })();
+      return () => {
+        vigente = false;
+      };
+    }
+
+    setCargandoEdicion(false);
+    setRequisitos([]);
     setForm(formInicial());
 
+    const id = Number(idPacienteUrl);
     if (!Number.isFinite(id) || id <= 0) {
       setPaciente(null);
       return;
@@ -232,7 +338,7 @@ export default function NuevaAdmisionClient() {
     return () => {
       vigente = false;
     };
-  }, [idPacienteUrl]);
+  }, [enEdicion, numeroVisitaUrl, idPacienteUrl]);
 
   const cargarRequisitos = useCallback(async (cliente: number, idPaciente: number) => {
     if (!cliente || cliente <= 0) {
@@ -254,32 +360,36 @@ export default function NuevaAdmisionClient() {
   const idPacienteRequisitos = paciente?.idPaciente ?? 0;
   useEffect(() => {
     const cli = Number(clienteActual) || 0;
-    void cargarRequisitos(cli, idPacienteRequisitos);
+    if (!enEdicion) {
+      void cargarRequisitos(cli, idPacienteRequisitos);
+    }
     if (cli > 0) {
       admisionNuevaService
         .getCatalogos(cli)
         .then((c) => setCatalogos((prev) => (prev ? { ...prev, convenios: c.convenios } : c)))
         .catch(() => {});
     }
-  }, [clienteActual, idPacienteRequisitos, cargarRequisitos]);
+  }, [clienteActual, idPacienteRequisitos, cargarRequisitos, enEdicion]);
 
   // Al elegir paciente en el buscador (sin venir por URL), sincroniza cobertura.
+  const pacienteIdSync = paciente?.idPaciente;
+  const pacienteCoberturaSync = paciente?.cobertura;
   useEffect(() => {
-    if (!paciente) return;
+    if (!pacienteIdSync || enEdicion) return;
     // Si llegó por URL, el efecto de idPacienteUrl ya setea cliente.
-    if (idPacienteUrl && Number(idPacienteUrl) === paciente.idPaciente) return;
-    const cob = String(paciente.cobertura || '').trim();
+    if (idPacienteUrl && Number(idPacienteUrl) === pacienteIdSync) return;
+    const cob = String(pacienteCoberturaSync || '').trim();
     setForm((f) => ({
       ...f,
       cliente: cob && Number(cob) > 0 ? cob : '',
       contrato: '',
     }));
-  }, [paciente?.idPaciente, idPacienteUrl]);
+  }, [pacienteIdSync, pacienteCoberturaSync, idPacienteUrl, enEdicion]);
 
   const idPacienteElegido = paciente?.idPaciente ?? 0;
   useEffect(() => {
-    if (!idPacienteElegido) {
-      setUltimaVisita(null);
+    if (enEdicion || !idPacienteElegido) {
+      if (!idPacienteElegido) setUltimaVisita(null);
       return;
     }
     let vigente = true;
@@ -310,7 +420,7 @@ export default function NuevaAdmisionClient() {
     return () => {
       vigente = false;
     };
-  }, [idPacienteElegido]);
+  }, [idPacienteElegido, enEdicion]);
 
   useEffect(() => {
     const q = profBusqueda.trim();
@@ -369,6 +479,8 @@ export default function NuevaAdmisionClient() {
     setAcompanantesPendientes([]);
     setNovedadesPendientes([]);
     setUltimaVisita(null);
+    setUbicacionActual(null);
+    setModoExito(null);
     setError('');
   };
 
@@ -395,11 +507,20 @@ export default function NuevaAdmisionClient() {
         r.valor === valor ? { ...r, archivo, estado: 'pendiente', error: undefined } : r,
       ),
     );
-    if (archivo && creada) void subirArchivo(creada.numeroVisita, valor, archivo);
+    const visitaArchivo = creada?.numeroVisita || (enEdicion ? numeroVisitaUrl : 0);
+    if (archivo && visitaArchivo) void subirArchivo(visitaArchivo, valor, archivo);
   };
 
-  const onQuitarRequisito = (valor: number) =>
+  const onQuitarRequisito = (valor: number) => {
     setRequisitos((rs) => rs.filter((r) => r.valor !== valor));
+    if (!enEdicion) return;
+    void admisionNuevaService.quitarRequisito(numeroVisitaUrl, valor).catch((e) => {
+      setError(admissionApiErrorMessage(e, 'No se pudo quitar el requisito'));
+      void admisionNuevaService.getRequisitosVisita(numeroVisitaUrl).then((rows) => {
+        setRequisitos((rows || []).map(requisitoDesdeVisita));
+      });
+    });
+  };
 
   const onAgregarRequisito = (valor: number) => {
     const encontrado = catalogoRequisitos.find((c) => c.Valor === valor);
@@ -409,6 +530,13 @@ export default function NuevaAdmisionClient() {
         ? rs
         : [...rs, { ...requisitoDesdeCatalogo(encontrado), deCobertura: false, deBase: false }],
     );
+    if (!enEdicion || !paciente) return;
+    void admisionNuevaService
+      .agregarRequisito(numeroVisitaUrl, valor, paciente.idPaciente)
+      .catch((e) => {
+        setError(admissionApiErrorMessage(e, 'No se pudo agregar el requisito'));
+        setRequisitos((rs) => rs.filter((r) => r.valor !== valor));
+      });
   };
 
   const validar = (): string => {
@@ -429,6 +557,49 @@ export default function NuevaAdmisionClient() {
     setError('');
 
     try {
+      if (enEdicion) {
+        await admissionSearchService.updateDatosPrincipales(numeroVisitaUrl, {
+          fechaAdmision: form.fechaAdmision || undefined,
+          horaAdmision: form.horaAdmision || undefined,
+          clasePaciente: form.clasePaciente || undefined,
+          numeroInternacion: form.numeroInternacion,
+          tipoAdmision: form.tipoAdmision || undefined,
+          idLugarEpisodio: form.idLugarEpisodio ? Number(form.idLugarEpisodio) : null,
+          origenAdmision: form.centroSalud ? Number(form.centroSalud) : 0,
+          diagnostico: form.diagnostico,
+          estadoAmbulatorio: form.estadoAmbulatorio,
+          doctorAdmisor: form.doctorAdmisor ? Number(form.doctorAdmisor) : 0,
+          cliente: form.cliente ? Number(form.cliente) : 0,
+          contrato: form.contrato ? Number(form.contrato) : 0,
+          doctorAsistiendo: form.doctorAsistiendo ? Number(form.doctorAsistiendo) : 0,
+          tipoPaciente: form.tipoPaciente || undefined,
+          doctorCabecera: form.doctorCabecera ? Number(form.doctorCabecera) : null,
+        });
+
+        try {
+          await visitaAcompanantesService.guardarObservacion(numeroVisitaUrl, form.observaciones);
+        } catch {
+          setError(
+            'La admisión se actualizó, pero no se pudo guardar la observación. Completala desde acompañantes y novedades.',
+          );
+        }
+
+        const pendientes = requisitos.filter((r) => r.archivo && r.estado !== 'ok');
+        for (const r of pendientes) {
+          await subirArchivo(numeroVisitaUrl, r.valor, r.archivo!);
+        }
+
+        setCreada({
+          numeroVisita: numeroVisitaUrl,
+          idPaciente: paciente!.idPaciente,
+          paciente: paciente!.apellidoyNombre,
+          requisitos: requisitos.map((r) => r.valor),
+          cama: null,
+        });
+        setModoExito('edicion');
+        return;
+      }
+
       const resultado = await admisionNuevaService.crear({
         idPaciente: paciente!.idPaciente,
         fechaAdmision: form.fechaAdmision,
@@ -452,6 +623,7 @@ export default function NuevaAdmisionClient() {
       });
 
       setCreada(resultado);
+      setModoExito('alta');
 
       // La visita ya existe: cada imagen se sube aparte para poder reintentar
       // una sola sin repetir el alta.
@@ -485,7 +657,12 @@ export default function NuevaAdmisionClient() {
         );
       }
     } catch (e) {
-      setError(admissionApiErrorMessage(e, 'Error al crear la admisión'));
+      setError(
+        admissionApiErrorMessage(
+          e,
+          enEdicion ? 'Error al actualizar la admisión' : 'Error al crear la admisión',
+        ),
+      );
     } finally {
       setGuardando(false);
     }
@@ -502,13 +679,25 @@ export default function NuevaAdmisionClient() {
   const hayFallidos = requisitos.some((r) => r.estado === 'error');
   const cargandoCatalogos = !catalogos;
 
+  if (cargandoEdicion) {
+    return (
+      <div className={styles.pagina}>
+        <div className={styles.cargandoCaja}>
+          <Loader />
+          <p>Cargando admisión…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (creada) {
     return (
       <div className={styles.pagina}>
         <div className={styles.exito}>
-          <h1>Admisión creada</h1>
+          <h1>{modoExito === 'edicion' ? 'Admisión actualizada' : 'Admisión creada'}</h1>
           <p className={styles.exitoNumero}>N° de visita {creada.numeroVisita}</p>
           <p>{creada.paciente}</p>
+          {error ? <p className={styles.avisoCama}>{error}</p> : null}
 
           {creada.cama && !creada.cama.asignada && (
             <p className={styles.avisoCama}>
@@ -547,7 +736,9 @@ export default function NuevaAdmisionClient() {
               className={styles.botonSecundario}
               onClick={() => {
                 setCreada(null);
+                setModoExito(null);
                 limpiarFormulario();
+                if (enEdicion) router.replace('/dashboard/admission/new');
               }}
             >
               <ClipboardPlus size={16} /> Nueva admisión
@@ -569,9 +760,14 @@ export default function NuevaAdmisionClient() {
     <div className={styles.pagina}>
       <header className={styles.header}>
         <h1>
-          <ClipboardPlus size={22} /> Nueva Admisión
+          {enEdicion ? <Pencil size={22} /> : <ClipboardPlus size={22} />}{' '}
+          {enEdicion ? 'Modificar admisión' : 'Nueva Admisión'}
         </h1>
-        <p>Admisión ambulatoria o internación sobre la historia clínica del paciente.</p>
+        <p>
+          {enEdicion
+            ? `Visita ${numeroVisitaUrl}. Los cambios se guardan sobre esta admisión, sea internación o ambulatorio.`
+            : 'Admisión ambulatoria o internación sobre la historia clínica del paciente.'}
+        </p>
       </header>
 
       {error && <div className={styles.errorBanner}>{error}</div>}
@@ -586,9 +782,9 @@ export default function NuevaAdmisionClient() {
           paciente={paciente}
           onSeleccionar={setPaciente}
           onLimpiar={() => setPaciente(null)}
-          disabled={bloqueado}
+          disabled={bloqueado || enEdicion}
         />
-        {paciente && ultimaVisita && (
+        {paciente && ultimaVisita && !enEdicion && (
           <p className={styles.sugerenciaUltimaVisita}>
             Se completaron datos con la última admisión del {ultimaVisita.fechaAdmision} (visita{' '}
             {ultimaVisita.numeroVisita}). Revisalos antes de guardar.
@@ -852,21 +1048,38 @@ export default function NuevaAdmisionClient() {
         catalogo={catalogoRequisitos}
         cargando={cargandoRequisitos}
         bloqueado={bloqueado}
+        numeroVisita={enEdicion ? numeroVisitaUrl : creada?.numeroVisita}
         onArchivo={onArchivo}
         onQuitar={onQuitarRequisito}
         onAgregar={onAgregarRequisito}
       />
 
-      <AcompanantesNovedadesAlta
-        acompanantes={acompanantesPendientes}
-        novedades={novedadesPendientes}
-        disabled={bloqueado}
-        onAcompanantesChange={setAcompanantesPendientes}
-        onNovedadesChange={setNovedadesPendientes}
-      />
+      {enEdicion ? (
+        <div className={styles.bloque}>
+          <AdmissionAcompanantesNovedades
+            numeroVisita={numeroVisitaUrl}
+            ocultarObservacion
+          />
+        </div>
+      ) : (
+        <AcompanantesNovedadesAlta
+          acompanantes={acompanantesPendientes}
+          novedades={novedadesPendientes}
+          disabled={bloqueado}
+          onAcompanantesChange={setAcompanantesPendientes}
+          onNovedadesChange={setNovedadesPendientes}
+        />
+      )}
 
-      {esInternado && (
+      {esInternado && !enEdicion && (
         <CamaSelector seleccion={cama} onSeleccionar={setCama} disabled={bloqueado} />
+      )}
+      {esInternado && enEdicion && (
+        <p className={styles.sugerenciaUltimaVisita}>
+          {ubicacionActual?.sector || ubicacionActual?.habitacion
+            ? `Ubicación actual: ${ubicacionActual.sector || '—'} / Hab. ${ubicacionActual.habitacion || '—'}. Para cambiar la cama usá el módulo de Camas.`
+            : 'Esta internación no tiene cama asignada. Ubicá al paciente desde Camas.'}
+        </p>
       )}
 
       <div className={styles.acciones}>
@@ -875,6 +1088,10 @@ export default function NuevaAdmisionClient() {
           className={styles.botonTexto}
           disabled={guardando}
           onClick={() => {
+            if (enEdicion) {
+              router.push('/dashboard/admission/search');
+              return;
+            }
             if (typeof window !== 'undefined' && window.history.length > 1) {
               router.back();
               return;
@@ -890,7 +1107,8 @@ export default function NuevaAdmisionClient() {
           disabled={guardando}
           onClick={guardar}
         >
-          <Save size={16} /> {guardando ? 'Guardando…' : 'Confirmar admisión'}
+          <Save size={16} />{' '}
+          {guardando ? 'Guardando…' : enEdicion ? 'Guardar cambios' : 'Confirmar admisión'}
         </button>
       </div>
     </div>
