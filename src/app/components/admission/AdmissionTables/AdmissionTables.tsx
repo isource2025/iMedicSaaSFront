@@ -48,6 +48,10 @@ import { getSexos, getSexo, createSexo, updateSexo, deleteSexo } from '../../../
 import catalogoSqlService from '../../../services/catalogoSqlService';
 import { catalogoSqlPorEtiqueta, etiquetaVisibleOpcgrd } from '../../../utils/catalogosSql';
 
+const COL_ID = { key: 'Valor', label: 'ID', editable: false, autoKey: true };
+const COL_CODIGO = { key: 'Valor', label: 'Código', editable: false, requiredOnCreate: true };
+const COL_DESC = { key: 'Descripcion', label: 'Descripción', editable: true };
+
 const AdmissionTables: React.FC = () => {
   // Utilizamos el custom hook para gestionar las opciones de grilla
   const {
@@ -66,7 +70,7 @@ const AdmissionTables: React.FC = () => {
   const [showDataModal, setShowDataModal] = useState<boolean>(false);
   const [currentTableData, setCurrentTableData] = useState<any[]>([]);
   const [currentTableTitle, setCurrentTableTitle] = useState<string>('');
-  const [currentTableColumns, setCurrentTableColumns] = useState<{key: string; label: string; editable?: boolean; type?: string}[]>([]);
+  const [currentTableColumns, setCurrentTableColumns] = useState<{key: string; label: string; editable?: boolean; type?: string; autoKey?: boolean; requiredOnCreate?: boolean}[]>([]);
   const [currentKeyField, setCurrentKeyField] = useState<string>('Valor');
   const [isLoadingTableData, setIsLoadingTableData] = useState<boolean>(false);
 
@@ -91,10 +95,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Clases de Paciente');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Valor', editable: false }, 
-        { key: 'Descripcion', label: 'Descripción', editable: true }
-      ]);
+      setCurrentTableColumns([COL_CODIGO, COL_DESC]);
       
       const data = await getClasesPaciente();
       setCurrentTableData(data);
@@ -111,10 +112,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Dadores de Órganos');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Valor', editable: false }, 
-        { key: 'Descripcion', label: 'Descripción', editable: true }
-      ]);
+      setCurrentTableColumns([COL_CODIGO, COL_DESC]);
       
       const data = await getDadoresOrganos();
       setCurrentTableData(data);
@@ -132,9 +130,9 @@ const AdmissionTables: React.FC = () => {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Diagnósticos');
       setCurrentTableColumns([
-        { key: 'Valor', label: 'Valor', editable: false },
-        { key: 'Descripcion', label: 'Descripción', editable: true },
-        { key: 'Agrupamiento', label: 'Agrupamiento', editable: true }
+        COL_ID,
+        { key: 'CodigoOMS', label: 'Código CIE', editable: true, requiredOnCreate: true },
+        COL_DESC,
       ]);
       
       const data = await getDiagnosticos();
@@ -152,10 +150,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Disposiciones de Egreso');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Valor', editable: false },
-        { key: 'Descripcion', label: 'Descripción', editable: true }
-      ]);
+      setCurrentTableColumns([COL_ID, COL_DESC]);
       
       const data = await getDisposicionesEgreso();
       setCurrentTableData(data);
@@ -172,10 +167,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Estados Ambulatorios');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Valor', editable: false },
-        { key: 'Descripcion', label: 'Descripción', editable: true }
-      ]);
+      setCurrentTableColumns([COL_CODIGO, COL_DESC]);
       
       const data = await getEstadosAmbulatorios();
       setCurrentTableData(data);
@@ -192,10 +184,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Estados Civiles');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Valor', editable: false },
-        { key: 'Descripcion', label: 'Descripción', editable: true }
-      ]);
+      setCurrentTableColumns([COL_CODIGO, COL_DESC]);
       
       const data = await getEstadosCiviles();
       setCurrentTableData(data);
@@ -212,10 +201,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Estados Militares');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Valor', editable: false },
-        { key: 'Descripcion', label: 'Descripción', editable: true }
-      ]);
+      setCurrentTableColumns([COL_CODIGO, COL_DESC]);
       
       const data = await getEstadosMilitares();
       setCurrentTableData(data);
@@ -233,10 +219,7 @@ const AdmissionTables: React.FC = () => {
     setCurrentTableTitle('Grupos Étnicos');
     
     // Definimos las columnas para la tabla de grupos étnicos
-    setCurrentTableColumns([
-      { key: 'Valor', label: 'Valor' },
-      { key: 'Descripcion', label: 'Descripción', editable: true }
-    ]);
+    setCurrentTableColumns([COL_CODIGO, COL_DESC]);
 
     try {
       const data = await getGruposEtnicos();
@@ -256,8 +239,8 @@ const AdmissionTables: React.FC = () => {
     
     // Definimos las columnas para la tabla de idiomas ISO
     setCurrentTableColumns([
-      { key: 'Valor', label: 'Código ISO' },
-      { key: 'Descripcion', label: 'Descripción', editable: true }
+      { key: 'Valor', label: 'Código ISO', editable: false, requiredOnCreate: true },
+      COL_DESC,
     ]);
 
     try {
@@ -278,10 +261,10 @@ const AdmissionTables: React.FC = () => {
     
     // Definimos las columnas para la tabla de localidades
     setCurrentTableColumns([
-      { key: 'Valor', label: 'ID' },
+      COL_ID,
       { key: 'CodigoPostal', label: 'Código Postal', editable: true },
       { key: 'NombreLocalidad', label: 'Nombre Localidad', editable: true },
-      { key: 'ValorProvincia', label: 'Cód. Provincia', editable: true }
+      { key: 'ValorProvincia', label: 'Cód. Provincia', editable: true },
     ]);
 
     try {
@@ -301,10 +284,7 @@ const AdmissionTables: React.FC = () => {
     setCurrentTableTitle('Nacionalidades');
     
     // Definimos las columnas para la tabla de nacionalidades
-    setCurrentTableColumns([
-      { key: 'Valor', label: 'Código', editable: false },
-      { key: 'Descripcion', label: 'Descripción', editable: true }
-    ]);
+    setCurrentTableColumns([COL_CODIGO, COL_DESC]);
 
     try {
       const data = await getNacionalidades();
@@ -323,10 +303,7 @@ const AdmissionTables: React.FC = () => {
     setCurrentTableTitle('Parentescos');
     
     // Definimos las columnas para la tabla de parentescos
-    setCurrentTableColumns([
-      { key: 'Valor', label: 'Código' },
-      { key: 'Descripcion', label: 'Descripción' },
-    ]);
+    setCurrentTableColumns([COL_CODIGO, COL_DESC]);
 
     try {
       const data = await getParentescos();
@@ -346,10 +323,10 @@ const AdmissionTables: React.FC = () => {
     
     // Definimos las columnas para la tabla de provincias
     setCurrentTableColumns([
-      { key: 'Valor', label: 'ID' },
-      { key: 'LetraProvincia', label: 'Código' },
-      { key: 'Descripcion', label: 'Nombre' },
-      { key: 'ValorNacionalidad', label: 'Nacionalidad' },
+      COL_ID,
+      { key: 'LetraProvincia', label: 'Código', editable: true },
+      { key: 'Descripcion', label: 'Nombre', editable: true },
+      { key: 'ValorNacionalidad', label: 'Nacionalidad', editable: true },
     ]);
 
     try {
@@ -369,10 +346,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Razas');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'ID' },
-        { key: 'Descripcion', label: 'Descripción' },
-      ]);
+      setCurrentTableColumns([COL_ID, COL_DESC]);
 
       const data = await getRazas();
       setCurrentTableData(data);
@@ -393,10 +367,7 @@ const AdmissionTables: React.FC = () => {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Religiones');
       setCurrentKeyField('Valor');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Código' },
-        { key: 'Descripcion', label: 'Descripción' },
-      ]);
+      setCurrentTableColumns([COL_CODIGO, COL_DESC]);
 
       const data = await getReligiones();
       setCurrentTableData(data);
@@ -415,7 +386,7 @@ const AdmissionTables: React.FC = () => {
       setCurrentTableTitle('Feriados');
       setCurrentKeyField('Fecha');
       setCurrentTableColumns([
-        { key: 'Fecha', label: 'Fecha', editable: true, type: 'date' },
+        { key: 'Fecha', label: 'Fecha', editable: true, type: 'date', requiredOnCreate: true },
         { key: 'Descripcion', label: 'Descripción', editable: true },
       ]);
 
@@ -438,9 +409,9 @@ const AdmissionTables: React.FC = () => {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Requisitos de Clientes');
       setCurrentTableColumns([
-        { key: 'Valor', label: 'ID' },
-        { key: 'Descripcion', label: 'Descripción' },
-        { key: 'AplicableAlPaciente', label: 'Aplicable al Paciente' },
+        COL_ID,
+        COL_DESC,
+        { key: 'AplicableAlPaciente', label: 'Aplicable al Paciente', editable: true },
       ]);
 
       const data = await getRequisitos();
@@ -461,10 +432,7 @@ const AdmissionTables: React.FC = () => {
     try {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Rol de Contacto');
-      setCurrentTableColumns([
-        { key: 'Valor', label: 'Código' },
-        { key: 'Descripcion', label: 'Descripción' },
-      ]);
+      setCurrentTableColumns([COL_CODIGO, COL_DESC]);
 
       const data = await getRolesContacto();
       setCurrentTableData(data);
@@ -485,8 +453,8 @@ const AdmissionTables: React.FC = () => {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Sexo');
       setCurrentTableColumns([
-        { key: 'valor', label: 'Código' },
-        { key: 'descripcion', label: 'Descripción' },
+        { key: 'valor', label: 'Código', editable: false, requiredOnCreate: true },
+        { key: 'descripcion', label: 'Descripción', editable: true },
       ]);
 
       const data = await getSexos();
@@ -508,8 +476,8 @@ const AdmissionTables: React.FC = () => {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Tipo de Admisión');
       setCurrentTableColumns([
-        { key: 'valor', label: 'Código' },
-        { key: 'descripcion', label: 'Descripción' },
+        { key: 'valor', label: 'Código', editable: false, requiredOnCreate: true },
+        { key: 'descripcion', label: 'Descripción', editable: true },
       ]);
 
       const data = await getTiposAdmision();
@@ -531,8 +499,8 @@ const AdmissionTables: React.FC = () => {
       setIsLoadingTableData(true);
       setCurrentTableTitle('Tipo de Paciente');
       setCurrentTableColumns([
-        { key: 'valor', label: 'Código' },
-        { key: 'descripcion', label: 'Descripción' },
+        { key: 'valor', label: 'Código', editable: false, requiredOnCreate: true },
+        { key: 'descripcion', label: 'Descripción', editable: true },
       ]);
 
       const data = await getTiposPaciente();
@@ -682,19 +650,15 @@ const AdmissionTables: React.FC = () => {
           break;
           
         case 'Diagnósticos':
-          // Añadir nuevo diagnóstico
           await createDiagnostico({
-            Valor: values.Valor,
+            CodigoOMS: values.CodigoOMS || '',
             Descripcion: values.Descripcion || '',
-            Agrupamiento: values.Agrupamiento || ''
           } as any);
           await handleShowDiagnosticosData();
           break;
           
         case 'Disposiciones de Egreso':
-          // Añadir nueva disposición de egreso
           await createDisposicionEgreso({
-            Valor: values.Valor,
             Descripcion: values.Descripcion || ''
           } as any);
           await handleShowDisposicionesEgresoData();
@@ -746,9 +710,7 @@ const AdmissionTables: React.FC = () => {
           break;
         
         case 'Localidades':
-          // Añadir nueva localidad
           await createLocalidad({
-            Valor: parseInt(values.Valor),
             CodigoPostal: parseInt(values.CodigoPostal) || 0,
             NombreLocalidad: values.NombreLocalidad || '',
             ValorProvincia: values.ValorProvincia || ''
@@ -772,21 +734,17 @@ const AdmissionTables: React.FC = () => {
           await handleShowParentescosData();
           break;
         case 'Provincias':
-          const nuevaProvincia = {
-            Valor: parseInt(values.Valor),
+          await createProvincia({
             LetraProvincia: values.LetraProvincia,
             Descripcion: values.Descripcion,
             ValorNacionalidad: values.ValorNacionalidad
-          };
-          await createProvincia(nuevaProvincia);
+          } as any);
           await handleShowProvinciasData();
           break;
         case 'Razas':
-          const nuevaRaza = {
-            Valor: parseInt(values.Valor),
+          await createRaza({
             Descripcion: values.Descripcion
-          };
-          await createRaza(nuevaRaza);
+          } as any);
           await handleShowRazasData();
           break;
         case 'Religiones':
@@ -805,12 +763,10 @@ const AdmissionTables: React.FC = () => {
           await handleShowFeriadosData();
           break;
         case 'Requisitos de Clientes':
-          const nuevoRequisito = {
-            Valor: parseInt(values.Valor),
+          await createRequisito({
             Descripcion: values.Descripcion,
             AplicableAlPaciente: values.AplicableAlPaciente || 'No'
-          };
-          await createRequisito(nuevoRequisito);
+          } as any);
           await handleShowRequisitosData();
           break;
         case 'Rol de Contacto':
@@ -878,20 +834,16 @@ const AdmissionTables: React.FC = () => {
           break;
           
         case 'Diagnósticos':
-          // Actualizar diagnóstico - espera string
           await updateDiagnostico(key, {
-            Valor: values.Valor,
+            CodigoOMS: values.CodigoOMS || '',
             Descripcion: values.Descripcion || '',
-            Agrupamiento: values.Agrupamiento || ''
           } as any);
           await handleShowDiagnosticosData();
           break;
           
         case 'Disposiciones de Egreso':
-          // Actualizar disposición de egreso - espera number
           const keyNumberDispEgr = parseInt(key);
           await updateDisposicionEgreso(keyNumberDispEgr, {
-            Valor: parseInt(values.Valor),
             Descripcion: values.Descripcion || ''
           } as any);
           await handleShowDisposicionesEgresoData();

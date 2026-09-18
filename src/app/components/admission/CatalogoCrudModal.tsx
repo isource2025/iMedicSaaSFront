@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { mensajeDeError } from '@/app/utils/apiError';
 import styles from './CatalogoCrudModal.module.css';
 
 export type CatalogoColumn = {
@@ -9,6 +10,8 @@ export type CatalogoColumn = {
   label: string;
   editable?: boolean;
   type?: string;
+  autoKey?: boolean;
+  requiredOnCreate?: boolean;
 };
 
 type Props = {
@@ -79,14 +82,16 @@ export default function CatalogoCrudModal({
   const visibles = filtrados.slice((paginaActual - 1) * PAGE, paginaActual * PAGE);
 
   const camposForm = columns.filter((c) => {
-    if (modo === 'alta') return c.editable !== false || c.key === keyField;
+    if (c.autoKey) return false;
+    if (modo === 'alta') return c.editable !== false || c.requiredOnCreate === true;
     return c.editable !== false;
   });
 
   const abrirAlta = () => {
     const inicial: Record<string, string> = {};
     columns.forEach((c) => {
-      if (c.editable !== false || c.key === keyField) inicial[c.key] = '';
+      if (c.autoKey) return;
+      if (c.editable !== false || c.requiredOnCreate === true) inicial[c.key] = '';
     });
     setForm(inicial);
     setSeleccionado(null);
@@ -123,6 +128,21 @@ export default function CatalogoCrudModal({
     setGuardando(true);
     setError('');
     try {
+      if (modo === 'alta' || modo === 'editar') {
+        const faltante = camposForm.find((c) => {
+          if (c.autoKey) return false;
+          const v = String(form[c.key] ?? '').trim();
+          if (c.requiredOnCreate && modo === 'alta') return !v;
+          const k = c.key.toLowerCase();
+          if (k.includes('desc') || k === 'nombre' || k === 'razonsocial') return !v;
+          return false;
+        });
+        if (faltante) {
+          setError(`Completá ${faltante.label.toLowerCase()}`);
+          setGuardando(false);
+          return;
+        }
+      }
       if (modo === 'alta') {
         if (!onAddItem) return;
         await onAddItem(form);
@@ -135,7 +155,7 @@ export default function CatalogoCrudModal({
       }
       volverLista();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar');
+      setError(mensajeDeError(e, 'No se pudo guardar'));
     } finally {
       setGuardando(false);
     }

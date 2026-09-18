@@ -4,6 +4,9 @@ export interface CatalogoSqlColumn {
   key: string;
   label: string;
   editable?: boolean;
+  autoKey?: boolean;
+  requiredOnCreate?: boolean;
+  type?: string;
 }
 
 interface Envelope<T> {
