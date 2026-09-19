@@ -1048,7 +1048,7 @@ export default function NuevaAdmisionClient() {
         catalogo={catalogoRequisitos}
         cargando={cargandoRequisitos}
         bloqueado={bloqueado}
-        numeroVisita={enEdicion ? numeroVisitaUrl : creada?.numeroVisita}
+        numeroVisita={enEdicion ? numeroVisitaUrl : undefined}
         onArchivo={onArchivo}
         onQuitar={onQuitarRequisito}
         onAgregar={onAgregarRequisito}
