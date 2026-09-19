@@ -84,7 +84,6 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
           adjuntosService.revocarBlobUrl(blobUrl);
           return;
         }
-        created = blobUrl;
         if (office) {
           try {
             const mammoth = await import('mammoth');
@@ -97,9 +96,23 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
             if (!cancelled) setDocHtml(null);
           }
           adjuntosService.revocarBlobUrl(blobUrl);
-          created = null;
           return;
         }
+        if (pdf) {
+          try {
+            const { renderPdfFirstPageDataUrl } = await import('@/app/utils/pdfJs');
+            const dataUrl = await renderPdfFirstPageDataUrl(blob, 360);
+            adjuntosService.revocarBlobUrl(blobUrl);
+            if (cancelled) return;
+            if (dataUrl) setUrl(dataUrl);
+            return;
+          } catch {
+            adjuntosService.revocarBlobUrl(blobUrl);
+            if (!cancelled) setUrl(null);
+            return;
+          }
+        }
+        created = blobUrl;
         setUrl(blobUrl);
       })
       .catch(() => {
@@ -112,23 +125,10 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
       cancelled = true;
       adjuntosService.revocarBlobUrl(created);
     };
-  }, [adjunto.IdAdjunto, previewable, office]);
+  }, [adjunto.IdAdjunto, previewable, office, pdf]);
 
-  if (url && image) {
+  if (url && (image || pdf)) {
     return <img src={url} alt="" className={styles.thumbImg} />;
-  }
-
-  if (url && pdf) {
-    return (
-      <span className={styles.thumbDocWrap}>
-        <iframe
-          src={`${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-          className={styles.thumbDocFrame}
-          title=""
-          tabIndex={-1}
-        />
-      </span>
-    );
   }
 
   if (docHtml) {

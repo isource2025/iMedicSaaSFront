@@ -8,7 +8,8 @@
     "dev:lan": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "node -e \"const fs=require('fs');const p=require('path');const src=p.join('node_modules','pdfjs-dist','build','pdf.worker.min.mjs');const destDir=p.join('public','pdfjs');const dest=p.join(destDir,'pdf.worker.min.mjs');if(fs.existsSync(src)){fs.mkdirSync(destDir,{recursive:true});fs.copyFileSync(src,dest);}\""
   },
   "dependencies": {
     "@types/react-transition-group": "^4.4.12",
@@ -22,6 +23,7 @@
     "lucide-react": "^0.501.0",
     "mammoth": "^1.12.1",
     "next": "14.1.0",
+    "pdfjs-dist": "^4.10.38",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoi
 import styles from './AdjuntoFileViewer.module.css';
 import { isDicom, isImage, isPdf, isVideo } from '@/app/utils/adjuntoFileTypes';
 import DicomViewer from './DicomViewer';
+import PdfPagesViewer from './PdfPagesViewer';
 
 export interface AdjuntoViewerState {
   blobUrl: string;
@@ -28,11 +29,9 @@ function clampZoom(value: number) {
 function ZoomablePreview({
   blobUrl,
   fileName,
-  kind,
 }: {
   blobUrl: string;
   fileName: string;
-  kind: 'image' | 'pdf';
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -179,22 +178,13 @@ function ZoomablePreview({
         onPointerCancel={endDrag}
         onDoubleClick={onDoubleClick}
       >
-        {kind === 'image' ? (
-          <img
-            src={blobUrl}
-            alt={fileName}
-            className={styles.zoomImage}
-            draggable={false}
-            style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
-          />
-        ) : (
-          <iframe
-            src={blobUrl}
-            title={fileName}
-            className={styles.zoomFrame}
-            style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
-          />
-        )}
+        <img
+          src={blobUrl}
+          alt={fileName}
+          className={styles.zoomImage}
+          draggable={false}
+          style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
+        />
       </div>
     </div>
   );
@@ -251,10 +241,10 @@ export default function AdjuntoFileViewer({ viewer, loading = false, onClose }: 
         <div className={styles.body}>
           {loading ? <div className={styles.loading}>Cargando archivo…</div> : null}
           {!loading && viewer && pdf ? (
-            <ZoomablePreview blobUrl={blobUrl} fileName={fileName} kind="pdf" />
+            <PdfPagesViewer blobUrl={blobUrl} fileName={fileName} />
           ) : null}
           {!loading && viewer && image ? (
-            <ZoomablePreview blobUrl={blobUrl} fileName={fileName} kind="image" />
+            <ZoomablePreview blobUrl={blobUrl} fileName={fileName} />
           ) : null}
           {!loading && viewer && dicom ? <DicomViewer blobUrl={blobUrl} /> : null}
           {!loading && viewer && video ? (

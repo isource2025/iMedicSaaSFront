@@ -51,8 +51,13 @@ function AdjuntoCard({
           blobUrl = URL.createObjectURL(blob);
           setPreview(blobUrl);
         } else if (type === 'application/pdf' || /\.pdf$/i.test(nombreArchivo)) {
-          blobUrl = URL.createObjectURL(blob);
-          setPreview(blobUrl);
+          try {
+            const { renderPdfFirstPageDataUrl } = await import('@/app/utils/pdfJs');
+            const dataUrl = await renderPdfFirstPageDataUrl(blob, 360);
+            if (!cancelled && dataUrl) setPreview(dataUrl);
+          } catch {
+            // Sin miniatura: se muestra badge PDF
+          }
         } else if (isDicom(nombreArchivo, type)) {
           try {
             const dataUrl = await renderDicomPreviewDataUrl(await blob.arrayBuffer());
@@ -93,16 +98,7 @@ function AdjuntoCard({
           </span>
         ) : null}
         {phase === 'error' ? <span className={styles.fileFallback}>Sin vista previa</span> : null}
-        {phase === 'ready' && preview && !isPdf ? <img src={preview} alt="" className={styles.thumbImg} /> : null}
-        {phase === 'ready' && preview && isPdf ? (
-          <span className={styles.pdfFrame}>
-            <iframe
-              src={`${preview}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&pagemode=none`}
-              className={styles.pdfPreview}
-              title={`Vista previa PDF ${nombreArchivo}`}
-            />
-          </span>
-        ) : null}
+        {phase === 'ready' && preview ? <img src={preview} alt="" className={styles.thumbImg} /> : null}
         {phase === 'ready' && !preview && isPdf ? <span className={styles.pdfBadge}>PDF</span> : null}
         {phase === 'ready' && !preview && isDicomFile ? <span className={styles.pdfBadge}>DICOM</span> : null}
         {phase === 'ready' && !preview && !isPdf && !isDicomFile ? (
