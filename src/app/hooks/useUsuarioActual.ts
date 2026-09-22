@@ -2,6 +2,12 @@
 
 import { useMemo } from 'react';
 import { authService } from '../services/authService';
+import {
+	getUserCodOperador,
+	getUserMatricula,
+	getUserValorPersonal,
+} from '../utils/sessionUser';
+import type { UserData } from '../types/AuthInterface';
 
 export interface UsuarioActual {
 	/** CodOperador en imPassword (id interno de sesión). */
@@ -22,30 +28,15 @@ export interface UsuarioActual {
 export function useUsuarioActual(): UsuarioActual | null {
 	return useMemo(() => {
 		if (typeof window === 'undefined') return null;
-		const u = authService.getCurrentUser() as Record<string, unknown> | null;
+		const u = authService.getCurrentUser() as UserData | null;
 		if (!u) return null;
-		const codOperador =
-			u.idCodOperador != null
-				? Number(u.idCodOperador)
-				: u.codOperador != null
-				  ? Number(u.codOperador)
-				  : null;
-		const valorPersonal =
-			u.idValorpersonal != null
-				? Number(u.idValorpersonal)
-				: u.valorPersonal != null
-				  ? Number(u.valorPersonal)
-				  : null;
-		const matricula =
-			u.matricula != null
-				? Number(u.matricula)
-				: u.Matricula != null
-				  ? Number(u.Matricula)
-				  : null;
+		const codOperador = getUserCodOperador(u) ?? null;
+		const valorPersonal = getUserValorPersonal(u) ?? null;
+		const matricula = getUserMatricula(u) ?? null;
 		return {
-			codOperador: Number.isFinite(codOperador) ? codOperador : null,
-			valorPersonal: Number.isFinite(valorPersonal) ? valorPersonal : null,
-			matricula: Number.isFinite(matricula) ? matricula : null,
+			codOperador,
+			valorPersonal,
+			matricula,
 			nombre: String(u.nombre || ''),
 			apellido: String(u.apellido || ''),
 		};
