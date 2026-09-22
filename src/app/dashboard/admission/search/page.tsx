@@ -54,10 +54,26 @@ function windowStartForPage(page: number): number {
 }
 
 function pagesInWindow(start: number, totalPages: number): number[] {
-  const end = Math.min(start + PREFETCH_WINDOW - 1, Math.max(totalPages, 1));
+  const rawEnd = start + PREFETCH_WINDOW - 1;
+  const end = totalPages > 0 ? Math.min(rawEnd, totalPages) : rawEnd;
   const pages: number[] = [];
   for (let p = start; p <= end; p += 1) pages.push(p);
   return pages;
+}
+
+function parsePageParam(raw: string | null): number {
+  const n = Number.parseInt(String(raw || '1'), 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+function buildSearchHref(filtros: SearchFilters, pageNum: number): string {
+  const params = new URLSearchParams();
+  if (filtros.termino.trim()) params.set('termino', filtros.termino.trim());
+  if (filtros.fechaInicio) params.set('fechaInicio', filtros.fechaInicio);
+  if (filtros.fechaFin) params.set('fechaFin', filtros.fechaFin);
+  params.set('page', String(Math.max(1, pageNum)));
+  const qs = params.toString();
+  return qs ? `/dashboard/admission/search?${qs}` : '/dashboard/admission/search';
 }
 
 function formatDocumento(raw: string | number | null | undefined): string {
@@ -110,14 +126,19 @@ function AdmissionSearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const terminoUrl = (searchParams.get('termino') || searchParams.get('dni') || '').trim();
+  const fechaInicioUrl = (searchParams.get('fechaInicio') || '').trim();
+  const fechaFinUrl = (searchParams.get('fechaFin') || '').trim();
+  const pageFromUrl = parsePageParam(searchParams.get('page'));
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<SearchFilters>({
     ...initialFilters,
     termino: terminoUrl,
+    fechaInicio: fechaInicioUrl,
+    fechaFin: fechaFinUrl,
   });
   const [periodoActivo, setPeriodoActivo] = useState<AdmissionPeriodo | null>(null);
   const [rows, setRows] = useState<AdmissionSearchRow[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -134,6 +155,7 @@ function AdmissionSearchPageContent() {
   const prefetchGenRef = useRef(0);
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
+  const searchReqRef = useRef(0);
 
   const {
     selectedVisit,
@@ -193,9 +215,9 @@ function AdmissionSearchPageContent() {
     return promise;
   }, [resetPageCache]);
 
+  /** Dispara en paralelo todas las páginas de una ventana de 5. */
   const prefetchWindow = useCallback(
     (startPage: number, filtros: SearchFilters, knownTotalPages: number) => {
-      if (knownTotalPages <= 0) return;
       const pages = pagesInWindow(startPage, knownTotalPages).filter(
         (p) => !pageCacheRef.current.has(p) && !inflightRef.current.has(p),
       );
@@ -208,6 +230,22 @@ function AdmissionSearchPageContent() {
     [fetchAndCachePage],
   );
 
+  const ensureWindowLoaded = useCallback(
+    (targetPage: number, filtros: SearchFilters, knownTotalPages: number) => {
+      const start = windowStartForPage(targetPage);
+      prefetchWindow(start, filtros, knownTotalPages);
+      // En la 4ª (o 5ª) de la ventana, precargar siempre la siguiente de 5.
+      const offsetInWindow = targetPage - start + 1;
+      if (offsetInWindow >= PREFETCH_TRIGGER_PAGE) {
+        const nextStart = start + PREFETCH_WINDOW;
+        if (knownTotalPages <= 0 || nextStart <= knownTotalPages) {
+          prefetchWindow(nextStart, filtros, knownTotalPages);
+        }
+      }
+    },
+    [prefetchWindow],
+  );
+
   const applyCachedPage = useCallback((targetPage: number, entry: CachedPage) => {
     setRows(entry.rows);
     setPage(targetPage);
@@ -215,40 +253,30 @@ function AdmissionSearchPageContent() {
     setTotal(entry.total);
   }, []);
 
-  const maybePrefetchNextWindow = useCallback(
-    (currentPage: number, filtros: SearchFilters, knownTotalPages: number) => {
-      const start = windowStartForPage(currentPage);
-      const offsetInWindow = currentPage - start + 1;
-      if (offsetInWindow < PREFETCH_TRIGGER_PAGE) return;
-      const nextStart = start + PREFETCH_WINDOW;
-      if (nextStart > knownTotalPages) return;
-      prefetchWindow(nextStart, filtros, knownTotalPages);
-    },
-    [prefetchWindow],
-  );
-
-  const runSearch = async (targetPage = 1, filtros = filters) => {
+  const runSearch = useCallback(async (targetPage = 1, filtros: SearchFilters = filtersRef.current) => {
     const key = filtersCacheKey(filtros);
     if (cacheKeyRef.current !== key) {
       resetPageCache(key);
     }
 
+    const reqId = ++searchReqRef.current;
+
     try {
       setError('');
       const cached = pageCacheRef.current.get(targetPage);
       if (cached) {
+        if (searchReqRef.current !== reqId) return;
         applyCachedPage(targetPage, cached);
         setLoading(false);
-        const start = windowStartForPage(targetPage);
-        prefetchWindow(start, filtros, cached.totalPages);
-        maybePrefetchNextWindow(targetPage, filtros, cached.totalPages);
+        ensureWindowLoaded(targetPage, filtros, cached.totalPages);
         return;
       }
 
       setLoading(true);
+      // Arranca toda la ventana de 5 en paralelo (aunque aún no sepamos totalPages).
+      ensureWindowLoaded(targetPage, filtros, 0);
       const entry = await fetchAndCachePage(targetPage, filtros);
-      // Si cambió la búsqueda mientras esperábamos, no pisa el estado.
-      if (cacheKeyRef.current !== key) return;
+      if (searchReqRef.current !== reqId || cacheKeyRef.current !== key) return;
 
       applyCachedPage(targetPage, entry);
 
@@ -259,30 +287,45 @@ function AdmissionSearchPageContent() {
         }
       }
 
-      const start = windowStartForPage(targetPage);
-      prefetchWindow(start, filtros, entry.totalPages);
-      maybePrefetchNextWindow(targetPage, filtros, entry.totalPages);
+      // Con totalPages real: completa la ventana actual y, si corresponde, la siguiente.
+      ensureWindowLoaded(targetPage, filtros, entry.totalPages);
     } catch (e: unknown) {
-      if (cacheKeyRef.current !== key) return;
+      if (searchReqRef.current !== reqId || cacheKeyRef.current !== key) return;
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       setError(err?.response?.data?.message || err?.message || 'Error al buscar admisiones');
     } finally {
-      if (cacheKeyRef.current === key) {
+      if (searchReqRef.current === reqId && cacheKeyRef.current === key) {
         setLoading(false);
       }
     }
-  };
-
-  useEffect(() => {
-    void runSearch(1, { ...initialFilters, termino: terminoUrl });
-    // Solo al montar / cambiar el query de URL.
+    // openVisitDetail es estable en la práctica; no lo listamos para evitar re-fetch en loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [terminoUrl]);
+  }, [applyCachedPage, ensureWindowLoaded, fetchAndCachePage, resetPageCache]);
+
+  // La URL es la fuente de verdad: page + filtros. El atrás/adelante del browser dispara esto.
+  useEffect(() => {
+    const filtrosFromUrl: SearchFilters = {
+      termino: terminoUrl,
+      fechaInicio: fechaInicioUrl,
+      fechaFin: fechaFinUrl,
+    };
+    setFilters(filtrosFromUrl);
+    void runSearch(pageFromUrl, filtrosFromUrl);
+  }, [terminoUrl, fechaInicioUrl, fechaFinUrl, pageFromUrl, runSearch]);
+
+  const navigateSearch = useCallback(
+    (filtros: SearchFilters, pageNum: number, mode: 'push' | 'replace' = 'push') => {
+      const href = buildSearchHref(filtros, pageNum);
+      if (mode === 'replace') router.replace(href);
+      else router.push(href);
+    },
+    [router],
+  );
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     resetPageCache(filtersCacheKey(filters));
-    await runSearch(1);
+    navigateSearch(filters, 1, 'push');
   };
 
   const aplicarPeriodo = (p: AdmissionPeriodo) => {
@@ -307,12 +350,22 @@ function AdmissionSearchPageContent() {
     closeVisitDetail();
     setFolderModal(null);
     resetPageCache(filtersCacheKey(initialFilters));
-    await runSearch(1, initialFilters);
+    navigateSearch(initialFilters, 1, 'push');
   };
 
   const goToPage = (targetPage: number) => {
     if (targetPage < 1 || (totalPages > 0 && targetPage > totalPages) || loading) return;
-    void runSearch(targetPage, filtersRef.current);
+    if (targetPage === pageFromUrl) return;
+    // Paginado con los filtros ya aplicados en la URL (no el draft del form).
+    navigateSearch(
+      {
+        termino: terminoUrl,
+        fechaInicio: fechaInicioUrl,
+        fechaFin: fechaFinUrl,
+      },
+      targetPage,
+      'push',
+    );
   };
 
   const groupedByPatient = useMemo(() => groupRowsByPatient(rows), [rows]);
