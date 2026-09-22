@@ -3,7 +3,8 @@
 .overlay {
 	position: fixed;
 	inset: 0;
-	z-index: 1100;
+	/* Por encima de ModalBasePaciente (1300) al abrir desde "Agregar Adicional" */
+	z-index: 1400;
 	background: rgba(0, 0, 0, 0.35);
 	opacity: 0;
 	transition: opacity 0.25s ease;
@@ -20,7 +21,7 @@
 	top: 0;
 	right: 0;
 	bottom: 0;
-	z-index: 1101;
+	z-index: 1401;
 	width: 420px;
 	max-width: 100%;
 	background: #fff;
