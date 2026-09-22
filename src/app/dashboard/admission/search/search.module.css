@@ -335,7 +335,64 @@
 }
 
 .resultsPanel {
+  position: relative;
   border-radius: 12px;
+  min-height: 140px;
+}
+
+.resultsDimmed {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.resultsLoader {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(248, 250, 252, 0.72);
+  border-radius: 12px;
+  backdrop-filter: blur(1px);
+}
+
+.resultsLoaderText {
+  font-size: 0.82rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.paginationStatus {
+  min-width: 140px;
+  text-align: center;
+}
+
+.paginationLoading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.paginationSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #bae6fd;
+  border-top-color: #0284c7;
+  border-radius: 50%;
+  animation: admissionSearchSpin 0.7s linear infinite;
+}
+
+@keyframes admissionSearchSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .empty {

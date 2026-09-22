@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { admissionSearchService, AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import AdmissionVisitDetailModal from '@/app/components/admission/AdmissionVisitDetailModal';
@@ -22,11 +22,43 @@ import {
 import { groupRowsByPatient } from '@/app/utils/admissionSearchUtils';
 import { interpretarBusquedaUnificada } from '@/app/utils/busquedaPaciente';
 
+const PAGE_LIMIT = 25;
+const PREFETCH_WINDOW = 5;
+/** Dentro de la ventana (1-based), al llegar a esta página se precarga la siguiente ventana. */
+const PREFETCH_TRIGGER_PAGE = 4;
+
 const initialFilters = {
   termino: '',
   fechaInicio: '',
   fechaFin: '',
 };
+
+type SearchFilters = typeof initialFilters;
+
+type CachedPage = {
+  rows: AdmissionSearchRow[];
+  total: number;
+  totalPages: number;
+};
+
+function filtersCacheKey(f: SearchFilters): string {
+  return JSON.stringify({
+    termino: f.termino.trim(),
+    fechaInicio: f.fechaInicio,
+    fechaFin: f.fechaFin,
+  });
+}
+
+function windowStartForPage(page: number): number {
+  return Math.floor((page - 1) / PREFETCH_WINDOW) * PREFETCH_WINDOW + 1;
+}
+
+function pagesInWindow(start: number, totalPages: number): number[] {
+  const end = Math.min(start + PREFETCH_WINDOW - 1, Math.max(totalPages, 1));
+  const pages: number[] = [];
+  for (let p = start; p <= end; p += 1) pages.push(p);
+  return pages;
+}
 
 function formatDocumento(raw: string | number | null | undefined): string {
   const digits = String(raw ?? '').replace(/\D+/g, '');
@@ -96,6 +128,13 @@ function AdmissionSearchPageContent() {
     visits: AdmissionSearchRow[];
   } | null>(null);
 
+  const pageCacheRef = useRef<Map<number, CachedPage>>(new Map());
+  const cacheKeyRef = useRef('');
+  const inflightRef = useRef<Map<number, Promise<CachedPage>>>(new Map());
+  const prefetchGenRef = useRef(0);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
   const {
     selectedVisit,
     detailData,
@@ -108,32 +147,129 @@ function AdmissionSearchPageContent() {
     reloadVisitDetail,
   } = useAdmissionVisitDetail();
 
-  const runSearch = async (targetPage = 1, filtros = filters) => {
-    try {
-      setLoading(true);
-      setError('');
-      const response = await admissionSearchService.buscar({
+  const resetPageCache = useCallback((key: string) => {
+    pageCacheRef.current = new Map();
+    inflightRef.current = new Map();
+    cacheKeyRef.current = key;
+    prefetchGenRef.current += 1;
+  }, []);
+
+  const fetchAndCachePage = useCallback(async (targetPage: number, filtros: SearchFilters): Promise<CachedPage> => {
+    const key = filtersCacheKey(filtros);
+    if (cacheKeyRef.current !== key) {
+      resetPageCache(key);
+    }
+
+    const cached = pageCacheRef.current.get(targetPage);
+    if (cached) return cached;
+
+    const inflight = inflightRef.current.get(targetPage);
+    if (inflight) return inflight;
+
+    const promise = admissionSearchService
+      .buscar({
         ...filtros,
         page: targetPage,
-        limit: 25,
+        limit: PAGE_LIMIT,
+      })
+      .then((response) => {
+        const entry: CachedPage = {
+          rows: response.data || [],
+          total: response.pagination?.total || 0,
+          totalPages: response.pagination?.totalPages || 0,
+        };
+        if (cacheKeyRef.current === key) {
+          pageCacheRef.current.set(targetPage, entry);
+          inflightRef.current.delete(targetPage);
+        }
+        return entry;
+      })
+      .catch((err) => {
+        inflightRef.current.delete(targetPage);
+        throw err;
       });
-      const data = response.data || [];
-      setRows(data);
-      setPage(response.pagination?.page || targetPage);
-      setTotalPages(response.pagination?.totalPages || 0);
-      setTotal(response.pagination?.total || 0);
+
+    inflightRef.current.set(targetPage, promise);
+    return promise;
+  }, [resetPageCache]);
+
+  const prefetchWindow = useCallback(
+    (startPage: number, filtros: SearchFilters, knownTotalPages: number) => {
+      if (knownTotalPages <= 0) return;
+      const pages = pagesInWindow(startPage, knownTotalPages).filter(
+        (p) => !pageCacheRef.current.has(p) && !inflightRef.current.has(p),
+      );
+      for (const p of pages) {
+        void fetchAndCachePage(p, filtros).catch(() => {
+          /* prefetch best-effort */
+        });
+      }
+    },
+    [fetchAndCachePage],
+  );
+
+  const applyCachedPage = useCallback((targetPage: number, entry: CachedPage) => {
+    setRows(entry.rows);
+    setPage(targetPage);
+    setTotalPages(entry.totalPages);
+    setTotal(entry.total);
+  }, []);
+
+  const maybePrefetchNextWindow = useCallback(
+    (currentPage: number, filtros: SearchFilters, knownTotalPages: number) => {
+      const start = windowStartForPage(currentPage);
+      const offsetInWindow = currentPage - start + 1;
+      if (offsetInWindow < PREFETCH_TRIGGER_PAGE) return;
+      const nextStart = start + PREFETCH_WINDOW;
+      if (nextStart > knownTotalPages) return;
+      prefetchWindow(nextStart, filtros, knownTotalPages);
+    },
+    [prefetchWindow],
+  );
+
+  const runSearch = async (targetPage = 1, filtros = filters) => {
+    const key = filtersCacheKey(filtros);
+    if (cacheKeyRef.current !== key) {
+      resetPageCache(key);
+    }
+
+    try {
+      setError('');
+      const cached = pageCacheRef.current.get(targetPage);
+      if (cached) {
+        applyCachedPage(targetPage, cached);
+        setLoading(false);
+        const start = windowStartForPage(targetPage);
+        prefetchWindow(start, filtros, cached.totalPages);
+        maybePrefetchNextWindow(targetPage, filtros, cached.totalPages);
+        return;
+      }
+
+      setLoading(true);
+      const entry = await fetchAndCachePage(targetPage, filtros);
+      // Si cambió la búsqueda mientras esperábamos, no pisa el estado.
+      if (cacheKeyRef.current !== key) return;
+
+      applyCachedPage(targetPage, entry);
 
       if (targetPage === 1 && filtros.termino.trim()) {
-        const resultado = interpretarBusquedaUnificada(filtros.termino, data);
+        const resultado = interpretarBusquedaUnificada(filtros.termino, entry.rows);
         if (resultado.tipo === 'visita') {
           void openVisitDetail(resultado.visita.NumeroVisita);
         }
       }
+
+      const start = windowStartForPage(targetPage);
+      prefetchWindow(start, filtros, entry.totalPages);
+      maybePrefetchNextWindow(targetPage, filtros, entry.totalPages);
     } catch (e: unknown) {
+      if (cacheKeyRef.current !== key) return;
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       setError(err?.response?.data?.message || err?.message || 'Error al buscar admisiones');
     } finally {
-      setLoading(false);
+      if (cacheKeyRef.current === key) {
+        setLoading(false);
+      }
     }
   };
 
@@ -145,6 +281,7 @@ function AdmissionSearchPageContent() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    resetPageCache(filtersCacheKey(filters));
     await runSearch(1);
   };
 
@@ -169,7 +306,13 @@ function AdmissionSearchPageContent() {
     setError('');
     closeVisitDetail();
     setFolderModal(null);
+    resetPageCache(filtersCacheKey(initialFilters));
     await runSearch(1, initialFilters);
+  };
+
+  const goToPage = (targetPage: number) => {
+    if (targetPage < 1 || (totalPages > 0 && targetPage > totalPages) || loading) return;
+    void runSearch(targetPage, filtersRef.current);
   };
 
   const groupedByPatient = useMemo(() => groupRowsByPatient(rows), [rows]);
@@ -323,6 +466,13 @@ function AdmissionSearchPageContent() {
       </div>
 
       <section className={styles.resultsPanel}>
+        {loading ? (
+          <div className={styles.resultsLoader} aria-busy="true" aria-live="polite">
+            <Loader />
+            <span className={styles.resultsLoaderText}>Cargando admisiones…</span>
+          </div>
+        ) : null}
+        <div className={loading ? styles.resultsDimmed : undefined}>
         {viewMode === 'admisiones' ? (
           <div className={styles.admisionesResult}>
             <div className={`${styles.tablaDesktop} ${sharedStyles.tableContainer}`}>
@@ -527,16 +677,28 @@ function AdmissionSearchPageContent() {
             )}
           </div>
         )}
+        </div>
       </section>
 
       <div className={styles.pagination}>
-        <button type="button" onClick={() => runSearch(page - 1)} disabled={loading || page <= 1}>
+        <button type="button" onClick={() => goToPage(page - 1)} disabled={loading || page <= 1}>
           Anterior
         </button>
-        <span>
-          Pagina {page} de {Math.max(1, totalPages)}
+        <span className={styles.paginationStatus}>
+          {loading ? (
+            <span className={styles.paginationLoading}>
+              <span className={styles.paginationSpinner} aria-hidden />
+              Cargando página…
+            </span>
+          ) : (
+            <>Página {page} de {Math.max(1, totalPages)}</>
+          )}
         </span>
-        <button type="button" onClick={() => runSearch(page + 1)} disabled={loading || page >= totalPages}>
+        <button
+          type="button"
+          onClick={() => goToPage(page + 1)}
+          disabled={loading || page >= totalPages || totalPages === 0}
+        >
           Siguiente
         </button>
       </div>
