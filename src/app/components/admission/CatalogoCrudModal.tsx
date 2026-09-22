@@ -29,7 +29,19 @@ type Props = {
 
 type Modo = 'lista' | 'alta' | 'editar' | 'borrar';
 
-const PAGE = 12;
+const PAGE = 50;
+
+function cell(row: Record<string, unknown> | null | undefined, key: string): unknown {
+  if (!row || !key) return undefined;
+  if (row[key] != null && String(row[key]).trim() !== '') return row[key];
+  const found = Object.keys(row).find((k) => k.toLowerCase() === key.toLowerCase());
+  return found != null ? row[found] : undefined;
+}
+
+function textoCelda(row: Record<string, unknown> | null | undefined, key: string): string {
+  const v = cell(row, key);
+  return v == null ? '' : String(v).trim();
+}
 
 export default function CatalogoCrudModal({
   isOpen,
@@ -71,8 +83,8 @@ export default function CatalogoCrudModal({
     if (!q) return data;
     return data.filter((row) =>
       columns.some((col) => {
-        const v = row[col.key];
-        return v != null && String(v).toLowerCase().includes(q);
+        const v = textoCelda(row, col.key);
+        return v.toLowerCase().includes(q);
       }),
     );
   }, [data, busqueda, columns]);
@@ -103,7 +115,7 @@ export default function CatalogoCrudModal({
     const inicial: Record<string, string> = {};
     columns.forEach((c) => {
       if (c.editable === false) return;
-      inicial[c.key] = row[c.key] != null ? String(row[c.key]) : '';
+      inicial[c.key] = textoCelda(row, c.key);
     });
     setForm(inicial);
     setSeleccionado(row);
@@ -164,11 +176,17 @@ export default function CatalogoCrudModal({
   if (!isOpen) return null;
 
   const etiquetaPrincipal = (row: Record<string, unknown>) => {
-    const desc = columns.find((c) => c.key.toLowerCase().includes('desc'));
-    if (desc && row[desc.key] != null && String(row[desc.key]).trim()) {
-      return String(row[desc.key]);
+    const desc = columns.find((c) => /desc|nombre|razon/i.test(c.key));
+    if (desc) {
+      const t = textoCelda(row, desc.key);
+      if (t) return t;
     }
-    return columns.map((c) => row[c.key]).filter((v) => v != null && String(v).trim()).join(' · ') || '—';
+    return (
+      columns
+        .map((c) => textoCelda(row, c.key))
+        .filter(Boolean)
+        .join(' · ') || '—'
+    );
   };
 
   return (
@@ -211,14 +229,14 @@ export default function CatalogoCrudModal({
               ) : (
                 <ul className={styles.lista}>
                   {visibles.map((row, idx) => (
-                    <li key={`${String(row[keyField])}-${idx}`} className={styles.fila}>
+                    <li key={`${textoCelda(row, keyField) || idx}-${idx}`} className={styles.fila}>
                       <div className={styles.filaTexto}>
                         <span className={styles.filaTitulo}>{etiquetaPrincipal(row)}</span>
                         <span className={styles.filaMeta}>
                           {columns
-                            .filter((c) => !c.key.toLowerCase().includes('desc'))
+                            .filter((c) => !/desc|nombre|razon/i.test(c.key))
                             .slice(0, 2)
-                            .map((c) => `${c.label}: ${row[c.key] ?? '—'}`)
+                            .map((c) => `${c.label}: ${textoCelda(row, c.key) || '—'}`)
                             .join(' · ')}
                         </span>
                       </div>

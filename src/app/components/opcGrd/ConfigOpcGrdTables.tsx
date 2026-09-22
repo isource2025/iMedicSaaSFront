@@ -331,7 +331,11 @@ export default function ConfigOpcGrdTables({
 					setSqlId(null);
 				}}
 				title={sqlTitle}
-				help="Catálogo de referencia. Podés buscar, agregar, editar o eliminar registros."
+				help={
+					sqlId === 'especialidad-medica'
+						? 'Mismo catálogo que Personal → Datos profesionales → Especialidad.'
+						: 'Catálogo de referencia. Podés buscar, agregar, editar o eliminar registros.'
+				}
 				data={sqlRows}
 				columns={sqlColumns}
 				keyField={sqlKey}

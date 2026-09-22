@@ -874,7 +874,7 @@ export default function PersonalForm({
 						>
 							<option value=''>- Seleccionar -</option>
 							{especialidades.map((o) => (
-								<option key={o.valor} value={o.valor}>
+								<option key={o.valor} value={String(o.valor)}>
 									{o.descripcion}
 								</option>
 							))}
