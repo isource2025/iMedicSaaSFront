@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import styles from "./ResultadoReindicarModal.module.css";
 
 export type ReindicarPorTipo = {
@@ -30,7 +31,11 @@ type Props = {
 	items: ReindicarItemTrack[];
 	porTipo: ReindicarPorTipo[];
 	onClose: () => void;
+	/** Tras mostrar la animación de éxito, avanza al resumen */
+	onExitoComplete?: () => void;
 };
+
+const EXITO_MS = 1800;
 
 function etiquetaEstado(status: ReindicarItemStatus): string {
 	switch (status) {
@@ -81,7 +86,16 @@ export default function ResultadoReindicarModal({
 	items,
 	porTipo,
 	onClose,
+	onExitoComplete,
 }: Props) {
+	useEffect(() => {
+		if (!isOpen || fase !== "exito" || !onExitoComplete) return;
+		const t = window.setTimeout(() => {
+			onExitoComplete();
+		}, EXITO_MS);
+		return () => window.clearTimeout(t);
+	}, [isOpen, fase, onExitoComplete]);
+
 	if (!isOpen) return null;
 
 	const total = items.length;
@@ -130,13 +144,13 @@ export default function ResultadoReindicarModal({
 				aria-busy={enProgreso || enExito}
 			>
 				{enExito ? (
-					<>
+					<div className={styles.exitoInner} key="fase-exito">
 						<SuccessCheckmark />
 						<h3 id="reindicar-resultado-title" className={styles.title}>
 							{titulo}
 						</h3>
 						<p className={styles.subtitle}>{subtitle}</p>
-					</>
+					</div>
 				) : (
 					<>
 						<h3 id="reindicar-resultado-title" className={styles.title}>

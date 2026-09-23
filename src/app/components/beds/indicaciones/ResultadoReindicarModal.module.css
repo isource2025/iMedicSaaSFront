@@ -311,14 +311,23 @@
 	flex-direction: column;
 	align-items: center;
 	text-align: center;
-	padding-top: 28px;
-	padding-bottom: 28px;
-	min-height: 260px;
+	padding-top: 36px;
+	padding-bottom: 36px;
+	min-height: 280px;
 	justify-content: center;
 }
 
+.exitoInner {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+	animation: exitoFadeIn 0.25s ease-out;
+}
+
 .modalExito .title {
-	margin-top: 8px;
+	margin-top: 12px;
+	margin-bottom: 6px;
 }
 
 .modalExito .subtitle {
@@ -326,7 +335,8 @@
 }
 
 .successAnimation {
-	margin: 8px auto 12px;
+	margin: 12px auto 8px;
+	line-height: 0;
 }
 
 .checkmark {
@@ -341,8 +351,6 @@
 	animation: fillCheck 0.4s ease-in-out 0.4s forwards,
 		scaleCheck 0.3s ease-in-out 0.9s both;
 	position: relative;
-	top: 5px;
-	right: 5px;
 	margin: 0 auto;
 }
 
@@ -361,6 +369,17 @@
 	stroke-dasharray: 48;
 	stroke-dashoffset: 48;
 	animation: strokeCheck 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes exitoFadeIn {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
 }
 
 @keyframes strokeCheck {

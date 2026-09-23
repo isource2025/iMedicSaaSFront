@@ -425,6 +425,7 @@ export default function IndicacionesSection({
             setModoReindicar(false);
             setSelectedForReindicar(new Set());
 
+            // Deja la fase "exito"; el modal avanza a "resumen" tras la animación
             setResultadoReindicar((prev) =>
                 prev
                     ? { ...prev, fase: "exito", porTipo }
@@ -435,12 +436,6 @@ export default function IndicacionesSection({
                           items: [],
                           porTipo,
                       },
-            );
-
-            await new Promise((r) => setTimeout(r, 1500));
-
-            setResultadoReindicar((prev) =>
-                prev ? { ...prev, fase: "resumen" } : prev,
             );
         } catch (err) {
             console.error('Error al reindicar:', err);
@@ -483,6 +478,12 @@ export default function IndicacionesSection({
             setSelectedDate(ymdToLocalDate(destino));
         }
     };
+
+    const handleExitoReindicarComplete = useCallback(() => {
+        setResultadoReindicar((prev) =>
+            prev && prev.fase === "exito" ? { ...prev, fase: "resumen" } : prev,
+        );
+    }, []);
     
     const handleCancelarReindicar = () => {
         setModoReindicar(false);
@@ -825,6 +826,7 @@ export default function IndicacionesSection({
                 onClose={() => {
                     void handleCerrarResultadoReindicar();
                 }}
+                onExitoComplete={handleExitoReindicarComplete}
             />
         </div>
     );
