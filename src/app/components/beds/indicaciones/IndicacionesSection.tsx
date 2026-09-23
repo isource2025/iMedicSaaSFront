@@ -15,7 +15,10 @@ import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
-import ResultadoReindicarModal, { ReindicarErrorItem, ReindicarPorTipo } from "./ResultadoReindicarModal";
+import ResultadoReindicarModal, {
+    ReindicarItemTrack,
+    ReindicarPorTipo,
+} from "./ResultadoReindicarModal";
 import ConfirmarFechaReindicarModal from "./ConfirmarFechaReindicarModal";
 import {
     fueNuevaEnSesion,
@@ -271,13 +274,11 @@ export default function IndicacionesSection({
     const [selectedForReindicar, setSelectedForReindicar] = useState<Set<string>>(new Set());
     const [reindicando, setReindicando] = useState(false);
     const [resultadoReindicar, setResultadoReindicar] = useState<{
+        fase: "progreso" | "resumen";
         fecha: string;
         fechaYmd: string;
+        items: ReindicarItemTrack[];
         porTipo: ReindicarPorTipo[];
-        exitosas: number;
-        fallidas: number;
-        omitidas: number;
-        errores: ReindicarErrorItem[];
     } | null>(null);
     const [confirmarFechaOpen, setConfirmarFechaOpen] = useState(false);
 
@@ -293,33 +294,59 @@ export default function IndicacionesSection({
             return newSet;
         });
     };
+
+    const patchItemReindicar = (
+        id: string,
+        patch: Partial<ReindicarItemTrack>,
+    ) => {
+        setResultadoReindicar((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                items: prev.items.map((it) =>
+                    it.id === id ? { ...it, ...patch } : it,
+                ),
+            };
+        });
+    };
     
     const handleConfirmarReindicar = async (fechaYmd: string) => {
         if (selectedForReindicar.size === 0) return;
         
+        const indicacionesAReindicar = baseRows.filter(r => selectedForReindicar.has(r.id));
+        const itemsIniciales: ReindicarItemTrack[] = indicacionesAReindicar.map((r) => ({
+            id: String(r.id),
+            descripcion: descripcionIndicacionReindicar(r),
+            status: "pendiente",
+        }));
+
         setReindicando(true);
+        setResultadoReindicar({
+            fase: "progreso",
+            fecha: formatearFechaReindicar(fechaYmd),
+            fechaYmd,
+            items: itemsIniciales,
+            porTipo: [],
+        });
+
         try {
-            const indicacionesAReindicar = baseRows.filter(r => selectedForReindicar.has(r.id));
-            
             const ahora = new Date();
             const horaBase = ahora.toTimeString().split(' ')[0]; // HH:MM:SS
             
-            let exitosas = 0;
-            let fallidas = 0;
-            let omitidas = 0;
             const porTipoMap = new Map<string, number>();
-            const errores: ReindicarErrorItem[] = [];
             let offsetSegundos = 0;
 
             for (const indicacion of indicacionesAReindicar) {
+                const itemId = String(indicacion.id);
                 const label = descripcionIndicacionReindicar(indicacion);
+                patchItemReindicar(itemId, { status: "cargando" });
+
                 try {
                     const indicacionCompleta = await indicacionesService.getIndicacionesByNroIndicacion(Number(indicacion.nro));
                     
                     if (!indicacionCompleta) {
-                        fallidas++;
-                        errores.push({
-                            descripcion: label,
+                        patchItemReindicar(itemId, {
+                            status: "error",
                             motivo: "No se pudo leer la indicación original. Intentá de nuevo.",
                         });
                         continue;
@@ -370,17 +397,15 @@ export default function IndicacionesSection({
                     };
                     
                     await indicacionesService.postNuevaIndicacion(payload);
-                    exitosas++;
+                    patchItemReindicar(itemId, { status: "ok" });
                     const tipo = etiquetaTipoReindicar(indicacion);
                     porTipoMap.set(tipo, (porTipoMap.get(tipo) || 0) + 1);
                 } catch (error) {
                     const motivo = motivoErrorReindicar(error);
-                    // Si ya existía, contar como omitida (no es un fallo raro)
                     if (motivo.toLowerCase().includes("ya había")) {
-                        omitidas++;
+                        patchItemReindicar(itemId, { status: "omitida", motivo });
                     } else {
-                        fallidas++;
-                        errores.push({ descripcion: label, motivo });
+                        patchItemReindicar(itemId, { status: "error", motivo });
                     }
                     console.error('Error al reindicar indicación:', indicacion.nro, error);
                 }
@@ -393,30 +418,41 @@ export default function IndicacionesSection({
             setModoReindicar(false);
             setSelectedForReindicar(new Set());
 
-            setResultadoReindicar({
-                fecha: formatearFechaReindicar(fechaYmd),
-                fechaYmd,
-                porTipo,
-                exitosas,
-                fallidas,
-                omitidas,
-                errores,
-            });
+            setResultadoReindicar((prev) =>
+                prev
+                    ? { ...prev, fase: "resumen", porTipo }
+                    : {
+                          fase: "resumen",
+                          fecha: formatearFechaReindicar(fechaYmd),
+                          fechaYmd,
+                          items: [],
+                          porTipo,
+                      },
+            );
         } catch (err) {
             console.error('Error al reindicar:', err);
-            setResultadoReindicar({
-                fecha: formatearFechaReindicar(fechaYmd),
-                fechaYmd,
-                porTipo: [],
-                exitosas: 0,
-                fallidas: selectedForReindicar.size,
-                omitidas: 0,
-                errores: [
-                    {
-                        descripcion: "Reindicación",
-                        motivo: motivoErrorReindicar(err),
-                    },
-                ],
+            setResultadoReindicar((prev) => {
+                const motivo = motivoErrorReindicar(err);
+                const items =
+                    prev?.items?.map((it) =>
+                        it.status === "ok" || it.status === "omitida" || it.status === "error"
+                            ? it
+                            : { ...it, status: "error" as const, motivo },
+                    ) ?? [
+                        {
+                            id: "reindicar",
+                            descripcion: "Reindicación",
+                            status: "error" as const,
+                            motivo,
+                        },
+                    ];
+                return {
+                    fase: "resumen",
+                    fecha: formatearFechaReindicar(fechaYmd),
+                    fechaYmd,
+                    items,
+                    porTipo: prev?.porTipo ?? [],
+                };
             });
         } finally {
             setReindicando(false);
@@ -760,15 +796,13 @@ export default function IndicacionesSection({
 
             <ResultadoReindicarModal
                 isOpen={resultadoReindicar !== null}
+                fase={resultadoReindicar?.fase ?? "progreso"}
+                fecha={resultadoReindicar?.fecha ?? ""}
+                items={resultadoReindicar?.items ?? []}
+                porTipo={resultadoReindicar?.porTipo ?? []}
                 onClose={() => {
                     void handleCerrarResultadoReindicar();
                 }}
-                fecha={resultadoReindicar?.fecha ?? ""}
-                porTipo={resultadoReindicar?.porTipo ?? []}
-                exitosas={resultadoReindicar?.exitosas ?? 0}
-                fallidas={resultadoReindicar?.fallidas ?? 0}
-                errores={resultadoReindicar?.errores ?? []}
-                omitidas={resultadoReindicar?.omitidas ?? 0}
             />
         </div>
     );
