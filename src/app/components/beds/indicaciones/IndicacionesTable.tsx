@@ -2,7 +2,7 @@
 import styles from "./IndicacionesTable.module.css";
 import { IoMedicalOutline, IoCloseCircleOutline, IoRepeatOutline, IoPencilOutline, IoTrashOutline } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
 import { formatSqlDate, formatHoraSimple } from "../../../utils/dateUtils";
@@ -76,7 +76,40 @@ export default function IndicacionesTable({
     onToggleReindicar,
     onActivarModoReindicar,
 }: Props) {
-    const hasRows = rows && rows.length > 0;
+    const [ocultasIds, setOcultasIds] = useState<Set<string>>(() => new Set());
+    const filasVisibles = useMemo(
+        () => (rows || []).filter((r) => !ocultasIds.has(String(r.id))),
+        [rows, ocultasIds],
+    );
+    const hasRows = filasVisibles.length > 0;
+
+    // Si el servidor ya no trae la fila, limpiar el optimista
+    useEffect(() => {
+        setOcultasIds((prev) => {
+            if (prev.size === 0) return prev;
+            const presentes = new Set((rows || []).map((r) => String(r.id)));
+            const next = new Set([...prev].filter((id) => presentes.has(id)));
+            return next.size === prev.size ? prev : next;
+        });
+    }, [rows]);
+
+    const ocultarFila = (id: string) => {
+        setOcultasIds((prev) => {
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+        });
+    };
+
+    const restaurarFila = (id: string) => {
+        setOcultasIds((prev) => {
+            if (!prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+        });
+    };
+
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const usuarioActual = useUsuarioActual();
     const { puede, rol } = usePermiso();
@@ -117,40 +150,49 @@ export default function IndicacionesTable({
     const [sinEfectoId, setSinEfectoId] = useState<string | null>(null);
     const [sinEfectoLoading, setSinEfectoLoading] = useState(false);
 
-    const handleDelete = async (id: number) => {
-        try {
-            const res = await indicacionesService.deleteIndicacion(id);
-            if (res) {
-                await refetch();
-            }
-        } catch (error) {
-            console.error("Error deleting indicacion:", error);
-        }
-    };
-
     const handleConfirmDelete = () => {
         if (!deletingId) return;
-        handleDelete(Number(deletingId));
+        const id = deletingId;
         setDeletingId(null);
+        ocultarFila(id);
+
+        void (async () => {
+            try {
+                await indicacionesService.deleteIndicacion(Number(id));
+                void refetch();
+            } catch (error) {
+                console.error("Error deleting indicacion:", error);
+                restaurarFila(id);
+                alert(
+                    error instanceof Error
+                        ? error.message
+                        : "No se pudo eliminar la indicación",
+                );
+            }
+        })();
     };
 
     const handleCloseModal = () => {
         setDeletingId(null);
     };
 
-    const handleConfirmSinEfecto = async () => {
+    const handleConfirmSinEfecto = () => {
         if (!sinEfectoId) return;
-        setSinEfectoLoading(true);
-        try {
-            await indicacionesService.dejarSinEfecto(Number(sinEfectoId));
-            setSinEfectoId(null);
-            await refetch();
-        } catch (error) {
-            console.error('Error al dejar sin efecto:', error);
-            alert(error instanceof Error ? error.message : 'No se pudo dejar sin efecto');
-        } finally {
-            setSinEfectoLoading(false);
-        }
+        const id = sinEfectoId;
+        setSinEfectoId(null);
+        setSinEfectoLoading(false);
+        ocultarFila(id);
+
+        void (async () => {
+            try {
+                await indicacionesService.dejarSinEfecto(Number(id));
+                void refetch();
+            } catch (error) {
+                console.error('Error al dejar sin efecto:', error);
+                restaurarFila(id);
+                alert(error instanceof Error ? error.message : 'No se pudo dejar sin efecto');
+            }
+        })();
     };
 
     // ✅ Handler para abrir el modal de aplicar indicación
@@ -285,16 +327,16 @@ export default function IndicacionesTable({
                                             type="checkbox"
                                             onChange={(e) => {
                                                 if (e.target.checked) {
-                                                    rows.forEach(r => onToggleReindicar?.(r.id));
+                                                    filasVisibles.forEach(r => onToggleReindicar?.(r.id));
                                                 } else {
-                                                    rows.forEach(r => {
+                                                    filasVisibles.forEach(r => {
                                                         if (selectedForReindicar.has(r.id)) {
                                                             onToggleReindicar?.(r.id);
                                                         }
                                                     });
                                                 }
                                             }}
-                                            checked={rows.length > 0 && rows.every(r => selectedForReindicar.has(r.id))}
+                                            checked={filasVisibles.length > 0 && filasVisibles.every(r => selectedForReindicar.has(r.id))}
                                         />
                                     </th>
                                 )}
@@ -323,7 +365,7 @@ export default function IndicacionesTable({
 
                         <tbody className={styles.tbody}>
                             {hasRows
-                                ? rows.map((r) => (
+                                ? filasVisibles.map((r) => (
                                     <tr
                                         key={r.id}
                                         className={[
@@ -491,12 +533,12 @@ export default function IndicacionesTable({
 
             {/* Vista móvil: tarjetas */}
             <div className={styles.mobileCards}>
-                {rows.length === 0 && (
+                {filasVisibles.length === 0 && (
                     <div className={styles.emptySearch}>
                         No hay resultados que coincidan con tu búsqueda.
                     </div>
                 )}
-                {rows.map((r) => (
+                {filasVisibles.map((r) => (
                     <div key={r.id} className={styles.cardMobile}>
                         <div className={styles.cardHeader}>
                             <strong>Indicado:</strong> {r.descripcion ?? "-"}
