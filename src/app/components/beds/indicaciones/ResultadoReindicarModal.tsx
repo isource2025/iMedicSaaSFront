@@ -7,6 +7,11 @@ export type ReindicarPorTipo = {
 	cantidad: number;
 };
 
+export type ReindicarErrorItem = {
+	descripcion: string;
+	motivo: string;
+};
+
 type Props = {
 	isOpen: boolean;
 	onClose: () => void;
@@ -14,6 +19,8 @@ type Props = {
 	porTipo: ReindicarPorTipo[];
 	exitosas: number;
 	fallidas: number;
+	errores?: ReindicarErrorItem[];
+	omitidas?: number;
 };
 
 export default function ResultadoReindicarModal({
@@ -23,6 +30,8 @@ export default function ResultadoReindicarModal({
 	porTipo,
 	exitosas,
 	fallidas,
+	errores = [],
+	omitidas = 0,
 }: Props) {
 	if (!isOpen) return null;
 
@@ -64,11 +73,35 @@ export default function ResultadoReindicarModal({
 					</ul>
 				) : null}
 
-				{fallidas > 0 ? (
-					<p className={styles.fail}>
-						No se pudieron reindicar {fallidas} indicación
-						{fallidas === 1 ? "" : "es"}.
+				{omitidas > 0 ? (
+					<p className={styles.info}>
+						{omitidas} ya estaba{omitidas === 1 ? "" : "n"} cargada
+						{omitidas === 1 ? "" : "s"} para ese día; no se volvieron a crear.
 					</p>
+				) : null}
+
+				{fallidas > 0 ? (
+					<div className={styles.failBox}>
+						<p className={styles.fail}>
+							No se pudieron reindicar {fallidas} indicación
+							{fallidas === 1 ? "" : "es"}.
+						</p>
+						{errores.length > 0 ? (
+							<ul className={styles.errorList}>
+								{errores.map((err, idx) => (
+									<li key={`${err.descripcion}-${idx}`} className={styles.errorItem}>
+										<span className={styles.errorName}>{err.descripcion}</span>
+										<span className={styles.errorReason}>{err.motivo}</span>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className={styles.errorReason}>
+								Puede deberse a que ya existían para ese día o a un problema de
+								conexión. Revisá el listado del día elegido e intentá de nuevo.
+							</p>
+						)}
+					</div>
 				) : null}
 
 				<div className={styles.actions}>

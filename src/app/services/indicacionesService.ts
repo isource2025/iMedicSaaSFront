@@ -279,9 +279,12 @@ export const indicacionesService = {
     },
 
     /**
-     * Marca las indicaciones de la visita como vistas por enfermería (estado compartido).
+     * Limpia Estado 'N' → NULL en las indicaciones nuevas de la visita (enfermería).
+     * Devuelve los NroIndicacion limpiados para conservar el badge en la sesión actual.
      */
-    marcarVistoEnfermeria: async (numeroVisita: number): Promise<void> => {
+    marcarVistoEnfermeria: async (
+        numeroVisita: number
+    ): Promise<{ actualizadas: number; nros: number[] }> => {
         const resp = await apiFetch(
             `${BASE_URL}/indicaciones/${numeroVisita}/visto-enfermeria`,
             {
@@ -295,6 +298,14 @@ export const indicacionesService = {
                 json?.mensaje || json?.message || "No se pudieron marcar las indicaciones como vistas"
             );
         }
+        const data = json?.data || {};
+        const nros = Array.isArray(data.nros)
+            ? data.nros.map((n: unknown) => Number(n)).filter((n: number) => Number.isFinite(n) && n > 0)
+            : [];
+        return {
+            actualizadas: Number(data.actualizadas ?? data.insertadas ?? nros.length) || 0,
+            nros,
+        };
     },
 
     getNuevasEnfermeria: async (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
@@ -15,8 +15,13 @@ import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
-import ResultadoReindicarModal, { ReindicarPorTipo } from "./ResultadoReindicarModal";
+import ResultadoReindicarModal, { ReindicarErrorItem, ReindicarPorTipo } from "./ResultadoReindicarModal";
 import ConfirmarFechaReindicarModal from "./ConfirmarFechaReindicarModal";
+import {
+    fueNuevaEnSesion,
+    rememberNuevasEnfermeriaSesion,
+    subscribeNuevasEnfermeriaSesion,
+} from "../../../utils/indicacionesNuevasSesion";
 
 function toLocalYmd(date: Date): string {
     const y = date.getFullYear();
@@ -66,6 +71,39 @@ function formatearFechaReindicar(ymd: string): string {
     const [y, m, d] = ymd.split("-");
     if (!y || !m || !d) return ymd;
     return `${d}/${m}/${y}`;
+}
+
+function descripcionIndicacionReindicar(row: IndicacionRow): string {
+    const alias = String(row.medicamento || row.descripcion || "").trim();
+    if (alias) return alias;
+    return `Indicación ${row.nro ?? row.id}`;
+}
+
+/** Mensajes claros para el usuario (sin códigos HTTP ni jerga técnica). */
+function motivoErrorReindicar(error: unknown): string {
+    const raw = String((error as Error)?.message || error || "").toLowerCase();
+    if (
+        raw.includes("ya existe") ||
+        raw.includes("duplicate") ||
+        raw.includes("conflict") ||
+        raw.includes("unique")
+    ) {
+        return "Ya había una indicación cargada para ese día con el mismo tipo y horario. Suele pasar si se reindica otra vez o si varias se guardan al mismo tiempo.";
+    }
+    if (raw.includes("hoy o para mañana") || raw.includes("solo se puede indicar")) {
+        return "Solo se pueden reindicar para el día de hoy o para mañana.";
+    }
+    if (raw.includes("network") || raw.includes("failed to fetch") || raw.includes("timeout")) {
+        return "No se pudo completar por un problema de conexión. Intentá de nuevo en unos segundos.";
+    }
+    if (raw.includes("identidad") || raw.includes("profesional") || raw.includes("operador")) {
+        return "Falta identificar correctamente al profesional que indica. Cerrá sesión, volvé a ingresar e intentá otra vez.";
+    }
+    const original = String((error as Error)?.message || "").trim();
+    if (original && original.length < 160 && !/^\d+$/.test(original)) {
+        return original;
+    }
+    return "No se pudo guardar esta indicación. Revisá los datos e intentá de nuevo.";
 }
 
 type IndicacionDTO = {
@@ -136,6 +174,27 @@ export default function IndicacionesSection({
         cacheTimeMs: 20000,
     });
 
+    // Re-render cuando el snapshot de "Nueva" (post-limpieza SQL) llega
+    const [nuevasSesionTick, setNuevasSesionTick] = useState(0);
+    useEffect(() => subscribeNuevasEnfermeriaSesion(() => setNuevasSesionTick((t) => t + 1)), []);
+
+    // Si el listado llega con Estado=N, congelar esos ids en sesión (aunque SQL se limpie después)
+    useEffect(() => {
+        if (!numeroVisita || !data) return;
+        const list: IndicacionDTO[] = Array.isArray(data)
+            ? data
+            : data && Array.isArray((data as { data?: IndicacionDTO[] }).data)
+                ? (data as { data: IndicacionDTO[] }).data
+                : [];
+        const nros = list
+            .filter((x) => Boolean((x as { nuevaEnfermeria?: boolean }).nuevaEnfermeria))
+            .map((x) => Number(x.nro ?? x.id))
+            .filter((n) => Number.isFinite(n) && n > 0);
+        if (nros.length) {
+            rememberNuevasEnfermeriaSesion(numeroVisita, nros);
+        }
+    }, [data, numeroVisita]);
+
     const baseRows: IndicacionRow[] = useMemo(() => {
 
 
@@ -179,7 +238,10 @@ export default function IndicacionesSection({
             OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
             matricula: (x as any).matricula ?? (x as any).Matricula ?? null,
             indicacionesHijas: (x as any).indicacionesHijas || [],
-            nuevaEnfermeria: Boolean((x as any).nuevaEnfermeria),
+            // API (Estado=N) o snapshot de sesión tras limpiar SQL al entrar
+            nuevaEnfermeria:
+                Boolean((x as any).nuevaEnfermeria) ||
+                fueNuevaEnSesion(numeroVisita ?? 0, x.nro ?? x.id),
         }));
 
         // Ordenar por ordenTipo (campo Orden de imInterTipoIndicacion) y luego por nro
@@ -196,7 +258,7 @@ export default function IndicacionesSection({
             const nroB = typeof b.nro === 'number' ? b.nro : parseInt(String(b.nro || '0'));
             return nroA - nroB;
         });
-    }, [data]);
+    }, [data, numeroVisita, nuevasSesionTick]);
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [query, setQuery] = useState("");
@@ -210,9 +272,12 @@ export default function IndicacionesSection({
     const [reindicando, setReindicando] = useState(false);
     const [resultadoReindicar, setResultadoReindicar] = useState<{
         fecha: string;
+        fechaYmd: string;
         porTipo: ReindicarPorTipo[];
         exitosas: number;
         fallidas: number;
+        omitidas: number;
+        errores: ReindicarErrorItem[];
     } | null>(null);
     const [confirmarFechaOpen, setConfirmarFechaOpen] = useState(false);
 
@@ -237,21 +302,38 @@ export default function IndicacionesSection({
             const indicacionesAReindicar = baseRows.filter(r => selectedForReindicar.has(r.id));
             
             const ahora = new Date();
-            const horaActual = ahora.toTimeString().split(' ')[0];
+            const horaBase = ahora.toTimeString().split(' ')[0]; // HH:MM:SS
             
             let exitosas = 0;
             let fallidas = 0;
+            let omitidas = 0;
             const porTipoMap = new Map<string, number>();
-            
+            const errores: ReindicarErrorItem[] = [];
+            let offsetSegundos = 0;
+
             for (const indicacion of indicacionesAReindicar) {
+                const label = descripcionIndicacionReindicar(indicacion);
                 try {
                     const indicacionCompleta = await indicacionesService.getIndicacionesByNroIndicacion(Number(indicacion.nro));
                     
                     if (!indicacionCompleta) {
-                        console.error('No se pudo obtener la indicación completa:', indicacion.nro);
                         fallidas++;
+                        errores.push({
+                            descripcion: label,
+                            motivo: "No se pudo leer la indicación original. Intentá de nuevo.",
+                        });
                         continue;
                     }
+
+                    // Hora distinta por ítem para evitar choque del índice único
+                    // (NumeroVisita + Tipo + Fecha + Hora) al reindicar en lote.
+                    const [hh, mm, ss] = horaBase.split(":").map((x) => Number(x) || 0);
+                    const totalSeg = hh * 3600 + mm * 60 + ss + offsetSegundos;
+                    offsetSegundos += 1;
+                    const h2 = Math.floor(totalSeg / 3600) % 24;
+                    const m2 = Math.floor((totalSeg % 3600) / 60);
+                    const s2 = totalSeg % 60;
+                    const horaActual = `${String(h2).padStart(2, "0")}:${String(m2).padStart(2, "0")}:${String(s2).padStart(2, "0")}`;
                     
                     const payload: NuevaIndicacionPayload = {
                         NumeroVisita: numeroVisita,
@@ -276,7 +358,7 @@ export default function IndicacionesSection({
                         HoraExpiro: null,
                         CantidadIndicada: indicacionCompleta.CantidadIndicada,
                         Orden: null,
-                        Estado: 'A',
+                        Estado: 'N',
                         CantidadPorTurno: indicacionCompleta.CantidadPorTurno,
                         CantidadEntregada: null,
                         ParaFechaEntrega: null,
@@ -292,8 +374,15 @@ export default function IndicacionesSection({
                     const tipo = etiquetaTipoReindicar(indicacion);
                     porTipoMap.set(tipo, (porTipoMap.get(tipo) || 0) + 1);
                 } catch (error) {
+                    const motivo = motivoErrorReindicar(error);
+                    // Si ya existía, contar como omitida (no es un fallo raro)
+                    if (motivo.toLowerCase().includes("ya había")) {
+                        omitidas++;
+                    } else {
+                        fallidas++;
+                        errores.push({ descripcion: label, motivo });
+                    }
                     console.error('Error al reindicar indicación:', indicacion.nro, error);
-                    fallidas++;
                 }
             }
             
@@ -301,32 +390,48 @@ export default function IndicacionesSection({
                 .map(([tipo, cantidad]) => ({ tipo, cantidad }))
                 .sort((a, b) => b.cantidad - a.cantidad);
 
-            setResultadoReindicar({
-                fecha: formatearFechaReindicar(fechaYmd),
-                porTipo,
-                exitosas,
-                fallidas,
-            });
-            
             setModoReindicar(false);
             setSelectedForReindicar(new Set());
 
-            const mismaFecha = selectedDate ? toLocalYmd(selectedDate) === fechaYmd : false;
-            if (mismaFecha) {
-                await refetch();
-            } else {
-                setSelectedDate(ymdToLocalDate(fechaYmd));
-            }
+            setResultadoReindicar({
+                fecha: formatearFechaReindicar(fechaYmd),
+                fechaYmd,
+                porTipo,
+                exitosas,
+                fallidas,
+                omitidas,
+                errores,
+            });
         } catch (err) {
             console.error('Error al reindicar:', err);
             setResultadoReindicar({
-                fecha: "",
+                fecha: formatearFechaReindicar(fechaYmd),
+                fechaYmd,
                 porTipo: [],
                 exitosas: 0,
                 fallidas: selectedForReindicar.size,
+                omitidas: 0,
+                errores: [
+                    {
+                        descripcion: "Reindicación",
+                        motivo: motivoErrorReindicar(err),
+                    },
+                ],
             });
         } finally {
             setReindicando(false);
+        }
+    };
+
+    const handleCerrarResultadoReindicar = async () => {
+        const destino = resultadoReindicar?.fechaYmd;
+        setResultadoReindicar(null);
+        if (!destino) return;
+        const mismaFecha = selectedDate ? toLocalYmd(selectedDate) === destino : false;
+        if (mismaFecha) {
+            await refetch();
+        } else {
+            setSelectedDate(ymdToLocalDate(destino));
         }
     };
     
@@ -655,11 +760,15 @@ export default function IndicacionesSection({
 
             <ResultadoReindicarModal
                 isOpen={resultadoReindicar !== null}
-                onClose={() => setResultadoReindicar(null)}
+                onClose={() => {
+                    void handleCerrarResultadoReindicar();
+                }}
                 fecha={resultadoReindicar?.fecha ?? ""}
                 porTipo={resultadoReindicar?.porTipo ?? []}
                 exitosas={resultadoReindicar?.exitosas ?? 0}
                 fallidas={resultadoReindicar?.fallidas ?? 0}
+                errores={resultadoReindicar?.errores ?? []}
+                omitidas={resultadoReindicar?.omitidas ?? 0}
             />
         </div>
     );

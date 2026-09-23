@@ -3,37 +3,43 @@
 import { useEffect } from 'react';
 import { indicacionesService } from '../services/indicacionesService';
 import { clearIndicacionesNuevasEnfermeria } from '../utils/bedsListCache';
+import {
+	clearNuevasEnfermeriaSesion,
+	rememberNuevasEnfermeriaSesion,
+} from '../utils/indicacionesNuevasSesion';
 import { esEnfermeroSesion } from './useUsuarioActual';
 
-const pendingTimers = new Map<number, ReturnType<typeof setTimeout>>();
-const vistoEnviado = new Set<number>();
+const limpioEnviado = new Set<number>();
 
-/** Marca indicaciones nuevas como vistas (enfermería) y limpia el badge de las cards. */
+/**
+ * Limpia Estado 'N' → NULL en SQL al entrar al detalle (enfermería).
+ * Guarda los ids limpiados en sesión para que la UI actual siga mostrando "Nueva".
+ * Limpia el badge de las cards en caché (lista / reentrada).
+ */
 export function marcarIndicacionesVistasEnfermeria(
 	numeroVisita: number | null | undefined,
 ): void {
 	const nro = Number(numeroVisita || 0);
 	if (!nro || !esEnfermeroSesion()) return;
 
-	const pending = pendingTimers.get(nro);
-	if (pending) {
-		clearTimeout(pending);
-		pendingTimers.delete(nro);
-	}
-
 	clearIndicacionesNuevasEnfermeria(nro);
-	if (vistoEnviado.has(nro)) return;
-	vistoEnviado.add(nro);
+	if (limpioEnviado.has(nro)) return;
+	limpioEnviado.add(nro);
 
-	void indicacionesService.marcarVistoEnfermeria(nro).catch((err) => {
-		vistoEnviado.delete(nro);
-		console.warn('No se pudieron marcar las indicaciones como vistas:', err);
-	});
+	void indicacionesService
+		.marcarVistoEnfermeria(nro)
+		.then((res) => {
+			rememberNuevasEnfermeriaSesion(nro, res.nros || []);
+		})
+		.catch((err) => {
+			limpioEnviado.delete(nro);
+			console.warn('No se pudo limpiar el estado Nueva de las indicaciones:', err);
+		});
 }
 
 /**
- * Conserva el estado "nueva" mientras el detalle de cama está abierto.
- * Al salir (Cerrar, atrás, otra ruta) marca como visto para que no vuelva en cards ni al reabrir.
+ * Al abrir el detalle de cama, limpia Estado N→NULL en SQL.
+ * Al desmontar, limpia el snapshot de sesión para que al reentrar no se vea "Nueva".
  */
 export function useMarcarIndicacionesVistasAlSalir(
 	numeroVisita: number | null | undefined,
@@ -42,27 +48,12 @@ export function useMarcarIndicacionesVistasAlSalir(
 
 	useEffect(() => {
 		if (!nro || !esEnfermeroSesion()) return;
-
-		const existing = pendingTimers.get(nro);
-		if (existing) {
-			clearTimeout(existing);
-			pendingTimers.delete(nro);
-		}
-		vistoEnviado.delete(nro);
+		limpioEnviado.delete(nro);
+		marcarIndicacionesVistasEnfermeria(nro);
 
 		return () => {
-			if (!esEnfermeroSesion()) return;
-			clearIndicacionesNuevasEnfermeria(nro);
-			if (vistoEnviado.has(nro)) return;
-			const prev = pendingTimers.get(nro);
-			if (prev) clearTimeout(prev);
-			pendingTimers.set(
-				nro,
-				setTimeout(() => {
-					pendingTimers.delete(nro);
-					marcarIndicacionesVistasEnfermeria(nro);
-				}, 250),
-			);
+			clearNuevasEnfermeriaSesion(nro);
+			limpioEnviado.delete(nro);
 		};
 	}, [nro]);
 }
