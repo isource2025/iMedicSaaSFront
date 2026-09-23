@@ -644,6 +644,10 @@ function AgendaPageContent() {
 
 	const handleAccionSlot = async (action: SlotMenuAction, slot: AgendaSlot) => {
 		setSlotMenu(null);
+		if (fechaPasada && action !== 'ver-detalle') {
+			setError('En fechas pasadas solo se puede consultar el historial.');
+			return;
+		}
 		if (action === 'rac-enfermeria') {
 			setRacSlot(slot);
 			return;
@@ -1002,8 +1006,8 @@ function AgendaPageContent() {
 					)}
 					{fechaPasada && (
 						<div className={styles.warning}>
-							No se pueden asignar turnos en fechas anteriores al día de hoy. Elegí
-							una fecha actual o futura en el calendario.
+							Historial de consultas: podés ver los turnos de días anteriores. No se
+							pueden asignar ni modificar turnos en fechas pasadas.
 						</div>
 					)}
 					{diaMotivo === 'feriado' && (
@@ -1114,7 +1118,8 @@ function AgendaPageContent() {
 													const key = `${s.hora}-${s.sector}-${s.idTurno ?? 'n'}`;
 													const libre = esLibre(s);
 													const cancelado = esCancelado(s);
-													const puedeMenu = !fechaPasada;
+													const puedeMenu =
+														!fechaPasada || (!libre && !cancelado && Boolean(s.idTurno));
 													return (
 														<AgendaTurnoTablaRow
 															key={key}
@@ -1345,7 +1350,8 @@ function AgendaPageContent() {
 													const key = `${s.hora}-${s.sector}-${s.idTurno ?? 'n'}`;
 													const libre = esLibre(s);
 													const cancelado = esCancelado(s);
-													const puedeMenu = !fechaPasada;
+													const puedeMenu =
+														!fechaPasada || (!libre && !cancelado && Boolean(s.idTurno));
 													return (
 														<AgendaTurnoTablaRow
 															key={key}
@@ -1387,6 +1393,7 @@ function AgendaPageContent() {
 				puedeBorrar={puedeBorrarTurno}
 				puedeRacEnfermeria={puedeRacEnfermeria}
 				puedeAtender={puedeAtender}
+				soloHistorial={fechaPasada}
 				onClose={() => setSlotMenu(null)}
 				onAction={handleAccionSlot}
 			/>

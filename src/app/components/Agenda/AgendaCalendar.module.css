@@ -1,13 +1,14 @@
-/* Días pasados: no seleccionables, mismo fondo que el calendario */
+/* Días pasados: seleccionables para historial (sin asignar turnos) */
 .past {
-	opacity: 0.45;
-	cursor: not-allowed;
-	color: #94a3b8;
+	opacity: 0.72;
+	cursor: pointer;
+	color: #64748b;
 }
 
 .past:hover {
-	border-color: transparent !important;
-	background: #e3f2f7 !important;
+	opacity: 1;
+	border-color: #94a3b8 !important;
+	background: #e2e8f0 !important;
 }
 
 /* Feriado nacional: se puede seleccionar para ver el motivo */
@@ -66,7 +67,7 @@
 	font-weight: 800;
 }
 
-/* Día con agenda del profesional (solo futuros / hoy, no seleccionado) */
+/* Día con agenda del profesional (incluye historial, no seleccionado) */
 .hasTurnos,
 .cellHasTurnos {
 	background: #bae6fd !important;
@@ -92,4 +93,12 @@
 .selected:hover {
 	background: #006080 !important;
 	border-color: #004d66 !important;
+}
+
+.past.selected,
+.past.selected:hover {
+	opacity: 1;
+	color: #fff !important;
+	background: #0083a9 !important;
+	border-color: #006080 !important;
 }

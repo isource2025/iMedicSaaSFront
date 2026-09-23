@@ -151,16 +151,24 @@
 	inset: 0;
 	background: rgba(15, 23, 42, 0.45);
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: center;
 	z-index: 80;
 	padding: 1rem;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
 }
 .modalContent {
 	background: #fff;
 	border-radius: 12px;
 	padding: 1.25rem 1.35rem;
 	width: min(520px, 96vw);
+	max-height: min(90vh, 860px);
+	margin: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	box-sizing: border-box;
 	box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
 }
 .modalContent h3 {

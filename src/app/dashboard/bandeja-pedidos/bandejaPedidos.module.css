@@ -699,10 +699,12 @@
 	inset: 0;
 	background: rgba(15, 23, 42, 0.45);
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: center;
 	z-index: 80;
 	padding: 1rem;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 .modalCard {
@@ -710,9 +712,23 @@
 	border-radius: 14px;
 	padding: 1.2rem;
 	width: min(560px, 100%);
+	max-height: min(90vh, 860px);
+	margin: auto;
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
+	overflow-x: hidden;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	box-sizing: border-box;
+}
+
+.modalCard .actions {
+	flex-shrink: 0;
+	padding-top: 0.25rem;
+	position: sticky;
+	bottom: 0;
+	background: #fff;
 }
 
 .modalTitle {

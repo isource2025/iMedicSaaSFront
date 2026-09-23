@@ -51,6 +51,8 @@ interface Props {
 	puedeBorrar?: boolean;
 	puedeRacEnfermeria?: boolean;
 	puedeAtender?: boolean;
+	/** Días pasados: solo ver detalle (historial), sin acciones de gestión */
+	soloHistorial?: boolean;
 	onClose: () => void;
 	onAction: (action: SlotMenuAction, slot: AgendaSlot) => void;
 }
@@ -94,6 +96,7 @@ export default function SlotTurnoMenu({
 	puedeBorrar = false,
 	puedeRacEnfermeria = false,
 	puedeAtender = true,
+	soloHistorial = false,
 	onClose,
 	onAction,
 }: Props) {
@@ -101,6 +104,10 @@ export default function SlotTurnoMenu({
 
 	const opciones = useMemo((): OpcionMenu[] => {
 		if (!slot) return [];
+		if (soloHistorial) {
+			if (!slot.idTurno || esSlotLibre(slot) || esCancelado(slot)) return [];
+			return [{ id: 'ver-detalle', label: 'Ver detalle de atención' }];
+		}
 		if (esSlotLibre(slot)) return OPCIONES_LIBRE;
 		if (esCancelado(slot)) {
 			return OPCIONES_LIBRE.filter((o) => o.id === 'asignar' || o.id === 'sobreturno');
@@ -146,7 +153,7 @@ export default function SlotTurnoMenu({
 			return [{ id: 'rac-enfermeria', label: 'RAC de enfermería' }, ...merged];
 		}
 		return merged;
-	}, [slot, puedeBorrar, puedeRacEnfermeria, puedeAtender]);
+	}, [slot, puedeBorrar, puedeRacEnfermeria, puedeAtender, soloHistorial]);
 
 	useEffect(() => {
 		if (!open) return;

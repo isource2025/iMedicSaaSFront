@@ -213,19 +213,17 @@ export default function AgendaCalendar({
 										!!matricula &&
 										diasConAgenda.has(iso) &&
 										!outside &&
-										!past &&
 										!active &&
 										!esFeriado;
 									const title = esFeriado
 										? `Feriado: ${feriadoNombre}`
 										: past
-											? 'No se pueden asignar turnos en fechas pasadas'
+											? 'Historial de consultas de ese día'
 											: undefined;
 									return (
 										<button
 											key={i}
 											type='button'
-											disabled={past}
 											className={[
 												styles.cell,
 												outside ? styles.muted : '',
@@ -236,13 +234,14 @@ export default function AgendaCalendar({
 											]
 												.filter(Boolean)
 												.join(' ')}
-											onClick={() => !past && onSelect(d)}
+											onClick={() => onSelect(d)}
 											aria-pressed={active}
-											aria-disabled={past}
 											aria-label={
 												esFeriado
 													? `${d.getDate()}, feriado: ${feriadoNombre}`
-													: undefined
+													: past
+														? `${d.getDate()}, historial de consultas`
+														: undefined
 											}
 											title={title}
 										>
