@@ -225,11 +225,11 @@ export default function IndicacionForm({
                 console.log('✅ Indicación guardada (sin adicionales)');
             }
             
-            // Recargar la tabla de indicaciones
+            // Recargar la tabla de indicaciones (padre + adicionales ya persistidos)
             if (refetch) {
                 await refetch();
             }
-            
+
             onClose();
         } catch (err) {
             console.error('❌ Error al guardar indicaciones:', err);

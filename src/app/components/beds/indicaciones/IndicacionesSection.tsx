@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
@@ -177,6 +177,13 @@ export default function IndicacionesSection({
         cacheTimeMs: 20000,
     });
 
+    // Evita refetch con queryKey viejo tras cambiar de fecha en medio del guardado
+    const refetchRef = useRef(refetch);
+    refetchRef.current = refetch;
+    const refetchListado = useCallback(async () => {
+        await refetchRef.current();
+    }, []);
+
     // Re-render cuando el snapshot de "Nueva" (post-limpieza SQL) llega
     const [nuevasSesionTick, setNuevasSesionTick] = useState(0);
     useEffect(() => subscribeNuevasEnfermeriaSesion(() => setNuevasSesionTick((t) => t + 1)), []);
@@ -274,7 +281,7 @@ export default function IndicacionesSection({
     const [selectedForReindicar, setSelectedForReindicar] = useState<Set<string>>(new Set());
     const [reindicando, setReindicando] = useState(false);
     const [resultadoReindicar, setResultadoReindicar] = useState<{
-        fase: "progreso" | "resumen";
+        fase: "progreso" | "exito" | "resumen";
         fecha: string;
         fechaYmd: string;
         items: ReindicarItemTrack[];
@@ -420,14 +427,20 @@ export default function IndicacionesSection({
 
             setResultadoReindicar((prev) =>
                 prev
-                    ? { ...prev, fase: "resumen", porTipo }
+                    ? { ...prev, fase: "exito", porTipo }
                     : {
-                          fase: "resumen",
+                          fase: "exito",
                           fecha: formatearFechaReindicar(fechaYmd),
                           fechaYmd,
                           items: [],
                           porTipo,
                       },
+            );
+
+            await new Promise((r) => setTimeout(r, 1500));
+
+            setResultadoReindicar((prev) =>
+                prev ? { ...prev, fase: "resumen" } : prev,
             );
         } catch (err) {
             console.error('Error al reindicar:', err);
@@ -508,17 +521,25 @@ export default function IndicacionesSection({
     const handleSave = async (data: NuevaIndicacionPayload) => {
         setSaving(true);
         try {
+            const fechaGuardada =
+                data.FechaCarga || fechaIndicacionPermitida(selectedDate);
             // Garantiza NumeroVisita desde props si viniera null
             const finalPayload: NuevaIndicacionPayload = {
                 ...data,
                 NumeroVisita: data.NumeroVisita ?? numeroVisita,
-                FechaCarga: data.FechaCarga || fechaIndicacionPermitida(selectedDate),
+                FechaCarga: fechaGuardada,
             };
             const resultado = await indicacionesService.postNuevaIndicacion(finalPayload);
-            
-            // Refetch para actualizar la lista de indicaciones
-            await refetch();
-            
+
+            // Si se guardó para otro día, cambiar el calendario.
+            // El refetch final lo hace NuevaIndicacionModal tras guardar hijas.
+            const mismaFecha = selectedDate
+                ? toLocalYmd(selectedDate) === fechaGuardada
+                : false;
+            if (!mismaFecha) {
+                setSelectedDate(ymdToLocalDate(fechaGuardada));
+            }
+
             return resultado;
         } catch (err) {
             if (err instanceof Error) {
@@ -751,7 +772,7 @@ export default function IndicacionesSection({
                     onClose={() => setModalOpen(false)}
                     onSave={handleSave}
                     defaultNumeroVisita={numeroVisita}
-                    refetch={refetch}
+                    refetch={refetchListado}
                     fechaCarga={fechaIndicacionPermitida(selectedDate)}
                 />
             </ModalBasePaciente>
@@ -779,6 +800,7 @@ export default function IndicacionesSection({
                     onSave={handleUpdate}
                     defaultNumeroVisita={numeroVisita}
                     nroIndicacion={selectedId}
+                    refetch={refetchListado}
                 />
             </ModalBasePaciente>
 

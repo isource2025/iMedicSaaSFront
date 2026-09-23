@@ -145,26 +145,45 @@ export function useBedSectionFetch<T = unknown>(
 	const revalidateOnFocus = opts?.revalidateOnFocus ?? false;
 
 	const abortRef = useRef<AbortController | null>(null);
+	const queryKeyRef = useRef(queryKey);
+	const queryParamsRef = useRef(queryParams);
+	const resolvedBaseUrlRef = useRef(resolvedBaseUrl);
+	queryKeyRef.current = queryKey;
+	queryParamsRef.current = queryParams;
+	resolvedBaseUrlRef.current = resolvedBaseUrl;
 
-	const doFetch = async () => {
+	const doFetch = async (optsFetch?: { soft?: boolean }) => {
 		if (!enabled) {
 			setIsLoading(false);
 			return;
 		}
 
-		const finalUrl = resolvedBaseUrl + buildQuery(queryParams);
-		setUrl(finalUrl);
-		setError(undefined);
-		setIsLoading(true);
-
-		// 1) Cache check
-		const now = Date.now();
-		const cached = _cache.get(queryKey);
-		if (cached && now - cached.ts < cacheTimeMs) {
-			setData(cached.data as T);
-			setLastUpdatedAt(cached.ts);
+		const soft = Boolean(optsFetch?.soft);
+		const currentKey = queryKeyRef.current;
+		const currentBase = resolvedBaseUrlRef.current;
+		const currentParams = queryParamsRef.current;
+		if (!currentBase) {
 			setIsLoading(false);
 			return;
+		}
+
+		const finalUrl = currentBase + buildQuery(currentParams);
+		setUrl(finalUrl);
+		setError(undefined);
+		if (!soft) {
+			setIsLoading(true);
+		}
+
+		// 1) Cache check (solo en carga normal; soft/refetch siempre va a red)
+		const now = Date.now();
+		if (!soft) {
+			const cached = _cache.get(currentKey);
+			if (cached && now - cached.ts < cacheTimeMs) {
+				setData(cached.data as T);
+				setLastUpdatedAt(cached.ts);
+				setIsLoading(false);
+				return;
+			}
 		}
 
 		// 2) Network
@@ -181,8 +200,8 @@ export function useBedSectionFetch<T = unknown>(
 			if (!res.ok) throw new Error(await motivoDeRespuesta(res));
 			const json = (await res.json()) as T;
 			setData(json);
-			setLastUpdatedAt(now);
-			_cache.set(queryKey, { ts: now, data: json });
+			setLastUpdatedAt(Date.now());
+			_cache.set(currentKey, { ts: Date.now(), data: json });
 		} catch (e: any) {
 			if (e?.name === 'AbortError') return; // navegación rápida
 			setError(e);
@@ -207,7 +226,6 @@ export function useBedSectionFetch<T = unknown>(
 	useEffect(() => {
 		if (!revalidateOnFocus) return;
 		const onFocus = () => {
-			// si hay cache aún válido no hace nada; si quieres forzar, pasa cacheTimeMs=0
 			doFetch();
 		};
 		window.addEventListener('focus', onFocus);
@@ -216,9 +234,9 @@ export function useBedSectionFetch<T = unknown>(
 	}, [revalidateOnFocus, queryKey, baseUrl]);
 
 	const refetch = async () => {
-		// invalida cache para este key y vuelve a pedir
-		_cache.delete(queryKey);
-		await doFetch();
+		// invalida cache del key actual y vuelve a pedir sin desmontar la UI
+		_cache.delete(queryKeyRef.current);
+		await doFetch({ soft: true });
 	};
 
 	const waitingFirstData = enabled && data === undefined && !error;
