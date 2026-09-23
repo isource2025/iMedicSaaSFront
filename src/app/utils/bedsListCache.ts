@@ -140,7 +140,7 @@ export function bedsListSignature(beds: Bed[]): string {
 		.join(';');
 }
 
-/** Tras cerrar el detalle, el badge debe desaparecer en la lista cacheada. */
+/** Tras entrar al detalle (enfermería), el badge debe desaparecer en la lista cacheada. */
 export function clearIndicacionesNuevasEnfermeria(numeroVisita: number): void {
 	const nro = Number(numeroVisita || 0);
 	if (!nro) return;

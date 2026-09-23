@@ -6,7 +6,6 @@ import styles from './SidebarFilters.module.css';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { bedsListHref } from '@/app/utils/bedsListFilters';
-import { marcarIndicacionesVistasEnfermeria } from '@/app/hooks/useMarcarIndicacionesVistasAlSalir';
 
 type Props = {
 	bedId?: string;
@@ -494,7 +493,6 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 					<button
 						className={styles.closeButton}
 						onClick={() => {
-							marcarIndicacionesVistasEnfermeria(bed?.NumeroVisita ?? bed?.numeroVisita);
 							router.replace(bedsListHref());
 						}}
 					>
