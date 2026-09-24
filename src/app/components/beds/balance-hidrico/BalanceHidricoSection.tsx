@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import type { BalanceHidrico, BalanceHidricoResumen } from '../../../types/balanceHidrico';
+import type { BalanceHidrico } from '../../../types/balanceHidrico';
 import {
 	eliminarBalance,
 	formatearFechaCorta,
@@ -90,7 +90,6 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const { data, isLoading, error, refetch } = useBedSectionFetch<{
 		success?: boolean;
 		data?: BalanceHidrico[];
-		resumen?: BalanceHidricoResumen;
 	}>({
 		enabled: !!path && activeSection === 'balance-hidrico',
 		endpointOverride: path ? { 'balance-hidrico': path } : undefined,
@@ -241,9 +240,6 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	if (activeSection !== 'balance-hidrico') return null;
 	if (isLoading) return <BedSectionLoading />;
 
-	const balanceClase =
-		totales.balance < 0 ? bh.kpiNeg : totales.balance > 0 ? bh.kpiPos : bh.kpiNeutro;
-
 	const celdaNum = (v: number | null | undefined, extra?: string) => (
 		<td className={`${bh.num} ${extra || ''}`}>{formatearNum(v)}</td>
 	);
@@ -279,43 +275,6 @@ const BalanceHidricoSection: React.FC<Props> = ({
 					</div>
 				</div>
 			)}
-
-			{/* KPIs — Clarion: Ingresos / Egresos / Total Balance */}
-			<div className={bh.kpis}>
-				<div className={`${bh.kpi} ${bh.kpiIng}`}>
-					<span className={bh.kpiLabel}>Ingresos</span>
-					<strong className={bh.kpiValue}>
-						{totales.ingresos}
-						<small>ml</small>
-					</strong>
-					<span className={bh.kpiHint}>
-						Par {totales.porColumna.Ing_Par_Paso} · Ent {totales.porColumna.Ing_Aent_Paso} · Apar{' '}
-						{totales.porColumna.Ing_Apar_paso} · Tranf {totales.porColumna.Ing_Tranf_paso}
-					</span>
-				</div>
-				<div className={`${bh.kpi} ${bh.kpiEgr}`}>
-					<span className={bh.kpiLabel}>Egresos</span>
-					<strong className={bh.kpiValue}>
-						{totales.egresos}
-						<small>ml</small>
-					</strong>
-					<span className={bh.kpiHint}>
-						Diur {totales.porColumna.Egr_Diuresis} · Cat {totales.porColumna.Egr_Catarsis} · SNG{' '}
-						{totales.porColumna.Egr_SNG_Vomito} · Dren {totales.porColumna.Egr_Drenajes}
-					</span>
-				</div>
-				<div className={`${bh.kpi} ${bh.kpiBal} ${balanceClase}`}>
-					<span className={bh.kpiLabel}>Total balance</span>
-					<strong className={bh.kpiValue}>
-						{signo(totales.balance)}
-						{totales.balance}
-						<small>ml</small>
-					</strong>
-					<span className={bh.kpiHint}>
-						{filtrados.length} {filtrados.length === 1 ? 'registro' : 'registros'}
-					</span>
-				</div>
-			</div>
 
 			{/* Toolbar: búsqueda · sólo el día */}
 			<div className={bh.toolbar}>
