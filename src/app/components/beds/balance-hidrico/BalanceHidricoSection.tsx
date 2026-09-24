@@ -1,21 +1,31 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import type { BalanceHidrico, BalanceHidricoResumen } from '../../../types/balanceHidrico';
+import type {
+	BalanceHidrico,
+	BalanceHidricoResumen,
+	TurnoEnfermeria,
+} from '../../../types/balanceHidrico';
 import {
 	eliminarBalance,
-	esFilaBalance,
+	filtrarPorTurno,
+	formatearFechaCorta,
 	formatearHora,
 	formatearMl,
+	formatearNum,
 	nombreProfesional,
+	sumarTotales,
+	TURNOS,
+	turnoDeHora,
 } from '../../../services/balanceHidricoService';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from '../indicaciones/IndicacionesSection.module.css';
 import tableStyles from '../controles/ControlesFrecuentesSection.module.css';
-import localStyles from './BalanceHidricoSection.module.css';
+import bh from './BalanceHidricoSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
+import ConfirmationModal from '../shared/ConfirmationModal';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -40,6 +50,8 @@ function toISODate(d: Date | null | undefined): string | null {
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+const signo = (n: number) => (n > 0 ? '+' : '');
+
 const BalanceHidricoSection: React.FC<Props> = ({
 	numeroVisita,
 	patientName,
@@ -53,7 +65,10 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const [selected, setSelected] = useState<BalanceHidrico | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [editing, setEditing] = useState<BalanceHidrico | null>(null);
+	const [aEliminar, setAEliminar] = useState<BalanceHidrico | null>(null);
 	const [query, setQuery] = useState('');
+	const [turno, setTurno] = useState<TurnoEnfermeria>('todos');
+	const [soloDia, setSoloDia] = useState(true);
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
 	const puedeCrear = puede('INTERNACION.BALANCE_HIDRICO.CREAR');
@@ -72,10 +87,13 @@ const BalanceHidricoSection: React.FC<Props> = ({
 
 	const fechaISO = useMemo(() => toISODate(selectedDate), [selectedDate]);
 
-	const path = useMemo(
-		() => (numeroVisita ? `/balance-hidrico/${numeroVisita}/byDate` : undefined),
-		[numeroVisita],
-	);
+	// Clarion: "Mostrar sólo el día seleccionado" → byDate; destildado → toda la internación
+	const path = useMemo(() => {
+		if (!numeroVisita) return undefined;
+		return soloDia
+			? `/balance-hidrico/${numeroVisita}/byDate`
+			: `/balance-hidrico/${numeroVisita}/all`;
+	}, [numeroVisita, soloDia]);
 
 	const { data, isLoading, error, refetch } = useBedSectionFetch<{
 		success?: boolean;
@@ -93,21 +111,37 @@ const BalanceHidricoSection: React.FC<Props> = ({
 		return [];
 	}, [data]);
 
-	const resumen: BalanceHidricoResumen | null = useMemo(() => {
-		if (data && !Array.isArray(data) && data.resumen) return data.resumen;
-		return null;
-	}, [data]);
-
 	const filtrados = useMemo(() => {
-		if (!query.trim()) return registros;
-		const q = query.toLowerCase();
-		return registros.filter((r) => {
-			const med = (r.Medicacion || '').toLowerCase();
-			const alim = (r.Ing_Aent_Alimento || '').toLowerCase();
-			const op = `${r.ProfesionalApellido || ''} ${r.ProfesionalNombres || ''}`.toLowerCase();
-			return med.includes(q) || alim.includes(q) || op.includes(q);
-		});
-	}, [registros, query]);
+		let list = filtrarPorTurno(registros, turno);
+		if (query.trim()) {
+			const q = query.toLowerCase();
+			list = list.filter((r) => {
+				const txt = [
+					r.Medicacion,
+					r.Via,
+					r.Ing_Aent_Alimento,
+					r.Ing_Apar_Solucion,
+					r.Sector,
+					r.ProfesionalApellido,
+					r.ProfesionalNombres,
+				]
+					.map((s) => String(s || '').toLowerCase())
+					.join(' ');
+				return txt.includes(q);
+			});
+		}
+		return list;
+	}, [registros, turno, query]);
+
+	const totales = useMemo(() => sumarTotales(filtrados), [filtrados]);
+	const conteoTurnos = useMemo(() => {
+		const c = { manana: 0, tarde: 0, noche: 0 };
+		for (const r of registros) {
+			const t = turnoDeHora(r.Hora);
+			if (t) c[t] += 1;
+		}
+		return c;
+	}, [registros]);
 
 	const formatSelectedDate = () => {
 		if (!selectedDate) return null;
@@ -134,13 +168,23 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	};
 	const fechaFormateada = formatSelectedDate();
 
-	const handleEliminar = async (r: BalanceHidrico) => {
-		if (
-			!confirm(
-				`¿Eliminar este registro?\n\n${r.Medicacion || 'Sin descripción'}\nHora: ${formatearHora(r.Hora)}`,
-			)
-		)
-			return;
+	const abrirNuevo = () => {
+		setEditing(null);
+		setModalOpen(true);
+	};
+	const abrirEditar = (r: BalanceHidrico) => {
+		setEditing(r);
+		setModalOpen(true);
+	};
+	const cerrarModal = () => {
+		setModalOpen(false);
+		setEditing(null);
+	};
+
+	const confirmarEliminar = async () => {
+		if (!aEliminar) return;
+		const r = aEliminar;
+		setAEliminar(null);
 		try {
 			await eliminarBalance(r.IdBalanceHidrico);
 			refetch();
@@ -152,18 +196,29 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const handleExport = async (option: ExportOption) => {
 		if (option !== 'pdf') return;
 		const empresaInfo = await obtenerInfoEmpresa();
+		const ml = (v: number | null | undefined) => formatearMl(v);
 		const parts = filtrados.map((r, idx) => ({
-			title: `Registro ${idx + 1}${esFilaBalance(r.Medicacion) ? ' (balance)' : ''}`,
+			title: `${formatearFechaCorta(r.Fecha)} ${formatearHora(r.Hora)} · ${r.Sector || '—'}  (registro ${idx + 1})`,
 			fields: [
-				{ label: 'Hora', value: formatearHora(r.Hora) },
-				{ label: 'Medicación', value: r.Medicacion || '—' },
-				{ label: 'Parenteral paso', value: formatearMl(r.Ing_Par_Paso) },
-				{ label: 'Enteral paso', value: formatearMl(r.Ing_Aent_Paso) },
-				{ label: 'Diuresis', value: formatearMl(r.Egr_Diuresis) },
-				{ label: 'Catarsis', value: formatearMl(r.Egr_Catarsis) },
-				{ label: 'Total ingresos', value: formatearMl(r.TotalIngresos) },
-				{ label: 'Total egresos', value: formatearMl(r.TotalEgresos) },
-				{ label: 'Balance', value: formatearMl(r.Total) },
+				{ label: 'Parenteral · Medicación', value: r.Medicacion || '—' },
+				{ label: 'Parenteral · Vía', value: r.Via || '—' },
+				{ label: 'Parenteral · Ingreso', value: ml(r.Ing_Par_Ingreso) },
+				{ label: 'Parenteral · Paso', value: ml(r.Ing_Par_Paso) },
+				{ label: 'Alim. enteral · Alimento', value: r.Ing_Aent_Alimento || '—' },
+				{ label: 'Alim. enteral · Ingreso', value: ml(r.Ing_Aent_Ingreso) },
+				{ label: 'Alim. enteral · Paso', value: ml(r.Ing_Aent_Paso) },
+				{ label: 'Alim. parenteral · Solución', value: r.Ing_Apar_Solucion || '—' },
+				{ label: 'Alim. parenteral · Ingreso', value: ml(r.Ing_Apar_Ingreso) },
+				{ label: 'Alim. parenteral · Paso', value: ml(r.Ing_Apar_paso) },
+				{ label: 'Transfusión · Ingreso', value: ml(r.Ing_Tranf_Ingreso) },
+				{ label: 'Transfusión · Paso', value: ml(r.Ing_Tranf_paso) },
+				{ label: 'Egreso · Diuresis', value: ml(r.Egr_Diuresis) },
+				{ label: 'Egreso · Catarsis', value: ml(r.Egr_Catarsis) },
+				{ label: 'Egreso · SNG / Vómito', value: ml(r.Egr_SNG_Vomito) },
+				{ label: 'Egreso · Drenajes', value: ml(r.Egr_Drenajes) },
+				{ label: 'Total ingresos', value: ml(r.TotalIngresos) },
+				{ label: 'Total egresos', value: ml(r.TotalEgresos) },
+				{ label: 'Balance', value: ml(r.Total) },
 			],
 			profesional: {
 				nombre: nombreProfesional(r.ProfesionalApellido, r.ProfesionalNombres),
@@ -171,12 +226,24 @@ const BalanceHidricoSection: React.FC<Props> = ({
 				especialidad: 'Enfermería',
 			},
 		}));
+		parts.push({
+			title: 'TOTALES',
+			fields: [
+				{ label: 'Ingresos', value: `${totales.ingresos} ml` },
+				{ label: 'Egresos', value: `${totales.egresos} ml` },
+				{ label: 'Total balance', value: `${signo(totales.balance)}${totales.balance} ml` },
+			],
+			profesional: { nombre: '', matricula: undefined, especialidad: '' },
+		});
 
+		const turnoLabel = TURNOS.find((t) => t.id === turno)?.label || 'Todos';
 		await exportToPDF({
 			title: 'Balance Hídrico',
-			subtitle: `Fecha: ${fechaISO}`,
+			subtitle: soloDia
+				? `Fecha: ${fechaISO} · Turno: ${turnoLabel}`
+				: `Toda la internación · Turno: ${turnoLabel}`,
 			parts,
-			fileName: `balance_hidrico_${fechaISO}.pdf`,
+			fileName: `balance_hidrico_${soloDia ? fechaISO : 'internacion'}.pdf`,
 			orientation: 'portrait',
 			empresaInfo,
 			patientInfo: {
@@ -193,7 +260,12 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	if (activeSection !== 'balance-hidrico') return null;
 	if (isLoading) return <BedSectionLoading />;
 
-	const balMostrar = resumen?.ultimoBalance?.total ?? resumen?.acumuladoBalance ?? 0;
+	const balanceClase =
+		totales.balance < 0 ? bh.kpiNeg : totales.balance > 0 ? bh.kpiPos : bh.kpiNeutro;
+
+	const celdaNum = (v: number | null | undefined, extra?: string) => (
+		<td className={`${bh.num} ${extra || ''}`}>{formatearNum(v)}</td>
+	);
 
 	return (
 		<div className={styles.root}>
@@ -203,20 +275,18 @@ const BalanceHidricoSection: React.FC<Props> = ({
 					<span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
 					<span className={styles.dateText}>
 						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+						{!soloDia && <span className={bh.scopeTag}>Toda la internación</span>}
 					</span>
 					<div className={styles.dateActions}>
 						{puedeCrear && (
 							<button
 								className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-								onClick={() => {
-									setEditing(null);
-									setModalOpen(true);
-								}}
+								onClick={abrirNuevo}
 							>
 								<span className={styles.addIcon} aria-hidden>
 									+
 								</span>
-								Registro
+								Agregar
 							</button>
 						)}
 						<ExportButton
@@ -229,152 +299,255 @@ const BalanceHidricoSection: React.FC<Props> = ({
 				</div>
 			)}
 
-			{resumen && (
-				<div className={localStyles.summaryBar}>
-					<div className={localStyles.summaryCard}>
-						<span className={localStyles.summaryLabel}>Ingresos (paso)</span>
-						<strong>{resumen.acumuladoIngresos} ml</strong>
-					</div>
-					<div className={localStyles.summaryCard}>
-						<span className={localStyles.summaryLabel}>Egresos</span>
-						<strong>{resumen.acumuladoEgresos} ml</strong>
-					</div>
-					<div
-						className={`${localStyles.summaryCard} ${
-							balMostrar < 0 ? localStyles.neg : localStyles.pos
-						}`}
-					>
-						<span className={localStyles.summaryLabel}>
-							{resumen.ultimoBalance
-								? `Último ${String(resumen.ultimoBalance.medicacion || '').trim()}`
-								: 'Balance del día'}
-						</span>
-						<strong>
-							{resumen.ultimoBalance
-								? `${resumen.ultimoBalance.total} ml`
-								: `${resumen.acumuladoBalance} ml`}
-						</strong>
-					</div>
+			{/* KPIs — Clarion: Ingresos / Egresos / Total Balance */}
+			<div className={bh.kpis}>
+				<div className={`${bh.kpi} ${bh.kpiIng}`}>
+					<span className={bh.kpiLabel}>Ingresos</span>
+					<strong className={bh.kpiValue}>
+						{totales.ingresos}
+						<small>ml</small>
+					</strong>
+					<span className={bh.kpiHint}>
+						Par {totales.porColumna.Ing_Par_Paso} · Ent {totales.porColumna.Ing_Aent_Paso} · Apar{' '}
+						{totales.porColumna.Ing_Apar_paso} · Tranf {totales.porColumna.Ing_Tranf_paso}
+					</span>
 				</div>
-			)}
+				<div className={`${bh.kpi} ${bh.kpiEgr}`}>
+					<span className={bh.kpiLabel}>Egresos</span>
+					<strong className={bh.kpiValue}>
+						{totales.egresos}
+						<small>ml</small>
+					</strong>
+					<span className={bh.kpiHint}>
+						Diur {totales.porColumna.Egr_Diuresis} · Cat {totales.porColumna.Egr_Catarsis} · SNG{' '}
+						{totales.porColumna.Egr_SNG_Vomito} · Dren {totales.porColumna.Egr_Drenajes}
+					</span>
+				</div>
+				<div className={`${bh.kpi} ${bh.kpiBal} ${balanceClase}`}>
+					<span className={bh.kpiLabel}>Total balance</span>
+					<strong className={bh.kpiValue}>
+						{signo(totales.balance)}
+						{totales.balance}
+						<small>ml</small>
+					</strong>
+					<span className={bh.kpiHint}>
+						{filtrados.length} {filtrados.length === 1 ? 'registro' : 'registros'}
+						{turno !== 'todos' ? ` · turno ${TURNOS.find((t) => t.id === turno)?.label}` : ''}
+					</span>
+				</div>
+			</div>
 
-			<div className={tableStyles.toolbar}>
-				<div className={tableStyles.searchWrap}>
-					<span className={tableStyles.searchIcon} aria-hidden>
+			{/* Toolbar: búsqueda · turnos · sólo el día */}
+			<div className={bh.toolbar}>
+				<div className={`${styles.searchWrap} ${bh.search}`}>
+					<span className={styles.searchIcon} aria-hidden>
 						🔎
 					</span>
 					<input
-						className={tableStyles.searchInput}
+						className={styles.searchInput}
 						type="text"
-						placeholder="Buscar por medicación, alimento, profesional…"
+						placeholder="Buscar medicación, alimento, solución, sector, profesional…"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 					/>
 				</div>
+
+				<div className={bh.turnos} role="tablist" aria-label="Turnos">
+					<span className={bh.turnosLabel}>Turno</span>
+					{TURNOS.map((t) => {
+						const count = t.id === 'todos' ? registros.length : conteoTurnos[t.id];
+						return (
+							<button
+								key={t.id}
+								type="button"
+								role="tab"
+								aria-selected={turno === t.id}
+								className={`${bh.turnoBtn} ${turno === t.id ? bh.turnoBtnActive : ''}`}
+								onClick={() => setTurno(t.id)}
+								title={t.rango || 'Todos los turnos'}
+							>
+								{t.label}
+								<span className={bh.turnoCount}>{count}</span>
+							</button>
+						);
+					})}
+				</div>
+
+				<label className={bh.switch}>
+					<input
+						type="checkbox"
+						checked={soloDia}
+						onChange={(e) => setSoloDia(e.target.checked)}
+					/>
+					<span className={bh.switchTrack} aria-hidden>
+						<span className={bh.switchThumb} />
+					</span>
+					<span className={bh.switchText}>Sólo el día seleccionado</span>
+				</label>
 			</div>
 
-			<div className={tableStyles.content}>
-				<div className={tableStyles.tableHolder}>
+			<div className={styles.content}>
+				<div className={styles.tableHolder}>
 					{error && (
 						<div className={tableStyles.errorBox}>Error al cargar: {error.message}</div>
 					)}
-					{!isLoading && !error && filtrados.length === 0 ? (
+					{!error && filtrados.length === 0 ? (
 						<EmptyState
 							variant="controles"
-							text="No hay registros de balance hídrico"
-							description="Cargá ingresos/egresos o un balance parcial/total del turno."
-							actionLabel={puedeCrear ? 'Nuevo registro' : undefined}
-							onAction={puedeCrear ? () => setModalOpen(true) : undefined}
+							text={
+								registros.length
+									? 'Sin registros para este filtro'
+									: soloDia
+										? 'No hay registros de balance hídrico para esta fecha'
+										: 'No hay registros de balance hídrico en la internación'
+							}
+							description={
+								registros.length
+									? 'Probá con otro turno o limpiá la búsqueda.'
+									: 'Cargá ingresos (parenteral, enteral, transfusión) y egresos (diuresis, catarsis, SNG, drenajes) con el botón Agregar.'
+							}
+							actionLabel={puedeCrear && !registros.length ? 'Agregar registro' : undefined}
+							onAction={puedeCrear && !registros.length ? abrirNuevo : undefined}
 						/>
-					) : !isLoading && !error ? (
+					) : !error ? (
 						<>
-							<div className={tableStyles.tableContainer}>
-								<table className={tableStyles.table}>
+							<div className={bh.gridWrap}>
+								<table className={bh.grid}>
 									<thead>
-										<tr>
-											<th>Hora</th>
-											<th>Descripción</th>
-											<th>Par. paso</th>
-											<th>Ent. paso</th>
-											<th>Diuresis</th>
-											<th>Otros egr.</th>
-											<th>Ingresos</th>
-											<th>Egresos</th>
-											<th>Balance</th>
-											<th>Profesional</th>
-											<th>Acciones</th>
+										<tr className={bh.headGroup}>
+											<th rowSpan={2} className={bh.colSector}>
+												Sector
+											</th>
+											{!soloDia && (
+												<th rowSpan={2} className={bh.colFecha}>
+													Fecha
+												</th>
+											)}
+											<th rowSpan={2} className={bh.colHora}>
+												Hora
+											</th>
+											<th colSpan={3} className={bh.grpIng}>
+												Ingresos parenteral
+											</th>
+											<th colSpan={3} className={bh.grpIng}>
+												Alimentación enteral
+											</th>
+											<th colSpan={3} className={bh.grpIng}>
+												Alimentación parenteral
+											</th>
+											<th colSpan={2} className={bh.grpIng}>
+												Transfusión
+											</th>
+											<th colSpan={4} className={bh.grpEgr}>
+												Egresos
+											</th>
+											<th colSpan={3} className={bh.grpTot}>
+												Totales
+											</th>
+											<th rowSpan={2} className={bh.colProf}>
+												Profesional
+											</th>
+											<th rowSpan={2} className={bh.colAcc}>
+												Acciones
+											</th>
+										</tr>
+										<tr className={bh.headSub}>
+											<th className={bh.colTexto}>Medicación</th>
+											<th className={bh.num}>Ingreso</th>
+											<th className={`${bh.num} ${bh.sepDer}`}>Paso</th>
+											<th className={bh.colTexto}>Alimento</th>
+											<th className={bh.num}>Ingreso</th>
+											<th className={`${bh.num} ${bh.sepDer}`}>Paso</th>
+											<th className={bh.colTexto}>Solución</th>
+											<th className={bh.num}>Ingreso</th>
+											<th className={`${bh.num} ${bh.sepDer}`}>Paso</th>
+											<th className={bh.num}>Ingreso</th>
+											<th className={`${bh.num} ${bh.sepDer}`}>Paso</th>
+											<th className={bh.num}>Diuresis</th>
+											<th className={bh.num}>Catarsis</th>
+											<th className={bh.num}>SNG / Vóm.</th>
+											<th className={`${bh.num} ${bh.sepDer}`}>Drenajes</th>
+											<th className={bh.num}>Ingresos</th>
+											<th className={bh.num}>Egresos</th>
+											<th className={`${bh.num} ${bh.sepDer}`}>Balance</th>
 										</tr>
 									</thead>
 									<tbody>
 										{filtrados.map((r) => {
-											const otrosEgr =
-												Number(r.Egr_Catarsis || 0) +
-												Number(r.Egr_SNG_Vomito || 0) +
-												Number(r.Egr_Drenajes || 0);
+											const bal = Number(r.Total || 0);
 											return (
-												<tr
-													key={r.IdBalanceHidrico}
-													className={
-														esFilaBalance(r.Medicacion) ? localStyles.rowBalance : undefined
-													}
-												>
-													<td>{formatearHora(r.Hora)}</td>
-													<td>
-														{esFilaBalance(r.Medicacion) ? (
-															<span className={localStyles.badgeBalance}>
-																{r.Medicacion}
-															</span>
-														) : (
-															r.Medicacion || '—'
-														)}
+												<tr key={r.IdBalanceHidrico}>
+													<td className={bh.colSector}>
+														<span className={bh.sectorBadge}>{r.Sector || '—'}</span>
 													</td>
-													<td>{formatearMl(r.Ing_Par_Paso)}</td>
-													<td>{formatearMl(r.Ing_Aent_Paso)}</td>
-													<td>{formatearMl(r.Egr_Diuresis)}</td>
-													<td>{otrosEgr ? `${otrosEgr} ml` : '—'}</td>
-													<td>{formatearMl(r.TotalIngresos)}</td>
-													<td>{formatearMl(r.TotalEgresos)}</td>
+													{!soloDia && (
+														<td className={bh.colFecha}>{formatearFechaCorta(r.Fecha)}</td>
+													)}
+													<td className={bh.colHora}>
+														<span className={bh.hora}>{formatearHora(r.Hora)}</span>
+														<span className={`${bh.turnoDot} ${bh[`dot_${turnoDeHora(r.Hora) || 'none'}`]}`} />
+													</td>
+													<td className={bh.colTexto} title={r.Medicacion || ''}>
+														<span className={bh.texto}>{r.Medicacion || ''}</span>
+														{r.Via && <span className={bh.via}>{r.Via}</span>}
+													</td>
+													{celdaNum(r.Ing_Par_Ingreso)}
+													{celdaNum(r.Ing_Par_Paso, `${bh.paso} ${bh.sepDer}`)}
+													<td className={bh.colTexto} title={r.Ing_Aent_Alimento || ''}>
+														<span className={bh.texto}>{r.Ing_Aent_Alimento || ''}</span>
+													</td>
+													{celdaNum(r.Ing_Aent_Ingreso)}
+													{celdaNum(r.Ing_Aent_Paso, `${bh.paso} ${bh.sepDer}`)}
+													<td className={bh.colTexto} title={r.Ing_Apar_Solucion || ''}>
+														<span className={bh.texto}>{r.Ing_Apar_Solucion || ''}</span>
+													</td>
+													{celdaNum(r.Ing_Apar_Ingreso)}
+													{celdaNum(r.Ing_Apar_paso, `${bh.paso} ${bh.sepDer}`)}
+													{celdaNum(r.Ing_Tranf_Ingreso)}
+													{celdaNum(r.Ing_Tranf_paso, `${bh.paso} ${bh.sepDer}`)}
+													{celdaNum(r.Egr_Diuresis, bh.egr)}
+													{celdaNum(r.Egr_Catarsis, bh.egr)}
+													{celdaNum(r.Egr_SNG_Vomito, bh.egr)}
+													{celdaNum(r.Egr_Drenajes, `${bh.egr} ${bh.sepDer}`)}
+													<td className={`${bh.num} ${bh.tot}`}>{formatearNum(r.TotalIngresos)}</td>
+													<td className={`${bh.num} ${bh.tot}`}>{formatearNum(r.TotalEgresos)}</td>
 													<td
-														className={
-															Number(r.Total || 0) < 0 ? localStyles.neg : undefined
-														}
+														className={`${bh.num} ${bh.tot} ${bh.sepDer} ${
+															bal < 0 ? bh.neg : bal > 0 ? bh.pos : ''
+														}`}
 													>
-														{formatearMl(r.Total)}
+														{bal === 0 ? '0' : `${signo(bal)}${formatearNum(bal)}`}
 													</td>
-													<td>
-														{nombreProfesional(
-															r.ProfesionalApellido,
-															r.ProfesionalNombres,
-														)}
+													<td className={bh.colProf} title={nombreProfesional(r.ProfesionalApellido, r.ProfesionalNombres)}>
+														<span className={bh.texto}>
+															{nombreProfesional(r.ProfesionalApellido, r.ProfesionalNombres)}
+														</span>
 													</td>
-													<td className={tableStyles.cellAccion}>
-														<div className={tableStyles.actionBtns}>
+													<td className={bh.colAcc}>
+														<div className={bh.acciones}>
 															<button
 																className={tableStyles.btnAction}
 																onClick={() => setSelected(r)}
 																title="Ver detalle"
 															>
-																<IoEyeOutline color="#5BC0DE" size={18} />
+																<IoEyeOutline color="#5BC0DE" size={17} />
 															</button>
 															{puedeEditar && puedeGestionarFila(r) && (
 																<button
 																	className={tableStyles.btnAction}
-																	onClick={() => {
-																		setEditing(r);
-																		setModalOpen(true);
-																	}}
-																	title="Editar"
+																	onClick={() => abrirEditar(r)}
+																	title="Cambiar"
 																>
-																	<IoPencilOutline color="#5BC0DE" size={18} />
+																	<IoPencilOutline color="#5BC0DE" size={17} />
 																</button>
 															)}
 															{puedeEliminar && puedeGestionarFila(r) && (
 																<button
 																	className={tableStyles.btnAction}
-																	onClick={() => handleEliminar(r)}
-																	title="Eliminar"
+																	onClick={() => setAEliminar(r)}
+																	title="Borrar"
 																>
-																	<IoTrashOutline color="#5BC0DE" size={18} />
+																	<IoTrashOutline color="#5BC0DE" size={17} />
 																</button>
 															)}
 														</div>
@@ -383,114 +556,207 @@ const BalanceHidricoSection: React.FC<Props> = ({
 											);
 										})}
 									</tbody>
+									<tfoot>
+										<tr>
+											<td colSpan={soloDia ? 2 : 3} className={bh.footLabel}>
+												Totales
+											</td>
+											<td />
+											<td className={bh.num}>{formatearNum(totales.porColumna.Ing_Par_Ingreso)}</td>
+											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Ing_Par_Paso)}</td>
+											<td />
+											<td className={bh.num}>{formatearNum(totales.porColumna.Ing_Aent_Ingreso)}</td>
+											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Ing_Aent_Paso)}</td>
+											<td />
+											<td className={bh.num}>{formatearNum(totales.porColumna.Ing_Apar_Ingreso)}</td>
+											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Ing_Apar_paso)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Ing_Tranf_Ingreso)}</td>
+											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Ing_Tranf_paso)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_Diuresis)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_Catarsis)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_SNG_Vomito)}</td>
+											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Egr_Drenajes)}</td>
+											<td className={bh.num}>{totales.ingresos}</td>
+											<td className={bh.num}>{totales.egresos}</td>
+											<td
+												className={`${bh.num} ${bh.sepDer} ${
+													totales.balance < 0 ? bh.neg : totales.balance > 0 ? bh.pos : ''
+												}`}
+											>
+												{signo(totales.balance)}
+												{totales.balance}
+											</td>
+											<td />
+											<td className={bh.colAcc} />
+										</tr>
+									</tfoot>
 								</table>
 							</div>
 
-							<div className={tableStyles.mobileCards}>
-								{filtrados.map((r) => (
-									<article
-										key={`bh-m-${r.IdBalanceHidrico}`}
-										className={tableStyles.mobileCard}
-									>
-										<div className={tableStyles.mobileCardHeader}>
-											<span>{formatearHora(r.Hora)}</span>
-											{esFilaBalance(r.Medicacion) && (
-												<span className={localStyles.badgeBalance}>Balance</span>
-											)}
-										</div>
-										<p className={tableStyles.mobileMeta}>
-											{r.Medicacion || 'Sin descripción'} · Ing {formatearMl(r.TotalIngresos)} ·
-											Egr {formatearMl(r.TotalEgresos)} · Bal {formatearMl(r.Total)}
-										</p>
-										<p className={tableStyles.mobileProfesional}>
-											{nombreProfesional(r.ProfesionalApellido, r.ProfesionalNombres)}
-										</p>
-										<div className={tableStyles.actionBtns}>
-											<button
-												className={tableStyles.btnAction}
-												onClick={() => setSelected(r)}
-												title="Ver"
-											>
-												<IoEyeOutline color="#5BC0DE" size={18} />
-											</button>
-											{puedeEditar && puedeGestionarFila(r) && (
-												<button
-													className={tableStyles.btnAction}
-													onClick={() => {
-														setEditing(r);
-														setModalOpen(true);
-													}}
-													title="Editar"
-												>
-													<IoPencilOutline color="#5BC0DE" size={18} />
-												</button>
-											)}
-											{puedeEliminar && puedeGestionarFila(r) && (
-												<button
-													className={tableStyles.btnAction}
-													onClick={() => handleEliminar(r)}
-													title="Eliminar"
-												>
-													<IoTrashOutline color="#5BC0DE" size={18} />
-												</button>
-											)}
-										</div>
-									</article>
-								))}
+							{/* Mobile */}
+							<div className={bh.cards}>
+								{filtrados.map((r) => {
+									const bal = Number(r.Total || 0);
+									return (
+										<article key={`bh-m-${r.IdBalanceHidrico}`} className={bh.card}>
+											<header className={bh.cardHead}>
+												<span className={bh.sectorBadge}>{r.Sector || '—'}</span>
+												<span className={bh.cardHora}>
+													{!soloDia && `${formatearFechaCorta(r.Fecha)} · `}
+													{formatearHora(r.Hora)}
+												</span>
+												<strong className={`${bh.cardBal} ${bal < 0 ? bh.neg : bal > 0 ? bh.pos : ''}`}>
+													{signo(bal)}
+													{bal} ml
+												</strong>
+											</header>
+											<dl className={bh.cardGrid}>
+												{r.Medicacion && (
+													<>
+														<dt>Medicación</dt>
+														<dd>
+															{r.Medicacion} {r.Via ? `(${r.Via})` : ''} · {formatearMl(r.Ing_Par_Paso)}
+														</dd>
+													</>
+												)}
+												{Boolean(r.Ing_Aent_Alimento || Number(r.Ing_Aent_Paso)) && (
+													<>
+														<dt>Enteral</dt>
+														<dd>
+															{r.Ing_Aent_Alimento || '—'} · {formatearMl(r.Ing_Aent_Paso)}
+														</dd>
+													</>
+												)}
+												{Boolean(r.Ing_Apar_Solucion || Number(r.Ing_Apar_paso)) && (
+													<>
+														<dt>Alim. parenteral</dt>
+														<dd>
+															{r.Ing_Apar_Solucion || '—'} · {formatearMl(r.Ing_Apar_paso)}
+														</dd>
+													</>
+												)}
+												{Number(r.Ing_Tranf_paso) > 0 && (
+													<>
+														<dt>Transfusión</dt>
+														<dd>{formatearMl(r.Ing_Tranf_paso)}</dd>
+													</>
+												)}
+												<dt>Egresos</dt>
+												<dd>
+													Diur {formatearNum(r.Egr_Diuresis) || 0} · Cat {formatearNum(r.Egr_Catarsis) || 0} · SNG{' '}
+													{formatearNum(r.Egr_SNG_Vomito) || 0} · Dren {formatearNum(r.Egr_Drenajes) || 0}
+												</dd>
+											</dl>
+											<footer className={bh.cardFoot}>
+												<span className={bh.cardProf}>
+													{nombreProfesional(r.ProfesionalApellido, r.ProfesionalNombres)}
+												</span>
+												<div className={bh.acciones}>
+													<button className={tableStyles.btnAction} onClick={() => setSelected(r)} title="Ver">
+														<IoEyeOutline color="#5BC0DE" size={18} />
+													</button>
+													{puedeEditar && puedeGestionarFila(r) && (
+														<button className={tableStyles.btnAction} onClick={() => abrirEditar(r)} title="Cambiar">
+															<IoPencilOutline color="#5BC0DE" size={18} />
+														</button>
+													)}
+													{puedeEliminar && puedeGestionarFila(r) && (
+														<button className={tableStyles.btnAction} onClick={() => setAEliminar(r)} title="Borrar">
+															<IoTrashOutline color="#5BC0DE" size={18} />
+														</button>
+													)}
+												</div>
+											</footer>
+										</article>
+									);
+								})}
 							</div>
 						</>
 					) : null}
 				</div>
 			</div>
 
+			{/* Detalle */}
 			{selected && (
 				<div className={tableStyles.modalOverlay} onClick={() => setSelected(null)}>
 					<div className={tableStyles.modalContent} onClick={(e) => e.stopPropagation()}>
 						<div className={tableStyles.modalHeader}>
-							<h3>Detalle balance hídrico</h3>
+							<h3>
+								Balance hídrico · {formatearFechaCorta(selected.Fecha)} {formatearHora(selected.Hora)}
+							</h3>
 							<button className={tableStyles.btnCerrar} onClick={() => setSelected(null)}>
 								×
 							</button>
 						</div>
 						<div className={tableStyles.modalBody}>
-							<div className={tableStyles.detailGrid}>
+							<div className={bh.detalle}>
 								{(
 									[
-										['Fecha', selected.Fecha],
-										['Hora', formatearHora(selected.Hora)],
-										['Medicación', selected.Medicacion || '—'],
-										['Vía', selected.Via || '—'],
-										['Par. ingreso', formatearMl(selected.Ing_Par_Ingreso)],
-										['Par. paso', formatearMl(selected.Ing_Par_Paso)],
-										['Alimento', selected.Ing_Aent_Alimento || '—'],
-										['Ent. ingreso', formatearMl(selected.Ing_Aent_Ingreso)],
-										['Ent. paso', formatearMl(selected.Ing_Aent_Paso)],
-										['Solución', selected.Ing_Apar_Solucion || '—'],
-										['Apar. ingreso', formatearMl(selected.Ing_Apar_Ingreso)],
-										['Apar. paso', formatearMl(selected.Ing_Apar_paso)],
-										['Transf. ingreso', formatearMl(selected.Ing_Tranf_Ingreso)],
-										['Transf. paso', formatearMl(selected.Ing_Tranf_paso)],
-										['Diuresis', formatearMl(selected.Egr_Diuresis)],
-										['Catarsis', formatearMl(selected.Egr_Catarsis)],
-										['SNG / vómito', formatearMl(selected.Egr_SNG_Vomito)],
-										['Drenajes', formatearMl(selected.Egr_Drenajes)],
-										['Total ingresos', formatearMl(selected.TotalIngresos)],
-										['Total egresos', formatearMl(selected.TotalEgresos)],
-										['Balance', formatearMl(selected.Total)],
 										[
-											'Profesional',
-											nombreProfesional(
-												selected.ProfesionalApellido,
-												selected.ProfesionalNombres,
-											),
+											'Ingresos parenteral',
+											[
+												['Medicación', selected.Medicacion || '—'],
+												['Vía', selected.Via || '—'],
+												['Ingreso', formatearMl(selected.Ing_Par_Ingreso)],
+												['Paso', formatearMl(selected.Ing_Par_Paso)],
+											],
 										],
-										['Sector', selected.Sector || '—'],
-									] as [string, string][]
-								).map(([label, value]) => (
-									<div className={tableStyles.detailItem} key={label}>
-										<span className={tableStyles.detailLabel}>{label}:</span>
-										<span className={tableStyles.detailValue}>{value}</span>
-									</div>
+										[
+											'Alimentación enteral',
+											[
+												['Alimento', selected.Ing_Aent_Alimento || '—'],
+												['Ingreso', formatearMl(selected.Ing_Aent_Ingreso)],
+												['Paso', formatearMl(selected.Ing_Aent_Paso)],
+											],
+										],
+										[
+											'Alimentación parenteral',
+											[
+												['Solución', selected.Ing_Apar_Solucion || '—'],
+												['Ingreso', formatearMl(selected.Ing_Apar_Ingreso)],
+												['Paso', formatearMl(selected.Ing_Apar_paso)],
+											],
+										],
+										[
+											'Transfusión',
+											[
+												['Ingreso', formatearMl(selected.Ing_Tranf_Ingreso)],
+												['Paso', formatearMl(selected.Ing_Tranf_paso)],
+											],
+										],
+										[
+											'Egresos',
+											[
+												['Diuresis', formatearMl(selected.Egr_Diuresis)],
+												['Catarsis', formatearMl(selected.Egr_Catarsis)],
+												['SNG / Vómito', formatearMl(selected.Egr_SNG_Vomito)],
+												['Drenajes', formatearMl(selected.Egr_Drenajes)],
+											],
+										],
+										[
+											'Registro',
+											[
+												['Sector', selected.Sector || '—'],
+												[
+													'Profesional',
+													nombreProfesional(selected.ProfesionalApellido, selected.ProfesionalNombres),
+												],
+												['Total ingresos', formatearMl(selected.TotalIngresos)],
+												['Total egresos', formatearMl(selected.TotalEgresos)],
+												['Balance', `${signo(Number(selected.Total || 0))}${Number(selected.Total || 0)} ml`],
+											],
+										],
+									] as [string, [string, string][]][]
+								).map(([grupo, items]) => (
+									<section key={grupo} className={bh.detalleGrupo}>
+										<h4>{grupo}</h4>
+										{items.map(([label, value]) => (
+											<div className={bh.detalleItem} key={label}>
+												<span>{label}</span>
+												<strong>{value}</strong>
+											</div>
+										))}
+									</section>
 								))}
 							</div>
 						</div>
@@ -498,14 +764,27 @@ const BalanceHidricoSection: React.FC<Props> = ({
 				</div>
 			)}
 
+			<ConfirmationModal
+				isOpen={!!aEliminar}
+				onClose={() => setAEliminar(null)}
+				onConfirm={confirmarEliminar}
+				title="Borrar registro de balance hídrico"
+				message={
+					aEliminar
+						? `${formatearFechaCorta(aEliminar.Fecha)} ${formatearHora(aEliminar.Hora)} · ${aEliminar.Sector || ''}\n${
+								aEliminar.Medicacion || aEliminar.Ing_Aent_Alimento || aEliminar.Ing_Apar_Solucion || 'Sin descripción'
+							}\nBalance: ${Number(aEliminar.Total || 0)} ml\n\nEsta acción no se puede deshacer.`
+						: ''
+				}
+				confirmText="Borrar"
+				cancelText="Cancelar"
+			/>
+
 			<ModalBasePaciente
 				numeroVisita={numeroVisita ? String(numeroVisita) : ''}
-				onClose={() => {
-					setModalOpen(false);
-					setEditing(null);
-				}}
+				onClose={cerrarModal}
 				isOpen={modalOpen}
-				titulo={editing ? 'Editar balance hídrico' : 'Nuevo registro de balance hídrico'}
+				titulo={editing ? 'Cambiar registro de balance hídrico' : 'Agregar registro de balance hídrico'}
 				footerButtons={
 					<button
 						type="submit"
@@ -522,10 +801,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 					registroToEdit={editing}
 					bedSector={bedSector}
 					refetch={refetch}
-					onClose={() => {
-						setModalOpen(false);
-						setEditing(null);
-					}}
+					onClose={cerrarModal}
 				/>
 			</ModalBasePaciente>
 		</div>

@@ -2,20 +2,20 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '@/app/contexts/AppContext';
-import {
-	actualizarBalance,
-	crearBalance,
-} from '../../../services/balanceHidricoService';
+import { actualizarBalance, crearBalance, turnoDeHora, TURNOS } from '../../../services/balanceHidricoService';
 import type { BalanceHidrico, BalanceHidricoPayload } from '../../../types/balanceHidrico';
-import { getSectorId, getSessionUser, getUserCodOperador, getHcIdProfesional } from '@/app/utils/sessionUser';
+import {
+	getSectorId,
+	getSessionUser,
+	getUserCodOperador,
+	getHcIdProfesional,
+} from '@/app/utils/sessionUser';
 import styles from './NuevoBalanceHidricoModal.module.css';
 
 const getLocalDate = (d: Date) =>
 	`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const getLocalTime = (d: Date) =>
 	`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-
-type TipoRegistro = 'registro' | 'parcial' | 'total';
 
 interface Props {
 	defaultNumeroVisita: number | null;
@@ -25,6 +25,20 @@ interface Props {
 	registroToEdit?: BalanceHidrico | null;
 	bedSector?: string | null;
 }
+
+type NumKey =
+	| 'Ing_Par_Ingreso'
+	| 'Ing_Par_Paso'
+	| 'Ing_Aent_Ingreso'
+	| 'Ing_Aent_Paso'
+	| 'Ing_Apar_Ingreso'
+	| 'Ing_Apar_paso'
+	| 'Ing_Tranf_Ingreso'
+	| 'Ing_Tranf_paso'
+	| 'Egr_Diuresis'
+	| 'Egr_Catarsis'
+	| 'Egr_SNG_Vomito'
+	| 'Egr_Drenajes';
 
 /** Vacío → 0 para que JSON no omita el campo y el UPDATE pueda limpiar. */
 function n0(v: number | undefined | null): number {
@@ -85,26 +99,19 @@ function fromRow(row: BalanceHidrico, sector: string): BalanceHidricoPayload {
 	};
 }
 
-function detectTipo(med?: string | null): TipoRegistro {
-	const m = String(med || '').toUpperCase();
-	if (m.includes('TOTAL')) return 'total';
-	if (m.includes('PARCIAL') || m.startsWith('BALANCE')) return 'parcial';
-	return 'registro';
-}
-
-function payloadParaApi(form: BalanceHidricoPayload, numeroVisita: number, sector: string): BalanceHidricoPayload {
+function payloadParaApi(form: BalanceHidricoPayload, numeroVisita: number): BalanceHidricoPayload {
 	return {
 		NumeroVisita: numeroVisita,
 		Fecha: form.Fecha,
 		Hora: form.Hora,
-		Medicacion: form.Medicacion || '',
-		Via: form.Via || '',
+		Medicacion: (form.Medicacion || '').trim(),
+		Via: (form.Via || '').trim().toUpperCase(),
 		Ing_Par_Ingreso: n0(form.Ing_Par_Ingreso),
 		Ing_Par_Paso: n0(form.Ing_Par_Paso),
-		Ing_Aent_Alimento: form.Ing_Aent_Alimento || '',
+		Ing_Aent_Alimento: (form.Ing_Aent_Alimento || '').trim(),
 		Ing_Aent_Ingreso: n0(form.Ing_Aent_Ingreso),
 		Ing_Aent_Paso: n0(form.Ing_Aent_Paso),
-		Ing_Apar_Solucion: form.Ing_Apar_Solucion || '',
+		Ing_Apar_Solucion: (form.Ing_Apar_Solucion || '').trim(),
 		Ing_Apar_Ingreso: n0(form.Ing_Apar_Ingreso),
 		Ing_Apar_paso: n0(form.Ing_Apar_paso),
 		Ing_Tranf_Ingreso: n0(form.Ing_Tranf_Ingreso),
@@ -113,7 +120,7 @@ function payloadParaApi(form: BalanceHidricoPayload, numeroVisita: number, secto
 		Egr_Catarsis: n0(form.Egr_Catarsis),
 		Egr_SNG_Vomito: n0(form.Egr_SNG_Vomito),
 		Egr_Drenajes: n0(form.Egr_Drenajes),
-		Sector: (sector || form.Sector || '').slice(0, 4),
+		Sector: (form.Sector || '').trim().toUpperCase().slice(0, 4),
 	};
 }
 
@@ -128,70 +135,63 @@ export default function NuevoBalanceHidricoModal({
 	const { usuario, sectorSeleccionado } = useAppContext();
 	const usuarioActual = getSessionUser(usuario);
 	const operadorId = getHcIdProfesional(usuarioActual) ?? getUserCodOperador(usuarioActual) ?? 0;
-	const idSector = (getSectorId(sectorSeleccionado) || bedSector || '').slice(0, 4);
+	const idSector = (getSectorId(sectorSeleccionado) || bedSector || '').toUpperCase().slice(0, 4);
 	const isEdit = !!registroToEdit?.IdBalanceHidrico;
 
 	const initial = useMemo(() => {
 		if (registroToEdit) return fromRow(registroToEdit, idSector);
-		return emptyForm(
-			defaultNumeroVisita || 0,
-			defaultFecha || getLocalDate(new Date()),
-			idSector,
-		);
+		return emptyForm(defaultNumeroVisita || 0, defaultFecha || getLocalDate(new Date()), idSector);
 	}, [registroToEdit, defaultNumeroVisita, defaultFecha, idSector]);
 
 	const [form, setForm] = useState<BalanceHidricoPayload>(initial);
-	const [tipo, setTipo] = useState<TipoRegistro>(detectTipo(registroToEdit?.Medicacion));
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		setForm(initial);
-		setTipo(detectTipo(registroToEdit?.Medicacion));
-	}, [initial, registroToEdit]);
+		setError(null);
+	}, [initial]);
 
 	const set = <K extends keyof BalanceHidricoPayload>(k: K, v: BalanceHidricoPayload[K]) =>
 		setForm((p) => ({ ...p, [k]: v }));
 
-	const setNum = (k: keyof BalanceHidricoPayload) => (e: React.ChangeEvent<HTMLInputElement>) =>
-		set(k, e.target.value === '' ? undefined : (Number(e.target.value) as never));
+	const setNum = (k: NumKey) => (e: React.ChangeEvent<HTMLInputElement>) => {
+		const raw = e.target.value;
+		if (raw === '') return set(k, undefined);
+		const n = Number(raw);
+		set(k, Number.isFinite(n) && n >= 0 ? n : undefined);
+	};
 
-	const previewTotales = useMemo(() => {
+	const copiarIngresoAPaso = (ing: NumKey, paso: NumKey) => set(paso, form[ing]);
+
+	const totales = useMemo(() => {
 		const ing =
-			n0(form.Ing_Par_Paso) +
-			n0(form.Ing_Aent_Paso) +
-			n0(form.Ing_Apar_paso) +
-			n0(form.Ing_Tranf_paso);
+			n0(form.Ing_Par_Paso) + n0(form.Ing_Aent_Paso) + n0(form.Ing_Apar_paso) + n0(form.Ing_Tranf_paso);
 		const egr =
-			n0(form.Egr_Diuresis) +
-			n0(form.Egr_Catarsis) +
-			n0(form.Egr_SNG_Vomito) +
-			n0(form.Egr_Drenajes);
+			n0(form.Egr_Diuresis) + n0(form.Egr_Catarsis) + n0(form.Egr_SNG_Vomito) + n0(form.Egr_Drenajes);
 		return { ing, egr, bal: ing - egr };
 	}, [form]);
 
-	const applyTipo = (t: TipoRegistro) => {
-		setTipo(t);
-		if (t === 'parcial') set('Medicacion', 'BALANCE PARCIAL');
-		else if (t === 'total') set('Medicacion', 'BALANCE TOTAL');
-		else if (/^balance/i.test(String(form.Medicacion || ''))) set('Medicacion', '');
-	};
+	const tieneDatos = totales.ing > 0 || totales.egr > 0 ||
+		n0(form.Ing_Par_Ingreso) + n0(form.Ing_Aent_Ingreso) + n0(form.Ing_Apar_Ingreso) + n0(form.Ing_Tranf_Ingreso) > 0 ||
+		!!(form.Medicacion || form.Ing_Aent_Alimento || form.Ing_Apar_Solucion);
+
+	const turnoActual = turnoDeHora(form.Hora);
+	const turnoLabel = TURNOS.find((t) => t.id === turnoActual)?.label;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if (saving) return;
 		const visita = defaultNumeroVisita || form.NumeroVisita;
-		if (!visita) {
-			setError('Falta número de visita');
-			return;
-		}
-		if (!operadorId) {
-			setError('Sesión sin operador — no se puede guardar');
-			return;
-		}
+		if (!visita) return setError('Falta número de visita');
+		if (!operadorId) return setError('Sesión sin operador — no se puede guardar');
+		if (!form.Fecha || !form.Hora) return setError('Fecha y hora son obligatorias');
+		if (!tieneDatos) return setError('Cargá al menos un ingreso o un egreso');
+
 		setSaving(true);
 		setError(null);
 		try {
-			const payload = payloadParaApi(form, visita, idSector);
+			const payload = payloadParaApi(form, visita);
 			if (isEdit && registroToEdit) {
 				await actualizarBalance(registroToEdit.IdBalanceHidrico, payload);
 			} else {
@@ -206,33 +206,76 @@ export default function NuevoBalanceHidricoModal({
 		}
 	};
 
-	return (
-		<form id="nuevo-balance-hidrico-form" onSubmit={handleSubmit} className={styles.form}>
-			{error && <div className={styles.errorMsg}>{error}</div>}
-
-			<div className={styles.tipoRow}>
-				{(
-					[
-						['registro', 'Registro'],
-						['parcial', 'Parcial'],
-						['total', 'Total'],
-					] as const
-				).map(([key, label]) => (
-					<button
-						key={key}
-						type="button"
-						className={`${styles.tipoBtn} ${tipo === key ? styles.tipoBtnActive : ''}`}
-						onClick={() => applyTipo(key)}
-					>
-						{label}
-					</button>
-				))}
+	// ---- render helpers (funciones, no componentes: evitan remount/pérdida de foco) ----
+	const renderNum = (k: NumKey, label: string) => (
+		<div className={styles.field}>
+			<label className={styles.label} htmlFor={`bh-${k}`}>
+				{label}
+			</label>
+			<div className={styles.mlWrap}>
+				<input
+					id={`bh-${k}`}
+					className={`${styles.input} ${styles.inputNum}`}
+					type="number"
+					inputMode="decimal"
+					min={0}
+					step="any"
+					placeholder="0"
+					value={form[k] ?? ''}
+					onChange={setNum(k)}
+					onFocus={(e) => e.currentTarget.select()}
+				/>
+				<span className={styles.mlSuffix}>ml</span>
 			</div>
+		</div>
+	);
 
-			<div className={styles.gridHead}>
+	const renderPar = (ing: NumKey, paso: NumKey) => (
+		<div className={styles.par}>
+			{renderNum(ing, 'Ingreso')}
+			<button
+				type="button"
+				className={styles.copyBtn}
+				title="Copiar Ingreso → Paso"
+				aria-label="Copiar ingreso a paso"
+				onClick={() => copiarIngresoAPaso(ing, paso)}
+				disabled={form[ing] == null}
+			>
+				→
+			</button>
+			{renderNum(paso, 'Paso')}
+		</div>
+	);
+
+	return (
+		<form id="nuevo-balance-hidrico-form" onSubmit={handleSubmit} className={styles.form} noValidate>
+			{error && (
+				<div className={styles.errorMsg} role="alert">
+					{error}
+				</div>
+			)}
+
+			{/* Cabecera del registro: Sector · Fecha · Hora */}
+			<div className={styles.head}>
 				<div className={styles.field}>
-					<label className={styles.label}>Fecha</label>
+					<label className={styles.label} htmlFor="bh-sector">
+						Sector
+					</label>
 					<input
+						id="bh-sector"
+						className={`${styles.input} ${styles.inputSector}`}
+						value={form.Sector || ''}
+						onChange={(e) => set('Sector', e.target.value.toUpperCase().slice(0, 4))}
+						maxLength={4}
+						placeholder="QUIR"
+					/>
+				</div>
+				<div className={styles.field}>
+					<label className={styles.label} htmlFor="bh-fecha">
+						Fecha
+					</label>
+					<input
+						id="bh-fecha"
 						className={styles.input}
 						type="date"
 						value={form.Fecha}
@@ -241,141 +284,169 @@ export default function NuevoBalanceHidricoModal({
 					/>
 				</div>
 				<div className={styles.field}>
-					<label className={styles.label}>Hora</label>
-					<input
-						className={styles.input}
-						type="time"
-						value={form.Hora}
-						onChange={(e) => set('Hora', e.target.value)}
-						required
-					/>
+					<label className={styles.label} htmlFor="bh-hora">
+						Hora
+					</label>
+					<div className={styles.horaRow}>
+						<input
+							id="bh-hora"
+							className={styles.input}
+							type="time"
+							value={form.Hora}
+							onChange={(e) => set('Hora', e.target.value)}
+							required
+						/>
+						<button
+							type="button"
+							className={styles.ghostBtn}
+							onClick={() => {
+								const now = new Date();
+								set('Hora', getLocalTime(now));
+								if (!isEdit) set('Fecha', getLocalDate(now));
+							}}
+						>
+							Ahora
+						</button>
+					</div>
 				</div>
-				<div className={styles.field}>
-					<label className={styles.label}>{tipo === 'registro' ? 'Medicación' : 'Etiqueta'}</label>
-					<input
-						className={styles.input}
-						value={form.Medicacion || ''}
-						onChange={(e) => set('Medicacion', e.target.value)}
-						placeholder={tipo === 'registro' ? 'PHP, DICLOFENAC…' : ''}
-						maxLength={500}
-					/>
-				</div>
-				<div className={styles.field}>
-					<label className={styles.label}>Vía</label>
-					<input
-						className={styles.input}
-						value={form.Via || ''}
-						onChange={(e) => set('Via', e.target.value)}
-						placeholder="EV"
-						maxLength={10}
-					/>
+				<div className={styles.turnoInfo}>
+					<span className={styles.label}>Turno</span>
+					<span className={`${styles.turnoChip} ${turnoActual ? styles[`chip_${turnoActual}`] : ''}`}>
+						{turnoLabel || '—'}
+					</span>
 				</div>
 			</div>
 
-			<section className={styles.block}>
-				<h4 className={styles.blockTitle}>Parenteral (ml)</h4>
-				<div className={styles.grid2}>
-					<div className={styles.field}>
-						<label className={styles.label}>Ingreso</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Par_Ingreso ?? ''} onChange={setNum('Ing_Par_Ingreso')} />
+			{/* INGRESOS */}
+			<div className={styles.grupoTitulo}>
+				<span className={`${styles.grupoDot} ${styles.dotIng}`} />
+				Ingresos
+			</div>
+			<div className={styles.bloques}>
+				<section className={`${styles.block} ${styles.blockIng}`}>
+					<h4 className={styles.blockTitle}>Parenteral</h4>
+					<div className={styles.rowTexto}>
+						<div className={`${styles.field} ${styles.grow}`}>
+							<label className={styles.label} htmlFor="bh-med">
+								Medicación
+							</label>
+							<input
+								id="bh-med"
+								className={styles.input}
+								value={form.Medicacion || ''}
+								onChange={(e) => set('Medicacion', e.target.value)}
+								placeholder="PHP, Sol. fisiológica, Dextrosa 5%…"
+								maxLength={500}
+								autoFocus
+							/>
+						</div>
+						<div className={styles.field}>
+							<label className={styles.label} htmlFor="bh-via">
+								Vía
+							</label>
+							<input
+								id="bh-via"
+								className={`${styles.input} ${styles.inputVia}`}
+								value={form.Via || ''}
+								onChange={(e) => set('Via', e.target.value.toUpperCase())}
+								placeholder="EV"
+								maxLength={10}
+								list="bh-vias"
+							/>
+							<datalist id="bh-vias">
+								<option value="EV" />
+								<option value="VO" />
+								<option value="SNG" />
+								<option value="SC" />
+								<option value="IM" />
+							</datalist>
+						</div>
 					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Paso</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Par_Paso ?? ''} onChange={setNum('Ing_Par_Paso')} />
-					</div>
-				</div>
-			</section>
+					{renderPar('Ing_Par_Ingreso', 'Ing_Par_Paso')}
+				</section>
 
-			<section className={styles.block}>
-				<h4 className={styles.blockTitle}>Enteral / oral (ml)</h4>
-				<div className={styles.grid4}>
-					<div className={styles.field} style={{ gridColumn: '1 / 3' }}>
-						<label className={styles.label}>Alimento</label>
+				<section className={`${styles.block} ${styles.blockIng}`}>
+					<h4 className={styles.blockTitle}>Alimentación enteral</h4>
+					<div className={styles.field}>
+						<label className={styles.label} htmlFor="bh-alim">
+							Alimento
+						</label>
 						<input
+							id="bh-alim"
 							className={styles.input}
 							value={form.Ing_Aent_Alimento || ''}
 							onChange={(e) => set('Ing_Aent_Alimento', e.target.value)}
 							maxLength={120}
-							placeholder="Glucerna, Osmolite…"
+							placeholder="Agua, Glucerna, Osmolite…"
 						/>
 					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Ingreso</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Aent_Ingreso ?? ''} onChange={setNum('Ing_Aent_Ingreso')} />
-					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Paso</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Aent_Paso ?? ''} onChange={setNum('Ing_Aent_Paso')} />
-					</div>
-				</div>
-			</section>
+					{renderPar('Ing_Aent_Ingreso', 'Ing_Aent_Paso')}
+				</section>
 
-			<section className={styles.block}>
-				<h4 className={styles.blockTitle}>Otras sol. / transfusión (ml)</h4>
-				<div className={styles.grid4}>
-					<div className={styles.field} style={{ gridColumn: '1 / 3' }}>
-						<label className={styles.label}>Solución</label>
+				<section className={`${styles.block} ${styles.blockIng}`}>
+					<h4 className={styles.blockTitle}>Alimentación parenteral</h4>
+					<div className={styles.field}>
+						<label className={styles.label} htmlFor="bh-sol">
+							Solución
+						</label>
 						<input
+							id="bh-sol"
 							className={styles.input}
 							value={form.Ing_Apar_Solucion || ''}
 							onChange={(e) => set('Ing_Apar_Solucion', e.target.value)}
 							maxLength={120}
+							placeholder="NPT, Lípidos, Aminoácidos…"
 						/>
 					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Apar. ing.</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Apar_Ingreso ?? ''} onChange={setNum('Ing_Apar_Ingreso')} />
-					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Apar. paso</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Apar_paso ?? ''} onChange={setNum('Ing_Apar_paso')} />
-					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Transf. ing.</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Tranf_Ingreso ?? ''} onChange={setNum('Ing_Tranf_Ingreso')} />
-					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Transf. paso</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Ing_Tranf_paso ?? ''} onChange={setNum('Ing_Tranf_paso')} />
-					</div>
-				</div>
-			</section>
+					{renderPar('Ing_Apar_Ingreso', 'Ing_Apar_paso')}
+				</section>
 
-			<section className={styles.block}>
-				<h4 className={styles.blockTitle}>Egresos (ml)</h4>
-				<div className={styles.grid4}>
-					<div className={styles.field}>
-						<label className={styles.label}>Diuresis</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Egr_Diuresis ?? ''} onChange={setNum('Egr_Diuresis')} />
-					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Catarsis</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Egr_Catarsis ?? ''} onChange={setNum('Egr_Catarsis')} />
-					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>SNG / vómito</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Egr_SNG_Vomito ?? ''} onChange={setNum('Egr_SNG_Vomito')} />
-					</div>
-					<div className={styles.field}>
-						<label className={styles.label}>Drenajes</label>
-						<input className={styles.input} type="number" min={0} step={1} value={form.Egr_Drenajes ?? ''} onChange={setNum('Egr_Drenajes')} />
-					</div>
-				</div>
-			</section>
-
-			<div className={styles.totalesPreview}>
-				<span>
-					Ing. paso: <strong>{previewTotales.ing} ml</strong>
-				</span>
-				<span>
-					Egresos: <strong>{previewTotales.egr} ml</strong>
-				</span>
-				<span className={previewTotales.bal < 0 ? styles.neg : styles.pos}>
-					Balance: <strong>{previewTotales.bal} ml</strong>
-				</span>
+				<section className={`${styles.block} ${styles.blockIng}`}>
+					<h4 className={styles.blockTitle}>Transfusión</h4>
+					<p className={styles.blockHint}>Glóbulos rojos, plasma, plaquetas.</p>
+					{renderPar('Ing_Tranf_Ingreso', 'Ing_Tranf_paso')}
+				</section>
 			</div>
 
-			{saving && <p className={styles.savingHint}>Guardando…</p>}
+			{/* EGRESOS */}
+			<div className={styles.grupoTitulo}>
+				<span className={`${styles.grupoDot} ${styles.dotEgr}`} />
+				Egresos
+			</div>
+			<section className={`${styles.block} ${styles.blockEgr}`}>
+				<div className={styles.grid4}>
+					{renderNum('Egr_Diuresis', 'Diuresis')}
+					{renderNum('Egr_Catarsis', 'Catarsis')}
+					{renderNum('Egr_SNG_Vomito', 'SNG / Vómito')}
+					{renderNum('Egr_Drenajes', 'Drenajes')}
+				</div>
+			</section>
+
+			{/* Totales en vivo */}
+			<div className={styles.totales}>
+				<div className={styles.totalItem}>
+					<span>Ingresos</span>
+					<strong>{totales.ing} ml</strong>
+					<small>suma de “Paso”</small>
+				</div>
+				<div className={styles.totalItem}>
+					<span>Egresos</span>
+					<strong>{totales.egr} ml</strong>
+					<small>diuresis + catarsis + SNG + drenajes</small>
+				</div>
+				<div
+					className={`${styles.totalItem} ${styles.totalBal} ${
+						totales.bal < 0 ? styles.neg : totales.bal > 0 ? styles.pos : ''
+					}`}
+				>
+					<span>Balance</span>
+					<strong>
+						{totales.bal > 0 ? '+' : ''}
+						{totales.bal} ml
+					</strong>
+					<small>{saving ? 'Guardando…' : isEdit ? 'Editando registro' : 'Nuevo registro'}</small>
+				</div>
+			</div>
 		</form>
 	);
 }

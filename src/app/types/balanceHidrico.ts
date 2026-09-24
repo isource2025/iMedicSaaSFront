@@ -45,6 +45,30 @@ export interface BalanceHidricoResumen {
 	} | null;
 }
 
+/** Turnos de enfermería (Clarion: combo "Turnos"). */
+export type TurnoEnfermeria = 'todos' | 'manana' | 'tarde' | 'noche';
+
+export interface TotalesBalance {
+	ingresos: number;
+	egresos: number;
+	balance: number;
+	/** Suma por columna, para la fila "Totales" de la grilla. */
+	porColumna: {
+		Ing_Par_Ingreso: number;
+		Ing_Par_Paso: number;
+		Ing_Aent_Ingreso: number;
+		Ing_Aent_Paso: number;
+		Ing_Apar_Ingreso: number;
+		Ing_Apar_paso: number;
+		Ing_Tranf_Ingreso: number;
+		Ing_Tranf_paso: number;
+		Egr_Diuresis: number;
+		Egr_Catarsis: number;
+		Egr_SNG_Vomito: number;
+		Egr_Drenajes: number;
+	};
+}
+
 export interface BalanceHidricoPayload {
 	NumeroVisita: number;
 	Fecha: string;
