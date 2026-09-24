@@ -1,16 +1,25 @@
+/* Formulario compacto — denser que evolucion/controles */
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 14px 8px;
+	background: #fff;
+}
+
 .errorMsg {
 	background: #fef2f2;
 	border: 1px solid #fecaca;
 	color: #b91c1c;
-	padding: 10px 12px;
-	border-radius: 8px;
-	font-size: 13px;
+	padding: 6px 8px;
+	border-radius: 6px;
+	font-size: 12px;
 }
 
 .tipoRow {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: 4px;
 }
 
 .tipoBtn {
@@ -19,8 +28,9 @@
 	background: #fff;
 	color: #374151;
 	border-radius: 999px;
-	padding: 8px 14px;
-	font-size: 13px;
+	padding: 4px 10px;
+	font-size: 11px;
+	line-height: 1.2;
 	cursor: pointer;
 }
 
@@ -31,32 +41,93 @@
 	font-weight: 600;
 }
 
+.grid2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 6px 8px;
+}
+
+.grid4 {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 6px 8px;
+}
+
+.gridHead {
+	display: grid;
+	grid-template-columns: 1fr 0.7fr 1.4fr 0.6fr;
+	gap: 6px 8px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.label {
+	font-size: 10px;
+	font-weight: 600;
+	color: #6b7280;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.input {
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	padding: 5px 8px;
+	font-size: 12px;
+	line-height: 1.25;
+	color: #111827;
+	background: #fff;
+	width: 100%;
+	box-sizing: border-box;
+	min-height: 28px;
+}
+
+.input:focus {
+	outline: none;
+	border-color: #00b5e2;
+	box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.12);
+}
+
+.input::placeholder {
+	color: #9ca3af;
+	font-size: 11px;
+}
+
 .block {
 	border: 1px solid #e5e7eb;
-	border-radius: 10px;
-	padding: 14px 16px;
+	border-radius: 6px;
+	padding: 6px 8px 8px;
 	background: #fafafa;
 }
 
 .blockTitle {
-	margin: 0 0 12px;
-	font-size: 13px;
+	margin: 0 0 6px;
+	font-size: 10px;
 	font-weight: 700;
 	color: #0083a9;
 	text-transform: uppercase;
-	letter-spacing: 0.02em;
+	letter-spacing: 0.03em;
 }
 
 .totalesPreview {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16px;
-	padding: 12px 14px;
-	border-radius: 8px;
+	gap: 10px 14px;
+	padding: 6px 8px;
+	border-radius: 6px;
 	background: #f0f9ff;
 	border: 1px solid #bae6fd;
-	font-size: 13px;
+	font-size: 11px;
 	color: #0c4a6e;
+}
+
+.totalesPreview strong {
+	font-size: 12px;
 }
 
 .pos {
@@ -69,6 +140,14 @@
 
 .savingHint {
 	margin: 0;
-	font-size: 13px;
+	font-size: 11px;
 	color: #6b7280;
+}
+
+@media (max-width: 640px) {
+	.gridHead,
+	.grid4,
+	.grid2 {
+		grid-template-columns: 1fr 1fr;
+	}
 }
