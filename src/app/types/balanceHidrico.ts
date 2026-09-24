@@ -45,9 +45,6 @@ export interface BalanceHidricoResumen {
 	} | null;
 }
 
-/** Turnos de enfermería (Clarion: combo "Turnos"). */
-export type TurnoEnfermeria = 'todos' | 'manana' | 'tarde' | 'noche';
-
 export interface TotalesBalance {
 	ingresos: number;
 	egresos: number;

@@ -4,7 +4,6 @@ import type {
 	BalanceHidricoPayload,
 	BalanceHidricoResumen,
 	TotalesBalance,
-	TurnoEnfermeria,
 } from '../types/balanceHidrico';
 import { motivoDeRespuesta } from '@/app/utils/apiError';
 
@@ -116,28 +115,6 @@ export function formatearFechaCorta(fecha: string | null | undefined): string {
 	const [y, m, d] = s.split('-');
 	if (!y || !m || !d) return s;
 	return `${d}/${m}/${y}`;
-}
-
-// ===== Turnos de enfermería =====
-export const TURNOS: { id: TurnoEnfermeria; label: string; rango: string }[] = [
-	{ id: 'todos', label: 'Todos', rango: '' },
-	{ id: 'manana', label: 'Mañana', rango: '06 – 14 h' },
-	{ id: 'tarde', label: 'Tarde', rango: '14 – 22 h' },
-	{ id: 'noche', label: 'Noche', rango: '22 – 06 h' },
-];
-
-export function turnoDeHora(hora: string | null | undefined): Exclude<TurnoEnfermeria, 'todos'> | null {
-	if (!hora) return null;
-	const h = parseInt(String(hora).split(':')[0], 10);
-	if (!Number.isFinite(h)) return null;
-	if (h >= 6 && h < 14) return 'manana';
-	if (h >= 14 && h < 22) return 'tarde';
-	return 'noche';
-}
-
-export function filtrarPorTurno(rows: BalanceHidrico[], turno: TurnoEnfermeria): BalanceHidrico[] {
-	if (turno === 'todos') return rows;
-	return rows.filter((r) => turnoDeHora(r.Hora) === turno);
 }
 
 const n0 = (v: number | null | undefined) => {

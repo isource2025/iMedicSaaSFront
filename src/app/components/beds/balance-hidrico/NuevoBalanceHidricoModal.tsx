@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '@/app/contexts/AppContext';
-import { actualizarBalance, crearBalance, turnoDeHora, TURNOS } from '../../../services/balanceHidricoService';
+import { actualizarBalance, crearBalance } from '../../../services/balanceHidricoService';
 import type { BalanceHidrico, BalanceHidricoPayload } from '../../../types/balanceHidrico';
 import {
 	getSectorId,
@@ -176,9 +176,6 @@ export default function NuevoBalanceHidricoModal({
 		n0(form.Ing_Par_Ingreso) + n0(form.Ing_Aent_Ingreso) + n0(form.Ing_Apar_Ingreso) + n0(form.Ing_Tranf_Ingreso) > 0 ||
 		!!(form.Medicacion || form.Ing_Aent_Alimento || form.Ing_Apar_Solucion);
 
-	const turnoActual = turnoDeHora(form.Hora);
-	const turnoLabel = TURNOS.find((t) => t.id === turnoActual)?.label;
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (saving) return;
@@ -308,12 +305,6 @@ export default function NuevoBalanceHidricoModal({
 							Ahora
 						</button>
 					</div>
-				</div>
-				<div className={styles.turnoInfo}>
-					<span className={styles.label}>Turno</span>
-					<span className={`${styles.turnoChip} ${turnoActual ? styles[`chip_${turnoActual}`] : ''}`}>
-						{turnoLabel || '—'}
-					</span>
 				</div>
 			</div>
 

@@ -1,22 +1,15 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import type {
-	BalanceHidrico,
-	BalanceHidricoResumen,
-	TurnoEnfermeria,
-} from '../../../types/balanceHidrico';
+import type { BalanceHidrico, BalanceHidricoResumen } from '../../../types/balanceHidrico';
 import {
 	eliminarBalance,
-	filtrarPorTurno,
 	formatearFechaCorta,
 	formatearHora,
 	formatearMl,
 	formatearNum,
 	nombreProfesional,
 	sumarTotales,
-	TURNOS,
-	turnoDeHora,
 } from '../../../services/balanceHidricoService';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
@@ -67,7 +60,6 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const [editing, setEditing] = useState<BalanceHidrico | null>(null);
 	const [aEliminar, setAEliminar] = useState<BalanceHidrico | null>(null);
 	const [query, setQuery] = useState('');
-	const [turno, setTurno] = useState<TurnoEnfermeria>('todos');
 	const [soloDia, setSoloDia] = useState(true);
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
@@ -112,7 +104,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	}, [data]);
 
 	const filtrados = useMemo(() => {
-		let list = filtrarPorTurno(registros, turno);
+		let list = registros;
 		if (query.trim()) {
 			const q = query.toLowerCase();
 			list = list.filter((r) => {
@@ -131,17 +123,9 @@ const BalanceHidricoSection: React.FC<Props> = ({
 			});
 		}
 		return list;
-	}, [registros, turno, query]);
+	}, [registros, query]);
 
 	const totales = useMemo(() => sumarTotales(filtrados), [filtrados]);
-	const conteoTurnos = useMemo(() => {
-		const c = { manana: 0, tarde: 0, noche: 0 };
-		for (const r of registros) {
-			const t = turnoDeHora(r.Hora);
-			if (t) c[t] += 1;
-		}
-		return c;
-	}, [registros]);
 
 	const formatSelectedDate = () => {
 		if (!selectedDate) return null;
@@ -236,12 +220,9 @@ const BalanceHidricoSection: React.FC<Props> = ({
 			profesional: { nombre: '', matricula: undefined, especialidad: '' },
 		});
 
-		const turnoLabel = TURNOS.find((t) => t.id === turno)?.label || 'Todos';
 		await exportToPDF({
 			title: 'Balance Hídrico',
-			subtitle: soloDia
-				? `Fecha: ${fechaISO} · Turno: ${turnoLabel}`
-				: `Toda la internación · Turno: ${turnoLabel}`,
+			subtitle: soloDia ? `Fecha: ${fechaISO}` : 'Toda la internación',
 			parts,
 			fileName: `balance_hidrico_${soloDia ? fechaISO : 'internacion'}.pdf`,
 			orientation: 'portrait',
@@ -332,12 +313,11 @@ const BalanceHidricoSection: React.FC<Props> = ({
 					</strong>
 					<span className={bh.kpiHint}>
 						{filtrados.length} {filtrados.length === 1 ? 'registro' : 'registros'}
-						{turno !== 'todos' ? ` · turno ${TURNOS.find((t) => t.id === turno)?.label}` : ''}
 					</span>
 				</div>
 			</div>
 
-			{/* Toolbar: búsqueda · turnos · sólo el día */}
+			{/* Toolbar: búsqueda · sólo el día */}
 			<div className={bh.toolbar}>
 				<div className={`${styles.searchWrap} ${bh.search}`}>
 					<span className={styles.searchIcon} aria-hidden>
@@ -350,27 +330,6 @@ const BalanceHidricoSection: React.FC<Props> = ({
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 					/>
-				</div>
-
-				<div className={bh.turnos} role="tablist" aria-label="Turnos">
-					<span className={bh.turnosLabel}>Turno</span>
-					{TURNOS.map((t) => {
-						const count = t.id === 'todos' ? registros.length : conteoTurnos[t.id];
-						return (
-							<button
-								key={t.id}
-								type="button"
-								role="tab"
-								aria-selected={turno === t.id}
-								className={`${bh.turnoBtn} ${turno === t.id ? bh.turnoBtnActive : ''}`}
-								onClick={() => setTurno(t.id)}
-								title={t.rango || 'Todos los turnos'}
-							>
-								{t.label}
-								<span className={bh.turnoCount}>{count}</span>
-							</button>
-						);
-					})}
 				</div>
 
 				<label className={bh.switch}>
@@ -396,14 +355,14 @@ const BalanceHidricoSection: React.FC<Props> = ({
 							variant="controles"
 							text={
 								registros.length
-									? 'Sin registros para este filtro'
+									? 'Sin registros para esta búsqueda'
 									: soloDia
 										? 'No hay registros de balance hídrico para esta fecha'
 										: 'No hay registros de balance hídrico en la internación'
 							}
 							description={
 								registros.length
-									? 'Probá con otro turno o limpiá la búsqueda.'
+									? 'Limpiá la búsqueda para ver todos los registros.'
 									: 'Cargá ingresos (parenteral, enteral, transfusión) y egresos (diuresis, catarsis, SNG, drenajes) con el botón Agregar.'
 							}
 							actionLabel={puedeCrear && !registros.length ? 'Agregar registro' : undefined}
@@ -441,8 +400,14 @@ const BalanceHidricoSection: React.FC<Props> = ({
 											<th colSpan={4} className={bh.grpEgr}>
 												Egresos
 											</th>
-											<th colSpan={3} className={bh.grpTot}>
-												Totales
+											<th rowSpan={2} className={`${bh.num} ${bh.colTot}`}>
+												Total Ingresos
+											</th>
+											<th rowSpan={2} className={`${bh.num} ${bh.colTot}`}>
+												Total Egresos
+											</th>
+											<th rowSpan={2} className={`${bh.num} ${bh.colTot} ${bh.sepDer}`}>
+												Total
 											</th>
 											<th rowSpan={2} className={bh.colProf}>
 												Profesional
@@ -465,11 +430,8 @@ const BalanceHidricoSection: React.FC<Props> = ({
 											<th className={`${bh.num} ${bh.sepDer}`}>Paso</th>
 											<th className={bh.num}>Diuresis</th>
 											<th className={bh.num}>Catarsis</th>
-											<th className={bh.num}>SNG / Vóm.</th>
+											<th className={bh.num}>SNG / Vómito</th>
 											<th className={`${bh.num} ${bh.sepDer}`}>Drenajes</th>
-											<th className={bh.num}>Ingresos</th>
-											<th className={bh.num}>Egresos</th>
-											<th className={`${bh.num} ${bh.sepDer}`}>Balance</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -485,7 +447,6 @@ const BalanceHidricoSection: React.FC<Props> = ({
 													)}
 													<td className={bh.colHora}>
 														<span className={bh.hora}>{formatearHora(r.Hora)}</span>
-														<span className={`${bh.turnoDot} ${bh[`dot_${turnoDeHora(r.Hora) || 'none'}`]}`} />
 													</td>
 													<td className={bh.colTexto} title={r.Medicacion || ''}>
 														<span className={bh.texto}>{r.Medicacion || ''}</span>
@@ -509,10 +470,10 @@ const BalanceHidricoSection: React.FC<Props> = ({
 													{celdaNum(r.Egr_Catarsis, bh.egr)}
 													{celdaNum(r.Egr_SNG_Vomito, bh.egr)}
 													{celdaNum(r.Egr_Drenajes, `${bh.egr} ${bh.sepDer}`)}
-													<td className={`${bh.num} ${bh.tot}`}>{formatearNum(r.TotalIngresos)}</td>
-													<td className={`${bh.num} ${bh.tot}`}>{formatearNum(r.TotalEgresos)}</td>
+													<td className={`${bh.num} ${bh.tot} ${bh.colTot}`}>{formatearNum(r.TotalIngresos)}</td>
+													<td className={`${bh.num} ${bh.tot} ${bh.colTot}`}>{formatearNum(r.TotalEgresos)}</td>
 													<td
-														className={`${bh.num} ${bh.tot} ${bh.sepDer} ${
+														className={`${bh.num} ${bh.tot} ${bh.colTot} ${bh.sepDer} ${
 															bal < 0 ? bh.neg : bal > 0 ? bh.pos : ''
 														}`}
 													>

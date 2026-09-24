@@ -17,10 +17,10 @@
 	font-weight: 600;
 }
 
-/* ---- Cabecera: sector / fecha / hora / turno ---- */
+/* ---- Cabecera: sector / fecha / hora ---- */
 .head {
 	display: grid;
-	grid-template-columns: 90px 160px 1fr auto;
+	grid-template-columns: 90px 160px 1fr;
 	gap: 8px 14px;
 	align-items: end;
 	padding: 10px 12px;
@@ -54,35 +54,6 @@
 .ghostBtn:hover {
 	background: #e0f2fe;
 	border-color: #7dd3fc;
-}
-
-.turnoInfo {
-	display: flex;
-	flex-direction: column;
-	gap: 3px;
-	align-items: flex-start;
-}
-.turnoChip {
-	display: inline-block;
-	padding: 4px 12px;
-	border-radius: 999px;
-	background: #e2e8f0;
-	color: #475569;
-	font-size: 0.74rem;
-	font-weight: 700;
-	line-height: 1.2;
-}
-.chip_manana {
-	background: #fef3c7;
-	color: #92400e;
-}
-.chip_tarde {
-	background: #e0f2fe;
-	color: #075985;
-}
-.chip_noche {
-	background: #e0e7ff;
-	color: #3730a3;
 }
 
 /* ---- Títulos de grupo ---- */
@@ -325,12 +296,6 @@
 @media (max-width: 900px) {
 	.head {
 		grid-template-columns: 90px 1fr 1fr;
-	}
-	.turnoInfo {
-		grid-column: 1 / -1;
-		flex-direction: row;
-		align-items: center;
-		gap: 10px;
 	}
 	.bloques {
 		grid-template-columns: 1fr;
