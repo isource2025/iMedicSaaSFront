@@ -20,7 +20,7 @@
 /* ---- Cabecera: sector / fecha / hora ---- */
 .head {
 	display: grid;
-	grid-template-columns: 90px 160px 1fr;
+	grid-template-columns: 170px 1fr;
 	gap: 8px 14px;
 	align-items: end;
 	padding: 10px 12px;
@@ -203,12 +203,6 @@
 	font-size: 0.76rem;
 }
 
-.inputSector {
-	text-transform: uppercase;
-	font-weight: 700;
-	letter-spacing: 0.06em;
-	text-align: center;
-}
 .inputVia {
 	width: 84px;
 	text-transform: uppercase;
@@ -295,7 +289,7 @@
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
 	.head {
-		grid-template-columns: 90px 1fr 1fr;
+		grid-template-columns: 1fr 1fr;
 	}
 	.bloques {
 		grid-template-columns: 1fr;
@@ -310,7 +304,7 @@
 		padding: 10px 12px 8px;
 	}
 	.head {
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: 1fr;
 	}
 	.rowTexto {
 		flex-direction: column;

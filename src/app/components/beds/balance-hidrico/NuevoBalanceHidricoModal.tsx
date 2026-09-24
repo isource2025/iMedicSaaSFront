@@ -99,7 +99,11 @@ function fromRow(row: BalanceHidrico, sector: string): BalanceHidricoPayload {
 	};
 }
 
-function payloadParaApi(form: BalanceHidricoPayload, numeroVisita: number): BalanceHidricoPayload {
+function payloadParaApi(
+	form: BalanceHidricoPayload,
+	numeroVisita: number,
+	sector: string,
+): BalanceHidricoPayload {
 	return {
 		NumeroVisita: numeroVisita,
 		Fecha: form.Fecha,
@@ -120,7 +124,8 @@ function payloadParaApi(form: BalanceHidricoPayload, numeroVisita: number): Bala
 		Egr_Catarsis: n0(form.Egr_Catarsis),
 		Egr_SNG_Vomito: n0(form.Egr_SNG_Vomito),
 		Egr_Drenajes: n0(form.Egr_Drenajes),
-		Sector: (form.Sector || '').trim().toUpperCase().slice(0, 4),
+		// Alta: sector de la cama. Edición: se conserva el sector con el que se registró.
+		Sector: (form.Sector || sector || '').trim().toUpperCase().slice(0, 4),
 	};
 }
 
@@ -135,7 +140,8 @@ export default function NuevoBalanceHidricoModal({
 	const { usuario, sectorSeleccionado } = useAppContext();
 	const usuarioActual = getSessionUser(usuario);
 	const operadorId = getHcIdProfesional(usuarioActual) ?? getUserCodOperador(usuarioActual) ?? 0;
-	const idSector = (getSectorId(sectorSeleccionado) || bedSector || '').toUpperCase().slice(0, 4);
+	// Sector: el de la cama del paciente (no se edita en el modal); fallback al de la sesión.
+	const idSector = (bedSector || getSectorId(sectorSeleccionado) || '').toUpperCase().slice(0, 4);
 	const isEdit = !!registroToEdit?.IdBalanceHidrico;
 
 	const initial = useMemo(() => {
@@ -188,7 +194,7 @@ export default function NuevoBalanceHidricoModal({
 		setSaving(true);
 		setError(null);
 		try {
-			const payload = payloadParaApi(form, visita);
+			const payload = payloadParaApi(form, visita, idSector);
 			if (isEdit && registroToEdit) {
 				await actualizarBalance(registroToEdit.IdBalanceHidrico, payload);
 			} else {
@@ -254,19 +260,6 @@ export default function NuevoBalanceHidricoModal({
 
 			{/* Cabecera del registro: Sector · Fecha · Hora */}
 			<div className={styles.head}>
-				<div className={styles.field}>
-					<label className={styles.label} htmlFor="bh-sector">
-						Sector
-					</label>
-					<input
-						id="bh-sector"
-						className={`${styles.input} ${styles.inputSector}`}
-						value={form.Sector || ''}
-						onChange={(e) => set('Sector', e.target.value.toUpperCase().slice(0, 4))}
-						maxLength={4}
-						placeholder="QUIR"
-					/>
-				</div>
 				<div className={styles.field}>
 					<label className={styles.label} htmlFor="bh-fecha">
 						Fecha
