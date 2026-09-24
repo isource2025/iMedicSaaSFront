@@ -88,7 +88,7 @@ export default function IndicacionesTable({
         setOcultasIds((prev) => {
             if (prev.size === 0) return prev;
             const presentes = new Set((rows || []).map((r) => String(r.id)));
-            const next = new Set([...prev].filter((id) => presentes.has(id)));
+            const next = new Set(Array.from(prev).filter((id) => presentes.has(id)));
             return next.size === prev.size ? prev : next;
         });
     }, [rows]);

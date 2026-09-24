@@ -49,7 +49,7 @@ const endpointBySection: Record<SidebarSection, string> = {
 	'controles-frecuentes': '/controles',
 	'evolucion-enfermeria': '/evolucion',
 	dieta: '/dieta',
-	'balance-hidrico': '/balance',
+	'balance-hidrico': '/balance-hidrico',
 	insumos: '/insumos',
 	informe_evo: '/informe-evo',
 	control: '/control',

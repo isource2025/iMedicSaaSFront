@@ -1,0 +1,74 @@
+.errorMsg {
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #b91c1c;
+	padding: 10px 12px;
+	border-radius: 8px;
+	font-size: 13px;
+}
+
+.tipoRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.tipoBtn {
+	appearance: none;
+	border: 1px solid #d1d5db;
+	background: #fff;
+	color: #374151;
+	border-radius: 999px;
+	padding: 8px 14px;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.tipoBtnActive {
+	border-color: #00b5e2;
+	background: #e8f8fc;
+	color: #036a86;
+	font-weight: 600;
+}
+
+.block {
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	padding: 14px 16px;
+	background: #fafafa;
+}
+
+.blockTitle {
+	margin: 0 0 12px;
+	font-size: 13px;
+	font-weight: 700;
+	color: #0083a9;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.totalesPreview {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	padding: 12px 14px;
+	border-radius: 8px;
+	background: #f0f9ff;
+	border: 1px solid #bae6fd;
+	font-size: 13px;
+	color: #0c4a6e;
+}
+
+.pos {
+	color: #047857;
+}
+
+.neg {
+	color: #b91c1c;
+}
+
+.savingHint {
+	margin: 0;
+	font-size: 13px;
+	color: #6b7280;
+}

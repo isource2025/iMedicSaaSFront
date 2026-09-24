@@ -32,6 +32,7 @@ import LabResultsModal from './laboratorios/LabResultsModal';
 import { bedToHeaderSnapshot } from '../../utils/bedHeader';
 import AdmissionVisitExportModal from '../admission/AdmissionVisitExportModal';
 import ProcedimientosSection from './procedimientos/ProcedimientosSection';
+import BalanceHidricoSection from './balance-hidrico/BalanceHidricoSection';
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -149,6 +150,18 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
+							/>
+						</>
+					) : activeSection === 'balance-hidrico' ? (
+						<>
+							<BalanceHidricoSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={bed?.ubicacionPaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								fechaIngreso={bed?.fechaIngresoSQL}
+								horaIngreso={bed?.horaIngresoSQL}
+								bedSector={bed?.sector}
 							/>
 						</>
 					) : activeSection === 'insumos' ? (
