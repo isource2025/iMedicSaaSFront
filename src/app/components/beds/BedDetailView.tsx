@@ -247,6 +247,8 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							documentoPaciente={bed?.documentoPaciente}
 							fechaIngreso={bed?.fechaIngresoSQL}
 							horaIngreso={bed?.horaIngresoSQL}
+							header={headerSnapshot}
+							internado={bed?.estado === 'ocupada' && !bed?.egresada}
 						/>
 					) : activeSection === 'adjuntos' ? (
 						<>

@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useBedDetail } from "../contexts/BedDetailContext";
+import { usePermiso } from "../../../hooks/usePermiso";
+import ModalIntercambiarCama from "../../modals/ModalIntercambiarCama";
+import type { PatientHeaderSnapshot } from "../../../utils/bedHeader";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import styles from "../indicaciones/IndicacionesSection.module.css";
 import BedSectionLoading from "../shared/BedSectionLoading";
@@ -31,6 +35,9 @@ interface MovimientosProps {
 	documentoPaciente?: string;
 	fechaIngreso?: string;
 	horaIngreso?: string;
+	header?: PatientHeaderSnapshot | null;
+	/** La visita sigue internada (sin egreso): habilita el intercambio de cama. */
+	internado?: boolean;
 }
 
 export default function MovimientosSection({
@@ -40,8 +47,14 @@ export default function MovimientosSection({
 	documentoPaciente,
 	fechaIngreso,
 	horaIngreso,
+	header,
+	internado = false,
 }: MovimientosProps) {
+	const router = useRouter();
 	const { activeSection, selectedDate } = useBedDetail();
+	const { puede } = usePermiso();
+	const puedeIntercambiar = internado && !!numeroVisita && puede("INTERNACION.MOVIMIENTOS.GESTIONAR");
+	const [intercambioOpen, setIntercambioOpen] = useState(false);
 	const [dispCatalogo, setDispCatalogo] = useState<Map<number, string>>(new Map());
 
 	useEffect(() => {
@@ -149,6 +162,16 @@ export default function MovimientosSection({
 						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
 					</span>
 					<div className={styles.dateActions}>
+						{puedeIntercambiar && (
+							<button
+								type="button"
+								className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+								onClick={() => setIntercambioOpen(true)}
+								title="Intercambiar la cama con otro paciente internado"
+							>
+								⇄ Intercambiar cama
+							</button>
+						)}
 						<ExportButton
 							data={movimientos}
 							fileName={`movimientos_${numeroVisita}.pdf`}
@@ -184,6 +207,19 @@ export default function MovimientosSection({
 					)}
 				</div>
 			</div>
+
+			{puedeIntercambiar && numeroVisita ? (
+				<ModalIntercambiarCama
+					isOpen={intercambioOpen}
+					onClose={() => setIntercambioOpen(false)}
+					numeroVisita={numeroVisita}
+					header={header}
+					onSuccess={(camaNueva) => {
+						refetch();
+						router.replace(`/dashboard/beds/${encodeURIComponent(camaNueva.id)}`);
+					}}
+				/>
+			) : null}
 		</div>
 	);
 }

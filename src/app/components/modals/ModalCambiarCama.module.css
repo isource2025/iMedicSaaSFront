@@ -8,6 +8,40 @@
   max-height: calc(100vh - 240px);
 }
 
+.modoTabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin-bottom: 1rem;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+}
+
+.modoTab {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.modoTab:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.modoTabActivo {
+  background: #fff;
+  color: #0083A9;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
 .formTitle {
   color: #0083A9; /* Pantone 314C - Azul turquesa oscuro */
   font-size: 1.25rem;

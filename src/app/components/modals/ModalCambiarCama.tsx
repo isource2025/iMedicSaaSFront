@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ModalBasePaciente from './ModalBasePaciente';
 import ModalBusquedaDiagnosticos from './ModalBusquedaDiagnosticos';
+import IntercambiarCamaPanel from './IntercambiarCamaPanel';
 import styles from './ModalCambiarCama.module.css';
 import Loader from '../Loader/Loader';
 import visitaMovimientoService from '../../services/visitaMovimientoService';
@@ -68,6 +69,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [modo, setModo] = useState<'libre' | 'intercambio'>('libre');
 
   // Datos del formulario para la nueva ubicación
   const [fechaEgreso, setFechaEgreso] = useState('');
@@ -212,6 +214,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       return;
     }
 
+    setModo('libre');
     const now = new Date();
     const formattedDate = fechaLocalISO(now);
     const formattedTime = horaLocalHHMM(now);
@@ -534,9 +537,46 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
         titulo="Mover Paciente de Cama"
         numeroVisita={numeroVisita.toString()}
         header={header}
-        footerButtons={<FooterButtons />}
+        footerButtons={modo === 'libre' ? <FooterButtons /> : undefined}
       >
         <div className={styles.cambiarCamaForm}>
+          <div className={styles.modoTabs} role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={modo === 'libre'}
+              className={`${styles.modoTab} ${modo === 'libre' ? styles.modoTabActivo : ''}`}
+              onClick={() => setModo('libre')}
+              disabled={loading || success}
+            >
+              Mover a cama libre
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={modo === 'intercambio'}
+              className={`${styles.modoTab} ${modo === 'intercambio' ? styles.modoTabActivo : ''}`}
+              onClick={() => setModo('intercambio')}
+              disabled={loading || success}
+            >
+              Intercambiar con otro paciente
+            </button>
+          </div>
+
+          {modo === 'intercambio' ? (
+            <IntercambiarCamaPanel
+              numeroVisita={numeroVisita}
+              nombrePaciente={header?.nombre}
+              onSuccess={() => {
+                onSuccess?.();
+                setTimeout(() => {
+                  onClose();
+                  router.refresh();
+                }, 1500);
+              }}
+            />
+          ) : (
+          <>
           {error && (
             <div className={styles.errorMessage}>
               {error}
@@ -869,6 +909,8 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
             )}
             </div>
             </>
+          )}
+          </>
           )}
         </div>
       </ModalBasePaciente>
