@@ -221,6 +221,7 @@ export default function HCIngresoSection({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [accionesMobileOpen, setAccionesMobileOpen] = useState(false);
     const [empresaInfo, setEmpresaInfo] = useState<EmpresaInfo | undefined>(undefined);
     const [auditoriaAbierta, setAuditoriaAbierta] = useState(false);
     
@@ -566,6 +567,8 @@ export default function HCIngresoSection({
                 {!loading && !error && (
                 <div className={styles.toolbar}>
                     <div className={styles.toolbarLeft}>
+                        {/* En desktop es display: contents; en mobile agrupa selector + menú de acciones */}
+                        <div className={styles.selectorRow}>
                         {/* Selector de registros - Custom Dropdown */}
                         <div className={styles.customDropdown}>
                             <div 
@@ -597,7 +600,82 @@ export default function HCIngresoSection({
                             )}
                         </div>
 
-                        {/* Botones Agregar (solo mobile), Modificar, Eliminar, Historial y Exportar (solo mobile) */}
+                        {/* Menú de acciones compacto - solo mobile */}
+                        <div className={styles.accionesMobile}>
+                            <button
+                                type="button"
+                                className={styles.accionesMobileTrigger}
+                                onClick={() => setAccionesMobileOpen((v) => !v)}
+                                aria-label="Más acciones"
+                                aria-expanded={accionesMobileOpen}
+                            >
+                                ⋯
+                            </button>
+                            {accionesMobileOpen && (
+                                <>
+                                    <button
+                                        type="button"
+                                        className={styles.accionesMobileBackdrop}
+                                        aria-label="Cerrar menú"
+                                        onClick={() => setAccionesMobileOpen(false)}
+                                    />
+                                    <div className={styles.accionesMobileMenu} role="menu">
+                                        <button
+                                            type="button"
+                                            role="menuitem"
+                                            className={styles.accionesMobileItem}
+                                            disabled={!selectedRecord}
+                                            onClick={() => {
+                                                setAccionesMobileOpen(false);
+                                                handleEdit();
+                                            }}
+                                        >
+                                            <span className={styles.btnIcon}>✏️</span> Modificar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            role="menuitem"
+                                            className={styles.accionesMobileItem}
+                                            disabled={!selectedRecord}
+                                            onClick={() => {
+                                                setAccionesMobileOpen(false);
+                                                if (selectedRecord) void handleExport('pdf', [selectedRecord]);
+                                            }}
+                                        >
+                                            <span className={styles.btnIcon}>📄</span> Exportar PDF
+                                        </button>
+                                        {puedeVerAuditoria && numeroVisita && (
+                                            <button
+                                                type="button"
+                                                role="menuitem"
+                                                className={styles.accionesMobileItem}
+                                                onClick={() => {
+                                                    setAccionesMobileOpen(false);
+                                                    setAuditoriaAbierta(true);
+                                                }}
+                                            >
+                                                <span className={styles.btnIcon}>🕓</span> Historial
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            role="menuitem"
+                                            className={`${styles.accionesMobileItem} ${styles.accionesMobileItemDanger}`}
+                                            disabled={!selectedRecord}
+                                            onClick={() => {
+                                                setAccionesMobileOpen(false);
+                                                handleDelete();
+                                            }}
+                                        >
+                                            <span className={styles.btnIcon}>✕</span> Eliminar
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        </div>
+
+                        {/* Botones Agregar (solo mobile), Modificar, Eliminar e Historial */}
                         <div className={styles.actionButtonsRow}>
                             <button 
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddMobile}`} 
@@ -628,15 +706,6 @@ export default function HCIngresoSection({
                                     <span className={styles.btnIcon}>🕓</span> Historial
                                 </button>
                             )}
-                            <div className={styles.exportMobile}>
-                                <ExportButton
-                                    data={selectedRecord ? [selectedRecord] : []}
-                                    fileName={`hc_ingreso_${numeroVisita}.pdf`}
-                                    onExport={handleExport}
-                                    options={['pdf']}
-                                    disabled={!selectedRecord}
-                                />
-                            </div>
                         </div>
                     </div>
 
