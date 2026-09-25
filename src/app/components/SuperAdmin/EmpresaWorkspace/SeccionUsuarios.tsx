@@ -310,7 +310,7 @@ export default function SeccionUsuarios({
         <div className={styles.modalOverlay} onClick={() => !saving && setModal(null)}>
           <div className={`${styles.modalPanel} ${styles.modalPanelLg}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <div>
+              <div className="modal-title">
                 <strong>{modal.mode === 'create' ? 'Nuevo usuario' : 'Editar usuario'}</strong>
                 <p className={styles.modalSubtitle}>
                   Acceso, identidad y asignación de sectores y servicios de pedidos.

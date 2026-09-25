@@ -61,7 +61,7 @@ export default function SlideDrawer({
 				className={`${styles.drawer} ${isOpen ? styles.drawerOpen : ''}`}
 			>
 				<div className={styles.drawerHeader}>
-					<h3 className={styles.drawerTitle}>{title}</h3>
+					<h3 className={`${styles.drawerTitle} modal-title`}>{title}</h3>
 					<button
 						className={styles.drawerClose}
 						onClick={onClose}

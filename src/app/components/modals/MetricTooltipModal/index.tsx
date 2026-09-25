@@ -44,7 +44,7 @@ export const MetricTooltipModal: React.FC<MetricTooltipModalProps> = ({
     <div className={styles.modalOverlay} onClick={handleBackdropClick}>
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>{title}</h3>
+          <h3 className={`${styles.modalTitle} modal-title`}>{title}</h3>
           <button 
             className={styles.closeButton}
             onClick={onClose}

@@ -142,7 +142,7 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 				aria-label='Detalle de atención del turno'
 			>
 				<header className={styles.header}>
-					<div>
+					<div className='modal-title'>
 						<h2 className={styles.title}>Detalle de la atención</h2>
 						<p className={styles.subtitle}>
 							{p?.nombre || 'Paciente'} · Turno #{idTurno}

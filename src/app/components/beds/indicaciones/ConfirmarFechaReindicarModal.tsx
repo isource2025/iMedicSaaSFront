@@ -39,7 +39,7 @@ export default function ConfirmarFechaReindicarModal({
 				role="dialog"
 				aria-labelledby="reindicar-fecha-title"
 			>
-				<h3 id="reindicar-fecha-title" className={styles.title}>
+				<h3 id="reindicar-fecha-title" className={`${styles.title} modal-title`}>
 					¿Para qué día reindicar?
 				</h3>
 				<p className={styles.subtitle}>

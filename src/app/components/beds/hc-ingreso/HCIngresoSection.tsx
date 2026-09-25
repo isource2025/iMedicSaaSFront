@@ -597,7 +597,7 @@ export default function HCIngresoSection({
                             )}
                         </div>
 
-                        {/* Botones Agregar (solo mobile), Modificar y Eliminar */}
+                        {/* Botones Agregar (solo mobile), Modificar, Eliminar, Historial y Exportar (solo mobile) */}
                         <div className={styles.actionButtonsRow}>
                             <button 
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddMobile}`} 
@@ -628,6 +628,15 @@ export default function HCIngresoSection({
                                     <span className={styles.btnIcon}>🕓</span> Historial
                                 </button>
                             )}
+                            <div className={styles.exportMobile}>
+                                <ExportButton
+                                    data={selectedRecord ? [selectedRecord] : []}
+                                    fileName={`hc_ingreso_${numeroVisita}.pdf`}
+                                    onExport={handleExport}
+                                    options={['pdf']}
+                                    disabled={!selectedRecord}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -640,19 +649,6 @@ export default function HCIngresoSection({
                             disabled={!selectedRecord}
                         />
                     </div>
-                </div>
-                )}
-
-                {/* Barra flotante inferior para mobile */}
-                {!loading && !error && (
-                <div className={styles.mobileBottomBar}>
-                    <ExportButton
-                        data={selectedRecord ? [selectedRecord] : []}
-                        fileName={`hc_ingreso_${numeroVisita}.pdf`}
-                        onExport={handleExport}
-                        options={['pdf']}
-                        disabled={!selectedRecord}
-                    />
                 </div>
                 )}
 

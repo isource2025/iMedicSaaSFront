@@ -20,7 +20,7 @@ export const ModalBase: React.FC<ModalBaseProps> = ({
         className={styles.modalContent}
       >
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>{title}</h2>
+          <h2 className={`${styles.modalTitle} modal-title`}>{title}</h2>
           <button 
             className={styles.closeButton} 
             onClick={onClose}

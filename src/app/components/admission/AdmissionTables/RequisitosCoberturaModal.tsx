@@ -96,7 +96,7 @@ export default function RequisitosCoberturaModal({ isOpen, onClose }: Props) {
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2>Requisitos por cobertura</h2>
+          <h2 className="modal-title">Requisitos por cobertura</h2>
           <button type="button" className={styles.cerrar} onClick={onClose} aria-label="Cerrar">
             <X size={18} />
           </button>

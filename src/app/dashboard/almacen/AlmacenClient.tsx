@@ -2077,7 +2077,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h2>{artForm.id ? 'Editar artículo' : 'Nuevo artículo'}</h2>
+							<h2 className="modal-title">{artForm.id ? 'Editar artículo' : 'Nuevo artículo'}</h2>
 							<button type="button" className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={closeModal}>
 								Cerrar
 							</button>
@@ -2128,7 +2128,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h2>{provForm.id ? 'Editar proveedor' : 'Nuevo proveedor'}</h2>
+							<h2 className="modal-title">{provForm.id ? 'Editar proveedor' : 'Nuevo proveedor'}</h2>
 							<button type="button" className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={closeModal}>
 								Cerrar
 							</button>
@@ -2182,7 +2182,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h2>Solicitud de provisión</h2>
+							<h2 className="modal-title">Solicitud de provisión</h2>
 							<button type="button" className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={closeModal}>
 								Cerrar
 							</button>
@@ -2308,7 +2308,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h2>Aprobar / cambiar estado</h2>
+							<h2 className="modal-title">Aprobar / cambiar estado</h2>
 							<button type="button" className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={closeModal}>
 								Cerrar
 							</button>
@@ -2362,7 +2362,7 @@ export default function AlmacenClient() {
 						aria-labelledby="orden-modal-title"
 					>
 						<div className={styles.modalHeader}>
-							<div className={styles.modalTitleBlock}>
+							<div className={`${styles.modalTitleBlock} modal-title`}>
 								<h2 id="orden-modal-title">Orden de provisión</h2>
 								{fromSolRef && (
 									<p className={styles.modalContext}>
@@ -2518,7 +2518,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h2>Acta de recepción — Orden {ordenDetail.NroOrden}</h2>
+							<h2 className="modal-title">Acta de recepción — Orden {ordenDetail.NroOrden}</h2>
 							<button type="button" className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={closeModal}>
 								Cerrar
 							</button>
@@ -2606,7 +2606,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h2>Ajuste de stock</h2>
+							<h2 className="modal-title">Ajuste de stock</h2>
 							<button type="button" className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={closeModal}>
 								Cerrar
 							</button>
@@ -2672,7 +2672,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<div className={styles.modalTitleBlock}>
+							<div className={`${styles.modalTitleBlock} modal-title`}>
 								<h2>
 									{modal === 'viewSol' && `Solicitud ${(detail as AlmacenSolicitud).NroPedido}`}
 									{modal === 'viewOrd' && `Orden ${(detail as AlmacenOrden).NroOrden}`}
@@ -2914,7 +2914,7 @@ export default function AlmacenClient() {
 				<div className={styles.overlay} onClick={closeModal}>
 					<div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h2>Trazabilidad del artículo</h2>
+							<h2 className="modal-title">Trazabilidad del artículo</h2>
 							<button
 								type="button"
 								className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}

@@ -514,7 +514,7 @@ export default function AtencionTurnoModal({
 				onClick={(e) => e.stopPropagation()}
 			>
 				<header className={styles.header}>
-					<div className={styles.headerMain}>
+					<div className={`${styles.headerMain} modal-title`}>
 						<h2 className={styles.title}>
 							{modoEdicion ? 'Editar atención' : 'Atención del turno'}
 						</h2>
@@ -1066,7 +1066,7 @@ export default function AtencionTurnoModal({
 						aria-modal='true'
 						onClick={(e) => e.stopPropagation()}
 					>
-						<h3 className={styles.confirmTitle}>Faltan datos obligatorios</h3>
+						<h3 className={`${styles.confirmTitle} modal-title`}>Faltan datos obligatorios</h3>
 						<p className={styles.confirmText}>
 							No se puede finalizar la atención todavía. Completá lo siguiente:
 						</p>
@@ -1131,7 +1131,7 @@ export default function AtencionTurnoModal({
 						aria-modal='true'
 						onClick={(e) => e.stopPropagation()}
 					>
-						<h3 className={styles.confirmTitle}>Carga en curso</h3>
+						<h3 className={`${styles.confirmTitle} modal-title`}>Carga en curso</h3>
 						<p className={styles.confirmText}>{confirmNav.message}</p>
 						<div className={styles.confirmActions}>
 							<button

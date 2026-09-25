@@ -1064,7 +1064,7 @@ function BandejaPedidosContent() {
 			{cumplirIc ? (
 				<div className={styles.modalOverlay} onClick={() => setCumplirIc(null)}>
 					<div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-						<h3 className={styles.modalTitle}>
+						<h3 className={`${styles.modalTitle} modal-title`}>
 							Completar ·{' '}
 							{(cumplirIc.PracticaSolicitada ||
 								cumplirIc.TipoPedidoDescripcion ||

@@ -140,7 +140,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className={modalStyles.modalHeader}>
-					<h3>Interconsultas pendientes · Agenda</h3>
+					<h3 className="modal-title">Interconsultas pendientes · Agenda</h3>
 					<button type="button" className={modalStyles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>
@@ -292,7 +292,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 				{cumplirRow && (
 					<div className={icStyles.modalOverlay} onClick={() => setCumplirRow(null)}>
 						<div className={icStyles.modalContent} onClick={(e) => e.stopPropagation()}>
-							<h3>
+							<h3 className="modal-title">
 								Responder ·{' '}
 								{(cumplirRow.PracticaSolicitada ||
 									cumplirRow.Especialidad ||

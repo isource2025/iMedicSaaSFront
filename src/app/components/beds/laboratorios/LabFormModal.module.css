@@ -424,3 +424,9 @@
     width: 100%;
   }
 }
+
+@media (max-width: 767px) {
+  .header h2 {
+    align-items: center;
+  }
+}

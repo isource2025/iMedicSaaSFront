@@ -217,7 +217,7 @@ function PasswordModal({ user, onClose, onSuccess }: any) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.modalTitle}>Cambiar Contraseña</h2>
+        <h2 className={`${styles.modalTitle} modal-title`}>Cambiar Contraseña</h2>
         <p className={styles.modalSubtitle}>
           Usuario: <strong>{user.NombreRed}</strong> ({user.Apellido}, {user.Nombres})
         </p>
@@ -312,7 +312,7 @@ function SectorsModal({ user, sectoresDisponibles, onClose, onSuccess }: any) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.modalTitle}>Gestionar Sectores</h2>
+        <h2 className={`${styles.modalTitle} modal-title`}>Gestionar Sectores</h2>
         <p className={styles.modalSubtitle}>
           Usuario: <strong>{user.NombreRed}</strong> ({user.Apellido}, {user.Nombres})
         </p>
@@ -442,7 +442,7 @@ function CreateUserModal({ onClose, onSuccess }: any) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalLarge} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.modalTitle}>Crear Nuevo Usuario</h2>
+        <h2 className={`${styles.modalTitle} modal-title`}>Crear Nuevo Usuario</h2>
 
         <form onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}

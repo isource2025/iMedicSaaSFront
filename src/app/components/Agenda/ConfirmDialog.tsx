@@ -47,7 +47,7 @@ export default function ConfirmDialog({
 				aria-label={title}
 				onMouseDown={(e) => e.stopPropagation()}
 			>
-				<h3 className={styles.title}>{title}</h3>
+				<h3 className={`${styles.title} modal-title`}>{title}</h3>
 				<p className={styles.text}>{message}</p>
 				<div className={styles.actions}>
 					<button

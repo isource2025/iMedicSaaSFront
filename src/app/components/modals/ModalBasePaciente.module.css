@@ -457,6 +457,12 @@
     }
 }
 
+@media (max-width: 767px) {
+    .modalTitulo {
+        white-space: normal;
+    }
+}
+
 @media (max-width: 480px) {
     .pacienteHeader {
         padding: 16px;

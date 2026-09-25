@@ -601,7 +601,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 				<div className={tableStyles.modalOverlay} onClick={() => setSelected(null)}>
 					<div className={tableStyles.modalContent} onClick={(e) => e.stopPropagation()}>
 						<div className={tableStyles.modalHeader}>
-							<h3>
+							<h3 className="modal-title">
 								Balance hídrico · {formatearFechaCorta(selected.Fecha)} {formatearHora(selected.Hora)}
 							</h3>
 							<button className={tableStyles.btnCerrar} onClick={() => setSelected(null)}>

@@ -307,7 +307,7 @@ export default function LabResultsSection({
         <div className={styles.modalOverlay} onClick={() => setShowDetailModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>
+              <h3 className="modal-title">
                 {laboratoriosService.getTipoEstudioIcon(selectedExamen.TipoEstudio)}{' '}
                 {laboratoriosService.getTipoEstudioNombre(selectedExamen.TipoEstudio)}
               </h3>

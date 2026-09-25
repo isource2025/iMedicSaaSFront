@@ -174,7 +174,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2>
+          <h2 className="modal-title">
             {icono} {titulo}
             {ocrResult?.cabecera.paciente && (
               <span className={styles.pacienteSub}>

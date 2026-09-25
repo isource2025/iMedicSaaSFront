@@ -109,7 +109,7 @@ export default function EditarTurnoAdminModal({ open, turno, onClose, onSaved }:
 				onClick={(e) => e.stopPropagation()}
 			>
 				<header className={styles.header}>
-					<div>
+					<div className='modal-title'>
 						<h2>{esReasignar ? 'Asignar / reasignar paciente' : 'Editar turno'}</h2>
 						<p>
 							Turno #{turno.idTurno} · {turno.fecha ?? '—'} · <strong>{turno.hora}</strong>

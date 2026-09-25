@@ -174,7 +174,7 @@ const ModalBusquedaDiagnosticos: React.FC<ModalBusquedaDiagnosticosProps> = ({
     <div className={styles.modalOverlay}>
       <div className={styles.modalContainer}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Búsqueda de Diagnósticos CIE-10</h2>
+          <h2 className={`${styles.modalTitle} modal-title`}>Búsqueda de Diagnósticos CIE-10</h2>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
         

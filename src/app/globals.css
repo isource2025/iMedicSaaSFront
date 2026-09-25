@@ -167,6 +167,20 @@ a {
 	}
 }
 
+/*
+ * Título de modal: en mobile el botón de menú flotante (48px, top-left) queda por encima
+ * de los modales; el título va centrado y con aire a ambos lados para no quedar tapado.
+ */
+@media (max-width: 767px) {
+	.modal-title {
+		flex: 1 1 auto;
+		min-width: 0;
+		text-align: center;
+		padding-left: 52px;
+		padding-right: 52px;
+	}
+}
+
 /* Media queries para diferentes tamaños de pantalla */
 @media (max-width: 640px) {
 	html {

@@ -183,7 +183,7 @@ export default function EpicrisisTable({
 				<div className={styles.modalOverlay} onClick={() => setViewing(null)}>
 					<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
-							<h3>
+							<h3 className="modal-title">
 								Epicrisis — {viewing.fecha} {viewing.hora}
 							</h3>
 							<button

@@ -505,7 +505,7 @@ export default function LabAnalysisView({ examenes }: LabAnalysisViewProps) {
   const innerAnalysis = (
     <>
       <div className={styles.header}>
-        <h3 className={styles.title}>Análisis de Laboratorios</h3>
+        <h3 className={`${styles.title}${maximized ? ' modal-title' : ''}`}>Análisis de Laboratorios</h3>
         <p className={styles.subtitle}>
           Los estudios se agrupan por tipo. En cada bloque hay una columna por muestra (fecha y hora);
           si hay varios estudios el mismo día, cada uno conserva su columna y sus valores.

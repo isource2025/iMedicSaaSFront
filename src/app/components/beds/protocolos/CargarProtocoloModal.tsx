@@ -244,7 +244,7 @@ export default function CargarProtocoloModal({
 		<div className={shell.modalOverlay} onClick={onClose}>
 			<div className={`${shell.modalContent} ${styles.shell}`} onClick={(e) => e.stopPropagation()}>
 				<header className={styles.header}>
-					<div>
+					<div className="modal-title">
 						<p className={styles.eyebrow}>Visita #{numeroVisita}</p>
 						<h3>Cargar protocolo</h3>
 					</div>

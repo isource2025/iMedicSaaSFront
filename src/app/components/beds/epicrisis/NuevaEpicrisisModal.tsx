@@ -426,7 +426,7 @@ export default function NuevaEpicrisisModal({
 						aria-labelledby="epicrisis-disclaimer-title"
 					>
 						<div className={styles.confirmModal}>
-							<h3 id="epicrisis-disclaimer-title" className={styles.confirmTitle}>
+							<h3 id="epicrisis-disclaimer-title" className={`${styles.confirmTitle} modal-title`}>
 								Deslinde de responsabilidad
 							</h3>
 							<p className={styles.confirmText}>{DISCLAIMER_IA_UI}</p>

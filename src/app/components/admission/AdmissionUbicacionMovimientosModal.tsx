@@ -709,7 +709,7 @@ export default function AdmissionUbicacionMovimientosModal({
       <div className={styles.overlay} onClick={onClose}>
         <div className={styles.dialog} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
           <div className={styles.header}>
-            <h2 className={styles.title}>
+            <h2 className={`${styles.title} modal-title`}>
               {focusSection === 'ubicacion'
                 ? 'Ubicación'
                 : focusSection === 'movimientos'

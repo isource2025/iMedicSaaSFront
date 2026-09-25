@@ -407,7 +407,7 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = 
 		>
 			{!embedded && (
 				<header className={styles.header}>
-					<div className={styles.headerInfo}>
+					<div className={`${styles.headerInfo} modal-title`}>
 						<div className={styles.headerIcon} aria-hidden>
 							🩺
 						</div>

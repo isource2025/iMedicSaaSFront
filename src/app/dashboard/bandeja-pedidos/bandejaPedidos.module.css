@@ -772,3 +772,9 @@
 		justify-content: center;
 	}
 }
+
+@media (max-width: 767px) {
+	.modalTitle {
+		flex: 0 0 auto;
+	}
+}

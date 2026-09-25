@@ -272,7 +272,7 @@ export default function EvolucionesTable({
                 <div className={styles.modalOverlay} onClick={handleCloseView}>
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h3>Evolución Médica</h3>
+                            <h3 className="modal-title">Evolución Médica</h3>
                             <button className={styles.btnClose} onClick={handleCloseView}>
                                 ×
                             </button>

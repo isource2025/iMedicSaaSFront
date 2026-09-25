@@ -205,7 +205,7 @@ export default function AdjuntoFileViewer({ viewer, loading = false, onClose }: 
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={`${styles.panel} ${dicom ? styles.panelDicom : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <span className={styles.title}>{fileName}</span>
+          <span className={`${styles.title} modal-title`}>{fileName}</span>
           <div className={styles.actions}>
             {viewer ? (
               <a

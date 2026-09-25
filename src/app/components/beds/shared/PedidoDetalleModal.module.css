@@ -347,3 +347,9 @@
 		width: 100%;
 	}
 }
+
+@media (max-width: 767px) {
+	.chips {
+		justify-content: center;
+	}
+}

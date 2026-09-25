@@ -322,7 +322,7 @@ export default function DicomVideoImporter({
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h3 className={styles.title}>Serie DICOM → video</h3>
+          <h3 className={`${styles.title} modal-title`}>Serie DICOM → video</h3>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
             ✕
           </button>

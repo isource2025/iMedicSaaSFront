@@ -66,7 +66,7 @@ export default function LaboralDataModal({
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-				<h3>{initialData ? 'Editar Empleo' : 'Agregar Empleo'}</h3>
+				<h3 className='modal-title'>{initialData ? 'Editar Empleo' : 'Agregar Empleo'}</h3>
 
 				<div className={styles.formGrid}>
 					<div

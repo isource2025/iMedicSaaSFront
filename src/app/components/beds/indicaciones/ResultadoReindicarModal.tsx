@@ -153,7 +153,7 @@ export default function ResultadoReindicarModal({
 					</div>
 				) : (
 					<>
-						<h3 id="reindicar-resultado-title" className={styles.title}>
+						<h3 id="reindicar-resultado-title" className={`${styles.title} modal-title`}>
 							{titulo}
 						</h3>
 						<p className={styles.subtitle}>{subtitle}</p>

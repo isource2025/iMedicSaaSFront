@@ -660,6 +660,12 @@
 	min-width: 0;
 }
 
+@media (max-width: 767px) {
+	.modalTitleBlock {
+		align-items: center;
+	}
+}
+
 .modalContext {
 	margin: 0;
 	font-size: 0.85rem;

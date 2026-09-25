@@ -250,7 +250,7 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                 <div className={styles.modalOverlay} onClick={() => setViewingEvolucion(null)}>
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h3>Evolución de Enfermería</h3>
+                            <h3 className="modal-title">Evolución de Enfermería</h3>
                             <button className={styles.btnClose} onClick={() => setViewingEvolucion(null)}>
                                 ×
                             </button>

@@ -351,7 +351,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 				<div className={tableStyles.modalOverlay} onClick={() => setSelectedControl(null)}>
 					<div className={tableStyles.modalContent} onClick={(e) => e.stopPropagation()}>
 						<div className={tableStyles.modalHeader}>
-							<h3>Detalle del Control</h3>
+							<h3 className="modal-title">Detalle del Control</h3>
 							<button className={tableStyles.btnCerrar} onClick={() => setSelectedControl(null)}>×</button>
 						</div>
 						<div className={tableStyles.modalBody}>

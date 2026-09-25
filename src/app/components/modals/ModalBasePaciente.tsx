@@ -49,7 +49,7 @@ const ModalBasePaciente: React.FC<ModalBasePacienteProps> = ({
 		<div className={styles.modalOverlay}>
 			<div className={styles.modalContainer} ref={modalRef}>
 				<div className={styles.modalHeader}>
-					<h2 className={styles.modalTitulo}>{titulo}</h2>
+					<h2 className={`${styles.modalTitulo} modal-title`}>{titulo}</h2>
 					<button className={styles.closeButton} onClick={onClose} type="button">
 						×
 					</button>

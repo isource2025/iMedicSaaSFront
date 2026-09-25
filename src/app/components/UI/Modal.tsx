@@ -77,7 +77,7 @@ export default function Modal({
 		>
 			<div className={`${styles.modal} ${modalSizeClass}`} ref={modalRef}>
 				<div className={styles.modalHeader}>
-					<h2 className={styles.modalTitle}>{title}</h2>
+					<h2 className={`${styles.modalTitle} modal-title`}>{title}</h2>
 					<button
 						className={styles.closeButton}
 						onClick={onClose}

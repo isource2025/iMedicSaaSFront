@@ -387,7 +387,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
         <div className={tableStyles.modalOverlay} onClick={handleCerrarDetalle}>
           <div className={tableStyles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={tableStyles.modalHeader}>
-              <h3>Detalle de Medicación</h3>
+              <h3 className="modal-title">Detalle de Medicación</h3>
               <button className={tableStyles.btnCerrar} onClick={handleCerrarDetalle}>
                 ✕
               </button>

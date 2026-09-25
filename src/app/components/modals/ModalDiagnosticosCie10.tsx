@@ -126,7 +126,7 @@ const ModalDiagnosticosCie10: React.FC<ModalDiagnosticosCie10Props> = ({
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Diagnósticos CIE-10</h2>
+          <h2 className={`${styles.modalTitle} modal-title`}>Diagnósticos CIE-10</h2>
           <button className={styles.closeButton} onClick={onClose} aria-label="Cerrar">
             <IoClose />
           </button>

@@ -30,7 +30,7 @@ export default function ConfirmDialog({
     <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="sa-confirm-title">
       <div className={styles.modalPanel} style={{ width: 'min(440px, 96vw)' }}>
         <div className={styles.modalHeader}>
-          <strong id="sa-confirm-title">{title}</strong>
+          <strong id="sa-confirm-title" className="modal-title">{title}</strong>
           <button type="button" className={styles.modalClose} onClick={onCancel} aria-label="Cerrar">
             ×
           </button>

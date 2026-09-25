@@ -321,7 +321,7 @@ export default function SeccionInfra({ empresa, onUpdated, onError }: Props) {
         <div className={styles.modalOverlay} onClick={() => setPreview(null)}>
           <div className={styles.modalPanel} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <strong>Preview {preview.label}</strong>
+              <strong className="modal-title">Preview {preview.label}</strong>
               <button type="button" className={styles.modalClose} onClick={() => setPreview(null)}>
                 ×
               </button>

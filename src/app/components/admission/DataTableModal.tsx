@@ -183,7 +183,7 @@ const DataTableModal = ({
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>{title}</h2>
+          <h2 className={`${styles.modalTitle} modal-title`}>{title}</h2>
           <button onClick={handleInternalClose} className={styles.closeButton}> 
             <IoClose />
           </button>

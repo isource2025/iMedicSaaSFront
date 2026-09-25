@@ -385,3 +385,9 @@
     flex: 1;
   }
 }
+
+@media (max-width: 767px) {
+  .title {
+    align-items: center;
+  }
+}

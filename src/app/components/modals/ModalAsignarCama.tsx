@@ -165,7 +165,7 @@ const ModalAsignarCama: React.FC<ModalAsignarCamaProps> = ({
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Asignar paciente a cama</h2>
+          <h2 className={`${styles.title} modal-title`}>Asignar paciente a cama</h2>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
             ×
           </button>

@@ -116,7 +116,7 @@ export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInic
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className={modalStyles.modalHeader}>
-					<h3>Pedidos de estudios · bandeja (Agenda)</h3>
+					<h3 className="modal-title">Pedidos de estudios · bandeja (Agenda)</h3>
 					<button type="button" className={modalStyles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>

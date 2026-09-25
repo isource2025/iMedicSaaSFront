@@ -144,7 +144,7 @@ export default function CerrarTurnoModal({
 		<div className={styles.overlay} role='dialog' aria-modal>
 			<div className={styles.modal}>
 				<header className={styles.header}>
-					<div>
+					<div className='modal-title'>
 						<h2 className={styles.title}>Cerrar turno</h2>
 						<p className={styles.subtitle}>{cabecera}</p>
 					</div>

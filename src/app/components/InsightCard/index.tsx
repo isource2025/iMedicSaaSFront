@@ -94,7 +94,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({
         <div className={`${styles.analysisModal} ${isAnalysisModalOpen ? styles.analysisModalOpen : ''}`}>
           <div className={styles.analysisModalContent}>
             <div className={styles.analysisModalHeader}>
-              <h3>{analysisData.title}</h3>
+              <h3 className="modal-title">{analysisData.title}</h3>
               <button 
                 className={styles.closeButton}
                 onClick={() => setIsAnalysisModalOpen(false)}

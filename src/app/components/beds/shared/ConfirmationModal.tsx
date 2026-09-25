@@ -35,7 +35,7 @@ export default function ConfirmationModal({
         <div className={styles.backdrop}>
             {/* El contenido del modal */}
             <div className={styles.modal} onClick={handleModalClick}>
-                <h3 className={styles.title}>{title}</h3>
+                <h3 className={`${styles.title} modal-title`}>{title}</h3>
                 <p className={styles.message}>{message}</p>
                 <div className={styles.actions}>
                     <button

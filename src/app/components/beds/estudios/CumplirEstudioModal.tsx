@@ -142,7 +142,7 @@ export default function CumplirEstudioModal({
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<h3>{modoEdicion ? 'Editar informe' : 'Completar'} · {practica}</h3>
+					<h3 className="modal-title">{modoEdicion ? 'Editar informe' : 'Completar'} · {practica}</h3>
 					<button type="button" className={styles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>

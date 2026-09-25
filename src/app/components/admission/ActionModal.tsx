@@ -74,7 +74,7 @@ const ActionModal = ({
       <div className={styles.modalContent}>
         {/* Encabezado del modal */}
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>
+          <h2 className={`${styles.modalTitle} modal-title`}>
             {action === 'add' ? 'Agregar' : action === 'edit' ? 'Editar' : 'Eliminar'} {title}
           </h2>
           <button 

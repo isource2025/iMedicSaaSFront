@@ -296,7 +296,7 @@ export default function AdmissionVisitExportModal({
     <div className={styles.overlay} onClick={handleBackdrop} role="presentation">
       <div className={styles.dialog} ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="export-visita-title">
         <div className={styles.header}>
-          <div className={styles.headerText}>
+          <div className={`${styles.headerText} modal-title`}>
             <p className={styles.kicker}>PDF de la historia</p>
             <h2 id="export-visita-title" className={styles.title}>
               {modeGeneral

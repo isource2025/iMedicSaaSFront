@@ -196,7 +196,7 @@ export default function AsignarTurnoModal({
 				aria-label={esSobreturno ? 'Agregar sobreturno' : 'Asignar turno'}
 			>
 				<header className={styles.header}>
-					<div>
+					<div className='modal-title'>
 						<h2>{esSobreturno ? 'Agregar sobreturno' : 'Asignar turno'}</h2>
 						<p>
 							{fechaEnvio} · <strong>{horaLabel}</strong>

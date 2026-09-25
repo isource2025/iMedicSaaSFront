@@ -142,7 +142,7 @@ export default function SolicitarInterconsultaModal({
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<h3>{editando ? 'Editar interconsulta' : 'Solicitar interconsulta'}</h3>
+					<h3 className="modal-title">{editando ? 'Editar interconsulta' : 'Solicitar interconsulta'}</h3>
 					<button type="button" className={styles.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
 					</button>

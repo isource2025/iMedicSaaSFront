@@ -9,7 +9,7 @@ export default function IndicativoColors({
 		<div className={styles.modalBackdrop}>
 			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<strong>Referencias para Indicaciones</strong>
+					<strong className="modal-title">Referencias para Indicaciones</strong>
 					<button className={styles.closeX} onClick={() => setHelpOpen(false)}>
 						×
 					</button>

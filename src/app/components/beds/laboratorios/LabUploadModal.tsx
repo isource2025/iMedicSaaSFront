@@ -110,7 +110,7 @@ export default function LabUploadModal({ numeroVisita, onClose, onSuccess }: Lab
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2>Cargar Resultado de Laboratorio</h2>
+          <h2 className="modal-title">Cargar Resultado de Laboratorio</h2>
           <button className={styles.closeButton} onClick={onClose}>
             ✕
           </button>

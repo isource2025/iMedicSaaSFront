@@ -204,7 +204,7 @@ export default function ModalAsignarCamaAVisita({
         aria-labelledby="asignar-cama-visita-title"
       >
         <div className={styles.header}>
-          <h2 id="asignar-cama-visita-title" className={styles.title}>
+          <h2 id="asignar-cama-visita-title" className={`${styles.title} modal-title`}>
             Asignar cama
           </h2>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">

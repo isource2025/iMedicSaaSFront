@@ -125,7 +125,7 @@ export default function PedidoDetalleModal({
 				aria-labelledby="pedido-detalle-title"
 			>
 				<div className={styles.header}>
-					<div className={styles.headerText}>
+					<div className={`${styles.headerText} modal-title`}>
 						{kicker ? <p className={styles.kicker}>{kicker}</p> : null}
 						<h3 id="pedido-detalle-title" className={styles.title}>
 							{title}

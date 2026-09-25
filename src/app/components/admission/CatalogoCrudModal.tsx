@@ -193,7 +193,7 @@ export default function CatalogoCrudModal({
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2>{title}</h2>
+          <h2 className="modal-title">{title}</h2>
           <button type="button" className={styles.cerrar} onClick={onClose} aria-label="Cerrar">
             <X size={18} />
           </button>
