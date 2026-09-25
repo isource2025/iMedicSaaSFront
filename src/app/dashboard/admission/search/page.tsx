@@ -476,7 +476,7 @@ function AdmissionSearchPageContent() {
 
           <div className={styles.toolbarActions}>
             <button type="submit" className={styles.actionPrimary} disabled={loading}>
-              {loading ? 'Buscando…' : 'Buscar'}
+              Buscar
             </button>
             <button type="button" className={styles.actionSecondary} onClick={onClear} disabled={loading}>
               Limpiar
@@ -543,13 +543,13 @@ function AdmissionSearchPageContent() {
                 </tr>
               </thead>
               <tbody>
-                {rows.length === 0 ? (
+                {rows.length === 0 && !loading ? (
                   <tr>
                     <td colSpan={8} className={styles.empty}>
-                      {loading ? 'Buscando...' : 'Sin resultados'}
+                      Sin resultados
                     </td>
                   </tr>
-                ) : (
+                ) : rows.length === 0 ? null : (
                   rows.map((row) => (
                     <tr key={row.NumeroVisita}>
                       <td>{iaLabel(row)}</td>
@@ -636,9 +636,9 @@ function AdmissionSearchPageContent() {
             </div>
 
             <div className={styles.admissionCards} aria-live="polite">
-              {rows.length === 0 ? (
-                <div className={styles.mobileEmpty}>{loading ? 'Buscando...' : 'Sin resultados'}</div>
-              ) : (
+              {rows.length === 0 && !loading ? (
+                <div className={styles.mobileEmpty}>Sin resultados</div>
+              ) : rows.length === 0 ? null : (
                 rows.map((row) => (
                   <article key={`card-${row.NumeroVisita}`} className={styles.admissionCard}>
                     <div className={styles.admissionCardHead}>
@@ -684,9 +684,9 @@ function AdmissionSearchPageContent() {
           </div>
         ) : (
           <div className={styles.patientFolders}>
-            {groupedByPatient.length === 0 ? (
-              <div className={sharedStyles.noResults}>{loading ? 'Buscando...' : 'Sin resultados'}</div>
-            ) : (
+            {groupedByPatient.length === 0 && !loading ? (
+              <div className={sharedStyles.noResults}>Sin resultados</div>
+            ) : groupedByPatient.length === 0 ? null : (
               groupedByPatient.map(({ patient, visits }) => (
                 <button
                   key={patient.IdPaciente}
@@ -738,14 +738,7 @@ function AdmissionSearchPageContent() {
           Anterior
         </button>
         <span className={styles.paginationStatus}>
-          {loading ? (
-            <span className={styles.paginationLoading}>
-              <span className={styles.paginationSpinner} aria-hidden />
-              Cargando página…
-            </span>
-          ) : (
-            <>Página {page} de {Math.max(1, totalPages)}</>
-          )}
+          Página {page} de {Math.max(1, totalPages)}
         </span>
         <button
           type="button"

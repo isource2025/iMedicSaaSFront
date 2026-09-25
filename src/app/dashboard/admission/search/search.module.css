@@ -371,30 +371,6 @@
   text-align: center;
 }
 
-.paginationLoading {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #0369a1;
-  font-weight: 600;
-}
-
-.paginationSpinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid #bae6fd;
-  border-top-color: #0284c7;
-  border-radius: 50%;
-  animation: admissionSearchSpin 0.7s linear infinite;
-}
-
-@keyframes admissionSearchSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .empty {
   text-align: center !important;
   color: #6b7280;

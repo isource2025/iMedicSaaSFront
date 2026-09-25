@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ClipboardPlus, Pencil, RotateCcw, Save, Stethoscope, UserRound } from 'lucide-react';
+import { BedDouble, ClipboardPlus, Pencil, RotateCcw, Save, Stethoscope, UserRound } from 'lucide-react';
 
 import PacienteSelector, {
   type PacienteElegido,
@@ -13,6 +13,7 @@ import AcompanantesNovedadesAlta, {
 } from '@/app/components/admission/NuevaAdmision/AcompanantesNovedadesAlta';
 import CamaSelector from '@/app/components/admission/NuevaAdmision/CamaSelector';
 import AdmissionAcompanantesNovedades from '@/app/components/admission/AdmissionAcompanantesNovedades';
+import AdmissionUbicacionMovimientosModal from '@/app/components/admission/AdmissionUbicacionMovimientosModal';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import Loader from '@/app/components/Loader/Loader';
 
@@ -194,10 +195,6 @@ export default function NuevaAdmisionClient() {
   const [paciente, setPaciente] = useState<PacienteElegido | null>(null);
   const [ultimaVisita, setUltimaVisita] = useState<UltimaVisitaPaciente | null>(null);
   const [cama, setCama] = useState<CamaSeleccionada | null>(null);
-  const [ubicacionActual, setUbicacionActual] = useState<{
-    sector: string;
-    habitacion: string;
-  } | null>(null);
 
   const [catalogos, setCatalogos] = useState<AdmisionNuevaCatalogos | null>(null);
   const [catalogoRequisitos, setCatalogoRequisitos] = useState<RequisitoCobertura[]>([]);
@@ -253,7 +250,6 @@ export default function NuevaAdmisionClient() {
     setAcompanantesPendientes([]);
     setNovedadesPendientes([]);
     setUltimaVisita(null);
-    setUbicacionActual(null);
 
     if (enEdicion) {
       let vigente = true;
@@ -285,9 +281,6 @@ export default function NuevaAdmisionClient() {
           });
           setForm(formDesdeVisita(v, panel?.observaciones || ''));
           setRequisitos((requisitosVisita || []).map(requisitoDesdeVisita));
-          const sector = String(v.SectorDescripcion || v.Sector || '').trim();
-          const habitacion = String(v.Habitacion || '').trim();
-          setUbicacionActual(sector || habitacion ? { sector, habitacion } : null);
         } catch (e) {
           if (!vigente) return;
           setPaciente(null);
@@ -479,7 +472,6 @@ export default function NuevaAdmisionClient() {
     setAcompanantesPendientes([]);
     setNovedadesPendientes([]);
     setUltimaVisita(null);
-    setUbicacionActual(null);
     setModoExito(null);
     setError('');
   };
@@ -1075,11 +1067,20 @@ export default function NuevaAdmisionClient() {
         <CamaSelector seleccion={cama} onSeleccionar={setCama} disabled={bloqueado} />
       )}
       {esInternado && enEdicion && (
-        <p className={styles.sugerenciaUltimaVisita}>
-          {ubicacionActual?.sector || ubicacionActual?.habitacion
-            ? `Ubicación actual: ${ubicacionActual.sector || '—'} / Hab. ${ubicacionActual.habitacion || '—'}. Para cambiar la cama usá el módulo de Camas.`
-            : 'Esta internación no tiene cama asignada. Ubicá al paciente desde Camas.'}
-        </p>
+        <div className={styles.bloque}>
+          <div className={styles.bloqueHeader}>
+            <h2>
+              <BedDouble size={18} /> Ubicación y movimientos
+            </h2>
+          </div>
+          <AdmissionUbicacionMovimientosModal
+            isOpen
+            embedded
+            numeroVisita={numeroVisitaUrl}
+            onClose={() => {}}
+            focusSection="ubicacion_movimientos"
+          />
+        </div>
       )}
 
       <div className={styles.acciones}>

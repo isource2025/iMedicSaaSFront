@@ -434,8 +434,9 @@ export default function AdmissionUbicacionMovimientosModal({
     focusSection === 'movimientos' ||
     focusSection === 'ubicacion_movimientos';
   const showEgreso = focusSection === 'all' || focusSection === 'egreso';
-  /** Embebido y con los tres bloques juntos hacen falta títulos para separarlos. */
-  const mostrarTitulos = !embedded || focusSection === 'all';
+  /** Embebido: títulos si hay más de un bloque, o ubicación+movimientos juntos. */
+  const mostrarTitulos =
+    !embedded || focusSection === 'all' || focusSection === 'ubicacion_movimientos';
 
   const body = (
     <div className={embedded ? styles.embeddedBody : styles.body}>
