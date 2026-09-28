@@ -17,7 +17,14 @@ import coberturaService, {
 import SeleccionCoberturaModal from './AddPatient/SeleccionCoberturaModal';
 import { apiService } from '../../services/axios';
 import { patientService } from '../../services/patientService';
-import type { PersonaResponse, LocalidadResponse, LocalidadData } from './typesForRenaper';
+import type { PersonaResponse } from './typesForRenaper';
+
+type ResolvedLocalidad = {
+	Valor: number | string;
+	NombreLocalidad: string;
+	ValorProvincia: string;
+	creada: boolean;
+};
 import { mapRenaperToPatientFields } from '@/app/utils/renaperMapper';
 import { repararTextoUi } from '@/app/utils/repararTextoUi';
 
@@ -135,6 +142,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		texto: string;
 	} | null>(null);
 	const busquedaDocRef = useRef(0);
+	const datosDeBusquedaRef = useRef(false);
 	const [estadosCiviles, setEstadosCiviles] = useState<{ value: string; label: string }[]>(
 		[],
 	);
@@ -235,29 +243,39 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			.replace(/\s+/g, ' ') // colapsa múltiple espacios
 			.trim();
 
-	// helper para pedir la localidad de forma segura
-	async function safeFetchLocalidad(ciudad: string): Promise<LocalidadData | null> {
-		const query = encodeURIComponent(normalizeCity(ciudad));
+	/** Busca la localidad de RENAPER en el catálogo y la da de alta si no existe. */
+	async function resolverLocalidadRenaper(
+		persona: Record<string, unknown>,
+	): Promise<{ localidad: ResolvedLocalidad | null; error?: string }> {
 		try {
-			const resp = await apiService.get<LocalidadResponse>(
-				`/localidad/search-by-localidad/${query}`,
+			const { data } = await apiService.post<{ data: ResolvedLocalidad | null }>(
+				'/localidad/resolver-renaper',
+				{
+					ciudad: persona.ciudad ?? persona.Ciudad ?? persona.localidad ?? '',
+					provincia: persona.provincia ?? persona.Provincia ?? '',
+					cpostal: persona.cpostal ?? persona.codigoPostal ?? '',
+				},
 			);
-			return resp.data?.data ?? null;
+			return { localidad: data?.data ?? null };
 		} catch (e: any) {
-			// si tu interceptor de axios mete el status:
-			if ((e as any)?.status === 404) {
-				console.warn('[Localidad] No encontrada:', ciudad);
-				return null;
-			}
-			// fallback si el interceptor solo manda message:
-			if (String(e?.message || '').includes('404')) {
-				console.warn('[Localidad] No encontrada:', ciudad);
-				return null;
-			}
-			console.warn('[Localidad] Error consultando:', e);
-			return null; // no bloquees el flujo
+			console.warn('[Localidad] No se pudo resolver:', e);
+			return { localidad: null, error: e?.response?.data?.message };
 		}
 	}
+
+	const limpiarFormularioParaDocumento = (documento: string, sexo?: string) => {
+		datosDeBusquedaRef.current = false;
+		autoProvinciaAppliedRef.current = false;
+		setFotoFile(null);
+		setPhotoPreview(null);
+		setFormData((prev) =>
+			buildInitialFormData({
+				NumeroDocumento: documento,
+				TipoDocumento: prev.TipoDocumento,
+				Sexo: sexo || prev.Sexo,
+			}),
+		);
+	};
 
 	const getRenaperInfo = async (
 		e: React.MouseEvent | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -274,6 +292,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		setBuscandoCoberturas(false);
 		const sexoOpt = SexoVal === 'F' ? 1 : 2;
 
+		// Sin esto quedan datos de la persona anterior en los campos que la nueva fuente no informa
+		if (!isEditing) limpiarFormularioParaDocumento(String(NumeroDocumento), SexoVal);
+
 		try {
 			// Paso 1: ficha local. RENAPER y obras sociales solo si ese documento no existe.
 			setAvisoDocumento('Buscando en la base de pacientes…');
@@ -284,6 +305,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					autoProvinciaAppliedRef.current = false;
 					setFotoFile(null);
 					setFormData(buildInitialFormData(local as Partial<PatientFormData>));
+					datosDeBusquedaRef.current = true;
 					setAvisoDocumento(
 						'Este documento ya está registrado. Se cargaron los datos de la ficha.',
 					);
@@ -320,6 +342,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			}
 
 			const mapped = mapRenaperToPatientFields(persona);
+			datosDeBusquedaRef.current = true;
 			setFormData((prev) => ({
 				...prev,
 				IDPaciente: undefined,
@@ -335,16 +358,34 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			setAvisoDocumento('Datos cargados desde RENAPER.');
 
 			const ciudadNorm = normalizeCity(mapped.ciudadNorm);
-			const dataLocalidad = ciudadNorm ? await safeFetchLocalidad(ciudadNorm) : null;
+			if (!ciudadNorm) return;
+			const { localidad, error: errorLocalidad } = await resolverLocalidadRenaper(persona);
 			if (!vigente()) return;
-			if (dataLocalidad?.Valor) {
-				setFormData((prev) => ({ ...prev, ValorLocalidad: String(dataLocalidad.Valor) }));
-			}
-			if (dataLocalidad?.ValorProvincia) {
-				await handleGetProvincia(String(dataLocalidad.ValorProvincia));
-			} else if (ciudadNorm) {
+			if (!localidad) {
 				setAvisoDocumento(
-					`Datos cargados desde RENAPER. La localidad "${ciudadNorm}" no está en el catálogo: selecciónela manualmente.`,
+					`Datos cargados desde RENAPER. ${errorLocalidad || `No se pudo cargar la localidad "${ciudadNorm}"`}: selecciónela manualmente.`,
+				);
+				return;
+			}
+			const valorLocalidad = String(localidad.Valor);
+			const valorProvincia = String(localidad.ValorProvincia || '').trim();
+			setLocalidadOptions((prev) =>
+				prev.some((l) => String(l.Valor) === valorLocalidad)
+					? prev
+					: [
+							...prev,
+							{
+								Valor: valorLocalidad,
+								NombreLocalidad: localidad.NombreLocalidad,
+								ValorProvincia: valorProvincia,
+							},
+						],
+			);
+			setFormData((prev) => ({ ...prev, ValorLocalidad: valorLocalidad }));
+			if (valorProvincia) await handleGetProvincia(valorProvincia);
+			if (localidad.creada) {
+				setAvisoDocumento(
+					`Datos cargados desde RENAPER. Se agregó la localidad "${localidad.NombreLocalidad}" al catálogo.`,
 				);
 			}
 		} catch (err) {
@@ -393,9 +434,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					tipo: fallidos.length ? 'error' : 'info',
 					texto: fallidos.length
 						? fallidos.map((c) => motivoAfiliado(c.razonSocial, c.motivo)).join(' ')
-						: checks.length
-							? `No figura activo en ${checks.map((c) => c.razonSocial).join(', ')}.`
-							: r.message || 'No hay obras sociales que validen por documento.',
+						: 'Sin obra social detectada.',
 				});
 			}
 		} catch (err) {
@@ -470,11 +509,17 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			setBuscandoRenaper(false);
 			setBuscandoCoberturas(false);
 			setAvisoDocumento('');
-			setFormData((prev) => ({
-				...prev,
-				NumeroDocumento: value,
-				IDPaciente: undefined,
-			}));
+			setMatchesCobertura([]);
+			setResultadoAfiliado(null);
+			if (datosDeBusquedaRef.current) {
+				limpiarFormularioParaDocumento(value);
+			} else {
+				setFormData((prev) => ({
+					...prev,
+					NumeroDocumento: value,
+					IDPaciente: undefined,
+				}));
+			}
 			if (errors.NumeroDocumento) {
 				setErrors((prev) => {
 					const n = { ...prev };
