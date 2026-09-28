@@ -79,3 +79,13 @@ export type CrearProtocoloPayload = {
 	tipoPractica?: string;
 	profesionales: { valorPersonal: number; funcion: number }[];
 };
+
+/** La práctica no se edita (ya está registrada para facturación). */
+export type ActualizarProtocoloPayload = {
+	texto: string;
+	tecnica?: string;
+	diagnosticoPre?: string;
+	diagnosticoPos?: string;
+	estado?: string;
+	profesionales?: { valorPersonal: number; funcion: number }[];
+};

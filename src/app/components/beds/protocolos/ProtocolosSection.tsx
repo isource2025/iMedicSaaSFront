@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import protocolosService from '@/app/services/protocolosService';
 import type { ProtocoloClinico } from '@/app/types/protocolos';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '@/app/hooks/useUsuarioActual';
+import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
+import ConfirmationModal from '../shared/ConfirmationModal';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import CargarProtocoloModal from './CargarProtocoloModal';
@@ -14,6 +17,7 @@ import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
+import localStyles from './ProtocolosSection.module.css';
 
 type Props = {
 	numeroVisita: number | null;
@@ -64,12 +68,44 @@ function buildFields(p: ProtocoloClinico) {
 export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	const { puede } = usePermiso();
 	const puedeCrear = puede('INTERNACION.PROTOCOLOS.CREAR');
+	const puedeEditar = puede('INTERNACION.PROTOCOLOS.EDITAR');
+	const puedeEliminar = puede('INTERNACION.PROTOCOLOS.ELIMINAR');
+	const usuarioActual = useUsuarioActual();
 	const [rows, setRows] = useState<ProtocoloClinico[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<ProtocoloClinico | null>(null);
 	const [showCargar, setShowCargar] = useState(false);
+	const [editing, setEditing] = useState<ProtocoloClinico | null>(null);
+	const [aEliminar, setAEliminar] = useState<ProtocoloClinico | null>(null);
 	const [query, setQuery] = useState('');
+
+	const puedeGestionarFila = (p: ProtocoloClinico) => {
+		if (esAdminClinico()) return true;
+		return esRegistroPropio({ IdOperador: p.idOperador }, usuarioActual) === true;
+	};
+
+	const abrirNuevo = () => {
+		setEditing(null);
+		setShowCargar(true);
+	};
+	const abrirEditar = (p: ProtocoloClinico) => {
+		setEditing(p);
+		setShowCargar(true);
+	};
+
+	const confirmarEliminar = async () => {
+		if (!aEliminar) return;
+		const p = aEliminar;
+		setAEliminar(null);
+		try {
+			await protocolosService.eliminar(p.idProtocolo);
+			setRows((prev) => prev.filter((r) => r.idProtocolo !== p.idProtocolo));
+			void load();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo borrar el protocolo');
+		}
+	};
 
 	const load = useCallback(async () => {
 		if (!numeroVisita) return;
@@ -161,7 +197,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 				title="Protocolos"
 				subtitle="Post-práctica / cirugía · equipo por rol y descripción clínica"
 				addLabel={puedeCrear ? 'Protocolo' : undefined}
-				onAdd={puedeCrear ? () => setShowCargar(true) : undefined}
+				onAdd={puedeCrear ? abrirNuevo : undefined}
 				exportSlot={
 					<ExportButton
 						data={filtered}
@@ -187,7 +223,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 								: 'Probá con otro criterio de búsqueda.'
 						}
 						actionLabel={puedeCrear && rows.length === 0 ? 'Protocolo' : undefined}
-						onAction={puedeCrear && rows.length === 0 ? () => setShowCargar(true) : undefined}
+						onAction={puedeCrear && rows.length === 0 ? abrirNuevo : undefined}
 					/>
 				) : (
 					<div className={tableStyles.tableWrap}>
@@ -200,6 +236,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 									<th>Práctica</th>
 									<th>Equipo</th>
 									<th>Cargado por</th>
+									<th className={localStyles.colAcc}>Acciones</th>
 								</tr>
 							</thead>
 							<tbody className={tableStyles.tbody}>
@@ -225,6 +262,41 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 											</td>
 											<td className={tableStyles.meta}>{resumenEquipo(r)}</td>
 											<td className={tableStyles.meta}>{r.operadorNombre || '—'}</td>
+											<td
+												className={localStyles.colAcc}
+												onClick={(e) => e.stopPropagation()}
+											>
+												<div className={localStyles.acciones}>
+													<button
+														type="button"
+														className={localStyles.btnAction}
+														onClick={() => setSelected(r)}
+														title="Ver detalle"
+													>
+														<IoEyeOutline color="#5BC0DE" size={18} />
+													</button>
+													{puedeEditar && puedeGestionarFila(r) && (
+														<button
+															type="button"
+															className={localStyles.btnAction}
+															onClick={() => abrirEditar(r)}
+															title="Editar"
+														>
+															<IoPencilOutline color="#5BC0DE" size={18} />
+														</button>
+													)}
+													{puedeEliminar && puedeGestionarFila(r) && (
+														<button
+															type="button"
+															className={localStyles.btnAction}
+															onClick={() => setAEliminar(r)}
+															title="Borrar"
+														>
+															<IoTrashOutline color="#5BC0DE" size={18} />
+														</button>
+													)}
+												</div>
+											</td>
 										</tr>
 									);
 								})}
@@ -252,11 +324,33 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 				/>
 			)}
 
+			<ConfirmationModal
+				isOpen={!!aEliminar}
+				onClose={() => setAEliminar(null)}
+				onConfirm={() => void confirmarEliminar()}
+				title="Borrar protocolo"
+				message={
+					aEliminar
+						? `${aEliminar.tipoDescripcion || aEliminar.tipoProtocolo || 'Protocolo'}${
+								aEliminar.numeroProtocolo ? ` #${aEliminar.numeroProtocolo}` : ''
+							} · ${formatFecha(aEliminar.fecha)}\n${
+								aEliminar.practicas?.[0]?.descripcion || ''
+							}\n\nSe borran también la práctica y el equipo asociados. Esta acción no se puede deshacer.`
+						: ''
+				}
+				confirmText="Borrar"
+				cancelText="Cancelar"
+			/>
+
 			<CargarProtocoloModal
 				open={showCargar}
 				numeroVisita={numeroVisita}
 				sector={sector}
-				onClose={() => setShowCargar(false)}
+				protocoloToEdit={editing}
+				onClose={() => {
+					setShowCargar(false);
+					setEditing(null);
+				}}
 				onCreated={() => void load()}
 			/>
 		</>

@@ -1,5 +1,6 @@
 import { apiFetch } from '@/app/utils/authFetch';
 import type {
+	ActualizarProtocoloPayload,
 	CrearProtocoloPayload,
 	PracticaProtocolo,
 	ProfesionalBusqueda,
@@ -110,6 +111,37 @@ const protocolosService = {
 			throw new Error(json?.mensaje || 'No se pudo crear el protocolo');
 		}
 		return json.data;
+	},
+
+	async actualizar(
+		idProtocolo: number,
+		payload: ActualizarProtocoloPayload,
+	): Promise<ProtocoloClinico | null> {
+		const res = await apiFetch(`/protocolos/${idProtocolo}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload),
+		});
+		const json = await parseJson<{
+			success?: boolean;
+			data?: ProtocoloClinico | null;
+			mensaje?: string;
+		}>(res);
+		if (!res.ok || !json?.success) {
+			throw new Error(json?.mensaje || 'No se pudo actualizar el protocolo');
+		}
+		return json.data ?? null;
+	},
+
+	async eliminar(idProtocolo: number): Promise<void> {
+		const res = await apiFetch(`/protocolos/${idProtocolo}`, {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+		});
+		const json = await parseJson<{ success?: boolean; mensaje?: string }>(res);
+		if (!res.ok || !json?.success) {
+			throw new Error(json?.mensaje || 'No se pudo borrar el protocolo');
+		}
 	},
 };
 

@@ -6,6 +6,7 @@ import type {
 	FuncionRequerida,
 	PracticaProtocolo,
 	ProfesionalBusqueda,
+	ProtocoloClinico,
 } from '@/app/types/protocolos';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { adjuntosService } from '@/app/services/adjuntosService';
@@ -18,6 +19,7 @@ type Props = {
 	sector?: string | null;
 	onClose: () => void;
 	onCreated: () => void;
+	protocoloToEdit?: ProtocoloClinico | null;
 };
 
 type Asignacion = {
@@ -50,8 +52,10 @@ export default function CargarProtocoloModal({
 	sector,
 	onClose,
 	onCreated,
+	protocoloToEdit = null,
 }: Props) {
 	const usuario = useUsuarioActual();
+	const isEdit = !!protocoloToEdit;
 	const [practicaQuery, setPracticaQuery] = useState('');
 	const [practicas, setPracticas] = useState<PracticaProtocolo[]>([]);
 	const [practica, setPractica] = useState<PracticaProtocolo | null>(null);
@@ -73,15 +77,46 @@ export default function CargarProtocoloModal({
 
 	useEffect(() => {
 		if (!open) return;
-		setPracticaQuery('');
 		setPracticas([]);
-		setPractica(null);
-		setAsignaciones([]);
-		setTexto('');
-		setTecnica('');
-		setDiagnosticoPre('');
-		setDiagnosticoPos('');
 		setAddFuncionCodigo('');
+		if (protocoloToEdit) {
+			const prac = protocoloToEdit.practicas?.[0];
+			setPractica(
+				prac
+					? {
+							idPractica: prac.codigoPractica,
+							tipoPractica: prac.tipoPractica,
+							descripcion: prac.descripcion,
+							funcionesRequeridas: [],
+						}
+					: null,
+			);
+			setPracticaQuery(prac?.descripcion || '');
+			setAsignaciones(
+				(prac?.profesionales || []).map((p) => ({
+					funcion: { codigo: p.funcion, nombre: p.funcionNombre, unidad: 0 },
+					profesional: {
+						valorPersonal: p.valorPersonal,
+						matricula: p.matricula ?? null,
+						apellidoNombre: p.apellidoNombre || `Id ${p.valorPersonal}`,
+					},
+					query: '',
+					results: [],
+				})),
+			);
+			setTexto(protocoloToEdit.texto || '');
+			setTecnica(protocoloToEdit.tecnica || '');
+			setDiagnosticoPre(protocoloToEdit.diagnosticoPre || '');
+			setDiagnosticoPos(protocoloToEdit.diagnosticoPos || '');
+		} else {
+			setPracticaQuery('');
+			setPractica(null);
+			setAsignaciones([]);
+			setTexto('');
+			setTecnica('');
+			setDiagnosticoPre('');
+			setDiagnosticoPos('');
+		}
 		setPendingFiles([]);
 		setTipoAdjunto('');
 		setError(null);
@@ -89,7 +124,7 @@ export default function CargarProtocoloModal({
 			.getTiposImagenes()
 			.then((rows) => setTiposAdjunto(rows || []))
 			.catch(() => setTiposAdjunto([]));
-	}, [open]);
+	}, [open, protocoloToEdit]);
 
 	useEffect(() => {
 		const t = practicaQuery.trim();
@@ -188,7 +223,7 @@ export default function CargarProtocoloModal({
 	};
 
 	const submit = async () => {
-		if (!practica) {
+		if (!practica && !isEdit) {
 			setError('Seleccioná la práctica / procedimiento');
 			return;
 		}
@@ -206,6 +241,37 @@ export default function CargarProtocoloModal({
 		}
 		setSubmitting(true);
 		setError(null);
+		const equipo = asignaciones
+			.filter((a) => a.profesional)
+			.map((a) => ({
+				valorPersonal: a.profesional!.valorPersonal,
+				funcion: a.funcion.codigo,
+			}));
+		if (isEdit && protocoloToEdit) {
+			try {
+				await protocolosService.actualizar(protocoloToEdit.idProtocolo, {
+					texto: texto.trim(),
+					tecnica: tecnica.trim(),
+					diagnosticoPre: diagnosticoPre.trim(),
+					diagnosticoPos: diagnosticoPos.trim(),
+					profesionales: practica ? equipo : undefined,
+				});
+				if (pendingFiles.length > 0) {
+					try {
+						await adjuntosService.subirArchivos(numeroVisita, pendingFiles, tipoAdjunto);
+					} catch (upErr) {
+						console.warn('[CargarProtocolo] adjuntos:', upErr);
+					}
+				}
+				onCreated();
+				onClose();
+			} catch (e) {
+				setError(e instanceof Error ? e.message : 'No se pudo actualizar el protocolo');
+			} finally {
+				setSubmitting(false);
+			}
+			return;
+		}
 		try {
 			const created = await protocolosService.crear({
 				numeroVisita,
@@ -213,16 +279,11 @@ export default function CargarProtocoloModal({
 				tecnica: tecnica.trim() || undefined,
 				diagnosticoPre: diagnosticoPre.trim() || undefined,
 				diagnosticoPos: diagnosticoPos.trim() || undefined,
-				idPractica: practica.idPractica,
-				tipoPractica: practica.tipoPractica,
+				idPractica: practica!.idPractica,
+				tipoPractica: practica!.tipoPractica,
 				sector: sector || undefined,
 				idOperador: usuario?.valorPersonal ?? undefined,
-				profesionales: asignaciones
-					.filter((a) => a.profesional)
-					.map((a) => ({
-						valorPersonal: a.profesional!.valorPersonal,
-						funcion: a.funcion.codigo,
-					})),
+				profesionales: equipo,
 			});
 			if (pendingFiles.length > 0 && created?.idProtocolo != null) {
 				try {
@@ -246,7 +307,11 @@ export default function CargarProtocoloModal({
 				<header className={styles.header}>
 					<div className="modal-title">
 						<p className={styles.eyebrow}>Visita #{numeroVisita}</p>
-						<h3>Cargar protocolo</h3>
+						<h3>
+							{isEdit
+								? `Editar protocolo ${protocoloToEdit?.numeroProtocolo || protocoloToEdit?.idProtocolo || ''}`
+								: 'Cargar protocolo'}
+						</h3>
 					</div>
 					<button type="button" className={shell.btnClose} onClick={onClose} aria-label="Cerrar">
 						×
@@ -261,7 +326,11 @@ export default function CargarProtocoloModal({
 							<span className={styles.step}>1</span>
 							<div>
 								<h4>Práctica / procedimiento</h4>
-								<p>Buscá por código o descripción y elegí una opción.</p>
+								<p>
+									{isEdit
+										? 'La práctica ya está registrada para facturación y no se puede cambiar.'
+										: 'Buscá por código o descripción y elegí una opción.'}
+								</p>
 							</div>
 						</div>
 
@@ -279,18 +348,20 @@ export default function CargarProtocoloModal({
 										) : null}
 									</span>
 								</div>
-								<button
-									type="button"
-									className={styles.linkBtn}
-									onClick={() => {
-										setPractica(null);
-										setPracticaQuery('');
-										setAsignaciones([]);
-										setPracticas([]);
-									}}
-								>
-									Cambiar
-								</button>
+								{!isEdit && (
+									<button
+										type="button"
+										className={styles.linkBtn}
+										onClick={() => {
+											setPractica(null);
+											setPracticaQuery('');
+											setAsignaciones([]);
+											setPracticas([]);
+										}}
+									>
+										Cambiar
+									</button>
+								)}
 							</div>
 						) : (
 							<div className={styles.searchWrap}>
@@ -537,7 +608,11 @@ export default function CargarProtocoloModal({
 							<span className={styles.step}>{practica ? '4' : '3'}</span>
 							<div>
 								<h4>Adjuntos</h4>
-								<p>Opcional. Se suben al guardar el protocolo.</p>
+								<p>
+									{isEdit
+										? 'Opcional. Se suman a los adjuntos de la visita al guardar.'
+										: 'Opcional. Se suben al guardar el protocolo.'}
+								</p>
 							</div>
 						</div>
 
@@ -590,7 +665,7 @@ export default function CargarProtocoloModal({
 						onClick={() => void submit()}
 						disabled={submitting}
 					>
-						{submitting ? 'Guardando…' : 'Guardar protocolo'}
+						{submitting ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Guardar protocolo'}
 					</button>
 				</footer>
 			</div>

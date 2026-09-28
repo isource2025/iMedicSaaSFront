@@ -50,6 +50,40 @@
 	min-width: 180px;
 }
 
+.colAcc {
+	width: 120px;
+	text-align: center;
+	cursor: default;
+}
+
+.acciones {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+}
+
+.btnAction {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+.btnAction:hover {
+	background: rgba(91, 192, 222, 0.1);
+	transform: scale(1.1);
+}
+.btnAction:active {
+	transform: scale(0.95);
+}
+
 .adjuntosBlock {
 	margin: 0.75rem 0 1rem;
 	padding: 0.75rem 0.85rem;
