@@ -21,7 +21,8 @@ interface OtherDataTabProps {
 	coberturaOptions: CoberturaOption[];
 	onValidarAfiliado?: () => void;
 	validandoAfiliado?: boolean;
-	resultadoAfiliado?: { tipo: 'ok' | 'error'; texto: string } | null;
+	buscandoCoberturas?: boolean;
+	resultadoAfiliado?: { tipo: 'ok' | 'error' | 'info'; texto: string } | null;
 }
 
 export default function PersonalDataTab({
@@ -35,13 +36,13 @@ export default function PersonalDataTab({
 	estadosCiviles,
 	onValidarAfiliado,
 	validandoAfiliado = false,
+	buscandoCoberturas = false,
 	resultadoAfiliado = null,
 }: OtherDataTabProps) {
 	const coberturaSel = coberturaOptions.find(
 		(c) => String(c.value) === String(formData.Cobertura || ''),
 	);
-	const validaPorNroAfiliado =
-		!!coberturaSel?.apiValidacion && !coberturaSel?.nroAfiliadoDocumento;
+	const tieneApiValidacion = !!coberturaSel?.apiValidacion;
 	// mapear opciones al formato del LoadingSelect
 	const [edad, setEdad] = useState(0);
 	const localidadSelectOptions = (localidadOptions || []).map((l) => ({
@@ -313,29 +314,45 @@ export default function PersonalDataTab({
 							className={`${styles.input} ${errors.nAfiliado ? styles.error : ''}`}
 							tabIndex={16}
 						/>
-						{validaPorNroAfiliado && onValidarAfiliado && (
+						{tieneApiValidacion && onValidarAfiliado && (
 							<button
 								type='button'
 								className={styles.validarAfiliadoBtn}
 								onClick={onValidarAfiliado}
-								disabled={validandoAfiliado || !String(formData.nAfiliado || '').trim()}
-								title={`Consultar actividad en ${coberturaSel?.label}`}
+								disabled={validandoAfiliado || buscandoCoberturas}
+								title={`Buscar actividad del afiliado en ${coberturaSel?.label}`}
 								tabIndex={17}
 							>
-								{validandoAfiliado ? 'Validando…' : 'Validar'}
+								{validandoAfiliado ? (
+									<>
+										<span className={styles.btnSpinner} aria-hidden='true' />
+										Buscando…
+									</>
+								) : (
+									'Buscar'
+								)}
 							</button>
 						)}
 					</div>
-					{resultadoAfiliado && (
-						<div
-							className={
-								resultadoAfiliado.tipo === 'ok'
-									? styles.afiliadoOk
-									: styles.errorMessage
-							}
-						>
-							{resultadoAfiliado.texto}
+					{buscandoCoberturas ? (
+						<div className={styles.afiliadoInfo}>
+							<span className={styles.btnSpinner} aria-hidden='true' />
+							Buscando en obras sociales…
 						</div>
+					) : (
+						resultadoAfiliado && (
+							<div
+								className={
+									resultadoAfiliado.tipo === 'ok'
+										? styles.afiliadoOk
+										: resultadoAfiliado.tipo === 'info'
+											? styles.afiliadoInfo
+											: styles.errorMessage
+								}
+							>
+								{resultadoAfiliado.texto}
+							</div>
+						)
 					)}
 					{errors.nAfiliado && (
 						<div className={styles.errorMessage}>{errors.nAfiliado}</div>

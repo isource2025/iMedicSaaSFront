@@ -20,6 +20,7 @@ export type ValidarAfiliadoResponse = {
 	documento: string | null;
 	matches: AfiliadoMatch[];
 	primary: AfiliadoMatch | null;
+	checks?: { valor: number | string; razonSocial: string; activo: boolean; motivo?: string }[];
 	message?: string;
 };
 

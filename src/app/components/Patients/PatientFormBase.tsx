@@ -129,10 +129,12 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const [coberturaOptions, setCoberturaOptions] = useState<CoberturaOption[]>([]);
 	const [matchesCobertura, setMatchesCobertura] = useState<AfiliadoMatch[]>([]);
 	const [validandoAfiliado, setValidandoAfiliado] = useState(false);
+	const [buscandoCoberturas, setBuscandoCoberturas] = useState(false);
 	const [resultadoAfiliado, setResultadoAfiliado] = useState<{
-		tipo: 'ok' | 'error';
+		tipo: 'ok' | 'error' | 'info';
 		texto: string;
 	} | null>(null);
+	const busquedaDocRef = useRef(0);
 	const [estadosCiviles, setEstadosCiviles] = useState<{ value: string; label: string }[]>(
 		[],
 	);
@@ -264,16 +266,20 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	) => {
 		e.preventDefault();
 		if (!NumeroDocumento) return;
+		const busqueda = ++busquedaDocRef.current;
+		const vigente = () => busqueda === busquedaDocRef.current;
 		setBuscandoRenaper(true);
-		setAvisoDocumento('');
 		setMatchesCobertura([]);
 		setResultadoAfiliado(null);
+		setBuscandoCoberturas(false);
 		const sexoOpt = SexoVal === 'F' ? 1 : 2;
 
 		try {
-			// Primero la ficha local. RENAPER solo si ese documento no existe.
+			// Paso 1: ficha local. RENAPER y obras sociales solo si ese documento no existe.
+			setAvisoDocumento('Buscando en la base de pacientes…');
 			try {
 				const local = await patientService.buscarPacientePorDocumento(NumeroDocumento);
+				if (!vigente()) return;
 				if (local) {
 					autoProvinciaAppliedRef.current = false;
 					setFotoFile(null);
@@ -287,69 +293,120 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 				console.error('Error buscando paciente en la base:', localErr);
 			}
 
-			if (!SexoVal) return;
+			// Paso 3 (en segundo plano, con su propio loader): obras sociales que validan por documento
+			void buscarCoberturasPorDocumento(String(NumeroDocumento), vigente);
 
-			const endpoint = `/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`;
-			const [renaperResult, afiliadoResult] = await Promise.allSettled([
-				apiService.get<PersonaResponse>(endpoint),
-				coberturaService.validarAfiliadoPorDocumento(NumeroDocumento),
-			]);
-
-			if (renaperResult.status === 'fulfilled' && renaperResult.value.data?.persona) {
-				const data = renaperResult.value.data;
-				const mapped = mapRenaperToPatientFields(
-					data.persona as Record<string, unknown>,
+			// Paso 2: RENAPER
+			if (!SexoVal) {
+				setAvisoDocumento('No está en la base. Seleccione el sexo para consultar RENAPER.');
+				return;
+			}
+			setAvisoDocumento('No está en la base. Buscando en RENAPER…');
+			let persona: Record<string, unknown> | null = null;
+			try {
+				const { data } = await apiService.get<PersonaResponse>(
+					`/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
 				);
-				const ciudadNorm = normalizeCity(mapped.ciudadNorm);
-				const dataLocalidad = ciudadNorm ? await safeFetchLocalidad(ciudadNorm) : null;
-
-				await fetchLocalidades?.();
-				setFormData((prev) => ({
-					...prev,
-					IDPaciente: undefined,
-					NumeroDocumento: mapped.NumeroDocumento || prev.NumeroDocumento,
-					ApellidoyNombre: mapped.ApellidoyNombre || prev.ApellidoyNombre,
-					Domicilio: mapped.Domicilio || prev.Domicilio,
-					ValorLocalidad: dataLocalidad?.Valor
-						? String(dataLocalidad.Valor)
-						: prev.ValorLocalidad,
-					Provincia: mapped.Provincia || prev.Provincia,
-					Nacionalidad: mapped.Nacionalidad || prev.Nacionalidad,
-					CUIT: mapped.CUIT || prev.CUIT,
-					FechaNacimiento: mapped.FechaNacimiento ?? prev.FechaNacimiento,
-					Sexo: mapped.Sexo ?? prev.Sexo,
-				}));
-
-				if (dataLocalidad?.ValorProvincia) {
-					await handleGetProvincia(String(dataLocalidad.ValorProvincia));
-				} else if (mapped.Provincia && !dataLocalidad) {
-					setFormData((prev) => ({
-						...prev,
-						Provincia: mapped.Provincia || prev.Provincia,
-					}));
-				}
-			} else if (renaperResult.status === 'rejected') {
-				console.error('Error Renaper:', renaperResult.reason);
-				setAvisoDocumento('No está en la base. No se pudo consultar RENAPER.');
-			} else {
+				persona = (data?.persona as Record<string, unknown>) || null;
+			} catch (renaperErr) {
+				console.error('Error Renaper:', renaperErr);
+				if (vigente()) setAvisoDocumento('No está en la base. No se pudo consultar RENAPER.');
+				return;
+			}
+			if (!vigente()) return;
+			if (!persona) {
 				setAvisoDocumento('No se encontró el documento en la base ni en RENAPER.');
+				return;
 			}
 
-			// Paralelo a Renaper: OS que validan por documento (APIValidacionPaciente + NroAfiliadoDocumento)
-			if (afiliadoResult.status === 'fulfilled') {
-				const activos = (afiliadoResult.value.matches || []).filter((m) => m.activo);
-				if (activos.length === 1) {
-					aplicarCobertura(activos[0], String(NumeroDocumento));
-				} else if (activos.length > 1) {
-					setMatchesCobertura(activos);
-				}
-			} else if (afiliadoResult.status === 'rejected') {
-				console.warn('Validación afiliado (no bloquea Renaper):', afiliadoResult.reason);
+			const mapped = mapRenaperToPatientFields(persona);
+			setFormData((prev) => ({
+				...prev,
+				IDPaciente: undefined,
+				NumeroDocumento: mapped.NumeroDocumento || prev.NumeroDocumento,
+				ApellidoyNombre: mapped.ApellidoyNombre || prev.ApellidoyNombre,
+				Domicilio: mapped.Domicilio || prev.Domicilio,
+				Provincia: mapped.Provincia || prev.Provincia,
+				Nacionalidad: mapped.Nacionalidad || prev.Nacionalidad,
+				CUIT: mapped.CUIT || prev.CUIT,
+				FechaNacimiento: mapped.FechaNacimiento ?? prev.FechaNacimiento,
+				Sexo: mapped.Sexo ?? prev.Sexo,
+			}));
+			setAvisoDocumento('Datos cargados desde RENAPER.');
+
+			const ciudadNorm = normalizeCity(mapped.ciudadNorm);
+			const dataLocalidad = ciudadNorm ? await safeFetchLocalidad(ciudadNorm) : null;
+			if (!vigente()) return;
+			if (dataLocalidad?.Valor) {
+				setFormData((prev) => ({ ...prev, ValorLocalidad: String(dataLocalidad.Valor) }));
+			}
+			if (dataLocalidad?.ValorProvincia) {
+				await handleGetProvincia(String(dataLocalidad.ValorProvincia));
+			} else if (ciudadNorm) {
+				setAvisoDocumento(
+					`Datos cargados desde RENAPER. La localidad "${ciudadNorm}" no está en el catálogo: selecciónela manualmente.`,
+				);
 			}
 		} catch (err) {
-			console.error('Error Renaper/afiliado:', err);
+			console.error('Error en búsqueda por documento:', err);
 		} finally {
-			setBuscandoRenaper(false);
+			if (vigente()) setBuscandoRenaper(false);
+		}
+	};
+
+	const motivoAfiliado = (razonSocial: string, motivo?: string) => {
+		switch (motivo) {
+			case 'no_configurado':
+				return `La validación de ${razonSocial} no está configurada en el servidor.`;
+			case 'timeout':
+				return `${razonSocial} no respondió a tiempo. Intente nuevamente.`;
+			case 'conectividad':
+			case 'servidor':
+			case 'respuesta_invalida':
+			case 'desconocido':
+				return `No se pudo consultar ${razonSocial}. Intente nuevamente.`;
+			default:
+				return `No figura activo en ${razonSocial}.`;
+		}
+	};
+
+	const buscarCoberturasPorDocumento = async (documento: string, vigente: () => boolean) => {
+		setBuscandoCoberturas(true);
+		try {
+			const r = await coberturaService.validarAfiliadoPorDocumento(documento);
+			if (!vigente()) return;
+			const activos = (r.matches || []).filter((m) => m.activo);
+			if (activos.length === 1) {
+				aplicarCobertura(activos[0], documento);
+			} else if (activos.length > 1) {
+				setMatchesCobertura(activos);
+				setResultadoAfiliado({
+					tipo: 'info',
+					texto: `Activo en ${activos.length} obras sociales: seleccione una.`,
+				});
+			} else {
+				const checks = r.checks || [];
+				const fallidos = checks.filter(
+					(c) => c.motivo && !['no_afiliado', 'inactivo'].includes(c.motivo),
+				);
+				setResultadoAfiliado({
+					tipo: fallidos.length ? 'error' : 'info',
+					texto: fallidos.length
+						? fallidos.map((c) => motivoAfiliado(c.razonSocial, c.motivo)).join(' ')
+						: checks.length
+							? `No figura activo en ${checks.map((c) => c.razonSocial).join(', ')}.`
+							: r.message || 'No hay obras sociales que validen por documento.',
+				});
+			}
+		} catch (err) {
+			console.warn('Validación de afiliado por documento:', err);
+			if (vigente())
+				setResultadoAfiliado({
+					tipo: 'error',
+					texto: 'No se pudo consultar las obras sociales.',
+				});
+		} finally {
+			if (vigente()) setBuscandoCoberturas(false);
 		}
 	};
 
@@ -361,7 +418,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		}));
 		setResultadoAfiliado({
 			tipo: 'ok',
-			texto: `Activo en ${match.razonSocial}`,
+			texto: `El paciente está activo en ${match.razonSocial}.`,
 		});
 	};
 
@@ -370,7 +427,10 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		const nro = String(formData.nAfiliado || '').trim();
 		if (!cobertura) return;
 		if (!nro) {
-			setResultadoAfiliado({ tipo: 'error', texto: 'Ingrese el número de afiliado' });
+			setResultadoAfiliado({
+				tipo: 'info',
+				texto: 'Cargue el número de afiliado para consultar la actividad en la obra social.',
+			});
 			return;
 		}
 		setValidandoAfiliado(true);
@@ -380,13 +440,13 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			if (r.activo) {
 				setResultadoAfiliado({
 					tipo: 'ok',
-					texto: `Activo en ${r.razonSocial}${r.datos?.nombre ? ` · ${r.datos.nombre}` : ''}`,
+					texto: `El afiliado ${nro} está activo en ${r.razonSocial}${r.datos?.nombre ? ` (${r.datos.nombre})` : ''}.`,
 				});
 			} else {
-				const estado = r.datos?.estado ? ` (${r.datos.estado})` : '';
+				const estado = r.datos?.estado ? ` Estado informado: ${r.datos.estado}.` : '';
 				setResultadoAfiliado({
-					tipo: 'error',
-					texto: `No figura activo en ${r.razonSocial}${estado}`,
+					tipo: r.motivo === 'no_afiliado' || r.motivo === 'inactivo' ? 'info' : 'error',
+					texto: `${motivoAfiliado(r.razonSocial, r.motivo)}${estado}`,
 				});
 			}
 		} catch (err: any) {
@@ -406,6 +466,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		const { name, value } = e.target;
 		if (name === 'Cobertura' || name === 'nAfiliado') setResultadoAfiliado(null);
 		if (!isEditing && name === 'NumeroDocumento') {
+			busquedaDocRef.current++;
+			setBuscandoRenaper(false);
+			setBuscandoCoberturas(false);
 			setAvisoDocumento('');
 			setFormData((prev) => ({
 				...prev,
@@ -662,6 +725,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										coberturaOptions={coberturaOptions}
 										onValidarAfiliado={validarAfiliadoEnCobertura}
 										validandoAfiliado={validandoAfiliado}
+										buscandoCoberturas={buscandoCoberturas}
 										resultadoAfiliado={resultadoAfiliado}
 									/>
 								)}
