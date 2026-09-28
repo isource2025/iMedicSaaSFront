@@ -37,7 +37,11 @@ export default function AgregarPacienteEnAgenda({
 			setSubmitting(true);
 			try {
 				const file: File | null = (data as { _fotoFile?: File })._fotoFile || null;
-				const created = await patientService.createPatient(data, file);
+				const idExistente = Number(data.IDPaciente);
+				const created =
+					Number.isFinite(idExistente) && idExistente > 0
+						? await patientService.updatePatient(idExistente, data)
+						: await patientService.createPatient(data, file);
 				setOpen(false);
 				onCreated?.({
 					IDPaciente: created.IDPaciente,

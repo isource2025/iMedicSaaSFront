@@ -94,8 +94,13 @@ export const usePatients = () => {
 			try {
 				setLoading(true);
 				setError(null);
-				const file: File | null = patientData._fotoFile || null;
-				await patientService.createPatient(patientData, file);
+				const idExistente = Number(patientData?.IDPaciente);
+				if (Number.isFinite(idExistente) && idExistente > 0) {
+					await patientService.updatePatient(idExistente, patientData);
+				} else {
+					const file: File | null = patientData._fotoFile || null;
+					await patientService.createPatient(patientData, file);
+				}
 				setIsAddModalOpen(false);
 				// Recargar usando refs para evitar dependencias
 				await loadPatients(currentPageRef.current, searchTermRef.current);

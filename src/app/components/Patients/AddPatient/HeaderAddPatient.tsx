@@ -14,6 +14,7 @@ interface HeaderAddPatientProps {
 		Sexo: string,
 	) => Promise<void>;
 	buscandoRenaper: boolean;
+	avisoDocumento?: string;
 	onPhotoChange: (file: File | null) => void;
 	setPhotoUploading: (isUploading: boolean) => void;
 }
@@ -25,6 +26,7 @@ export default function HeaderAddPatient({
 	tiposDocumento,
 	getRenaperInfo,
 	buscandoRenaper,
+	avisoDocumento,
 	onPhotoChange,
 	setPhotoUploading,
 }: HeaderAddPatientProps) {
@@ -107,7 +109,7 @@ export default function HeaderAddPatient({
 										)
 									}
 									className={styles.searchButton}
-									title='Buscar en Renaper'
+									title='Buscar en la base y, si no existe, en RENAPER'
 								>
 									<svg
 										viewBox='0 0 24 24'
@@ -199,6 +201,9 @@ export default function HeaderAddPatient({
 						</div>
 						{errors.NumeroDocumento && (
 							<div className={styles.headerError}>{errors.NumeroDocumento}</div>
+						)}
+						{avisoDocumento && (
+							<div className={styles.documentoAviso}>{avisoDocumento}</div>
 						)}
 					</div>
 				</div>

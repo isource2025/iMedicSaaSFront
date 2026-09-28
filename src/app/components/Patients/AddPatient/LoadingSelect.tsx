@@ -49,7 +49,9 @@ export default function CustomSelect({
         setMounted(true);
     }, []);
 
-    const selected = options.find((o) => o.value === value);
+    const mismoValor = (a: string | number, b: string | number) =>
+        String(a) === String(b);
+    const selected = options.find((o) => mismoValor(o.value, value));
     const filtered = options.filter((o) =>
         o.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -287,7 +289,7 @@ export default function CustomSelect({
                                             optionRefs.current[i] = el;
                                         }}
                                         className={`${styles.dropdownItem} ${
-                                            opt.value === value
+                                            mismoValor(opt.value, value)
                                                 ? styles.selected
                                                 : ""
                                         } ${
@@ -297,14 +299,15 @@ export default function CustomSelect({
                                         }`}
                                         role="option"
                                         id={
-                                            opt.value === value
+                                            mismoValor(opt.value, value)
                                                 ? `${name}-active`
                                                 : undefined
                                         }
-                                        aria-selected={opt.value === value}
+                                        aria-selected={mismoValor(opt.value, value)}
                                         tabIndex={-1} // no entra el foco aquí; se selecciona con click/Enter desde el buscador
                                         onMouseDown={(e) => e.stopPropagation()}
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                            e.stopPropagation();
                                             onChange(opt.value);
                                             close();
                                         }}

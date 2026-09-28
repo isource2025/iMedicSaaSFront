@@ -89,6 +89,39 @@ export const getPatientById = async (id: number): Promise<Patient> => {
 	}
 };
 
+const mismoDocumento = (a: unknown, b: string) => {
+	const da = String(a ?? '').replace(/\D/g, '');
+	const db = String(b ?? '').replace(/\D/g, '');
+	if (!da || !db) return false;
+	if (da === db) return true;
+	const na = Number(da);
+	const nb = Number(db);
+	return Number.isFinite(na) && na > 0 && na === nb;
+};
+
+/** Coincidencia exacta de documento en la ficha local. Null si no existe. */
+export const buscarPacientePorDocumento = async (
+	documento: string | number,
+): Promise<Patient | null> => {
+	const doc = String(documento ?? '').replace(/\D/g, '');
+	if (!doc) return null;
+	const response = await apiService.get<ApiResponse<Patient[]>>(
+		`/patients/search?searchTerm=${encodeURIComponent(doc)}`,
+	);
+	const lista = response.data?.data || [];
+	const exacto = lista.find((p) => mismoDocumento(p.NumeroDocumento, doc));
+	if (!exacto?.IDPaciente) return null;
+	try {
+		return await getPatientById(Number(exacto.IDPaciente));
+	} catch (error) {
+		console.error(
+			'No se pudo cargar la ficha completa, se usan los datos de la búsqueda:',
+			error,
+		);
+		return exacto;
+	}
+};
+
 // Crear un nuevo paciente
 export const createPatient = async (data: PatientFormData, fotoFile?: File | null): Promise<Patient> => {
 	try {
@@ -227,6 +260,7 @@ export const patientService = {
 	getPatients,
 	getAllPatients: getPatients, // Alias para compatibilidad
 	searchPatients,
+	buscarPacientePorDocumento,
 	getPatientById,
 	createPatient,
 	updatePatient,

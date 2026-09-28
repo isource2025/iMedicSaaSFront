@@ -50,9 +50,8 @@ export default function Modal({
 	if (!isOpen) return null;
 
 	const handleBackdropClick = (e: React.MouseEvent) => {
-		if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-			onClose();
-		}
+		if (e.target !== e.currentTarget) return;
+		onClose();
 	};
 
 	const modalSizeClass =

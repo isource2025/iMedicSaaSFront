@@ -63,7 +63,29 @@ const validarAfiliadoPorDocumento = async (
 	return data;
 };
 
+export type ValidacionCobertura = {
+	valor: number | string;
+	razonSocial: string;
+	provider: string | null;
+	activo: boolean;
+	nAfiliado?: string;
+	nroAfiliadoEsDocumento?: boolean;
+	motivo?: string;
+	datos?: { nombre?: string | null; estado?: string | null; tipo?: string | null } | null;
+};
+
+const validarAfiliadoEnCobertura = async (
+	valorCobertura: string | number,
+	nroAfiliado: string,
+): Promise<ValidacionCobertura> => {
+	const { data } = await apiService.get<ValidacionCobertura>(
+		`/cobertura/${encodeURIComponent(String(valorCobertura))}/validar-afiliado/${encodeURIComponent(nroAfiliado.trim())}`,
+	);
+	return data;
+};
+
 export default {
 	getCoberturas,
 	validarAfiliadoPorDocumento,
+	validarAfiliadoEnCobertura,
 };

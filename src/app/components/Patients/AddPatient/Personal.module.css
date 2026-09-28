@@ -87,6 +87,41 @@
     margin-top: 0.15rem;
 }
 
+.afiliadoRow {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.validarAfiliadoBtn {
+    flex-shrink: 0;
+    height: 2.4rem;
+    padding: 0 0.9rem;
+    border: 1.5px solid #00b5e2;
+    border-radius: 10px;
+    background: #fff;
+    color: #0083a9;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.validarAfiliadoBtn:hover:not(:disabled) {
+    background: #f0f9ff;
+}
+
+.validarAfiliadoBtn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.afiliadoOk {
+    color: #16a34a;
+    font-size: 0.72rem;
+    margin-top: 0.15rem;
+}
+
 /* Loading auxiliar de texto al lado del campo */
 .loadingText {
     font-size: 0.72rem;
@@ -406,7 +441,7 @@
 /* ===== Dropdown en portal (flotante por encima de todo) ===== */
 .dropdownPortal {
     position: fixed; /* clave: ignora stacking/overflow de padres */
-    z-index: 9999; /* por encima de todo */
+    z-index: 12000; /* por encima del modal y de los paneles fijos */
     background: #fff;
     border: 1px solid #d1d5db;
     border-radius: 10px;

@@ -10,8 +10,13 @@ import LaboralDataTab from './AddPatient/LaboralDataTab';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
 import styles from './PatientFormBase.module.css';
 import React, { useState, useEffect, useRef } from 'react';
-import coberturaService from '../../services/coberturaService';
+import coberturaService, {
+	type AfiliadoMatch,
+	type CoberturaOption,
+} from '../../services/coberturaService';
+import SeleccionCoberturaModal from './AddPatient/SeleccionCoberturaModal';
 import { apiService } from '../../services/axios';
+import { patientService } from '../../services/patientService';
 import type { PersonaResponse, LocalidadResponse, LocalidadData } from './typesForRenaper';
 import { mapRenaperToPatientFields } from '@/app/utils/renaperMapper';
 import { repararTextoUi } from '@/app/utils/repararTextoUi';
@@ -121,9 +126,13 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	});
 	const [sexoOptions, setSexoOptions] = useState<Sexo[]>([]);
 	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
-	const [coberturaOptions, setCoberturaOptions] = useState<
-		{ value: string; label: string }[]
-	>([]);
+	const [coberturaOptions, setCoberturaOptions] = useState<CoberturaOption[]>([]);
+	const [matchesCobertura, setMatchesCobertura] = useState<AfiliadoMatch[]>([]);
+	const [validandoAfiliado, setValidandoAfiliado] = useState(false);
+	const [resultadoAfiliado, setResultadoAfiliado] = useState<{
+		tipo: 'ok' | 'error';
+		texto: string;
+	} | null>(null);
 	const [estadosCiviles, setEstadosCiviles] = useState<{ value: string; label: string }[]>(
 		[],
 	);
@@ -144,10 +153,12 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 	const [internalSubmitting, setInternalSubmitting] = useState(false);
 	const [buscandoRenaper, setBuscandoRenaper] = useState(false);
+	const [avisoDocumento, setAvisoDocumento] = useState('');
 
 	const tabsRef = useRef<HTMLDivElement[]>([]);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const nodeRef = useRef<HTMLDivElement | null>(null);
+	const autoProvinciaAppliedRef = useRef(false);
 
 	const fetchSexos = async () => {
 		try {
@@ -252,11 +263,32 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		SexoVal: string,
 	) => {
 		e.preventDefault();
-		if (!NumeroDocumento || !SexoVal) return;
+		if (!NumeroDocumento) return;
 		setBuscandoRenaper(true);
+		setAvisoDocumento('');
+		setMatchesCobertura([]);
+		setResultadoAfiliado(null);
 		const sexoOpt = SexoVal === 'F' ? 1 : 2;
 
 		try {
+			// Primero la ficha local. RENAPER solo si ese documento no existe.
+			try {
+				const local = await patientService.buscarPacientePorDocumento(NumeroDocumento);
+				if (local) {
+					autoProvinciaAppliedRef.current = false;
+					setFotoFile(null);
+					setFormData(buildInitialFormData(local as Partial<PatientFormData>));
+					setAvisoDocumento(
+						'Este documento ya está registrado. Se cargaron los datos de la ficha.',
+					);
+					return;
+				}
+			} catch (localErr) {
+				console.error('Error buscando paciente en la base:', localErr);
+			}
+
+			if (!SexoVal) return;
+
 			const endpoint = `/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`;
 			const [renaperResult, afiliadoResult] = await Promise.allSettled([
 				apiService.get<PersonaResponse>(endpoint),
@@ -274,6 +306,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 				await fetchLocalidades?.();
 				setFormData((prev) => ({
 					...prev,
+					IDPaciente: undefined,
 					NumeroDocumento: mapped.NumeroDocumento || prev.NumeroDocumento,
 					ApellidoyNombre: mapped.ApellidoyNombre || prev.ApellidoyNombre,
 					Domicilio: mapped.Domicilio || prev.Domicilio,
@@ -297,16 +330,19 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 				}
 			} else if (renaperResult.status === 'rejected') {
 				console.error('Error Renaper:', renaperResult.reason);
+				setAvisoDocumento('No está en la base. No se pudo consultar RENAPER.');
+			} else {
+				setAvisoDocumento('No se encontró el documento en la base ni en RENAPER.');
 			}
 
-			// Paralelo a Renaper: OS con APIValidacionPaciente (ej. IOSCOR)
-			if (afiliadoResult.status === 'fulfilled' && afiliadoResult.value.primary) {
-				const match = afiliadoResult.value.primary;
-				setFormData((prev) => ({
-					...prev,
-					Cobertura: String(match.valor),
-					nAfiliado: match.nAfiliado || String(NumeroDocumento),
-				}));
+			// Paralelo a Renaper: OS que validan por documento (APIValidacionPaciente + NroAfiliadoDocumento)
+			if (afiliadoResult.status === 'fulfilled') {
+				const activos = (afiliadoResult.value.matches || []).filter((m) => m.activo);
+				if (activos.length === 1) {
+					aplicarCobertura(activos[0], String(NumeroDocumento));
+				} else if (activos.length > 1) {
+					setMatchesCobertura(activos);
+				}
 			} else if (afiliadoResult.status === 'rejected') {
 				console.warn('Validación afiliado (no bloquea Renaper):', afiliadoResult.reason);
 			}
@@ -317,10 +353,74 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		}
 	};
 
+	const aplicarCobertura = (match: AfiliadoMatch, documento?: string) => {
+		setFormData((prev) => ({
+			...prev,
+			Cobertura: String(match.valor),
+			nAfiliado: match.nAfiliado || documento || prev.nAfiliado,
+		}));
+		setResultadoAfiliado({
+			tipo: 'ok',
+			texto: `Activo en ${match.razonSocial}`,
+		});
+	};
+
+	const validarAfiliadoEnCobertura = async () => {
+		const cobertura = String(formData.Cobertura || '').trim();
+		const nro = String(formData.nAfiliado || '').trim();
+		if (!cobertura) return;
+		if (!nro) {
+			setResultadoAfiliado({ tipo: 'error', texto: 'Ingrese el número de afiliado' });
+			return;
+		}
+		setValidandoAfiliado(true);
+		setResultadoAfiliado(null);
+		try {
+			const r = await coberturaService.validarAfiliadoEnCobertura(cobertura, nro);
+			if (r.activo) {
+				setResultadoAfiliado({
+					tipo: 'ok',
+					texto: `Activo en ${r.razonSocial}${r.datos?.nombre ? ` · ${r.datos.nombre}` : ''}`,
+				});
+			} else {
+				const estado = r.datos?.estado ? ` (${r.datos.estado})` : '';
+				setResultadoAfiliado({
+					tipo: 'error',
+					texto: `No figura activo en ${r.razonSocial}${estado}`,
+				});
+			}
+		} catch (err: any) {
+			console.error('Error validando afiliado:', err);
+			setResultadoAfiliado({
+				tipo: 'error',
+				texto: err?.response?.data?.error || 'No se pudo consultar la obra social',
+			});
+		} finally {
+			setValidandoAfiliado(false);
+		}
+	};
+
 	const handleChange = async (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 	) => {
 		const { name, value } = e.target;
+		if (name === 'Cobertura' || name === 'nAfiliado') setResultadoAfiliado(null);
+		if (!isEditing && name === 'NumeroDocumento') {
+			setAvisoDocumento('');
+			setFormData((prev) => ({
+				...prev,
+				NumeroDocumento: value,
+				IDPaciente: undefined,
+			}));
+			if (errors.NumeroDocumento) {
+				setErrors((prev) => {
+					const n = { ...prev };
+					delete n.NumeroDocumento;
+					return n;
+				});
+			}
+			return;
+		}
 		// Localidad -> provincia
 		if (name === 'ValorLocalidad') {
 			const selected = localidadOptions.find(
@@ -429,14 +529,14 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		fetchEstadoCivil();
 	}, []);
 
-	// Al editar: si ya viene ValorLocalidad, actualizar Provincia y Nacionalidad automáticamente una vez
-	const autoProvinciaAppliedRef = useRef(false);
+	// Al editar o al cargar una ficha local, resolver provincia si vino como código
 	useEffect(() => {
+		const provinciaEsCodigo = /^\d+$/.test(String(formData.Provincia || '').trim());
 		if (
-			!isEditing ||
 			autoProvinciaAppliedRef.current ||
 			!formData.ValorLocalidad ||
-			!localidadOptions.length
+			!localidadOptions.length ||
+			(!isEditing && !provinciaEsCodigo)
 		)
 			return;
 		const selected = localidadOptions.find(
@@ -446,7 +546,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			autoProvinciaAppliedRef.current = true;
 			handleGetProvincia(String(selected.ValorProvincia));
 		}
-	}, [isEditing, formData.ValorLocalidad, localidadOptions]);
+	}, [isEditing, formData.ValorLocalidad, formData.Provincia, localidadOptions]);
 
 	// Sincronizar cuando initialData (paciente a editar) llega asincrónicamente
 	useEffect(() => {
@@ -483,6 +583,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					tiposDocumento={tiposDocumento}
 					getRenaperInfo={getRenaperInfo}
 					buscandoRenaper={buscandoRenaper}
+					avisoDocumento={avisoDocumento}
 					onPhotoChange={(file: File | null) => {
 						setFotoFile(file);
 						if (file) {
@@ -559,6 +660,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										sexoOptions={sexoOptions}
 										estadosCiviles={estadosCiviles}
 										coberturaOptions={coberturaOptions}
+										onValidarAfiliado={validarAfiliadoEnCobertura}
+										validandoAfiliado={validandoAfiliado}
+										resultadoAfiliado={resultadoAfiliado}
 									/>
 								)}
 								{activeTab === 'other' && (
@@ -602,12 +706,20 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 						)}
 						{internalSubmitting
 							? 'Guardando...'
-							: isEditing
+							: isEditing || formData.IDPaciente
 							? 'Actualizar'
 							: 'Guardar'}
 					</button>
 				</div>
 			</div>
+			<SeleccionCoberturaModal
+				matches={matchesCobertura}
+				onSeleccionar={(m) => {
+					aplicarCobertura(m, String(formData.NumeroDocumento || ''));
+					setMatchesCobertura([]);
+				}}
+				onCancelar={() => setMatchesCobertura([])}
+			/>
 		</form>
 	);
 };

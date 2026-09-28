@@ -3,6 +3,7 @@ import { Localidad } from '../../../services/localidadService';
 import styles from './Personal.module.css';
 import LoadingSelect from './LoadingSelect';
 import { useEffect, useState } from 'react';
+import type { CoberturaOption } from '../../../services/coberturaService';
 
 interface OtherDataTabProps {
 	formData: PatientFormData;
@@ -17,7 +18,10 @@ interface OtherDataTabProps {
 	};
 	sexoOptions: { valor: string; descripcion: string }[];
 	estadosCiviles: { value: string; label: string }[];
-	coberturaOptions: { value: string; label: string }[];
+	coberturaOptions: CoberturaOption[];
+	onValidarAfiliado?: () => void;
+	validandoAfiliado?: boolean;
+	resultadoAfiliado?: { tipo: 'ok' | 'error'; texto: string } | null;
 }
 
 export default function PersonalDataTab({
@@ -29,7 +33,15 @@ export default function PersonalDataTab({
 	sexoOptions,
 	coberturaOptions,
 	estadosCiviles,
+	onValidarAfiliado,
+	validandoAfiliado = false,
+	resultadoAfiliado = null,
 }: OtherDataTabProps) {
+	const coberturaSel = coberturaOptions.find(
+		(c) => String(c.value) === String(formData.Cobertura || ''),
+	);
+	const validaPorNroAfiliado =
+		!!coberturaSel?.apiValidacion && !coberturaSel?.nroAfiliadoDocumento;
 	// mapear opciones al formato del LoadingSelect
 	const [edad, setEdad] = useState(0);
 	const localidadSelectOptions = (localidadOptions || []).map((l) => ({
@@ -279,7 +291,7 @@ export default function PersonalDataTab({
 				<LoadingSelect
 					name='Cobertura'
 					label='Cobertura:'
-					value={Number(formData.Cobertura) || ''}
+					value={formData.Cobertura ? String(formData.Cobertura) : ''}
 					onChange={(val) =>
 						handleChange({ target: { name: 'Cobertura', value: val } } as any)
 					}
@@ -292,14 +304,39 @@ export default function PersonalDataTab({
 				)}
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Número de Afiliado:</label>
-					<input
-						type='text'
-						name='nAfiliado'
-						value={formData.nAfiliado}
-						onChange={handleChange}
-						className={`${styles.input} ${errors.nAfiliado ? styles.error : ''}`}
-						tabIndex={16}
-					/>
+					<div className={styles.afiliadoRow}>
+						<input
+							type='text'
+							name='nAfiliado'
+							value={formData.nAfiliado}
+							onChange={handleChange}
+							className={`${styles.input} ${errors.nAfiliado ? styles.error : ''}`}
+							tabIndex={16}
+						/>
+						{validaPorNroAfiliado && onValidarAfiliado && (
+							<button
+								type='button'
+								className={styles.validarAfiliadoBtn}
+								onClick={onValidarAfiliado}
+								disabled={validandoAfiliado || !String(formData.nAfiliado || '').trim()}
+								title={`Consultar actividad en ${coberturaSel?.label}`}
+								tabIndex={17}
+							>
+								{validandoAfiliado ? 'Validando…' : 'Validar'}
+							</button>
+						)}
+					</div>
+					{resultadoAfiliado && (
+						<div
+							className={
+								resultadoAfiliado.tipo === 'ok'
+									? styles.afiliadoOk
+									: styles.errorMessage
+							}
+						>
+							{resultadoAfiliado.texto}
+						</div>
+					)}
 					{errors.nAfiliado && (
 						<div className={styles.errorMessage}>{errors.nAfiliado}</div>
 					)}
