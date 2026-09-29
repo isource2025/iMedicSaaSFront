@@ -157,6 +157,8 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		label: 'Configuración',
 		submodulos: [
 			{ id: 'PERSONAL', label: 'Personal', path: '/dashboard/personal', acciones: [...CRUD, ACCIONES.GESTIONAR] },
+			// Matriz de permisos: sólo ADMIN y SUPER_ADMIN (plantillas generadas).
+			{ id: 'ROLES', label: 'Matriz de permisos', path: '/dashboard/configuracion/permisos', acciones: [...CRUD] },
 		],
 	},
 	{

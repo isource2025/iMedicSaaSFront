@@ -1,0 +1,407 @@
+.page {
+	padding: 1.25rem 1.5rem 5rem;
+	max-width: 1320px;
+	margin: 0 auto;
+}
+
+.header h1 {
+	margin: 0;
+	font-size: 1.45rem;
+	color: #0f172a;
+}
+
+.header p {
+	margin: 0.25rem 0 1rem;
+	color: #64748b;
+	font-size: 0.92rem;
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: 300px minmax(0, 1fr);
+	gap: 1.25rem;
+	align-items: start;
+}
+
+@media (max-width: 900px) {
+	.layout {
+		grid-template-columns: 1fr;
+	}
+}
+
+.panel {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 0.9rem;
+}
+
+.sideTitle {
+	margin: 0.6rem 0 0.35rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.roleItem {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0.55rem 0.65rem;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	background: transparent;
+	cursor: pointer;
+	text-align: left;
+	font: inherit;
+	color: #0f172a;
+}
+
+.roleItem:hover {
+	background: #f1f5f9;
+}
+
+.roleItemActive {
+	background: #e6f4f8;
+	border-color: #0083a9;
+}
+
+.roleName {
+	font-size: 0.9rem;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.roleMeta {
+	font-size: 0.75rem;
+	color: #64748b;
+	white-space: nowrap;
+}
+
+.badge {
+	display: inline-block;
+	font-size: 0.7rem;
+	font-weight: 600;
+	padding: 0.1rem 0.45rem;
+	border-radius: 999px;
+	background: #e2e8f0;
+	color: #334155;
+	margin-left: 0.4rem;
+	vertical-align: middle;
+}
+
+.badgeSistema {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.roleHead {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 0.9rem;
+}
+
+.fields {
+	display: grid;
+	grid-template-columns: minmax(180px, 1fr) minmax(220px, 2fr);
+	gap: 0.6rem;
+	flex: 1 1 420px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	font-size: 0.78rem;
+	color: #475569;
+}
+
+.input,
+.select {
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	padding: 0.45rem 0.65rem;
+	font: inherit;
+	font-size: 0.9rem;
+	background: #fff;
+	min-width: 0;
+}
+
+.input:disabled {
+	background: #f1f5f9;
+	color: #475569;
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: flex-start;
+}
+
+.btn {
+	border-radius: 8px;
+	padding: 0.45rem 0.8rem;
+	font: inherit;
+	font-size: 0.85rem;
+	cursor: pointer;
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #334155;
+}
+
+.btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.btnPrimary {
+	background: #0083a9;
+	border-color: #0083a9;
+	color: #fff;
+}
+
+.btnDanger {
+	color: #b91c1c;
+	border-color: #fecaca;
+}
+
+.btnLink {
+	background: none;
+	border: none;
+	color: #0083a9;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.8rem;
+	padding: 0;
+}
+
+.btnLink:disabled {
+	color: #94a3b8;
+	cursor: not-allowed;
+}
+
+.banner {
+	border-radius: 8px;
+	padding: 0.6rem 0.8rem;
+	margin-bottom: 0.9rem;
+	font-size: 0.88rem;
+}
+
+.bannerInfo {
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	color: #1e3a8a;
+}
+
+.bannerError {
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #b91c1c;
+}
+
+.bannerOk {
+	background: #f0fdf4;
+	border: 1px solid #bbf7d0;
+	color: #166534;
+}
+
+.tabs {
+	display: flex;
+	gap: 0.25rem;
+	border-bottom: 1px solid #e2e8f0;
+	margin-bottom: 0.9rem;
+}
+
+.tab {
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	padding: 0.5rem 0.85rem;
+	font: inherit;
+	font-size: 0.9rem;
+	color: #64748b;
+	cursor: pointer;
+}
+
+.tabActive {
+	color: #0083a9;
+	border-bottom-color: #0083a9;
+	font-weight: 600;
+}
+
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 0.75rem;
+}
+
+.counter {
+	font-size: 0.85rem;
+	color: #475569;
+}
+
+.modulo {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	margin-bottom: 0.7rem;
+	overflow: hidden;
+}
+
+.moduloHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.55rem 0.8rem;
+	background: #f1f5f9;
+	cursor: pointer;
+	font-weight: 700;
+	font-size: 0.92rem;
+	color: #0f172a;
+}
+
+.moduloBody {
+	padding: 0.4rem 0.8rem 0.8rem;
+}
+
+.sub {
+	padding: 0.65rem 0;
+	border-bottom: 1px dashed #e2e8f0;
+}
+
+.sub:last-child {
+	border-bottom: none;
+}
+
+.subHead {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.subTitle {
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: #0f172a;
+}
+
+.subDesc {
+	font-size: 0.8rem;
+	color: #64748b;
+	margin: 0.1rem 0 0.4rem;
+}
+
+.acciones {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 0.35rem 1rem;
+}
+
+.accion {
+	display: flex;
+	gap: 0.5rem;
+	align-items: flex-start;
+	font-size: 0.84rem;
+	color: #0f172a;
+	cursor: pointer;
+}
+
+.accionOff {
+	color: #94a3b8;
+	cursor: not-allowed;
+}
+
+.accion input {
+	margin-top: 0.2rem;
+}
+
+.accionLabel {
+	font-weight: 600;
+}
+
+.accionDesc {
+	display: block;
+	font-size: 0.78rem;
+	color: #64748b;
+	font-weight: 400;
+}
+
+.list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.list li {
+	padding: 0.5rem 0;
+	border-bottom: 1px solid #e2e8f0;
+	font-size: 0.88rem;
+}
+
+.muted {
+	color: #64748b;
+	font-size: 0.85rem;
+}
+
+.saveBar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 30;
+	display: flex;
+	justify-content: center;
+	gap: 0.75rem;
+	align-items: center;
+	padding: 0.7rem 1rem;
+	background: #0f172a;
+	color: #fff;
+	font-size: 0.9rem;
+}
+
+.overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 50;
+	padding: 1rem;
+}
+
+.modal {
+	background: #fff;
+	border-radius: 12px;
+	padding: 1.25rem;
+	width: 100%;
+	max-width: 460px;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.modal h2 {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #0f172a;
+}
+
+.modalActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
