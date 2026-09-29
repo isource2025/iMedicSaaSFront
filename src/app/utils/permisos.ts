@@ -26,6 +26,7 @@ export const ACCIONES = {
 	EDITAR: 'EDITAR',
 	ELIMINAR: 'ELIMINAR',
 	GESTIONAR: 'GESTIONAR',
+	TRASLADAR: 'TRASLADAR',
 	APLICAR: 'APLICAR',
 	EXPORTAR: 'EXPORTAR',
 	IMPRIMIR: 'IMPRIMIR',
@@ -107,7 +108,9 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			{ id: 'ESTUDIOS',             label: 'Pedidos de estudios (complementarios)', acciones: [...CRUD] },
 			{ id: 'PROTOCOLOS',           label: 'Protocolos',                 acciones: [...CRUD] },
 			{ id: 'PROCEDIMIENTOS',       label: 'Procedimientos',             acciones: [...CRUD] },
-			{ id: 'MOVIMIENTOS',          label: 'Movimientos / traslados',    acciones: [ACCIONES.VER, ACCIONES.GESTIONAR] },
+			// TRASLADAR = cambio/intercambio/asignación de cama. GESTIONAR además
+			// incluye egreso y edición del último movimiento.
+			{ id: 'MOVIMIENTOS',          label: 'Movimientos / traslados',    acciones: [ACCIONES.VER, ACCIONES.TRASLADAR, ACCIONES.GESTIONAR] },
 			{ id: 'ADJUNTOS',             label: 'Adjuntos',                   acciones: [...CRUD] },
 			{ id: 'EPICRISIS',            label: 'Epicrisis',                  acciones: [...CRUD, ACCIONES.IMPRIMIR] },
 			// Historial de cambios de la HC (quién modificó o borró qué). Solo lectura
@@ -244,6 +247,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		..._todas('INTERNACION', 'PROCEDIMIENTOS'),
 		..._todas('INTERNACION', 'EPICRISIS'),
 		'INTERNACION.MOVIMIENTOS.VER',
+		'INTERNACION.MOVIMIENTOS.TRASLADAR',
 		'INTERNACION.MOVIMIENTOS.GESTIONAR',
 		'INTERNACION.EVOLUCION_ENFERMERIA.VER',
 		'INTERNACION.SIGNOS_VITALES.VER',
@@ -285,6 +289,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.PROCEDIMIENTOS.VER',
 		'INTERNACION.EPICRISIS.VER',
 		'INTERNACION.MOVIMIENTOS.VER',
+		'INTERNACION.MOVIMIENTOS.TRASLADAR',
 		..._todas('INTERNACION', 'EVOLUCION_ENFERMERIA'),
 		..._todas('INTERNACION', 'SIGNOS_VITALES'),
 		..._todas('INTERNACION', 'MEDICACION'),
@@ -324,6 +329,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.CAMAS.EDITAR',
 		'INTERNACION.CAMAS.ELIMINAR',
 		'INTERNACION.CAMAS.GESTIONAR',
+		'INTERNACION.MOVIMIENTOS.TRASLADAR',
 		'INTERNACION.MOVIMIENTOS.GESTIONAR',
 		'INTERNACION.TABLA.EXPORTAR',
 

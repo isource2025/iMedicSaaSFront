@@ -134,7 +134,7 @@ export default function IntercambiarCamaPanel({
         mensajeDeError(
           err,
           status === 403
-            ? 'No tiene permiso para mover camas (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)'
+            ? 'No tiene permiso para mover camas (se requiere INTERNACION.MOVIMIENTOS.TRASLADAR)'
             : 'Error al intercambiar camas',
         ),
       );

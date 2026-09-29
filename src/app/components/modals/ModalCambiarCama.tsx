@@ -500,7 +500,7 @@ const ModalCambiarCama: React.FC<ModalCambiarCamaProps> = ({
       console.error('Error en el cambio de cama:', detalleDeError(err));
       const generico =
         err?.response?.status === 403
-          ? 'No tiene permiso para mover camas (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)'
+          ? 'No tiene permiso para mover camas (se requiere INTERNACION.MOVIMIENTOS.TRASLADAR)'
           : 'Ocurrió un error durante el cambio de cama';
       setError(mensajeDeError(err, generico));
       setSuccess(false);

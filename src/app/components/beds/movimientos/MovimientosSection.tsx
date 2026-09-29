@@ -53,7 +53,10 @@ export default function MovimientosSection({
 	const router = useRouter();
 	const { activeSection, selectedDate } = useBedDetail();
 	const { puede } = usePermiso();
-	const puedeIntercambiar = internado && !!numeroVisita && puede("INTERNACION.MOVIMIENTOS.GESTIONAR");
+	const puedeIntercambiar =
+		internado &&
+		!!numeroVisita &&
+		(puede("INTERNACION.MOVIMIENTOS.TRASLADAR") || puede("INTERNACION.MOVIMIENTOS.GESTIONAR"));
 	const [intercambioOpen, setIntercambioOpen] = useState(false);
 	const [dispCatalogo, setDispCatalogo] = useState<Map<number, string>>(new Map());
 
