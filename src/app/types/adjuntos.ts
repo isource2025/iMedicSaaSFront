@@ -4,6 +4,17 @@ export interface TipoImagenHC {
   DescTipoImagen: string;
 }
 
+/** Pantalla desde la que se subió (imPedidosEstudiosAdjuntos.Origen). */
+export type OrigenAdjunto = 'INTERNACION' | 'ADMISION' | 'AGENDA' | 'ESTUDIO' | 'PROTOCOLO';
+
+export const ORIGEN_ADJUNTO_LABEL: Record<OrigenAdjunto, string> = {
+  INTERNACION: 'Internación',
+  ADMISION: 'Admisión',
+  AGENDA: 'Agenda',
+  ESTUDIO: 'Estudios',
+  PROTOCOLO: 'Protocolos',
+};
+
 export interface Adjunto {
   IdAdjunto: number;
   NumeroVisita: number;
@@ -18,6 +29,7 @@ export interface Adjunto {
   FechaCarga: string;
   TipoImagen?: string;
   TipoImagenNombre?: string;
+  Origen?: OrigenAdjunto | null;
 }
 
 export interface SubirAdjuntoResponse {

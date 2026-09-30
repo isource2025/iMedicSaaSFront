@@ -279,23 +279,122 @@
   color: #64748b;
 }
 
-.campo input {
+.campo input,
+.campo select {
   padding: 0.55rem 0.7rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 0.88rem;
   color: #0f172a;
+  background: #fff;
+  font-family: inherit;
 }
 
-.campo input:focus {
+.campo input:focus,
+.campo select:focus {
   outline: none;
   border-color: #7dd3fc;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
 }
 
-.campo input:disabled {
+.campo input:disabled,
+.campo select:disabled {
   background: #f8fafc;
   color: #94a3b8;
+}
+
+.obligatorio {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+.busqueda {
+  position: relative;
+}
+
+.busqueda input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.busquedaSeleccion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #7dd3fc;
+  border-radius: 8px;
+  background: #f0f9ff;
+  color: #0f172a;
+  font-size: 0.88rem;
+}
+
+.busquedaQuitar {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.busquedaQuitar:hover {
+  background: #e0f2fe;
+  color: #0f172a;
+}
+
+.busquedaLista {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.busquedaItem {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: inherit;
+}
+
+.busquedaItem:hover {
+  background: #f1f5f9;
+}
+
+.busquedaItemTitulo {
+  font-size: 0.85rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.busquedaItemDetalle {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.busquedaEstado {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.8rem;
+  color: #64748b;
 }
 
 .confirmacion p {

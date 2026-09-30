@@ -104,7 +104,7 @@ export default function CumplirEstudioModal({
 			if (guardarInforme) {
 				await guardarInforme(texto.trim());
 				if (archivos.length > 0 && pedido.IdVisita > 0) {
-					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
+					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim(), 'ESTUDIO');
 				}
 				onCumplido(pedido);
 			} else if (modoEdicion) {
@@ -112,7 +112,7 @@ export default function CumplirEstudioModal({
 					textoInforme: texto.trim(),
 				});
 				if (archivos.length > 0 && pedido.IdVisita > 0) {
-					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
+					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim(), 'ESTUDIO');
 				}
 				onCumplido(updated);
 			} else {
@@ -126,7 +126,7 @@ export default function CumplirEstudioModal({
 						undefined,
 				});
 				if (archivos.length > 0 && pedido.IdVisita > 0) {
-					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim());
+					await adjuntosService.subirArchivos(pedido.IdVisita, archivos, tipoImagen.trim(), 'ESTUDIO');
 				}
 				onCumplido(updated);
 			}

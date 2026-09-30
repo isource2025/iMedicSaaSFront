@@ -1,12 +1,21 @@
 import { apiService } from './axios';
 
+export interface CatalogoSqlOption {
+  value: string;
+  label: string;
+  detail?: string;
+}
+
 export interface CatalogoSqlColumn {
   key: string;
   label: string;
   editable?: boolean;
   autoKey?: boolean;
   requiredOnCreate?: boolean;
+  required?: boolean;
   type?: string;
+  input?: 'select' | 'search';
+  options?: CatalogoSqlOption[];
 }
 
 interface Envelope<T> {
@@ -65,6 +74,13 @@ export const catalogoSqlService = {
       `/catalogos-sql/${id}/${encodeURIComponent(clave)}`,
     );
     return unpack(data);
+  },
+  async buscar(id: string, campo: string, q: string): Promise<CatalogoSqlOption[]> {
+    const { data } = await apiService.get<Envelope<CatalogoSqlOption[]>>(
+      `/catalogos-sql/${id}/buscar/${encodeURIComponent(campo)}`,
+      { params: { q } },
+    );
+    return data.data ?? [];
   },
 };
 

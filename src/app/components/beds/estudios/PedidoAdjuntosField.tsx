@@ -1,7 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { TipoImagenHC } from '@/app/types/adjuntos';
+import SubirAdjuntoModal from '@/app/components/beds/adjuntos/SubirAdjuntoModal';
+import SubirAdjuntoButton from '@/app/components/beds/adjuntos/SubirAdjuntoButton';
 import styles from './PedidoEstudioForms.module.css';
 
 type Props = {
@@ -14,29 +16,12 @@ type Props = {
 	idVisita?: number;
 };
 
-const ACCEPT = '.pdf,.jpg,.jpeg,.png,.gif,.dcm,.doc,.docx';
-const MAX_SIZE = 10 * 1024 * 1024;
 const MAX_FILES = 8;
 
 function formatSize(bytes: number) {
 	if (bytes < 1024) return `${bytes} B`;
 	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function isAllowed(file: File) {
-	const typeOk = [
-		'application/pdf',
-		'image/jpeg',
-		'image/jpg',
-		'image/png',
-		'image/gif',
-		'application/dicom',
-		'application/msword',
-		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	].includes(file.type);
-	const dicom = /\.dcm$/i.test(file.name);
-	return typeOk || dicom;
 }
 
 export default function PedidoAdjuntosField({
@@ -48,36 +33,23 @@ export default function PedidoAdjuntosField({
 	disabled,
 	idVisita,
 }: Props) {
-	const inputRef = useRef<HTMLInputElement>(null);
-	const [dragActive, setDragActive] = useState(false);
-	const [hintError, setHintError] = useState<string | null>(null);
+	const [modalOpen, setModalOpen] = useState(false);
+	const restantes = MAX_FILES - archivos.length;
+	const tipoDesc = tipos.find((t) => t.TipoImagen === tipoImagen)?.DescTipoImagen || tipoImagen;
 
-	const addFiles = (incoming: FileList | File[]) => {
-		const errors: string[] = [];
+	const agregar = (files: File[], tipo: string) => {
 		const next = [...archivos];
-		for (const file of Array.from(incoming)) {
-			if (!isAllowed(file)) {
-				errors.push(`${file.name}: tipo no permitido`);
-				continue;
-			}
-			if (file.size > MAX_SIZE) {
-				errors.push(`${file.name}: supera 10 MB`);
-				continue;
-			}
+		for (const file of files) {
 			if (next.some((f) => f.name === file.name && f.size === file.size)) continue;
-			if (next.length >= MAX_FILES) {
-				errors.push(`Máximo ${MAX_FILES} archivos`);
-				break;
-			}
+			if (next.length >= MAX_FILES) break;
 			next.push(file);
 		}
-		setHintError(errors[0] || null);
+		onTipoChange(tipo);
 		onArchivosChange(next);
 	};
 
 	const removeFile = (index: number) => {
 		onArchivosChange(archivos.filter((_, i) => i !== index));
-		if (inputRef.current) inputRef.current.value = '';
 	};
 
 	return (
@@ -88,93 +60,21 @@ export default function PedidoAdjuntosField({
 					<p className={styles.adjuntosHint}>
 						Opcional. Quedan en la historia clínica
 						{idVisita ? ` de la visita ${idVisita}` : ''}.
+						{archivos.length > 0 && tipoDesc ? ` Tipo: ${tipoDesc}.` : ''}
 					</p>
 				</div>
-			</div>
-
-			<label className={styles.adjuntosTipo}>
-				<span>Tipo de documento</span>
-				<select
-					className={styles.input}
-					value={tipoImagen}
-					onChange={(e) => onTipoChange(e.target.value)}
-					disabled={disabled}
-				>
-					<option value="">Seleccionar…</option>
-					{tipos.map((t) => (
-						<option key={t.TipoImagen} value={t.TipoImagen}>
-							{t.DescTipoImagen || t.TipoImagen}
-						</option>
-					))}
-				</select>
-			</label>
-
-			<div
-				className={`${styles.dropzone} ${dragActive ? styles.dropzoneActive : ''} ${
-					disabled ? styles.dropzoneDisabled : ''
-				}`}
-				onDragEnter={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					if (!disabled) setDragActive(true);
-				}}
-				onDragOver={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-				}}
-				onDragLeave={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					setDragActive(false);
-				}}
-				onDrop={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					setDragActive(false);
-					if (!disabled) addFiles(e.dataTransfer.files);
-				}}
-				onClick={() => {
-					if (!disabled) inputRef.current?.click();
-				}}
-				role="button"
-				tabIndex={disabled ? -1 : 0}
-				onKeyDown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						if (!disabled) inputRef.current?.click();
-					}
-				}}
-			>
-				<input
-					ref={inputRef}
-					type="file"
-					multiple
-					accept={ACCEPT}
-					disabled={disabled}
-					className={styles.fileInputHidden}
-					onChange={(e) => {
-						if (e.target.files) addFiles(e.target.files);
-					}}
+				<SubirAdjuntoButton
+					onClick={() => setModalOpen(true)}
+					disabled={disabled || restantes <= 0}
 				/>
-				<span className={styles.dropzoneIcon} aria-hidden>
-					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-						<polyline points="17 8 12 3 7 8" />
-						<line x1="12" y1="3" x2="12" y2="15" />
-					</svg>
-				</span>
-				<p className={styles.dropzoneText}>Arrastrá archivos o hacé clic para elegirlos</p>
-				<p className={styles.dropzoneMeta}>PDF, imagen, DICOM o Word · máx. 10 MB c/u</p>
 			</div>
-
-			{hintError ? <p className={styles.adjuntosError}>{hintError}</p> : null}
 
 			{archivos.length > 0 ? (
 				<ul className={styles.fileChips}>
 					{archivos.map((file, index) => (
 						<li key={`${file.name}-${file.size}-${index}`} className={styles.fileChip}>
 							<span className={styles.fileChipIcon} aria-hidden>
-								{file.type.startsWith('image/') ? '🖼' : '📄'}
+								{file.type.startsWith('image/') ? '🖼' : file.type.startsWith('video/') ? '🎞' : '📄'}
 							</span>
 							<span className={styles.fileChipBody}>
 								<span className={styles.fileChipName}>{file.name}</span>
@@ -183,10 +83,7 @@ export default function PedidoAdjuntosField({
 							<button
 								type="button"
 								className={styles.fileChipRemove}
-								onClick={(e) => {
-									e.stopPropagation();
-									removeFile(index);
-								}}
+								onClick={() => removeFile(index)}
 								disabled={disabled}
 								aria-label={`Quitar ${file.name}`}
 							>
@@ -196,6 +93,17 @@ export default function PedidoAdjuntosField({
 					))}
 				</ul>
 			) : null}
+
+			<SubirAdjuntoModal
+				isOpen={modalOpen}
+				onClose={() => setModalOpen(false)}
+				titleMeta={idVisita ? `Visita #${idVisita}` : undefined}
+				tiposImagen={tipos}
+				tipoInicial={tipoImagen}
+				maxFiles={Math.max(restantes, 1)}
+				confirmLabel={(n) => `Agregar ${n} archivo(s)`}
+				onConfirm={agregar}
+			/>
 		</section>
 	);
 }

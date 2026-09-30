@@ -418,7 +418,7 @@ function BandejaPedidosContent() {
 			await interconsultasService.cumplir(id, respuestaIc.trim());
 			if (adjuntosIc.length > 0 && cumplirIc.IdVisita > 0) {
 				const { adjuntosService } = await import('@/app/services/adjuntosService');
-				await adjuntosService.subirArchivos(cumplirIc.IdVisita, adjuntosIc, tipoAdjIc.trim());
+				await adjuntosService.subirArchivos(cumplirIc.IdVisita, adjuntosIc, tipoAdjIc.trim(), 'ESTUDIO');
 			}
 			setCumplirIc(null);
 			setRespuestaIc('');

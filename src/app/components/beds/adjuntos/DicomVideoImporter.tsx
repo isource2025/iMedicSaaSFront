@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { adjuntosService } from '@/app/services/adjuntosService';
-import type { TipoImagenHC } from '@/app/types/adjuntos';
+import type { OrigenAdjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import { buildVideoFromDicomFiles, DicomVideoBuildResult } from '@/app/utils/dicomVideoBuilder';
 import {
   inferFpsFromDicomFiles,
@@ -12,22 +12,27 @@ import {
 import styles from './DicomVideoImporter.module.css';
 
 interface DicomVideoImporterProps {
-  numeroVisita: number;
+  numeroVisita?: number;
   tiposImagen: TipoImagenHC[];
+  /** Si se indica, el video generado se entrega acá en lugar de subirse a la visita. */
+  onSave?: (video: File, tipoImagen: string) => Promise<void> | void;
   onUploaded: () => void;
   /** Si es true, se muestra en la pestaña (sin segundo modal). */
   embedded?: boolean;
   open?: boolean;
   onClose?: () => void;
+  origen?: OrigenAdjunto;
 }
 
 export default function DicomVideoImporter({
   numeroVisita,
   tiposImagen,
+  onSave,
   onUploaded,
   embedded = false,
   open = true,
   onClose,
+  origen = 'INTERNACION',
 }: DicomVideoImporterProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -146,7 +151,13 @@ export default function DicomVideoImporter({
       setBusy(true);
       setError(null);
       const videoFile = new File([result.blob], result.fileName, { type: result.mimeType });
-      await adjuntosService.subirArchivo(numeroVisita, videoFile, tipoImagenCodigo);
+      if (onSave) {
+        await onSave(videoFile, tipoImagenCodigo);
+      } else if (numeroVisita && numeroVisita > 0) {
+        await adjuntosService.subirArchivo(numeroVisita, videoFile, tipoImagenCodigo, origen);
+      } else {
+        throw new Error('No hay una visita para guardar el video.');
+      }
       reset();
       onUploaded();
       onClose?.();

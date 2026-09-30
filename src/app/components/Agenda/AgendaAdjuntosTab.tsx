@@ -6,6 +6,8 @@ import { adjuntosService } from '@/app/services/adjuntosService';
 import AdjuntoFileViewer, {
 	type AdjuntoViewerState,
 } from '@/app/components/beds/adjuntos/AdjuntoFileViewer';
+import SubirAdjuntoModal from '@/app/components/beds/adjuntos/SubirAdjuntoModal';
+import SubirAdjuntoButton from '@/app/components/beds/adjuntos/SubirAdjuntoButton';
 import type { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import Loader from '../Loader/Loader';
 import styles from './AgendaAdjuntosTab.module.css';
@@ -18,9 +20,9 @@ interface Props {
 export default function AgendaAdjuntosTab({ idTurno, onUploadingChange }: Props) {
 	const [adjuntos, setAdjuntos] = useState<Adjunto[]>([]);
 	const [tipos, setTipos] = useState<TipoImagenHC[]>([]);
-	const [tipoSel, setTipoSel] = useState('');
 	const [loading, setLoading] = useState(true);
 	const [uploading, setUploading] = useState(false);
+	const [subirOpen, setSubirOpen] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
 	const [viewerLoading, setViewerLoading] = useState(false);
@@ -29,8 +31,8 @@ export default function AgendaAdjuntosTab({ idTurno, onUploadingChange }: Props)
 		onUploadingChange?.(uploading);
 	}, [uploading, onUploadingChange]);
 
-	const cargar = useCallback(async () => {
-		setLoading(true);
+	const cargar = useCallback(async (silencioso = false) => {
+		if (!silencioso) setLoading(true);
 		setError(null);
 		try {
 			const [list, tiposImg] = await Promise.all([
@@ -39,16 +41,13 @@ export default function AgendaAdjuntosTab({ idTurno, onUploadingChange }: Props)
 			]);
 			setAdjuntos(list);
 			setTipos(tiposImg);
-			if (!tipoSel && tiposImg.length) {
-				setTipoSel(String(tiposImg[0].TipoImagen || '').trim());
-			}
 		} catch (e: unknown) {
 			const err = e as { message?: string };
 			setError(err?.message || 'Error al cargar adjuntos');
 		} finally {
 			setLoading(false);
 		}
-	}, [idTurno, tipoSel]);
+	}, [idTurno]);
 
 	useEffect(() => {
 		void cargar();
@@ -58,20 +57,16 @@ export default function AgendaAdjuntosTab({ idTurno, onUploadingChange }: Props)
 		return () => adjuntosService.revocarBlobUrl(viewer?.blobUrl);
 	}, [viewer?.blobUrl]);
 
-	const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		e.target.value = '';
-		if (!file || !tipoSel.trim()) return;
+	const subirArchivos = async (files: File[], tipoImagen: string) => {
 		setUploading(true);
 		setError(null);
 		try {
-			await agendaService.subirAdjuntoTurno(idTurno, file, tipoSel.trim());
-			await cargar();
-		} catch (err: unknown) {
-			const ex = err as { message?: string };
-			setError(ex?.message || 'Error al subir archivo');
+			for (const file of files) {
+				await agendaService.subirAdjuntoTurno(idTurno, file, tipoImagen);
+			}
 		} finally {
 			setUploading(false);
+			await cargar(true);
 		}
 	};
 
@@ -109,26 +104,20 @@ export default function AgendaAdjuntosTab({ idTurno, onUploadingChange }: Props)
 			</p>
 
 			<div className={styles.uploadRow}>
-				<label className={styles.field}>
-					Tipo de documento
-					<select value={tipoSel} onChange={(e) => setTipoSel(e.target.value)}>
-						{tipos.map((t) => (
-							<option key={t.TipoImagen} value={t.TipoImagen}>
-								{t.DescTipoImagen || t.TipoImagen}
-							</option>
-						))}
-					</select>
-				</label>
-				<label className={styles.fileBtn}>
-					{uploading ? 'Subiendo…' : 'Seleccionar archivo'}
-					<input
-						type='file'
-						accept='.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.dcm'
-						disabled={uploading || !tipoSel}
-						onChange={onFile}
-					/>
-				</label>
+				<SubirAdjuntoButton
+					onClick={() => setSubirOpen(true)}
+					disabled={uploading}
+					label={uploading ? 'Subiendo…' : '+ Subir nuevo'}
+				/>
 			</div>
+
+			<SubirAdjuntoModal
+				isOpen={subirOpen}
+				onClose={() => setSubirOpen(false)}
+				titleMeta={`Turno #${idTurno}`}
+				tiposImagen={tipos}
+				onConfirm={subirArchivos}
+			/>
 
 			{error ? <div className={styles.error}>{error}</div> : null}
 

@@ -6,6 +6,14 @@ import { apiFetchBlob } from '@/app/utils/authFetch';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import AdjuntoFileViewer, { AdjuntoViewerState } from '@/app/components/beds/adjuntos/AdjuntoFileViewer';
 import ConfirmationModal from '@/app/components/beds/shared/ConfirmationModal';
+import SubirAdjuntoModal from '@/app/components/beds/adjuntos/SubirAdjuntoModal';
+import SubirAdjuntoButton from '@/app/components/beds/adjuntos/SubirAdjuntoButton';
+import { ORIGEN_ADJUNTO_LABEL, type OrigenAdjunto } from '@/app/types/adjuntos';
+
+function etiquetaOrigen(raw: unknown): string {
+  const o = String(raw ?? '').trim().toUpperCase() as OrigenAdjunto;
+  return ORIGEN_ADJUNTO_LABEL[o] ?? '';
+}
 import { isDicom, isImage } from '@/app/utils/adjuntoFileTypes';
 import { renderDicomPreviewDataUrl } from '@/app/utils/dicomRenderer';
 import { usePermiso } from '@/app/hooks/usePermiso';
@@ -54,6 +62,7 @@ function AdjuntoCard({
   idAdjunto,
   nombreArchivo,
   fechaCarga,
+  origen,
   canDelete,
   deleting,
   onOpen,
@@ -62,6 +71,7 @@ function AdjuntoCard({
   idAdjunto: number;
   nombreArchivo: string;
   fechaCarga?: string;
+  origen?: string;
   canDelete: boolean;
   deleting: boolean;
   onOpen: (idAdjunto: number, nombreArchivo: string) => void;
@@ -129,6 +139,7 @@ function AdjuntoCard({
         disabled={deleting}
       >
         <div className={styles.thumb} aria-hidden>
+          {origen ? <span className={styles.origenBadge}>{origen}</span> : null}
           {phase === 'loading' ? (
             <span className={styles.loaderWrap}>
               <span className={styles.loaderSpinner} />
@@ -184,10 +195,7 @@ export default function AdmissionAdjuntosGrid({
 }) {
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
-  const [tipos, setTipos] = useState<{ TipoImagen: string; DescTipoImagen: string }[]>([]);
-  const [tipoImagen, setTipoImagen] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [subirOpen, setSubirOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -198,24 +206,6 @@ export default function AdmissionAdjuntosGrid({
   const puedeIntentarEliminar =
     puede('INTERNACION.ADJUNTOS.ELIMINAR') || puede('INTERNACION.ADJUNTOS.CREAR');
 
-  useEffect(() => {
-    if (!allowUpload) return;
-    let cancelled = false;
-    adjuntosService
-      .getTiposImagenes()
-      .then((list) => {
-        if (cancelled) return;
-        setTipos(list);
-        if (list[0]?.TipoImagen) setTipoImagen(list[0].TipoImagen);
-      })
-      .catch(() => {
-        /* ignore */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [allowUpload]);
-
   const parsedItems = useMemo(
     () =>
       items.flatMap((raw) => {
@@ -225,7 +215,8 @@ export default function AdmissionAdjuntosGrid({
         const name = str(raw.NombreArchivo ?? raw.Descripcion) || `Adjunto ${id}`;
         const fechaCarga = str(raw.FechaCarga ?? raw.Fecha ?? raw.fechaCarga);
         const idOperador = parseIdOperador(raw);
-        return [{ id, name, fechaCarga, idOperador }];
+        const origen = etiquetaOrigen(raw.Origen ?? raw.origen);
+        return [{ id, name, fechaCarga, idOperador, origen }];
       }),
     [items]
   );
@@ -272,22 +263,10 @@ export default function AdmissionAdjuntosGrid({
     setViewer(null);
   };
 
-  const handleUpload = async (files: FileList | null) => {
-    if (!allowUpload || !numeroVisita || !files?.length) return;
-    if (!tipoImagen.trim()) {
-      setUploadError('Seleccioná un tipo de imagen');
-      return;
-    }
-    setUploading(true);
-    setUploadError(null);
-    try {
-      await adjuntosService.subirArchivos(numeroVisita, Array.from(files), tipoImagen.trim());
-      onUploaded?.();
-    } catch (e: unknown) {
-      setUploadError(e instanceof Error ? e.message : 'No se pudo subir el archivo');
-    } finally {
-      setUploading(false);
-    }
+  const handleUpload = async (files: File[], tipoImagen: string) => {
+    if (!allowUpload || !numeroVisita || !files.length) return;
+    await adjuntosService.subirArchivos(numeroVisita, files, tipoImagen, 'ADMISION');
+    onUploaded?.();
   };
 
   const confirmDelete = async () => {
@@ -319,34 +298,18 @@ export default function AdmissionAdjuntosGrid({
         onConfirm={() => void confirmDelete()}
       />
       {allowUpload && numeroVisita ? (
-        <div className={styles.uploadBox}>
-          <p className={styles.uploadTitle}>Agregar adjunto a esta visita</p>
-          {tipos.length > 0 ? (
-            <select
-              className={styles.uploadSelect}
-              value={tipoImagen}
-              onChange={(e) => setTipoImagen(e.target.value)}
-              disabled={uploading}
-            >
-              {tipos.map((t) => (
-                <option key={t.TipoImagen} value={t.TipoImagen}>
-                  {t.DescTipoImagen || t.TipoImagen}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          <input
-            type="file"
-            multiple
-            disabled={uploading}
-            onChange={(e) => {
-              void handleUpload(e.target.files);
-              e.target.value = '';
-            }}
+        <>
+          <div className={styles.uploadBox}>
+            <p className={styles.uploadTitle}>Archivos de la visita</p>
+            <SubirAdjuntoButton onClick={() => setSubirOpen(true)} />
+          </div>
+          <SubirAdjuntoModal
+            isOpen={subirOpen}
+            onClose={() => setSubirOpen(false)}
+            titleMeta={`Visita #${numeroVisita}`}
+            onConfirm={handleUpload}
           />
-          {uploading ? <p className={styles.hint}>Subiendo…</p> : null}
-          {uploadError ? <p className={styles.uploadError}>{uploadError}</p> : null}
-        </div>
+        </>
       ) : null}
       {deleteError ? <p className={styles.uploadError}>{deleteError}</p> : null}
       {!parsedItems.length ? (
@@ -363,6 +326,7 @@ export default function AdmissionAdjuntosGrid({
                 idAdjunto={it.id}
                 nombreArchivo={it.name}
                 fechaCarga={it.fechaCarga}
+                origen={it.origen}
                 canDelete={puedeEliminarItem(it.idOperador)}
                 deleting={deletingId === it.id}
                 onOpen={openAdjunto}

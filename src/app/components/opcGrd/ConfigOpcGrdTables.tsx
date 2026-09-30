@@ -351,6 +351,7 @@ export default function ConfigOpcGrdTables({
 					if (!sqlId) return;
 					aplicarSql(await catalogoSqlService.borrar(sqlId, key));
 				}}
+				onSearch={async (campo, q) => (sqlId ? catalogoSqlService.buscar(sqlId, campo, q) : [])}
 			/>
 				</>
 			)}

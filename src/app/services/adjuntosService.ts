@@ -5,7 +5,8 @@ import {
   SubirMultiplesAdjuntosResponse,
   ListarAdjuntosResponse,
   AdjuntosAgrupadosResponse,
-  TipoImagenHC
+  TipoImagenHC,
+  type OrigenAdjunto,
 } from '../types/adjuntos';
 
 async function extractErrorMessage(response: Response, fallback: string): Promise<string> {
@@ -33,10 +34,16 @@ export const adjuntosService = {
     return json.data ?? [];
   },
 
-  async subirArchivo(numeroVisita: number, archivo: File, tipoImagen: string): Promise<SubirAdjuntoResponse> {
+  async subirArchivo(
+    numeroVisita: number,
+    archivo: File,
+    tipoImagen: string,
+    origen?: OrigenAdjunto,
+  ): Promise<SubirAdjuntoResponse> {
     const formData = new FormData();
     formData.append('numeroVisita', numeroVisita.toString());
     formData.append('tipoImagen', tipoImagen.trim());
+    if (origen) formData.append('origen', origen);
     formData.append('archivo', archivo);
 
     const response = await apiFetch('/adjuntos/upload', {
@@ -52,10 +59,16 @@ export const adjuntosService = {
     return response.json();
   },
 
-  async subirArchivos(numeroVisita: number, archivos: File[], tipoImagen: string): Promise<SubirMultiplesAdjuntosResponse> {
+  async subirArchivos(
+    numeroVisita: number,
+    archivos: File[],
+    tipoImagen: string,
+    origen?: OrigenAdjunto,
+  ): Promise<SubirMultiplesAdjuntosResponse> {
     const formData = new FormData();
     formData.append('numeroVisita', numeroVisita.toString());
     formData.append('tipoImagen', tipoImagen.trim());
+    if (origen) formData.append('origen', origen);
 
     archivos.forEach((archivo) => {
       formData.append('archivos', archivo);

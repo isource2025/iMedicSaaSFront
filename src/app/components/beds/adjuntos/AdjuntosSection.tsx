@@ -142,9 +142,9 @@ export default function AdjuntosSection({
       setError(null);
 
       if (selectedFiles.length === 1) {
-        await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0], tipoImagenCodigo);
+        await adjuntosService.subirArchivo(numeroVisita, selectedFiles[0], tipoImagenCodigo, 'INTERNACION');
       } else {
-        await adjuntosService.subirArchivos(numeroVisita, selectedFiles, tipoImagenCodigo);
+        await adjuntosService.subirArchivos(numeroVisita, selectedFiles, tipoImagenCodigo, 'INTERNACION');
       }
 
       setSelectedFiles([]);

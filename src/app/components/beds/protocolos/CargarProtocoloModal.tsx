@@ -10,6 +10,8 @@ import type {
 } from '@/app/types/protocolos';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { adjuntosService } from '@/app/services/adjuntosService';
+import SubirAdjuntoModal from '../adjuntos/SubirAdjuntoModal';
+import SubirAdjuntoButton from '../adjuntos/SubirAdjuntoButton';
 import shell from '../shared/PedidoDetalleModal.module.css';
 import styles from './CargarProtocoloModal.module.css';
 
@@ -67,6 +69,7 @@ export default function CargarProtocoloModal({
 	const [diagnosticoPos, setDiagnosticoPos] = useState('');
 	const [addFuncionCodigo, setAddFuncionCodigo] = useState('');
 	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+	const [subirOpen, setSubirOpen] = useState(false);
 	const [tipoAdjunto, setTipoAdjunto] = useState('');
 	const [tiposAdjunto, setTiposAdjunto] = useState<{ TipoImagen: string; DescTipoImagen: string }[]>(
 		[],
@@ -258,7 +261,7 @@ export default function CargarProtocoloModal({
 				});
 				if (pendingFiles.length > 0) {
 					try {
-						await adjuntosService.subirArchivos(numeroVisita, pendingFiles, tipoAdjunto);
+						await adjuntosService.subirArchivos(numeroVisita, pendingFiles, tipoAdjunto, 'PROTOCOLO');
 					} catch (upErr) {
 						console.warn('[CargarProtocolo] adjuntos:', upErr);
 					}
@@ -287,7 +290,7 @@ export default function CargarProtocoloModal({
 			});
 			if (pendingFiles.length > 0 && created?.idProtocolo != null) {
 				try {
-					await adjuntosService.subirArchivos(numeroVisita, pendingFiles, tipoAdjunto);
+					await adjuntosService.subirArchivos(numeroVisita, pendingFiles, tipoAdjunto, 'PROTOCOLO');
 				} catch (upErr) {
 					console.warn('[CargarProtocolo] adjuntos:', upErr);
 				}
@@ -616,37 +619,51 @@ export default function CargarProtocoloModal({
 							</div>
 						</div>
 
-						<div className={styles.grid2}>
-							<label className={styles.field}>
-								<span>Tipo de estudio</span>
-								<select
-									className={styles.input}
-									value={tipoAdjunto}
-									onChange={(e) => setTipoAdjunto(e.target.value)}
-								>
-									<option value="">Seleccione…</option>
-									{tiposAdjunto.map((t) => (
-										<option key={t.TipoImagen} value={t.TipoImagen}>
-											{t.DescTipoImagen || t.TipoImagen}
-										</option>
-									))}
-								</select>
-							</label>
-							<label className={styles.field}>
-								<span>Archivos</span>
-								<input
-									type="file"
-									multiple
-									className={styles.fileInput}
-									onChange={(e) =>
-										setPendingFiles(e.target.files ? Array.from(e.target.files) : [])
-									}
-								/>
-							</label>
+						<div className={styles.adjRow}>
+							<p className={styles.hint}>
+								{pendingFiles.length > 0
+									? `${pendingFiles.length} archivo(s) listos para subir · Tipo: ${
+											tiposAdjunto.find((t) => t.TipoImagen === tipoAdjunto)?.DescTipoImagen ||
+											tipoAdjunto
+										}`
+									: 'Sin archivos seleccionados'}
+							</p>
+							<SubirAdjuntoButton
+								onClick={() => setSubirOpen(true)}
+								disabled={submitting}
+							/>
 						</div>
 						{pendingFiles.length > 0 ? (
-							<p className={styles.hint}>{pendingFiles.length} archivo(s) listos para subir</p>
+							<ul className={styles.adjList}>
+								{pendingFiles.map((f, i) => (
+									<li key={`${f.name}-${f.size}-${i}`} className={styles.adjItem}>
+										<span className={styles.adjName}>{f.name}</span>
+										<span className={styles.adjSize}>{(f.size / 1024).toFixed(0)} KB</span>
+										<button
+											type="button"
+											className={styles.adjRemove}
+											onClick={() => setPendingFiles((prev) => prev.filter((_, j) => j !== i))}
+											disabled={submitting}
+											aria-label={`Quitar ${f.name}`}
+										>
+											×
+										</button>
+									</li>
+								))}
+							</ul>
 						) : null}
+						<SubirAdjuntoModal
+							isOpen={subirOpen}
+							onClose={() => setSubirOpen(false)}
+							titleMeta={`Visita #${numeroVisita}`}
+							tiposImagen={tiposAdjunto}
+							tipoInicial={tipoAdjunto}
+							confirmLabel={(n) => `Agregar ${n} archivo(s)`}
+							onConfirm={(files, tipo) => {
+								setTipoAdjunto(tipo);
+								setPendingFiles((prev) => [...prev, ...files]);
+							}}
+						/>
 					</section>
 				</div>
 

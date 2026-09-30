@@ -1,9 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { mensajeDeError } from '@/app/utils/apiError';
 import styles from './CatalogoCrudModal.module.css';
+
+export type CatalogoOption = {
+  value: string;
+  label: string;
+  detail?: string;
+};
 
 export type CatalogoColumn = {
   key: string;
@@ -12,6 +18,9 @@ export type CatalogoColumn = {
   type?: string;
   autoKey?: boolean;
   requiredOnCreate?: boolean;
+  required?: boolean;
+  input?: 'select' | 'search';
+  options?: CatalogoOption[];
 };
 
 type Props = {
@@ -25,7 +34,127 @@ type Props = {
   onAddItem?: (values: Record<string, string>) => Promise<void>;
   onUpdateItem?: (key: string, values: Record<string, string>) => Promise<void>;
   onDeleteItem?: (key: string) => Promise<void>;
+  /** Columnas con input 'search': devuelve opciones para el texto escrito. */
+  onSearch?: (campo: string, q: string) => Promise<CatalogoOption[]>;
 };
+
+function vacioODefault(v: string): boolean {
+  return !v || v === '0';
+}
+
+function CampoBusqueda({
+  column,
+  value,
+  disabled,
+  onChange,
+  onSearch,
+}: {
+  column: CatalogoColumn;
+  value: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+  onSearch?: (campo: string, q: string) => Promise<CatalogoOption[]>;
+}) {
+  const [texto, setTexto] = useState('');
+  const [abierto, setAbierto] = useState(false);
+  const [buscando, setBuscando] = useState(false);
+  const [resultados, setResultados] = useState<CatalogoOption[]>([]);
+  const [seleccion, setSeleccion] = useState<CatalogoOption | null>(null);
+  const [errorBusqueda, setErrorBusqueda] = useState('');
+  const pedido = useRef(0);
+  const onSearchRef = useRef(onSearch);
+  onSearchRef.current = onSearch;
+
+  useEffect(() => {
+    const buscar = onSearchRef.current;
+    if (!abierto || !buscar) return;
+    const id = ++pedido.current;
+    const t = window.setTimeout(async () => {
+      setBuscando(true);
+      setErrorBusqueda('');
+      try {
+        const r = await buscar(column.key, texto.trim());
+        if (id === pedido.current) setResultados(r);
+      } catch (e) {
+        if (id === pedido.current) setErrorBusqueda(mensajeDeError(e, 'No se pudo buscar'));
+      } finally {
+        if (id === pedido.current) setBuscando(false);
+      }
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [texto, abierto, column.key]);
+
+  if (!vacioODefault(value)) {
+    const etiqueta = seleccion && seleccion.value === value ? seleccion : null;
+    return (
+      <div className={styles.busquedaSeleccion}>
+        <span>
+          {etiqueta ? etiqueta.label : value}
+          {etiqueta?.detail ? (
+            <span className={styles.busquedaItemDetalle}> · {etiqueta.detail}</span>
+          ) : null}
+        </span>
+        {!disabled ? (
+          <button
+            type="button"
+            className={styles.busquedaQuitar}
+            onClick={() => {
+              onChange('');
+              setSeleccion(null);
+              setTexto('');
+            }}
+            aria-label={`Quitar ${column.label.toLowerCase()}`}
+          >
+            <X size={15} />
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.busqueda}>
+      <input
+        type="text"
+        value={texto}
+        disabled={disabled}
+        placeholder="Buscar por paciente, documento o número de visita…"
+        onChange={(e) => setTexto(e.target.value)}
+        onFocus={() => setAbierto(true)}
+        onBlur={() => window.setTimeout(() => setAbierto(false), 150)}
+      />
+      {abierto ? (
+        <ul className={styles.busquedaLista}>
+          {buscando ? <li className={styles.busquedaEstado}>Buscando…</li> : null}
+          {!buscando && errorBusqueda ? (
+            <li className={styles.busquedaEstado}>{errorBusqueda}</li>
+          ) : null}
+          {!buscando && !errorBusqueda && resultados.length === 0 ? (
+            <li className={styles.busquedaEstado}>Sin resultados</li>
+          ) : null}
+          {!buscando &&
+            resultados.map((o) => (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  className={styles.busquedaItem}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setSeleccion(o);
+                    onChange(o.value);
+                    setAbierto(false);
+                  }}
+                >
+                  <span className={styles.busquedaItemTitulo}>{o.label}</span>
+                  {o.detail ? <span className={styles.busquedaItemDetalle}>{o.detail}</span> : null}
+                </button>
+              </li>
+            ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 type Modo = 'lista' | 'alta' | 'editar' | 'borrar';
 
@@ -43,6 +172,13 @@ function textoCelda(row: Record<string, unknown> | null | undefined, key: string
   return v == null ? '' : String(v).trim();
 }
 
+function textoMostrado(row: Record<string, unknown> | null | undefined, col: CatalogoColumn): string {
+  const v = textoCelda(row, col.key);
+  if (!v || col.input !== 'select') return v;
+  const o = col.options?.find((x) => x.value.toUpperCase() === v.toUpperCase());
+  return o ? o.label : v;
+}
+
 export default function CatalogoCrudModal({
   isOpen,
   onClose,
@@ -54,6 +190,7 @@ export default function CatalogoCrudModal({
   onAddItem,
   onUpdateItem,
   onDeleteItem,
+  onSearch,
 }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(1);
@@ -145,6 +282,7 @@ export default function CatalogoCrudModal({
           if (c.autoKey) return false;
           const v = String(form[c.key] ?? '').trim();
           if (c.requiredOnCreate && modo === 'alta') return !v;
+          if (c.required) return !v;
           const k = c.key.toLowerCase();
           if (k.includes('desc') || k === 'nombre' || k === 'razonsocial') return !v;
           return false;
@@ -183,7 +321,7 @@ export default function CatalogoCrudModal({
     }
     return (
       columns
-        .map((c) => textoCelda(row, c.key))
+        .map((c) => textoMostrado(row, c))
         .filter(Boolean)
         .join(' · ') || '—'
     );
@@ -236,7 +374,7 @@ export default function CatalogoCrudModal({
                           {columns
                             .filter((c) => !/desc|nombre|razon/i.test(c.key))
                             .slice(0, 2)
-                            .map((c) => `${c.label}: ${textoCelda(row, c.key) || '—'}`)
+                            .map((c) => `${c.label}: ${textoMostrado(row, c) || '—'}`)
                             .join(' · ')}
                         </span>
                       </div>
@@ -308,17 +446,69 @@ export default function CatalogoCrudModal({
               </div>
             ) : (
               <div className={styles.campos}>
-                {camposForm.map((c) => (
-                  <label key={c.key} className={styles.campo}>
-                    <span>{c.label}</span>
-                    <input
-                      type={c.type || 'text'}
-                      value={form[c.key] ?? ''}
-                      disabled={modo === 'editar' && c.editable === false}
-                      onChange={(e) => setForm((f) => ({ ...f, [c.key]: e.target.value }))}
-                    />
-                  </label>
-                ))}
+                {camposForm.map((c) => {
+                  const valor = form[c.key] ?? '';
+                  const bloqueado = modo === 'editar' && c.editable === false;
+                  const obligatorio = c.required || (modo === 'alta' && c.requiredOnCreate);
+                  const setValor = (v: string) => setForm((f) => ({ ...f, [c.key]: v }));
+                  const etiqueta = (
+                    <span>
+                      {c.label}
+                      {obligatorio ? <span className={styles.obligatorio}>*</span> : null}
+                    </span>
+                  );
+
+                  if (c.input === 'search') {
+                    return (
+                      <div key={c.key} className={styles.campo}>
+                        {etiqueta}
+                        <CampoBusqueda
+                          column={c}
+                          value={valor}
+                          disabled={bloqueado}
+                          onChange={setValor}
+                          onSearch={onSearch}
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (c.input === 'select') {
+                    const opciones = c.options ?? [];
+                    const fueraDeLista =
+                      valor && !opciones.some((o) => o.value.toUpperCase() === valor.toUpperCase());
+                    return (
+                      <label key={c.key} className={styles.campo}>
+                        {etiqueta}
+                        <select
+                          value={valor}
+                          disabled={bloqueado}
+                          onChange={(e) => setValor(e.target.value)}
+                        >
+                          <option value="">Seleccioná…</option>
+                          {fueraDeLista ? <option value={valor}>{valor} (actual)</option> : null}
+                          {opciones.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    );
+                  }
+
+                  return (
+                    <label key={c.key} className={styles.campo}>
+                      {etiqueta}
+                      <input
+                        type={c.type || 'text'}
+                        value={valor}
+                        disabled={bloqueado}
+                        onChange={(e) => setValor(e.target.value)}
+                      />
+                    </label>
+                  );
+                })}
               </div>
             )}
 
