@@ -352,8 +352,8 @@ export default function MatrizPermisosPage() {
 			{aviso ? <div className={`${styles.banner} ${styles.bannerOk}`}>{aviso}</div> : null}
 			{data && !data.soportaPersonalizados ? (
 				<div className={`${styles.banner} ${styles.bannerInfo}`}>
-					La creación de roles personalizados no está disponible en este entorno. Podés consultar los roles del
-					sistema.
+					La creación de roles personalizados todavía no está habilitada para esta clínica. Podés consultar los
+					roles del sistema; para activarla, contactá a soporte.
 				</div>
 			) : null}
 
