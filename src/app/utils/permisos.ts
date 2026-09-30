@@ -274,9 +274,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	],
 
 	ENFERMERO: [
-		'TURNOS.AGENDA.VER',
-		'TURNOS.AGENDA.EDITAR',
-
 		'ADMISION.PACIENTES.VER',
 		'ADMISION.BUSQUEDA.VER',
 
