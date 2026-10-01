@@ -28,6 +28,8 @@ import { InsightCard } from '@/app/components/InsightCard';
 import { MetricTooltipModal } from '@/app/components/modals/MetricTooltipModal';
 import { MetricTooltip } from '@/app/components/MetricTooltip';
 import { AnalyticsLoader } from '@/app/components/AnalyticsLoader';
+import { ExportExcelButton } from '@/app/components/ExportExcelButton';
+import { armarLibroCamas } from '@/app/utils/export/camasExcel';
 import { AnalysisResult } from '@/app/utils/analyticsEngine';
 import styles from './BedsAnalytics.module.css';
 
@@ -215,6 +217,10 @@ export default function BedsAnalytics() {
             </div>
           </div>
           <div className={styles.controls}>
+            <ExportExcelButton
+              construir={() => (resumen ? armarLibroCamas(resumen, indicadoresPorFecha, estadoActual) : null)}
+              disabled={loading || !resumen}
+            />
             <div className={styles.filterTabs}>
               {['Día', 'Semana', 'Mes', 'Año'].map(tab => (
                 <button key={tab} className={`${styles.tabButton} ${activeTab === tab.toLowerCase() ? styles.activeTab : ''}`} onClick={() => handleTabClick(tab.toLowerCase())}>

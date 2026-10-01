@@ -10,6 +10,10 @@ import type { ResumenAmbulatorioHoy } from '../types/ambulatorio';
 import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
 import { useIndicadores } from '../hooks/useIndicadores';
 import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
+import { usePermiso } from '../hooks/usePermiso';
+import { obtenerResumenProduccionMes } from '../services/produccionHospitalService';
+import type { ResumenProduccionMes } from '../types/produccionHospital';
+import { entero, monedaCompacta } from './reports/facturacion/produccionFormat';
 import { useAppContext } from '../contexts/AppContext';
 import { authService } from '../services/authService';
 import styles from './DashboardPage.module.css';
@@ -120,6 +124,31 @@ export default function Dashboard() {
   const [loadingAmbulatorio, setLoadingAmbulatorio] = useState(true);
   const [errorAmbulatorio, setErrorAmbulatorio] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  // Producción del hospital: sólo quien tiene el permiso (hoy, el administrador).
+  const { loaded: permisosCargados, puede } = usePermiso();
+  const puedeVerProduccion = permisosCargados && puede('REPORTES.FACTURACION.VER');
+  const [produccionMes, setProduccionMes] = useState<ResumenProduccionMes | null>(null);
+  const [loadingProduccion, setLoadingProduccion] = useState(true);
+  const [errorProduccion, setErrorProduccion] = useState(false);
+
+  useEffect(() => {
+    if (!puedeVerProduccion) return;
+    let vigente = true;
+    setLoadingProduccion(true);
+    setErrorProduccion(false);
+    setProduccionMes(null);
+    obtenerResumenProduccionMes()
+      .then((r) => vigente && setProduccionMes(r))
+      .catch((error) => {
+        console.error('Error fetching hospital production summary:', error);
+        if (vigente) setErrorProduccion(true);
+      })
+      .finally(() => vigente && setLoadingProduccion(false));
+    return () => {
+      vigente = false;
+    };
+  }, [puedeVerProduccion, tenantId]);
 
   useEffect(() => {
     const rol = authService.getCurrentRol();
@@ -390,19 +419,88 @@ export default function Dashboard() {
           )}
         </div>
         
-        <div className={styles.cardStaff}>
-          <div className={styles.cardHeader}>
-            <Icon path={ICONS.userCheck} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
-            <h3 className={styles.cardLabel}>Personal Activo</h3>
+        {puedeVerProduccion && (
+          <div
+            className={styles.cardStaff}
+            style={{ cursor: 'pointer' }}
+            onClick={() => router.push('/dashboard/reports/facturacion')}
+          >
+            <div className={styles.cardHeader}>
+              <Icon path={ICONS.trendingUp} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
+              <h3 className={styles.cardLabel}>Producción del Hospital</h3>
+              <button className={styles.arrowButton} aria-label="Ver producción del hospital">
+                <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
+              </button>
+            </div>
+            {loadingProduccion ? (
+              <div className={styles.cardCenterLoader}>
+                <div className={styles.cardCenterSpinner}></div>
+              </div>
+            ) : errorProduccion || !produccionMes ? (
+              <div className={styles.cardStats}>
+                <span className={styles.stat}>Sin datos disponibles</span>
+              </div>
+            ) : (
+              <div className={styles.cardStats}>
+                <div className={styles.statRow}>
+                  <div className={styles.cardMainMetric}>
+                    <p className={styles.cardValue}>{entero(produccionMes.practicas)}</p>
+                    <span className={styles.cardMainLabel}>Prácticas este mes</span>
+                  </div>
+                  {produccionMes.variacionPracticas != null && (
+                    <div className={styles.cardSecondaryMetric}>
+                      <p
+                        className={styles.cardSecondaryValue}
+                        style={{ color: produccionMes.variacionPracticas >= 0 ? '#388e3c' : '#d32f2f' }}
+                      >
+                        {`${produccionMes.variacionPracticas >= 0 ? '+' : ''}${produccionMes.variacionPracticas}%`}
+                      </p>
+                      <span className={styles.cardSecondaryLabel}>vs mes anterior</span>
+                    </div>
+                  )}
+                </div>
+                <div className={styles.statRow}>
+                  <div className={styles.cardSecondaryMetric}>
+                    <p className={styles.cardSecondaryValue}>{monedaCompacta(produccionMes.facturado)}</p>
+                    <span className={styles.cardSecondaryLabel}>Facturado hasta hoy</span>
+                  </div>
+                </div>
+                {produccionMes.valorizadoPct != null && (() => {
+                  const pct = produccionMes.valorizadoPct;
+                  const habitual = produccionMes.referencia?.valorizadoPct ?? null;
+                  // Misma regla que la página: en demora si está muy por debajo de lo habitual.
+                  const enDemora = habitual != null ? pct < habitual * 0.75 : pct < 40;
+                  return (
+                    <div className={styles.valorizacion}>
+                      <div className={styles.valorizacionTexto}>
+                        <span>Valorizado</span>
+                        <strong className={enDemora ? styles.valorizacionAviso : undefined}>{`${pct}%`}</strong>
+                      </div>
+                      <div className={styles.valorizacionBarra} role="img" aria-label={`${pct}% valorizado`}>
+                        <span
+                          className={enDemora ? styles.valorizacionRellenoAviso : styles.valorizacionRelleno}
+                          style={{ width: `${Math.max(2, Math.min(100, pct))}%` }}
+                        />
+                        {habitual != null && (
+                          <i
+                            className={styles.valorizacionMarca}
+                            style={{ left: `${Math.min(100, habitual)}%` }}
+                            title={`Hace 3 meses estaba en ${habitual}%`}
+                          />
+                        )}
+                      </div>
+                      <span className={styles.valorizacionAyuda}>
+                        {enDemora
+                          ? `En demora: el importe de este mes va a subir.${habitual != null ? ` Lo habitual es ~${Math.round(habitual)}%.` : ''}`
+                          : 'Lo realizado este mes que ya tiene importe.'}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
-          <div className={styles.cardMainMetric}>
-            <p className={styles.cardValue}>18</p>
-            <span className={styles.cardMainLabel}>En turno</span>
-          </div>
-          <div className={styles.cardStats}>
-            <span className={styles.stat}>Próximamente</span>
-          </div>
-        </div>
+        )}
       </div>
       
       {/* Activity Overview */}

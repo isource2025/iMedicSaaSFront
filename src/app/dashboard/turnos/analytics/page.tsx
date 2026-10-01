@@ -6,6 +6,8 @@ import { usePermiso } from '@/app/hooks/usePermiso';
 import { useAmbulatorio } from '@/app/hooks/useAmbulatorio';
 import { MetricCard } from '@/app/components/MetricCard';
 import { AnalyticsLoader } from '@/app/components/AnalyticsLoader';
+import { ExportExcelButton } from '@/app/components/ExportExcelButton';
+import { armarLibroAmbulatorio } from '@/app/utils/export/ambulatorioExcel';
 import {
   DIAS_SEMANA_CORTO,
   GRACIA_MIN_DEFAULT,
@@ -121,6 +123,7 @@ export default function AmbulatorioAnalytics() {
     porSector,
     porProfesional,
     heatmap,
+    data: analitica,
     loading,
     error,
     computedData,
@@ -231,6 +234,10 @@ export default function AmbulatorioAnalytics() {
             </div>
           </div>
           <div className={styles.controls}>
+            <ExportExcelButton
+              construir={() => (analitica ? armarLibroAmbulatorio(analitica) : null)}
+              disabled={loading || !analitica}
+            />
             <div className={styles.filterTabs}>
               {['Día', 'Semana', 'Mes', 'Año'].map((tab) => (
                 <button

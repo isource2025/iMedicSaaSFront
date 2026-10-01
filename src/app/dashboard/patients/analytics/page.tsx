@@ -29,6 +29,8 @@ import { InsightCard } from '@/app/components/InsightCard';
 import { MetricTooltip } from '@/app/components/MetricTooltip/MetricTooltip';
 import { MetricTooltipModal } from '@/app/components/modals/MetricTooltipModal';
 import { AnalyticsLoader } from '@/app/components/AnalyticsLoader';
+import { ExportExcelButton } from '@/app/components/ExportExcelButton';
+import { armarLibroPacientes } from '@/app/utils/export/pacientesExcel';
 import styles from './PatientsAnalytics.module.css';
 
 // Componente para iconos (ejemplo simple)
@@ -176,6 +178,10 @@ export default function PatientsAnalytics() {
             </div>
           </div>
           <div className={styles.controls}>
+            <ExportExcelButton
+              construir={() => (resumen ? armarLibroPacientes(resumen, indicadoresPorFecha) : null)}
+              disabled={loading || !resumen}
+            />
             <div className={styles.filterTabs}>
               {['Día', 'Semana', 'Mes', 'Año'].map(tab => (
                 <button 

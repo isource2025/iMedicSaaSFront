@@ -360,6 +360,69 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Avance de valorización de la tarjeta de producción */
+.valorizacion {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.valorizacionTexto {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  color: #666;
+}
+
+.valorizacionTexto strong {
+  font-size: 15px;
+  color: #2e7d32;
+}
+
+.valorizacionTexto .valorizacionAviso {
+  color: #e65100;
+}
+
+.valorizacionBarra {
+  position: relative;
+  height: 8px;
+  background: #eef1f4;
+  border-radius: 4px;
+}
+
+.valorizacionRelleno,
+.valorizacionRellenoAviso {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.valorizacionRelleno {
+  background: #2e7d32;
+}
+
+.valorizacionRellenoAviso {
+  background: #f57c00;
+}
+
+/* Marca de "lo habitual": una rayita sobre la barra */
+.valorizacionMarca {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: #37474f;
+  border-radius: 1px;
+}
+
+.valorizacionAyuda {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #888;
+}
+
 .cardHeader {
   display: flex;
   justify-content: space-between;
