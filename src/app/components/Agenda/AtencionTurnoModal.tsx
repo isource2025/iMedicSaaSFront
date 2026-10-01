@@ -7,8 +7,11 @@ import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AgendaAdjuntosTab from '@/app/components/Agenda/AgendaAdjuntosTab';
 import TipoPedidoEstudioPicker from '@/app/components/Agenda/TipoPedidoEstudioPicker';
 import PracticaFacturacionPicker from '@/app/components/Agenda/PracticaFacturacionPicker';
+import HistorialPacienteDrawer from '@/app/components/Agenda/HistorialPacienteDrawer';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { useModalLayer } from '@/app/hooks/useModalLayer';
+import { usePermiso } from '@/app/hooks/usePermiso';
+import { usePacienteHistorial } from '@/app/hooks/usePacienteHistorial';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveReceptorPorTipo, sectorCoincideServicio } from '@/app/utils/resolveSectorReceptor';
 import styles from './AtencionTurnoModal.module.css';
@@ -53,6 +56,7 @@ function inicialesEstudio(desc: string): string {
 
 interface TurnoAtencion {
 	idTurno: number;
+	idPaciente?: number | null;
 	pacienteNombre?: string | null;
 	numeroDocumento?: number | string | null;
 	sector?: string | null;
@@ -178,6 +182,16 @@ export default function AtencionTurnoModal({
 		{ step: WizardStep; label: string }[] | null
 	>(null);
 
+	const { puede, loaded: permisosLoaded } = usePermiso();
+	const puedeVerHistorial = permisosLoaded && puede('ADMISION.BUSQUEDA.VER');
+	const [historialOpen, setHistorialOpen] = useState(false);
+	const historial = usePacienteHistorial({
+		enabled: open && Boolean(turno?.idTurno) && puedeVerHistorial,
+		idPaciente: turno?.idPaciente,
+		numeroDocumento: turno?.numeroDocumento,
+		pacienteNombre: turno?.pacienteNombre,
+	});
+
 	const step = STEPS[stepIndex]?.id ?? 'rac';
 	const isFirst = stepIndex === 0;
 	const isLast = stepIndex === STEPS.length - 1;
@@ -199,6 +213,7 @@ export default function AtencionTurnoModal({
 	useEffect(() => {
 		if (!open || !turno?.idTurno) return;
 		setStepIndex(0);
+		setHistorialOpen(false);
 		setMotivo('');
 		setEnfermedadActual('');
 		setDiagTerm('');
@@ -1052,6 +1067,19 @@ export default function AtencionTurnoModal({
 						</button>
 					</div>
 				</footer>
+
+				{puedeVerHistorial ? (
+					<HistorialPacienteDrawer
+						open={historialOpen}
+						onOpenChange={setHistorialOpen}
+						patient={historial.patient}
+						visits={historial.visits}
+						loading={historial.loading}
+						error={historial.error}
+						puedeBuscar={historial.puedeBuscar}
+						onRetry={historial.reload}
+					/>
+				) : null}
 			</div>
 
 			{validacionErrores && validacionErrores.length > 0 ? (

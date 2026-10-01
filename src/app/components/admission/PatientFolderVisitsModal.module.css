@@ -81,6 +81,12 @@
 	overflow-y: auto;
 }
 
+/* Dentro de un contenedor que ya hace scroll (panel lateral del wizard). */
+.list.listFill {
+	max-height: none;
+	overflow-y: visible;
+}
+
 .emptyMsg {
 	margin: 0;
 	padding: 2rem 1rem;

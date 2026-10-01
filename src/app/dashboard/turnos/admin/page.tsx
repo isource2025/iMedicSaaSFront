@@ -433,6 +433,7 @@ export default function TurnosAdminPage() {
 						turnoCerrar
 							? {
 									idTurno: turnoCerrar.idTurno,
+									idPaciente: turnoCerrar.idPaciente,
 									pacienteNombre: turnoCerrar.pacienteNombre,
 									numeroDocumento: turnoCerrar.numeroDocumento,
 									sector: turnoCerrar.sector,

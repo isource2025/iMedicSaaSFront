@@ -11,6 +11,7 @@
 }
 
 .modal {
+	position: relative; /* ancla del panel lateral de historial */
 	background: #fff;
 	width: 100vw;
 	height: 100vh;

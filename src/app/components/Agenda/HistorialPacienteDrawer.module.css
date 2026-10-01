@@ -1,0 +1,288 @@
+/*
+ * Panel lateral del historial del paciente dentro del wizard de atención.
+ * Importante: NO usar `transform` en el panel ni en sus ancestros: los modales
+ * `position: fixed` que se abren desde adentro (exportar) quedarían atrapados.
+ */
+.root {
+	--hw: min(440px, 100%);
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	pointer-events: none; /* el wizard sigue siendo operable mientras el panel está abierto */
+}
+
+.backdrop {
+	display: none;
+}
+
+.panel {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: calc(-1 * var(--hw) - 32px);
+	width: var(--hw);
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	border-left: 1px solid #e2e8f0;
+	box-shadow: -10px 0 28px rgba(15, 23, 42, 0.18);
+	visibility: hidden;
+	pointer-events: auto;
+	transition:
+		right 0.26s ease,
+		visibility 0s linear 0.26s;
+}
+
+.panelOpen {
+	right: 0;
+	visibility: visible;
+	transition:
+		right 0.26s ease,
+		visibility 0s linear 0s;
+}
+
+.panelHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #f8fafc;
+	flex-shrink: 0;
+}
+
+.panelTitleWrap {
+	flex: 1;
+	min-width: 0;
+}
+
+.panelTitle {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: #1e293b;
+}
+
+.panelSub {
+	margin: 0.1rem 0 0;
+	font-size: 0.78rem;
+	color: #64748b;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.closeBtn {
+	border: none;
+	background: transparent;
+	font-size: 1.5rem;
+	line-height: 1;
+	cursor: pointer;
+	color: #64748b;
+	padding: 0 0.25rem;
+}
+
+.closeBtn:hover {
+	color: #1e293b;
+}
+
+.backBtn {
+	display: none;
+	align-items: center;
+	gap: 0.25rem;
+	border: 1px solid #bae6fd;
+	background: #f0f9ff;
+	color: #0369a1;
+	font-family: inherit;
+	font-size: 0.85rem;
+	font-weight: 600;
+	padding: 0.5rem 0.75rem;
+	border-radius: 999px;
+	cursor: pointer;
+	min-height: 44px;
+	white-space: nowrap;
+}
+
+.panelBody {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	padding: 0.85rem 1rem;
+	padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+}
+
+.state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 2rem 1rem;
+	text-align: center;
+	color: #64748b;
+	font-size: 0.9rem;
+}
+
+.errorText {
+	margin: 0;
+	color: #b91c1c;
+}
+
+.retryBtn {
+	border: 1px solid #0083a9;
+	background: #fff;
+	color: #0083a9;
+	font-family: inherit;
+	font-weight: 600;
+	font-size: 0.85rem;
+	padding: 0.4rem 0.9rem;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.spinner {
+	width: 22px;
+	height: 22px;
+	border: 3px solid #e2e8f0;
+	border-top-color: #0083a9;
+	border-radius: 50%;
+	animation: historialSpin 0.7s linear infinite;
+}
+
+@keyframes historialSpin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Pestaña con flecha pegada al borde derecho */
+.tab {
+	position: absolute;
+	top: 45%;
+	right: 0;
+	width: 30px;
+	height: 76px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 0;
+	border: none;
+	border-radius: 12px 0 0 12px;
+	background: #0083a9;
+	color: #fff;
+	cursor: pointer;
+	box-shadow: -3px 3px 12px rgba(15, 23, 42, 0.25);
+	pointer-events: auto;
+	transition:
+		right 0.26s ease,
+		background 0.15s ease;
+}
+
+.tab:hover {
+	background: #006f90;
+}
+
+.tab:focus-visible {
+	outline: 3px solid #bae6fd;
+	outline-offset: 2px;
+}
+
+.tabOpen {
+	right: var(--hw);
+}
+
+.tabArrow {
+	transition: transform 0.26s ease;
+}
+
+.tabOpen .tabArrow {
+	transform: rotate(180deg);
+}
+
+.tabBadge {
+	min-width: 20px;
+	height: 20px;
+	padding: 0 5px;
+	border-radius: 999px;
+	background: #fff;
+	color: #0083a9;
+	font-size: 0.7rem;
+	font-weight: 800;
+	line-height: 20px;
+	text-align: center;
+}
+
+/* Mobile: hoja a todo el ancho con fondo; el cierre vive en la cabecera del panel */
+@media (max-width: 768px) {
+	.root {
+		--hw: 100%;
+	}
+
+	.backdrop {
+		display: block;
+		position: absolute;
+		inset: 0;
+		background: rgba(15, 23, 42, 0.45);
+		pointer-events: auto;
+	}
+
+	.panel {
+		border-left: none;
+		box-shadow: none;
+	}
+
+	.panelHeader {
+		padding: 0.6rem 0.75rem;
+		padding-top: calc(0.6rem + env(safe-area-inset-top, 0px));
+	}
+
+	.backBtn {
+		display: inline-flex;
+	}
+
+	.panelTitleWrap {
+		order: 2;
+	}
+
+	.closeBtn {
+		display: none;
+	}
+
+	.panelSub {
+		white-space: normal;
+	}
+
+	.panelBody {
+		padding: 0.75rem;
+		padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+	}
+
+	.tab {
+		top: 40%;
+		width: 36px;
+		height: 84px;
+		right: env(safe-area-inset-right, 0px);
+	}
+
+	.tabOpen {
+		display: none;
+	}
+}
+
+@media (max-height: 520px) {
+	.tab {
+		top: 30%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.panel,
+	.panelOpen,
+	.tab,
+	.tabArrow {
+		transition: none;
+	}
+}

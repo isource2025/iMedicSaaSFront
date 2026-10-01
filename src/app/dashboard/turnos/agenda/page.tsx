@@ -1434,6 +1434,7 @@ function AgendaPageContent() {
 					cerrarSlot
 						? {
 								idTurno: cerrarSlot.idTurno ?? 0,
+								idPaciente: cerrarSlot.idPaciente,
 								pacienteNombre: cerrarSlot.pacienteNombre,
 								numeroDocumento: cerrarSlot.numeroDocumento,
 								sector: cerrarSlot.sector,
