@@ -64,6 +64,9 @@ export function repararTextoUi(texto: unknown): string {
 		s = s.replace(re, repl);
 	}
 
+	// "ï¿½" = U+FFFD (EF BF BD) leído como Latin-1: nunca mostrar esa basura.
+	s = s.replace(/\u00EF\u00BF\u00BD/g, '\uFFFD');
+
 	try {
 		return s.normalize('NFC');
 	} catch {
@@ -85,7 +88,7 @@ function isBinaryLike(value: unknown): boolean {
 export function repararStringsDeepUi<T>(value: T, depth = 0): T {
 	if (depth > 8) return value;
 	if (typeof value === 'string') {
-		if (!/Ã|Â|\uFFFD|[\u0080-\u009F]/.test(value)) return value;
+		if (!/Ã|Â|\u00EF\u00BF\u00BD|\uFFFD|[\u0080-\u009F]/.test(value)) return value;
 		return repararTextoUi(value) as T;
 	}
 	if (Array.isArray(value)) {
