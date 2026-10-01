@@ -420,17 +420,10 @@ export default function Dashboard() {
         </div>
         
         {puedeVerProduccion && (
-          <div
-            className={styles.cardStaff}
-            style={{ cursor: 'pointer' }}
-            onClick={() => router.push('/dashboard/reports/facturacion')}
-          >
+          <div className={styles.cardStaff}>
             <div className={styles.cardHeader}>
               <Icon path={ICONS.trendingUp} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
               <h3 className={styles.cardLabel}>Producción del Hospital</h3>
-              <button className={styles.arrowButton} aria-label="Ver producción del hospital">
-                <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
-              </button>
             </div>
             {loadingProduccion ? (
               <div className={styles.cardCenterLoader}>

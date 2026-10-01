@@ -103,7 +103,6 @@ const menuItems: MenuItem[] = [
     id: 'reportes', moduloId: 'REPORTES', label: 'Reportes', icon: BarChart3,
     subItems: [
       { submoduloId: 'ESTADISTICAS', label: 'Estadísticas', path: '/dashboard/reports/estadisticas' },
-      { submoduloId: 'FACTURACION',  label: 'Facturación',  path: '/dashboard/reports/facturacion' },
       { submoduloId: 'OCUPACION',    label: 'Ocupación',    path: '/dashboard/reports/ocupacion' }
     ]
   },
