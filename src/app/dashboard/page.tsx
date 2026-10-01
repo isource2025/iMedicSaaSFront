@@ -10,10 +10,10 @@ import type { ResumenAmbulatorioHoy } from '../types/ambulatorio';
 import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
 import { useIndicadores } from '../hooks/useIndicadores';
 import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
-import { usePermiso } from '../hooks/usePermiso';
-import { obtenerResumenProduccionMes } from '../services/produccionHospitalService';
-import type { ResumenProduccionMes } from '../types/produccionHospital';
-import { entero, monedaCompacta } from './reports/facturacion/produccionFormat';
+// import { usePermiso } from '../hooks/usePermiso';
+// import { obtenerResumenProduccionMes } from '../services/produccionHospitalService';
+// import type { ResumenProduccionMes } from '../types/produccionHospital';
+// import { entero, monedaCompacta } from './reports/facturacion/produccionFormat';
 import { useAppContext } from '../contexts/AppContext';
 import { authService } from '../services/authService';
 import styles from './DashboardPage.module.css';
@@ -126,29 +126,29 @@ export default function Dashboard() {
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Producción del hospital: sólo quien tiene el permiso (hoy, el administrador).
-  const { loaded: permisosCargados, puede } = usePermiso();
-  const puedeVerProduccion = permisosCargados && puede('REPORTES.FACTURACION.VER');
-  const [produccionMes, setProduccionMes] = useState<ResumenProduccionMes | null>(null);
-  const [loadingProduccion, setLoadingProduccion] = useState(true);
-  const [errorProduccion, setErrorProduccion] = useState(false);
-
-  useEffect(() => {
-    if (!puedeVerProduccion) return;
-    let vigente = true;
-    setLoadingProduccion(true);
-    setErrorProduccion(false);
-    setProduccionMes(null);
-    obtenerResumenProduccionMes()
-      .then((r) => vigente && setProduccionMes(r))
-      .catch((error) => {
-        console.error('Error fetching hospital production summary:', error);
-        if (vigente) setErrorProduccion(true);
-      })
-      .finally(() => vigente && setLoadingProduccion(false));
-    return () => {
-      vigente = false;
-    };
-  }, [puedeVerProduccion, tenantId]);
+  // const { loaded: permisosCargados, puede } = usePermiso();
+  // const puedeVerProduccion = permisosCargados && puede('REPORTES.FACTURACION.VER');
+  // const [produccionMes, setProduccionMes] = useState<ResumenProduccionMes | null>(null);
+  // const [loadingProduccion, setLoadingProduccion] = useState(true);
+  // const [errorProduccion, setErrorProduccion] = useState(false);
+  //
+  // useEffect(() => {
+  //   if (!puedeVerProduccion) return;
+  //   let vigente = true;
+  //   setLoadingProduccion(true);
+  //   setErrorProduccion(false);
+  //   setProduccionMes(null);
+  //   obtenerResumenProduccionMes()
+  //     .then((r) => vigente && setProduccionMes(r))
+  //     .catch((error) => {
+  //       console.error('Error fetching hospital production summary:', error);
+  //       if (vigente) setErrorProduccion(true);
+  //     })
+  //     .finally(() => vigente && setLoadingProduccion(false));
+  //   return () => {
+  //     vigente = false;
+  //   };
+  // }, [puedeVerProduccion, tenantId]);
 
   useEffect(() => {
     const rol = authService.getCurrentRol();
@@ -419,7 +419,7 @@ export default function Dashboard() {
           )}
         </div>
         
-        {puedeVerProduccion && (
+        {/* {puedeVerProduccion && (
           <div className={styles.cardStaff}>
             <div className={styles.cardHeader}>
               <Icon path={ICONS.trendingUp} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
@@ -493,7 +493,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        )}
+        )} */}
       </div>
       
       {/* Activity Overview */}
