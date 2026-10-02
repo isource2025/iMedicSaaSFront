@@ -1,0 +1,300 @@
+/* Solicitudes de estudios con varias prácticas (circuito nuevo) */
+
+.hint {
+	font-size: 0.8rem;
+	font-weight: 400;
+	color: #64748b;
+	margin: 0.25rem 0 0;
+}
+
+.hintWarn {
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: #b45309;
+	margin: 0.25rem 0 0;
+}
+
+.counter {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 0.5rem;
+	padding: 0.05rem 0.5rem;
+	border-radius: 999px;
+	background: #e0f2fe;
+	color: #0369a1;
+	font-size: 0.72rem;
+	font-weight: 700;
+}
+
+.seleccion {
+	list-style: none;
+	margin: 0.4rem 0 0.2rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.seleccionItem {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.45rem 0.65rem;
+	border: 1px solid #bae6fd;
+	background: #f0f9fc;
+	border-radius: 8px;
+	font-weight: 400;
+	font-size: 0.9rem;
+	color: #0f172a;
+}
+
+.seleccionItem span {
+	color: #64748b;
+	font-size: 0.82rem;
+	margin-left: 0.35rem;
+}
+
+.seleccionItem button {
+	border: none;
+	background: transparent;
+	color: #b91c1c;
+	cursor: pointer;
+	font: inherit;
+	font-size: 1.1rem;
+	line-height: 1;
+	padding: 0.1rem 0.4rem;
+	border-radius: 6px;
+}
+
+.seleccionItem button:hover:not(:disabled) {
+	background: #fee2e2;
+}
+
+.seleccionItem button:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.resultAgregado {
+	background: #ecfdf5;
+}
+
+.resultAgregado:hover {
+	background: #d1fae5 !important;
+}
+
+.tag {
+	font-size: 0.7rem;
+	font-weight: 700;
+	color: #047857;
+}
+
+.scroll {
+	max-height: 14rem;
+	overflow: auto;
+}
+
+/* ---- Lista por visita ---- */
+
+.estadoBadge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.1rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.72rem;
+	font-weight: 700;
+	white-space: nowrap;
+	background: #f1f5f9;
+	color: #475569;
+}
+
+.estadoTomada {
+	background: #e0f2fe;
+	color: #0369a1;
+}
+
+.estadoParcial {
+	background: #fef3c7;
+	color: #b45309;
+}
+
+.estadoCumplida {
+	background: #dcfce7;
+	color: #15803d;
+}
+
+.expander {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	font: inherit;
+	color: #0369a1;
+	padding: 0;
+	text-align: left;
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.4rem;
+}
+
+.expander:hover {
+	text-decoration: underline;
+}
+
+.subRow td {
+	background: #f8fafc;
+	padding-top: 0.3rem;
+	padding-bottom: 0.3rem;
+	font-size: 0.85rem;
+}
+
+.subPractica {
+	padding-left: 1.4rem;
+	position: relative;
+}
+
+.subPractica::before {
+	content: '↳';
+	position: absolute;
+	left: 0.4rem;
+	color: #94a3b8;
+}
+
+.itemsLista {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.itemDetalle {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	padding: 0.5rem 0.7rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.itemDetalleHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.itemDetalleMeta {
+	font-size: 0.78rem;
+	color: #64748b;
+}
+
+/* ---- Cumplir ---- */
+
+.checkList {
+	list-style: none;
+	margin: 0.4rem 0 0.2rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.checkItem {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.45rem 0.65rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+	font-weight: 400;
+	font-size: 0.9rem;
+	color: #0f172a;
+	cursor: pointer;
+}
+
+.checkItem input {
+	width: 1rem;
+	height: 1rem;
+	accent-color: #0083a9;
+}
+
+.checkItemDisabled {
+	background: #f8fafc;
+	color: #64748b;
+	cursor: default;
+}
+
+.checkItemCod {
+	color: #64748b;
+	font-size: 0.82rem;
+}
+
+.linkBtn {
+	border: none;
+	background: transparent;
+	color: #0284c7;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.8rem;
+	padding: 0;
+}
+
+.linkBtn:hover {
+	text-decoration: underline;
+}
+
+.rowHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+/* ---- Bandeja ---- */
+
+.practicasLista {
+	list-style: none;
+	margin: 0.35rem 0 0.15rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.practicaLinea {
+	display: flex;
+	align-items: baseline;
+	gap: 0.45rem;
+	font-size: 0.88rem;
+	color: #0f172a;
+}
+
+.practicaLineaHecha {
+	color: #64748b;
+	text-decoration: line-through;
+	text-decoration-color: #94a3b8;
+}
+
+.practicaLineaCod {
+	font-weight: 700;
+	color: #0083a9;
+	font-size: 0.82rem;
+}
+
+.progreso {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.1rem 0.5rem;
+	border-radius: 999px;
+	background: #fef3c7;
+	color: #b45309;
+	font-size: 0.72rem;
+	font-weight: 700;
+}

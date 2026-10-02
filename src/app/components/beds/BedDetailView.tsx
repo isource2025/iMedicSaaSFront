@@ -23,6 +23,8 @@ import AdjuntosModal from './adjuntos/AdjuntosModal';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
 import LabResultsSection from './laboratorios/LabResultsSection';
 import EstudiosSection from './estudios/EstudiosSection';
+import SolicitudesEstudiosSection from './estudios/SolicitudesEstudiosSection';
+import { useSolicitudesMulti } from '@/app/utils/solicitudesMulti';
 import ProtocolosSection from './protocolos/ProtocolosSection';
 import InterconsultaSection from './interconsulta/InterconsultaSection';
 import EpicrisisSection from './epicrisis/EpicrisisSection';
@@ -41,6 +43,7 @@ interface BedDetailViewProps {
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	// Drawer (sidebar) en mobile
 	const [drawerOpen, setDrawerOpen] = useState(false);
+	const solicitudesMulti = useSolicitudesMulti();
 	// Modal de archivos adjuntos
 	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
 	const [showNursingModal, setShowNursingModal] = useState(false);
@@ -203,13 +206,23 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'solicitudEstudios' ? (
-						<EstudiosSection
-							numeroVisita={bed?.NumeroVisita || null}
-							sectorSolicitante={sectorOrigen}
-							patientName={bed?.NombrePaciente}
-							documentoPaciente={bed?.documentoPaciente}
-							patientLocation={bed?.ubicacionPaciente}
-						/>
+						solicitudesMulti ? (
+							<SolicitudesEstudiosSection
+								numeroVisita={bed?.NumeroVisita || null}
+								sectorSolicitante={sectorOrigen}
+								patientName={bed?.NombrePaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								patientLocation={bed?.ubicacionPaciente}
+							/>
+						) : (
+							<EstudiosSection
+								numeroVisita={bed?.NumeroVisita || null}
+								sectorSolicitante={sectorOrigen}
+								patientName={bed?.NombrePaciente}
+								documentoPaciente={bed?.documentoPaciente}
+								patientLocation={bed?.ubicacionPaciente}
+							/>
+						)
 					) : activeSection === 'laboratorios' ? (
 						<LabResultsSection
 							numeroVisita={bed?.NumeroVisita || null}

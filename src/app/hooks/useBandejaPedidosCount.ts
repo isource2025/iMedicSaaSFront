@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
+import solicitudesEstudiosService from '@/app/services/solicitudesEstudiosService';
+import { solicitudesMultiHabilitado } from '@/app/utils/solicitudesMulti';
 import { peekCachedBandejaCount } from '@/app/utils/serviciosReceptorCache';
 
 const POLL_MS = 45_000;
@@ -29,7 +31,9 @@ export function useBandejaPedidosCount(
 			return;
 		}
 		try {
-			const data = await estudiosService.contarLibres({ soloMios: true });
+			const data = solicitudesMultiHabilitado()
+				? await solicitudesEstudiosService.contarLibresBandeja({ soloMios: true })
+				: await estudiosService.contarLibres({ soloMios: true });
 			setEstudios(data.estudios);
 			setInterconsultas(data.interconsultas);
 		} catch {
