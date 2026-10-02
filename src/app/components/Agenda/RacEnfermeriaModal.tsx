@@ -13,6 +13,7 @@ import {
 import { indicacionesService } from '@/app/services/indicacionesService';
 import type { AgendaSlot } from '@/app/services/agendaService';
 import { formatIMC } from '@/app/utils/antropometria';
+import { calcularPresionMedia, presionMediaComoTexto } from '@/app/utils/presionArterial';
 import { fechaCalendarioArgentina, horaWallArgentina } from '@/app/utils/dateUtils';
 import styles from './RacEnfermeriaModal.module.css';
 
@@ -263,7 +264,7 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = 
 				pulso: toNum(controlForm.pulso),
 				presionMax: toNum(controlForm.presionMax),
 				presionMin: toNum(controlForm.presionMin),
-				presionMedia: toNum(controlForm.presionMedia),
+				presionMedia: calcularPresionMedia(controlForm.presionMax, controlForm.presionMin) ?? undefined,
 				frecuenciaRespiratoria: toNum(controlForm.frecuenciaRespiratoria),
 				temperaturaAxilar: toNum(controlForm.temperaturaAxilar),
 				temperaturaRectal: toNum(controlForm.temperaturaRectal),
@@ -588,10 +589,14 @@ export default function RacEnfermeriaModal({ open, slot, fechaTurno, embedded = 
 													<div className={styles.field}>
 														<label>Media</label>
 														<input
-															type='number'
+															type='text'
 															className={styles.input}
-															value={controlForm.presionMedia}
-															onChange={numChange('presionMedia')}
+															aria-label='Presión media'
+															value={presionMediaComoTexto(controlForm.presionMax, controlForm.presionMin)}
+															readOnly
+															tabIndex={-1}
+															placeholder='Auto'
+															title='Se calcula automáticamente: (Máx + 2 × Mín) / 3'
 														/>
 													</div>
 												</div>

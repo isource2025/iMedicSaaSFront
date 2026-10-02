@@ -13,22 +13,12 @@ import { useAppContext } from "@/app/contexts/AppContext";
 import { parseValorPersonalId } from "@/app/utils/valorPersonal";
 import { sectorDesdeCamaId } from "@/app/utils/dateUtils";
 import SlideDrawer from "../UI/SlideDrawer";
-
-interface IndicacionHija {
-    id: string;
-    nroIndicacion?: number | null;
-    formaAdicional: string | null;
-    codigo: number | null;
-    aliasMedicamento: string | null;
-    cantidad: number | null;
-    tipoUnidad: string | null;
-    frecuencia: string | null;
-    observaciones: string | null;
-}
+import { guardarAdicionalesNuevos, type IndicacionHija } from "./adicionales";
 
 interface IndicacionFormProps {
     onClose: () => void;
-    onSave: (data: NuevaIndicacionPayload) => Promise<void> | void;
+    /** Alta: devolver el resultado del POST (con NroIndicacion). Edición: devolver { NroIndicacion }. */
+    onSave: (data: NuevaIndicacionPayload) => Promise<unknown> | unknown;
     defaultNumeroVisita: number | null;
     nroIndicacion?: number | null;
     refetch?: () => Promise<void>;
@@ -184,47 +174,17 @@ export default function IndicacionForm({
         e.preventDefault();
         try {
             const resultado = await onSave(form);
-            console.log('📥 Resultado completo del backend:', resultado);
-            
-            if (indicacionesHijas.length > 0 && resultado && (resultado as any).NroIndicacion) {
-                const nroIndicacionPadre = (resultado as any).NroIndicacion;
-                
-                console.log('✅ Indicación padre guardada con NroIndicacion:', nroIndicacionPadre);
-                console.log(`📋 Guardando ${indicacionesHijas.length} indicación(es) adicional(es)...`);
-                
-                for (let i = 0; i < indicacionesHijas.length; i++) {
-                    const hija = indicacionesHijas[i];
-                    
-                    // La indicación adicional copia TODOS los datos del padre
-                    // Solo cambia: Codigo, CantidadIndicada, TipoUnidad, Frecuencia, Cantidad, AliasMedicamento
-                    // Y establece NroAdicional = NroIndicacion del padre
-                    // El backend incrementará automáticamente HoraCarga según el índice
-                    const hijaPayload: NuevaIndicacionPayload = {
-                        ...form, // Copiar TODO del padre
-                        Codigo: hija.codigo,
-                        CantidadIndicada: hija.cantidad,
-                        TipoUnidad: hija.tipoUnidad,
-                        Frecuencia: hija.frecuencia,
-                        Cantidad: hija.cantidad,
-                        AliasMedicamento: hija.aliasMedicamento,
-                        FormaAdicional: hija.formaAdicional,
-                        FechaCarga: form.FechaCarga || fechaCarga,
-                        NroAdicional: nroIndicacionPadre, // DEBE IR AL FINAL para sobrescribir el 0 del padre
-                    };
-                    
-                    console.log(`💊 Guardando indicación adicional ${i + 1}/${indicacionesHijas.length}`);
-                    console.log('📦 Payload completo:', hijaPayload);
-                    console.log('🔗 NroAdicional debe ser:', nroIndicacionPadre);
-                    
-                    await indicacionesService.postNuevaIndicacion(hijaPayload);
-                    console.log(`✅ Indicación adicional ${i + 1} guardada exitosamente`);
-                }
-                
-                console.log('🎉 Todas las indicaciones adicionales guardadas exitosamente');
-            } else {
-                console.log('✅ Indicación guardada (sin adicionales)');
-            }
-            
+            // Alta: el padre devuelve su NroIndicacion. Edición: es la indicación que se está editando
+            // (el PUT no devuelve número). Sólo se envían los adicionales nuevos; los existentes no se duplican.
+            await guardarAdicionalesNuevos({
+                form,
+                hijas: indicacionesHijas,
+                nroIndicacionEnEdicion: nroIndicacion,
+                resultadoGuardado: resultado,
+                fechaCarga,
+                postAdicional: (payload) => indicacionesService.postNuevaIndicacion(payload),
+            });
+
             // Recargar la tabla de indicaciones (padre + adicionales ya persistidos)
             if (refetch) {
                 await refetch();

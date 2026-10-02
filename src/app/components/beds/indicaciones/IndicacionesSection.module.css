@@ -331,6 +331,11 @@
 
 /* ====== Responsive ====== */
 @media (max-width: 768px) {
+	/* En celular los botones de "volver a indicar" van en la barra fija de la lista */
+	.actions {
+		display: none;
+	}
+
 	.root {
 		gap: 12px;
 		padding: 0 10px;

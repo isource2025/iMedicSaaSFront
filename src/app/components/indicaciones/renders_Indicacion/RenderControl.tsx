@@ -2,6 +2,7 @@
 import { useAppContext } from "@/app/contexts/AppContext";
 import { FormData } from "../AplicarIndicacion";
 import styles from '../AplicarIndicacion.module.css';
+import { presionMediaComoTexto } from "@/app/utils/presionArterial";
 
 export default function RenderControl({
     formData,
@@ -116,14 +117,16 @@ export default function RenderControl({
                                 tabIndex={5}
                             />
                             <span className={styles.subLabel}>Media</span>
+                            {/* Se calcula sola con Max y Min: (Max + 2 × Min) / 3 */}
                             <input
-                                type="number"
-                                placeholder="0.00"
-                                step="0.01"
-                                value={formData.control.presionArterialMedia || ''}
-                                onChange={(e) => handleControlChange('presionArterialMedia', e.target.value)}
-                                className={styles.inputEditable}
-                                tabIndex={6}
+                                type="text"
+                                aria-label="Presión media"
+                                placeholder="Auto"
+                                value={presionMediaComoTexto(formData.control.presionArterialMax, formData.control.presionArterialMin)}
+                                readOnly
+                                className={styles.inputDisabled}
+                                tabIndex={-1}
+                                title="Se calcula automáticamente"
                             />
                         </div>
                     </div>

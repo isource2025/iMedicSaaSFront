@@ -473,6 +473,112 @@
         font-weight: 600;
         color: var(--primary-600);
         font-size: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .cardCheckbox {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        margin-top: 0;
+        accent-color: var(--primary-600);
+    }
+
+    .cardSeleccionable {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .cardSeleccionada {
+        background: #f0f9fc;
+    }
+
+    /* Botón con texto: acción principal de la tarjeta para volver a indicar */
+    .btnReindicarMobile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 44px;
+        margin-top: 8px;
+        border: 1px solid var(--primary-600);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--primary-600);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btnReindicarMobile:active {
+        background: #e6f4f8;
+    }
+
+    /* Barra fija inferior del modo volver a indicar */
+    .reindicarBar {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        margin: 0 -8px -8px;
+        background: #fff;
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .reindicarTodas {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--ink);
+        white-space: nowrap;
+    }
+
+    .reindicarTodas input {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--primary-600);
+    }
+
+    .reindicarConfirmar {
+        flex: 1;
+        min-height: 44px;
+        border: 0;
+        border-radius: 10px;
+        background: #16a34a;
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .reindicarConfirmar:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .reindicarCancelar {
+        min-height: 44px;
+        padding: 0 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .cardSeleccionada {
+        border-color: var(--primary-600);
+        box-shadow: 0 0 0 2px rgba(0, 131, 169, 0.25);
     }
 
     .cardRow {
@@ -480,16 +586,38 @@
         color: var(--ink);
     }
 
-    .cardRow .label {
+    .cardRow .label,
+    .cardAdicionales .label {
         font-weight: 600;
         color: var(--muted);
         margin-right: 6px;
     }
 
+    .cardAdicionales {
+        font-size: 0.875rem;
+        color: var(--ink);
+    }
+
+    .cardAdicionales .hijaItem {
+        font-size: 0.85rem;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
     .cardActions {
         margin-top: 10px;
         display: flex;
+        flex-wrap: wrap;
         gap: 8px;
+    }
+
+    /* Objetivo táctil mínimo de 44px */
+    .cardActions .btnAction {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btnAction {

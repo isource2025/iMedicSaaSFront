@@ -568,17 +568,12 @@ export default function IndicacionesSection({
                 data
             );
 
-            await refetch();
-        } catch (err) {
-            if (err instanceof Error) {
-                alert(
-                    err.message ??
-                    "Error inesperado al actualizar la indicación"
-                );
-            }
+            // El formulario guarda a continuación los adicionales nuevos (necesita el nº del padre),
+            // recarga el listado y cierra el modal. Si algo falla, se propaga para que el formulario
+            // avise y quede abierto sin perder lo cargado.
+            return { NroIndicacion: id };
         } finally {
             setSaving(false);
-            setSelectedId(null);
         }
     };
 
@@ -695,7 +690,7 @@ export default function IndicacionesSection({
                                 <span className={styles.btnIcon} aria-hidden>
                                     ✓
                                 </span>
-                                {reindicando ? 'Reindicando...' : `Reindicar ${selectedForReindicar.size} indicación${selectedForReindicar.size !== 1 ? 'es' : ''}`}
+                                {reindicando ? 'Reindicando...' : `Reindicar ${selectedForReindicar.size} ${selectedForReindicar.size === 1 ? 'indicación' : 'indicaciones'}`}
                             </button>
                             <button
                                 className={`${styles.btn} ${styles.btnGhost}`}
@@ -741,6 +736,9 @@ export default function IndicacionesSection({
                             selectedForReindicar={selectedForReindicar}
                             onToggleReindicar={handleToggleReindicar}
                             onActivarModoReindicar={() => setModoReindicar(true)}
+                            onConfirmarReindicar={() => setConfirmarFechaOpen(true)}
+                            onCancelarReindicar={handleCancelarReindicar}
+                            reindicando={reindicando}
                         />
                     )}
                 </div>

@@ -9,6 +9,7 @@ import {
 } from "../../../services/controlesFrecuentesService";
 import type { ControlFrecuente } from "../../../types/controlesFrecuentes";
 import { formatIMC } from "@/app/utils/antropometria";
+import { calcularPresionMedia } from "@/app/utils/presionArterial";
 import { getSectorId, getSessionUser, getUserCodOperador, getHcIdProfesional } from "@/app/utils/sessionUser";
 import styles from "../evolucion/NuevaEvolucionEnfermeriaModal.module.css";
 
@@ -84,16 +85,22 @@ export default function NuevoControlModal({
 		set(k, e.target.value === "" ? undefined : (Number(e.target.value) as any));
 
 	const imcPreview = formatIMC(form.peso, form.talla);
+	// La presión media no se carga a mano: se calcula con la máxima y la mínima.
+	const presionMediaCalculada = calcularPresionMedia(form.presionMax, form.presionMin);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setSaving(true);
 		setError(null);
 		try {
+			const datos: CrearControlData = {
+				...form,
+				presionMedia: presionMediaCalculada ?? undefined,
+			};
 			if (isEdit && controlToEdit) {
-				await actualizarControl(controlToEdit.Valor, form);
+				await actualizarControl(controlToEdit.Valor, datos);
 			} else {
-				await crearControl({ ...form, numeroVisita: defaultNumeroVisita || 0 });
+				await crearControl({ ...datos, numeroVisita: defaultNumeroVisita || 0 });
 			}
 			await refetch?.();
 			onClose();
@@ -155,6 +162,7 @@ export default function NuevoControlModal({
 						type="number"
 						min={0}
 						max={400}
+						aria-label="TA Máx"
 						value={form.presionMax ?? ""}
 						onChange={setNum("presionMax")}
 						placeholder="—"
@@ -169,9 +177,25 @@ export default function NuevoControlModal({
 						type="number"
 						min={0}
 						max={400}
+						aria-label="TA Mín"
 						value={form.presionMin ?? ""}
 						onChange={setNum("presionMin")}
 						placeholder="—"
+					/>
+				</div>
+				<div className={styles.field}>
+					<label className={styles.label}>
+						TA Media <span className={styles.unit}>(mmHg)</span>
+					</label>
+					<input
+						className={styles.input}
+						type="text"
+						aria-label="TA Media"
+						value={presionMediaCalculada == null ? "" : String(presionMediaCalculada)}
+						readOnly
+						tabIndex={-1}
+						placeholder="Auto"
+						title="Se calcula automáticamente: (Máx + 2 × Mín) / 3"
 					/>
 				</div>
 			</div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import type { PedidoEstudio, TipoPedidoEstudio } from '@/app/types/estudios';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
@@ -64,6 +64,10 @@ export default function SolicitarEstudioModal({
 		force: open,
 	});
 	const [idServicioDestino, setIdServicioDestino] = useState('');
+	/** Tipo elegido por el usuario en esta sesión (no el que viene cargado al editar). */
+	const [tipoElegido, setTipoElegido] = useState<TipoPedidoEstudio | null>(null);
+	/** Último tipo elegido para el que ya se calculó el servicio destino. */
+	const tipoAplicadoRef = useRef<TipoPedidoEstudio | null>(null);
 	const [urgencia, setUrgencia] = useState<Urgencia>('Normal');
 	const [notas, setNotas] = useState('');
 	const [submitting, setSubmitting] = useState(false);
@@ -74,6 +78,8 @@ export default function SolicitarEstudioModal({
 		setTerm('');
 		setTipos([]);
 		setError(null);
+		setTipoElegido(null);
+		tipoAplicadoRef.current = null;
 		if (pedido) {
 			setTipo(tipoDePedido(pedido));
 			setUrgencia(urgenciaDePedido(pedido.EstadoUrgencia));
@@ -88,6 +94,8 @@ export default function SolicitarEstudioModal({
 
 	useEffect(() => {
 		if (!open || !pedido || !servicios.length) return;
+		// Si ya cambió la práctica, el servicio lo define la nueva práctica (no el del pedido original)
+		if (tipoAplicadoRef.current) return;
 		setIdServicioDestino(
 			resolveServicioDestinoEnLista(
 				pedido.SectorReceptor,
@@ -121,14 +129,15 @@ export default function SolicitarEstudioModal({
 		};
 	}, [term, tipo]);
 
-	const servicioAuto = useMemo(() => {
-		if (editando || !tipo || !servicios.length) return '';
-		return resolveReceptorPorTipo(tipo, servicios);
-	}, [editando, tipo, servicios]);
-
+	// Cada vez que se elige otra práctica se recalcula el servicio destino que le corresponde
+	// (antes sólo se completaba si estaba vacío y quedaba el servicio de la práctica anterior).
+	// Si la nueva práctica no tiene un servicio asociado, se vacía para que se elija a mano.
 	useEffect(() => {
-		if (servicioAuto && !idServicioDestino) setIdServicioDestino(servicioAuto);
-	}, [servicioAuto, idServicioDestino]);
+		if (!tipoElegido || !servicios.length) return;
+		if (tipoAplicadoRef.current === tipoElegido) return;
+		tipoAplicadoRef.current = tipoElegido;
+		setIdServicioDestino(resolveReceptorPorTipo(tipoElegido, servicios));
+	}, [tipoElegido, servicios]);
 
 	const opcionesServicio = useMemo(() => {
 		const opts = servicios.map((s) => ({
@@ -234,6 +243,7 @@ export default function SolicitarEstudioModal({
 													type="button"
 													onClick={() => {
 														setTipo(t);
+														setTipoElegido(t);
 														setTerm('');
 														setTipos([]);
 													}}

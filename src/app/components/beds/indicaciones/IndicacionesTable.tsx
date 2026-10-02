@@ -63,6 +63,10 @@ type Props = {
     selectedForReindicar?: Set<string>;
     onToggleReindicar?: (id: string) => void;
     onActivarModoReindicar?: () => void;
+    /** Vista móvil: confirma / cancela desde la barra fija inferior del modo "volver a indicar". */
+    onConfirmarReindicar?: () => void;
+    onCancelarReindicar?: () => void;
+    reindicando?: boolean;
 };
 
 export default function IndicacionesTable({
@@ -75,6 +79,9 @@ export default function IndicacionesTable({
     selectedForReindicar = new Set(),
     onToggleReindicar,
     onActivarModoReindicar,
+    onConfirmarReindicar,
+    onCancelarReindicar,
+    reindicando = false,
 }: Props) {
     const [ocultasIds, setOcultasIds] = useState<Set<string>>(() => new Set());
     const filasVisibles = useMemo(
@@ -532,17 +539,49 @@ export default function IndicacionesTable({
             </div>
 
             {/* Vista móvil: tarjetas */}
-            <div className={styles.mobileCards}>
+            <div className={styles.mobileCards} data-testid="indicaciones-mobile">
                 {filasVisibles.length === 0 && (
                     <div className={styles.emptySearch}>
                         No hay resultados que coincidan con tu búsqueda.
                     </div>
                 )}
                 {filasVisibles.map((r) => (
-                    <div key={r.id} className={styles.cardMobile}>
+                    <div
+                        key={r.id}
+                        className={`${styles.cardMobile} ${modoReindicar ? styles.cardSeleccionable : ""} ${modoReindicar && selectedForReindicar.has(r.id) ? styles.cardSeleccionada : ""}`}
+                        data-testid={`indicacion-card-${r.id}`}
+                        onClick={modoReindicar ? () => onToggleReindicar?.(r.id) : undefined}
+                    >
                         <div className={styles.cardHeader}>
-                            <strong>Indicado:</strong> {r.descripcion ?? "-"}
+                            {modoReindicar && (
+                                <input
+                                    type="checkbox"
+                                    className={styles.cardCheckbox}
+                                    aria-label="Seleccionar para volver a indicar"
+                                    checked={selectedForReindicar.has(r.id)}
+                                    onChange={() => onToggleReindicar?.(r.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            )}
+                            <span>
+                                <strong>Indicado:</strong> {r.descripcion ?? "-"}
+                            </span>
                         </div>
+                        {r.indicacionesHijas && r.indicacionesHijas.length > 0 && (
+                            <div className={styles.cardAdicionales} data-testid={`adicionales-${r.id}`}>
+                                <span className={styles.label}>Adicionales:</span>
+                                <div className={styles.indicacionesHijas}>
+                                    {r.indicacionesHijas.map((hija) => (
+                                        <div key={hija.nroIndicacion} className={styles.hijaItem}>
+                                            + {hija.formaAdicional ? `${hija.formaAdicional} - ` : ""}
+                                            {hija.medicamento || hija.descripcion}
+                                            {hija.cantidad != null ? ` · ${hija.cantidad}${hija.tipoUnidad ? ` ${hija.tipoUnidad.trim()}` : ""}` : ""}
+                                            {hija.frecuencia ? ` · ${hija.frecuencia}` : ""}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <div className={styles.cardRow}>
                             <span className={styles.label}>Cantidad:</span>{" "}
                             {r.cantidad ?? "-"}
@@ -572,6 +611,7 @@ export default function IndicacionesTable({
                             {r.medicamento ?? "-"}
                         </div>
 
+                        {!modoReindicar && (
                         <div className={styles.cardActions}>
                             {puedeAplicar && (
                             <button
@@ -607,8 +647,59 @@ export default function IndicacionesTable({
                                 <IoTrashOutline color="#e11d48" />
                             </button>)}
                         </div>
+                        )}
+                        {/* Volver a indicar: solo médicos (y admin). Activa el modo y deja esta tarjeta marcada. */}
+                        {puedeEditar && !modoReindicar && (
+                        <button
+                            type="button"
+                            className={styles.btnReindicarMobile}
+                            onClick={() => {
+                                onActivarModoReindicar?.();
+                                if (!selectedForReindicar.has(r.id)) onToggleReindicar?.(r.id);
+                            }}
+                        >
+                            <IoRepeatOutline aria-hidden size={20} />
+                            Volver a indicar
+                        </button>)}
                     </div>
                 ))}
+
+                {/* Barra fija inferior del modo "volver a indicar" (la confirmación queda siempre a mano) */}
+                {modoReindicar && (
+                    <div className={styles.reindicarBar} data-testid="reindicar-bar">
+                        <label className={styles.reindicarTodas}>
+                            <input
+                                type="checkbox"
+                                aria-label="Seleccionar todas"
+                                checked={filasVisibles.length > 0 && filasVisibles.every((r) => selectedForReindicar.has(r.id))}
+                                onChange={(e) => {
+                                    filasVisibles.forEach((r) => {
+                                        if (e.target.checked !== selectedForReindicar.has(r.id)) onToggleReindicar?.(r.id);
+                                    });
+                                }}
+                            />
+                            Todas
+                        </label>
+                        <button
+                            type="button"
+                            className={styles.reindicarConfirmar}
+                            disabled={selectedForReindicar.size === 0 || reindicando || !onConfirmarReindicar}
+                            onClick={() => onConfirmarReindicar?.()}
+                        >
+                            {reindicando
+                                ? "Reindicando…"
+                                : `Reindicar ${selectedForReindicar.size} ${selectedForReindicar.size === 1 ? "indicación" : "indicaciones"}`}
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.reindicarCancelar}
+                            disabled={reindicando}
+                            onClick={() => onCancelarReindicar?.()}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Modal de confirmación de eliminación */}
