@@ -3,6 +3,7 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BandejaPedidosPage from "./page";
 import solicitudesEstudiosService from "@/app/services/solicitudesEstudiosService";
+import estudiosService from "@/app/services/estudiosService";
 
 const { estado } = vi.hoisted(() => ({
     estado: {
@@ -10,6 +11,7 @@ const { estado } = vi.hoisted(() => ({
         catalogo: { sectores: [] as any[], servicios: [] as any[], loading: true },
         usuario: { matricula: 10 },
         permiso: { puede: () => true },
+        multi: [true, () => {}] as [boolean, (v: boolean) => void],
     },
 }));
 
@@ -17,7 +19,7 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => estado.searchParams }
 vi.mock("@/app/hooks/useUsuarioActual", () => ({ useUsuarioActual: () => estado.usuario }));
 vi.mock("@/app/hooks/usePermiso", () => ({ usePermiso: () => estado.permiso }));
 vi.mock("@/app/hooks/useSectoresReceptor", () => ({ useSectoresReceptor: () => estado.catalogo }));
-vi.mock("@/app/utils/solicitudesMulti", () => ({ useSolicitudesMulti: () => true }));
+vi.mock("@/app/utils/solicitudesMulti", () => ({ useSolicitudesMulti: () => estado.multi }));
 
 // Igual que el backend para un usuario que ve todos los servicios: sin sector, 400
 const rechazarSinSector = async (sector: string) => {
@@ -33,7 +35,7 @@ vi.mock("@/app/services/solicitudesEstudiosService", () => ({
     },
 }));
 vi.mock("@/app/services/estudiosService", () => ({
-    default: { listarPendientes: vi.fn(async () => []), contarLibres: vi.fn(async () => ({})) },
+    default: { listarPendientes: vi.fn(), contarLibres: vi.fn(async () => ({})) },
 }));
 vi.mock("@/app/services/interconsultasService", () => ({
     interconsultasService: { listarPendientes: vi.fn(async () => []) },
@@ -59,7 +61,9 @@ const sectoresPedidos = () =>
 beforeEach(() => {
     estado.searchParams = new URLSearchParams();
     estado.catalogo = { sectores: [], servicios: [], loading: true };
+    estado.multi = [true, () => {}];
     vi.mocked(solicitudesEstudiosService.listarPendientes).mockReset().mockImplementation(rechazarSinSector as any);
+    vi.mocked(estudiosService.listarPendientes).mockReset().mockImplementation(rechazarSinSector as any);
     vi.mocked(solicitudesEstudiosService.contarLibresBandeja).mockReset().mockResolvedValue({
         estudios: 2,
         interconsultas: 2,
@@ -115,6 +119,19 @@ describe("Bandeja de pedidos · entrada sin 'Query sector requerido'", () => {
 
         await waitFor(() => expect(sectoresPedidos()).toContain("CAR"));
         expect(sectoresPedidos()).not.toContain("");
+        expect(screen.queryByText("Query sector requerido")).not.toBeInTheDocument();
+    });
+
+    it("vista de siempre (predeterminada): tampoco pide la cola de estudios sin servicio", async () => {
+        estado.multi = [false, () => {}];
+        const { rerender } = render(<BandejaPedidosPage />);
+        await act(async () => {
+            cargarServicios();
+            rerender(<BandejaPedidosPage />);
+        });
+
+        expect(await screen.findByRole("button", { name: "Abrir cola de CARDIOLOGIA" })).toBeInTheDocument();
+        expect(vi.mocked(estudiosService.listarPendientes).mock.calls.map(([s]) => s)).not.toContain("");
         expect(screen.queryByText("Query sector requerido")).not.toBeInTheDocument();
     });
 
