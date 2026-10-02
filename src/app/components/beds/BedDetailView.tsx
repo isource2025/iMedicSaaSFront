@@ -43,7 +43,7 @@ interface BedDetailViewProps {
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	// Drawer (sidebar) en mobile
 	const [drawerOpen, setDrawerOpen] = useState(false);
-	const solicitudesMulti = useSolicitudesMulti();
+	const [solicitudesMulti, setSolicitudesMulti] = useSolicitudesMulti();
 	// Modal de archivos adjuntos
 	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
 	const [showNursingModal, setShowNursingModal] = useState(false);
@@ -206,23 +206,37 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'solicitudEstudios' ? (
-						solicitudesMulti ? (
-							<SolicitudesEstudiosSection
-								numeroVisita={bed?.NumeroVisita || null}
-								sectorSolicitante={sectorOrigen}
-								patientName={bed?.NombrePaciente}
-								documentoPaciente={bed?.documentoPaciente}
-								patientLocation={bed?.ubicacionPaciente}
-							/>
-						) : (
-							<EstudiosSection
-								numeroVisita={bed?.NumeroVisita || null}
-								sectorSolicitante={sectorOrigen}
-								patientName={bed?.NombrePaciente}
-								documentoPaciente={bed?.documentoPaciente}
-								patientLocation={bed?.ubicacionPaciente}
-							/>
-						)
+						<>
+							{solicitudesMulti ? (
+								<SolicitudesEstudiosSection
+									numeroVisita={bed?.NumeroVisita || null}
+									sectorSolicitante={sectorOrigen}
+									patientName={bed?.NombrePaciente}
+									documentoPaciente={bed?.documentoPaciente}
+									patientLocation={bed?.ubicacionPaciente}
+								/>
+							) : (
+								<EstudiosSection
+									numeroVisita={bed?.NumeroVisita || null}
+									sectorSolicitante={sectorOrigen}
+									patientName={bed?.NombrePaciente}
+									documentoPaciente={bed?.documentoPaciente}
+									patientLocation={bed?.ubicacionPaciente}
+								/>
+							)}
+							<div style={{ marginTop: '0.75rem', textAlign: 'right', fontSize: '0.72rem', opacity: 0.55 }}>
+								<button
+									type="button"
+									style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}
+									onClick={() => setSolicitudesMulti(!solicitudesMulti)}
+									title="Vista de prueba: permite pedir varios estudios en una sola solicitud"
+								>
+									{solicitudesMulti
+										? '← Volver a la vista de siempre'
+										: 'Vista agrupada de estudios (beta)'}
+								</button>
+							</div>
+						</>
 					) : activeSection === 'laboratorios' ? (
 						<LabResultsSection
 							numeroVisita={bed?.NumeroVisita || null}

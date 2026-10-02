@@ -223,7 +223,7 @@ function BandejaPedidosContent() {
 		porServicio: [],
 	});
 	const [estudios, setEstudios] = useState<PedidoEstudio[]>([]);
-	const multi = useSolicitudesMulti();
+	const [multi, setMulti] = useSolicitudesMulti();
 	const multiRef = useRef(multi);
 	multiRef.current = multi;
 	const [solicitudes, setSolicitudes] = useState<SolicitudEstudio[]>([]);
@@ -1212,6 +1212,20 @@ function BandejaPedidosContent() {
 					onClose={() => setSelectedEstudio(null)}
 				/>
 			) : null}
+
+			<div style={{ marginTop: '0.75rem', textAlign: 'right', fontSize: '0.72rem', opacity: 0.55 }}>
+				<button
+					type="button"
+					style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}
+					onClick={() => {
+						fpRef.current = '';
+						setMulti(!multi);
+					}}
+					title="Vista de prueba: una tarjeta por solicitud, con todos sus estudios"
+				>
+					{multi ? '← Volver a la vista de siempre' : 'Vista agrupada de estudios (beta)'}
+				</button>
+			</div>
 
 			{selectedSolicitud ? (
 				<PedidoDetalleModal
