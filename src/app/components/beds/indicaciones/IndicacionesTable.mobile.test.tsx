@@ -191,6 +191,28 @@ describe("Indicaciones · vista móvil · barra fija de confirmación", () => {
         expect(onCancelar).toHaveBeenCalledTimes(1);
     });
 
+    it("flota fija sobre la pantalla (montada en body) y deja espacio al final para no tapar la última indicación", () => {
+        renderTabla({ modoReindicar: true, selectedForReindicar: new Set(), onConfirmarReindicar: vi.fn() });
+
+        const barra = screen.getByTestId("reindicar-bar");
+        const contenedor = screen.getByTestId("indicaciones-mobile");
+        // Fuera del contenedor de tarjetas: ningún ancestro con overflow/scroll puede dejarla "debajo de todo"
+        expect(barra.parentElement).toBe(document.body);
+        expect(contenedor.contains(barra)).toBe(false);
+
+        // Espaciador como último elemento de la lista, después de la última tarjeta
+        const ultimo = contenedor.lastElementChild as HTMLElement;
+        expect(ultimo.className).toContain("reindicarEspaciador");
+        expect(ultimo.previousElementSibling).toBe(screen.getByTestId("indicacion-card-2"));
+    });
+
+    it("no hay barra ni espaciador fuera del modo volver a indicar", () => {
+        renderTabla();
+        expect(screen.queryByTestId("reindicar-bar")).not.toBeInTheDocument();
+        const contenedor = screen.getByTestId("indicaciones-mobile");
+        expect(contenedor.querySelector('[class*="reindicarEspaciador"]')).toBeNull();
+    });
+
     it("singular con una sola y deshabilitado sin ninguna", () => {
         const { rerender } = renderTabla({
             modoReindicar: true,

@@ -3,6 +3,7 @@ import styles from "./IndicacionesTable.module.css";
 import { IoMedicalOutline, IoCloseCircleOutline, IoRepeatOutline, IoPencilOutline, IoTrashOutline } from "react-icons/io5";
 import { indicacionesService } from "../../../services/indicacionesService";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
 import { formatSqlDate, formatHoraSimple } from "../../../utils/dateUtils";
@@ -665,7 +666,7 @@ export default function IndicacionesTable({
                 ))}
 
                 {/* Barra fija inferior del modo "volver a indicar" (la confirmación queda siempre a mano) */}
-                {modoReindicar && (
+                {modoReindicar && typeof document !== "undefined" && createPortal(
                     <div className={styles.reindicarBar} data-testid="reindicar-bar">
                         <label className={styles.reindicarTodas}>
                             <input
@@ -698,8 +699,11 @@ export default function IndicacionesTable({
                         >
                             Cancelar
                         </button>
-                    </div>
+                    </div>,
+                    document.body
                 )}
+                {/* Espacio para que la barra flotante no tape la última indicación */}
+                {modoReindicar && <div className={styles.reindicarEspaciador} aria-hidden />}
             </div>
 
             {/* Modal de confirmación de eliminación */}

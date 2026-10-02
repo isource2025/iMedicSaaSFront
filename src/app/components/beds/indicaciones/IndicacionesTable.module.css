@@ -439,6 +439,11 @@
     display: none;
 }
 
+/* La barra de reindicar es solo móvil: en escritorio no se muestra */
+.reindicarBar {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .emptySearch {
         padding: 20px;
@@ -517,19 +522,27 @@
         background: #e6f4f8;
     }
 
-    /* Barra fija inferior del modo volver a indicar */
+    /* Barra flotante inferior del modo volver a indicar (se renderiza en body, fija a la pantalla) */
     .reindicarBar {
-        position: sticky;
-        bottom: 0;
-        z-index: 5;
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+        z-index: 900;
         display: flex;
         align-items: center;
         gap: 8px;
         padding: 10px;
-        margin: 0 -8px -8px;
         background: #fff;
-        border-top: 1px solid var(--border);
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+    }
+
+    /* Reserva el alto de la barra para que la última tarjeta pueda scrollear por encima de ella */
+    .reindicarEspaciador {
+        height: calc(76px + env(safe-area-inset-bottom, 0px));
+        flex: 0 0 auto;
     }
 
     .reindicarTodas {
