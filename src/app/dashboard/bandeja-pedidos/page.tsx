@@ -309,8 +309,18 @@ function BandejaPedidosContent() {
 		const sec = sectorRef.current.trim();
 		const currentTab = tabRef.current;
 		const silent = Boolean(opts?.silent);
-		if (!silent) setLoading(true);
 		setError(null);
+		// Sin servicio elegido no hay cola que mostrar (panorama o servicios aún cargando) y el backend la rechaza
+		if (!sec) {
+			fpRef.current = '';
+			setEstudios([]);
+			setSolicitudes([]);
+			setInterconsultas([]);
+			setLoading(false);
+			void loadResumen();
+			return;
+		}
+		if (!silent) setLoading(true);
 		try {
 			const filtros = {
 				paciente: filtroRef.current.paciente.trim() || undefined,
