@@ -1,6 +1,6 @@
 /**
- * Solicitud con varias prácticas: se agregan/quitan estudios, el servicio destino lo propone la
- * primera práctica y se envía UNA sola solicitud con todos los ítems.
+ * Solicitud con varias prácticas: primero se elige el servicio que realiza el estudio y recién
+ * después se eligen las prácticas (solo las de ese servicio); se envía UNA solicitud con todos los ítems.
  */
 import React from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -26,9 +26,15 @@ const { catalogo, tiposApi } = vi.hoisted(() => ({
 vi.mock("@/app/hooks/useSectoresReceptor", () => ({ useSectoresReceptor: () => catalogo }));
 vi.mock("@/app/services/solicitudesEstudiosService", () => ({
     default: {
-        buscarTipos: vi.fn(async (q: string) =>
-            tiposApi.filter((t) => t.descripcion.toLowerCase().includes(q.toLowerCase())),
-        ),
+        // Igual que el backend: solo prácticas cuyo código empieza con un prefijo del servicio.
+        buscarTipos: vi.fn(async (q: string, _limit?: number, servicio?: string) => {
+            const prefijos = catalogo.servicios.find((s) => s.valor === servicio)?.prefijos ?? [];
+            return tiposApi.filter(
+                (t) =>
+                    prefijos.some((p) => String(t.idPractica).startsWith(p)) &&
+                    t.descripcion.toLowerCase().includes(q.toLowerCase()),
+            );
+        }),
         crear: vi.fn(),
         actualizar: vi.fn(),
     },
@@ -49,10 +55,17 @@ vi.mock("@/app/components/Patients/AddPatient/LoadingSelect", () => ({
 import solicitudesEstudiosService from "@/app/services/solicitudesEstudiosService";
 import SolicitarEstudiosModal from "./SolicitarEstudiosModal";
 
-const servicioActual = () => (screen.getByLabelText("servicioDestino") as HTMLSelectElement).value;
-const buscador = () => screen.getByPlaceholderText(/Buscar por descripción/);
+type User = ReturnType<typeof userEvent.setup>;
 
-const agregar = async (user: ReturnType<typeof userEvent.setup>, busqueda: string, descripcion: string) => {
+const selectServicio = () => screen.getByLabelText("servicioDestino") as HTMLSelectElement;
+const servicioActual = () => selectServicio().value;
+const buscador = () => screen.getByPlaceholderText(/Buscar por descripción|Primero elegí/) as HTMLInputElement;
+
+const elegirServicio = async (user: User, valor: string) => {
+    await user.selectOptions(selectServicio(), valor);
+};
+
+const agregar = async (user: User, busqueda: string, descripcion: string) => {
     await user.clear(buscador());
     await user.type(buscador(), busqueda);
     // el nombre accesible del resultado es "<descripción><código>" (o "<descripción>✓ agregado")
@@ -76,14 +89,78 @@ beforeEach(() => {
     vi.mocked(solicitudesEstudiosService.actualizar).mockReset().mockResolvedValue({} as any);
 });
 
+describe("SolicitarEstudiosModal · el servicio se elige primero", () => {
+    it("sin servicio no se pueden buscar estudios", async () => {
+        const user = userEvent.setup();
+        renderModal();
+        expect(buscador().disabled).toBe(true);
+        expect(buscador().placeholder).toMatch(/Primero elegí el servicio/);
+        await user.click(screen.getByRole("button", { name: "Solicitar" }));
+        expect(await screen.findByText("Agregá al menos un estudio")).toBeTruthy();
+        expect(solicitudesEstudiosService.buscarTipos).not.toHaveBeenCalled();
+    });
+
+    it("al elegir el servicio se listan sus estudios y la búsqueda va filtrada por ese servicio", async () => {
+        const user = userEvent.setup();
+        renderModal();
+        await elegirServicio(user, "LAB");
+
+        expect(await screen.findByRole("button", { name: /^GLUCEMIA\d/ })).toBeTruthy();
+        expect(screen.getByRole("button", { name: /^UREA\d/ })).toBeTruthy();
+        expect(screen.queryByRole("button", { name: /^GLUCEMIA RADIO/ })).toBeNull();
+        expect(solicitudesEstudiosService.buscarTipos).toHaveBeenCalledWith("", expect.any(Number), "LAB");
+
+        await user.type(buscador(), "gluc");
+        await waitFor(() =>
+            expect(solicitudesEstudiosService.buscarTipos).toHaveBeenCalledWith("gluc", expect.any(Number), "LAB"),
+        );
+        // aunque el texto coincida, lo de rayos no aparece en laboratorio
+        expect(screen.queryByRole("button", { name: /^GLUCEMIA RADIO/ })).toBeNull();
+    });
+
+    it("cada servicio ve solo sus prácticas", async () => {
+        const user = userEvent.setup();
+        renderModal();
+        await elegirServicio(user, "RAYOS");
+        await user.type(buscador(), "gluc");
+        expect(await screen.findByRole("button", { name: /^GLUCEMIA RADIO\d/ })).toBeTruthy();
+        expect(screen.queryByRole("button", { name: /^GLUCEMIA\d/ })).toBeNull();
+    });
+
+    it("si el servicio no tiene estudios en el catálogo lo avisa", async () => {
+        const user = userEvent.setup();
+        catalogo.servicios.push({ valor: "VACIO", descripcion: "Sin catálogo", prefijos: ["99"] });
+        try {
+            renderModal();
+            await elegirServicio(user, "VACIO");
+            expect(await screen.findByText(/no tiene estudios cargados en el catálogo/)).toBeTruthy();
+        } finally {
+            catalogo.servicios.pop();
+        }
+    });
+
+    it("cambiar de servicio con estudios elegidos vacía la lista y avisa", async () => {
+        const user = userEvent.setup();
+        renderModal();
+        await elegirServicio(user, "LAB");
+        await agregar(user, "gluc", "GLUCEMIA");
+        expect(screen.getByRole("button", { name: /Quitar GLUCEMIA/ })).toBeTruthy();
+
+        await elegirServicio(user, "RAYOS");
+        expect(screen.queryByRole("button", { name: /Quitar GLUCEMIA/ })).toBeNull();
+        expect(await screen.findByText(/Cambiaste de servicio/)).toBeTruthy();
+        expect(servicioActual()).toBe("RAYOS");
+    });
+});
+
 describe("SolicitarEstudiosModal · varias prácticas en una solicitud", () => {
     it("agrega tres estudios y envía UNA solicitud con los tres ítems", async () => {
         const user = userEvent.setup();
         const onCreated = vi.fn();
         renderModal({ onCreated });
 
+        await elegirServicio(user, "LAB");
         await agregar(user, "gluc", "GLUCEMIA");
-        await waitFor(() => expect(servicioActual()).toBe("LAB"));
         await agregar(user, "ure", "UREA");
         await agregar(user, "creat", "CREATININA");
 
@@ -99,6 +176,7 @@ describe("SolicitarEstudiosModal · varias prácticas en una solicitud", () => {
     it("no duplica un estudio ya agregado", async () => {
         const user = userEvent.setup();
         renderModal();
+        await elegirServicio(user, "LAB");
         await agregar(user, "gluc", "GLUCEMIA");
         await user.clear(buscador());
         await user.type(buscador(), "glucemia");
@@ -109,6 +187,7 @@ describe("SolicitarEstudiosModal · varias prácticas en una solicitud", () => {
     it("quitar un estudio lo saca de la solicitud", async () => {
         const user = userEvent.setup();
         renderModal();
+        await elegirServicio(user, "LAB");
         await agregar(user, "gluc", "GLUCEMIA");
         await agregar(user, "ure", "UREA");
 
@@ -120,22 +199,13 @@ describe("SolicitarEstudiosModal · varias prácticas en una solicitud", () => {
         expect(items.map((i) => i.idPractica)).toEqual([660002]);
     });
 
-    it("sin estudios no deja solicitar", async () => {
+    it("con servicio pero sin estudios no deja solicitar", async () => {
         const user = userEvent.setup();
         renderModal();
+        await elegirServicio(user, "LAB");
         await user.click(screen.getByRole("button", { name: "Solicitar" }));
         expect(await screen.findByText("Agregá al menos un estudio")).toBeTruthy();
         expect(solicitudesEstudiosService.crear).not.toHaveBeenCalled();
-    });
-
-    it("avisa si un estudio suele ir a otro servicio, pero respeta el elegido", async () => {
-        const user = userEvent.setup();
-        renderModal();
-        await agregar(user, "gluc", "GLUCEMIA");
-        await waitFor(() => expect(servicioActual()).toBe("LAB"));
-        await agregar(user, "radio", "GLUCEMIA RADIO");
-        expect(await screen.findByText(/suele ir a/)).toBeTruthy();
-        expect(servicioActual()).toBe("LAB");
     });
 
     it("editando una solicitud PENDIENTE: solo envía los ítems si cambió la lista", async () => {

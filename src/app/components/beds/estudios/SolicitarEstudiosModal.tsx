@@ -5,10 +5,7 @@ import solicitudesEstudiosService from '@/app/services/solicitudesEstudiosServic
 import type { TipoPedidoEstudio } from '@/app/types/estudios';
 import type { SolicitudEstudio } from '@/app/types/solicitudesEstudios';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
-import {
-	resolveReceptorPorTipo,
-	resolveServicioDestinoEnLista,
-} from '@/app/utils/resolveSectorReceptor';
+import { resolveServicioDestinoEnLista } from '@/app/utils/resolveSectorReceptor';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
@@ -17,6 +14,8 @@ import solStyles from './SolicitudesEstudios.module.css';
 type Urgencia = 'Normal' | 'Medio' | 'Urgente';
 
 const MAX_ITEMS = 60;
+/** Cantidad de estudios que se listan al elegir un servicio, antes de escribir nada. */
+const LISTA_INICIAL = 40;
 
 function urgenciaDe(estado?: string | null): Urgencia {
 	const v = String(estado || '').trim().toLowerCase();
@@ -73,7 +72,8 @@ export default function SolicitarEstudiosModal({
 		force: open,
 	});
 	const [idServicioDestino, setIdServicioDestino] = useState('');
-	const [servicioTocado, setServicioTocado] = useState(false);
+	const [avisoServicio, setAvisoServicio] = useState<string | null>(null);
+	const [busquedaHecha, setBusquedaHecha] = useState(false);
 	const [urgencia, setUrgencia] = useState<Urgencia>('Normal');
 	const [notas, setNotas] = useState('');
 	const [submitting, setSubmitting] = useState(false);
@@ -84,7 +84,8 @@ export default function SolicitarEstudiosModal({
 		setTerm('');
 		setResultados([]);
 		setError(null);
-		setServicioTocado(false);
+		setAvisoServicio(null);
+		setBusquedaHecha(false);
 		if (solicitud) {
 			const t = tiposDeSolicitud(solicitud);
 			setSeleccion(t);
@@ -112,38 +113,40 @@ export default function SolicitarEstudiosModal({
 		);
 	}, [open, solicitud, servicios]);
 
-	// Búsqueda en el catálogo (imTiposPedidosEstudios).
+	// Catálogo (imTiposPedidosEstudios) limitado a lo que realiza el servicio elegido.
+	// Sin servicio no se busca: primero se elige quién realiza el estudio, después las prácticas.
 	useEffect(() => {
 		const t = term.trim();
-		if (t.length < 2 || listaFija) {
+		const servicio = idServicioDestino.trim();
+		if (listaFija || !servicio || t.length === 1) {
 			setResultados([]);
+			setBusquedaHecha(false);
 			return;
 		}
 		let cancel = false;
 		setLoadingTipos(true);
 		const h = setTimeout(async () => {
 			try {
-				const rows = await solicitudesEstudiosService.buscarTipos(t, 25);
+				const rows = await solicitudesEstudiosService.buscarTipos(
+					t,
+					t ? 25 : LISTA_INICIAL,
+					servicio,
+				);
 				if (!cancel) setResultados(rows);
 			} catch {
 				if (!cancel) setResultados([]);
 			} finally {
-				if (!cancel) setLoadingTipos(false);
+				if (!cancel) {
+					setLoadingTipos(false);
+					setBusquedaHecha(true);
+				}
 			}
-		}, 280);
+		}, t ? 280 : 0);
 		return () => {
 			cancel = true;
 			clearTimeout(h);
 		};
-	}, [term, listaFija]);
-
-	// El servicio destino lo define la primera práctica, salvo que el usuario ya lo haya elegido.
-	useEffect(() => {
-		if (editando || servicioTocado || !servicios.length) return;
-		if (seleccion.length === 0) return;
-		const sugerido = resolveReceptorPorTipo(seleccion[0], servicios);
-		if (sugerido) setIdServicioDestino(sugerido);
-	}, [editando, servicioTocado, seleccion, servicios]);
+	}, [term, listaFija, idServicioDestino]);
 
 	const opcionesServicio = useMemo(() => {
 		const opts = servicios.map((s) => ({
@@ -159,16 +162,23 @@ export default function SolicitarEstudiosModal({
 		return opts;
 	}, [servicios, idServicioDestino]);
 
-	/** Prácticas que normalmente van a otro servicio distinto del elegido. */
-	const otroServicio = useMemo(() => {
-		if (!idServicioDestino || !servicios.length) return [];
-		return seleccion.filter((t) => {
-			const sug = resolveReceptorPorTipo(t, servicios);
-			return sug && sug !== idServicioDestino;
-		});
-	}, [seleccion, servicios, idServicioDestino]);
-
 	if (!open) return null;
+
+	const cambiarServicio = (val: string) => {
+		const nuevo = String(val || '').trim();
+		if (nuevo === idServicioDestino.trim()) return;
+		// Cada servicio realiza prácticas distintas: la lista armada para otro servicio no vale.
+		if (!listaFija && seleccion.length > 0) {
+			setSeleccion([]);
+			setAvisoServicio(
+				'Cambiaste de servicio: se quitaron los estudios elegidos porque cada servicio realiza prácticas distintas.',
+			);
+		} else {
+			setAvisoServicio(null);
+		}
+		setTerm('');
+		setIdServicioDestino(nuevo);
+	};
 
 	const yaAgregado = (t: TipoPedidoEstudio) => seleccion.some((s) => s.idPractica === t.idPractica);
 
@@ -260,6 +270,25 @@ export default function SolicitarEstudiosModal({
 					) : null}
 
 					<label className={formStyles.label}>
+						Servicio que realiza el estudio
+						<CustomSelect
+							label=""
+							name="servicioDestino"
+							isLoading={loadingServicios}
+							disabled={bloqueado}
+							value={idServicioDestino}
+							onChange={(val) => cambiarServicio(String(val))}
+							options={opcionesServicio}
+						/>
+						{!loadingServicios && servicios.length === 0 ? (
+							<div className={formStyles.hint}>
+								No hay servicios en el catálogo. Configúrelos en Personal / Servicios.
+							</div>
+						) : null}
+						{avisoServicio ? <div className={solStyles.hintWarn}>{avisoServicio}</div> : null}
+					</label>
+
+					<label className={formStyles.label}>
 						<span>
 							Estudios
 							<span className={solStyles.counter}>{seleccion.length}</span>
@@ -270,10 +299,25 @@ export default function SolicitarEstudiosModal({
 									className={formStyles.input}
 									value={term}
 									onChange={(e) => setTerm(e.target.value)}
-									placeholder="Buscar por descripción o código y tocar para agregar…"
+									placeholder={
+										idServicioDestino.trim()
+											? 'Buscar por descripción o código y tocar para agregar…'
+											: 'Primero elegí el servicio que realiza el estudio'
+									}
+									disabled={!idServicioDestino.trim()}
 									autoComplete="off"
 								/>
 								{loadingTipos && <div className={formStyles.hint}>Buscando…</div>}
+								{!loadingTipos &&
+								busquedaHecha &&
+								idServicioDestino.trim() &&
+								resultados.length === 0 ? (
+									<div className={formStyles.hint}>
+										{term.trim()
+											? 'Sin resultados para este servicio.'
+											: 'Este servicio no tiene estudios cargados en el catálogo.'}
+									</div>
+								) : null}
 								{resultados.length > 0 && (
 									<ul className={`${formStyles.results} ${solStyles.scroll}`}>
 										{resultados.map((t) => {
@@ -326,34 +370,6 @@ export default function SolicitarEstudiosModal({
 							</ul>
 						) : !listaFija ? (
 							<div className={solStyles.hint}>Todavía no agregaste estudios.</div>
-						) : null}
-					</label>
-
-					<label className={formStyles.label}>
-						Servicio destino
-						<CustomSelect
-							label=""
-							name="servicioDestino"
-							isLoading={loadingServicios}
-							disabled={bloqueado}
-							value={idServicioDestino}
-							onChange={(val) => {
-								setServicioTocado(true);
-								setIdServicioDestino(String(val));
-							}}
-							options={opcionesServicio}
-						/>
-						{!loadingServicios && servicios.length === 0 ? (
-							<div className={formStyles.hint}>
-								No hay servicios en el catálogo. Configúrelos en Personal / Servicios.
-							</div>
-						) : null}
-						{otroServicio.length > 0 && !bloqueado ? (
-							<div className={solStyles.hintWarn}>
-								Revisá el destino: {otroServicio.map((t) => t.descripcion).slice(0, 3).join(', ')}
-								{otroServicio.length > 3 ? '…' : ''} suele{otroServicio.length > 1 ? 'n' : ''} ir a
-								otro servicio. Toda la solicitud va al servicio elegido.
-							</div>
 						) : null}
 					</label>
 

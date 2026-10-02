@@ -116,9 +116,23 @@ const solicitudesEstudiosService = {
     );
   },
 
-  async buscarTipos(q: string, limit = 25): Promise<TipoPedidoEstudio[]> {
-    // Mismo catálogo (imTiposPedidosEstudios) y misma respuesta que el circuito viejo.
-    return estudiosService.buscarTipos(q, limit);
+  /**
+   * Catálogo (imTiposPedidosEstudios). Con `servicio` devuelve solo lo que realiza ese servicio
+   * (y permite listar sin texto). Sin servicio, igual que el circuito viejo.
+   */
+  async buscarTipos(q: string, limit = 25, servicio?: string): Promise<TipoPedidoEstudio[]> {
+    const srv = String(servicio || '').trim();
+    if (!srv) return estudiosService.buscarTipos(q, limit);
+    const params = new URLSearchParams({ q, limit: String(limit), servicio: srv });
+    try {
+      return await request<TipoPedidoEstudio[]>(
+        `/tipos/buscar?${params}`,
+        { method: 'GET' },
+        '',
+      );
+    } catch {
+      return [];
+    }
   },
 
   /**
