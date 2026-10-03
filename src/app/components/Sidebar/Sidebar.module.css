@@ -578,10 +578,13 @@
   .sidebar {
     transform: translateX(-100%);
     width: 280px;
+    background: transparent;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .sidebar.expanded {
+    width: min(320px, calc(100vw - 48px));
+    background: transparent;
     transform: translateX(0);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
