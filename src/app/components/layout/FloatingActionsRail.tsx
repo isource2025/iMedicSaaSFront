@@ -60,11 +60,14 @@ export default function FloatingActionsRail({ children, ariaLabel, className = '
 	const hasPedidos = pedidos > 0;
 	const badgeTotal = hasUnread ? notif.count : pedidos;
 	const showBell = bellReady && !open;
+	const showLoader = !bellReady && !open;
 	const tone = !showBell ? '' : hasUnread ? styles.tabAlert : hasPedidos ? styles.tabPedidos : '';
 
 	const tabLabel = open
 		? 'Ocultar acciones rápidas'
-		: `Mostrar acciones rápidas${showBell && badgeTotal > 0 ? `, ${badgeTotal} notificaciones` : ''}`;
+		: showLoader
+			? 'Mostrar acciones rápidas, cargando notificaciones'
+			: `Mostrar acciones rápidas${badgeTotal > 0 ? `, ${badgeTotal} notificaciones` : ''}`;
 
 	return (
 		<div className={`${styles.rail} ${open ? styles.railOpen : ''} ${className}`}>
@@ -80,12 +83,13 @@ export default function FloatingActionsRail({ children, ariaLabel, className = '
 				aria-label={tabLabel}
 				title={tabLabel}
 			>
+				{showLoader ? <span className={styles.tabLoader} aria-hidden /> : null}
 				{showBell ? (
 					<span className={`${styles.tabBell} ${animateBellRef.current ? styles.tabBellEntrance : ''}`}>
 						<svg
 							className={hasUnread || hasPedidos ? styles.tabBellRing : undefined}
-							width="16"
-							height="16"
+							width="20"
+							height="20"
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
@@ -104,8 +108,8 @@ export default function FloatingActionsRail({ children, ariaLabel, className = '
 				) : null}
 				<svg
 					className={styles.tabArrow}
-					width="14"
-					height="14"
+					width="16"
+					height="16"
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
