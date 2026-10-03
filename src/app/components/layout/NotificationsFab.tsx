@@ -2,27 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '@/app/services/authService';
-import { notificacionesService, type NotificacionItem } from '@/app/services/notificacionesService';
-import { INBOX_UNREAD_EVENT } from '@/app/hooks/useWhatsAppInboxUnread';
-import { useBandejaPedidosCount } from '@/app/hooks/useBandejaPedidosCount';
+import type { NotificacionItem } from '@/app/services/notificacionesService';
+import {
+	descartarAvisosPedido,
+	markEntranceShown,
+	marcarNotificacionLeida,
+	marcarTodasNotificacionesLeidas,
+	refreshList,
+	useNotificacionesStore,
+} from '@/app/utils/notificacionesStore';
 import styles from './NotificationsFab.module.css';
-
-function valorPersonalFromUser(user: Record<string, unknown> | null): number | null {
-	if (!user) return null;
-	const raw =
-		user.idValorpersonal ??
-		user.valorPersonal ??
-		user.ValorPersonal ??
-		user.id;
-	const n = parseInt(String(raw ?? ''), 10);
-	return Number.isFinite(n) && n > 0 ? n : null;
-}
 
 const OPEN_EVENT = 'imedic:notifications-open';
 const BANDEJA_PATH = '/dashboard/bandeja-pedidos';
-/** Si el backend no responde, el botón aparece igual para no dejar al usuario sin acceso. */
-const FIRST_LOAD_TIMEOUT_MS = 8000;
 
 function esNotificacionWhatsApp(n: NotificacionItem): boolean {
 	const tipo = String(n.TipoNotificacion || '').toUpperCase();
@@ -50,102 +42,42 @@ function esInterconsultaNotif(n: NotificacionItem): boolean {
 
 export default function NotificationsFab({ stack = false }: { stack?: boolean }) {
 	const router = useRouter();
-	const [userId, setUserId] = useState<number | null>(null);
-	const [count, setCount] = useState(0);
-	const [countLoaded, setCountLoaded] = useState(false);
-	const [loadTimedOut, setLoadTimedOut] = useState(false);
-	const [open, setOpen] = useState(false);
-	const [items, setItems] = useState<NotificacionItem[]>([]);
-	const [loadingList, setLoadingList] = useState(false);
-	const [listError, setListError] = useState<string | null>(null);
-	const panelRef = useRef<HTMLDivElement>(null);
+	const notif = useNotificacionesStore();
 	const {
-		count: bandejaLibres,
+		userId,
+		count,
+		items,
+		itemsLoaded,
+		loadingList,
+		listError,
 		estudios: bandejaEstudios,
 		interconsultas: bandejaIc,
-		loaded: bandejaLoaded,
-	} = useBandejaPedidosCount(Boolean(userId));
+	} = notif;
+	const bandejaLibres = bandejaEstudios + bandejaIc;
+	const [open, setOpen] = useState(false);
+	const panelRef = useRef<HTMLDivElement>(null);
+	/** Se decide una sola vez por montaje: solo anima la primera aparición de la sesión. */
+	const animateEntranceRef = useRef<boolean | null>(null);
 
-	const refreshUser = useCallback(() => {
-		const u = authService.getCurrentUser() as Record<string, unknown> | null;
-		setUserId(valorPersonalFromUser(u));
-	}, []);
-
-	const fetchCount = useCallback(async () => {
-		const vp = valorPersonalFromUser(authService.getCurrentUser() as Record<string, unknown> | null);
-		if (!vp) return;
-		try {
-			const c = await notificacionesService.getUnreadCount(vp);
-			setCount(c);
-		} catch {
-			/* silencioso */
-		} finally {
-			setCountLoaded(true);
-		}
-	}, []);
-
-	const loadList = useCallback(async () => {
-		const vp = valorPersonalFromUser(authService.getCurrentUser() as Record<string, unknown> | null);
-		if (!vp) return;
-		setLoadingList(true);
-		setListError(null);
-		try {
-			const { data } = await notificacionesService.listar(vp, { limit: 40, soloNoLeidas: false });
-			setItems(data);
-		} catch (e) {
-			setItems([]);
-			setListError(e instanceof Error ? e.message : 'No se pudieron cargar las notificaciones');
-		} finally {
-			setLoadingList(false);
-		}
-	}, []);
+	const firstLoadDone = (notif.countLoaded && notif.bandejaLoaded) || notif.firstLoadTimedOut;
+	const visible = Boolean(userId) && firstLoadDone;
+	if (visible && animateEntranceRef.current === null) {
+		animateEntranceRef.current = !notif.entranceShown;
+	}
 
 	useEffect(() => {
-		refreshUser();
-		const onStorage = () => refreshUser();
-		window.addEventListener('storage', onStorage);
-		return () => window.removeEventListener('storage', onStorage);
-	}, [refreshUser]);
-
-	useEffect(() => {
-		setCountLoaded(false);
-		setLoadTimedOut(false);
-		if (!userId) return;
-		const timeout = window.setTimeout(() => setLoadTimedOut(true), FIRST_LOAD_TIMEOUT_MS);
-		return () => window.clearTimeout(timeout);
-	}, [userId]);
-
-	useEffect(() => {
-		if (!userId) return;
-		fetchCount();
-		const t = window.setInterval(fetchCount, 45000);
-		const onInbox = () => fetchCount();
-		window.addEventListener(INBOX_UNREAD_EVENT, onInbox);
-		return () => {
-			window.clearInterval(t);
-			window.removeEventListener(INBOX_UNREAD_EVENT, onInbox);
-		};
-	}, [userId, fetchCount]);
+		if (visible) markEntranceShown();
+	}, [visible]);
 
 	useEffect(() => {
 		if (!open || !userId) return;
-		loadList();
-	}, [open, userId, loadList]);
+		void refreshList();
+	}, [open, userId]);
 
 	const closePanel = useCallback(() => {
 		setOpen(false);
-		const vp = valorPersonalFromUser(authService.getCurrentUser() as Record<string, unknown> | null);
-		if (!vp) return;
-		void (async () => {
-			try {
-				await notificacionesService.marcarPedidosLeidas(vp);
-				setItems((prev) => prev.filter((n) => !esNotificacionPedido(n)));
-				await fetchCount();
-			} catch {
-				/* silencioso */
-			}
-		})();
-	}, [fetchCount]);
+		void descartarAvisosPedido();
+	}, []);
 
 	useEffect(() => {
 		if (!open) return;
@@ -165,11 +97,10 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		const onOpenEvent = () => {
 			if (!userId) return;
 			setOpen(true);
-			void loadList();
 		};
 		window.addEventListener(OPEN_EVENT, onOpenEvent);
 		return () => window.removeEventListener(OPEN_EVENT, onOpenEvent);
-	}, [userId, loadList]);
+	}, [userId]);
 
 	const handleOpen = () => {
 		if (!userId) return;
@@ -188,18 +119,7 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	const abrirNotificacion = async (n: NotificacionItem) => {
 		if (!userId) return;
-		const leida = n.Leida === 1 || n.Leida === true;
-		if (!leida) {
-			try {
-				await notificacionesService.marcarLeida(userId, n.IdNotificacion);
-				setItems((prev) =>
-					prev.map((x) => (x.IdNotificacion === n.IdNotificacion ? { ...x, Leida: 1 } : x)),
-				);
-				fetchCount();
-			} catch {
-				/* noop */
-			}
-		}
+		void marcarNotificacionLeida(n);
 		if (esNotificacionWhatsApp(n)) {
 			closePanel();
 			router.push('/dashboard/turnos/chats');
@@ -227,17 +147,14 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 	const marcarTodas = async () => {
 		if (!userId) return;
 		try {
-			await notificacionesService.marcarTodasLeidas(userId);
-			setItems((prev) => prev.filter((n) => !esNotificacionPedido(n)).map((x) => ({ ...x, Leida: 1 })));
-			setCount(0);
+			await marcarTodasNotificacionesLeidas();
 			setOpen(false);
 		} catch {
 			/* noop */
 		}
 	};
 
-	const firstLoadDone = (countLoaded && bandejaLoaded) || loadTimedOut;
-	if (!userId || !firstLoadDone) {
+	if (!visible) {
 		return null;
 	}
 
@@ -249,7 +166,7 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	return (
 		<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={panelRef}>
-			<div className={styles.fabEntrance}>
+			<div className={animateEntranceRef.current ? styles.fabEntrance : undefined}>
 				<button
 					id="notifications-fab-trigger"
 					type="button"
@@ -358,9 +275,9 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 					</button>
 
 					<div className={styles.panelBody}>
-						{loadingList ? (
+						{loadingList && !itemsLoaded ? (
 							<p className={styles.muted}>Cargando…</p>
-						) : listError ? (
+						) : listError && !itemsLoaded ? (
 							<p className={styles.muted}>{listError}</p>
 						) : items.length === 0 ? (
 							<p className={styles.muted}>

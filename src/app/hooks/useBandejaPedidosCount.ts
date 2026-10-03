@@ -1,12 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import estudiosService from '@/app/services/estudiosService';
-import solicitudesEstudiosService from '@/app/services/solicitudesEstudiosService';
-import { solicitudesMultiHabilitado } from '@/app/utils/solicitudesMulti';
-import { peekCachedBandejaCount } from '@/app/utils/serviciosReceptorCache';
-
-const POLL_MS = 45_000;
+import { refreshBandeja, useNotificacionesStore } from '@/app/utils/notificacionesStore';
 
 export type BandejaPedidosCount = {
 	count: number;
@@ -17,74 +11,20 @@ export type BandejaPedidosCount = {
 	refresh: () => Promise<void>;
 };
 
-/** Contador de pedidos libres (estudios + interconsultas) en los servicios del usuario. */
-export function useBandejaPedidosCount(
-	enabled = true,
-	options?: { poll?: boolean },
-): BandejaPedidosCount {
-	const poll = options?.poll !== false;
-	const [estudios, setEstudios] = useState(0);
-	const [interconsultas, setInterconsultas] = useState(0);
-	const [loaded, setLoaded] = useState(false);
-
-	const refresh = useCallback(async () => {
-		if (!enabled) {
-			setEstudios(0);
-			setInterconsultas(0);
-			setLoaded(false);
-			return;
-		}
-		try {
-			const data = solicitudesMultiHabilitado()
-				? await solicitudesEstudiosService.contarLibresBandeja({ soloMios: true })
-				: await estudiosService.contarLibres({ soloMios: true });
-			setEstudios(data.estudios);
-			setInterconsultas(data.interconsultas);
-		} catch {
-			const fallback = peekCachedBandejaCount();
-			if (fallback) {
-				setEstudios(fallback.estudios);
-				setInterconsultas(fallback.interconsultas);
-			}
-		} finally {
-			setLoaded(true);
-		}
-	}, [enabled]);
-
-	useLayoutEffect(() => {
-		if (!enabled) return;
-		const local = peekCachedBandejaCount();
-		if (local) {
-			setEstudios(local.estudios);
-			setInterconsultas(local.interconsultas);
-		}
-	}, [enabled]);
-
-	useEffect(() => {
-		if (!enabled) {
-			setLoaded(false);
-			return;
-		}
-		void refresh();
-		if (!poll) return;
-		const t = window.setInterval(() => {
-			if (document.visibilityState === 'visible') void refresh();
-		}, POLL_MS);
-		const onVis = () => {
-			if (document.visibilityState === 'visible') void refresh();
-		};
-		document.addEventListener('visibilitychange', onVis);
-		return () => {
-			window.clearInterval(t);
-			document.removeEventListener('visibilitychange', onVis);
-		};
-	}, [enabled, refresh, poll]);
-
+/**
+ * Contador de pedidos libres (estudios + interconsultas) en los servicios del usuario.
+ * Lee del estado compartido de la campanita: se actualiza por SSE y no se vuelve a pedir al navegar.
+ */
+export function useBandejaPedidosCount(enabled = true): BandejaPedidosCount {
+	const s = useNotificacionesStore(enabled);
+	const active = enabled && Boolean(s.userKey);
+	const estudios = active ? s.estudios : 0;
+	const interconsultas = active ? s.interconsultas : 0;
 	return {
 		count: estudios + interconsultas,
 		estudios,
 		interconsultas,
-		loaded,
-		refresh,
+		loaded: active && s.bandejaLoaded,
+		refresh: refreshBandeja,
 	};
 }

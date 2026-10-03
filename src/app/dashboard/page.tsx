@@ -108,7 +108,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { empresaInfo } = useAppContext();
   const tenantId = empresaInfo?.id ?? null;
-  const { count: pedidosPendientes } = useBandejaPedidosCount(true, { poll: false });
+  const { count: pedidosPendientes } = useBandejaPedidosCount(true);
   const [bedStats, setBedStats] = useState<BedStats>({
     totalCamas: 0,
     camasDisponibles: 0,

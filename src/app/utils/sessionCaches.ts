@@ -15,6 +15,11 @@ function clearMetricServiceCaches(): void {
 	} catch {
 		/* ignore */
 	}
+	try {
+		require('./notificacionesStore').resetNotificacionesStore();
+	} catch {
+		/* ignore */
+	}
 }
 
 /**

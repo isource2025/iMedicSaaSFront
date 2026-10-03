@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useNotificacionesStore } from '@/app/utils/notificacionesStore';
 import styles from './FloatingActionsRail.module.css';
 
 const STORAGE_KEY = 'imedic:fab-rail-open';
@@ -13,12 +14,15 @@ interface FloatingActionsRailProps {
 }
 
 /**
- * Botones flotantes plegables: una pestaña con flecha pegada al borde derecho
+ * Botones flotantes plegables: una pestaña pegada al borde derecho (campanita + flecha)
  * los despliega u oculta para que no tapen el contenido.
  */
 export default function FloatingActionsRail({ children, ariaLabel, className = '' }: FloatingActionsRailProps) {
 	const [open, setOpen] = useState(false);
 	const stackId = useId();
+	const notif = useNotificacionesStore();
+	/** Se decide una sola vez por montaje: solo anima la primera aparición de la sesión. */
+	const animateBellRef = useRef<boolean | null>(null);
 
 	useEffect(() => {
 		try {
@@ -46,7 +50,21 @@ export default function FloatingActionsRail({ children, ariaLabel, className = '
 		});
 	};
 
-	const tabLabel = open ? 'Ocultar acciones rápidas' : 'Mostrar acciones rápidas';
+	const bellReady =
+		Boolean(notif.userId) && ((notif.countLoaded && notif.bandejaLoaded) || notif.firstLoadTimedOut);
+	if (bellReady && animateBellRef.current === null) {
+		animateBellRef.current = !notif.entranceShown;
+	}
+	const pedidos = notif.estudios + notif.interconsultas;
+	const hasUnread = notif.count > 0;
+	const hasPedidos = pedidos > 0;
+	const badgeTotal = hasUnread ? notif.count : pedidos;
+	const showBell = bellReady && !open;
+	const tone = !showBell ? '' : hasUnread ? styles.tabAlert : hasPedidos ? styles.tabPedidos : '';
+
+	const tabLabel = open
+		? 'Ocultar acciones rápidas'
+		: `Mostrar acciones rápidas${showBell && badgeTotal > 0 ? `, ${badgeTotal} notificaciones` : ''}`;
 
 	return (
 		<div className={`${styles.rail} ${open ? styles.railOpen : ''} ${className}`}>
@@ -55,21 +73,43 @@ export default function FloatingActionsRail({ children, ariaLabel, className = '
 			</div>
 			<button
 				type="button"
-				className={styles.tab}
+				className={`${styles.tab} ${tone}`}
 				onClick={toggle}
 				aria-expanded={open}
 				aria-controls={stackId}
 				aria-label={tabLabel}
 				title={tabLabel}
 			>
+				{showBell ? (
+					<span className={`${styles.tabBell} ${animateBellRef.current ? styles.tabBellEntrance : ''}`}>
+						<svg
+							className={hasUnread || hasPedidos ? styles.tabBellRing : undefined}
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2.2"
+							aria-hidden
+						>
+							<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+							<path d="M13.73 21a2 2 0 0 1-3.46 0" />
+						</svg>
+						{badgeTotal > 0 ? (
+							<span className={`${styles.tabBadge} ${!hasUnread ? styles.tabBadgePedidos : ''}`} aria-hidden>
+								{badgeTotal > 99 ? '99+' : badgeTotal}
+							</span>
+						) : null}
+					</span>
+				) : null}
 				<svg
 					className={styles.tabArrow}
-					width="18"
-					height="18"
+					width="14"
+					height="14"
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
-					strokeWidth="2.6"
+					strokeWidth="2.8"
 					aria-hidden
 				>
 					<path d="M15 6l-6 6 6 6" />
