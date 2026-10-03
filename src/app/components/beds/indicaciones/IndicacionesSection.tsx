@@ -500,7 +500,7 @@ export default function IndicacionesSection({
     );
 
     const rowsPorEstado = useMemo(
-        () => (mostrarSuspendidas ? baseRows : baseRows.filter((r) => !r.suspendida)),
+        () => baseRows.filter((r) => Boolean(r.suspendida) === mostrarSuspendidas),
         [baseRows, mostrarSuspendidas]
     );
 
@@ -626,7 +626,7 @@ export default function IndicacionesSection({
             }));
 
             await exportToPDF({
-                title: 'Indicaciones Médicas',
+                title: mostrarSuspendidas ? 'Indicaciones Médicas dejadas sin efecto' : 'Indicaciones Médicas',
                 subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
                 parts,
                 fileName: `indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
@@ -653,7 +653,9 @@ export default function IndicacionesSection({
             {/* Fecha seleccionada + botón agregar */}
             {fechaFormateada && (
                 <div className={styles.dateHeader}>
-                    <h2 className={styles.sectionTitle}>Indicaciones</h2>
+                    <h2 className={styles.sectionTitle}>
+                        {mostrarSuspendidas ? 'Indicaciones sin efecto' : 'Indicaciones'}
+                    </h2>
                     <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
                     <span className={styles.dateText}>
                         {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
@@ -698,14 +700,18 @@ export default function IndicacionesSection({
                     role="switch"
                     aria-checked={mostrarSuspendidas}
                     className={`${styles.switchSuspendidas} ${mostrarSuspendidas ? styles.switchOn : ''}`}
-                    onClick={() => setMostrarSuspendidas((v) => !v)}
-                    title={mostrarSuspendidas ? 'Ocultar indicaciones dejadas sin efecto' : 'Mostrar indicaciones dejadas sin efecto'}
+                    onClick={() => {
+                        if (!mostrarSuspendidas) handleCancelarReindicar();
+                        setMostrarSuspendidas((v) => !v);
+                    }}
+                    disabled={reindicando}
+                    title={mostrarSuspendidas ? 'Volver a las indicaciones vigentes' : 'Ver solo las indicaciones dejadas sin efecto'}
                 >
                     <span className={styles.switchTrack} aria-hidden>
                         <span className={styles.switchThumb} />
                     </span>
                     <span className={styles.switchLabel}>
-                        Mostrar sin efecto
+                        Ver sin efecto
                         <span className={styles.switchCount}>{cantidadSuspendidas}</span>
                     </span>
                 </button>
@@ -750,19 +756,23 @@ export default function IndicacionesSection({
                             text={
                                 rowsPorEstado.length > 0
                                     ? 'Sin resultados'
-                                    : cantidadSuspendidas > 0
-                                        ? 'Sin indicaciones vigentes'
-                                        : 'Sin indicaciones registradas'
+                                    : mostrarSuspendidas
+                                        ? 'Sin indicaciones dejadas sin efecto'
+                                        : cantidadSuspendidas > 0
+                                            ? 'Sin indicaciones vigentes'
+                                            : 'Sin indicaciones registradas'
                             }
                             description={
                                 rowsPorEstado.length > 0
                                     ? 'Probá con otro criterio de búsqueda.'
-                                    : cantidadSuspendidas > 0
-                                        ? `Hay ${cantidadSuspendidas} ${cantidadSuspendidas === 1 ? 'indicación dejada' : 'indicaciones dejadas'} sin efecto. Activá "Mostrar sin efecto" para verlas.`
-                                        : 'Cargá una indicación con el botón de arriba.'
+                                    : mostrarSuspendidas
+                                        ? 'No hay indicaciones dejadas sin efecto para este día.'
+                                        : cantidadSuspendidas > 0
+                                            ? `Hay ${cantidadSuspendidas} ${cantidadSuspendidas === 1 ? 'indicación dejada' : 'indicaciones dejadas'} sin efecto. Activá "Ver sin efecto" para verlas.`
+                                            : 'Cargá una indicación con el botón de arriba.'
                             }
-                            actionLabel={rowsPorEstado.length === 0 ? 'Nueva Indicación' : undefined}
-                            onAction={rowsPorEstado.length === 0 ? onAddIndicacion : undefined}
+                            actionLabel={rowsPorEstado.length === 0 && !mostrarSuspendidas ? 'Nueva Indicación' : undefined}
+                            onAction={rowsPorEstado.length === 0 && !mostrarSuspendidas ? onAddIndicacion : undefined}
                         />
                     ) : (
                         <IndicacionesTable
