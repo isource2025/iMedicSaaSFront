@@ -22,6 +22,7 @@
 
 .table {
 	width: 100%;
+	min-width: 860px;
 	border-collapse: collapse;
 	table-layout: auto;
 	font-size: 0.85rem;
@@ -44,6 +45,15 @@
 	white-space: nowrap;
 }
 
+.thead th span,
+.table thead th span {
+	display: inline-block;
+	margin-top: 2px;
+	font-weight: 500;
+	font-size: 0.75rem;
+	color: #6b7280;
+}
+
 .tbody .row td,
 .table tbody tr td {
 	padding: 0.65rem 0.75rem;
@@ -54,7 +64,7 @@
 
 .tbody .row:nth-child(even) td,
 .table tbody tr:nth-child(even) td {
-	background: #fafafa;
+	background: #fafafaaa;
 }
 
 .row:hover td,
@@ -122,11 +132,32 @@
 .urgenciaNormal { background: #22c55e; }
 .urgenciaNone { background: #cbd5e1; }
 
-.actionBtns {
-	display: inline-flex;
-	align-items: center;
-	gap: 2px;
+/* Columna de acciones: los botones van siempre en una sola fila */
+.colAccion,
+.thead th.colAccion,
+.table thead th.colAccion {
+	min-width: 120px;
+	width: 1%;
+	text-align: center;
+}
+
+.cellAccion,
+.tbody .row td.cellAccion,
+.table tbody tr td.cellAccion {
+	min-width: 120px;
+	width: 1%;
+	padding: 6px 8px;
+	text-align: center;
 	white-space: nowrap;
+	cursor: default;
+}
+
+.actionBtns {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: nowrap;
 }
 
 .btnAction {
@@ -141,10 +172,26 @@
 	cursor: pointer;
 	padding: 0;
 	flex-shrink: 0;
+	transition: all 0.15s ease-in-out;
+}
+
+.btnAction svg {
+	width: 18px;
+	height: 18px;
 }
 
 .btnAction:hover {
 	background: #f3f4f6;
+	transform: translateY(-1px);
+}
+
+.btnAction:active {
+	transform: translateY(0);
+}
+
+.btnAction:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
 }
 
 .error {

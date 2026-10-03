@@ -198,7 +198,7 @@ export default function ProcedimientosSection({
 									<th>Cant.</th>
 									<th>Sector</th>
 									<th>Profesionales</th>
-									<th>Acciones</th>
+									<th className={tableStyles.colAccion}>Acciones</th>
 								</tr>
 							</thead>
 							<tbody className={tableStyles.tbody}>
@@ -213,15 +213,17 @@ export default function ProcedimientosSection({
 										<td className={tableStyles.meta}>{r.CantidadPractica ?? '—'}</td>
 										<td className={tableStyles.meta}>{r.ValorSector || '—'}</td>
 										<td className={tableStyles.meta}>{r.Profesionales || '—'}</td>
-										<td>
-											<button
-												type="button"
-												className={tableStyles.btnAction}
-												title="Ver detalle"
-												onClick={() => setSelected(r)}
-											>
-												<IoEyeOutline color="#5BC0DE" size={18} />
-											</button>
+										<td className={tableStyles.cellAccion}>
+											<div className={tableStyles.actionBtns}>
+												<button
+													type="button"
+													className={tableStyles.btnAction}
+													title="Ver detalle"
+													onClick={() => setSelected(r)}
+												>
+													<IoEyeOutline color="#5BC0DE" size={18} />
+												</button>
+											</div>
 										</td>
 									</tr>
 								))}

@@ -23,7 +23,7 @@
     width: 100%;
     min-width: 1040px;
     border-collapse: collapse; /* grilla clásica */
-    table-layout: fixed; /* respeta widths y truncados */
+    table-layout: auto; /* ajuste dinámico según contenido */
     font-size: 0.85rem;
     line-height: 1.25;
     color: #111827; /* slate-900 */
@@ -48,7 +48,7 @@
     display: inline-block;
     margin-top: 2px;
     font-weight: 500;
-    font-size: 11px;
+    font-size: 0.75rem;
     color: #6b7280;
 }
 
@@ -87,52 +87,56 @@
     font-weight: 600;
     line-height: 1.25;
     color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 .sub {
     margin-top: 2px;
     font-size: 0.8rem;
     font-weight: 400;
     color: #64748b;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
-/* Anchos de columnas optimizados */
+/* Anchos de columnas: mínimos, el resto se ajusta al contenido */
 .colEstado {
+    min-width: 60px;
     width: 60px;
     text-align: center;
 }
 .colType {
-    width: 110px;
+    min-width: 110px;
 }
 .colCant,
 .cellTight {
+    min-width: 70px;
     width: 70px;
 }
 .colInd {
-    width: 20%;
+    min-width: 200px;
 }
 .colMed {
-    width: 130px;
+    min-width: 130px;
 }
 .colFreq {
-    width: 13%;
+    min-width: 180px;
 }
 .colProx {
-    width: 13%;
+    min-width: 160px;
 }
 .colSector {
+    min-width: 70px;
     width: 70px;
 }
 .colNro {
-    width: 90px;
+    min-width: 90px;
 }
 .colAccion {
-    width: 200px;
+    min-width: 120px;
+    width: 1%;
 }
 
 /* Celda de estado */
@@ -227,6 +231,7 @@
 .cellAccion {
     text-align: center;
     padding: 6px 8px !important;
+    white-space: nowrap;
 }
 
 .actionBtns {

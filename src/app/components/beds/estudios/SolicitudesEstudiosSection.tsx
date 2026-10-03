@@ -311,7 +311,7 @@ export default function SolicitudesEstudiosSection({
 										<th>Estudios</th>
 										<th>Pedido</th>
 										<th>Solicitado por</th>
-										<th>Acciones</th>
+										<th className={tableStyles.colAccion}>Acciones</th>
 									</tr>
 								</thead>
 								<tbody className={tableStyles.tbody}>
@@ -362,7 +362,7 @@ export default function SolicitudesEstudiosSection({
 													</td>
 													<td className={tableStyles.notas}>{previewText(s.NotasObservacion)}</td>
 													<td className={tableStyles.meta}>{s.MedicoSolicitanteNombre || '—'}</td>
-													<td>
+													<td className={tableStyles.cellAccion}>
 														<div className={tableStyles.actionBtns}>
 															<button
 																type="button"

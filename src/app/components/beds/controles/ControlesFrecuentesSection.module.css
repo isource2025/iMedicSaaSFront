@@ -330,11 +330,13 @@
 	font-weight: 600;
 }
 
-/* Columna de acciones */
-.cellAccion {
+/* Columna de acciones: los botones van siempre en una sola fila */
+.table tbody tr td.cellAccion {
 	min-width: 120px;
-	width: 120px;
+	width: 1%;
+	padding: 6px 8px;
 	text-align: center;
+	white-space: nowrap;
 }
 
 .actionBtns {
@@ -342,7 +344,7 @@
 	justify-content: center;
 	align-items: center;
 	gap: 6px;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 }
 
 .btnAction {
@@ -356,16 +358,17 @@
 	border-radius: 6px;
 	background: transparent;
 	cursor: pointer;
-	transition: all 0.15s ease;
+	flex-shrink: 0;
+	transition: all 0.15s ease-in-out;
 }
 
 .btnAction:hover {
-	background: rgba(91, 192, 222, 0.1);
-	transform: scale(1.1);
+	background: #f3f4f6;
+	transform: translateY(-1px);
 }
 
 .btnAction:active {
-	transform: scale(0.95);
+	transform: translateY(0);
 }
 
 .btnAction:disabled {
