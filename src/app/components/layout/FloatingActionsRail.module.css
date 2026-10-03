@@ -55,16 +55,16 @@
 .tab {
   position: relative;
   flex-shrink: 0;
-  width: calc(var(--fab-size) + var(--fab-edge-gap) * 2);
-  min-height: 40px;
+  width: 34px;
+  min-height: 70px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 11px 0;
+  gap: 10px;
+  padding: 14px 0;
   border: none;
-  border-radius: 14px 0 0 14px;
+  border-radius: 12px 0 0 12px;
   background: #0083a9;
   color: #fff;
   cursor: pointer;
@@ -158,8 +158,8 @@
 
 .tabBadge {
   position: absolute;
-  top: -14px;
-  right: 8px;
+  top: -10px;
+  right: -7px;
   min-width: 19px;
   height: 19px;
   padding: 0 5px;
@@ -207,8 +207,8 @@
   }
 
   .tab {
-    min-height: 42px;
-    padding: 12px 0;
+    min-height: 72px;
+    padding: 15px 0;
   }
 }
 
