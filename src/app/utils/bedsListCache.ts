@@ -4,6 +4,8 @@ import { getIdEmpresaFromToken } from './jwtSession';
 type BedsListCache = {
 	ts: number;
 	idEmpresa: string | null;
+	/** Sector pedido al backend ('all' = todos); solo sirve para sectores que cubre. */
+	sector?: string;
 	beds: Bed[];
 	states?: { id: string; valor: string; descripcion: string }[];
 	sectores?: { id: string; valor: string; descripcion: string }[];
@@ -53,15 +55,33 @@ export function clearCachedBedsList(): void {
 	cache = null;
 }
 
+export function normalizarSectorCamas(sector?: string | null): string {
+	const s = String(sector || '').trim();
+	return !s || s.toLowerCase() === 'all' ? 'all' : s.toUpperCase();
+}
+
+/** ¿Las camas pedidas para `cargado` sirven para mostrar `pedido`? */
+export function sectorCamasCubre(cargado: string | null | undefined, pedido: string | null | undefined): boolean {
+	if (cargado == null) return false;
+	const c = normalizarSectorCamas(cargado);
+	return c === 'all' || c === normalizarSectorCamas(pedido);
+}
+
 export function getCachedBedsList(
 	maxAgeMs = DEFAULT_TTL_MS,
 	idEmpresa?: string | number | null,
+	sector?: string | null,
 ): Bed[] | null {
 	if (!cache?.beds?.length) return null;
 	const current = resolveEmpresaId(idEmpresa);
 	if (!isSameEmpresa(cache.idEmpresa, current)) return null;
 	if (Date.now() - cache.ts > maxAgeMs) return null;
+	if (sector !== undefined && !sectorCamasCubre(cache.sector, sector)) return null;
 	return applyIndicacionesNuevasVistoLocal(cache.beds);
+}
+
+export function getCachedBedsSector(): string | null {
+	return cache?.sector ?? null;
 }
 
 export function getCachedBedMeta(
@@ -99,12 +119,14 @@ export function setCachedBedsList(
 	beds: Bed[],
 	extra?: { states?: BedsListCache['states']; sectores?: BedsListCache['sectores'] },
 	idEmpresa?: string | number | null,
+	sector?: string | null,
 ): void {
 	const current = resolveEmpresaId(idEmpresa);
 	const sameTenant = cache && isSameEmpresa(cache.idEmpresa, current);
 	cache = {
 		ts: Date.now(),
 		idEmpresa: current,
+		sector: normalizarSectorCamas(sector),
 		beds: applyIndicacionesNuevasVistoLocal(beds),
 		states: extra?.states ?? (sameTenant ? cache?.states : undefined),
 		sectores: extra?.sectores ?? (sameTenant ? cache?.sectores : undefined),

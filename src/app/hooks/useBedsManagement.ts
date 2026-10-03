@@ -10,6 +10,9 @@ import {
 	getCachedBedMeta,
 	applyIndicacionesNuevasVistoLocal,
 	getCachedBedsList,
+	getCachedBedsSector,
+	normalizarSectorCamas,
+	sectorCamasCubre,
 	setCachedBedMeta,
 	setCachedBedsList,
 } from '../utils/bedsListCache';
@@ -108,19 +111,23 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 	const { sectorSeleccionado, idsector, isAuthenticated, empresaInfo } = useAppContext();
 	const idEmpresa = empresaInfo?.id ?? null;
 
+	const [sectorFilter, setSectorFilter] = useState<string>(() => readPreferredSector(urlSector));
 	const cachedBeds =
-		typeof window !== 'undefined' ? getCachedBedsList(undefined, idEmpresa) : null;
+		typeof window !== 'undefined' ? getCachedBedsList(undefined, idEmpresa, sectorFilter) : null;
 	const cachedMeta =
 		typeof window !== 'undefined' ? getCachedBedMeta(undefined, idEmpresa) : null;
 
 	const [beds, setBeds] = useState<Bed[]>(() => cachedBeds || []);
+	/** Sector con el que se pidieron las camas que hay en `beds` (null = ninguna todavía). */
+	const [loadedSector, setLoadedSector] = useState<string | null>(() =>
+		cachedBeds ? getCachedBedsSector() : null,
+	);
 	const [bedStates, setBedStates] = useState<BedState[]>(
 		() => (cachedMeta?.states as BedState[]) || [],
 	);
 	const [loading, setLoading] = useState(() => !cachedBeds);
 	const [error, setError] = useState<string | null>(null);
 	const [filter, setFilter] = useState<string>('all');
-	const [sectorFilter, setSectorFilter] = useState<string>(() => readPreferredSector(urlSector));
 	const [servicioFilter, setServicioFilter] = useState<string>('all');
 	const [searchTerm, setSearchTerm] = useState('');
 	const [tipoRecursoFilter, setTipoRecursoFilter] = useState<'all' | BedTipoRecurso>('all');
@@ -175,7 +182,8 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 				if (gen !== fetchGenRef.current) return;
 				signatureRef.current = bedsListSignature(data);
 				setBeds(data);
-				setCachedBedsList(data, undefined, idEmpresa);
+				setLoadedSector(normalizarSectorCamas(sector));
+				setCachedBedsList(data, undefined, idEmpresa, sector);
 			} catch (err: unknown) {
 				if (gen !== fetchGenRef.current) return;
 				setError(bedsErrorMessage(err));
@@ -203,6 +211,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 				const data = applyIndicacionesNuevasVistoLocal(boot.beds);
 				signatureRef.current = bedsListSignature(data);
 				setBeds(data);
+				setLoadedSector(normalizarSectorCamas(sector));
 				if (boot.sectores.length) {
 					setSectors(boot.sectores);
 				} else {
@@ -217,6 +226,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 						states: boot.states.length ? boot.states : undefined,
 					},
 					idEmpresa,
+					sector,
 				);
 				if (!silent) setLoading(false);
 				return;
@@ -253,6 +263,7 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		if (empresaChanged) {
 			signatureRef.current = '';
 			setBeds([]);
+			setLoadedSector(null);
 			setSectors(seedSectorFromSession());
 			setBedStates([]);
 			setSectorFilter(readPreferredSector(urlSector));
@@ -262,10 +273,10 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 			return;
 		}
 
-		const hasCache = Boolean(getCachedBedsList(undefined, idEmpresa));
+		const hasCache = Boolean(getCachedBedsList(undefined, idEmpresa, sectorFilter));
 		const meta = getCachedBedMeta(undefined, idEmpresa);
 		void fetchInicial({ silent: hasCache, necesitaEstados: !meta?.states?.length });
-	}, [fetchInicial, isAuthenticated, idEmpresa]);
+	}, [fetchInicial, isAuthenticated, idEmpresa, sectorFilter]);
 
 	// Sector: filtro de esta sesión > URL > sector de login (principal) > Todos.
 	// El combo lista todos los I; el del personal solo preselecciona.
@@ -389,13 +400,18 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 
 	const refreshBeds = useCallback(() => fetchBeds({ silent: false }), [fetchBeds]);
 
+	// Al cambiar de sector, las camas en memoria son del sector anterior: filtrarlas daría
+	// "no se encontraron camas" hasta que llegue la respuesta. Se muestra el loader.
+	const esperandoSector =
+		isAuthenticated && !error && !sectorCamasCubre(loadedSector, sectorFilter);
+
 	return {
 		beds: filteredBeds,
 		allBeds: beds,
 		bedStates,
 		sectors,
 		serviciosMedicos,
-		loading,
+		loading: loading || esperandoSector,
 		error,
 		filter,
 		setFilter,
