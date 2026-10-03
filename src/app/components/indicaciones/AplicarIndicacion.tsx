@@ -165,9 +165,7 @@ export default function AplicarIndicacion(props: Props) {
                         usuario?.valorPersonal,
                         usuario?.idValorpersonal,
                     ),
-                    profesionalNombre: data.OperadorApellido && data.OperadorNombres
-                        ? `${data.OperadorApellido}, ${data.OperadorNombres}`
-                        : 'N/A',
+                    profesionalNombre: data.ProfesionalNombre || '',
                     frecuencia: data.Frecuencia || '',
                     intervalo: data.Intervalo || undefined,
                     observaciones: data.Observaciones || '',

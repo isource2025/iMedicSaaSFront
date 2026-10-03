@@ -71,7 +71,7 @@ export function getUserValorPersonal(user?: UserData | null): number | undefined
 export function getUserDisplayName(user?: UserData | null): string {
 	const nombre = String(user?.nombre || '').trim();
 	const apellido = String(user?.apellido || '').trim();
-	return `${nombre} ${apellido}`.trim();
+	return `${apellido} ${nombre}`.trim();
 }
 
 export function getStoredSector(): SectorInfo | null {

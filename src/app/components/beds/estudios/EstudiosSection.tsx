@@ -70,7 +70,7 @@ function buildEstudioFields(row: PedidoEstudio) {
 		{ label: 'Tipo', value: row.TipoPedidoDescripcion || row.PracticaSolicitada },
 		{ label: 'Nomenclador', value: row.NomencladorDescripcion, full: true },
 		{ label: 'Matrícula', value: row.MatriculaSolicitante },
-		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
+		{ label: 'Tomado por', value: row.NombreToma },
 		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{
 			label: 'Servicio destino',
@@ -316,7 +316,7 @@ export default function EstudiosSection({
 									<th>Pedido</th>
 									<th>Respuesta</th>
 									<th>Solicitado por</th>
-									<th>Acciones</th>
+									<th className={tableStyles.colAccion}>Acciones</th>
 								</tr>
 							</thead>
 							<tbody className={tableStyles.tbody}>
@@ -354,7 +354,7 @@ export default function EstudiosSection({
 													: '—'}
 										</td>
 										<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
-										<td>
+										<td className={tableStyles.cellAccion}>
 											<div className={tableStyles.actionBtns}>
 											<button
 												type="button"

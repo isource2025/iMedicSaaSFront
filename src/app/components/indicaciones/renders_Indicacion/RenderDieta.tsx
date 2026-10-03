@@ -1,3 +1,5 @@
+import { useAppContext } from '@/app/contexts/AppContext';
+import { getSessionUser, getUserDisplayName } from '@/app/utils/sessionUser';
 import { FormData } from '../AplicarIndicacion';
 import styles from '../AplicarIndicacion.module.css';
 
@@ -8,6 +10,7 @@ export default function RenderDieta({
     formData: FormData;
     handleChange: (field: keyof FormData, value: any) => void;
 }) {
+    const { usuario } = useAppContext();
     return (
         <>
             {/* Sección con recuadro rojo - campos editables */}
@@ -37,13 +40,7 @@ export default function RenderDieta({
                 <div className={styles.fieldRow}>
                     <label className={styles.fieldLabel}>Profesional</label>
                     <div className={styles.fieldValue}>
-                        <input
-                            type="text"
-                            value={formData.profesionalAsiste || ''}
-                            disabled
-                            className={styles.inputDisabled}
-                            style={{ width: '80px' }}
-                        />
+                        <span className={styles.profesionalNombre}>{getUserDisplayName(getSessionUser(usuario)) || '-'}</span>
                     </div>
                 </div>
 

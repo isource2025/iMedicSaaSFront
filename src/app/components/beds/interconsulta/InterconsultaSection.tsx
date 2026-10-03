@@ -59,7 +59,7 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 		return [
 			buildAtencionField(row),
 			{ label: 'Especialidad', value: row.Especialidad, full: true },
-			{ label: 'Matrícula', value: row.MedicoSolicitante },
+			{ label: 'Solicitado por', value: row.MedicoSolicitanteNombre },
 			{ label: 'Origen', value: 'Registro web' },
 		];
 	}
@@ -73,8 +73,7 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 			full: true,
 		},
 		{ label: 'Solicitado por', value: row.MedicoSolicitanteNombre },
-		{ label: 'Matrícula', value: row.MedicoSolicitante },
-		{ label: 'Tomado por', value: row.NombreToma || (row.MatriculaToma ? String(row.MatriculaToma) : null) },
+		{ label: 'Tomado por', value: row.NombreToma },
 		{ label: 'Respondido por', value: cumplido ? autorRespuesta(row) : null },
 		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{ label: 'Cód. práctica', value: row.CodigoPractica },
@@ -266,7 +265,6 @@ export default function InterconsultaSection({
 					],
 					profesional: {
 						nombre: r.MedicoSolicitanteNombre || 'PROFESIONAL',
-						matricula: r.MedicoSolicitante ?? undefined,
 					},
 				};
 			});
@@ -371,7 +369,7 @@ export default function InterconsultaSection({
 									<th>Respuesta</th>
 									<th>Solicitado por</th>
 									<th>Estado</th>
-									<th>Acciones</th>
+									<th className={tableStyles.colAccion}>Acciones</th>
 								</tr>
 							</thead>
 							<tbody className={tableStyles.tbody}>
@@ -418,7 +416,7 @@ export default function InterconsultaSection({
 													(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
 												{responsable ? ` · ${responsable}` : ''}
 											</td>
-											<td>
+											<td className={tableStyles.cellAccion}>
 												<div className={tableStyles.actionBtns}>
 												<button
 													type="button"

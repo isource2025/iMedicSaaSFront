@@ -1,6 +1,7 @@
 'use client'
 import { useAppContext } from "@/app/contexts/AppContext";
 import { FormData } from "../AplicarIndicacion";
+import { getSessionUser, getUserDisplayName } from "@/app/utils/sessionUser";
 import styles from '../AplicarIndicacion.module.css';
 import { presionMediaComoTexto } from "@/app/utils/presionArterial";
 
@@ -27,13 +28,7 @@ export default function RenderControl({
             <div className={styles.fieldRow}>
                 <label className={styles.fieldLabel}>Profesional que Indica</label>
                 <div className={styles.fieldValue}>
-                    <input
-                        type="text"
-                        value={usuario?.codigoOperador || usuario?.valorPersonal || usuario?.idValorpersonal || ''}
-                        disabled
-                        className={styles.inputDisabled}
-                    />
-                    <span className={styles.profesionalNombre}>{usuario?.nombre + " " + usuario?.apellido}</span>
+                    <span className={styles.profesionalNombre}>{formData.profesionalNombre || '-'}</span>
                 </div>
             </div>
 
@@ -50,13 +45,7 @@ export default function RenderControl({
             <div className={styles.fieldRow}>
                 <label className={styles.fieldLabel}>Personal que Controla</label>
                 <div className={styles.fieldValue}>
-                    <input
-                        type="text"
-                        value={formData.profesionalAsiste}
-                        disabled
-                        className={styles.inputDisabled}
-                    />
-                    <span className={styles.profesionalNombre}>{usuario?.nombre + " " + usuario?.apellido}</span>
+                    <span className={styles.profesionalNombre}>{getUserDisplayName(getSessionUser(usuario)) || '-'}</span>
                 </div>
             </div>
 

@@ -94,8 +94,8 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
                     { label: 'Cantidad', value: row.cantidad ?? '—' },
                 ],
                 profesional: {
-                    nombre: row.fullName || row.profesional || 'PROFESIONAL',
-                    matricula: row.matricula ?? row.profesional ?? undefined,
+                    nombre: row.fullName || 'PROFESIONAL',
+                    matricula: row.matricula ?? undefined,
                 },
             }));
 

@@ -1,7 +1,7 @@
 'use client'
 import { useAppContext } from "@/app/contexts/AppContext";
 import { FormData } from "../../../indicaciones/AplicarIndicacion";
-import { getSessionUser, getUserCodOperador, getHcIdProfesional, getUserDisplayName } from "@/app/utils/sessionUser";
+import { getSessionUser, getUserDisplayName } from "@/app/utils/sessionUser";
 import styles from '../../../indicaciones/AplicarIndicacion.module.css';
 import { presionMediaComoTexto } from "@/app/utils/presionArterial";
 
@@ -15,7 +15,6 @@ export default function RenderControlSimplificado({
 
     const { usuario } = useAppContext()
     const usuarioActual = getSessionUser(usuario);
-    const operadorActual = getHcIdProfesional(usuarioActual) ?? getUserCodOperador(usuarioActual);
     const nombreActual = getUserDisplayName(usuarioActual);
 
     // Helper para manejar cambios en los campos de control
@@ -32,13 +31,7 @@ export default function RenderControlSimplificado({
             <div className={styles.fieldRow}>
                 <label className={styles.fieldLabel}>Personal que Controla</label>
                 <div className={styles.fieldValue}>
-                    <input
-                        type="text"
-                        value={operadorActual || ''}
-                        disabled
-                        className={styles.inputDisabled}
-                    />
-                    <span className={styles.profesionalNombre}>{nombreActual}</span>
+                    <span className={styles.profesionalNombre}>{nombreActual || '-'}</span>
                 </div>
             </div>
 

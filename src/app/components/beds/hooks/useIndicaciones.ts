@@ -67,10 +67,7 @@ function mapIndicacionToRow(indicacion: Indicacion): IndicacionRow {
 		id: `${indicacion.NumeroVisita}-${indicacion.NroIndicacion}`,
 		cantidad: indicacion.Cantidad ?? undefined,
 		descripcion: indicacion.AliasMedicamento || `Indicación ${indicacion.NroIndicacion}`,
-		profesional:
-			indicacion.OperadorApellido && indicacion.OperadorNombres
-				? `${indicacion.OperadorNombres} ${indicacion.OperadorApellido}`
-				: 'Profesional no especificado',
+		profesional: indicacion.ProfesionalNombre || 'Profesional no especificado',
 		frecuencia: indicacion.Frecuencia || '-',
 		observaciones: indicacion.Observaciones || '',
 		proximo: formatDateTime(indicacion.FechaProximo, indicacion.HoraProximo),

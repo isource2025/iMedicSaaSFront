@@ -127,9 +127,7 @@ const IndicacionesList: React.FC<IndicacionesListProps> = ({
             <div className={styles.indicacionHeader}>
               <div className={styles.indicacionInfo}>
                 <span className={styles.indicacionNumber}>
-                  {indicacion.OperadorApellido && indicacion.OperadorNombres
-                    ? `${indicacion.OperadorApellido}, ${indicacion.OperadorNombres}`
-                    : (indicacion.OperadorCarga ?? 'Operador desconocido')}
+                  {indicacion.ProfesionalNombre || 'Operador desconocido'}
                 </span>
               </div>
             </div>

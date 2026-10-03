@@ -6,7 +6,6 @@ import {
   obtenerMedicacionPorVisitaYFecha,
   formatearFecha,
   formatearHora,
-  obtenerNombreCompleto,
   eliminarMedicacion,
   actualizarMedicacion,
 } from '../../../services/medicacionControlService';
@@ -190,10 +189,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
           { label: 'Observaciones', value: row.Observaciones || '—' },
         ],
         profesional: {
-          nombre:
-            obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres) !== '-'
-              ? obtenerNombreCompleto(row.ProfesionalApellido, row.ProfesionalNombres)
-              : obtenerNombreCompleto(row.OperadorApellido, row.OperadorNombres),
+          nombre: row.ProfesionalFullName || row.OperadorFullName || '-',
           matricula: row.Matricula ?? undefined,
           especialidad: 'Enfermería',
         },
@@ -303,10 +299,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                 <td>
                   <div className={tableStyles.profesionalContainer}>
                     <div className={tableStyles.profesionalPrimary}>
-                      {medicacion.Profesional || medicacion.OperadorCarga || '-'}
-                    </div>
-                    <div className={tableStyles.profesionalSub}>
-                      {medicacion.ProfesionalFullName || medicacion.OperadorFullName || ''}
+                      {medicacion.ProfesionalFullName || medicacion.OperadorFullName || '-'}
                     </div>
                   </div>
                 </td>
@@ -359,7 +352,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
               Aplicado {medicacion.CantidadIndicada || '—'} {medicacion.TipoUnidad || ''} · Total {medicacion.Cantidad || '—'}
             </p>
             <p className={tableStyles.mobileProfesional}>
-              {medicacion.ProfesionalFullName || medicacion.OperadorFullName || medicacion.Profesional || '—'}
+              {medicacion.ProfesionalFullName || medicacion.OperadorFullName || '—'}
             </p>
             <div className={tableStyles.actionBtns}>
               <button className={tableStyles.btnAction} onClick={() => handleVerDetalle(medicacion)} title="Ver detalle">
@@ -404,8 +397,8 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
                   ['Cantidad indicada', selectedMedicacion.CantidadIndicada || '-'],
                   ['Tipo unidad', selectedMedicacion.TipoUnidad || '-'],
                   ['Sector', selectedMedicacion.Sector || '-'],
-                  ['Profesional', selectedMedicacion.ProfesionalFullName || selectedMedicacion.Profesional || '-'],
-                  ['Operador', selectedMedicacion.OperadorFullName || selectedMedicacion.OperadorCarga || '-'],
+                  ['Profesional', selectedMedicacion.ProfesionalFullName || '-'],
+                  ['Operador', selectedMedicacion.OperadorFullName || '-'],
                   ['Observaciones', selectedMedicacion.Observaciones || '-'],
                 ].map(([label, value]) => (
                   <div key={String(label)} className={tableStyles.detailItem}>

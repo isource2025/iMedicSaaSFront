@@ -79,9 +79,9 @@ export default function EvolucionesTable({
         if (row.profesionalNombreCompleto) {
             nombre = row.profesionalNombreCompleto;
         } else if (row.profesionalApellido && row.profesionalNombre) {
-            nombre = `${row.profesionalApellido}, ${row.profesionalNombre}`;
+            nombre = `${row.profesionalApellido} ${row.profesionalNombre}`;
         } else {
-            nombre = row.profesional ? `Profesional ${row.profesional}` : "-";
+            nombre = "-";
         }
         
         // Agregar especialidad si existe
@@ -137,8 +137,8 @@ export default function EvolucionesTable({
                                         <td className={styles.cellProfesional}>
                                             {r.profesionalNombreCompleto || 
                                              (r.profesionalApellido && r.profesionalNombre ? 
-                                              `${r.profesionalApellido}, ${r.profesionalNombre}` : 
-                                              (r.profesional ? `Profesional ${r.profesional}` : "-"))}
+                                              `${r.profesionalApellido} ${r.profesionalNombre}` : 
+                                              "-")}
                                             {r.especialidadDescripcion && (
                                                 <>
                                                     <br />

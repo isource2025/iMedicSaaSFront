@@ -763,7 +763,7 @@ export default function HCIngresoSection({
                                     {selectedRecord.FechaFormateada && (
                                         <span>Fecha: {selectedRecord.FechaFormateada} {selectedRecord.HoraFormateada || ""}</span>
                                     )}
-                                    <span>Profesional: {selectedRecord.ProfesionalNombre || selectedRecord.IdProfecional}</span>
+                                    <span>Profesional: {selectedRecord.ProfesionalNombre || "—"}</span>
                                     <span>Sector: {selectedRecord.SectorDescripcion || selectedRecord.IdSector}</span>
                                 </div>
                             </div>

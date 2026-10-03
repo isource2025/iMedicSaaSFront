@@ -142,7 +142,7 @@ export default function InsumosTable({
                                                     {r.descripcion ?? "-"}
                                                 </div>
                                                 <div className={styles.sub}>
-                                                    {(r.profesional + " - " + r.fullName) || ""}
+                                                    {r.fullName || "—"}
                                                 </div>
                                             </div>
                                         </td>
@@ -236,7 +236,7 @@ export default function InsumosTable({
                         </div>
                         <div className={styles.cardRow}>
                             <span className={styles.label}>Profesional:</span>{" "}
-                            {r.profesional ?? "-"}
+                            {r.fullName || "-"}
                         </div>
                         <div className={styles.cardRow}>
                             <span className={styles.label}>ID Sector:</span>{" "}

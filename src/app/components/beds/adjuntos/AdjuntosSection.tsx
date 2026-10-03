@@ -206,7 +206,6 @@ export default function AdjuntosSection({
         ],
         profesional: {
           nombre: (a as any).NombreUsuario || (a as any).CargadoPorNombre || 'OPERADOR',
-          matricula: a.IdOperador ?? a.CargadoPor ?? undefined,
         },
       }));
 

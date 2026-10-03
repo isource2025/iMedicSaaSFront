@@ -169,7 +169,7 @@ export const obtenerNombreCompleto = (
   if (!apellido && !nombres) return '-';
   if (!apellido) return nombres || '-';
   if (!nombres) return apellido;
-  return `${apellido}, ${nombres}`;
+  return `${apellido} ${nombres}`;
 };
 
 /**

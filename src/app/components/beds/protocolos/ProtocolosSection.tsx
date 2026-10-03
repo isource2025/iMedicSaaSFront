@@ -17,7 +17,6 @@ import { exportToPDF } from '../../../utils/pdfExport';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
-import localStyles from './ProtocolosSection.module.css';
 
 type Props = {
 	numeroVisita: number | null;
@@ -45,7 +44,7 @@ function resumenEquipo(p: ProtocoloClinico) {
 	const profs = p.practicas?.flatMap((x) => x.profesionales || []) || [];
 	if (!profs.length) return '—';
 	return profs
-		.map((x) => `${x.funcionNombre}: ${x.apellidoNombre || x.valorPersonal}`)
+		.map((x) => `${x.funcionNombre}: ${x.apellidoNombre || 'Sin identificar'}`)
 		.join(' · ');
 }
 
@@ -55,7 +54,7 @@ function buildFields(p: ProtocoloClinico) {
 		{ label: 'Fecha', value: formatFecha(p.fecha) },
 		{ label: 'Nº protocolo', value: p.numeroProtocolo },
 		{ label: 'Tipo', value: p.tipoDescripcion || p.tipoProtocolo || '—' },
-		{ label: 'Cargado por', value: p.operadorNombre || p.idOperador },
+		{ label: 'Cargado por', value: p.operadorNombre },
 		{ label: 'Práctica', value: prac?.descripcion || prac?.codigoPractica },
 		{ label: 'Código', value: prac?.codigoPractica },
 		{ label: 'Equipo', value: resumenEquipo(p), full: true },
@@ -236,7 +235,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 									<th>Práctica</th>
 									<th>Equipo</th>
 									<th>Cargado por</th>
-									<th className={localStyles.colAcc}>Acciones</th>
+									<th className={tableStyles.colAccion}>Acciones</th>
 								</tr>
 							</thead>
 							<tbody className={tableStyles.tbody}>
@@ -263,13 +262,13 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 											<td className={tableStyles.meta}>{resumenEquipo(r)}</td>
 											<td className={tableStyles.meta}>{r.operadorNombre || '—'}</td>
 											<td
-												className={localStyles.colAcc}
+												className={tableStyles.cellAccion}
 												onClick={(e) => e.stopPropagation()}
 											>
-												<div className={localStyles.acciones}>
+												<div className={tableStyles.actionBtns}>
 													<button
 														type="button"
-														className={localStyles.btnAction}
+														className={tableStyles.btnAction}
 														onClick={() => setSelected(r)}
 														title="Ver detalle"
 													>
@@ -278,7 +277,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 													{puedeEditar && puedeGestionarFila(r) && (
 														<button
 															type="button"
-															className={localStyles.btnAction}
+															className={tableStyles.btnAction}
 															onClick={() => abrirEditar(r)}
 															title="Editar"
 														>
@@ -288,7 +287,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 													{puedeEliminar && puedeGestionarFila(r) && (
 														<button
 															type="button"
-															className={localStyles.btnAction}
+															className={tableStyles.btnAction}
 															onClick={() => setAEliminar(r)}
 															title="Borrar"
 														>

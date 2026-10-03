@@ -93,7 +93,7 @@ export function nombreProfesional(
 	if (!apellido && !nombres) return '—';
 	if (!apellido) return nombres || '—';
 	if (!nombres) return apellido;
-	return `${apellido}, ${nombres}`;
+	return `${apellido} ${nombres}`;
 }
 
 export function esFilaBalance(medicacion?: string | null): boolean {

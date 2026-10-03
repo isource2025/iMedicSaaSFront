@@ -145,9 +145,7 @@ export default function EpicrisisSection({
 			textLabel: 'Epicrisis',
 			text: row.epicrisis || '—',
 			profesional: {
-				nombre:
-					row.profesionalNombreCompleto ||
-					(row.profesional != null ? `Prof. ${row.profesional}` : 'PROFESIONAL'),
+				nombre: row.profesionalNombreCompleto || 'PROFESIONAL',
 				matricula: row.profesional ?? undefined,
 			},
 		}));

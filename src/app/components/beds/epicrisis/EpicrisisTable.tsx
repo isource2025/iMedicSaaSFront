@@ -103,10 +103,7 @@ export default function EpicrisisTable({
 												</div>
 											</td>
 											<td className={styles.cellProfesional}>
-												{r.profesionalNombreCompleto ||
-													(r.profesional
-														? `Profesional ${r.profesional}`
-														: '-')}
+												{r.profesionalNombreCompleto || '-'}
 											</td>
 											<td className={styles.cellSector}>{r.idSector || '-'}</td>
 											<td className={styles.cellAccion}>
@@ -197,7 +194,7 @@ export default function EpicrisisTable({
 						<div className={styles.modalBody}>
 							<p>
 								<strong>Profesional:</strong>{' '}
-								{viewing.profesionalNombreCompleto || viewing.profesional || '-'}
+								{viewing.profesionalNombreCompleto || '-'}
 							</p>
 							{(viewing.diagnostico || viewing.diagnosticoText) && (
 								<p>

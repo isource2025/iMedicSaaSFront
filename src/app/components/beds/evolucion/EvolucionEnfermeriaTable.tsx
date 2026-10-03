@@ -19,7 +19,7 @@ type Props = {
 function nombreProfesional(r: EvolucionEnfermeriaRow): string {
     const apellido = String(r.ProfesionalApellido || "").trim();
     const nombres = String(r.ProfesionalNombres || "").trim();
-    if (apellido && nombres) return `${apellido}, ${nombres}`;
+    if (apellido && nombres) return `${apellido} ${nombres}`;
     if (apellido) return apellido;
     if (nombres) return nombres;
     return "—";

@@ -115,7 +115,6 @@ export default function LabResultsSection({
         ],
         profesional: {
           nombre: (e as any).NombreUsuario || (e as any).CargadoPorNombre || 'OPERADOR',
-          matricula: (e as any).IdOperador ?? (e as any).CargadoPor ?? undefined,
         },
       }));
 
