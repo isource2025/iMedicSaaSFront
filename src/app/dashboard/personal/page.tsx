@@ -21,7 +21,6 @@ import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
 import { personalService } from '@/app/services/personalService';
 import type { SyncFisicoInforme as SyncFisicoInformeData } from '@/app/services/personalService';
-import { downloadPersonalExcel } from '@/app/utils/downloadPersonalExcel';
 import styles from './personal.module.css';
 
 type MenuState = {
@@ -156,6 +155,8 @@ export default function PersonalPage() {
 		try {
 			const data = await personalService.exportarPersonal(campos);
 			const stamp = new Date().toISOString().slice(0, 10);
+			// xlsx (~400 KB) se descarga recién al exportar, no al abrir la página.
+			const { downloadPersonalExcel } = await import('@/app/utils/downloadPersonalExcel');
 			downloadPersonalExcel(data.columns, data.rows, `personal_${stamp}.xlsx`);
 			setExportOpen(false);
 		} catch (e) {

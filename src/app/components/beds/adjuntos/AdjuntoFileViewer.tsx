@@ -3,8 +3,18 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import styles from './AdjuntoFileViewer.module.css';
 import { isDicom, isImage, isPdf, isVideo } from '@/app/utils/adjuntoFileTypes';
-import DicomViewer from './DicomViewer';
-import PdfPagesViewer from './PdfPagesViewer';
+import dynamic from 'next/dynamic';
+
+// pdf.js (~400 kB) y dicom-parser (~110 kB) se descargan recién al abrir un
+// archivo de ese tipo; ambos dependen de APIs del navegador (ssr: false).
+const DicomViewer = dynamic(() => import('./DicomViewer'), {
+  ssr: false,
+  loading: () => <div className={styles.loading}>Cargando visor DICOM…</div>,
+});
+const PdfPagesViewer = dynamic(() => import('./PdfPagesViewer'), {
+  ssr: false,
+  loading: () => <div className={styles.loading}>Cargando visor PDF…</div>,
+});
 
 export interface AdjuntoViewerState {
   blobUrl: string;

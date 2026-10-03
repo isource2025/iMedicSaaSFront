@@ -3,13 +3,20 @@
 import { useEffect, useState, useCallback } from 'react';
 import { NursingReportModalProps, ControlFrecuente } from '../../types/nursing/NursingComponents';
 import ModalBasePaciente from '../modals/ModalBasePaciente';
-import ControlesFrecuentesChart, { CHART_PARAMS } from "./ControlesFrecuentesChart";
+import dynamic from 'next/dynamic';
+import { CHART_PARAMS } from './chartParams';
 import { apiFetch } from '@/app/utils/authFetch';
 // import NuevaIndicacionModal, { IndicacionData } from './NuevaIndicacionModal';
 import styles from './NursingReportModal.module.css';
 import Loader from '../Loader/Loader';
 import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
 import { NuevaIndicacionPayload } from '@/app/types/indicaciones';
+
+// El gráfico (recharts, ~380 kB) solo se descarga al abrir la pestaña "Gráfico".
+const ControlesFrecuentesChart = dynamic(() => import('./ControlesFrecuentesChart'), {
+  ssr: false,
+  loading: () => <div style={{ position: 'relative', minHeight: '220px' }}><Loader /></div>,
+});
 import { indicacionesService } from '@/app/services/indicacionesService';
 import { formatIMC } from '@/app/utils/antropometria';
 

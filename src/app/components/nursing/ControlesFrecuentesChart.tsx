@@ -126,15 +126,6 @@ const ControlesFrecuentesChart = ({ data, parametro }: ControlesFrecuentesChartP
   );
 };
 
-export const CHART_PARAMS = [
-  { value: "pulso", label: "Pulso" },
-  { value: "maximo", label: "Presión Máxima" },
-  { value: "minimo", label: "Presión Mínima" },
-  { value: "pam", label: "PAMedia" },
-  { value: "frecResp", label: "Frec. Resp." },
-  { value: "axilar", label: "Temp. Axilar" },
-  { value: "saturometria", label: "Saturometría" },
-  { value: "glucemia", label: "Glucemia" }
-];
+export { CHART_PARAMS } from './chartParams';
 
 export default ControlesFrecuentesChart;

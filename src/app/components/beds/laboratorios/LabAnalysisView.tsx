@@ -3,9 +3,16 @@ import { useState, useMemo, useRef, useEffect, type CSSProperties } from "react"
 import { createPortal } from "react-dom";
 import { ExamenLabCompleto, ExamenLabDetalle } from "@/app/types/laboratorios";
 import { laboratoriosService } from "@/app/services/laboratoriosService";
-import LabParameterChart, { LabDataPoint } from "./LabParameterChart";
+import dynamic from "next/dynamic";
+import type { LabDataPoint } from "./LabParameterChart";
 import EmptyState from "../shared/EmptyState";
 import styles from "./LabAnalysisView.module.css";
+
+// El gráfico (recharts) se carga solo cuando el usuario despliega un parámetro.
+const LabParameterChart = dynamic(() => import("./LabParameterChart"), {
+  ssr: false,
+  loading: () => <div className={styles.chartInlineCell} style={{ minHeight: "160px" }} />,
+});
 
 interface LabAnalysisViewProps {
   examenes: ExamenLabCompleto[];

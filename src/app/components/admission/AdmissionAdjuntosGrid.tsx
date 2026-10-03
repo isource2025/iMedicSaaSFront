@@ -15,7 +15,6 @@ function etiquetaOrigen(raw: unknown): string {
   return ORIGEN_ADJUNTO_LABEL[o] ?? '';
 }
 import { isDicom, isImage } from '@/app/utils/adjuntoFileTypes';
-import { renderDicomPreviewDataUrl } from '@/app/utils/dicomRenderer';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import {
   useUsuarioActual,
@@ -105,6 +104,8 @@ function AdjuntoCard({
           }
         } else if (isDicom(nombreArchivo, type)) {
           try {
+            // dicom-parser sólo se descarga si hay un DICOM que previsualizar (igual que pdfJs).
+            const { renderDicomPreviewDataUrl } = await import('@/app/utils/dicomRenderer');
             const dataUrl = await renderDicomPreviewDataUrl(await blob.arrayBuffer());
             if (!cancelled) setPreview(dataUrl);
           } catch {

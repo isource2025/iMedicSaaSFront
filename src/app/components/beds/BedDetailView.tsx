@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Bed } from '../../types/beds';
 import styles from './BedDetailView.module.css';
+import Loader from '../Loader/Loader';
 
 /** Si ya tienes estos componentes, usa los tuyos */
 import PatientMiniHeader from './patient/PatientMiniHeader';
@@ -11,30 +13,44 @@ import SidebarFilters from './sidebar/SidebarFilters';
 import { useBedDetail } from './contexts/BedDetailContext';
 import { getIdSectorFromToken } from '../../utils/jwtSession';
 import { useMarcarIndicacionesVistasAlSalir } from '../../hooks/useMarcarIndicacionesVistasAlSalir';
+// Secciones iniciales (indicaciones para todos, adjuntos para CARGA_HC): estáticas,
+// así el primer render de la ficha no espera un chunk extra.
 import IndicacionesSection from './indicaciones/IndicacionesSection';
-import MedicacionSuministradaSection from './medicacion/MedicacionSuministradaSection';
-import ControlesFrecuentesSection from './controles/ControlesFrecuentesSection';
-import EvolucionEnfermeriaSection from './evolucion/EvolucionEnfermeriaSection';
-import InsumosSection from './insumos/InsumosSection';
-import MovimientosSection from './movimientos/MovimientosSection';
-import EvolucionesSection from './evoluciones/EvolucionesSection';
-import HCIngresoSection from './hc-ingreso/HCIngresoSection';
-import AdjuntosModal from './adjuntos/AdjuntosModal';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
-import LabResultsSection from './laboratorios/LabResultsSection';
-import EstudiosSection from './estudios/EstudiosSection';
-import SolicitudesEstudiosSection from './estudios/SolicitudesEstudiosSection';
+import AdjuntosModal from './adjuntos/AdjuntosModal';
 import { useSolicitudesMulti } from '@/app/utils/solicitudesMulti';
-import ProtocolosSection from './protocolos/ProtocolosSection';
-import InterconsultaSection from './interconsulta/InterconsultaSection';
-import EpicrisisSection from './epicrisis/EpicrisisSection';
 import BedFloatingActions from './BedFloatingActions';
 import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
 import { bedToHeaderSnapshot } from '../../utils/bedHeader';
 import AdmissionVisitExportModal from '../admission/AdmissionVisitExportModal';
-import ProcedimientosSection from './procedimientos/ProcedimientosSection';
-import BalanceHidricoSection from './balance-hidrico/BalanceHidricoSection';
+
+/**
+ * El resto de las secciones se renderiza de a una (según `activeSection`), así
+ * que cada una va en su propio chunk y se descarga la primera vez que se abre.
+ * Antes las 18 venían en el bundle de /beds/[id] (≈550 KB de First Load JS).
+ */
+const SeccionCargando = () => (
+	<div style={{ position: 'relative', minHeight: '220px' }}>
+		<Loader />
+	</div>
+);
+// next/dynamic exige el objeto de opciones como literal en cada llamada.
+const MedicacionSuministradaSection = dynamic(() => import('./medicacion/MedicacionSuministradaSection'), { loading: SeccionCargando });
+const ControlesFrecuentesSection = dynamic(() => import('./controles/ControlesFrecuentesSection'), { loading: SeccionCargando });
+const EvolucionEnfermeriaSection = dynamic(() => import('./evolucion/EvolucionEnfermeriaSection'), { loading: SeccionCargando });
+const InsumosSection = dynamic(() => import('./insumos/InsumosSection'), { loading: SeccionCargando });
+const MovimientosSection = dynamic(() => import('./movimientos/MovimientosSection'), { loading: SeccionCargando });
+const EvolucionesSection = dynamic(() => import('./evoluciones/EvolucionesSection'), { loading: SeccionCargando });
+const HCIngresoSection = dynamic(() => import('./hc-ingreso/HCIngresoSection'), { loading: SeccionCargando });
+const LabResultsSection = dynamic(() => import('./laboratorios/LabResultsSection'), { loading: SeccionCargando });
+const EstudiosSection = dynamic(() => import('./estudios/EstudiosSection'), { loading: SeccionCargando });
+const SolicitudesEstudiosSection = dynamic(() => import('./estudios/SolicitudesEstudiosSection'), { loading: SeccionCargando });
+const ProtocolosSection = dynamic(() => import('./protocolos/ProtocolosSection'), { loading: SeccionCargando });
+const InterconsultaSection = dynamic(() => import('./interconsulta/InterconsultaSection'), { loading: SeccionCargando });
+const EpicrisisSection = dynamic(() => import('./epicrisis/EpicrisisSection'), { loading: SeccionCargando });
+const ProcedimientosSection = dynamic(() => import('./procedimientos/ProcedimientosSection'), { loading: SeccionCargando });
+const BalanceHidricoSection = dynamic(() => import('./balance-hidrico/BalanceHidricoSection'), { loading: SeccionCargando });
 
 interface BedDetailViewProps {
 	bed: Bed;

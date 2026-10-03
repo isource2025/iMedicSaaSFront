@@ -1,5 +1,10 @@
-import { renderDicomToCanvas } from '@/app/utils/dicomRenderer';
 import { sortDicomFilesByNumericOrder } from '@/app/utils/dicomSort';
+
+// dicom-parser se carga recién cuando se genera un video (evita sumarlo al bundle inicial).
+async function renderDicomToCanvas(arrayBuffer: ArrayBuffer, canvas: HTMLCanvasElement): Promise<void> {
+  const mod = await import('@/app/utils/dicomRenderer');
+  return mod.renderDicomToCanvas(arrayBuffer, canvas);
+}
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
