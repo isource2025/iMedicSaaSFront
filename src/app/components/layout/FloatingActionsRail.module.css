@@ -1,11 +1,13 @@
 /*
- * No dejar `transform` en los botones cuando están visibles: los paneles/modales
- * `position: fixed` que se abren desde ellos quedarían atrapados.
+ * Un solo bloque pegado al borde derecho: opciones arriba, pestaña (flecha) abajo.
+ * Sin `transform`/`filter` en el bloque ni en las opciones visibles: los paneles/modales
+ * `position: fixed` que se abren desde ellas quedarían atrapados.
  */
-/* Una sola columna: botones arriba, pestaña abajo, centrados sobre el mismo eje. */
 .rail {
-  --fab-size: 42px;
-  --fab-edge-gap: 5px;
+  --rail-w: 40px;
+  --rail-grow: 14px;
+  --rail-bg: #0083a9;
+  --rail-radius: 14px;
   position: fixed;
   right: 0;
   bottom: 20px;
@@ -13,49 +15,86 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
   pointer-events: none;
 }
 
 .stack {
-  display: flex;
+  display: none;
   flex-direction: column-reverse;
-  align-items: center;
-  gap: 8px;
-  width: calc(var(--fab-size) + var(--fab-edge-gap) * 2);
-  padding-right: var(--fab-edge-gap);
-  padding-left: var(--fab-edge-gap);
+  align-items: flex-end;
+  gap: 2px;
+  width: var(--rail-w);
+  padding: 6px 0 4px;
   box-sizing: border-box;
-  pointer-events: none;
-}
-
-.stack > * {
-  pointer-events: none;
-  visibility: hidden;
-  opacity: 0;
-  transform: translateX(calc(100% + 40px));
-  transition:
-    transform 0.26s ease,
-    opacity 0.2s ease,
-    visibility 0s linear 0.26s;
-}
-
-.railOpen .stack > * {
+  background: var(--rail-bg);
+  border-radius: var(--rail-radius) 0 0 0;
+  box-shadow: -4px 0 14px rgba(15, 23, 42, 0.2);
   pointer-events: auto;
-  visibility: visible;
-  opacity: 1;
-  transform: none;
+}
+
+/* Se revela de abajo hacia arriba; al terminar no queda clip (no recorta paneles ni el hover). */
+.railOpen .stack {
+  display: flex;
+  animation: railReveal 0.26s ease backwards;
+}
+
+@keyframes railReveal {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Opción del bloque (la usan los botones que viven dentro del riel). */
+.item {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--rail-w);
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 12px 0 0 12px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
   transition:
-    transform 0.26s ease,
-    opacity 0.2s ease,
-    visibility 0s linear 0s;
+    width 0.22s cubic-bezier(0.34, 1.4, 0.64, 1),
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.item:focus-visible,
+.itemActive {
+  width: calc(var(--rail-w) + var(--rail-grow));
+  background: var(--rail-item-accent, #0a9ccc);
+  box-shadow: -4px 2px 12px rgba(15, 23, 42, 0.28);
+}
+
+.item:focus-visible {
+  outline: 2px solid #bae6fd;
+  outline-offset: -2px;
+}
+
+.item:active {
+  background: var(--rail-item-accent-strong, var(--rail-item-accent, #0a9ccc));
 }
 
 /* Pestaña pegada al borde derecho: campanita (plegado) + flecha */
 .tab {
   position: relative;
   flex-shrink: 0;
-  width: 34px;
+  width: var(--rail-w);
   min-height: 70px;
   display: flex;
   flex-direction: column;
@@ -64,17 +103,47 @@
   gap: 10px;
   padding: 14px 0;
   border: none;
-  border-radius: 12px 0 0 12px;
-  background: #0083a9;
+  border-radius: var(--rail-radius) 0 0 var(--rail-radius);
+  background: var(--rail-bg);
   color: #fff;
   cursor: pointer;
-  box-shadow: -3px 3px 12px rgba(15, 23, 42, 0.25);
+  box-shadow: -4px 2px 14px rgba(15, 23, 42, 0.25);
   pointer-events: auto;
-  transition: background 0.2s ease;
+  transition:
+    width 0.22s cubic-bezier(0.34, 1.4, 0.64, 1),
+    background 0.2s ease;
 }
 
-.tab:hover {
-  background: #006f90;
+/* En táctil el :hover queda "pegado" tras el tap: solo se extiende con puntero real. */
+@media (hover: hover) {
+  .item:hover {
+    width: calc(var(--rail-w) + var(--rail-grow));
+    background: var(--rail-item-accent, #0a9ccc);
+    box-shadow: -4px 2px 12px rgba(15, 23, 42, 0.28);
+  }
+
+  .tab:hover {
+    width: calc(var(--rail-w) + var(--rail-grow));
+    background: #006f90;
+  }
+}
+
+/* Abierto: la pestaña es la base del bloque. */
+.railOpen .tab {
+  min-height: 44px;
+  padding: 12px 0;
+  border-radius: 0 0 0 var(--rail-radius);
+  box-shadow: -4px 4px 14px rgba(15, 23, 42, 0.2);
+}
+
+.railOpen .tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .tabAlert {
@@ -197,24 +266,32 @@
 
 @media (max-width: 768px) {
   .rail {
+    --rail-w: 42px;
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     right: env(safe-area-inset-right, 0px);
-    gap: 9px;
   }
 
-  .stack {
-    gap: 7px;
+  .item {
+    height: 46px;
   }
 
   .tab {
     min-height: 72px;
     padding: 15px 0;
   }
+
+  .railOpen .tab {
+    min-height: 46px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stack > *,
-  .railOpen .stack > * {
+  .railOpen .stack {
+    animation: none;
+  }
+
+  .item,
+  .tab {
     transition: none;
   }
 

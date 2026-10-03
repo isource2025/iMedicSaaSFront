@@ -1,6 +1,7 @@
 'use client';
 
 import FloatingActionsRail from '@/app/components/layout/FloatingActionsRail';
+import railStyles from '@/app/components/layout/FloatingActionsRail.module.css';
 import NotificationsFab from '@/app/components/layout/NotificationsFab';
 import PatientFolderFab from '@/app/components/layout/PatientFolderFab';
 import { usePermiso } from '@/app/hooks/usePermiso';
@@ -45,7 +46,7 @@ export default function BedFloatingActions({
       {showNursing && (
       <button
         type="button"
-        className={styles.fabEnfermeria}
+        className={`${railStyles.item} ${styles.fabEnfermeria}`}
         onClick={onOpenNursing}
         title="Reporte de enfermería"
         aria-label="Abrir reporte de enfermería"
@@ -61,7 +62,7 @@ export default function BedFloatingActions({
       {showLabs && (
       <button
         type="button"
-        className={styles.fabLaboratorio}
+        className={`${railStyles.item} ${styles.fabLaboratorio}`}
         onClick={onOpenLaboratorios}
         title="Resultados de laboratorio"
         aria-label="Abrir resultados de laboratorio"
@@ -76,7 +77,7 @@ export default function BedFloatingActions({
       {showAdjuntos && (
       <button
         type="button"
-        className={styles.fabAdjuntos}
+        className={`${railStyles.item} ${styles.fabAdjuntos}`}
         onClick={onOpenAdjuntos}
         title="Archivos adjuntos"
         aria-label="Abrir archivos adjuntos"

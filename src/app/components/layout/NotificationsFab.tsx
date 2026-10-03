@@ -11,6 +11,7 @@ import {
 	refreshList,
 	useNotificacionesStore,
 } from '@/app/utils/notificacionesStore';
+import railStyles from './FloatingActionsRail.module.css';
 import styles from './NotificationsFab.module.css';
 
 const OPEN_EVENT = 'imedic:notifications-open';
@@ -162,7 +163,11 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 	const hasPedidos = bandejaLibres > 0;
 	const fabHighlight = hasUnread || hasPedidos;
 	const badgeTotal = hasUnread ? count : bandejaLibres;
-	const fabTone = hasUnread ? styles.fabAlert : hasPedidos ? styles.fabPedidos : styles.fabIdle;
+	const fabClass = stack
+		? `${railStyles.item} ${styles.railItem} ${hasUnread ? styles.railAlert : hasPedidos ? styles.railPedidos : ''} ${
+				open ? railStyles.itemActive : ''
+			}`
+		: `${styles.fab} ${hasUnread ? styles.fabAlert : hasPedidos ? styles.fabPedidos : styles.fabIdle}`;
 
 	return (
 		<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={panelRef}>
@@ -170,7 +175,7 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 				<button
 					id="notifications-fab-trigger"
 					type="button"
-					className={`${styles.fab} ${fabTone}`}
+					className={fabClass}
 					onClick={handleOpen}
 					aria-expanded={open}
 					data-fab-alert={fabHighlight ? 'true' : undefined}

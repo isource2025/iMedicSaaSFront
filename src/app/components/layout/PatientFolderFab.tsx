@@ -7,6 +7,7 @@ import PatientFolderVisitsModal from '@/app/components/admission/PatientFolderVi
 import { useAdmissionVisitDetail } from '@/app/hooks/useAdmissionVisitDetail';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { interpretarBusquedaUnificada } from '@/app/utils/busquedaPaciente';
+import railStyles from './FloatingActionsRail.module.css';
 import styles from './PatientFolderFab.module.css';
 
 type Carpeta = {
@@ -108,7 +109,7 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 		<>
 			<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={wrapRef}>
 				{expanded ? (
-					<div className={styles.searchPanel}>
+					<div className={`${styles.searchPanel} ${stack ? styles.searchPanelInStack : ''}`}>
 						<form
 							className={styles.searchForm}
 							onSubmit={(e) => {
@@ -180,12 +181,28 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 								))}
 							</ul>
 						)}
+						{stack && !searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
 					</div>
-				) : (
+				) : null}
+				{stack || !expanded ? (
 					<button
 						type="button"
-						className={styles.fab}
-						onClick={() => setExpanded(true)}
+						className={
+							stack
+								? `${railStyles.item} ${styles.railItem} ${expanded ? railStyles.itemActive : ''}`
+								: styles.fab
+						}
+						onClick={() => {
+							if (!expanded) {
+								setExpanded(true);
+								return;
+							}
+							setExpanded(false);
+							setTermino('');
+							setSearchError('');
+							setHits([]);
+						}}
+						aria-expanded={expanded}
 						aria-label="Buscar paciente por nombre, DNI o número de visita"
 						title="Buscar paciente"
 					>
@@ -194,8 +211,8 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 							<path d="M20 20l-3.5-3.5" />
 						</svg>
 					</button>
-				)}
-				{!searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
+				) : null}
+				{!stack && !searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
 			</div>
 
 			<PatientFolderVisitsModal
