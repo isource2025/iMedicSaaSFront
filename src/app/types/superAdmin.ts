@@ -242,6 +242,25 @@ export interface CatalogoServicio {
   descripcion: string;
 }
 
+/** Capítulo del nomenclador que se puede asignar a un servicio como prefijo de práctica. */
+export interface PrefijoPracticaOpcion {
+  value: string;
+  label: string;
+  detail?: string;
+}
+
+export interface ServicioPrefijos {
+  id: string;
+  descripcion: string;
+  /** Prefijos guardados en imServicios.PrefijosPractica ("42,66" -> ['42','66']). */
+  prefijos: string[];
+}
+
+export interface ServiciosPrefijosEmpresa {
+  servicios: ServicioPrefijos[];
+  opciones: PrefijoPracticaOpcion[];
+}
+
 export interface CatalogoSector {
   id: string;
   descripcion: string;

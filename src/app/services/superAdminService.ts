@@ -3,6 +3,7 @@ import type {
   ActualizarUsuarioEmpresaBody,
   CatalogoSector,
   CatalogoServicio,
+  ServiciosPrefijosEmpresa,
   AltaEmpresaBody,
   ConfigPlataforma,
   CrearUsuarioEmpresaBody,
@@ -263,6 +264,26 @@ export const superAdminService = {
       `${BASE}/servicios/${encodeURIComponent(valor)}`,
       body,
     );
+    return res.data.data;
+  },
+
+  /** Servicios de la empresa con sus prefijos de práctica + todos los prefijos disponibles. */
+  async getServiciosPrefijos(idEmpresa: string | number): Promise<ServiciosPrefijosEmpresa> {
+    const res = await apiService.get<{ success: boolean; data: ServiciosPrefijosEmpresa }>(
+      `${BASE}/empresas/${idEmpresa}/servicios-prefijos`,
+    );
+    return res.data.data;
+  },
+
+  async guardarPrefijosServicio(
+    idEmpresa: string | number,
+    valor: string,
+    prefijos: string[],
+  ): Promise<{ id: string; prefijos: string[]; texto: string }> {
+    const res = await apiService.put<{
+      success: boolean;
+      data: { id: string; prefijos: string[]; texto: string };
+    }>(`${BASE}/empresas/${idEmpresa}/servicios/${encodeURIComponent(valor)}/prefijos`, { prefijos });
     return res.data.data;
   },
 

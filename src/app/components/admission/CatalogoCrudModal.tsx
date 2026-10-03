@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { mensajeDeError } from '@/app/utils/apiError';
+import PrefijosPracticaPicker from '@/app/components/UI/PrefijosPracticaPicker';
 import styles from './CatalogoCrudModal.module.css';
 
 export type CatalogoOption = {
@@ -19,8 +20,10 @@ export type CatalogoColumn = {
   autoKey?: boolean;
   requiredOnCreate?: boolean;
   required?: boolean;
-  input?: 'select' | 'search';
+  input?: 'select' | 'search' | 'multicheck';
   options?: CatalogoOption[];
+  /** Solo 'multicheck': largo de la columna donde se guarda la lista. */
+  maxLength?: number;
 };
 
 type Props = {
@@ -468,6 +471,22 @@ export default function CatalogoCrudModal({
                           disabled={bloqueado}
                           onChange={setValor}
                           onSearch={onSearch}
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (c.input === 'multicheck') {
+                    return (
+                      <div key={c.key} className={styles.campo}>
+                        {etiqueta}
+                        <PrefijosPracticaPicker
+                          name={c.key}
+                          options={c.options ?? []}
+                          value={valor}
+                          disabled={bloqueado}
+                          maxLength={c.maxLength}
+                          onChange={setValor}
                         />
                       </div>
                     );

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { superAdminService } from '@/app/services/superAdminService';
-import type { CatalogoServicio, EmpresaAdmin } from '@/app/types/superAdmin';
+import type { CatalogoServicio, EmpresaAdmin, ServiciosPrefijosEmpresa } from '@/app/types/superAdmin';
+import PrefijosPracticaPicker, { unirPrefijos } from '@/app/components/UI/PrefijosPracticaPicker';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import styles from '../superAdmin.module.css';
 
@@ -22,6 +23,49 @@ export default function SeccionServicios({ empresa, servicios, onRefresh, onUpda
   const [q, setQ] = useState('');
   const [saving, setSaving] = useState(false);
   const [borrar, setBorrar] = useState<string | null>(null);
+  const [prefData, setPrefData] = useState<ServiciosPrefijosEmpresa | null>(null);
+  const [prefError, setPrefError] = useState<string | null>(null);
+  const [prefEdit, setPrefEdit] = useState<{ id: string; descripcion: string; valor: string } | null>(null);
+  const [prefError2, setPrefError2] = useState<string | null>(null);
+
+  const cargarPrefijos = useCallback(async () => {
+    try {
+      setPrefData(await superAdminService.getServiciosPrefijos(empresa.id));
+      setPrefError(null);
+    } catch (e) {
+      setPrefData(null);
+      setPrefError(e instanceof Error ? e.message : 'No se pudieron cargar los prefijos de práctica');
+    }
+  }, [empresa.id]);
+
+  useEffect(() => {
+    void cargarPrefijos();
+  }, [cargarPrefijos]);
+
+  const prefijosDe = useMemo(() => {
+    const m = new Map<string, string[]>();
+    (prefData?.servicios || []).forEach((p) => m.set(p.id.toUpperCase(), p.prefijos));
+    return m;
+  }, [prefData]);
+
+  const guardarPrefijos = async () => {
+    if (!prefEdit) return;
+    setSaving(true);
+    setPrefError2(null);
+    try {
+      await superAdminService.guardarPrefijosServicio(
+        empresa.id,
+        prefEdit.id,
+        prefEdit.valor ? prefEdit.valor.split(',') : [],
+      );
+      setPrefEdit(null);
+      await cargarPrefijos();
+    } catch (e) {
+      setPrefError2(e instanceof Error ? e.message : 'No se pudieron guardar los prefijos');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     setSel(new Set(empresa.onboarding?.serviciosDefecto || []));
@@ -107,6 +151,9 @@ export default function SeccionServicios({ empresa, servicios, onRefresh, onUpda
           Guardar predeterminados
         </button>
       </div>
+      {prefError ? (
+        <p className={styles.muted}>No se pudieron cargar los prefijos de práctica: {prefError}</p>
+      ) : null}
       <div className={styles.inlineForm}>
         <input className={styles.input} placeholder="Buscar…" value={q} onChange={(e) => setQ(e.target.value)} />
         <input
@@ -133,6 +180,7 @@ export default function SeccionServicios({ empresa, servicios, onRefresh, onUpda
               <th>Default</th>
               <th>Código</th>
               <th>Descripción</th>
+              <th>Prefijos de práctica</th>
               <th></th>
             </tr>
           </thead>
@@ -163,7 +211,33 @@ export default function SeccionServicios({ empresa, servicios, onRefresh, onUpda
                     s.descripcion
                   )}
                 </td>
+                <td>
+                  {prefData ? (
+                    (prefijosDe.get(s.id.toUpperCase()) || []).length ? (
+                      (prefijosDe.get(s.id.toUpperCase()) || []).join(', ')
+                    ) : (
+                      <span className={styles.muted}>—</span>
+                    )
+                  ) : (
+                    <span className={styles.muted}>…</span>
+                  )}
+                </td>
                 <td className={styles.actionsCell}>
+                  <button
+                    type="button"
+                    className={styles.btnSmSecondary}
+                    disabled={!prefData}
+                    onClick={() => {
+                      setPrefError2(null);
+                      setPrefEdit({
+                        id: s.id,
+                        descripcion: s.descripcion,
+                        valor: unirPrefijos(prefijosDe.get(s.id.toUpperCase()) || []),
+                      });
+                    }}
+                  >
+                    Prefijos
+                  </button>
                   {editId === s.id ? (
                     <button type="button" className={styles.btnSm} onClick={() => void guardarEdit()}>
                       OK
@@ -189,6 +263,52 @@ export default function SeccionServicios({ empresa, servicios, onRefresh, onUpda
           </tbody>
         </table>
       </div>
+      {prefEdit && prefData ? (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="sa-prefijos-title">
+          <div className={styles.modalPanel} style={{ width: 'min(640px, 96vw)' }}>
+            <div className={styles.modalHeader}>
+              <strong id="sa-prefijos-title" className="modal-title">
+                Prefijos de práctica · {prefEdit.id} {prefEdit.descripcion ? `(${prefEdit.descripcion})` : ''}
+              </strong>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setPrefEdit(null)}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.wizardHint} style={{ marginTop: 0 }}>
+                Capítulos del nomenclador que realiza este servicio. Con ellos se arma el catálogo de estudios
+                que se pueden pedir. El 42 (consultas / interconsulta) suele estar en todos los servicios.
+              </p>
+              {prefError2 ? <div className={styles.error}>{prefError2}</div> : null}
+              <PrefijosPracticaPicker
+                name="prefijos"
+                options={prefData.opciones}
+                value={prefEdit.valor}
+                maxLength={40}
+                onChange={(valor) => setPrefEdit((p) => (p ? { ...p, valor } : p))}
+              />
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setPrefEdit(null)}
+                disabled={saving}
+              >
+                Cancelar
+              </button>
+              <button type="button" className={styles.btn} onClick={() => void guardarPrefijos()} disabled={saving}>
+                {saving ? 'Guardando…' : 'Guardar prefijos'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <ConfirmDialog
         open={!!borrar}
         title="Eliminar servicio"

@@ -14,8 +14,9 @@ export interface CatalogoSqlColumn {
   requiredOnCreate?: boolean;
   required?: boolean;
   type?: string;
-  input?: 'select' | 'search';
+  input?: 'select' | 'search' | 'multicheck';
   options?: CatalogoSqlOption[];
+  maxLength?: number;
 }
 
 interface Envelope<T> {
