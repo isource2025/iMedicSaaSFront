@@ -21,10 +21,8 @@
 .stack {
   display: none;
   flex-direction: column-reverse;
-  align-items: flex-end;
-  gap: 2px;
+  align-items: flex-end;  
   width: var(--rail-w);
-  padding: 6px 0 4px;
   box-sizing: border-box;
   background: var(--rail-bg);
   border-radius: var(--rail-radius) 0 0 0;
