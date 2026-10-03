@@ -457,7 +457,11 @@ export default function AdmissionUbicacionMovimientosModal({
         <>
           {showUbicacion ? (
             <section className={embedded ? styles.sectionFlat : styles.section}>
-              {mostrarTitulos ? <h3 className={styles.sectionTitle}>Ubicación actual</h3> : null}
+              {mostrarTitulos ? (
+                <h3 className={styles.sectionTitle}>
+                  {yaEgresado ? 'Última ubicación (egresado)' : 'Ubicación actual'}
+                </h3>
+              ) : null}
               <div className={styles.ubicacionGrid}>
                 <label className={styles.field}>
                   <span>Sector</span>
@@ -602,7 +606,7 @@ export default function AdmissionUbicacionMovimientosModal({
                     className={`${styles.btn} ${styles.btnDanger}`}
                     disabled={loading || revertBusy}
                     onClick={() => void onRevertirEgreso()}
-                    title="Anula el egreso y devuelve al paciente a la misma cama"
+                    title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda sin cama para asignarle una"
                   >
                     {revertBusy ? 'Revisando…' : 'Revertir egreso'}
                   </button>

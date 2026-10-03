@@ -1070,7 +1070,7 @@ export default function NuevaAdmisionClient() {
         <div className={styles.bloque}>
           <div className={styles.bloqueHeader}>
             <h2>
-              <BedDouble size={18} /> Ubicación y movimientos
+              <BedDouble size={18} /> Ubicación, movimientos y egreso
             </h2>
           </div>
           <AdmissionUbicacionMovimientosModal
@@ -1078,7 +1078,7 @@ export default function NuevaAdmisionClient() {
             embedded
             numeroVisita={numeroVisitaUrl}
             onClose={() => {}}
-            focusSection="ubicacion_movimientos"
+            focusSection="all"
           />
         </div>
       )}
