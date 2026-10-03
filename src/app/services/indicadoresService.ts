@@ -82,6 +82,72 @@ export const obtenerIndicadores = async (
 };
 
 /**
+ * Resumen por clase (suma + total) a partir de filas ya descargadas. Puro, sin red.
+ */
+export const resumenDesdeIndicadores = (
+  indicadoresRaw: IndicadorData[],
+  fechaInicio: string,
+  fechaFin: string
+): ResumenIndicadores => {
+  const resumenPorClase: Record<string, number> = {};
+  let totalGeneral = 0;
+
+  (indicadoresRaw || []).forEach(item => {
+    if (!resumenPorClase[item.ClasePaciente]) {
+      resumenPorClase[item.ClasePaciente] = 0;
+    }
+    resumenPorClase[item.ClasePaciente] += item.TotalIngresos;
+    totalGeneral += item.TotalIngresos;
+  });
+
+  return {
+    resumenPorClase,
+    totalGeneral,
+    periodo: { fechaInicio, fechaFin },
+  };
+};
+
+/**
+ * Serie por fecha a partir de filas ya descargadas. Puro, sin red.
+ */
+export const porFechaDesdeIndicadores = (indicadoresRaw: IndicadorData[]): IndicadorPorFecha[] => {
+  const datosPorFecha: Record<string, { total: number; porClase: Record<string, number> }> = {};
+
+  (indicadoresRaw || []).forEach(item => {
+    if (!datosPorFecha[item.Fecha]) {
+      datosPorFecha[item.Fecha] = { total: 0, porClase: {} };
+    }
+    datosPorFecha[item.Fecha].total += item.TotalIngresos;
+    datosPorFecha[item.Fecha].porClase[item.ClasePaciente] = item.TotalIngresos;
+  });
+
+  return Object.entries(datosPorFecha)
+    .map(([fecha, datos]) => ({
+      fecha: new Date(fecha).toISOString(),
+      total: datos.total,
+      porClase: datos.porClase,
+    }))
+    .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+};
+
+/**
+ * Obtiene indicadores + resumen + serie con UNA sola request
+ * (antes eran tres GET /indicadores idénticos).
+ */
+export const obtenerIndicadoresCompletos = async (
+  tipoIndicador: string = 'Ingresos',
+  fechaInicio: string,
+  fechaFin: string
+): Promise<{ indicadores: IndicadorData[]; resumen: ResumenIndicadores; porFecha: IndicadorPorFecha[] }> => {
+  const indicadores = await obtenerIndicadores(tipoIndicador, fechaInicio, fechaFin);
+  return {
+    indicadores,
+    resumen: resumenDesdeIndicadores(indicadores, fechaInicio, fechaFin),
+    porFecha: porFechaDesdeIndicadores(indicadores),
+  };
+};
+
+/**
  * Obtiene resumen de indicadores agrupados por clase de paciente
  */
 export const obtenerResumenIndicadores = async (
@@ -90,29 +156,8 @@ export const obtenerResumenIndicadores = async (
   fechaFin: string
 ): Promise<ResumenIndicadores> => {
   try {
-    // Primero obtenemos los datos raw
     const indicadoresRaw = await obtenerIndicadores(tipoIndicador, fechaInicio, fechaFin);
-    
-    // Procesamos los datos para crear el resumen por clase
-    const resumenPorClase: Record<string, number> = {};
-    let totalGeneral = 0;
-    
-    indicadoresRaw.forEach(item => {
-      if (!resumenPorClase[item.ClasePaciente]) {
-        resumenPorClase[item.ClasePaciente] = 0;
-      }
-      resumenPorClase[item.ClasePaciente] += item.TotalIngresos;
-      totalGeneral += item.TotalIngresos;
-    });
-    
-    return {
-      resumenPorClase,
-      totalGeneral,
-      periodo: {
-        fechaInicio,
-        fechaFin
-      }
-    };
+    return resumenDesdeIndicadores(indicadoresRaw, fechaInicio, fechaFin);
   } catch (error) {
     console.error('Error al obtener resumen de indicadores:', error);
     throw error;
@@ -128,33 +173,8 @@ export const obtenerIndicadoresPorFecha = async (
   fechaFin: string
 ): Promise<IndicadorPorFecha[]> => {
   try {
-    // Primero obtenemos los datos raw
     const indicadoresRaw = await obtenerIndicadores(tipoIndicador, fechaInicio, fechaFin);
-    
-    // Agrupamos por fecha
-    const datosPorFecha: Record<string, { total: number; porClase: Record<string, number> }> = {};
-    
-    indicadoresRaw.forEach(item => {
-      if (!datosPorFecha[item.Fecha]) {
-        datosPorFecha[item.Fecha] = {
-          total: 0,
-          porClase: {}
-        };
-      }
-      
-      datosPorFecha[item.Fecha].total += item.TotalIngresos;
-      datosPorFecha[item.Fecha].porClase[item.ClasePaciente] = item.TotalIngresos;
-    });
-    
-    // Convertimos a array y ordenamos por fecha
-    return Object.entries(datosPorFecha)
-      .map(([fecha, datos]) => ({
-        fecha: new Date(fecha).toISOString(),
-        total: datos.total,
-        porClase: datos.porClase
-      }))
-      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
-      
+    return porFechaDesdeIndicadores(indicadoresRaw);
   } catch (error) {
     console.error('Error al obtener indicadores por fecha:', error);
     throw error;
@@ -186,7 +206,10 @@ export const obtenerResumenPacientesHoy = async (): Promise<ResumenPacientesHoy>
 
 export const indicadoresService = {
   obtenerIndicadores,
+  obtenerIndicadoresCompletos,
   obtenerResumenIndicadores,
   obtenerIndicadoresPorFecha,
-  obtenerResumenPacientesHoy
+  obtenerResumenPacientesHoy,
+  resumenDesdeIndicadores,
+  porFechaDesdeIndicadores,
 };

@@ -1,20 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { bedsService } from '../services/bedsService';
-import { indicadoresService, ResumenPacientesHoy } from '../services/indicadoresService';
-import { obtenerActividadReciente, ActividadReciente } from '../services/dashboardService';
-import { obtenerResumenAmbulatorioHoy } from '../services/ambulatorioService';
-import type { ResumenAmbulatorioHoy } from '../types/ambulatorio';
-import { useCamasIndicadores } from '../hooks/useCamasIndicadores';
-import { useIndicadores } from '../hooks/useIndicadores';
+import type { ActividadReciente } from '../services/dashboardService';
+import { useDashboardResumen } from '../hooks/useDashboardResumen';
 import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
 // import { usePermiso } from '../hooks/usePermiso';
 // import { obtenerResumenProduccionMes } from '../services/produccionHospitalService';
 // import type { ResumenProduccionMes } from '../types/produccionHospital';
 // import { entero, monedaCompacta } from './reports/facturacion/produccionFormat';
-import { useAppContext } from '../contexts/AppContext';
 import { authService } from '../services/authService';
 import styles from './DashboardPage.module.css';
 
@@ -92,37 +86,9 @@ function chipLabelForMovimiento(
   return action;
 }
 
-interface BedStats {
-  totalCamas: number;
-  camasDisponibles: number;
-  camasOcupadas: number;
-  camasNoDisponibles: number;
-}
-
-const initialPatientSummary: ResumenPacientesHoy = {
-  totalHoy: 0,
-  porcentajeCambio: 0,
-};
-
 export default function Dashboard() {
   const router = useRouter();
-  const { empresaInfo } = useAppContext();
-  const tenantId = empresaInfo?.id ?? null;
   const { count: pedidosPendientes } = useBandejaPedidosCount(true);
-  const [bedStats, setBedStats] = useState<BedStats>({
-    totalCamas: 0,
-    camasDisponibles: 0,
-    camasOcupadas: 0,
-    camasNoDisponibles: 0
-  });
-  const [patientSummary, setPatientSummary] = useState<ResumenPacientesHoy>(initialPatientSummary);
-  const [actividadReciente, setActividadReciente] = useState<ActividadReciente[]>([]);
-  const [ambulatorioHoy, setAmbulatorioHoy] = useState<ResumenAmbulatorioHoy | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingPatients, setLoadingPatients] = useState(true);
-  const [loadingActividad, setLoadingActividad] = useState(true);
-  const [loadingAmbulatorio, setLoadingAmbulatorio] = useState(true);
-  const [errorAmbulatorio, setErrorAmbulatorio] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Producción del hospital: sólo quien tiene el permiso (hoy, el administrador).
@@ -158,94 +124,31 @@ export default function Dashboard() {
     }
   }, [router]);
 
-  // Configurar fechas para los últimos 30 días
-  const today = new Date();
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(today.getDate() - 30);
-  const fechaInicio = thirtyDaysAgo.toISOString().split('T')[0];
-  const fechaFin = today.toISOString().split('T')[0];
-
-  // Hooks para obtener datos detallados de analytics
-  const { 
-    resumen: resumenCamas, 
-    estadoActual: estadoActualCamas,
-    loading: loadingCamas,
-    computedData: computedCamas
-  } = useCamasIndicadores(fechaInicio, fechaFin);
-
-  const { 
-    resumen: resumenPacientes, 
-    estadoActual: estadoActualPacientes,
-    loading: loadingPacientesAnalytics,
-    computedData: computedPacientes
-  } = useIndicadores('Ingresos', fechaInicio, fechaFin);
-
-  useEffect(() => {
-    setLoading(true);
-    setLoadingPatients(true);
-    setLoadingActividad(true);
-    setLoadingAmbulatorio(true);
-    setBedStats({
-      totalCamas: 0,
-      camasDisponibles: 0,
-      camasOcupadas: 0,
-      camasNoDisponibles: 0,
-    });
-    setPatientSummary(initialPatientSummary);
-    setActividadReciente([]);
-    setAmbulatorioHoy(null);
-    setErrorAmbulatorio(false);
-
-    const fetchBedStats = async () => {
-      try {
-        const stats = await bedsService.getTotalBeds();
-        setBedStats(stats);
-      } catch (error) {
-        console.error('Error fetching bed statistics:', error);
-      } finally {
-        setLoading(false);
-      }
+  // Rango de 30 días (estable durante la sesión de la página para no recargar en cada render)
+  const { fechaInicio, fechaFin } = useMemo(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    return {
+      fechaInicio: thirtyDaysAgo.toISOString().split('T')[0],
+      fechaFin: today.toISOString().split('T')[0],
     };
+  }, []);
 
-    const fetchPatientSummary = async () => {
-      try {
-        const summary = await indicadoresService.obtenerResumenPacientesHoy();
-        setPatientSummary(summary);
-      } catch (error) {
-        console.error('Error fetching patient summary:', error);
-      } finally {
-        setLoadingPatients(false);
-      }
-    };
-
-    const fetchActividadReciente = async () => {
-      try {
-        const actividades = await obtenerActividadReciente(10);
-        setActividadReciente(actividades);
-      } catch (error) {
-        console.error('Error fetching recent activity:', error);
-      } finally {
-        setLoadingActividad(false);
-      }
-    };
-
-    const fetchAmbulatorioHoy = async () => {
-      try {
-        setErrorAmbulatorio(false);
-        setAmbulatorioHoy(await obtenerResumenAmbulatorioHoy());
-      } catch (error) {
-        console.error('Error fetching ambulatory summary:', error);
-        setErrorAmbulatorio(true);
-      } finally {
-        setLoadingAmbulatorio(false);
-      }
-    };
-
-    fetchBedStats();
-    fetchPatientSummary();
-    fetchActividadReciente();
-    fetchAmbulatorioHoy();
-  }, [tenantId]);
+  // Una sola request (GET /dashboard/resumen) para todas las cards; cae a las
+  // llamadas individuales si el agregado no está disponible.
+  const {
+    bedStats,
+    estadoActualCamas,
+    patientSummary,
+    actividadReciente,
+    ambulatorioHoy,
+    errorAmbulatorio,
+    loadingCamas,
+    loadingPacientes: loadingPacientesAnalytics,
+    loadingActividad,
+    loadingAmbulatorio,
+  } = useDashboardResumen({ fechaInicio, fechaFin, limiteActividad: 10 });
 
   return (
     <div className={styles.container}>

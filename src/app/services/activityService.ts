@@ -224,21 +224,25 @@ export class InternacionActivityService extends ActivityService {
   }
 
   /**
+   * Convierte y ordena (más reciente primero) movimientos ya descargados.
+   * Lo usa el agregado del dashboard, que trae los movimientos en la misma request.
+   */
+  actividadesDesdeMovimientos(movimientos: MovimientoInternacion[]): ActividadReciente[] {
+    return this.convertirAActividades(movimientos).sort((a, b) => {
+      const fechaA = this.extraerFechaParaOrdenamiento(a.time);
+      const fechaB = this.extraerFechaParaOrdenamiento(b.time);
+      return fechaB.getTime() - fechaA.getTime();
+    });
+  }
+
+  /**
    * Obtiene actividades de internación
    */
   async obtenerActividades(limite: number = 10): Promise<ActividadReciente[]> {
     try {
       const movimientos = await this.obtenerMovimientos(limite);
-      const actividades = this.convertirAActividades(movimientos);
-      
       // Ordenar por fecha y hora más reciente primero (como backup del ordenamiento del backend)
-      return actividades.sort((a, b) => {
-        // Extraer fecha y hora para comparación
-        const fechaA = this.extraerFechaParaOrdenamiento(a.time);
-        const fechaB = this.extraerFechaParaOrdenamiento(b.time);
-        
-        return fechaB.getTime() - fechaA.getTime(); // Más reciente primero
-      });
+      return this.actividadesDesdeMovimientos(movimientos);
     } catch (error) {
       console.error('Error al obtener actividades de internación:', error);
       return this.convertirAActividades(FALLBACK_MOVIMIENTOS.slice(0, limite));

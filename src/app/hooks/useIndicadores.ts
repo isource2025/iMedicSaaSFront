@@ -61,25 +61,15 @@ export const useIndicadores = (
     });
     
     try {
-      // 1. Cargar indicadores básicos
-      console.log('📊 Cargando indicadores básicos...');
-      const indicadoresData = await indicadoresService.obtenerIndicadores(tipoIndicador, debouncedFechaInicio, debouncedFechaFin);
+      // Una sola request: resumen y serie se derivan en memoria de las mismas filas.
+      const { indicadores: indicadoresData, resumen: resumenData, porFecha: porFechaData } =
+        await indicadoresService.obtenerIndicadoresCompletos(tipoIndicador, debouncedFechaInicio, debouncedFechaFin);
       setIndicadores(indicadoresData);
-      setLoadingSteps(prev => ({ ...prev, indicadores: false, resumen: true }));
-      
-      // 2. Cargar resumen
-      console.log('📈 Procesando resumen...');
-      const resumenData = await indicadoresService.obtenerResumenIndicadores(tipoIndicador, debouncedFechaInicio, debouncedFechaFin);
       setResumen(resumenData);
-      setLoadingSteps(prev => ({ ...prev, resumen: false, porFecha: true }));
-      
-      // 3. Cargar datos por fecha
-      console.log('📅 Procesando datos por fecha...');
-      const porFechaData = await indicadoresService.obtenerIndicadoresPorFecha(tipoIndicador, debouncedFechaInicio, debouncedFechaFin);
       setIndicadoresPorFecha(porFechaData);
-      setLoadingSteps(prev => ({ ...prev, porFecha: false, estadoActual: true }));
+      setLoadingSteps(prev => ({ ...prev, indicadores: false, estadoActual: true }));
       
-      // 4. Estado actual (simulado para compatibilidad)
+      // Estado actual (derivado, para compatibilidad)
       setEstadoActual({
         total: resumenData?.totalGeneral || 0,
         promedio: porFechaData.length > 0 ? Math.round((resumenData?.totalGeneral || 0) / porFechaData.length) : 0,

@@ -186,6 +186,20 @@ export const camasIndicadoresService = {
     }
   },
 
+  /**
+   * Precarga el cache con datos que llegaron por otra vía (p. ej. el agregado
+   * GET /dashboard/resumen), para que /beds/analytics abra sin volver a pedirlos.
+   */
+  precargar: (
+    fechaInicio: string,
+    fechaFin: string,
+    datos: { resumen?: ResumenCamas | null; porFecha?: CamasPorFecha[] | null; estadoActual?: EstadoActualCamas | null },
+  ): void => {
+    if (datos.resumen) cache.set(cache.generateKey('resumen-camas', { fechaInicio, fechaFin }), datos.resumen);
+    if (datos.porFecha) cache.set(cache.generateKey('camas-por-fecha', { fechaInicio, fechaFin }), datos.porFecha);
+    if (datos.estadoActual) cache.set(cache.generateKey('estado-actual-camas', {}), datos.estadoActual, 30000);
+  },
+
   clearCache: (): void => {
     cache.clear();
     console.log('🧹 Cache de camas limpiado');
