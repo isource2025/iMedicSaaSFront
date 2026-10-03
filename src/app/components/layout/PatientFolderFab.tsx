@@ -105,116 +105,162 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 
 	if (!canUse) return null;
 
-	return (
-		<>
-			<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={wrapRef}>
-				{expanded ? (
-					<div className={`${styles.searchPanel} ${stack ? styles.searchPanelInStack : ''}`}>
-						<form
-							className={styles.searchForm}
-							onSubmit={(e) => {
-								e.preventDefault();
-								void runSearch();
+	const cerrar = () => {
+		setExpanded(false);
+		setTermino('');
+		setSearchError('');
+		setHits([]);
+	};
+
+	const lupa = (
+		<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+			<circle cx="11" cy="11" r="7" />
+			<path d="M20 20l-3.5-3.5" />
+		</svg>
+	);
+
+	const hitList =
+		hits.length > 0 ? (
+			<ul className={`${styles.hitList} ${stack ? styles.railHits : ''}`}>
+				{hits.map((g) => (
+					<li key={g.patient.IdPaciente}>
+						<button
+							type="button"
+							onClick={() => {
+								setFolderModal(g);
+								cerrar();
 							}}
 						>
-							<input
-								ref={inputRef}
-								type="text"
-								className={styles.searchInput}
-								placeholder="Nombre, DNI o nº de visita"
-								value={termino}
-								onChange={(e) => {
-									setTermino(e.target.value);
-									if (searchError) setSearchError('');
-									if (hits.length) setHits([]);
-								}}
-								disabled={searching}
-								aria-label="Buscar por nombre, DNI o número de visita"
-							/>
-							<button
-								type="submit"
-								className={styles.searchSubmit}
-								disabled={searching || !termino.trim()}
-								aria-label={searching ? 'Buscando' : 'Buscar'}
-								aria-busy={searching}
-							>
-								{searching ? (
-									<span className={styles.spinner} aria-hidden />
-								) : (
-									<svg
-										width="18"
-										height="18"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2.2"
-										aria-hidden
-									>
-										<circle cx="11" cy="11" r="7" />
-										<path d="M20 20l-3.5-3.5" />
-									</svg>
-								)}
-							</button>
-						</form>
-						{hits.length > 0 && (
-							<ul className={styles.hitList}>
-								{hits.map((g) => (
-									<li key={g.patient.IdPaciente}>
-										<button
-											type="button"
-											onClick={() => {
-												setFolderModal(g);
-												setExpanded(false);
-												setTermino('');
-												setHits([]);
-											}}
-										>
-											<span className={styles.hitName}>
-												{String(g.patient.ApellidoYNombre || '').trim() || '—'}
-											</span>
-											<span className={styles.hitMeta}>
-												DNI {String(g.patient.NumeroDocumento || '').trim() || '—'} ·{' '}
-												{g.visits.length} visita{g.visits.length === 1 ? '' : 's'}
-											</span>
-										</button>
-									</li>
-								))}
-							</ul>
-						)}
-						{stack && !searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
-					</div>
-				) : null}
-				{stack || !expanded ? (
-					<button
-						type="button"
-						className={
-							stack
-								? `${railStyles.item} ${styles.railItem} ${expanded ? railStyles.itemActive : ''}`
-								: styles.fab
-						}
-						onClick={() => {
-							if (!expanded) {
-								setExpanded(true);
-								return;
-							}
-							setExpanded(false);
-							setTermino('');
-							setSearchError('');
-							setHits([]);
-						}}
-						aria-expanded={expanded}
-						aria-label="Buscar paciente por nombre, DNI o número de visita"
-						title="Buscar paciente"
-					>
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-							<circle cx="11" cy="11" r="7" />
-							<path d="M20 20l-3.5-3.5" />
-						</svg>
-					</button>
-				) : null}
-				{!stack && !searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
-			</div>
+							<span className={styles.hitName}>
+								{String(g.patient.ApellidoYNombre || '').trim() || '—'}
+							</span>
+							<span className={styles.hitMeta}>
+								DNI {String(g.patient.NumeroDocumento || '').trim() || '—'} ·{' '}
+								{g.visits.length} visita{g.visits.length === 1 ? '' : 's'}
+							</span>
+						</button>
+					</li>
+				))}
+			</ul>
+		) : null;
 
+	const onInputChange = (value: string) => {
+		setTermino(value);
+		if (searchError) setSearchError('');
+		if (hits.length) setHits([]);
+	};
+
+	return (
+		<>
+			{stack ? (
+				<div className={`${styles.wrap} ${styles.wrapInStack}`} ref={wrapRef}>
+					{/* La misma opción del riel se extiende hacia la izquierda y contiene el buscador. */}
+					<form
+						className={`${railStyles.item} ${styles.railItem} ${styles.railSearch} ${
+							expanded ? styles.railSearchOpen : ''
+						}`}
+						onSubmit={(e) => {
+							e.preventDefault();
+							if (expanded) void runSearch();
+						}}
+					>
+						<input
+							ref={inputRef}
+							type="text"
+							className={styles.railSearchInput}
+							placeholder="Nombre, DNI o nº de visita"
+							value={termino}
+							onChange={(e) => onInputChange(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === 'Escape') cerrar();
+							}}
+							disabled={searching}
+							tabIndex={expanded ? 0 : -1}
+							aria-hidden={!expanded}
+							aria-label="Buscar por nombre, DNI o número de visita"
+						/>
+						<button
+							type="submit"
+							className={styles.railSearchBtn}
+							onClick={(e) => {
+								if (!expanded) {
+									e.preventDefault();
+									setExpanded(true);
+								} else if (!termino.trim()) {
+									e.preventDefault();
+									cerrar();
+								}
+							}}
+							aria-expanded={expanded}
+							aria-busy={searching}
+							aria-label={
+								!expanded
+									? 'Buscar paciente por nombre, DNI o número de visita'
+									: searching
+										? 'Buscando'
+										: termino.trim()
+											? 'Buscar'
+											: 'Cerrar búsqueda'
+							}
+							title="Buscar paciente"
+						>
+							{searching ? <span className={styles.spinner} aria-hidden /> : lupa}
+						</button>
+					</form>
+					{expanded && (hitList || (!searching && searchError)) ? (
+						<div className={styles.railPopover}>
+							{hitList}
+							{!searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
+						</div>
+					) : null}
+				</div>
+			) : (
+				<div className={styles.wrap} ref={wrapRef}>
+					{expanded ? (
+						<div className={styles.searchPanel}>
+							<form
+								className={styles.searchForm}
+								onSubmit={(e) => {
+									e.preventDefault();
+									void runSearch();
+								}}
+							>
+								<input
+									ref={inputRef}
+									type="text"
+									className={styles.searchInput}
+									placeholder="Nombre, DNI o nº de visita"
+									value={termino}
+									onChange={(e) => onInputChange(e.target.value)}
+									disabled={searching}
+									aria-label="Buscar por nombre, DNI o número de visita"
+								/>
+								<button
+									type="submit"
+									className={styles.searchSubmit}
+									disabled={searching || !termino.trim()}
+									aria-label={searching ? 'Buscando' : 'Buscar'}
+									aria-busy={searching}
+								>
+									{searching ? <span className={styles.spinner} aria-hidden /> : lupa}
+								</button>
+							</form>
+							{hitList}
+						</div>
+					) : (
+						<button
+							type="button"
+							className={styles.fab}
+							onClick={() => setExpanded(true)}
+							aria-label="Buscar paciente por nombre, DNI o número de visita"
+							title="Buscar paciente"
+						>
+							{lupa}
+						</button>
+					)}
+					{!searching && searchError ? <p className={styles.inlineError}>{searchError}</p> : null}
+				</div>
+			)}
 			<PatientFolderVisitsModal
 				isOpen={folderModal != null}
 				onClose={() => setFolderModal(null)}

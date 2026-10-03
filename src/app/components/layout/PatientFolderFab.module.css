@@ -162,31 +162,103 @@
   --rail-item-accent-strong: #0083a9;
 }
 
-.searchPanelInStack {
-  position: absolute;
-  right: calc(100% + 12px);
-  bottom: 0;
-  z-index: 20;
+/* La opción (form) se extiende hacia la izquierda; el input vive dentro y la lupa queda a la derecha. */
+.railSearch {
+  justify-content: flex-end;
+  overflow: hidden;
+  cursor: default;
 }
 
-.searchPanelInStack .inlineError {
-  align-self: flex-end;
+.wrapInStack .railSearch {
+  transition:
+    width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.wrapInStack .railSearch.railSearchOpen {
+  width: min(330px, calc(100vw - 20px));
+  background: var(--rail-item-accent);
+  box-shadow: -4px 2px 14px rgba(15, 23, 42, 0.3);
+}
+
+.railSearchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 0;
+  height: 32px;
+  margin-left: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.railSearchInput::placeholder {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.railSearchOpen .railSearchInput {
+  margin-left: 12px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.16);
+  opacity: 1;
+  transition: opacity 0.2s ease 0.1s;
+}
+
+.railSearchOpen .railSearchInput:focus {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.railSearchBtn {
+  flex: 0 0 var(--rail-w);
+  width: var(--rail-w);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.railSearchBtn:focus-visible {
+  outline: 2px solid #bae6fd;
+  outline-offset: -4px;
+  border-radius: 8px;
+}
+
+/* Resultados / error: flotan justo encima de la opción extendida. */
+.railPopover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: min(330px, calc(100vw - 20px));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.railHits {
+  min-width: 0;
+}
+
+.railPopover .inlineError {
+  max-width: none;
 }
 
 @media (max-width: 768px) {
-  .searchPanelInStack {
-    position: fixed;
-    left: calc(10px + env(safe-area-inset-left, 0px));
-    right: calc(10px + env(safe-area-inset-right, 0px) + 54px);
-    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .searchPanelInStack .searchForm,
-  .searchPanelInStack .hitList {
-    min-width: 0;
-  }
-
-  .searchPanelInStack .searchInput {
+  .railSearchInput {
     font-size: 16px;
   }
 }
