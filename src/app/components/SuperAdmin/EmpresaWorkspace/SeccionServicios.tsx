@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { superAdminService } from '@/app/services/superAdminService';
 import type { CatalogoServicio, EmpresaAdmin, ServiciosPrefijosEmpresa } from '@/app/types/superAdmin';
 import PrefijosPracticaPicker, { unirPrefijos } from '@/app/components/UI/PrefijosPracticaPicker';
+import InfoHint from '@/app/components/UI/InfoHint';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import styles from '../superAdmin.module.css';
 
@@ -180,7 +181,7 @@ export default function SeccionServicios({ empresa, servicios, onRefresh, onUpda
               <th>Default</th>
               <th>Código</th>
               <th>Descripción</th>
-              <th>Prefijos de práctica</th>
+              <th>Prefijos de práctica <InfoHint label="prefijos de práctica" text="Capítulos del nomenclador que realiza este servicio. Al pedir un estudio a este servicio solo se ofrecen las prácticas de los capítulos tildados." /></th>
               <th></th>
             </tr>
           </thead>
@@ -269,6 +270,7 @@ export default function SeccionServicios({ empresa, servicios, onRefresh, onUpda
             <div className={styles.modalHeader}>
               <strong id="sa-prefijos-title" className="modal-title">
                 Prefijos de práctica · {prefEdit.id} {prefEdit.descripcion ? `(${prefEdit.descripcion})` : ''}
+                <InfoHint label="prefijos de práctica" text="Capítulos del nomenclador que realiza este servicio. Al pedir un estudio a este servicio solo se ofrecen las prácticas de los capítulos tildados." />
               </strong>
               <button
                 type="button"

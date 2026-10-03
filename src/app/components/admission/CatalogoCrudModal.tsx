@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { mensajeDeError } from '@/app/utils/apiError';
 import PrefijosPracticaPicker from '@/app/components/UI/PrefijosPracticaPicker';
+import InfoHint from '@/app/components/UI/InfoHint';
 import styles from './CatalogoCrudModal.module.css';
 
 export type CatalogoOption = {
@@ -20,6 +21,8 @@ export type CatalogoColumn = {
   autoKey?: boolean;
   requiredOnCreate?: boolean;
   required?: boolean;
+  /** Explicación breve del campo, en lenguaje cotidiano. */
+  help?: string;
   input?: 'select' | 'search' | 'multicheck';
   options?: CatalogoOption[];
   /** Solo 'multicheck': largo de la columna donde se guarda la lista. */
@@ -454,10 +457,14 @@ export default function CatalogoCrudModal({
                   const bloqueado = modo === 'editar' && c.editable === false;
                   const obligatorio = c.required || (modo === 'alta' && c.requiredOnCreate);
                   const setValor = (v: string) => setForm((f) => ({ ...f, [c.key]: v }));
+                  const idEtiqueta = `campo-${c.key}`;
                   const etiqueta = (
                     <span>
-                      {c.label}
-                      {obligatorio ? <span className={styles.obligatorio}>*</span> : null}
+                      <span id={idEtiqueta}>
+                        {c.label}
+                        {obligatorio ? <span className={styles.obligatorio}>*</span> : null}
+                      </span>
+                      {c.help ? <InfoHint label={c.label} text={c.help} /> : null}
                     </span>
                   );
 
@@ -500,6 +507,7 @@ export default function CatalogoCrudModal({
                       <label key={c.key} className={styles.campo}>
                         {etiqueta}
                         <select
+                          aria-labelledby={idEtiqueta}
                           value={valor}
                           disabled={bloqueado}
                           onChange={(e) => setValor(e.target.value)}
@@ -520,6 +528,7 @@ export default function CatalogoCrudModal({
                     <label key={c.key} className={styles.campo}>
                       {etiqueta}
                       <input
+                        aria-labelledby={idEtiqueta}
                         type={c.type || 'text'}
                         value={valor}
                         disabled={bloqueado}
