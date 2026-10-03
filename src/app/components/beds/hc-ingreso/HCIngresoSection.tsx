@@ -60,7 +60,7 @@ function fechaHoraDesdeRecord(record: HCIngresoRecord): { fecha: string; hora: s
 }
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
-import { generarPDFHistoriaClinica } from '@/app/utils/pdfHCIngreso';
+import { generarPDFHistoriaClinica } from '@/app/utils/pdfExportLazy';
 import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
 import ExamenFisicoTejidoSubcutaneo from "./examen-fisico/ExamenFisicoTejidoSubcutaneo";
 import ExamenFisicoCabezaForm from "./examen-fisico/ExamenFisicoCabeza";

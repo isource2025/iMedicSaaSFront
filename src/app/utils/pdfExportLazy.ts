@@ -55,6 +55,10 @@ export const generarPDFEpicrisis: GenerarPDFEpicrisis = async (...args) =>
 export const generarPDFInterconsulta: GenerarPDFInterconsulta = async (...args) =>
 	(await cargarPdfInterconsulta()).generarPDFInterconsulta(...args);
 
+type GenerarPDFHistoriaClinica = typeof import('./pdfHCIngreso').generarPDFHistoriaClinica;
+export const generarPDFHistoriaClinica: GenerarPDFHistoriaClinica = async (...args) =>
+	(await import('./pdfHCIngreso')).generarPDFHistoriaClinica(...args);
+
 /** Precarga opcional (p. ej. al hacer hover sobre el botón de exportar). */
 export const precargarPdfExport = () => {
 	void cargarPdfExport();

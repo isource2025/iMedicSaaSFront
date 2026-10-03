@@ -186,6 +186,56 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		[idEmpresa, sectorFilter],
 	);
 
+	/**
+	 * Carga inicial en UNA request (GET /beds/bootstrap: camas + sectores + estados).
+	 * Si el agregado no está disponible, cae al camino de 3 requests.
+	 */
+	const fetchInicial = useCallback(
+		async (opts: { silent: boolean; necesitaEstados: boolean }) => {
+			const { silent, necesitaEstados } = opts;
+			const sector = String(sectorFilter).trim() || 'all';
+			const gen = ++fetchGenRef.current;
+			if (!silent) setLoading(true);
+			setError(null);
+			try {
+				const boot = await bedsService.getBootstrap(sector);
+				if (gen !== fetchGenRef.current) return;
+				const data = applyIndicacionesNuevasVistoLocal(boot.beds);
+				signatureRef.current = bedsListSignature(data);
+				setBeds(data);
+				if (boot.sectores.length) {
+					setSectors(boot.sectores);
+				} else {
+					const seeded = seedSectorFromSession();
+					if (seeded.length) setSectors(seeded);
+				}
+				if (boot.states.length) setBedStates(boot.states);
+				setCachedBedsList(
+					data,
+					{
+						sectores: boot.sectores.length ? boot.sectores : undefined,
+						states: boot.states.length ? boot.states : undefined,
+					},
+					idEmpresa,
+				);
+				if (!silent) setLoading(false);
+				return;
+			} catch (err) {
+				if (gen !== fetchGenRef.current) return;
+				console.warn(
+					'[beds] bootstrap no disponible, usando llamadas individuales:',
+					err instanceof Error ? err.message : err,
+				);
+			}
+			await Promise.all([
+				fetchBeds({ silent, sector }),
+				necesitaEstados ? fetchBedStates() : Promise.resolve(),
+				fetchSectores(),
+			]);
+		},
+		[fetchBeds, fetchBedStates, fetchSectores, idEmpresa, sectorFilter],
+	);
+
 	// Carga inicial / cambio de empresa: invalidar UI si el tenant cambió
 	useEffect(() => {
 		if (!isAuthenticated) {
@@ -208,18 +258,14 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 			setSectorFilter(readPreferredSector(urlSector));
 			setFilter('all');
 			setServicioFilter('all');
-			void fetchBeds({ silent: false });
-			void fetchBedStates();
-			void fetchSectores();
+			void fetchInicial({ silent: false, necesitaEstados: true });
 			return;
 		}
 
 		const hasCache = Boolean(getCachedBedsList(undefined, idEmpresa));
 		const meta = getCachedBedMeta(undefined, idEmpresa);
-		void fetchBeds({ silent: hasCache });
-		if (!meta?.states?.length) void fetchBedStates();
-		void fetchSectores();
-	}, [fetchBeds, fetchBedStates, fetchSectores, isAuthenticated, idEmpresa]);
+		void fetchInicial({ silent: hasCache, necesitaEstados: !meta?.states?.length });
+	}, [fetchInicial, isAuthenticated, idEmpresa]);
 
 	// Sector: filtro de esta sesión > URL > sector de login (principal) > Todos.
 	// El combo lista todos los I; el del personal solo preselecciona.

@@ -145,6 +145,21 @@ const BedsList = () => {
 		setAsignarCamaModalOpen(true);
 	};
 
+	// Precarga el chunk de la ficha de cama en cuanto hay una cama ocupada en pantalla:
+	// el click siguiente no espera la descarga del JS de /dashboard/beds/[id].
+	const prefetchedRef = useRef(false);
+	useEffect(() => {
+		if (prefetchedRef.current) return;
+		const ocupada = beds.find((bed) => bed.estado === 'ocupada');
+		if (!ocupada) return;
+		prefetchedRef.current = true;
+		try {
+			router.prefetch(`/dashboard/beds/${ocupada.id}`);
+		} catch {
+			/* prefetch es best-effort */
+		}
+	}, [beds, router]);
+
 	const handleBedClick = (bedId: string) => {
 		const selected = beds.find((bed) => bed.id === bedId);
 		if (selected && selected.estado === 'ocupada') {

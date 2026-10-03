@@ -11,7 +11,7 @@ import styles from "../indicaciones/IndicacionesSection.module.css";
 import BedSectionLoading from "../shared/BedSectionLoading";
 import EmptyState from "../shared/EmptyState";
 import ExportButton, { ExportOption } from "../shared/ExportButton";
-import { exportToPDF } from "../../../utils/pdfExport";
+import { exportToPDF } from "../../../utils/pdfExportLazy";
 import { obtenerInfoEmpresa } from "../../../services/empresaService";
 import { getDisposicionesEgreso } from "../../../services/disposicionEgresoService";
 import {

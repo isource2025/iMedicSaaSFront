@@ -94,7 +94,56 @@ export function normalizeBedFromApi(item: Record<string, unknown> | Bed): Bed {
 
 const BEDS_TIMEOUT_MS = 45000;
 
+type CatalogoItem = { id: string; valor: string; descripcion: string };
+
+function mapSectorItem(item: Record<string, unknown> | null | undefined): CatalogoItem | null {
+	const row = item || {};
+	const valor = String(row.valor ?? row.Valor ?? row.IdSector ?? row.idSector ?? '').trim();
+	if (!valor) return null;
+	const descripcion = String(row.descripcion ?? row.Descripcion ?? valor).trim();
+	return { id: valor, valor, descripcion: descripcion || valor };
+}
+
+export interface BedsBootstrap {
+	beds: Bed[];
+	sectores: CatalogoItem[];
+	states: CatalogoItem[];
+}
+
 export const bedsService = {
+	/**
+	 * Lista + sectores + estados en UNA request (GET /beds/bootstrap).
+	 * Lanza si la API no lo soporta o falla; el hook cae a las llamadas individuales.
+	 */
+	getBootstrap: async (sector?: string | null): Promise<BedsBootstrap> => {
+		const code = String(sector || '').trim();
+		const qs =
+			code && code.toLowerCase() !== 'all'
+				? `?sector=${encodeURIComponent(code)}`
+				: '';
+		const { data: json } = await apiService.get<
+			ApiResp<{
+				camas?: Record<string, unknown>[];
+				sectores?: Record<string, unknown>[];
+				estados?: { valor: string; descripcion: string }[];
+			}>
+		>(`/beds/bootstrap${qs}`, { timeout: BEDS_TIMEOUT_MS });
+
+		if (!json.success || !json.data) throw new Error(json.mensaje || 'Error en la API de camas');
+
+		return {
+			beds: (json.data.camas || []).map(mapBedItem),
+			sectores: (json.data.sectores || [])
+				.map(mapSectorItem)
+				.filter((s): s is CatalogoItem => Boolean(s)),
+			states: (json.data.estados || []).map((item) => ({
+				id: item.valor,
+				valor: item.valor,
+				descripcion: item.descripcion,
+			})),
+		};
+	},
+
 	getAllBeds: async (sector?: string | null): Promise<Bed[]> => {
 		const code = String(sector || '').trim();
 		const qs =
@@ -139,16 +188,8 @@ export const bedsService = {
 			if (!json.success) throw new Error(json.mensaje || 'Error al obtener sectores');
 
 			return (json.data || [])
-				.map((item) => {
-					const row = item || {};
-					const valor = String(
-						row.valor ?? row.Valor ?? row.IdSector ?? row.idSector ?? '',
-					).trim();
-					if (!valor) return null;
-					const descripcion = String(row.descripcion ?? row.Descripcion ?? valor).trim();
-					return { id: valor, valor, descripcion: descripcion || valor };
-				})
-				.filter((s): s is { id: string; valor: string; descripcion: string } => Boolean(s));
+				.map(mapSectorItem)
+				.filter((s): s is CatalogoItem => Boolean(s));
 		} catch (error) {
 			const ax = error && typeof error === 'object' && 'response' in error
 				? (error as { response?: { status?: number; data?: { mensaje?: string } }; code?: string; message?: string })
