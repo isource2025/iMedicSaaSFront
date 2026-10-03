@@ -24,6 +24,9 @@ const formatTime = (timeString: string) => {
   return timeString.includes(':') ? timeString.substring(0, 5) : timeString;
 };
 
+/** Nunca se muestra el código/matrícula: solo el nombre resuelto. */
+const nombreProfesional = (control: ControlFrecuente) => String(control.ProfesionalNombre ?? '').trim();
+
 const vacio = (v: unknown) => v == null || String(v).trim() === '' || String(v).trim() === '-' || Number(v) === 0;
 
 /** Valores con dato de un control, para la vista en tarjetas (mobile). */
@@ -231,8 +234,8 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
                             <span className={styles.cardFecha}>
                               {formatDate(control.FechaControl)} · {formatTime(control.HoraControl)}
                             </span>
-                            {control.Profesional ? (
-                              <span className={styles.cardProfesional}>{control.Profesional}</span>
+                            {nombreProfesional(control) ? (
+                              <span className={styles.cardProfesional}>{nombreProfesional(control)}</span>
                             ) : null}
                           </div>
                           {valores.length > 0 ? (
@@ -304,7 +307,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
                             <td>{control.Peso ? `${control.Peso} kg` : '-'}</td>
                             <td>{control.Talla ? `${control.Talla} cm` : '-'}</td>
                             <td>{formatIMC(control.Peso, control.Talla, control.IMC)}</td>
-                            <td>{control.Profesional || '-'}</td>
+                            <td>{nombreProfesional(control) || '-'}</td>
                             <td>{control.Observaciones || '-'}</td>
                           </tr>
                         ))}

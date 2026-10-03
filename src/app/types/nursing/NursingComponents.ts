@@ -19,6 +19,7 @@ export interface ControlFrecuente {
   IMC: number | null;
   Observaciones: string;
   Profesional: string;
+  ProfesionalNombre?: string | null;
 }
 
 /**
