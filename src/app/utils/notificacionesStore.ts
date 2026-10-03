@@ -46,6 +46,9 @@ const POLL_TICK_MS = 45_000;
 /** Con el stream vivo, el polling queda solo como red de seguridad (multi-instancia, proxies). */
 const POLL_WHEN_LIVE_MS = 5 * 60_000;
 const EVENT_DEBOUNCE_MS = 400;
+/** Si falla el conteo de la bandeja se reintenta pronto, sin esperar al próximo polling. */
+const BANDEJA_RETRY_MIN_MS = 3_000;
+const BANDEJA_RETRY_MAX_MS = 60_000;
 /** El backend manda ping cada 25 s; si no llega nada, la conexión quedó colgada. */
 const STREAM_IDLE_MS = 70_000;
 const RECONNECT_MIN_MS = 2_000;
@@ -151,6 +154,8 @@ function currentUser(): { userId: number; userKey: string } | null {
 
 let countJob: Promise<void> | null = null;
 let bandejaJob: Promise<void> | null = null;
+let bandejaRetryTimer: number | null = null;
+let bandejaRetryDelay = BANDEJA_RETRY_MIN_MS;
 let listJob: Promise<void> | null = null;
 let lastFullRefresh = 0;
 
@@ -176,6 +181,23 @@ export function refreshCount(): Promise<void> {
 	return countJob;
 }
 
+function clearBandejaRetry() {
+	if (bandejaRetryTimer != null) {
+		window.clearTimeout(bandejaRetryTimer);
+		bandejaRetryTimer = null;
+	}
+}
+
+function scheduleBandejaRetry(userKey: string) {
+	clearBandejaRetry();
+	const delay = bandejaRetryDelay;
+	bandejaRetryDelay = Math.min(bandejaRetryDelay * 2, BANDEJA_RETRY_MAX_MS);
+	bandejaRetryTimer = window.setTimeout(() => {
+		bandejaRetryTimer = null;
+		if (sameUser(userKey)) void refreshBandeja();
+	}, delay);
+}
+
 export function refreshBandeja(): Promise<void> {
 	if (bandejaJob) return bandejaJob;
 	const { userKey } = state;
@@ -183,16 +205,21 @@ export function refreshBandeja(): Promise<void> {
 	bandejaJob = (async () => {
 		try {
 			const data = solicitudesMultiHabilitado()
-				? await solicitudesEstudiosService.contarLibresBandeja({ soloMios: true })
-				: await estudiosService.contarLibres({ soloMios: true });
-			if (sameUser(userKey)) setState({ estudios: data.estudios, interconsultas: data.interconsultas });
-		} catch {
-			const fallback = peekCachedBandejaCount();
-			if (fallback && sameUser(userKey)) {
-				setState({ estudios: fallback.estudios, interconsultas: fallback.interconsultas });
+				? await solicitudesEstudiosService.contarLibresBandeja({ soloMios: true, lanzarError: true })
+				: await estudiosService.contarLibres({ soloMios: true, lanzarError: true });
+			if (sameUser(userKey)) {
+				clearBandejaRetry();
+				bandejaRetryDelay = BANDEJA_RETRY_MIN_MS;
+				setState({ estudios: data.estudios, interconsultas: data.interconsultas, bandejaLoaded: true });
 			}
+		} catch {
+			if (!sameUser(userKey)) return;
+			const fallback = peekCachedBandejaCount();
+			if (fallback) {
+				setState({ estudios: fallback.estudios, interconsultas: fallback.interconsultas, bandejaLoaded: true });
+			}
+			scheduleBandejaRetry(userKey);
 		} finally {
-			if (sameUser(userKey) && !state.bandejaLoaded) setState({ bandejaLoaded: true });
 			bandejaJob = null;
 		}
 	})();
@@ -411,6 +438,8 @@ function bindWindowListeners() {
 }
 
 function stopTimers() {
+	clearBandejaRetry();
+	bandejaRetryDelay = BANDEJA_RETRY_MIN_MS;
 	if (pollTimer != null) window.clearInterval(pollTimer);
 	if (firstLoadTimer != null) window.clearTimeout(firstLoadTimer);
 	if (hiddenTimer != null) window.clearTimeout(hiddenTimer);

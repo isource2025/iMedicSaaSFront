@@ -139,19 +139,25 @@ const solicitudesEstudiosService = {
    * Conteo de la bandeja con los estudios contados por SOLICITUD (no por práctica).
    * Interconsultas siguen saliendo del circuito de siempre.
    */
-  async contarLibresBandeja(opts?: { soloMios?: boolean }): Promise<BandejaConteo> {
+  async contarLibresBandeja(opts?: { soloMios?: boolean; lanzarError?: boolean }): Promise<BandejaConteo> {
+    const qs = opts?.soloMios ? '?soloMios=1' : '';
+    const solicitudesReq = apiFetch(`${BASE}/pendientes/conteo${qs}`, {
+      method: 'GET',
+      headers: JSON_HEADERS,
+    });
+    solicitudesReq.catch(() => undefined);
     const base = await estudiosService.contarLibres(opts);
+    if (!base.porServicio.length) return base;
     try {
-      const qs = opts?.soloMios ? '?soloMios=1' : '';
-      const res = await apiFetch(`${BASE}/pendientes/conteo${qs}`, {
-        method: 'GET',
-        headers: JSON_HEADERS,
-      });
+      const res = await solicitudesReq;
       const json = await parseJson<{
         solicitudes?: number;
         porServicio?: { valor: string; solicitudes?: number }[];
       }>(res);
-      if (!res.ok || !json?.success || !json.data) return base;
+      if (!res.ok || !json?.success || !json.data) {
+        if (opts?.lanzarError) throw new Error('conteo solicitudes');
+        return base;
+      }
       const porValor = new Map(
         (json.data.porServicio || []).map((s) => [String(s.valor || '').trim(), Number(s.solicitudes) || 0]),
       );
@@ -166,7 +172,8 @@ const solicitudesEstudiosService = {
       };
       setCachedBandejaCount(merged);
       return merged;
-    } catch {
+    } catch (err) {
+      if (opts?.lanzarError) throw err;
       return base;
     }
   },

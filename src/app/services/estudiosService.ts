@@ -286,14 +286,14 @@ const estudiosService = {
     return fetchSectoresReceptor(soloMios);
   },
 
-  async contarLibres(opts?: { soloMios?: boolean }): Promise<BandejaConteo> {
+  /** Con `lanzarError` propaga la falla en vez de devolver el último conteo guardado (o 0). */
+  async contarLibres(opts?: { soloMios?: boolean; lanzarError?: boolean }): Promise<BandejaConteo> {
     const soloMios = Boolean(opts?.soloMios);
     const key = soloMios ? 'mios' : 'all';
-    const pending = conteoInflight.get(key);
-    if (pending) return pending;
-    const job = (async () => {
-      const qs = soloMios ? '?soloMios=1' : '';
-      try {
+    let job = conteoInflight.get(key);
+    if (!job) {
+      job = (async () => {
+        const qs = soloMios ? '?soloMios=1' : '';
         const res = await apiFetch(`/estudios/pendientes/conteo${qs}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
@@ -328,20 +328,23 @@ const estudiosService = {
         };
         setCachedBandejaCount(data);
         return data;
-      } catch {
-        const cached = peekCachedBandejaCount();
-        return {
-          estudios: cached?.estudios || 0,
-          interconsultas: cached?.interconsultas || 0,
-          urgentes: 0,
-          porServicio: [],
-        };
-      }
-    })().finally(() => {
-      conteoInflight.delete(key);
-    });
-    conteoInflight.set(key, job);
-    return job;
+      })().finally(() => {
+        conteoInflight.delete(key);
+      });
+      conteoInflight.set(key, job);
+    }
+    try {
+      return await job;
+    } catch (err) {
+      if (opts?.lanzarError) throw err;
+      const cached = peekCachedBandejaCount();
+      return {
+        estudios: cached?.estudios || 0,
+        interconsultas: cached?.interconsultas || 0,
+        urgentes: 0,
+        porServicio: [],
+      };
+    }
   },
 };
 
