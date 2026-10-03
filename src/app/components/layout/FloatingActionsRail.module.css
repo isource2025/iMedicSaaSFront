@@ -1,0 +1,112 @@
+/*
+ * No dejar `transform` en los botones cuando están visibles: los paneles/modales
+ * `position: fixed` que se abren desde ellos quedarían atrapados.
+ */
+.rail {
+  position: fixed;
+  right: 0;
+  bottom: 20px;
+  z-index: var(--fab-rail-z, 900);
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 8px;
+  padding-right: 12px;
+  pointer-events: none;
+}
+
+.stack > * {
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(calc(100% + 40px));
+  transition:
+    transform 0.26s ease,
+    opacity 0.2s ease,
+    visibility 0s linear 0.26s;
+}
+
+/* Abierto, o notificaciones pendientes: siempre a la vista */
+.railOpen .stack > *,
+.stack > *:has([data-fab-alert='true']) {
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition:
+    transform 0.26s ease,
+    opacity 0.2s ease,
+    visibility 0s linear 0s;
+}
+
+/* Pestaña con flecha pegada al borde derecho */
+.tab {
+  position: relative;
+  flex-shrink: 0;
+  width: 26px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 12px 0 0 12px;
+  background: #0083a9;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: -3px 3px 12px rgba(15, 23, 42, 0.25);
+  pointer-events: auto;
+  transition: background 0.15s ease;
+}
+
+.tab:hover {
+  background: #006f90;
+}
+
+.tab:focus-visible {
+  outline: 3px solid #bae6fd;
+  outline-offset: 2px;
+}
+
+.tabArrow {
+  transition: transform 0.26s ease;
+}
+
+.railOpen .tabArrow {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 768px) {
+  .rail {
+    bottom: 14px;
+    right: env(safe-area-inset-right, 0px);
+  }
+
+  .stack {
+    gap: 7px;
+    padding-right: 10px;
+  }
+
+  .tab {
+    width: 30px;
+    height: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack > *,
+  .railOpen .stack > *,
+  .stack > *:has([data-fab-alert='true']) {
+    transition: none;
+  }
+
+  .tabArrow {
+    transition: none;
+  }
+}

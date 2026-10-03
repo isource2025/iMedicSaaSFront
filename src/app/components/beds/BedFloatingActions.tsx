@@ -1,5 +1,6 @@
 'use client';
 
+import FloatingActionsRail from '@/app/components/layout/FloatingActionsRail';
 import NotificationsFab from '@/app/components/layout/NotificationsFab';
 import PatientFolderFab from '@/app/components/layout/PatientFolderFab';
 import { usePermiso } from '@/app/hooks/usePermiso';
@@ -30,15 +31,15 @@ export default function BedFloatingActions({
 
   if (!showAdjuntos && !showLabs && !showNursing) {
     return (
-      <div className={styles.root} aria-label="Acciones rápidas">
+      <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root}>
         <NotificationsFab stack />
         <PatientFolderFab stack />
-      </div>
+      </FloatingActionsRail>
     );
   }
 
   return (
-    <div className={styles.root} aria-label="Acciones rápidas">
+    <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root}>
       <NotificationsFab stack />
       <PatientFolderFab stack />
       {showNursing && (
@@ -85,6 +86,6 @@ export default function BedFloatingActions({
         </svg>
       </button>
       )}
-    </div>
+    </FloatingActionsRail>
   );
 }

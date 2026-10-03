@@ -12,6 +12,8 @@ export type BandejaPedidosCount = {
 	count: number;
 	estudios: number;
 	interconsultas: number;
+	/** True cuando terminó la primera consulta (con o sin error). */
+	loaded: boolean;
 	refresh: () => Promise<void>;
 };
 
@@ -23,11 +25,13 @@ export function useBandejaPedidosCount(
 	const poll = options?.poll !== false;
 	const [estudios, setEstudios] = useState(0);
 	const [interconsultas, setInterconsultas] = useState(0);
+	const [loaded, setLoaded] = useState(false);
 
 	const refresh = useCallback(async () => {
 		if (!enabled) {
 			setEstudios(0);
 			setInterconsultas(0);
+			setLoaded(false);
 			return;
 		}
 		try {
@@ -42,6 +46,8 @@ export function useBandejaPedidosCount(
 				setEstudios(fallback.estudios);
 				setInterconsultas(fallback.interconsultas);
 			}
+		} finally {
+			setLoaded(true);
 		}
 	}, [enabled]);
 
@@ -55,7 +61,10 @@ export function useBandejaPedidosCount(
 	}, [enabled]);
 
 	useEffect(() => {
-		if (!enabled) return;
+		if (!enabled) {
+			setLoaded(false);
+			return;
+		}
 		void refresh();
 		if (!poll) return;
 		const t = window.setInterval(() => {
@@ -75,6 +84,7 @@ export function useBandejaPedidosCount(
 		count: estudios + interconsultas,
 		estudios,
 		interconsultas,
+		loaded,
 		refresh,
 	};
 }

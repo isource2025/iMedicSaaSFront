@@ -21,6 +21,8 @@ function valorPersonalFromUser(user: Record<string, unknown> | null): number | n
 
 const OPEN_EVENT = 'imedic:notifications-open';
 const BANDEJA_PATH = '/dashboard/bandeja-pedidos';
+/** Si el backend no responde, el botón aparece igual para no dejar al usuario sin acceso. */
+const FIRST_LOAD_TIMEOUT_MS = 8000;
 
 function esNotificacionWhatsApp(n: NotificacionItem): boolean {
 	const tipo = String(n.TipoNotificacion || '').toUpperCase();
@@ -50,13 +52,19 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 	const router = useRouter();
 	const [userId, setUserId] = useState<number | null>(null);
 	const [count, setCount] = useState(0);
+	const [countLoaded, setCountLoaded] = useState(false);
+	const [loadTimedOut, setLoadTimedOut] = useState(false);
 	const [open, setOpen] = useState(false);
 	const [items, setItems] = useState<NotificacionItem[]>([]);
 	const [loadingList, setLoadingList] = useState(false);
 	const [listError, setListError] = useState<string | null>(null);
 	const panelRef = useRef<HTMLDivElement>(null);
-	const { count: bandejaLibres, estudios: bandejaEstudios, interconsultas: bandejaIc } =
-		useBandejaPedidosCount(Boolean(userId));
+	const {
+		count: bandejaLibres,
+		estudios: bandejaEstudios,
+		interconsultas: bandejaIc,
+		loaded: bandejaLoaded,
+	} = useBandejaPedidosCount(Boolean(userId));
 
 	const refreshUser = useCallback(() => {
 		const u = authService.getCurrentUser() as Record<string, unknown> | null;
@@ -71,6 +79,8 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 			setCount(c);
 		} catch {
 			/* silencioso */
+		} finally {
+			setCountLoaded(true);
 		}
 	}, []);
 
@@ -96,6 +106,14 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		window.addEventListener('storage', onStorage);
 		return () => window.removeEventListener('storage', onStorage);
 	}, [refreshUser]);
+
+	useEffect(() => {
+		setCountLoaded(false);
+		setLoadTimedOut(false);
+		if (!userId) return;
+		const timeout = window.setTimeout(() => setLoadTimedOut(true), FIRST_LOAD_TIMEOUT_MS);
+		return () => window.clearTimeout(timeout);
+	}, [userId]);
 
 	useEffect(() => {
 		if (!userId) return;
@@ -218,7 +236,8 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		}
 	};
 
-	if (!userId) {
+	const firstLoadDone = (countLoaded && bandejaLoaded) || loadTimedOut;
+	if (!userId || !firstLoadDone) {
 		return null;
 	}
 
@@ -230,34 +249,37 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	return (
 		<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={panelRef}>
-			<button
-				id="notifications-fab-trigger"
-				type="button"
-				className={`${styles.fab} ${fabTone}`}
-				onClick={handleOpen}
-				aria-expanded={open}
-				aria-label={`Notificaciones${fabHighlight ? `, ${badgeTotal} sin leer` : ''}`}
-				title="Notificaciones"
-			>
-				<svg
-					className={`${styles.fabIcon} ${fabHighlight ? styles.fabIconAlert : ''}`}
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					aria-hidden
+			<div className={styles.fabEntrance}>
+				<button
+					id="notifications-fab-trigger"
+					type="button"
+					className={`${styles.fab} ${fabTone}`}
+					onClick={handleOpen}
+					aria-expanded={open}
+					data-fab-alert={fabHighlight ? 'true' : undefined}
+					aria-label={`Notificaciones${fabHighlight ? `, ${badgeTotal} sin leer` : ''}`}
+					title="Notificaciones"
 				>
-					<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-					<path d="M13.73 21a2 2 0 0 1-3.46 0" />
-				</svg>
-				{fabHighlight ? (
-					<span className={`${styles.badge} ${hasPedidos ? styles.badgePedidos : ''}`} aria-hidden>
-						{badgeTotal > 99 ? '99+' : badgeTotal}
-					</span>
-				) : null}
-			</button>
+					<svg
+						className={`${styles.fabIcon} ${fabHighlight ? styles.fabIconAlert : ''}`}
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						aria-hidden
+					>
+						<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+						<path d="M13.73 21a2 2 0 0 1-3.46 0" />
+					</svg>
+					{fabHighlight ? (
+						<span className={`${styles.badge} ${hasPedidos ? styles.badgePedidos : ''}`} aria-hidden>
+							{badgeTotal > 99 ? '99+' : badgeTotal}
+						</span>
+					) : null}
+				</button>
+			</div>
 
 			{open ? (
 				<div className={styles.panel} role="dialog" aria-label="Lista de notificaciones">
