@@ -1,28 +1,52 @@
 'use client';
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useNotificacionesStore } from '@/app/utils/notificacionesStore';
 import styles from './FloatingActionsRail.module.css';
 
 const STORAGE_KEY = 'imedic:fab-rail-open';
 const NOTIFICATIONS_OPEN_EVENT = 'imedic:notifications-open';
+/** Los modales leen este atributo para dejar lugar a la pestaña en mobile. */
+const BODY_FLAG = 'fabRailOverModals';
 
 interface FloatingActionsRailProps {
 	children: ReactNode;
 	ariaLabel: string;
 	className?: string;
+	/** Queda por encima de los modales (los modales que abren estos botones). */
+	overModals?: boolean;
 }
 
 /**
  * Botones flotantes plegables: una pestaña pegada al borde derecho (campanita + flecha)
  * los despliega u oculta para que no tapen el contenido.
+ * Se renderiza en `body` para que su z-index no dependa del contexto de apilamiento de la página.
  */
-export default function FloatingActionsRail({ children, ariaLabel, className = '' }: FloatingActionsRailProps) {
+export default function FloatingActionsRail({
+	children,
+	ariaLabel,
+	className = '',
+	overModals = false,
+}: FloatingActionsRailProps) {
 	const [open, setOpen] = useState(false);
+	const [mounted, setMounted] = useState(false);
 	const stackId = useId();
 	const notif = useNotificacionesStore();
 	/** Se decide una sola vez por montaje: solo anima la primera aparición de la sesión. */
 	const animateBellRef = useRef<boolean | null>(null);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	useEffect(() => {
+		if (!overModals) return;
+		document.body.dataset[BODY_FLAG] = '1';
+		return () => {
+			delete document.body.dataset[BODY_FLAG];
+		};
+	}, [overModals]);
 
 	useEffect(() => {
 		try {
@@ -69,7 +93,9 @@ export default function FloatingActionsRail({ children, ariaLabel, className = '
 			? 'Mostrar acciones rápidas, cargando notificaciones'
 			: `Mostrar acciones rápidas${badgeTotal > 0 ? `, ${badgeTotal} notificaciones` : ''}`;
 
-	return (
+	if (!mounted) return null;
+
+	return createPortal(
 		<div className={`${styles.rail} ${open ? styles.railOpen : ''} ${className}`}>
 			<div id={stackId} className={styles.stack} role="group" aria-label={ariaLabel}>
 				{children}
@@ -119,6 +145,7 @@ export default function FloatingActionsRail({ children, ariaLabel, className = '
 					<path d="M15 6l-6 6 6 6" />
 				</svg>
 			</button>
-		</div>
+		</div>,
+		document.body,
 	);
 }

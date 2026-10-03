@@ -212,64 +212,139 @@
 	padding: 20px 0;
 }
 
-/* Responsivo */
+/*
+ * Mobile: dos líneas.
+ * 1) nombre · N° de visita · botón de menú
+ * 2) DNI + sexo · sector/cama · fecha/hora de admisión · cobertura
+ * Sin etiquetas: el formato de cada dato ya lo identifica.
+ */
 @media (max-width: 768px) {
 	.wrap {
-		flex-direction: column;
-		padding: 20px;
-		gap: 16px;
+		flex-wrap: wrap;
+		align-items: center;
+		padding: 8px 12px;
+		gap: 4px 10px;
+		border-radius: 12px;
 	}
 
-	.headerRight {
-		flex-direction: row;
-		align-items: flex-start;
-		justify-content: space-between;
-		width: 100%;
-		padding-top: 12px;
-		border-top: 1px solid rgba(0, 131, 169, 0.1);
+	.headerLeft,
+	.headerRight,
+	.infoRow {
+		display: contents;
+	}
+
+	.wrap::before {
+		content: '';
+		order: 4;
+		flex-basis: 100%;
+		height: 0;
+	}
+
+	.infoLabel,
+	.visitaLabel,
+	.coberturaLabel {
+		display: none;
+	}
+
+	.nombrePaciente {
+		order: 1;
+		flex: 1 1 0;
+		min-width: 0;
+		margin: 0;
+		font-size: 0.92rem;
+		line-height: 1.25;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.visitaBlock {
-		align-items: flex-start;
-	}
-
-	.coberturaBlock {
-		align-items: flex-end;
+		order: 2;
+		flex: none;
 	}
 
 	.visitaNumber {
-		font-size: 1.5rem;
+		font-size: 0.85rem;
+		font-weight: 500;
+		letter-spacing: 0.04em;
+		color: #475569;
 	}
 
-	.nombrePaciente {
-		font-size: 1.15rem;
+	.menuButtonContainer {
+		order: 3;
+		position: static;
+		flex: none;
 	}
 
-	.infoRow {
-		flex-direction: column;
-		gap: 12px;
+	.menuButtonContainer:empty {
+		display: none;
 	}
-}
 
-@media (max-width: 480px) {
-	.wrap {
-		padding: 12px;
-		border-radius: 14px;
+	.documentoRow {
+		order: 5;
+		gap: 4px;
 	}
 
 	.documentoNumero {
-		font-size: 0.95rem;
+		font-size: 0.75rem;
+		letter-spacing: 0.04em;
 	}
 
-	.nombrePaciente {
-		font-size: 1rem;
+	.masculino,
+	.femenino,
+	.otro {
+		width: 0.95rem;
+		height: 0.95rem;
 	}
 
-	.visitaNumber {
-		font-size: 1.3rem;
+	.ubicacionBlock {
+		order: 6;
+	}
+
+	.admisionBlock {
+		order: 7;
+	}
+
+	.coberturaBlock {
+		order: 8;
+		margin-left: auto;
+		min-width: 0;
+		max-width: 45%;
+	}
+
+	.coberturaValue {
+		font-size: 0.72rem;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
+	}
+
+	.infoValues {
+		gap: 6px;
 	}
 
 	.infoValueItem {
+		gap: 3px;
+		font-size: 0.75rem;
+	}
+
+	.infoIcon {
 		font-size: 0.8rem;
+	}
+
+	.sectorBadge {
+		padding: 1px 6px;
+		font-size: 0.7rem;
+	}
+
+	.camaInfo {
+		gap: 3px;
+		font-size: 0.75rem;
+	}
+
+	.camaIcon {
+		width: 0.85rem;
+		height: 0.85rem;
 	}
 }

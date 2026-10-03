@@ -395,92 +395,84 @@
     border-color: #cbd5e1;
 }
 
-/* Responsivo */
+/* Mobile: pantalla completa, sin márgenes; solo el contenido scrollea. */
 @media (max-width: 768px) {
+    .modalOverlay {
+        left: 0;
+        align-items: stretch;
+        justify-content: stretch;
+        backdrop-filter: none;
+    }
+
     .modalContainer {
-        width: 95%;
-        max-height: 95vh;
-        min-width: auto;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: hidden;
+    }
+
+    .modalHeader {
+        flex-shrink: 0;
+        padding: 10px 8px 10px 14px;
+        padding-top: calc(10px + env(safe-area-inset-top, 0px));
+        border-radius: 0;
+    }
+
+    .modalTitulo {
+        font-size: 1.05rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .closeButton {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
+
+    .pacienteHeader {
+        flex-shrink: 0;
+        padding: 6px 8px;
+        gap: 0;
+    }
+
+    .modalContent {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modalFooter {
+        flex-shrink: 0;
+        gap: 8px;
+        padding: 8px 10px;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+        border-radius: 0;
+    }
+
+    /* Deja lugar a la pestaña de acciones flotantes cuando queda por encima del modal */
+    :global(body[data-fab-rail-over-modals]) .modalFooter {
+        padding-right: 64px;
     }
 
     .modalFooter > button,
     .modalFooter > * > button {
         flex: 1;
-        padding: 0.75rem;
+        padding: 0.7rem 0.5rem;
         font-size: 0.88rem;
     }
 
     .cancelButton {
         flex: 1;
-        padding: 0.75rem;
+        padding: 0.7rem 0.5rem;
         font-size: 0.88rem;
-    }
-
-    .pacienteHeader {
-        flex-direction: column;
-        padding: 20px;
-        gap: 16px;
-    }
-
-    .headerRight {
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: space-between;
-        width: 100%;
-        padding-top: 12px;
-        border-top: 1px solid rgba(0, 131, 169, 0.1);
-    }
-
-    .visitaBlock {
-        align-items: flex-start;
-    }
-
-    .coberturaBlock {
-        align-items: flex-end;
-    }
-
-    .visitaNumber {
-        font-size: 1.6rem;
-    }
-
-    .nombrePaciente {
-        font-size: 1.15rem;
-    }
-
-    .infoRow {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .modalContent {
-        max-height: calc(95vh - 280px);
-    }
-}
-
-@media (max-width: 767px) {
-    .modalTitulo {
-        white-space: normal;
-    }
-}
-
-@media (max-width: 480px) {
-    .pacienteHeader {
-        padding: 16px;
-    }
-
-    .documentoNumero {
-        font-size: 0.95rem;
-    }
-
-    .nombrePaciente {
-        font-size: 1rem;
-    }
-
-    .visitaNumber {
-        font-size: 1.4rem;
-    }
-
-    .infoValueItem {
-        font-size: 0.8rem;
     }
 }

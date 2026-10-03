@@ -24,6 +24,35 @@ const formatTime = (timeString: string) => {
   return timeString.includes(':') ? timeString.substring(0, 5) : timeString;
 };
 
+const vacio = (v: unknown) => v == null || String(v).trim() === '' || String(v).trim() === '-' || Number(v) === 0;
+
+/** Valores con dato de un control, para la vista en tarjetas (mobile). */
+function valoresControl(control: ControlFrecuente): { label: string; value: string }[] {
+  const c = control as ControlFrecuente & { HGT?: string | number; Hgt?: string | number };
+  const out: { label: string; value: string }[] = [];
+  const add = (label: string, raw: unknown, fmt: (v: any) => string = (v) => String(v)) => {
+    if (!vacio(raw)) out.push({ label, value: fmt(raw) });
+  };
+  add('Pulso', c.Pulso);
+  if (!vacio(c.Maximo) || !vacio(c.Minimo)) {
+    out.push({
+      label: 'Presión',
+      value: `${vacio(c.Maximo) ? '-' : c.Maximo}/${vacio(c.Minimo) ? '-' : c.Minimo}`,
+    });
+  }
+  add('PA media', c.PAMedia);
+  add('Frec. resp.', c.FrecuenciaRespiratoria);
+  add('T° axilar', c.Axilar, (v) => Number(v).toFixed(1));
+  add('T° rectal', c.Rectal);
+  add('Saturación', c.Saturometria, (v) => `${v}%`);
+  add('Glucemia', c.HGT ?? c.Hgt);
+  add('Peso', c.Peso, (v) => `${v} kg`);
+  add('Talla', c.Talla, (v) => `${v} cm`);
+  const imc = formatIMC(c.Peso, c.Talla, c.IMC);
+  if (!vacio(imc)) out.push({ label: 'IMC', value: imc });
+  return out;
+}
+
 export const NursingReportModal: React.FC<NursingReportModalProps> = ({
   isOpen,
   onClose,
@@ -145,7 +174,7 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
           ) : (
             <>
               <div className={styles.tabsContainer}>
-                <div>
+                <div className={styles.tabGroup}>
                   <button
                     className={`${styles.tabButton} ${activeTab === 'tabla' ? styles.activeTab : ''}`}
                     onClick={() => handleTabChange('tabla')}
@@ -192,6 +221,39 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
                 controls.length === 0 ? (
                   <div className={styles.noData}>No hay controles registrados para esta visita</div>
                 ) : (
+                  <>
+                  <ul className={styles.cardList}>
+                    {controls.map((control, index) => {
+                      const valores = valoresControl(control);
+                      return (
+                        <li key={index} className={styles.card}>
+                          <div className={styles.cardHead}>
+                            <span className={styles.cardFecha}>
+                              {formatDate(control.FechaControl)} · {formatTime(control.HoraControl)}
+                            </span>
+                            {control.Profesional ? (
+                              <span className={styles.cardProfesional}>{control.Profesional}</span>
+                            ) : null}
+                          </div>
+                          {valores.length > 0 ? (
+                            <dl className={styles.cardGrid}>
+                              {valores.map((v) => (
+                                <div key={v.label} className={styles.cardItem}>
+                                  <dt>{v.label}</dt>
+                                  <dd>{v.value}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          ) : (
+                            <p className={styles.cardEmpty}>Sin valores registrados</p>
+                          )}
+                          {control.Observaciones ? (
+                            <p className={styles.cardObs}>{control.Observaciones}</p>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
                   <div className={styles.tableContainer}>
                     <table className={styles.controlsTable}>
                       <colgroup>
@@ -249,11 +311,12 @@ export const NursingReportModal: React.FC<NursingReportModalProps> = ({
                       </tbody>
                     </table>
                   </div>
+                  </>
                 )
               ) : (
                 <>
-                  <div style={{ margin: '16px 0 8px 0' }}>
-                    <label style={{ marginRight: 8, fontWeight: 500 }}>Parámetro: </label>
+                  <div className={styles.paramRow}>
+                    <label className={styles.paramLabel}>Parámetro: </label>
                     <select className={styles.paramDropdown} value={parametro} onChange={handleParametroChange}>
                       {CHART_PARAMS.map(opt => (
                         <option key={opt.value} value={opt.value}>

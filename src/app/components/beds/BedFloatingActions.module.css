@@ -1,5 +1,6 @@
+/* Encima de los modales que abren estos botones (adjuntos 11050), debajo del visor de archivos (11100). */
 .root {
-  --fab-rail-z: 10100;
+  --fab-rail-z: 11080;
 }
 
 .fabAdjuntos,

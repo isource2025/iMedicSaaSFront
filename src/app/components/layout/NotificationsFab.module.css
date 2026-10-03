@@ -453,3 +453,44 @@
 .itemAction:hover {
   text-decoration: underline;
 }
+
+/* Mobile: hoja a lo ancho, por encima de la pestaña de acciones */
+@media (max-width: 768px) {
+  .panel {
+    position: fixed;
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-height: calc(100vh - 140px);
+    max-height: calc(100dvh - 140px);
+    border-radius: 14px;
+  }
+
+  .panelHeader {
+    padding: 12px 14px;
+  }
+
+  .bandejaCard {
+    width: calc(100% - 20px);
+    margin: 10px 10px 4px;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .item {
+    padding: 12px 14px;
+  }
+
+  .itemUnread {
+    padding-left: 11px;
+  }
+
+  .itemText {
+    font-size: 14px;
+  }
+
+  .itemAction {
+    padding: 4px 0;
+    font-size: 13px;
+  }
+}

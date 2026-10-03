@@ -344,7 +344,12 @@
 	}
 
 	.form {
-		padding: 16px;
+		gap: 12px;
+		padding: 12px 14px;
+	}
+
+	.textarea {
+		min-height: 220px;
 	}
 
 	.confirmActions {

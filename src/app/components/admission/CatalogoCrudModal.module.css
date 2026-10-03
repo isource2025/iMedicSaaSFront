@@ -427,3 +427,74 @@
     align-items: stretch;
   }
 }
+
+/* Mobile: pantalla completa */
+@media (max-width: 768px) {
+  .overlay {
+    padding: 0;
+    left: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    backdrop-filter: none;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 12px 14px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .header {
+    flex-shrink: 0;
+  }
+
+  .header h2 {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cerrar {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+  }
+
+  .listaWrap {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .lista {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .formulario {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pie,
+  .formAcciones {
+    flex-shrink: 0;
+  }
+
+  .formAcciones > button {
+    flex: 1;
+    justify-content: center;
+  }
+}

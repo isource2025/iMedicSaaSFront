@@ -344,11 +344,6 @@
 
 /* Estilos responsivos */
 @media (max-width: 768px) {
-  .modalContent {
-    width: 95%;
-    max-height: 80vh;
-  }
-  
   .modalTitle {
     font-size: 1.1rem;
   }
@@ -458,4 +453,78 @@
   padding: 1rem 1.5rem;
   border-top: 1px solid #e9ecef; /* Línea separadora superior */
   background-color: #f8f9fa; /* Un fondo ligero, opcional */
+}
+
+/* Mobile: pantalla completa */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 0;
+    left: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    backdrop-filter: none;
+  }
+
+  .modalContent {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modalHeader {
+    flex-shrink: 0;
+    border-radius: 0;
+    gap: 10px;
+    padding: 0.75rem 1rem;
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  }
+
+  .modalTitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .closeButton {
+    flex-shrink: 0;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .actionBarContainer {
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0.75rem 1rem;
+  }
+
+  .tableContainer {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 0.75rem 0.75rem;
+  }
+
+  .modalFooter {
+    flex-shrink: 0;
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .modalFooter .formButton {
+    flex: 1;
+    justify-content: center;
+  }
 }

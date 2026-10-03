@@ -2,22 +2,30 @@
  * No dejar `transform` en los botones cuando están visibles: los paneles/modales
  * `position: fixed` que se abren desde ellos quedarían atrapados.
  */
+/* Una sola columna: botones arriba, pestaña abajo, centrados sobre el mismo eje. */
 .rail {
+  --fab-size: 42px;
+  --fab-edge-gap: 5px;
   position: fixed;
   right: 0;
   bottom: 20px;
   z-index: var(--fab-rail-z, 900);
   display: flex;
+  flex-direction: column;
   align-items: flex-end;
+  gap: 10px;
   pointer-events: none;
 }
 
 .stack {
   display: flex;
   flex-direction: column-reverse;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
-  padding-right: 12px;
+  width: calc(var(--fab-size) + var(--fab-edge-gap) * 2);
+  padding-right: var(--fab-edge-gap);
+  padding-left: var(--fab-edge-gap);
+  box-sizing: border-box;
   pointer-events: none;
 }
 
@@ -47,7 +55,7 @@
 .tab {
   position: relative;
   flex-shrink: 0;
-  width: 36px;
+  width: calc(var(--fab-size) + var(--fab-edge-gap) * 2);
   min-height: 40px;
   display: flex;
   flex-direction: column;
@@ -56,7 +64,7 @@
   gap: 7px;
   padding: 11px 0;
   border: none;
-  border-radius: 12px 0 0 12px;
+  border-radius: 14px 0 0 14px;
   background: #0083a9;
   color: #fff;
   cursor: pointer;
@@ -189,17 +197,16 @@
 
 @media (max-width: 768px) {
   .rail {
-    bottom: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     right: env(safe-area-inset-right, 0px);
+    gap: 9px;
   }
 
   .stack {
     gap: 7px;
-    padding-right: 10px;
   }
 
   .tab {
-    width: 38px;
     min-height: 42px;
     padding: 12px 0;
   }

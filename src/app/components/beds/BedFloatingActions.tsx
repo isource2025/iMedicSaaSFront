@@ -31,7 +31,7 @@ export default function BedFloatingActions({
 
   if (!showAdjuntos && !showLabs && !showNursing) {
     return (
-      <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root}>
+      <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root} overModals>
         <NotificationsFab stack />
         <PatientFolderFab stack />
       </FloatingActionsRail>
@@ -39,7 +39,7 @@ export default function BedFloatingActions({
   }
 
   return (
-    <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root}>
+    <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root} overModals>
       <NotificationsFab stack />
       <PatientFolderFab stack />
       {showNursing && (

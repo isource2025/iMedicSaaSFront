@@ -507,3 +507,50 @@
 		opacity: 1;
 	}
 }
+
+/* Mobile: pantalla completa (excepto el selector de fecha, que es un confirm) */
+@media (max-width: 768px) {
+	.backdrop:not(:has(.choiceList)) {
+		padding: 0;
+		left: 0;
+		align-items: stretch;
+		justify-content: stretch;
+		backdrop-filter: none;
+	}
+
+	.modal:not(:has(.choiceList)) {
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
+		height: 100%;
+		max-height: none;
+		margin: 0;
+		border-radius: 0;
+		box-shadow: none;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		padding: 14px;
+		padding-top: calc(14px + env(safe-area-inset-top, 0px));
+		padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+	}
+
+	.modal:not(:has(.choiceList)) > * {
+		flex-shrink: 0;
+	}
+
+	.modal:not(:has(.choiceList)) > .trackList {
+		flex: 1 1 auto;
+		min-height: 0;
+		max-height: none;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.modal:not(:has(.choiceList)) > .actions {
+		margin-top: auto;
+	}
+
+	.modal:not(:has(.choiceList)) > .actions .btn {
+		flex: 1;
+	}
+}

@@ -625,10 +625,10 @@
 }
 
 @media (max-width: 768px) {
+    /* El modal (pantalla completa) ya scrollea: sin scroll anidado */
     .formScrollContainer {
-        max-height: 80vh;
-        overflow-y: auto;
-        overflow-x: hidden;
+        max-height: none;
+        overflow: visible;
     }
 
     .wrap {

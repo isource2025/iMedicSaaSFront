@@ -135,8 +135,7 @@ export default function AgendaInterconsultasBandeja({ open, onClose, sectorInici
 	return (
 		<div className={modalStyles.modalOverlay} onClick={onClose}>
 			<div
-				className={modalStyles.modalContent}
-				style={{ maxWidth: 900, width: '96vw', maxHeight: '90vh', overflow: 'auto' }}
+				className={`${modalStyles.modalContent} ${modalStyles.modalContentBandeja}`}
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className={modalStyles.modalHeader}>

@@ -370,3 +370,116 @@
     justify-content: flex-end;
   }
 }
+
+/* Mobile: pantalla completa */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 0;
+    left: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    backdrop-filter: none;
+  }
+
+  .modalContainer {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modalHeader {
+    flex-shrink: 0;
+    border-radius: 0;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    padding-top: calc(0.6rem + env(safe-area-inset-top, 0px));
+  }
+
+  .modalTitle {
+    min-width: 0;
+    font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .closeButton {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+  }
+
+  .searchContainer {
+    flex-shrink: 0;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .searchLabel {
+    font-size: 0.75rem;
+  }
+
+  .modalContent {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tableContainer {
+    height: auto;
+    overflow: visible;
+  }
+
+  .diagnosticosTable,
+  .resultCount {
+    font-size: 0.8rem;
+  }
+
+  .diagnosticosTable th,
+  .diagnosticosTable td {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .paginationButton,
+  .pageNumber {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .pageNumber {
+    font-size: 0.8rem;
+  }
+
+  .modalFooter {
+    flex-shrink: 0;
+    border-radius: 0;
+    padding: 0.65rem 0.85rem;
+    padding-bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .selectedInfo {
+    font-size: 0.75rem;
+  }
+
+  .selectedDescription {
+    max-width: none;
+  }
+
+  .footerButtons .cancelButton,
+  .footerButtons .selectButton {
+    flex: 1;
+    margin-right: 0;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}

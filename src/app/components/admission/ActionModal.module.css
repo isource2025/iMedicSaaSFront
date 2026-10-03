@@ -181,3 +181,70 @@
   font-size: 0.85rem;
   margin-top: 4px;
 }
+
+/* Mobile: pantalla completa */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 0;
+    left: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    backdrop-filter: none;
+  }
+
+  .modalContent {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modalHeader {
+    flex-shrink: 0;
+    border-radius: 0;
+    gap: 10px;
+    padding: 12px 14px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+
+  .modalTitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .closeButton {
+    flex-shrink: 0;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .modalBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px;
+  }
+
+  .modalFooter {
+    flex-shrink: 0;
+    border-radius: 0;
+    padding: 12px 14px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .modalFooter .formButton {
+    flex: 1;
+    justify-content: center;
+  }
+}
