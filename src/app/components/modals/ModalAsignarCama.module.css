@@ -344,6 +344,11 @@
     grid-template-columns: 1fr;
   }
 
+  .resultsBox {
+    max-height: none;
+    overflow: visible;
+  }
+
   .footer {
     flex-shrink: 0;
     border-radius: 0;

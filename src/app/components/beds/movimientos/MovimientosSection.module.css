@@ -146,3 +146,101 @@
 	max-width: 280px;
 	white-space: normal;
 }
+
+@media (max-width: 768px) {
+	.tableWrap {
+		border: none;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.tableWrapCompact {
+		max-height: none;
+		overflow: visible;
+	}
+
+	.table {
+		min-width: 0;
+		font-size: 0.82rem;
+	}
+
+	.table thead {
+		display: none;
+	}
+
+	.table,
+	.table tbody,
+	.table tbody tr,
+	.table tbody tr td {
+		display: block;
+		width: 100%;
+	}
+
+	.table tbody tr {
+		margin-bottom: 8px;
+		border: 1px solid #e5e7eb;
+		border-radius: 10px;
+		overflow: hidden;
+		background: #fff;
+	}
+
+	.table tbody tr td,
+	.table tbody tr:nth-child(even) td {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 10px;
+		padding: 6px 10px;
+		border-top: 1px solid #f1f5f9;
+		border-right: none;
+		background: transparent;
+		text-align: right;
+	}
+
+	.table tbody tr td:first-child {
+		border-top: none;
+	}
+
+	.table tbody tr td::before {
+		content: attr(data-label);
+		flex-shrink: 0;
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
+		color: #64748b;
+		text-align: left;
+	}
+
+	.table tbody tr:hover td {
+		background: transparent;
+	}
+
+	.rowActual {
+		border-color: #67e8f9 !important;
+		background: #ecfeff !important;
+	}
+
+	.rowEgreso {
+		border-color: #fdba74 !important;
+		background: #fff7ed !important;
+	}
+
+	.rowActual td,
+	.rowEgreso td {
+		background: transparent !important;
+	}
+
+	.cellEstado {
+		flex-wrap: wrap;
+	}
+
+	.cellEstado .estadoHint {
+		margin-top: 0;
+	}
+
+	.cellOperador,
+	.cellDiag {
+		max-width: none;
+	}
+}

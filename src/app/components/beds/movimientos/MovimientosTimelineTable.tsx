@@ -60,18 +60,18 @@ export default function MovimientosTimelineTable({ movimientos, dispCatalogo, co
 						const diag = diagnosticoTexto(m);
 						return (
 							<tr key={`${fechaHoraIngreso(m)}-${etiquetaCama(m)}-${idx}`} className={ROW_CLASS[estado]}>
-								<td>
+								<td className={tStyles.cellEstado} data-label="Estado">
 									<span className={`${tStyles.badgeEstado} ${BADGE_CLASS[estado]}`}>{estado}</span>
 									{estado === 'Egreso' && disp !== '—' ? (
 										<span className={tStyles.estadoHint}>{disp}</span>
 									) : null}
 								</td>
-								<td className={tStyles.cellCama}>{etiquetaCama(m)}</td>
-								<td>{etiquetaSector(m)}</td>
-								<td className={tStyles.cellFecha}>{fechaHoraIngreso(m)}</td>
-								<td className={tStyles.cellFecha}>{fechaHoraEgreso(m)}</td>
-								<td className={tStyles.cellDiag}>{diag}</td>
-								<td className={tStyles.cellOperador}>{nombreOperador(m)}</td>
+								<td className={tStyles.cellCama} data-label="Cama">{etiquetaCama(m)}</td>
+								<td data-label="Sector">{etiquetaSector(m)}</td>
+								<td className={tStyles.cellFecha} data-label="Ingreso">{fechaHoraIngreso(m)}</td>
+								<td className={tStyles.cellFecha} data-label="Egreso">{fechaHoraEgreso(m)}</td>
+								<td className={tStyles.cellDiag} data-label="Diagnóstico">{diag}</td>
+								<td className={tStyles.cellOperador} data-label="Operador">{nombreOperador(m)}</td>
 							</tr>
 						);
 					})}
