@@ -89,13 +89,19 @@ export default function IndicacionesTable({
         () => (rows || []).filter((r) => !ocultasIds.has(String(r.id))),
         [rows, ocultasIds],
     );
+    const filasSeleccionables = useMemo(
+        () => filasVisibles.filter((r) => !r.suspendida),
+        [filasVisibles],
+    );
     const hasRows = filasVisibles.length > 0;
 
-    // Si el servidor ya no trae la fila, limpiar el optimista
+    // Si el servidor ya no trae la fila (o ya la trae sin efecto), limpiar el optimista
     useEffect(() => {
         setOcultasIds((prev) => {
             if (prev.size === 0) return prev;
-            const presentes = new Set((rows || []).map((r) => String(r.id)));
+            const presentes = new Set(
+                (rows || []).filter((r) => !r.suspendida).map((r) => String(r.id)),
+            );
             const next = new Set(Array.from(prev).filter((id) => presentes.has(id)));
             return next.size === prev.size ? prev : next;
         });
@@ -334,17 +340,13 @@ export default function IndicacionesTable({
                                         <input
                                             type="checkbox"
                                             onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    filasVisibles.forEach(r => onToggleReindicar?.(r.id));
-                                                } else {
-                                                    filasVisibles.forEach(r => {
-                                                        if (selectedForReindicar.has(r.id)) {
-                                                            onToggleReindicar?.(r.id);
-                                                        }
-                                                    });
-                                                }
+                                                filasSeleccionables.forEach(r => {
+                                                    if (e.target.checked !== selectedForReindicar.has(r.id)) {
+                                                        onToggleReindicar?.(r.id);
+                                                    }
+                                                });
                                             }}
-                                            checked={filasVisibles.length > 0 && filasVisibles.every(r => selectedForReindicar.has(r.id))}
+                                            checked={filasSeleccionables.length > 0 && filasSeleccionables.every(r => selectedForReindicar.has(r.id))}
                                         />
                                     </th>
                                 )}
@@ -381,14 +383,17 @@ export default function IndicacionesTable({
                                             selectedId === r.id
                                                 ? styles.activeRow
                                                 : "",
-                                            r.nuevaEnfermeria ? styles.rowNueva : "",
+                                            r.nuevaEnfermeria && !r.suspendida ? styles.rowNueva : "",
+                                            r.suspendida ? styles.rowSuspendida : "",
                                         ].join(" ")}
                                     >
                                         {modoReindicar && (
                                             <td className={styles.cellCheckbox}>
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedForReindicar.has(r.id)}
+                                                    checked={!r.suspendida && selectedForReindicar.has(r.id)}
+                                                    disabled={r.suspendida}
+                                                    title={r.suspendida ? "Indicación dejada sin efecto" : undefined}
                                                     onChange={() => onToggleReindicar?.(r.id)}
                                                     onClick={(e) => e.stopPropagation()}
                                                 />
@@ -398,7 +403,9 @@ export default function IndicacionesTable({
                                             <div className={`${styles.estadoIndicador} ${styles[`estado${getEstadoIndicacion(r).color.charAt(0).toUpperCase() + getEstadoIndicacion(r).color.slice(1)}`]}`}>
                                                 {getEstadoIndicacion(r).label}
                                             </div>
-                                            {r.nuevaEnfermeria ? (
+                                            {r.suspendida ? (
+                                                <span className={styles.badgeSinEfecto}>Sin efecto</span>
+                                            ) : r.nuevaEnfermeria ? (
                                                 <span className={styles.badgeNueva}>Nueva</span>
                                             ) : null}
                                         </td>
@@ -474,6 +481,9 @@ export default function IndicacionesTable({
 
                                         <td className={styles.cellAccion}>
                                             <div className={styles.actionBtns}>
+                                                {r.suspendida ? (
+                                                    <span className={styles.noActions} title="Indicación dejada sin efecto">—</span>
+                                                ) : (<>
                                                 {/* Aplicar: solo enfermeros (y admin) */}
                                                 {puedeAplicar && (
                                                 <button
@@ -529,6 +539,7 @@ export default function IndicacionesTable({
                                                 {!puedeAplicar && !puedeModificarFila(r) && !puedeDejarSinEfecto && (
                                                 <span className={styles.noActions}>—</span>
                                                 )}
+                                                </>)}
                                             </div>
                                         </td>
                                     </tr>
@@ -549,12 +560,12 @@ export default function IndicacionesTable({
                 {filasVisibles.map((r) => (
                     <div
                         key={r.id}
-                        className={`${styles.cardMobile} ${modoReindicar ? styles.cardSeleccionable : ""} ${modoReindicar && selectedForReindicar.has(r.id) ? styles.cardSeleccionada : ""}`}
+                        className={`${styles.cardMobile} ${r.suspendida ? styles.cardSuspendida : ""} ${modoReindicar && !r.suspendida ? styles.cardSeleccionable : ""} ${modoReindicar && !r.suspendida && selectedForReindicar.has(r.id) ? styles.cardSeleccionada : ""}`}
                         data-testid={`indicacion-card-${r.id}`}
-                        onClick={modoReindicar ? () => onToggleReindicar?.(r.id) : undefined}
+                        onClick={modoReindicar && !r.suspendida ? () => onToggleReindicar?.(r.id) : undefined}
                     >
                         <div className={styles.cardHeader}>
-                            {modoReindicar && (
+                            {modoReindicar && !r.suspendida && (
                                 <input
                                     type="checkbox"
                                     className={styles.cardCheckbox}
@@ -567,6 +578,9 @@ export default function IndicacionesTable({
                             <span>
                                 <strong>Indicado:</strong> {r.descripcion ?? "-"}
                             </span>
+                            {r.suspendida && (
+                                <span className={styles.badgeSinEfecto}>Sin efecto</span>
+                            )}
                         </div>
                         {r.indicacionesHijas && r.indicacionesHijas.length > 0 && (
                             <div className={styles.cardAdicionales} data-testid={`adicionales-${r.id}`}>
@@ -612,7 +626,7 @@ export default function IndicacionesTable({
                             {r.medicamento ?? "-"}
                         </div>
 
-                        {!modoReindicar && (
+                        {!modoReindicar && !r.suspendida && (
                         <div className={styles.cardActions}>
                             {puedeAplicar && (
                             <button
@@ -650,7 +664,7 @@ export default function IndicacionesTable({
                         </div>
                         )}
                         {/* Volver a indicar: solo médicos (y admin). Activa el modo y deja esta tarjeta marcada. */}
-                        {puedeEditar && !modoReindicar && (
+                        {puedeEditar && !modoReindicar && !r.suspendida && (
                         <button
                             type="button"
                             className={styles.btnReindicarMobile}
@@ -672,9 +686,9 @@ export default function IndicacionesTable({
                             <input
                                 type="checkbox"
                                 aria-label="Seleccionar todas"
-                                checked={filasVisibles.length > 0 && filasVisibles.every((r) => selectedForReindicar.has(r.id))}
+                                checked={filasSeleccionables.length > 0 && filasSeleccionables.every((r) => selectedForReindicar.has(r.id))}
                                 onChange={(e) => {
-                                    filasVisibles.forEach((r) => {
+                                    filasSeleccionables.forEach((r) => {
                                         if (e.target.checked !== selectedForReindicar.has(r.id)) onToggleReindicar?.(r.id);
                                     });
                                 }}

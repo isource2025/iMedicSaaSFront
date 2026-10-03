@@ -165,6 +165,49 @@
     text-transform: uppercase;
 }
 
+/* Indicaciones dejadas sin efecto (visibles con el switch "Mostrar sin efecto") */
+.tbody .rowSuspendida td,
+.tbody .row.rowSuspendida:nth-child(even) td,
+.tbody .row.rowSuspendida:hover td {
+    background: #f3f4f6;
+    color: #9ca3af;
+}
+
+.tbody .rowSuspendida .primary,
+.tbody .rowSuspendida .sub,
+.tbody .rowSuspendida .cantidad,
+.tbody .rowSuspendida .hijaItem {
+    color: #9ca3af;
+}
+
+.tbody .rowSuspendida .desc .primary {
+    text-decoration: line-through;
+}
+
+.badgeSinEfecto {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #6b7280;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.cardSuspendida {
+    background: #f3f4f6 !important;
+    opacity: 0.85;
+}
+
+.cardSuspendida .cardHeader .badgeSinEfecto {
+    margin-top: 0;
+    margin-left: auto;
+}
+
 /* Divisores de columna (opcional, coméntalo si no los quieres) */
 .table th,
 .table td {

@@ -26,6 +26,12 @@ import {
     subscribeNuevasEnfermeriaSesion,
 } from "../../../utils/indicacionesNuevasSesion";
 
+const PARAMS_INDICACIONES = { incluirSuspendidas: 1 };
+
+function esIndicacionSuspendida(x: { suspendida?: boolean; estado?: string }): boolean {
+    return Boolean(x.suspendida) || String(x.estado ?? "").trim().toUpperCase() === "S";
+}
+
 function toLocalYmd(date: Date): string {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -174,6 +180,7 @@ export default function IndicacionesSection({
         endpointOverride: indicacionesPath
             ? { indicaciones: indicacionesPath }
             : undefined,
+        params: PARAMS_INDICACIONES,
         cacheTimeMs: 20000,
     });
 
@@ -216,12 +223,7 @@ export default function IndicacionesSection({
                 : [];
 
 
-        const rows = list
-            .filter((x) => {
-                const estado = String(x.estado ?? '').trim().toUpperCase();
-                return !x.suspendida && estado !== 'S';
-            })
-            .map((x) => ({
+        const rows = list.map((x) => ({
             id: x.id,
             cantidad: x.cantidad,
             descripcion: x.descripcion,
@@ -243,7 +245,7 @@ export default function IndicacionesSection({
             ultimaAplicacion: x.ultimaAplicacion,
             proximaAplicacion: x.proximaAplicacion,
             estado: x.estado,
-            suspendida: x.suspendida,
+            suspendida: esIndicacionSuspendida(x),
             unicaVez: x.unicaVez,
             OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
             matricula: (x as any).matricula ?? (x as any).Matricula ?? null,
@@ -272,6 +274,7 @@ export default function IndicacionesSection({
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [query, setQuery] = useState("");
+    const [mostrarSuspendidas, setMostrarSuspendidas] = useState(false);
     const [helpOpen, setHelpOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -320,7 +323,7 @@ export default function IndicacionesSection({
     const handleConfirmarReindicar = async (fechaYmd: string) => {
         if (selectedForReindicar.size === 0) return;
         
-        const indicacionesAReindicar = baseRows.filter(r => selectedForReindicar.has(r.id));
+        const indicacionesAReindicar = baseRows.filter(r => selectedForReindicar.has(r.id) && !r.suspendida);
         const itemsIniciales: ReindicarItemTrack[] = indicacionesAReindicar.map((r) => ({
             id: String(r.id),
             descripcion: descripcionIndicacionReindicar(r),
@@ -491,11 +494,21 @@ export default function IndicacionesSection({
         setConfirmarFechaOpen(false);
     };
 
+    const cantidadSuspendidas = useMemo(
+        () => baseRows.filter((r) => r.suspendida).length,
+        [baseRows]
+    );
+
+    const rowsPorEstado = useMemo(
+        () => (mostrarSuspendidas ? baseRows : baseRows.filter((r) => !r.suspendida)),
+        [baseRows, mostrarSuspendidas]
+    );
+
     // Filtrado simple por texto
     const rows = useMemo(() => {
         const q = query.trim().toLowerCase();
-        if (!q) return baseRows;
-        return baseRows.filter((r) => {
+        if (!q) return rowsPorEstado;
+        return rowsPorEstado.filter((r) => {
             const hay = (v?: string | number) =>
                 v != null && String(v).toLowerCase().includes(q);
             return (
@@ -509,7 +522,7 @@ export default function IndicacionesSection({
                 hay(r.nro)
             );
         });
-    }, [baseRows, query]);
+    }, [rowsPorEstado, query]);
 
     if (activeSection !== "indicaciones") return null;
 
@@ -598,6 +611,7 @@ export default function IndicacionesSection({
             const parts = rows.map((row, idx) => ({
                 title: `Indicación ${idx + 1}${row.nro != null ? ` · N° ${row.nro}` : ''}`,
                 fields: [
+                    ...(row.suspendida ? [{ label: 'Estado', value: 'Dejada sin efecto' }] : []),
                     { label: 'Tipo', value: row.tipo || '—' },
                     { label: 'Descripción', value: row.descripcion || '—' },
                     { label: 'Cantidad', value: row.cantidad ?? '—' },
@@ -679,6 +693,23 @@ export default function IndicacionesSection({
                     />
                 </div>
 
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={mostrarSuspendidas}
+                    className={`${styles.switchSuspendidas} ${mostrarSuspendidas ? styles.switchOn : ''}`}
+                    onClick={() => setMostrarSuspendidas((v) => !v)}
+                    title={mostrarSuspendidas ? 'Ocultar indicaciones dejadas sin efecto' : 'Mostrar indicaciones dejadas sin efecto'}
+                >
+                    <span className={styles.switchTrack} aria-hidden>
+                        <span className={styles.switchThumb} />
+                    </span>
+                    <span className={styles.switchLabel}>
+                        Mostrar sin efecto
+                        <span className={styles.switchCount}>{cantidadSuspendidas}</span>
+                    </span>
+                </button>
+
                 <div className={styles.actions}>
                     {modoReindicar && (
                         <>
@@ -716,14 +747,22 @@ export default function IndicacionesSection({
                     ) : rows.length === 0 ? (
                         <EmptyState
                             variant="indicaciones"
-                            text={baseRows.length === 0 ? 'Sin indicaciones registradas' : 'Sin resultados'}
-                            description={
-                                baseRows.length === 0
-                                    ? 'Cargá una indicación con el botón de arriba.'
-                                    : 'Probá con otro criterio de búsqueda.'
+                            text={
+                                rowsPorEstado.length > 0
+                                    ? 'Sin resultados'
+                                    : cantidadSuspendidas > 0
+                                        ? 'Sin indicaciones vigentes'
+                                        : 'Sin indicaciones registradas'
                             }
-                            actionLabel={baseRows.length === 0 ? 'Nueva Indicación' : undefined}
-                            onAction={baseRows.length === 0 ? onAddIndicacion : undefined}
+                            description={
+                                rowsPorEstado.length > 0
+                                    ? 'Probá con otro criterio de búsqueda.'
+                                    : cantidadSuspendidas > 0
+                                        ? `Hay ${cantidadSuspendidas} ${cantidadSuspendidas === 1 ? 'indicación dejada' : 'indicaciones dejadas'} sin efecto. Activá "Mostrar sin efecto" para verlas.`
+                                        : 'Cargá una indicación con el botón de arriba.'
+                            }
+                            actionLabel={rowsPorEstado.length === 0 ? 'Nueva Indicación' : undefined}
+                            onAction={rowsPorEstado.length === 0 ? onAddIndicacion : undefined}
                         />
                     ) : (
                         <IndicacionesTable

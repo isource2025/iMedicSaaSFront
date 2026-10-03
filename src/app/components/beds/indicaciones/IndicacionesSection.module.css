@@ -176,6 +176,82 @@
 	gap: 8px;
 }
 
+/* Switch "Mostrar sin efecto" */
+.switchSuspendidas {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	flex-shrink: 0;
+	padding: 8px 14px;
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	background: #fff;
+	color: #475569;
+	font-size: 0.82rem;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.switchSuspendidas:hover {
+	border-color: #cbd5e1;
+}
+.switchSuspendidas:focus-visible {
+	outline: none;
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(45, 204, 229, 0.25);
+}
+
+.switchTrack {
+	position: relative;
+	width: 36px;
+	height: 20px;
+	border-radius: 999px;
+	background: #cbd5e1;
+	transition: background-color 0.2s ease;
+	flex-shrink: 0;
+}
+
+.switchThumb {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+	transition: transform 0.2s ease;
+}
+
+.switchOn .switchTrack {
+	background: #6b7280;
+}
+.switchOn .switchThumb {
+	transform: translateX(16px);
+}
+
+.switchLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.switchCount {
+	min-width: 20px;
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: #f1f5f9;
+	color: #64748b;
+	font-size: 0.72rem;
+	text-align: center;
+}
+.switchOn .switchCount {
+	background: #e5e7eb;
+	color: #374151;
+}
+
 /* Botones */
 .btn {
     padding: 0.6rem 1.75rem;
@@ -393,6 +469,10 @@
 
 	.searchWrap {
 		min-width: 100%;
+	}
+
+	.switchSuspendidas {
+		align-self: flex-start;
 	}
 
 	.searchInput {
