@@ -11,7 +11,7 @@ import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import ConfirmationModal from '../shared/ConfirmationModal';
-import { exportToPDF } from '../../../utils/pdfExport';
+import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { getIdSectorFromToken } from '@/app/utils/jwtSession';

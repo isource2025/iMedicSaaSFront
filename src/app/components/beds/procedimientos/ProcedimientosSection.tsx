@@ -9,7 +9,7 @@ import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
-import { exportToPDF } from '../../../utils/pdfExport';
+import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';

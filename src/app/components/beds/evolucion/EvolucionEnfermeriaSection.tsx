@@ -15,7 +15,7 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
-import { exportToPDF } from '../../../utils/pdfExport';
+import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 interface EvolucionEnfermeriaSectionProps {

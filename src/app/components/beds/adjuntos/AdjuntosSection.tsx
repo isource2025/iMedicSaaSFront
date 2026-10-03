@@ -8,7 +8,7 @@ import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
-import { exportToPDF } from '../../../utils/pdfExport';
+import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import BedSectionLayout from '../shared/BedSectionLayout';

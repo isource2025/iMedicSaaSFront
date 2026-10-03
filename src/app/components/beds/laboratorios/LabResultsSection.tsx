@@ -9,7 +9,7 @@ import LabFormModal from './LabFormModal';
 import LabResultsTable from './LabResultsTable';
 import LabAnalysisView from './LabAnalysisView';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
-import { exportToPDF } from '../../../utils/pdfExport';
+import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';

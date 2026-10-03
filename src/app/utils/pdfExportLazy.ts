@@ -11,9 +11,11 @@
 import type { PDFExportOptions } from './pdfExport';
 
 type GenerarPDFEpicrisis = typeof import('./pdfEpicrisis').generarPDFEpicrisis;
+type GenerarPDFInterconsulta = typeof import('./pdfInterconsulta').generarPDFInterconsulta;
 
 let pdfExportMod: Promise<typeof import('./pdfExport')> | null = null;
 let pdfEpicrisisMod: Promise<typeof import('./pdfEpicrisis')> | null = null;
+let pdfInterconsultaMod: Promise<typeof import('./pdfInterconsulta')> | null = null;
 
 function cargarPdfExport() {
 	if (!pdfExportMod) {
@@ -35,10 +37,23 @@ function cargarPdfEpicrisis() {
 	return pdfEpicrisisMod;
 }
 
+function cargarPdfInterconsulta() {
+	if (!pdfInterconsultaMod) {
+		pdfInterconsultaMod = import('./pdfInterconsulta').catch((e) => {
+			pdfInterconsultaMod = null;
+			throw e;
+		});
+	}
+	return pdfInterconsultaMod;
+}
+
 export const exportToPDF = async (opts: PDFExportOptions) => (await cargarPdfExport()).exportToPDF(opts);
 
 export const generarPDFEpicrisis: GenerarPDFEpicrisis = async (...args) =>
 	(await cargarPdfEpicrisis()).generarPDFEpicrisis(...args);
+
+export const generarPDFInterconsulta: GenerarPDFInterconsulta = async (...args) =>
+	(await cargarPdfInterconsulta()).generarPDFInterconsulta(...args);
 
 /** Precarga opcional (p. ej. al hacer hover sobre el botón de exportar). */
 export const precargarPdfExport = () => {
