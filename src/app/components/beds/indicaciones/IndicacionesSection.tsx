@@ -161,7 +161,7 @@ export default function IndicacionesSection({
     fechaIngreso,
     horaIngreso,
 }: IndicacionesSectionProps) {
-    const { activeSection, selectedDate, setSelectedDate } = useBedDetail();
+    const { activeSection, selectedDate, setSelectedDate, marcarSeccionInicialLista } = useBedDetail();
     const fechaHoy = toLocalYmd(new Date());
     const fechaManana = addDaysYmd(fechaHoy, 1);
 
@@ -183,6 +183,10 @@ export default function IndicacionesSection({
         params: PARAMS_INDICACIONES,
         cacheTimeMs: 20000,
     });
+
+    useEffect(() => {
+        if (!isLoading) marcarSeccionInicialLista();
+    }, [isLoading, marcarSeccionInicialLista]);
 
     // Evita refetch con queryKey viejo tras cambiar de fecha en medio del guardado
     const refetchRef = useRef(refetch);

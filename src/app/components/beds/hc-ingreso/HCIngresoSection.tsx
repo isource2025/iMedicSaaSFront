@@ -14,6 +14,7 @@ import {
     actualizarHCIngreso, 
     eliminarHCIngreso 
 } from "@/app/services/hcIngresoService";
+import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from "@/app/utils/bedVisitaCache";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { ExamenFisicoCompleto } from "@/app/types/examenFisico";
 import {
@@ -29,6 +30,14 @@ import {
     getUserDisplayName,
     resolveHcSector,
 } from "@/app/utils/sessionUser";
+
+function recargarRecords(numeroVisita: number) {
+    return cargarVisita(
+        visitaCacheKey("hcIngreso", numeroVisita),
+        () => obtenerHCIngresoPorVisita(numeroVisita),
+        true,
+    );
+}
 
 function fechaHoraLocal(d: Date = new Date()) {
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -214,11 +223,16 @@ export default function HCIngresoSection({
     
     // Estado del componente
     const [mode, setMode] = useState<ViewMode>("view");
-    const [records, setRecords] = useState<HCIngresoRecord[]>([]);
-    const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
+    const hcCacheKey = visitaCacheKey("hcIngreso", numeroVisita);
+    const [records, setRecords] = useState<HCIngresoRecord[]>(
+        () => peekVisita<HCIngresoRecord[]>(hcCacheKey) ?? [],
+    );
+    const [selectedRecordId, setSelectedRecordId] = useState<number | null>(
+        () => peekVisita<HCIngresoRecord[]>(hcCacheKey)?.[0]?.IdHCIngreso ?? null,
+    );
     const [activeSection, setActiveSection] = useState<string>("antecedentes");
     const [showOnlySelectedDay, setShowOnlySelectedDay] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => peekVisita(hcCacheKey) === undefined);
     const [error, setError] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [accionesMobileOpen, setAccionesMobileOpen] = useState(false);
@@ -272,18 +286,31 @@ export default function HCIngresoSection({
             return;
         }
 
+        const key = visitaCacheKey("hcIngreso", numeroVisita);
+        const cached = tomarVisita<HCIngresoRecord[]>(key);
+        if (cached) {
+            setRecords(cached.data);
+            setSelectedRecordId(cached.data[0]?.IdHCIngreso ?? null);
+            setLoading(false);
+            if (!cached.refrescar) return;
+        }
+
         let vigente = true;
         const cargarDatos = async () => {
-            setLoading(true);
+            if (!cached) setLoading(true);
             try {
-                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                const data = await cargarVisita(key, () => obtenerHCIngresoPorVisita(numeroVisita));
                 if (!vigente) return;
                 setRecords(data);
-                setSelectedRecordId(data.length > 0 ? data[0].IdHCIngreso : null);
+                setSelectedRecordId((prev) =>
+                    cached && prev != null && data.some((r) => r.IdHCIngreso === prev)
+                        ? prev
+                        : data[0]?.IdHCIngreso ?? null,
+                );
             } catch (err) {
                 if (!vigente) return;
                 console.error("Error al cargar HC de Ingreso:", err);
-                setError("Error al cargar la historia clínica de ingreso");
+                if (!cached) setError("Error al cargar la historia clínica de ingreso");
             } finally {
                 if (vigente) setLoading(false);
             }
@@ -440,7 +467,7 @@ export default function HCIngresoSection({
 
             if (mode === "add") {
                 const result = await crearHCIngreso(payloadActual as Partial<HCIngresoRecord>);
-                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                const data = await recargarRecords(numeroVisita);
                 setRecords(data);
                 if (result.IdHCIngreso) {
                     setSelectedRecordId(result.IdHCIngreso);
@@ -472,7 +499,7 @@ export default function HCIngresoSection({
                 });
 
                 await actualizarHCIngreso(selectedRecordId, dataToSave);
-                const data = await obtenerHCIngresoPorVisita(numeroVisita);
+                const data = await recargarRecords(numeroVisita);
                 setRecords(data);
             }
 
@@ -504,7 +531,7 @@ export default function HCIngresoSection({
             console.log("HC eliminada exitosamente");
 
             // Recargar datos
-            const data = await obtenerHCIngresoPorVisita(numeroVisita);
+            const data = await recargarRecords(numeroVisita);
             setRecords(data);
 
             // Seleccionar el primer registro si existe

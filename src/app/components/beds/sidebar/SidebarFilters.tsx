@@ -20,7 +20,7 @@ type Props = {
  * Si una sección no aparece en este mapa, se considera siempre visible
  * (caso de "informe_evo" o utilitarios).
  */
-const SECTION_TO_PERM: Record<string, string> = {
+export const SECTION_TO_PERM: Record<string, string> = {
 	hcIngreso: 'HISTORIA_CLINICA',
 	indicaciones: 'INDICACIONES',
 	evoluciones: 'EVOLUCIONES',

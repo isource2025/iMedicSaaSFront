@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
 import { PedidoEstudio } from '@/app/types/estudios';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import SolicitarEstudioModal from './SolicitarEstudioModal';
@@ -118,8 +119,12 @@ export default function EstudiosSection({
 		puede('INTERNACION.ESTUDIOS.EDITAR') || puedeCrear;
 	const puedeEliminar =
 		puede('INTERNACION.ESTUDIOS.ELIMINAR') || puedeCrear;
-	const [rows, setRows] = useState<PedidoEstudio[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [rows, setRows] = useState<PedidoEstudio[]>(
+		() => peekVisita<PedidoEstudio[]>(visitaCacheKey('estudios', numeroVisita)) ?? [],
+	);
+	const [loading, setLoading] = useState(
+		() => peekVisita(visitaCacheKey('estudios', numeroVisita)) === undefined,
+	);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<PedidoEstudio | null>(null);
 	const [editing, setEditing] = useState<PedidoEstudio | null>(null);
@@ -129,21 +134,30 @@ export default function EstudiosSection({
 	const [showSolicitar, setShowSolicitar] = useState(false);
 	const [query, setQuery] = useState('');
 
-	const loadVisita = useCallback(async () => {
+	const loadVisita = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
-		setLoading(true);
+		const key = visitaCacheKey('estudios', numeroVisita);
+		const inicial = modo === 'inicial';
+		const cached = inicial ? tomarVisita<PedidoEstudio[]>(key) : undefined;
+		if (cached) {
+			setRows(cached.data);
+			setLoading(false);
+			if (!cached.refrescar) return;
+		} else {
+			setLoading(true);
+		}
 		setError(null);
 		try {
-			setRows(await estudiosService.listarPorVisita(numeroVisita));
+			setRows(await cargarVisita(key, () => estudiosService.listarPorVisita(numeroVisita), !inicial));
 		} catch (e) {
-			setError(e instanceof Error ? e.message : 'Error al cargar');
+			if (!cached) setError(e instanceof Error ? e.message : 'Error al cargar');
 		} finally {
 			setLoading(false);
 		}
 	}, [numeroVisita]);
 
 	useEffect(() => {
-		void loadVisita();
+		void loadVisita('inicial');
 	}, [loadVisita]);
 
 	const filtered = useMemo(() => {

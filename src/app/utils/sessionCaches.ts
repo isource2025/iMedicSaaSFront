@@ -2,6 +2,7 @@ import { clearCachedBedsList } from './bedsListCache';
 import { clearBedSnapshot } from './bedSnapshotCache';
 import { clearStoredBedsListFilters } from './bedsListFilters';
 import { clearServiciosReceptorCache } from './serviciosReceptorCache';
+import { limpiarCacheVisitas } from './bedVisitaCache';
 
 /** Evita dependencia circular estática con los servicios de métricas. */
 function clearMetricServiceCaches(): void {
@@ -17,6 +18,11 @@ function clearMetricServiceCaches(): void {
 	}
 	try {
 		require('./notificacionesStore').resetNotificacionesStore();
+	} catch {
+		/* ignore */
+	}
+	try {
+		require('../components/beds/contexts/useBedSectionQuery').clearBedSectionCache();
 	} catch {
 		/* ignore */
 	}
@@ -52,6 +58,11 @@ export function clearTenantUiCaches(): void {
 	}
 	try {
 		clearServiciosReceptorCache();
+	} catch {
+		/* ignore */
+	}
+	try {
+		limpiarCacheVisitas();
 	} catch {
 		/* ignore */
 	}

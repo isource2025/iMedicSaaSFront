@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IoEyeOutline } from 'react-icons/io5';
 import procedimientosService from '@/app/services/procedimientosService';
 import type { FacPracticaVisita } from '@/app/types/procedimientos';
+import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -67,27 +68,40 @@ export default function ProcedimientosSection({
 	documentoPaciente,
 	patientLocation,
 }: Props) {
-	const [rows, setRows] = useState<FacPracticaVisita[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [rows, setRows] = useState<FacPracticaVisita[]>(
+		() => peekVisita<FacPracticaVisita[]>(visitaCacheKey('procedimientos', numeroVisita)) ?? [],
+	);
+	const [loading, setLoading] = useState(
+		() => peekVisita(visitaCacheKey('procedimientos', numeroVisita)) === undefined,
+	);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<FacPracticaVisita | null>(null);
 	const [query, setQuery] = useState('');
 
-	const loadVisita = useCallback(async () => {
+	const loadVisita = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
-		setLoading(true);
+		const key = visitaCacheKey('procedimientos', numeroVisita);
+		const inicial = modo === 'inicial';
+		const cached = inicial ? tomarVisita<FacPracticaVisita[]>(key) : undefined;
+		if (cached) {
+			setRows(cached.data);
+			setLoading(false);
+			if (!cached.refrescar) return;
+		} else {
+			setLoading(true);
+		}
 		setError(null);
 		try {
-			setRows(await procedimientosService.listarPorVisita(numeroVisita));
+			setRows(await cargarVisita(key, () => procedimientosService.listarPorVisita(numeroVisita), !inicial));
 		} catch (e) {
-			setError(e instanceof Error ? e.message : 'Error al cargar');
+			if (!cached) setError(e instanceof Error ? e.message : 'Error al cargar');
 		} finally {
 			setLoading(false);
 		}
 	}, [numeroVisita]);
 
 	useEffect(() => {
-		void loadVisita();
+		void loadVisita('inicial');
 	}, [loadVisita]);
 
 	const filtered = useMemo(() => {

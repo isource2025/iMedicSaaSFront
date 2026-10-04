@@ -6,7 +6,7 @@ import { apiFetch } from '@/app/utils/authFetch';
 import { motivoDeRespuesta } from '@/app/utils/apiError';
 
 // ===== Helpers =====
-function toISODate(d: Date | null | undefined) {
+export function toISODate(d: Date | null | undefined) {
 	if (!d) return undefined;
 	const y = d.getFullYear();
 	const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -57,9 +57,115 @@ const endpointBySection: Record<SidebarSection, string> = {
 	laboratorios: '/laboratorios',
 };
 
+function resolveApiBase(apiBase?: string) {
+	return (apiBase ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
+}
+
+// Si el endpoint es relativo, prefix con apiBase. Si es absoluto (http...), úsalo tal cual.
+function resolveUrl(baseUrl: string | undefined, apiBase: string) {
+	if (!baseUrl) return undefined;
+	if (/^https?:\/\//i.test(baseUrl)) return baseUrl;
+	const path = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
+	return `${apiBase}${path}`;
+}
+
+function buildQueryParams(input: {
+	dateISO?: string;
+	patientId?: string | number;
+	bedId?: string | number;
+	admissionId?: string | number;
+	params?: Record<string, string | number | boolean | undefined>;
+}): Record<string, unknown> {
+	return {
+		date: input.dateISO, // cambia el nombre si tu backend usa otro (ej. 'on' o 'fecha')
+		patientId: input.patientId,
+		bedId: input.bedId,
+		admissionId: input.admissionId,
+		...(input.params ?? {}),
+	};
+}
+
+function buildKey(
+	section: SidebarSection,
+	dateISO: string | undefined,
+	resolvedBaseUrl: string | undefined,
+	queryParams: Record<string, unknown>,
+) {
+	return `bedDetail::${section}::${dateISO ?? 'null'}::${resolvedBaseUrl ?? 'no-url'}::${stableStringify(queryParams)}`;
+}
+
 // ===== Cache simple en memoria (compartida por módulo) =====
 // key -> { ts, data }
 const _cache = new Map<string, { ts: number; data: unknown }>();
+// key -> request en curso (la comparten la precarga y la sección)
+const _inflight = new Map<string, Promise<unknown>>();
+
+/** Pasado este tiempo el cache ya no se muestra mientras se recarga: vuelve el loader. */
+const STALE_MAX_MS = 10 * 60_000;
+
+/** Logout / cambio de empresa: las claves no llevan el tenant. */
+export function clearBedSectionCache(): void {
+	_cache.clear();
+	_inflight.clear();
+}
+
+function fetchShared(url: string, key: string, init: RequestInit | undefined, force: boolean) {
+	const pending = _inflight.get(key);
+	if (pending && !force) return pending;
+	const request = async () => {
+		const res = await apiFetch(url, { method: 'GET', ...(init ?? {}) });
+		if (!res.ok) throw new Error(await motivoDeRespuesta(res));
+		return res.json() as Promise<unknown>;
+	};
+	const job: Promise<unknown> = request()
+		.then((json) => {
+			if (_inflight.get(key) === job) _cache.set(key, { ts: Date.now(), data: json });
+			return json;
+		})
+		.finally(() => {
+			if (_inflight.get(key) === job) _inflight.delete(key);
+		});
+	_inflight.set(key, job);
+	return job;
+}
+
+export type PrefetchBedSectionParams = {
+	section: SidebarSection;
+	endpoint: string;
+	date?: Date | null;
+	patientId?: string | number;
+	bedId?: string | number;
+	admissionId?: string | number;
+	params?: Record<string, string | number | boolean | undefined>;
+	/** No vuelve a pedir si el cache tiene menos de este tiempo (default 30s). */
+	freshMs?: number;
+	apiBase?: string;
+};
+
+/**
+ * Deja en cache lo que va a pedir `useBedSectionFetch` con los mismos datos, así la sección
+ * se muestra sin loader al abrirla. Los parámetros tienen que coincidir con los de la sección.
+ */
+export async function prefetchBedSection(p: PrefetchBedSectionParams): Promise<void> {
+	const dateISO = toISODate(p.date);
+	const url = resolveUrl(p.endpoint, resolveApiBase(p.apiBase));
+	if (!url) return;
+	const queryParams = buildQueryParams({
+		dateISO,
+		patientId: p.patientId,
+		bedId: p.bedId,
+		admissionId: p.admissionId,
+		params: p.params,
+	});
+	const key = buildKey(p.section, dateISO, url, queryParams);
+	const cached = _cache.get(key);
+	if (cached && Date.now() - cached.ts < (p.freshMs ?? 30_000)) return;
+	try {
+		await fetchShared(url + buildQuery(queryParams), key, undefined, false);
+	} catch {
+		/* la sección vuelve a intentar al abrirse */
+	}
+}
 
 export type UseBedSectionFetchParams = {
 	// Identificadores que tu backend necesite (paciente, cama, internación, etc.)
@@ -96,10 +202,7 @@ export function useBedSectionFetch<T = unknown>(
 	const section = activeSection;
 	const dateISO = toISODate(selectedDate);
 
-	const apiBase = (opts?.apiBase ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(
-		/\/+$/,
-		'',
-	);
+	const apiBase = resolveApiBase(opts?.apiBase);
 
 	const endpoints = useMemo(
 		() => ({
@@ -109,42 +212,40 @@ export function useBedSectionFetch<T = unknown>(
 		[opts?.endpointOverride],
 	);
 
-	// Si el endpoint es relativo, prefix con apiBase. Si es absoluto (http...), úsalo tal cual.
 	const baseUrl = endpoints[section];
-	const resolvedBaseUrl = useMemo(() => {
-		if (!baseUrl) return undefined;
-		if (/^https?:\/\//i.test(baseUrl)) return baseUrl; // absoluto
-		const path = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
-		return `${apiBase}${path}`; // relativo -> prefix apiBase
-	}, [baseUrl, apiBase]);
+	const resolvedBaseUrl = useMemo(() => resolveUrl(baseUrl, apiBase), [baseUrl, apiBase]);
 
-	const queryParams = useMemo(() => {
-		return {
-			date: dateISO, // cambia el nombre si tu backend usa otro (ej. 'on' o 'fecha')
-			patientId: opts?.patientId,
-			bedId: opts?.bedId,
-			admissionId: opts?.admissionId,
-			...(opts?.params ?? {}),
-		} as Record<string, unknown>;
-	}, [dateISO, opts?.patientId, opts?.bedId, opts?.admissionId, opts?.params]);
+	const queryParams = useMemo(
+		() =>
+			buildQueryParams({
+				dateISO,
+				patientId: opts?.patientId,
+				bedId: opts?.bedId,
+				admissionId: opts?.admissionId,
+				params: opts?.params,
+			}),
+		[dateISO, opts?.patientId, opts?.bedId, opts?.admissionId, opts?.params],
+	);
 
 	const queryKey = useMemo(
-		() =>
-			`bedDetail::${section}::${dateISO ?? 'null'}::${resolvedBaseUrl ?? 'no-url'}::${stableStringify(queryParams)}`,
+		() => buildKey(section, dateISO, resolvedBaseUrl, queryParams),
 		[section, dateISO, resolvedBaseUrl, queryParams],
 	);
 
-	const [data, setData] = useState<T | undefined>(undefined);
-	const [isLoading, setIsLoading] = useState(true);
+	const [initialCache] = useState(() => {
+		const c = _cache.get(queryKey);
+		return c && Date.now() - c.ts < STALE_MAX_MS ? c : undefined;
+	});
+	const [data, setData] = useState<T | undefined>(initialCache?.data as T | undefined);
+	const [isLoading, setIsLoading] = useState(!initialCache);
 	const [error, setError] = useState<Error | undefined>(undefined);
 	const [url, setUrl] = useState<string | undefined>(undefined);
-	const [lastUpdatedAt, setLastUpdatedAt] = useState<number | undefined>(undefined);
+	const [lastUpdatedAt, setLastUpdatedAt] = useState<number | undefined>(initialCache?.ts);
 
 	const enabled = (opts?.enabled ?? true) && !!baseUrl;
 	const cacheTimeMs = opts?.cacheTimeMs ?? 30_000; // 30s
 	const revalidateOnFocus = opts?.revalidateOnFocus ?? false;
 
-	const abortRef = useRef<AbortController | null>(null);
 	const queryKeyRef = useRef(queryKey);
 	const queryParamsRef = useRef(queryParams);
 	const resolvedBaseUrlRef = useRef(resolvedBaseUrl);
@@ -186,39 +287,38 @@ export function useBedSectionFetch<T = unknown>(
 			}
 		}
 
-		// 2) Network
-		abortRef.current?.abort();
-		const controller = new AbortController();
-		abortRef.current = controller;
-
+		// 2) Network (reutiliza la precarga en curso; un refetch tras guardar pide de nuevo)
 		try {
-			const res = await apiFetch(finalUrl, {
-				method: 'GET',
-				...(opts?.fetchInit ?? {}),
-				signal: controller.signal,
-			});
-			if (!res.ok) throw new Error(await motivoDeRespuesta(res));
-			const json = (await res.json()) as T;
+			const json = (await fetchShared(finalUrl, currentKey, opts?.fetchInit, soft)) as T;
+			if (queryKeyRef.current !== currentKey) return; // navegación rápida
 			setData(json);
 			setLastUpdatedAt(Date.now());
-			_cache.set(currentKey, { ts: Date.now(), data: json });
 		} catch (e: any) {
-			if (e?.name === 'AbortError') return; // navegación rápida
+			if (queryKeyRef.current !== currentKey) return;
 			setError(e);
 		} finally {
-			setIsLoading(false);
+			if (queryKeyRef.current === currentKey) setIsLoading(false);
 		}
 	};
 
-	// Refetch en cambios de sección/fecha/params/URL (p. ej. otra visita)
+	// Refetch en cambios de sección/fecha/params/URL (p. ej. otra visita).
+	// Con cache (precargado o de una visita anterior) se muestra al instante y se refresca atrás.
 	useEffect(() => {
 		if (enabled) {
+			const cached = _cache.get(queryKey);
+			if (cached && Date.now() - cached.ts < STALE_MAX_MS) {
+				setData(cached.data as T);
+				setLastUpdatedAt(cached.ts);
+				setError(undefined);
+				setIsLoading(false);
+				if (Date.now() - cached.ts >= cacheTimeMs) void doFetch({ soft: true });
+				return;
+			}
 			setIsLoading(true);
 			setData(undefined);
 			setError(undefined);
 		}
-		doFetch();
-		return () => abortRef.current?.abort();
+		void doFetch();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [queryKey, baseUrl, enabled]);
 

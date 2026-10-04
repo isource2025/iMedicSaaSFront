@@ -6,6 +6,7 @@ import {
 	InterconsultaRow,
 } from '@/app/services/interconsultasService';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import { buildAtencionField } from '../shared/pacientePedidoFields';
@@ -153,9 +154,13 @@ export default function InterconsultaSection({
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
 	const canEdit = puede('INTERNACION.INTERCONSULTAS.EDITAR') || canCreate;
 
-	const [rows, setRows] = useState<InterconsultaRow[]>([]);
+	const [rows, setRows] = useState<InterconsultaRow[]>(
+		() => peekVisita<InterconsultaRow[]>(visitaCacheKey('interconsulta', numeroVisita)) ?? [],
+	);
 	const [showSolicitar, setShowSolicitar] = useState(false);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(
+		() => peekVisita(visitaCacheKey('interconsulta', numeroVisita)) === undefined,
+	);
 	const [exportingDetail, setExportingDetail] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
@@ -163,21 +168,32 @@ export default function InterconsultaSection({
 	const [editingRespuesta, setEditingRespuesta] = useState<InterconsultaRow | null>(null);
 	const [query, setQuery] = useState('');
 
-	const loadVisita = useCallback(async () => {
+	const loadVisita = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
-		setLoading(true);
+		const key = visitaCacheKey('interconsulta', numeroVisita);
+		const inicial = modo === 'inicial';
+		const cached = inicial ? tomarVisita<InterconsultaRow[]>(key) : undefined;
+		if (cached) {
+			setRows(cached.data);
+			setLoading(false);
+			if (!cached.refrescar) return;
+		} else {
+			setLoading(true);
+		}
 		setError(null);
 		try {
-			setRows(await interconsultasService.listarPorVisita(numeroVisita));
+			setRows(
+				await cargarVisita(key, () => interconsultasService.listarPorVisita(numeroVisita), !inicial),
+			);
 		} catch (e) {
-			setError(e instanceof Error ? e.message : 'Error al cargar');
+			if (!cached) setError(e instanceof Error ? e.message : 'Error al cargar');
 		} finally {
 			setLoading(false);
 		}
 	}, [numeroVisita]);
 
 	useEffect(() => {
-		void loadVisita();
+		void loadVisita('inicial');
 	}, [loadVisita]);
 
 	const filtered = useMemo(() => {

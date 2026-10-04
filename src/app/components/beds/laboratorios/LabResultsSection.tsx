@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { laboratoriosService } from '@/app/services/laboratoriosService';
 import { ExamenLabCompleto } from '@/app/types/laboratorios';
+import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import LabUploadModal from './LabUploadModal';
 import LabFormModal from './LabFormModal';
@@ -33,8 +34,12 @@ export default function LabResultsSection({
   fechaIngreso,
   horaIngreso,
 }: LabResultsSectionProps) {
-  const [examenes, setExamenes] = useState<ExamenLabCompleto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [examenes, setExamenes] = useState<ExamenLabCompleto[]>(
+    () => peekVisita<ExamenLabCompleto[]>(visitaCacheKey('laboratorios', numeroVisita)) ?? [],
+  );
+  const [loading, setLoading] = useState(
+    () => peekVisita(visitaCacheKey('laboratorios', numeroVisita)) === undefined,
+  );
   const [error, setError] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedExamen, setSelectedExamen] = useState<ExamenLabCompleto | null>(null);
@@ -44,21 +49,33 @@ export default function LabResultsSection({
 
   useEffect(() => {
     if (numeroVisita) {
-      loadExamenes();
+      loadExamenes('inicial');
     }
   }, [numeroVisita]);
 
-  const loadExamenes = async () => {
+  const loadExamenes = async (modo?: 'inicial') => {
     if (!numeroVisita) return;
+    const key = visitaCacheKey('laboratorios', numeroVisita);
+    const inicial = modo === 'inicial';
+    const cached = inicial ? tomarVisita<ExamenLabCompleto[]>(key) : undefined;
+    if (cached) {
+      setExamenes(cached.data);
+      setLoading(false);
+      if (!cached.refrescar) return;
+    }
 
     try {
-      setLoading(true);
+      if (!cached) setLoading(true);
       setError(null);
-      const data = await laboratoriosService.getExamenesByVisita(numeroVisita);
+      const data = await cargarVisita(
+        key,
+        () => laboratoriosService.getExamenesByVisita(numeroVisita),
+        !inicial,
+      );
       setExamenes(data);
     } catch (err) {
       console.error('Error al cargar exámenes:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar exámenes');
+      if (!cached) setError(err instanceof Error ? err.message : 'Error al cargar exámenes');
     } finally {
       setLoading(false);
     }

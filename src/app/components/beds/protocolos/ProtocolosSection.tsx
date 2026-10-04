@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import protocolosService from '@/app/services/protocolosService';
 import type { ProtocoloClinico } from '@/app/types/protocolos';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '@/app/hooks/useUsuarioActual';
 import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import ConfirmationModal from '../shared/ConfirmationModal';
@@ -70,8 +71,12 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	const puedeEditar = puede('INTERNACION.PROTOCOLOS.EDITAR');
 	const puedeEliminar = puede('INTERNACION.PROTOCOLOS.ELIMINAR');
 	const usuarioActual = useUsuarioActual();
-	const [rows, setRows] = useState<ProtocoloClinico[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [rows, setRows] = useState<ProtocoloClinico[]>(
+		() => peekVisita<ProtocoloClinico[]>(visitaCacheKey('protocolos', numeroVisita)) ?? [],
+	);
+	const [loading, setLoading] = useState(
+		() => peekVisita(visitaCacheKey('protocolos', numeroVisita)) === undefined,
+	);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<ProtocoloClinico | null>(null);
 	const [showCargar, setShowCargar] = useState(false);
@@ -106,21 +111,30 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 		}
 	};
 
-	const load = useCallback(async () => {
+	const load = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
-		setLoading(true);
+		const key = visitaCacheKey('protocolos', numeroVisita);
+		const inicial = modo === 'inicial';
+		const cached = inicial ? tomarVisita<ProtocoloClinico[]>(key) : undefined;
+		if (cached) {
+			setRows(cached.data);
+			setLoading(false);
+			if (!cached.refrescar) return;
+		} else {
+			setLoading(true);
+		}
 		setError(null);
 		try {
-			setRows(await protocolosService.listarPorVisita(numeroVisita));
+			setRows(await cargarVisita(key, () => protocolosService.listarPorVisita(numeroVisita), !inicial));
 		} catch (e) {
-			setError(e instanceof Error ? e.message : 'Error al cargar');
+			if (!cached) setError(e instanceof Error ? e.message : 'Error al cargar');
 		} finally {
 			setLoading(false);
 		}
 	}, [numeroVisita]);
 
 	useEffect(() => {
-		void load();
+		void load('inicial');
 	}, [load]);
 
 	const filtered = useMemo(() => {

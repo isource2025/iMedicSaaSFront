@@ -5,6 +5,7 @@ import solicitudesEstudiosService from '@/app/services/solicitudesEstudiosServic
 import type { PedidoEstudio } from '@/app/types/estudios';
 import type { SolicitudEstudio } from '@/app/types/solicitudesEstudios';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -128,8 +129,12 @@ export default function SolicitudesEstudiosSection({
 	const puedeEditar = puede('INTERNACION.ESTUDIOS.EDITAR') || puedeCrear;
 	const puedeEliminar = puede('INTERNACION.ESTUDIOS.ELIMINAR') || puedeCrear;
 
-	const [rows, setRows] = useState<SolicitudEstudio[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [rows, setRows] = useState<SolicitudEstudio[]>(
+		() => peekVisita<SolicitudEstudio[]>(visitaCacheKey('solicitudesEstudios', numeroVisita)) ?? [],
+	);
+	const [loading, setLoading] = useState(
+		() => peekVisita(visitaCacheKey('solicitudesEstudios', numeroVisita)) === undefined,
+	);
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<SolicitudEstudio | null>(null);
 	const [editing, setEditing] = useState<SolicitudEstudio | null>(null);
@@ -140,21 +145,32 @@ export default function SolicitudesEstudiosSection({
 	const [expandidas, setExpandidas] = useState<Set<number>>(new Set());
 	const [query, setQuery] = useState('');
 
-	const loadVisita = useCallback(async () => {
+	const loadVisita = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
-		setLoading(true);
+		const key = visitaCacheKey('solicitudesEstudios', numeroVisita);
+		const inicial = modo === 'inicial';
+		const cached = inicial ? tomarVisita<SolicitudEstudio[]>(key) : undefined;
+		if (cached) {
+			setRows(cached.data);
+			setLoading(false);
+			if (!cached.refrescar) return;
+		} else {
+			setLoading(true);
+		}
 		setError(null);
 		try {
-			setRows(await solicitudesEstudiosService.listarPorVisita(numeroVisita));
+			setRows(
+				await cargarVisita(key, () => solicitudesEstudiosService.listarPorVisita(numeroVisita), !inicial),
+			);
 		} catch (e) {
-			setError(e instanceof Error ? e.message : 'Error al cargar');
+			if (!cached) setError(e instanceof Error ? e.message : 'Error al cargar');
 		} finally {
 			setLoading(false);
 		}
 	}, [numeroVisita]);
 
 	useEffect(() => {
-		void loadVisita();
+		void loadVisita('inicial');
 	}, [loadVisita]);
 
 	const filtered = useMemo(() => {

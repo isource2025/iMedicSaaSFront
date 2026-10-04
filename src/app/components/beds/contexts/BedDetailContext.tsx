@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Bed } from '../../../types/beds';
 
 export type SidebarSection =
@@ -43,6 +43,10 @@ export interface BedDetailContextType {
 	adjuntosTotalCount: number;
 	adjuntosRecientesCount: number;
 	setAdjuntosSidebarInfo: (total: number, recientes: number) => void;
+
+	/** La sección con la que abre la ficha terminó su primera carga: arranca la precarga del resto. */
+	seccionInicialLista: boolean;
+	marcarSeccionInicialLista: () => void;
 }
 
 export const BedDetailContext = createContext<BedDetailContextType | undefined>(undefined);
@@ -71,6 +75,8 @@ export function BedDetailProvider({
 	const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
 	const [adjuntosTotalCount, setAdjuntosTotalCount] = useState(0);
 	const [adjuntosRecientesCount, setAdjuntosRecientesCount] = useState(0);
+	const [seccionInicialLista, setSeccionInicialLista] = useState(false);
+	const marcarSeccionInicialLista = useCallback(() => setSeccionInicialLista(true), []);
 
 	useEffect(() => {
 		if (initialBed) setBed(initialBed);
@@ -113,6 +119,8 @@ export function BedDetailProvider({
 		adjuntosTotalCount,
 		adjuntosRecientesCount,
 		setAdjuntosSidebarInfo,
+		seccionInicialLista,
+		marcarSeccionInicialLista,
 	};
 
 	return <BedDetailContext.Provider value={value}>{children}</BedDetailContext.Provider>;

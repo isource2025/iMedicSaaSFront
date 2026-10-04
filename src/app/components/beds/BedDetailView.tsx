@@ -20,6 +20,7 @@ import AdjuntosSection from './adjuntos/AdjuntosSection';
 import AdjuntosModal from './adjuntos/AdjuntosModal';
 import { useSolicitudesMulti } from '@/app/utils/solicitudesMulti';
 import BedFloatingActions from './BedFloatingActions';
+import BedSectionsPrefetcher from './BedSectionsPrefetcher';
 import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
 import { bedToHeaderSnapshot } from '../../utils/bedHeader';
@@ -75,6 +76,10 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 
 	return (
 		<div className={styles.root}>
+			<BedSectionsPrefetcher
+				numeroVisita={bed?.NumeroVisita || null}
+				solicitudesMulti={solicitudesMulti}
+			/>
 			{/* ====== HEADER (arriba de todo) ====== */}
 			<header className={styles.header}>
 				<PatientMiniHeader
