@@ -532,6 +532,15 @@
 	font-weight: 400;
 }
 
+.selectedLista {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
 .selectedTipo button {
 	border: none;
 	background: transparent;

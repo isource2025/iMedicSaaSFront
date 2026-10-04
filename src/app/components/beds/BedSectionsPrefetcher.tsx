@@ -9,7 +9,6 @@ import { precargarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 
 type Props = {
 	numeroVisita: number | null;
-	solicitudesMulti: boolean;
 };
 
 /** `porFecha`: se descarta si el usuario cambia de día antes de que salga. */
@@ -30,11 +29,7 @@ const CHUNKS: Record<string, () => Promise<unknown>> = {
 	evoluciones: () => import('./evoluciones/EvolucionesSection'),
 	hcIngreso: () => import('./hc-ingreso/HCIngresoSection'),
 	laboratorios: () => import('./laboratorios/LabResultsSection'),
-	solicitudEstudios: () =>
-		Promise.all([
-			import('./estudios/EstudiosSection'),
-			import('./estudios/SolicitudesEstudiosSection'),
-		]),
+	solicitudEstudios: () => import('./estudios/EstudiosSection'),
 	protocolos: () => import('./protocolos/ProtocolosSection'),
 	interconsulta: () => import('./interconsulta/InterconsultaSection'),
 	epicrisis: () => import('./epicrisis/EpicrisisSection'),
@@ -66,7 +61,7 @@ function tareasPorFecha(nv: number, date: Date | null): Tarea[] {
 }
 
 /** Secciones que traen toda la visita (no dependen de la fecha). Claves = las de cada sección. */
-function tareasPorVisita(nv: number, solicitudesMulti: boolean): Tarea[] {
+function tareasPorVisita(nv: number): Tarea[] {
 	return [
 		{
 			seccion: 'hcIngreso',
@@ -85,13 +80,9 @@ function tareasPorVisita(nv: number, solicitudesMulti: boolean): Tarea[] {
 		{
 			seccion: 'solicitudEstudios',
 			run: () =>
-				solicitudesMulti
-					? precargarVisita(visitaCacheKey('solicitudesEstudios', nv), async () =>
-							(await import('@/app/services/solicitudesEstudiosService')).default.listarPorVisita(nv),
-						)
-					: precargarVisita(visitaCacheKey('estudios', nv), async () =>
-							(await import('@/app/services/estudiosService')).default.listarPorVisita(nv),
-						),
+				precargarVisita(visitaCacheKey('estudios', nv), async () =>
+					(await import('@/app/services/estudiosService')).default.listarPorVisita(nv),
+				),
 		},
 		{
 			seccion: 'laboratorios',
@@ -137,7 +128,7 @@ async function ejecutar(tareas: Tarea[], cancelado: () => boolean) {
  * Cuando termina de cargar la sección con la que abre la ficha (Indicaciones), precarga en
  * segundo plano el código y los datos del resto, así al abrirlas se muestran sin loader.
  */
-export default function BedSectionsPrefetcher({ numeroVisita, solicitudesMulti }: Props) {
+export default function BedSectionsPrefetcher({ numeroVisita }: Props) {
 	const { selectedDate, seccionInicialLista } = useBedDetail();
 	const { puedeSubmodulo, rol, loaded } = usePermiso();
 	const [arrancar, setArrancar] = useState(false);
@@ -176,10 +167,8 @@ export default function BedSectionsPrefetcher({ numeroVisita, solicitudesMulti }
 				}
 			}
 
-			const claveVisita = `${nv}:${solicitudesMulti ? 'multi' : 'simple'}`;
-			const porVisita = visitasPrecargadas.current.has(claveVisita)
-				? []
-				: tareasPorVisita(nv, solicitudesMulti);
+			const claveVisita = String(nv);
+			const porVisita = visitasPrecargadas.current.has(claveVisita) ? [] : tareasPorVisita(nv);
 			visitasPrecargadas.current.add(claveVisita);
 
 			// Intercaladas para que las más consultadas (evoluciones, HC) salgan primero.
@@ -201,7 +190,7 @@ export default function BedSectionsPrefetcher({ numeroVisita, solicitudesMulti }
 		};
 		// selectedDate entra por dateISO (mismo día = misma clave de cache)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [arrancar, loaded, numeroVisita, dateISO, solicitudesMulti]);
+	}, [arrancar, loaded, numeroVisita, dateISO]);
 
 	return null;
 }

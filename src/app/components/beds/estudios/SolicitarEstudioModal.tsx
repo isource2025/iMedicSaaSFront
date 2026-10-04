@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import estudiosService from '@/app/services/estudiosService';
+import solicitudesEstudiosService from '@/app/services/solicitudesEstudiosService';
 import type { PedidoEstudio, TipoPedidoEstudio } from '@/app/types/estudios';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import {
@@ -13,6 +14,9 @@ import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
 
 type Urgencia = 'Normal' | 'Medio' | 'Urgente';
+
+/** Mismo tope que el backend para un pedido con varias prácticas. */
+const MAX_ESTUDIOS = 100;
 
 function urgenciaDePedido(estado?: string | null): Urgencia {
 	const v = String(estado || '').trim().toLowerCase();
@@ -58,13 +62,14 @@ export default function SolicitarEstudioModal({
 	const [term, setTerm] = useState('');
 	const [tipos, setTipos] = useState<TipoPedidoEstudio[]>([]);
 	const [loadingTipos, setLoadingTipos] = useState(false);
-	const [tipo, setTipo] = useState<TipoPedidoEstudio | null>(null);
+	/** Al crear se pueden sumar varias prácticas; al editar un pedido es una sola. */
+	const [seleccion, setSeleccion] = useState<TipoPedidoEstudio[]>([]);
 	const { servicios, loading: loadingServicios } = useSectoresReceptor({
 		enabled: open,
 		force: open,
 	});
 	const [idServicioDestino, setIdServicioDestino] = useState('');
-	/** Tipo elegido por el usuario en esta sesión (no el que viene cargado al editar). */
+	/** Primera práctica elegida en esta sesión: define el servicio destino. */
 	const [tipoElegido, setTipoElegido] = useState<TipoPedidoEstudio | null>(null);
 	/** Último tipo elegido para el que ya se calculó el servicio destino. */
 	const tipoAplicadoRef = useRef<TipoPedidoEstudio | null>(null);
@@ -81,11 +86,12 @@ export default function SolicitarEstudioModal({
 		setTipoElegido(null);
 		tipoAplicadoRef.current = null;
 		if (pedido) {
-			setTipo(tipoDePedido(pedido));
+			const t = tipoDePedido(pedido);
+			setSeleccion(t ? [t] : []);
 			setUrgencia(urgenciaDePedido(pedido.EstadoUrgencia));
 			setNotas(pedido.NotasObservacion || '');
 		} else {
-			setTipo(null);
+			setSeleccion([]);
 			setIdServicioDestino('');
 			setUrgencia('Normal');
 			setNotas('');
@@ -105,9 +111,15 @@ export default function SolicitarEstudioModal({
 		);
 	}, [open, pedido, servicios]);
 
+	const puedeAgregar =
+		!bloqueado && (editando ? seleccion.length === 0 : seleccion.length < MAX_ESTUDIOS);
+	// Con una práctica ya cargada y su servicio definido, solo se ofrecen las prácticas que
+	// realiza ese servicio (sus prefijos de práctica).
+	const servicioFiltro = seleccion.length > 0 ? idServicioDestino.trim() : '';
+
 	useEffect(() => {
 		const t = term.trim();
-		if (t.length < 2 || tipo) {
+		if (t.length < 2 || !puedeAgregar) {
 			setTipos([]);
 			return;
 		}
@@ -115,7 +127,9 @@ export default function SolicitarEstudioModal({
 		setLoadingTipos(true);
 		const h = setTimeout(async () => {
 			try {
-				const rows = await estudiosService.buscarTipos(t, 25);
+				const rows = servicioFiltro
+					? await solicitudesEstudiosService.buscarTipos(t, 25, servicioFiltro)
+					: await estudiosService.buscarTipos(t, 25);
 				if (!cancel) setTipos(rows);
 			} catch {
 				if (!cancel) setTipos([]);
@@ -127,11 +141,10 @@ export default function SolicitarEstudioModal({
 			cancel = true;
 			clearTimeout(h);
 		};
-	}, [term, tipo]);
+	}, [term, puedeAgregar, servicioFiltro]);
 
-	// Cada vez que se elige otra práctica se recalcula el servicio destino que le corresponde
-	// (antes sólo se completaba si estaba vacío y quedaba el servicio de la práctica anterior).
-	// Si la nueva práctica no tiene un servicio asociado, se vacía para que se elija a mano.
+	// La primera práctica define el servicio destino; las siguientes ya se buscan dentro de él.
+	// Si la práctica no tiene un servicio asociado, se vacía para que se elija a mano.
 	useEffect(() => {
 		if (!tipoElegido || !servicios.length) return;
 		if (tipoAplicadoRef.current === tipoElegido) return;
@@ -158,8 +171,26 @@ export default function SolicitarEstudioModal({
 
 	if (!open) return null;
 
+	const nombreServicioFiltro = servicioFiltro
+		? servicios.find((s) => s.valor === servicioFiltro)?.descripcion || servicioFiltro
+		: '';
+	const resultados = tipos.filter((t) => !seleccion.some((s) => s.idPractica === t.idPractica));
+
+	const agregar = (t: TipoPedidoEstudio) => {
+		if (seleccion.some((s) => s.idPractica === t.idPractica)) return;
+		if (seleccion.length === 0) setTipoElegido(t);
+		setSeleccion((prev) => [...prev, t]);
+		setTerm('');
+		setTipos([]);
+		setError(null);
+	};
+
+	const quitar = (t: TipoPedidoEstudio) => {
+		setSeleccion((prev) => prev.filter((s) => s.idPractica !== t.idPractica));
+	};
+
 	const submit = async () => {
-		if (!tipo) {
+		if (seleccion.length === 0) {
 			setError('Seleccione un tipo de estudio');
 			return;
 		}
@@ -170,20 +201,33 @@ export default function SolicitarEstudioModal({
 		setSubmitting(true);
 		setError(null);
 		try {
-			const payload = {
-				idTipoPedido: tipo.idTipoPedido,
-				idPractica: tipo.idPractica,
+			const comunes = {
 				idSectorReceptor: idServicioDestino.trim(),
 				notas: notas.trim() || undefined,
 				estadoUrgencia: urgencia,
 			};
+			const [primero] = seleccion;
 			if (editando && pedido) {
-				await estudiosService.actualizar(pedido.IdPedido, payload);
-			} else {
+				await estudiosService.actualizar(pedido.IdPedido, {
+					idTipoPedido: primero.idTipoPedido,
+					idPractica: primero.idPractica,
+					...comunes,
+				});
+			} else if (seleccion.length === 1) {
 				await estudiosService.crear({
 					idVisita,
 					sectorSolicitante,
-					...payload,
+					idTipoPedido: primero.idTipoPedido,
+					idPractica: primero.idPractica,
+					...comunes,
+				});
+			} else {
+				// Varias prácticas: un solo pedido al servicio, con una fila por práctica.
+				await solicitudesEstudiosService.crear({
+					idVisita,
+					sectorSolicitante,
+					items: seleccion.map((t) => ({ idTipoPedido: t.idTipoPedido, idPractica: t.idPractica })),
+					...comunes,
 				});
 			}
 			onCreated();
@@ -212,42 +256,64 @@ export default function SolicitarEstudioModal({
 						</p>
 					) : null}
 
-					<label className={formStyles.label}>
-						Tipo de estudio
-						{tipo ? (
-							<div className={formStyles.selectedTipo}>
-								<span>
-									<strong>{tipo.descripcion}</strong> · {tipo.idPractica}
-								</span>
-								{!bloqueado ? (
-									<button type="button" onClick={() => setTipo(null)}>
-										Cambiar
-									</button>
-								) : null}
-							</div>
-						) : (
+					<div className={formStyles.label}>
+						{seleccion.length > 1 ? `Estudios (${seleccion.length})` : 'Tipo de estudio'}
+						{seleccion.length > 0 ? (
+							<ul className={formStyles.selectedLista}>
+								{seleccion.map((t) => (
+									<li key={`${t.idPractica}-${t.idTipoPedido}`} className={formStyles.selectedTipo}>
+										<span>
+											<strong>{t.descripcion}</strong> · {t.idPractica}
+										</span>
+										{bloqueado ? null : editando ? (
+											<button type="button" onClick={() => quitar(t)}>
+												Cambiar
+											</button>
+										) : (
+											<button
+												type="button"
+												onClick={() => quitar(t)}
+												aria-label={`Quitar ${t.descripcion}`}
+											>
+												Quitar
+											</button>
+										)}
+									</li>
+								))}
+							</ul>
+						) : null}
+						{puedeAgregar ? (
 							<>
 								<input
 									className={formStyles.input}
 									value={term}
 									onChange={(e) => setTerm(e.target.value)}
-									placeholder="Buscar por descripción o código…"
+									placeholder={
+										seleccion.length > 0
+											? 'Buscar por descripción o código para agregar otro estudio…'
+											: 'Buscar por descripción o código…'
+									}
+									aria-label={seleccion.length > 0 ? 'Agregar otro estudio' : 'Buscar estudio'}
 									autoComplete="off"
 								/>
+								{nombreServicioFiltro ? (
+									<div className={formStyles.hint}>
+										Solo se muestran estudios que realiza {nombreServicioFiltro}.
+									</div>
+								) : null}
 								{loadingTipos && <div className={formStyles.hint}>Buscando…</div>}
-								{tipos.length > 0 && (
+								{!loadingTipos && term.trim().length >= 2 && resultados.length === 0 ? (
+									<div className={formStyles.hint}>
+										{nombreServicioFiltro
+											? `No hay estudios de ${nombreServicioFiltro} que coincidan.`
+											: 'Sin resultados.'}
+									</div>
+								) : null}
+								{resultados.length > 0 && (
 									<ul className={formStyles.results}>
-										{tipos.map((t) => (
+										{resultados.map((t) => (
 											<li key={`${t.idPractica}-${t.idTipoPedido}`}>
-												<button
-													type="button"
-													onClick={() => {
-														setTipo(t);
-														setTipoElegido(t);
-														setTerm('');
-														setTipos([]);
-													}}
-												>
+												<button type="button" onClick={() => agregar(t)}>
 													{t.descripcion}
 													<span>{t.idPractica}</span>
 												</button>
@@ -256,8 +322,8 @@ export default function SolicitarEstudioModal({
 									</ul>
 								)}
 							</>
-						)}
-					</label>
+						) : null}
+					</div>
 
 					<label className={formStyles.label}>
 						Servicio destino
@@ -314,7 +380,13 @@ export default function SolicitarEstudioModal({
 								(!bloqueado && (loadingServicios || servicios.length === 0))
 							}
 						>
-							{submitting ? 'Guardando…' : editando ? 'Guardar' : 'Solicitar'}
+							{submitting
+								? 'Guardando…'
+								: editando
+									? 'Guardar'
+									: seleccion.length > 1
+										? `Solicitar ${seleccion.length} estudios`
+										: 'Solicitar'}
 						</button>
 					</div>
 				</div>

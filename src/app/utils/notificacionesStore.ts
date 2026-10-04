@@ -3,8 +3,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { notificacionesService, type NotificacionItem } from '@/app/services/notificacionesService';
 import estudiosService from '@/app/services/estudiosService';
-import solicitudesEstudiosService from '@/app/services/solicitudesEstudiosService';
-import { solicitudesMultiHabilitado } from '@/app/utils/solicitudesMulti';
 import { peekCachedBandejaCount } from '@/app/utils/serviciosReceptorCache';
 import { getIdEmpresaFromToken } from '@/app/utils/jwtSession';
 import { apiFetch } from '@/app/utils/authFetch';
@@ -204,9 +202,7 @@ export function refreshBandeja(): Promise<void> {
 	if (!userKey) return Promise.resolve();
 	bandejaJob = (async () => {
 		try {
-			const data = solicitudesMultiHabilitado()
-				? await solicitudesEstudiosService.contarLibresBandeja({ soloMios: true, lanzarError: true })
-				: await estudiosService.contarLibres({ soloMios: true, lanzarError: true });
+			const data = await estudiosService.contarLibres({ soloMios: true, lanzarError: true });
 			if (sameUser(userKey)) {
 				clearBandejaRetry();
 				bandejaRetryDelay = BANDEJA_RETRY_MIN_MS;

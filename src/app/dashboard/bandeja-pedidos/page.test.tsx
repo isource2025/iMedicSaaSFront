@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BandejaPedidosPage from "./page";
-import solicitudesEstudiosService from "@/app/services/solicitudesEstudiosService";
 import estudiosService from "@/app/services/estudiosService";
 
 const { estado } = vi.hoisted(() => ({
@@ -11,7 +10,6 @@ const { estado } = vi.hoisted(() => ({
         catalogo: { sectores: [] as any[], servicios: [] as any[], loading: true },
         usuario: { matricula: 10 },
         permiso: { puede: () => true },
-        multi: [true, () => {}] as [boolean, (v: boolean) => void],
     },
 }));
 
@@ -19,28 +17,18 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => estado.searchParams }
 vi.mock("@/app/hooks/useUsuarioActual", () => ({ useUsuarioActual: () => estado.usuario }));
 vi.mock("@/app/hooks/usePermiso", () => ({ usePermiso: () => estado.permiso }));
 vi.mock("@/app/hooks/useSectoresReceptor", () => ({ useSectoresReceptor: () => estado.catalogo }));
-vi.mock("@/app/utils/solicitudesMulti", () => ({ useSolicitudesMulti: () => estado.multi }));
 
 // Igual que el backend para un usuario que ve todos los servicios: sin sector, 400
 const rechazarSinSector = async (sector: string) => {
     if (!sector.trim()) throw new Error("Query sector requerido");
     return [];
 };
-vi.mock("@/app/services/solicitudesEstudiosService", () => ({
-    default: {
-        listarPendientes: vi.fn(),
-        contarLibresBandeja: vi.fn(),
-        tomar: vi.fn(),
-        liberar: vi.fn(),
-    },
-}));
 vi.mock("@/app/services/estudiosService", () => ({
-    default: { listarPendientes: vi.fn(), contarLibres: vi.fn(async () => ({})) },
+    default: { listarPendientes: vi.fn(), contarLibres: vi.fn() },
 }));
 vi.mock("@/app/services/interconsultasService", () => ({
     interconsultasService: { listarPendientes: vi.fn(async () => []) },
 }));
-vi.mock("@/app/components/beds/estudios/CumplirSolicitudModal", () => ({ default: () => null }));
 vi.mock("@/app/components/beds/estudios/CumplirEstudioModal", () => ({ default: () => null }));
 vi.mock("@/app/components/beds/estudios/PedidoAdjuntosField", () => ({ default: () => null }));
 vi.mock("@/app/components/beds/estudios/PacientePedidoHeader", () => ({ default: () => null }));
@@ -56,15 +44,13 @@ const cargarServicios = (lista = servicios) => {
 };
 
 const sectoresPedidos = () =>
-    vi.mocked(solicitudesEstudiosService.listarPendientes).mock.calls.map(([sector]) => sector);
+    vi.mocked(estudiosService.listarPendientes).mock.calls.map(([sector]) => sector);
 
 beforeEach(() => {
     estado.searchParams = new URLSearchParams();
     estado.catalogo = { sectores: [], servicios: [], loading: true };
-    estado.multi = [true, () => {}];
-    vi.mocked(solicitudesEstudiosService.listarPendientes).mockReset().mockImplementation(rechazarSinSector as any);
     vi.mocked(estudiosService.listarPendientes).mockReset().mockImplementation(rechazarSinSector as any);
-    vi.mocked(solicitudesEstudiosService.contarLibresBandeja).mockReset().mockResolvedValue({
+    vi.mocked(estudiosService.contarLibres).mockReset().mockResolvedValue({
         estudios: 2,
         interconsultas: 2,
         urgentes: 1,
@@ -83,7 +69,7 @@ describe("Bandeja de pedidos · entrada sin 'Query sector requerido'", () => {
         });
 
         expect(await screen.findByRole("button", { name: "Abrir cola de CARDIOLOGIA" })).toBeInTheDocument();
-        await waitFor(() => expect(solicitudesEstudiosService.contarLibresBandeja).toHaveBeenCalled());
+        await waitFor(() => expect(estudiosService.contarLibres).toHaveBeenCalled());
         expect(screen.queryByText("Query sector requerido")).not.toBeInTheDocument();
         expect(sectoresPedidos()).not.toContain("");
     });
@@ -122,23 +108,10 @@ describe("Bandeja de pedidos · entrada sin 'Query sector requerido'", () => {
         expect(screen.queryByText("Query sector requerido")).not.toBeInTheDocument();
     });
 
-    it("vista de siempre (predeterminada): tampoco pide la cola de estudios sin servicio", async () => {
-        estado.multi = [false, () => {}];
-        const { rerender } = render(<BandejaPedidosPage />);
-        await act(async () => {
-            cargarServicios();
-            rerender(<BandejaPedidosPage />);
-        });
-
-        expect(await screen.findByRole("button", { name: "Abrir cola de CARDIOLOGIA" })).toBeInTheDocument();
-        expect(vi.mocked(estudiosService.listarPendientes).mock.calls.map(([s]) => s)).not.toContain("");
-        expect(screen.queryByText("Query sector requerido")).not.toBeInTheDocument();
-    });
-
     it("los errores reales al cargar una cola se siguen mostrando", async () => {
         estado.searchParams = new URLSearchParams("sector=CAR");
         cargarServicios();
-        vi.mocked(solicitudesEstudiosService.listarPendientes).mockRejectedValue(new Error("Servicio no asignado"));
+        vi.mocked(estudiosService.listarPendientes).mockRejectedValue(new Error("Servicio no asignado"));
         render(<BandejaPedidosPage />);
 
         expect(await screen.findByText("Servicio no asignado")).toBeInTheDocument();

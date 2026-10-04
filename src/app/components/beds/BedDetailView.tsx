@@ -18,7 +18,6 @@ import { useMarcarIndicacionesVistasAlSalir } from '../../hooks/useMarcarIndicac
 import IndicacionesSection from './indicaciones/IndicacionesSection';
 import AdjuntosSection from './adjuntos/AdjuntosSection';
 import AdjuntosModal from './adjuntos/AdjuntosModal';
-import { useSolicitudesMulti } from '@/app/utils/solicitudesMulti';
 import BedFloatingActions from './BedFloatingActions';
 import BedSectionsPrefetcher from './BedSectionsPrefetcher';
 import NursingReportModal from '../nursing/NursingReportModal';
@@ -46,7 +45,6 @@ const EvolucionesSection = dynamic(() => import('./evoluciones/EvolucionesSectio
 const HCIngresoSection = dynamic(() => import('./hc-ingreso/HCIngresoSection'), { loading: SeccionCargando });
 const LabResultsSection = dynamic(() => import('./laboratorios/LabResultsSection'), { loading: SeccionCargando });
 const EstudiosSection = dynamic(() => import('./estudios/EstudiosSection'), { loading: SeccionCargando });
-const SolicitudesEstudiosSection = dynamic(() => import('./estudios/SolicitudesEstudiosSection'), { loading: SeccionCargando });
 const ProtocolosSection = dynamic(() => import('./protocolos/ProtocolosSection'), { loading: SeccionCargando });
 const InterconsultaSection = dynamic(() => import('./interconsulta/InterconsultaSection'), { loading: SeccionCargando });
 const EpicrisisSection = dynamic(() => import('./epicrisis/EpicrisisSection'), { loading: SeccionCargando });
@@ -60,7 +58,6 @@ interface BedDetailViewProps {
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	// Drawer (sidebar) en mobile
 	const [drawerOpen, setDrawerOpen] = useState(false);
-	const [solicitudesMulti, setSolicitudesMulti] = useSolicitudesMulti();
 	// Modal de archivos adjuntos
 	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
 	const [showNursingModal, setShowNursingModal] = useState(false);
@@ -76,10 +73,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 
 	return (
 		<div className={styles.root}>
-			<BedSectionsPrefetcher
-				numeroVisita={bed?.NumeroVisita || null}
-				solicitudesMulti={solicitudesMulti}
-			/>
+			<BedSectionsPrefetcher numeroVisita={bed?.NumeroVisita || null} />
 			{/* ====== HEADER (arriba de todo) ====== */}
 			<header className={styles.header}>
 				<PatientMiniHeader
@@ -227,37 +221,13 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientLocation={bed?.ubicacionPaciente}
 						/>
 					) : activeSection === 'solicitudEstudios' ? (
-						<>
-							{solicitudesMulti ? (
-								<SolicitudesEstudiosSection
-									numeroVisita={bed?.NumeroVisita || null}
-									sectorSolicitante={sectorOrigen}
-									patientName={bed?.NombrePaciente}
-									documentoPaciente={bed?.documentoPaciente}
-									patientLocation={bed?.ubicacionPaciente}
-								/>
-							) : (
-								<EstudiosSection
-									numeroVisita={bed?.NumeroVisita || null}
-									sectorSolicitante={sectorOrigen}
-									patientName={bed?.NombrePaciente}
-									documentoPaciente={bed?.documentoPaciente}
-									patientLocation={bed?.ubicacionPaciente}
-								/>
-							)}
-							<div style={{ marginTop: '0.75rem', textAlign: 'right', fontSize: '0.72rem', opacity: 0.55 }}>
-								<button
-									type="button"
-									style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}
-									onClick={() => setSolicitudesMulti(!solicitudesMulti)}
-									title="Vista de prueba: permite pedir varios estudios en una sola solicitud"
-								>
-									{solicitudesMulti
-										? '← Volver a la vista de siempre'
-										: 'Vista agrupada de estudios (beta)'}
-								</button>
-							</div>
-						</>
+						<EstudiosSection
+							numeroVisita={bed?.NumeroVisita || null}
+							sectorSolicitante={sectorOrigen}
+							patientName={bed?.NombrePaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							patientLocation={bed?.ubicacionPaciente}
+						/>
 					) : activeSection === 'laboratorios' ? (
 						<LabResultsSection
 							numeroVisita={bed?.NumeroVisita || null}
