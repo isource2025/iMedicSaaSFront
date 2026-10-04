@@ -543,28 +543,6 @@
         background: #f0f9fc;
     }
 
-    /* Botón con texto: acción principal de la tarjeta para volver a indicar */
-    .btnReindicarMobile {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        min-height: 44px;
-        margin-top: 8px;
-        border: 1px solid var(--primary-600);
-        border-radius: 10px;
-        background: #fff;
-        color: var(--primary-600);
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .btnReindicarMobile:active {
-        background: #e6f4f8;
-    }
-
     /* Barra flotante inferior del modo volver a indicar (se renderiza en body, fija a la pantalla) */
     .reindicarBar {
         position: fixed;

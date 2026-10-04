@@ -637,6 +637,20 @@ export default function IndicacionesTable({
                             >
                                 <IoMedicalOutline color="#10b981" />
                             </button>)}
+                            {/* Volver a indicar: solo médicos (y admin). Activa el modo y deja esta tarjeta marcada. */}
+                            {puedeEditar && (
+                            <button
+                                type="button"
+                                className={`${styles.btnAction} ${styles.btnEdit}`}
+                                title="Volver a indicar"
+                                aria-label="Volver a indicar"
+                                onClick={() => {
+                                    onActivarModoReindicar?.();
+                                    if (!selectedForReindicar.has(r.id)) onToggleReindicar?.(r.id);
+                                }}
+                            >
+                                <IoRepeatOutline color="#5BC0DE" />
+                            </button>)}
                             {puedeModificarFila(r) && (
                             <button
                                 className={`${styles.btnAction} ${styles.btnEdit}`}
@@ -663,19 +677,6 @@ export default function IndicacionesTable({
                             </button>)}
                         </div>
                         )}
-                        {/* Volver a indicar: solo médicos (y admin). Activa el modo y deja esta tarjeta marcada. */}
-                        {puedeEditar && !modoReindicar && !r.suspendida && (
-                        <button
-                            type="button"
-                            className={styles.btnReindicarMobile}
-                            onClick={() => {
-                                onActivarModoReindicar?.();
-                                if (!selectedForReindicar.has(r.id)) onToggleReindicar?.(r.id);
-                            }}
-                        >
-                            <IoRepeatOutline aria-hidden size={20} />
-                            Volver a indicar
-                        </button>)}
                     </div>
                 ))}
 
