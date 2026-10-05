@@ -50,6 +50,7 @@ const InterconsultaSection = dynamic(() => import('./interconsulta/Interconsulta
 const EpicrisisSection = dynamic(() => import('./epicrisis/EpicrisisSection'), { loading: SeccionCargando });
 const ProcedimientosSection = dynamic(() => import('./procedimientos/ProcedimientosSection'), { loading: SeccionCargando });
 const BalanceHidricoSection = dynamic(() => import('./balance-hidrico/BalanceHidricoSection'), { loading: SeccionCargando });
+const DietaSection = dynamic(() => import('./dieta/DietaSection'), { loading: SeccionCargando });
 
 interface BedDetailViewProps {
 	bed: Bed;
@@ -170,6 +171,15 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								horaIngreso={bed?.horaIngresoSQL}
 							/>
 						</>
+					) : activeSection === 'dieta' ? (
+						<DietaSection
+							numeroVisita={bed?.NumeroVisita || null}
+							patientName={bed?.NombrePaciente}
+							patientLocation={bed?.ubicacionPaciente}
+							documentoPaciente={bed?.documentoPaciente}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
+						/>
 					) : activeSection === 'balance-hidrico' ? (
 						<>
 							<BalanceHidricoSection

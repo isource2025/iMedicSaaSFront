@@ -7,6 +7,7 @@ const ICONS: Record<string, string> = {
 	indicaciones: "💊",
 	controles: "🩺",
 	medicacion: "💉",
+	dieta: "🍽️",
 	evolucion: "📋",
 	insumos: "🧰",
 	movimientos: "🔄",
