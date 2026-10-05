@@ -47,11 +47,6 @@ function fechaHoraLocal(d: Date = new Date()) {
     };
 }
 
-function fechaLocalDesdeDate(d: Date) {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
 function fechaHoraDesdeRecord(record: HCIngresoRecord): { fecha: string; hora: string } | null {
     if (record.FechaFormateada) {
         return {
@@ -231,7 +226,6 @@ export default function HCIngresoSection({
         () => peekVisita<HCIngresoRecord[]>(hcCacheKey)?.[0]?.IdHCIngreso ?? null,
     );
     const [activeSection, setActiveSection] = useState<string>("antecedentes");
-    const [showOnlySelectedDay, setShowOnlySelectedDay] = useState(false);
     const [loading, setLoading] = useState(() => peekVisita(hcCacheKey) === undefined);
     const [error, setError] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -321,16 +315,6 @@ export default function HCIngresoSection({
             vigente = false;
         };
     }, [numeroVisita]);
-
-    // Filtrar registros por fecha si está activo el checkbox
-    const filteredRecords = useMemo(() => {
-        if (!showOnlySelectedDay || !selectedDate) return records;
-        const dateStr = fechaLocalDesdeDate(selectedDate);
-        return records.filter((r: HCIngresoRecord) => {
-            if (!r.FechaFormateada) return false;
-            return r.FechaFormateada === dateStr;
-        });
-    }, [showOnlySelectedDay, selectedDate, records]);
 
     // Registro seleccionado
     const selectedRecord = useMemo(() => {
@@ -578,8 +562,15 @@ export default function HCIngresoSection({
                         </span>
                         <div className={styles.dateActions}>
                             <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`} onClick={handleAdd}>
-                                <span className={styles.addIcon}>+</span> Agregar
+                                <span className={styles.addIcon}>+</span> Agregar HC
                             </button>
+                            <ExportButton
+                                data={selectedRecord ? [selectedRecord] : []}
+                                fileName={`hc_ingreso_${numeroVisita}.pdf`}
+                                onExport={handleExport}
+                                options={['pdf']}
+                                disabled={!selectedRecord}
+                            />
                         </div>
                     </div>
                 )}
@@ -708,7 +699,7 @@ export default function HCIngresoSection({
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddMobile}`} 
                                 onClick={handleAdd}
                             >
-                                <span className={styles.addIcon}>+</span> Agregar
+                                <span className={styles.addIcon}>+</span> Agregar HC
                             </button>
                             <button 
                                 className={styles.btnSecondary} 
@@ -734,16 +725,6 @@ export default function HCIngresoSection({
                                 </button>
                             )}
                         </div>
-                    </div>
-
-                    <div className={styles.toolbarRight}>
-                        <ExportButton
-                            data={selectedRecord ? [selectedRecord] : []}
-                            fileName={`hc_ingreso_${numeroVisita}.pdf`}
-                            onExport={handleExport}
-                            options={['pdf']}
-                            disabled={!selectedRecord}
-                        />
                     </div>
                 </div>
                 )}

@@ -27,3 +27,10 @@
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
 }
+
+/* Una sola columna: lugar para las pestañas laterales (ver .sideTabs en BedCard). */
+@media (max-width: 768px) {
+  .bedsGrid {
+    padding-left: 20px;
+  }
+}

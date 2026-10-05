@@ -4,33 +4,41 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { admissionSearchService, type ExportSectionKey } from '@/app/services/admissionSearchService';
 import styles from './AdmissionVisitExportModal.module.css';
 
-const SECTIONS: { id: ExportSectionKey; label: string; hint?: string }[] = [
-  { id: 'admision', label: 'Datos de admisión' },
-  { id: 'hcIngreso', label: 'HC de ingreso' },
-  { id: 'practicas', label: 'Prácticas por paciente' },
-  { id: 'indicaciones', label: 'Indicaciones' },
-  { id: 'medicamentos', label: 'Medicamentos suministrados' },
-  { id: 'evoluciones', label: 'Evoluciones' },
-  { id: 'estudios', label: 'Estudios solicitados', hint: 'Pedidos y resultados' },
-  { id: 'protocolos', label: 'Protocolos clínicos' },
-  { id: 'epicrisis', label: 'Epicrisis' },
-  { id: 'adjuntos', label: 'Adjuntos', hint: 'Solo metadatos, sin archivos' },
+type SectionDef = { id: ExportSectionKey; label: string; hint?: string };
+
+/** Mismo orden que el menú del detalle de cama (Gestión Médica → Gestión Enfermería → Otras). */
+const GROUPS: { titulo: string | null; items: SectionDef[] }[] = [
+  { titulo: null, items: [{ id: 'admision', label: 'Datos de admisión' }] },
+  {
+    titulo: 'Gestión médica',
+    items: [
+      { id: 'hcIngreso', label: 'HC de ingreso' },
+      { id: 'indicaciones', label: 'Indicaciones' },
+      { id: 'estudios', label: 'Estudios', hint: 'Pedidos y resultados' },
+      { id: 'interconsultas', label: 'Interconsultas', hint: 'Pedido y respuesta' },
+      { id: 'protocolos', label: 'Protocolos' },
+      { id: 'practicas', label: 'Procedimientos' },
+      { id: 'evoluciones', label: 'Evoluciones' },
+      { id: 'epicrisis', label: 'Epicrisis' },
+    ],
+  },
+  {
+    titulo: 'Gestión enfermería',
+    items: [
+      { id: 'controles', label: 'Controles' },
+      { id: 'medicamentos', label: 'Medicación suministrada' },
+      { id: 'dietas', label: 'Dietas' },
+      { id: 'balanceHidrico', label: 'Balance hídrico' },
+      { id: 'evolucionEnfermeria', label: 'Evolución de enfermería' },
+      { id: 'insumos', label: 'Insumos' },
+    ],
+  },
+  { titulo: 'Otras', items: [{ id: 'adjuntos', label: 'Adjuntos', hint: 'Solo metadatos, sin archivos' }] },
 ];
 
-const SECTIONS_MAIN = SECTIONS.filter((s) => s.id !== 'evoluciones');
-const EVO_META = SECTIONS.find((s) => s.id === 'evoluciones')!;
+const SECTIONS: SectionDef[] = GROUPS.flatMap((g) => g.items);
 
-const NEEDS_DATE_SECTIONS: ExportSectionKey[] = [
-  'hcIngreso',
-  'practicas',
-  'indicaciones',
-  'medicamentos',
-  'estudios',
-  'protocolos',
-  'epicrisis',
-  'adjuntos',
-  'evoluciones',
-];
+const NEEDS_DATE_SECTIONS: ExportSectionKey[] = SECTIONS.map((s) => s.id).filter((id) => id !== 'admision');
 
 function defaultSelection(): Record<ExportSectionKey, boolean> {
   const o = {} as Record<ExportSectionKey, boolean>;
@@ -390,66 +398,58 @@ export default function AdmissionVisitExportModal({
               </div>
             </div>
 
-            <div className={styles.tileGrid}>
-              {SECTIONS_MAIN.map((s) => (
-                <label
-                  key={s.id}
-                  className={`${styles.tile} ${selection[s.id] ? styles.tileOn : ''}`}
-                >
-                  <input type="checkbox" checked={selection[s.id]} onChange={() => toggle(s.id)} />
-                  <span className={styles.tileText}>
-                    <span className={styles.tileLabel}>{s.label}</span>
-                    {s.hint ? <span className={styles.tileHint}>{s.hint}</span> : null}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            {showEvoFold ? (
-              <details className={styles.evoDetails} open>
-                <summary className={styles.evoSummary}>
-                  <span className={styles.evoSummaryInner}>
-                    <input
-                      type="checkbox"
-                      checked={selection.evoluciones}
-                      onChange={() => toggle('evoluciones')}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label="Incluir evoluciones en el PDF"
-                    />
-                    <span className={styles.tileText}>
-                      <span className={styles.tileLabel}>{EVO_META.label}</span>
-                      <span className={styles.tileHint}>
-                        {evolucionesFiltradas.length} en el período · filtrá por servicio
-                      </span>
-                    </span>
-                  </span>
-                </summary>
-                <div className={styles.evoBody}>
-                  {evoGroups.map((g) => (
-                    <label key={g.serviceKey} className={styles.evoServiceHead}>
-                      <input
-                        type="checkbox"
-                        checked={serviceSelected[g.serviceKey] !== false}
-                        disabled={!selection.evoluciones}
-                        onChange={() => toggleService(g.serviceKey)}
-                        aria-label={`Incluir evoluciones de ${g.serviceLabel}`}
-                      />
-                      <span>
-                        {g.serviceLabel}
-                        <span className={styles.mutedCount}> · {g.items.length}</span>
+            {GROUPS.map((group) => (
+              <div key={group.titulo ?? 'general'}>
+                {group.titulo ? <h4 className={styles.groupTitle}>{group.titulo}</h4> : null}
+                <div className={styles.tileGrid}>
+                  {group.items.map((s) => (
+                    <label
+                      key={s.id}
+                      className={`${styles.tile} ${selection[s.id] ? styles.tileOn : ''}`}
+                    >
+                      <input type="checkbox" checked={selection[s.id]} onChange={() => toggle(s.id)} />
+                      <span className={styles.tileText}>
+                        <span className={styles.tileLabel}>{s.label}</span>
+                        {s.id === 'evoluciones' && showEvoFold ? (
+                          <span className={styles.tileHint}>{evolucionesFiltradas.length} en el período</span>
+                        ) : s.hint ? (
+                          <span className={styles.tileHint}>{s.hint}</span>
+                        ) : null}
                       </span>
                     </label>
                   ))}
                 </div>
-              </details>
-            ) : (
-              <label className={`${styles.tile} ${styles.tileWide} ${selection.evoluciones ? styles.tileOn : ''}`}>
-                <input type="checkbox" checked={selection.evoluciones} onChange={() => toggle('evoluciones')} />
-                <span className={styles.tileText}>
-                  <span className={styles.tileLabel}>{EVO_META.label}</span>
-                </span>
-              </label>
-            )}
+
+                {group.items.some((s) => s.id === 'evoluciones') && showEvoFold && selection.evoluciones ? (
+                  <details className={styles.evoDetails} open>
+                    <summary className={styles.evoSummary}>
+                      <span className={styles.evoSummaryInner}>
+                        <span className={styles.tileText}>
+                          <span className={styles.tileLabel}>Evoluciones por servicio</span>
+                          <span className={styles.tileHint}>Destildá los servicios que no querés incluir</span>
+                        </span>
+                      </span>
+                    </summary>
+                    <div className={styles.evoBody}>
+                      {evoGroups.map((g) => (
+                        <label key={g.serviceKey} className={styles.evoServiceHead}>
+                          <input
+                            type="checkbox"
+                            checked={serviceSelected[g.serviceKey] !== false}
+                            onChange={() => toggleService(g.serviceKey)}
+                            aria-label={`Incluir evoluciones de ${g.serviceLabel}`}
+                          />
+                          <span>
+                            {g.serviceLabel}
+                            <span className={styles.mutedCount}> · {g.items.length}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+              </div>
+            ))}
           </section>
 
           {error ? <p className={styles.error}>{error}</p> : null}

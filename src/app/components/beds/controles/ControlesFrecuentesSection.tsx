@@ -15,6 +15,7 @@ import styles from '../indicaciones/IndicacionesSection.module.css';
 import tableStyles from './ControlesFrecuentesSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -73,9 +74,13 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 		[numeroVisita],
 	);
 
+	const [periodo, setPeriodo] = useState<Periodo>('0');
+	const paramsPeriodo = useMemo(() => (periodo === '0' ? undefined : { days: periodo }), [periodo]);
+
 	const { data, isLoading, error, refetch } = useBedSectionFetch<any>({
 		enabled: !!controlesPath && activeSection === 'controles-frecuentes',
 		endpointOverride: controlesPath ? { 'controles-frecuentes': controlesPath } : undefined,
+		params: paramsPeriodo,
 		cacheTimeMs: 15000,
 	});
 
@@ -190,7 +195,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 							}}
 						>
 							<span className={styles.addIcon} aria-hidden>+</span>
-							Control
+							Agregar control
 						</button>
 						<ExportButton
 							data={controlsFiltrados}
@@ -214,6 +219,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 						onChange={(e) => setQuery(e.target.value)}
 					/>
 				</div>
+				<PeriodFilter value={periodo} onChange={setPeriodo} />
 			</div>
 
 			{/* Contenido */}
@@ -225,7 +231,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 							variant="controles"
 							text="No hay controles registrados"
 							description="Aún no se han cargado controles frecuentes para esta fecha. Agregá uno haciendo clic en el botón de arriba."
-							actionLabel="Nuevo Control"
+							actionLabel="Agregar control"
 							onAction={() => setModalOpen(true)}
 						/>
 					) : !isLoading && !error ? (

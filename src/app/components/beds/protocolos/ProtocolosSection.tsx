@@ -14,6 +14,7 @@ import CargarProtocoloModal from './CargarProtocoloModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
@@ -83,6 +84,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	const [editing, setEditing] = useState<ProtocoloClinico | null>(null);
 	const [aEliminar, setAEliminar] = useState<ProtocoloClinico | null>(null);
 	const [query, setQuery] = useState('');
+	const [periodo, setPeriodo] = useState<Periodo>('all');
 
 	const puedeGestionarFila = (p: ProtocoloClinico) => {
 		if (esAdminClinico()) return true;
@@ -138,9 +140,10 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	}, [load]);
 
 	const filtered = useMemo(() => {
+		const enPeriodo = filtrarPorPeriodo(rows, periodo, (r) => r.fecha);
 		const q = query.trim().toLowerCase();
-		if (!q) return rows;
-		return rows.filter((r) => {
+		if (!q) return enPeriodo;
+		return enPeriodo.filter((r) => {
 			const hay = (v?: string | number | null) =>
 				v != null && String(v).toLowerCase().includes(q);
 			const prac = r.practicas?.[0];
@@ -154,7 +157,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 				hay(resumenEquipo(r))
 			);
 		});
-	}, [rows, query]);
+	}, [rows, query, periodo]);
 
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
@@ -209,7 +212,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 			<BedSectionLayout
 				title="Protocolos"
 				subtitle="Post-práctica / cirugía · equipo por rol y descripción clínica"
-				addLabel={puedeCrear ? 'Protocolo' : undefined}
+				addLabel={puedeCrear ? 'Agregar protocolo' : undefined}
 				onAdd={puedeCrear ? abrirNuevo : undefined}
 				exportSlot={
 					<ExportButton
@@ -224,6 +227,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 					onChange: setQuery,
 					placeholder: 'Buscar por tipo, práctica, equipo, operador…',
 				}}
+				period={{ value: periodo, onChange: setPeriodo }}
 			>
 				{error && <div className={styles.error}>{error}</div>}
 				{filtered.length === 0 ? (
@@ -232,10 +236,10 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 						text={rows.length === 0 ? 'Sin protocolos' : 'Sin resultados'}
 						description={
 							rows.length === 0
-								? 'Cargá un protocolo con el botón + Protocolo.'
-								: 'Probá con otro criterio de búsqueda.'
+								? 'Cargá un protocolo con el botón Agregar protocolo.'
+								: 'Probá con otro criterio de búsqueda o período.'
 						}
-						actionLabel={puedeCrear && rows.length === 0 ? 'Protocolo' : undefined}
+						actionLabel={puedeCrear && rows.length === 0 ? 'Agregar protocolo' : undefined}
 						onAction={puedeCrear && rows.length === 0 ? abrirNuevo : undefined}
 					/>
 				) : (

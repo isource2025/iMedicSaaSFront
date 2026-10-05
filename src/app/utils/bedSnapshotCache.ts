@@ -77,5 +77,6 @@ export function mergeBedSnapshots(cached: Bed | null, fresh: Bed): Bed {
 		tipoRecurso: fresh.tipoRecurso || cached.tipoRecurso,
 		indicacionesNuevasEnfermeria:
 			fresh.indicacionesNuevasEnfermeria ?? cached.indicacionesNuevasEnfermeria ?? 0,
+		estudiosRespondidos: fresh.estudiosRespondidos ?? cached.estudiosRespondidos ?? 0,
 	};
 }

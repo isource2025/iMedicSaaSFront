@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import styles from '../indicaciones/IndicacionesSection.module.css';
+import PeriodFilter, { Periodo } from './PeriodFilter';
 
 type SearchProps = {
 	value: string;
@@ -19,6 +20,7 @@ type Props = {
 	addTitle?: string;
 	exportSlot?: ReactNode;
 	search?: SearchProps;
+	period?: { value: Periodo; onChange: (value: Periodo) => void };
 	extraToolbar?: ReactNode;
 	children: ReactNode;
 };
@@ -33,6 +35,7 @@ export default function BedSectionLayout({
 	addTitle,
 	exportSlot,
 	search,
+	period,
 	extraToolbar,
 	children,
 }: Props) {
@@ -63,7 +66,7 @@ export default function BedSectionLayout({
 				</div>
 			</div>
 
-			{(search || extraToolbar) && (
+			{(search || period || extraToolbar) && (
 				<div className={styles.toolbar}>
 					{search ? (
 						<div className={styles.searchWrap}>
@@ -81,6 +84,7 @@ export default function BedSectionLayout({
 					) : (
 						<div />
 					)}
+					{period ? <PeriodFilter value={period.value} onChange={period.onChange} /> : null}
 					{extraToolbar}
 				</div>
 			)}

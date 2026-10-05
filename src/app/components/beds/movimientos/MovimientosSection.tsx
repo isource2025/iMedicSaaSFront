@@ -25,7 +25,9 @@ import {
 	fechaHoraIngreso,
 	nombreOperador,
 	ordenarMovimientos,
+	rangoMovimiento,
 } from "./movimientosDisplay";
+import PeriodFilter, { Periodo, filtrarPorRangoEnPeriodo } from "../shared/PeriodFilter";
 import MovimientosTimelineTable from "./MovimientosTimelineTable";
 
 interface MovimientosProps {
@@ -86,8 +88,18 @@ export default function MovimientosSection({
 		else if (Array.isArray(data)) raw = data;
 		else if (Array.isArray(data.data)) raw = data.data;
 		else if (data && typeof data === "object") raw = [data];
-		return ordenarMovimientos(raw);
+		const ordenados = ordenarMovimientos(raw);
+		return ordenados.map((m, idx) => ({
+			...m,
+			EstadoUi: clasificarEstadoMovimiento(m, idx, ordenados),
+		}));
 	}, [data]);
+
+	const [periodo, setPeriodo] = useState<Periodo>("all");
+	const movimientosVisibles = useMemo(
+		() => filtrarPorRangoEnPeriodo(movimientos, periodo, rangoMovimiento),
+		[movimientos, periodo],
+	);
 
 	const formatSelectedDate = () => {
 		if (!selectedDate) return null;
@@ -104,12 +116,12 @@ export default function MovimientosSection({
 	const handleExport = async (option: ExportOption) => {
 		if (option === "pdf") {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = movimientos.map((m, idx) => ({
+			const parts = movimientosVisibles.map((m, idx) => ({
 				title: `Movimiento ${idx + 1}`,
 				fields: [
 					{
 						label: "Estado",
-						value: clasificarEstadoMovimiento(m, idx, movimientos),
+						value: clasificarEstadoMovimiento(m, idx, movimientosVisibles),
 					},
 					{ label: "Cama", value: etiquetaCama(m) },
 					{ label: "Sector", value: etiquetaSector(m) },
@@ -176,7 +188,7 @@ export default function MovimientosSection({
 							</button>
 						)}
 						<ExportButton
-							data={movimientos}
+							data={movimientosVisibles}
 							fileName={`movimientos_${numeroVisita}.pdf`}
 							onExport={handleExport}
 							options={["pdf"]}
@@ -184,6 +196,10 @@ export default function MovimientosSection({
 					</div>
 				</div>
 			)}
+
+			<div className={styles.toolbar}>
+				<PeriodFilter value={periodo} onChange={setPeriodo} />
+			</div>
 
 			<div className={styles.content}>
 				<div className={styles.tableHolder}>
@@ -198,15 +214,19 @@ export default function MovimientosSection({
 							</button>
 						</div>
 					)}
-					{!isLoading && !error && movimientos.length === 0 && (
+					{!isLoading && !error && movimientosVisibles.length === 0 && (
 						<EmptyState
 							variant="movimientos"
-							text="Sin movimientos registrados"
-							description="Esta visita no tiene traslados ni cambios de cama registrados."
+							text={movimientos.length === 0 ? "Sin movimientos registrados" : "Sin resultados"}
+							description={
+								movimientos.length === 0
+									? "Esta visita no tiene traslados ni cambios de cama registrados."
+									: "No hay movimientos en el período elegido. Probá con otro período."
+							}
 						/>
 					)}
-					{!isLoading && !error && movimientos.length > 0 && (
-						<MovimientosTimelineTable movimientos={movimientos} dispCatalogo={dispCatalogo} />
+					{!isLoading && !error && movimientosVisibles.length > 0 && (
+						<MovimientosTimelineTable movimientos={movimientosVisibles} dispCatalogo={dispCatalogo} />
 					)}
 				</div>
 			</div>

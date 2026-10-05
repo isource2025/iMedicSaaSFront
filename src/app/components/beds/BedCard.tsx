@@ -17,9 +17,8 @@ import {
 	IoAddOutline,
 } from 'react-icons/io5';
 import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft, ClipboardList } from 'lucide-react';
-import { usePermiso } from '../../hooks/usePermiso';
-import { esEnfermeroSesion } from '../../hooks/useUsuarioActual';
 import { indicacionesService } from '../../services/indicacionesService';
+import estudiosService from '../../services/estudiosService';
 
 /**
  * Tarjeta de recurso hospitalario (cama / consultorio / insumos).
@@ -40,27 +39,37 @@ function etiquetaTipoIndicacion(tipo?: string): string {
 	return tipo ? String(tipo) : 'Indicación';
 }
 
-type NuevaIndicacionPreview = {
-	descripcion?: string;
-	tipo?: string;
-	frecuencia?: string;
-	cantidad?: number | string | null;
-	tipoUnidad?: string;
-};
+function fechaHoraCorta(valor?: string | null): string {
+	const m = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+	if (!m) return '';
+	return `${m[3]}/${m[2]}${m[4] ? ` ${m[4]}:${m[5]}` : ''}`;
+}
 
-function IndicacionesNuevasBadge({
-	numeroVisita,
+type SideTabPreviewItem = { nombre: string; meta: string };
+
+const PREVIEW_LIMIT = 3;
+
+/** Pestaña lateral de la card con preview al hover (indicaciones nuevas / estudios respondidos). */
+function SideTabConPreview({
 	count,
+	titulo,
+	className,
+	icon,
+	ariaLabel,
+	cargar,
 	onOpen,
 }: {
-	numeroVisita: number;
 	count: number;
+	titulo: string;
+	className: string;
+	icon: React.ReactNode;
+	ariaLabel: string;
+	cargar: () => Promise<{ total: number; items: SideTabPreviewItem[] }>;
 	onOpen: () => void;
 }) {
 	const [open, setOpen] = useState(false);
-	const [placement, setPlacement] = useState<'below' | 'above'>('below');
 	const [loading, setLoading] = useState(false);
-	const [items, setItems] = useState<NuevaIndicacionPreview[] | null>(null);
+	const [items, setItems] = useState<SideTabPreviewItem[] | null>(null);
 	const [total, setTotal] = useState(count);
 	const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const wrapRef = useRef<HTMLSpanElement>(null);
@@ -70,7 +79,7 @@ function IndicacionesNuevasBadge({
 		if (items) return;
 		setLoading(true);
 		try {
-			const data = await indicacionesService.getNuevasEnfermeria(numeroVisita, 3);
+			const data = await cargar();
 			setItems(data.items);
 			setTotal(data.total || count);
 		} catch {
@@ -102,16 +111,16 @@ function IndicacionesNuevasBadge({
 			const pw = preview.offsetWidth;
 			const ph = preview.offsetHeight;
 			const gap = 8;
-			const spaceBelow = window.innerHeight - rect.bottom - gap;
-			const next = spaceBelow < ph && rect.top > ph + gap ? 'above' : 'below';
+			const abrirArriba = window.innerHeight - rect.top - gap < ph && rect.bottom > ph + gap;
 
-			let left = rect.right - pw;
-			left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
-			const top = next === 'above' ? rect.top - ph - gap : rect.bottom + gap;
+			let left = rect.right + gap;
+			if (left + pw > window.innerWidth - 8) left = rect.left - pw - gap;
+			left = Math.max(8, left);
+			let top = abrirArriba ? rect.bottom - ph : rect.top;
+			top = Math.max(8, Math.min(top, window.innerHeight - ph - 8));
 
 			preview.style.left = `${left}px`;
 			preview.style.top = `${top}px`;
-			setPlacement((prev) => (prev === next ? prev : next));
 		};
 
 		place();
@@ -129,14 +138,12 @@ function IndicacionesNuevasBadge({
 		? createPortal(
 				<div
 					ref={previewRef}
-					className={`${styles.indicacionesPreview} ${
-						placement === 'above' ? styles.indicacionesPreviewAbove : styles.indicacionesPreviewBelow
-					}`}
+					className={styles.indicacionesPreview}
 					onMouseEnter={show}
 					onMouseLeave={hide}
 					onClick={(e) => e.stopPropagation()}
 				>
-					<p className={styles.indicacionesPreviewTitle}>Indicaciones nuevas</p>
+					<p className={styles.indicacionesPreviewTitle}>{titulo}</p>
 					{loading && !items ? (
 						<p className={styles.indicacionesPreviewEmpty}>Cargando…</p>
 					) : !items?.length ? (
@@ -144,27 +151,19 @@ function IndicacionesNuevasBadge({
 					) : (
 						<ul className={styles.indicacionesPreviewList}>
 							{items.map((item, idx) => (
-								<li key={`${item.descripcion}-${idx}`} className={styles.indicacionesPreviewItem}>
-									<span className={styles.indicacionesPreviewName}>
-										{item.descripcion || 'Sin descripción'}
-									</span>
-									<span className={styles.indicacionesPreviewMeta}>
-										{etiquetaTipoIndicacion(item.tipo)}
-										{item.frecuencia ? ` · ${item.frecuencia}` : ''}
-										{item.cantidad != null && String(item.cantidad) !== ''
-											? ` · ${item.cantidad}${item.tipoUnidad ? ` ${item.tipoUnidad}` : ''}`
-											: ''}
-									</span>
+								<li key={`${item.nombre}-${idx}`} className={styles.indicacionesPreviewItem}>
+									<span className={styles.indicacionesPreviewName}>{item.nombre}</span>
+									{item.meta ? (
+										<span className={styles.indicacionesPreviewMeta}>{item.meta}</span>
+									) : null}
 								</li>
 							))}
 						</ul>
 					)}
 					{restantes > 0 ? (
 						<p className={styles.indicacionesPreviewMore}>
-							+{restantes} más. Abrí la cama para verlas.
+							+{restantes} más. Abrí la cama para verlos.
 						</p>
-					) : total > 3 ? (
-						<p className={styles.indicacionesPreviewMore}>Abrí la cama para ver el resto.</p>
 					) : null}
 				</div>,
 				document.body
@@ -180,18 +179,99 @@ function IndicacionesNuevasBadge({
 		>
 			<button
 				type="button"
-				className={styles.indicacionesBadge}
-				title={`${count} indicación${count === 1 ? '' : 'es'} nueva${count === 1 ? '' : 's'} por revisar`}
+				className={`${styles.sideTab} ${className}`}
+				aria-label={ariaLabel}
 				onClick={(e) => {
 					e.stopPropagation();
 					onOpen();
 				}}
 			>
-				<ClipboardList size={13} strokeWidth={2.4} aria-hidden />
-				<span className={styles.indicacionesBadgeCount}>{count}</span>
+				{icon}
+				<span className={styles.sideTabCount}>{count}</span>
 			</button>
 			{preview}
 		</span>
+	);
+}
+
+function IndicacionesNuevasBadge({
+	numeroVisita,
+	count,
+	onOpen,
+}: {
+	numeroVisita: number;
+	count: number;
+	onOpen: () => void;
+}) {
+	return (
+		<SideTabConPreview
+			count={count}
+			titulo="Indicaciones nuevas"
+			className={styles.sideTabIndicaciones}
+			icon={<ClipboardList size={14} strokeWidth={2.4} aria-hidden />}
+			ariaLabel={`${count} indicación${count === 1 ? '' : 'es'} nueva${count === 1 ? '' : 's'} sin revisar por enfermería. Abrir indicaciones`}
+			onOpen={onOpen}
+			cargar={async () => {
+				const data = await indicacionesService.getNuevasEnfermeria(numeroVisita, PREVIEW_LIMIT);
+				return {
+					total: data.total,
+					items: data.items.map((item) => ({
+						nombre: item.descripcion || 'Sin descripción',
+						meta: [
+							etiquetaTipoIndicacion(item.tipo),
+							item.frecuencia || '',
+							item.cantidad != null && String(item.cantidad) !== ''
+								? `${item.cantidad}${item.tipoUnidad ? ` ${item.tipoUnidad}` : ''}`
+								: '',
+						]
+							.filter(Boolean)
+							.join(' · '),
+					})),
+				};
+			}}
+		/>
+	);
+}
+
+function EstudiosRespondidosBadge({
+	numeroVisita,
+	count,
+	onOpen,
+}: {
+	numeroVisita: number;
+	count: number;
+	onOpen: () => void;
+}) {
+	return (
+		<SideTabConPreview
+			count={count}
+			titulo="Estudios e interconsultas respondidos"
+			className={styles.sideTabEstudios}
+			icon={<IoFlaskOutline size={14} aria-hidden />}
+			ariaLabel={`${count} estudios e interconsultas respondidos. Abrir estudios`}
+			onOpen={onOpen}
+			cargar={async () => {
+				const data = await estudiosService.getRespondidosResumen(numeroVisita, PREVIEW_LIMIT);
+				return {
+					total: data.total,
+					items: data.items.map((item) => {
+						const esInterconsulta = item.categoria === 'INTERCONSULTA';
+						const nombre = esInterconsulta
+							? `Interconsulta${item.especialidad ? ` · ${item.especialidad}` : ''}`
+							: item.descripcion || 'Estudio sin descripción';
+						return {
+							nombre: item.codigo ? `${item.codigo} · ${nombre}` : nombre,
+							meta: [
+								esInterconsulta ? '' : item.especialidad || '',
+								fechaHoraCorta(item.fechaResultado) ? `Resp. ${fechaHoraCorta(item.fechaResultado)}` : '',
+							]
+								.filter(Boolean)
+								.join(' · '),
+						};
+					}),
+				};
+			}}
+		/>
 	);
 }
 
@@ -205,6 +285,7 @@ const BedCard: React.FC<BedCardProps> = ({
 	onDischarge,
 	onAssignPatient,
 	onOpenAdjuntos,
+	onOpenSection,
 }) => {
 	const recurso = bed.tipoRecurso ?? 'cama';
 
@@ -232,6 +313,7 @@ const BedCard: React.FC<BedCardProps> = ({
 				onAssignPatient={onAssignPatient}
 				onOpenAdjuntos={onOpenAdjuntos}
 				onRecentIndications={onRecentIndications}
+				onOpenSection={onOpenSection}
 			/>
 		);
 	}
@@ -248,6 +330,7 @@ const BedCard: React.FC<BedCardProps> = ({
 			onAssignPatient={onAssignPatient}
 			onOpenAdjuntos={onOpenAdjuntos}
 			onRecentIndications={onRecentIndications}
+			onOpenSection={onOpenSection}
 		/>
 	);
 };
@@ -264,15 +347,19 @@ function CamaOConsultorioCard({
 	onAssignPatient,
 	onOpenAdjuntos,
 	onRecentIndications,
+	onOpenSection,
 }: BedCardProps & { variant: 'cama' | 'consultorio' }) {
-	const { loaded } = usePermiso();
-	const esEnfermero = loaded && esEnfermeroSesion();
 	const nuevasIndicaciones = Number(bed.indicacionesNuevasEnfermeria || 0);
 	const mostrarBadgeIndicaciones =
-		esEnfermero &&
 		!!bed.numeroVisita &&
 		bed.numeroVisita !== 0 &&
 		nuevasIndicaciones > 0 &&
+		bed.estado !== 'desocupada' &&
+		bed.estado !== 'disponible';
+	const estudiosRespondidos = Number(bed.estudiosRespondidos || 0);
+	const mostrarBadgeEstudios =
+		!!bed.numeroVisita &&
+		estudiosRespondidos > 0 &&
 		bed.estado !== 'desocupada' &&
 		bed.estado !== 'disponible';
 	const renderGenderIcon = () => {
@@ -323,6 +410,31 @@ function CamaOConsultorioCard({
 			className={`${styles.bedCard} ${wrapperMod} ${estadoClass} ${puedeAsignar ? styles.bedCardAssignable : ''}`}
 			onClick={() => onBedClick && onBedClick(bed.id)}
 		>
+			{mostrarBadgeIndicaciones || mostrarBadgeEstudios ? (
+				<div className={styles.sideTabs}>
+					{mostrarBadgeIndicaciones ? (
+						<IndicacionesNuevasBadge
+							numeroVisita={Number(bed.numeroVisita)}
+							count={nuevasIndicaciones}
+							onOpen={() => {
+								if (onOpenSection) onOpenSection(bed.id, 'indicaciones');
+								else if (onRecentIndications) onRecentIndications(bed.id);
+								else onBedClick?.(bed.id);
+							}}
+						/>
+					) : null}
+					{mostrarBadgeEstudios ? (
+						<EstudiosRespondidosBadge
+							numeroVisita={Number(bed.numeroVisita)}
+							count={estudiosRespondidos}
+							onOpen={() => {
+								if (onOpenSection) onOpenSection(bed.id, 'solicitudEstudios');
+								else onBedClick?.(bed.id);
+							}}
+						/>
+					) : null}
+				</div>
+			) : null}
 			<div className={styles.cardHeader}>
 				<div className={styles.bedInfo}>
 					{variant === 'consultorio' && (
@@ -344,16 +456,6 @@ function CamaOConsultorioCard({
 						<div className={styles.visitaHeader}>
 							{bed.numeroVisita}
 							{renderGenderIcon()}
-							{mostrarBadgeIndicaciones ? (
-								<IndicacionesNuevasBadge
-									numeroVisita={Number(bed.numeroVisita)}
-									count={nuevasIndicaciones}
-									onOpen={() => {
-										if (onRecentIndications) onRecentIndications(bed.id);
-										else onBedClick?.(bed.id);
-									}}
-								/>
-							) : null}
 						</div>
 					</div>
 				) : null}

@@ -40,7 +40,6 @@ export default function EpicrisisSection({
 	const [saving, setSaving] = useState(false);
 	const [printing, setPrinting] = useState(false);
 	const [query, setQuery] = useState('');
-
 	const epicrisisPath = useMemo(
 		() => (numeroVisita ? `/epicrisis/${numeroVisita}` : undefined),
 		[numeroVisita],
@@ -212,7 +211,7 @@ export default function EpicrisisSection({
 			<BedSectionLayout
 				title="Epicrisis"
 				subtitle="Resumen del episodio de hospitalización"
-				addLabel="Epicrisis"
+				addLabel="Agregar epicrisis"
 				onAdd={() => {
 					setSelectedId(null);
 					setModalOpen(true);
@@ -244,10 +243,10 @@ export default function EpicrisisSection({
 						text={baseRows.length === 0 ? 'Sin epicrisis' : 'Sin resultados'}
 						description={
 							baseRows.length === 0
-								? 'Cargá una epicrisis con el botón + Epicrisis.'
+								? 'Cargá una epicrisis con el botón Agregar epicrisis.'
 								: 'Probá con otro criterio de búsqueda.'
 						}
-						actionLabel={baseRows.length === 0 ? 'Epicrisis' : undefined}
+						actionLabel={baseRows.length === 0 ? 'Agregar epicrisis' : undefined}
 						onAction={
 							baseRows.length === 0
 								? () => {

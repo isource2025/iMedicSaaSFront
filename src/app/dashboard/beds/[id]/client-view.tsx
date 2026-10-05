@@ -18,6 +18,9 @@ import {
 
 type Props = { id: string };
 
+/** Secciones a las que se puede entrar directo con ?seccion= (badges de la card). */
+const SECCIONES_DESDE_URL = new Set<string>(['indicaciones', 'solicitudEstudios']);
+
 export default function ClientBedView({ id }: Props) {
 	const router = useRouter();
 	const path = useMemo(
@@ -106,8 +109,14 @@ export default function ClientBedView({ id }: Props) {
 	}
 
 	const rol = authService.getCurrentRol()?.nombre?.toUpperCase();
+	const seccionUrl =
+		typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('seccion') : null;
 	const initialSection: SidebarSection =
-		rol === 'CARGA_HC' ? 'adjuntos' : 'indicaciones';
+		rol === 'CARGA_HC'
+			? 'adjuntos'
+			: seccionUrl && SECCIONES_DESDE_URL.has(seccionUrl)
+				? (seccionUrl as SidebarSection)
+				: 'indicaciones';
 
 	return (
 		<BedDetailProvider

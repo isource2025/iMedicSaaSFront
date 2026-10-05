@@ -160,11 +160,11 @@ const BedsList = () => {
 		}
 	}, [beds, router]);
 
-	const handleBedClick = (bedId: string) => {
+	const handleBedClick = (bedId: string, seccion?: string) => {
 		const selected = beds.find((bed) => bed.id === bedId);
 		if (selected && selected.estado === 'ocupada') {
 			setBedSnapshot(selected);
-			router.push(`/dashboard/beds/${bedId}`);
+			router.push(`/dashboard/beds/${bedId}${seccion ? `?seccion=${seccion}` : ''}`);
 		}
 	};
 
@@ -235,6 +235,7 @@ const BedsList = () => {
 							onOpenAdjuntos={() => handleOpenAdjuntos(bed)}
 							onChangeBed={() => handleChangeBed(bed.id, bed.sector)}
 							onBedClick={() => handleBedClick(bed.id)}
+							onOpenSection={(id, seccion) => handleBedClick(id, seccion)}
 							onLabResults={() => handleLabResults(bed.id)}
 							onDischarge={() => handleDischarge(bed.id)}
 							onAssignPatient={handleAssignPatient}

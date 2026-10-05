@@ -2,6 +2,7 @@
 /* Migración UI v1 - 4 Feb 2026 */
 
 .bedCard {
+  position: relative;
   border-radius: 12px;
   overflow: visible;
   background-color: white;
@@ -438,39 +439,107 @@
   font-size: 0.82rem;
 }
 
+/*
+ * Pestañas pegadas al borde izquierdo de la card (mismo lenguaje que FloatingActionsRail).
+ * Ancho + ensanche deben dejar aire dentro del gap de .bedsGrid (20px).
+ */
+.sideTabs {
+  --side-tab-w: 15px;
+  --side-tab-grow: 2px;
+  position: absolute;
+  top: 46px;
+  right: 100%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
 .indicacionesBadgeWrap {
-  position: relative;
-  display: inline-flex;
+  display: flex;
+}
+
+.sideTab {
+  min-width: var(--side-tab-w);
+  width: var(--side-tab-w);
+  min-height: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 6px 0;
+  border: 1px solid;
+  border-right: none;
+  border-radius: 5px 0 0 5px;
+  cursor: pointer;
+  transition:
+    width 0.22s cubic-bezier(0.34, 1.4, 0.64, 1),
+    background 0.2s ease;
+}
+
+.sideTab svg {
+  width: 11px;
+  height: 11px;
   flex-shrink: 0;
 }
 
-.indicacionesBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  margin: 0;
-  padding: 2px 5px 2px 4px;
-  border: 0;
-  border-radius: 999px;
-  background: #fff;
-  color: #9a3412;
-  font-size: 0.72rem;
+.sideTabCount {
+  font-size: 0.62rem;
   font-weight: 800;
   line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
-  flex-shrink: 0;
 }
 
-.indicacionesBadge:hover {
-  background: #fff7ed;
-  color: #7c2d12;
+.sideTabIndicaciones {
+  background: #ff8a50;
+  border-color: #f2733a;
+  color: #fff;
+  box-shadow: -2px 2px 6px rgba(242, 115, 58, 0.4);
 }
 
-.indicacionesBadgeCount {
-  color: #c2410c;
-  min-width: 0.7rem;
-  text-align: center;
+.sideTabEstudios {
+  background: #3b82f6;
+  border-color: #2563eb;
+  color: #fff;
+  box-shadow: -2px 2px 6px rgba(37, 99, 235, 0.4);
+}
+
+.sideTab:focus-visible {
+  width: calc(var(--side-tab-w) + var(--side-tab-grow));
+  outline: 2px solid #bae6fd;
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .sideTab:hover {
+    width: calc(var(--side-tab-w) + var(--side-tab-grow));
+  }
+
+  .sideTabIndicaciones:hover {
+    background: #f2733a;
+  }
+
+  .sideTabEstudios:hover {
+    background: #2563eb;
+  }
+}
+
+/* Mobile: sin ensanche (se saldría de la pantalla); el ancho crece solo si el número no entra. */
+@media (max-width: 768px) {
+  .sideTab,
+  .sideTab:hover,
+  .sideTab:focus-visible {
+    width: auto;
+    padding: 6px 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sideTab {
+    transition: none;
+  }
 }
 
 .indicacionesPreview {
@@ -488,26 +557,6 @@
   white-space: normal;
   cursor: default;
   pointer-events: auto;
-}
-
-.indicacionesPreview::before {
-  content: '';
-  position: absolute;
-  right: 14px;
-  width: 10px;
-  height: 10px;
-  background: #fff;
-  transform: rotate(45deg);
-}
-
-.indicacionesPreviewBelow::before {
-  top: -5px;
-  box-shadow: -1px -1px 1px rgba(15, 23, 42, 0.06);
-}
-
-.indicacionesPreviewAbove::before {
-  bottom: -5px;
-  box-shadow: 1px 1px 1px rgba(15, 23, 42, 0.06);
 }
 
 .indicacionesPreviewTitle {

@@ -79,7 +79,39 @@ async function fetchSectoresReceptor(soloMios: boolean): Promise<SectorReceptorE
   return job;
 }
 
+export interface EstudioRespondidoPreview {
+  codigo?: string;
+  categoria?: 'ESTUDIO' | 'INTERCONSULTA' | string;
+  descripcion?: string;
+  especialidad?: string;
+  fechaResultado?: string | null;
+}
+
 const estudiosService = {
+  async getRespondidosResumen(
+    numeroVisita: number,
+    limit = 3,
+  ): Promise<{ total: number; items: EstudioRespondidoPreview[] }> {
+    try {
+      const res = await apiFetch(`/estudios/visita/${numeroVisita}/respondidos?limit=${limit}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) return { total: 0, items: [] };
+      const json = await parseJson<{
+        success?: boolean;
+        data?: { total?: number; items?: EstudioRespondidoPreview[] };
+      }>(res);
+      const data = json?.data || {};
+      return {
+        total: Number(data.total || 0),
+        items: Array.isArray(data.items) ? data.items : [],
+      };
+    } catch {
+      return { total: 0, items: [] };
+    }
+  },
+
   async listarPorVisita(numeroVisita: number): Promise<PedidoEstudio[]> {
     try {
       const res = await apiFetch(`/estudios/visita/${numeroVisita}`, {

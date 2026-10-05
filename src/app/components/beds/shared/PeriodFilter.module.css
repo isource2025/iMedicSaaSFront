@@ -1,0 +1,48 @@
+.periodFilters {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.periodTag {
+	padding: 8px 16px;
+	border: 1px solid #e2e8f0;
+	border-radius: 20px;
+	background: #fff;
+	color: #64748b;
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.periodTag:hover {
+	border-color: #00b5e2;
+	color: #00b5e2;
+	background: #f0f9ff;
+}
+
+.periodTagActive,
+.periodTagActive:hover {
+	background: linear-gradient(135deg, #00b5e2 0%, #0083a9 100%);
+	color: #fff;
+	border-color: #0083a9;
+	box-shadow: 0 2px 8px rgba(0, 131, 169, 0.25);
+}
+
+@media (max-width: 768px) {
+	.periodFilters {
+		width: 100%;
+		justify-content: space-between;
+		gap: 6px;
+	}
+
+	.periodTag {
+		flex: 1 1 0;
+		padding: 8px 6px;
+		font-size: 0.8rem;
+		text-align: center;
+	}
+}

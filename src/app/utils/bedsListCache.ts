@@ -157,7 +157,7 @@ export function bedsListSignature(beds: Bed[]): string {
 	return beds
 		.map(
 			(b) =>
-				`${b.id}|${b.estado}|${b.numeroVisita}|${b.NombrePaciente}|${b.documentoPaciente}|${b.tipoRecurso}|${b.indicacionesNuevasEnfermeria ?? 0}`,
+				`${b.id}|${b.estado}|${b.numeroVisita}|${b.NombrePaciente}|${b.documentoPaciente}|${b.tipoRecurso}|${b.indicacionesNuevasEnfermeria ?? 0}|${b.estudiosRespondidos ?? 0}`,
 		)
 		.join(';');
 }

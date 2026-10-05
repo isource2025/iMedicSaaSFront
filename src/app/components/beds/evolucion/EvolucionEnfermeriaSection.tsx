@@ -15,6 +15,7 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
@@ -36,7 +37,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   horaIngreso
 }) => {
   const { activeSection, selectedDate } = useBedDetail();
-  const [periodFilter, setPeriodFilter] = useState<'0' | '7' | '30' | 'all'>('0');
+  const [periodFilter, setPeriodFilter] = useState<Periodo>('0');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvolucion, setEditingEvolucion] = useState<EvolucionEnfermeria | null>(null);
   const [saving, setSaving] = useState(false);
@@ -222,7 +223,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
               <span className={styles.addIcon} aria-hidden>
                 +
               </span>
-              Evolución
+              Agregar evolución
             </button>
             <ExportButton
               data={filteredEvoluciones}
@@ -246,36 +247,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <div className={styles.periodFilters}>
-          <button
-            type="button"
-            className={`${styles.periodTag} ${periodFilter === '0' ? styles.periodTagActive : ''}`}
-            onClick={() => setPeriodFilter('0')}
-          >
-            Hoy
-          </button>
-          <button
-            type="button"
-            className={`${styles.periodTag} ${periodFilter === '7' ? styles.periodTagActive : ''}`}
-            onClick={() => setPeriodFilter('7')}
-          >
-            7 días
-          </button>
-          <button
-            type="button"
-            className={`${styles.periodTag} ${periodFilter === '30' ? styles.periodTagActive : ''}`}
-            onClick={() => setPeriodFilter('30')}
-          >
-            1 mes
-          </button>
-          <button
-            type="button"
-            className={`${styles.periodTag} ${periodFilter === 'all' ? styles.periodTagActive : ''}`}
-            onClick={() => setPeriodFilter('all')}
-          >
-            Todas
-          </button>
-        </div>
+        <PeriodFilter value={periodFilter} onChange={setPeriodFilter} />
       </div>
 
       {/* Tabla */}
@@ -291,7 +263,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
               variant="evolucion"
               text="Sin evoluciones registradas"
               description="No hay evoluciones de enfermería para esta fecha. Podés agregar una haciendo clic en el botón de arriba."
-              actionLabel="Nueva Evolución"
+              actionLabel="Agregar evolución"
               onAction={onAddEvolucion}
             />
           )}

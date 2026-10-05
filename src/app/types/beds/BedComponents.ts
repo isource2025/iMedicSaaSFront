@@ -9,6 +9,8 @@ export interface BedCardProps {
   onRecentIndications?: (bedId: string) => void;
   onChangeBed: (bedId: string) => void;
   onBedClick?: (bedId: string) => void;
+  /** Abrir el detalle de cama directo en una sección del menú */
+  onOpenSection?: (bedId: string, section: 'indicaciones' | 'solicitudEstudios') => void;
   onLabResults?: (bedId: string) => void;
   onDischarge?: (bedId: string) => void;
   onOpenAdjuntos?: (bed: Bed) => void;

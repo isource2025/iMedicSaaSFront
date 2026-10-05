@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import { authService } from '@/app/services/authService';
 import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
@@ -8,6 +8,7 @@ import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
@@ -69,6 +70,11 @@ export default function AdjuntosSection({
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
   const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita'>('visita');
   const fileUploadRef = useRef<FileUploadRef>(null);
+  const [periodo, setPeriodo] = useState<Periodo>('all');
+  const adjuntosVisibles = useMemo(
+    () => filtrarPorPeriodo(adjuntos, periodo, (a) => a.FechaCarga),
+    [adjuntos, periodo],
+  );
 
   const showMessage = useCallback((title: string, message: string, tone: MessageModalTone = 'info') => {
     setFeedback({ title, message, tone });
@@ -186,7 +192,7 @@ export default function AdjuntosSection({
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const parts = adjuntos.map((a, idx) => ({
+      const parts = adjuntosVisibles.map((a, idx) => ({
         title: `Adjunto ${idx + 1}`,
         fields: [
           { label: 'Nombre', value: a.NombreArchivo || '—' },
@@ -248,12 +254,13 @@ export default function AdjuntosSection({
       subtitle="Archivos de esta internación"
       exportSlot={
         <ExportButton
-          data={adjuntos}
+          data={adjuntosVisibles}
           fileName={`adjuntos_${numeroVisita}.pdf`}
           onExport={handleExport}
           options={['pdf']}
         />
       }
+      period={modo === 'visita' ? { value: periodo, onChange: setPeriodo } : undefined}
       extraToolbar={
         <div className={styles.modeTabs} role="tablist">
           <button
@@ -263,7 +270,7 @@ export default function AdjuntosSection({
             className={modo === 'visita' ? styles.modeTabActive : styles.modeTab}
             onClick={() => setModo('visita')}
           >
-            Lista de archivos ({adjuntos.length})
+            Lista de archivos ({adjuntosVisibles.length})
           </button>
           <button
             type="button"
@@ -364,7 +371,7 @@ export default function AdjuntosSection({
       {modo === 'visita' && (
         <div className={styles.listSection}>
           <FileList
-            adjuntos={adjuntos}
+            adjuntos={adjuntosVisibles}
             onDelete={handleDelete}
             onError={(msg) => showMessage('Error', msg, 'error')}
             readOnly={false}

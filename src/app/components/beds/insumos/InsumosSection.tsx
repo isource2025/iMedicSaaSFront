@@ -7,6 +7,7 @@ import InsumosTable, { InsumoRow } from "./InsumosTable";
 import styles from './InsumosSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -46,11 +47,15 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
         [numeroVisita]
     );
 
+    const [periodo, setPeriodo] = useState<Periodo>('0');
+    const paramsPeriodo = useMemo(() => (periodo === '0' ? undefined : { days: periodo }), [periodo]);
+
     const { data, isLoading, error, refetch } = useBedSectionFetch<any>({
         enabled: !!insumosPath && activeSection === "insumos",
         endpointOverride: insumosPath
             ? { insumos: insumosPath }
             : undefined,
+        params: paramsPeriodo,
         cacheTimeMs: 15000,
     });
 
@@ -189,6 +194,7 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
                         onChange={(e) => setQuery(e.target.value)}
                     />
                 </div>
+                <PeriodFilter value={periodo} onChange={setPeriodo} />
             </div>
 
             {/* Contenedor flexible para la tabla */}

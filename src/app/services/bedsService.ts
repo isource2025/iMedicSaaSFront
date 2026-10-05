@@ -62,6 +62,7 @@ function mapBedItem(item: Record<string, unknown>): Bed {
 		indicacionesNuevasEnfermeria: Number(
 			item.IndicacionesNuevasEnfermeria ?? item.indicacionesNuevasEnfermeria ?? 0,
 		),
+		estudiosRespondidos: Number(item.EstudiosRespondidos ?? item.estudiosRespondidos ?? 0),
 	};
 }
 
@@ -87,6 +88,7 @@ export function normalizeBedFromApi(item: Record<string, unknown> | Bed): Bed {
 					raw.IndicacionesNuevasEnfermeria ??
 					0,
 			),
+			estudiosRespondidos: Number(b.estudiosRespondidos ?? raw.EstudiosRespondidos ?? 0),
 		};
 	}
 	return mapBedItem(item as Record<string, unknown>);

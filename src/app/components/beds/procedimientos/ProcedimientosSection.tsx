@@ -10,6 +10,7 @@ import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
@@ -77,6 +78,7 @@ export default function ProcedimientosSection({
 	const [error, setError] = useState<string | null>(null);
 	const [selected, setSelected] = useState<FacPracticaVisita | null>(null);
 	const [query, setQuery] = useState('');
+	const [periodo, setPeriodo] = useState<Periodo>('all');
 
 	const loadVisita = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
@@ -105,9 +107,10 @@ export default function ProcedimientosSection({
 	}, [loadVisita]);
 
 	const filtered = useMemo(() => {
+		const enPeriodo = filtrarPorPeriodo(rows, periodo, (r) => r.FechaPractica);
 		const q = query.trim().toLowerCase();
-		if (!q) return rows;
-		return rows.filter((r) => {
+		if (!q) return enPeriodo;
+		return enPeriodo.filter((r) => {
 			const hay = (v?: string | number | null) =>
 				v != null && String(v).toLowerCase().includes(q);
 			return (
@@ -120,7 +123,7 @@ export default function ProcedimientosSection({
 				(r.Realizadores || []).some((n) => hay(n))
 			);
 		});
-	}, [rows, query]);
+	}, [rows, query, periodo]);
 
 	const handleExport = async (option: ExportOption) => {
 		if (option !== 'pdf') return;
@@ -187,6 +190,7 @@ export default function ProcedimientosSection({
 					onChange: setQuery,
 					placeholder: 'Buscar por práctica, código, tipo, sector, profesional…',
 				}}
+				period={{ value: periodo, onChange: setPeriodo }}
 			>
 				{error && <div className={styles.error}>{error}</div>}
 				{filtered.length === 0 ? (
@@ -196,7 +200,7 @@ export default function ProcedimientosSection({
 						description={
 							rows.length === 0
 								? 'No hay filas en imFacPracticas para esta internación.'
-								: 'Probá con otro criterio de búsqueda.'
+								: 'Probá con otro criterio de búsqueda o período.'
 						}
 					/>
 				) : (

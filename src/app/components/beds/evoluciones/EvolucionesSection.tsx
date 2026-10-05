@@ -12,6 +12,7 @@ import styles from './EvolucionesSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
@@ -31,8 +32,6 @@ type EvolucionDTO = {
     valorEspecialidad?: number;
     especialidadDescripcion?: string;
 };
-
-type PeriodFilter = '0' | '7' | '30' | 'all';
 
 export default function EvolucionesSection({
     bedId,
@@ -54,7 +53,7 @@ export default function EvolucionesSection({
     horaIngreso?: string;
 }) {
     const { activeSection, selectedDate } = useBedDetail();
-    const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('0');
+    const [periodFilter, setPeriodFilter] = useState<Periodo>('0');
     const [especialidadFilter, setEspecialidadFilter] = useState<string>('todas');
 
     const evolucionesPath = useMemo(
@@ -268,7 +267,7 @@ export default function EvolucionesSection({
                             <span className={styles.addIcon} aria-hidden>
                                 +
                             </span>
-                            Evolución
+                            Agregar evolución
                         </button>
                         <ExportButton
                             data={rows}
@@ -292,32 +291,7 @@ export default function EvolucionesSection({
                         onChange={(e) => setQuery(e.target.value)}
                     />
                 </div>
-                <div className={styles.periodFilters}>
-                    <button
-                        className={`${styles.periodTag} ${periodFilter === '0' ? styles.periodTagActive : ''}`}
-                        onClick={() => setPeriodFilter('0')}
-                    >
-                        Hoy
-                    </button>
-                    <button
-                        className={`${styles.periodTag} ${periodFilter === '7' ? styles.periodTagActive : ''}`}
-                        onClick={() => setPeriodFilter('7')}
-                    >
-                        7 días
-                    </button>
-                    <button
-                        className={`${styles.periodTag} ${periodFilter === '30' ? styles.periodTagActive : ''}`}
-                        onClick={() => setPeriodFilter('30')}
-                    >
-                        1 mes
-                    </button>
-                    <button
-                        className={`${styles.periodTag} ${periodFilter === 'all' ? styles.periodTagActive : ''}`}
-                        onClick={() => setPeriodFilter('all')}
-                    >
-                        Todas
-                    </button>
-                </div>
+                <PeriodFilter value={periodFilter} onChange={setPeriodFilter} />
             </div>
 
             {/* Filtros por especialidad */}
@@ -358,10 +332,10 @@ export default function EvolucionesSection({
                             text={baseRows.length === 0 ? 'Sin evoluciones' : 'Sin resultados'}
                             description={
                                 baseRows.length === 0
-                                    ? 'Cargá una evolución con el botón + Evolución.'
+                                    ? 'Cargá una evolución con el botón Agregar evolución.'
                                     : 'Probá con otro criterio de búsqueda o filtro.'
                             }
-                            actionLabel={baseRows.length === 0 ? 'Evolución' : undefined}
+                            actionLabel={baseRows.length === 0 ? 'Agregar evolución' : undefined}
                             onAction={baseRows.length === 0 ? onAddEvolucion : undefined}
                         />
                     )}

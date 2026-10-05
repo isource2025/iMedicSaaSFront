@@ -13,6 +13,7 @@ import { NuevaIndicacionPayload } from "../../../types/indicaciones";
 import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import ResultadoReindicarModal, {
@@ -171,6 +172,12 @@ export default function IndicacionesSection({
         [numeroVisita]
     );
 
+    const [periodo, setPeriodo] = useState<Periodo>('0');
+    const paramsIndicaciones = useMemo(
+        () => (periodo === '0' ? PARAMS_INDICACIONES : { ...PARAMS_INDICACIONES, days: periodo }),
+        [periodo]
+    );
+
     const { data, isLoading, error, refetch } = useBedSectionFetch<
         IndicacionDTO[]
     >({
@@ -180,7 +187,7 @@ export default function IndicacionesSection({
         endpointOverride: indicacionesPath
             ? { indicaciones: indicacionesPath }
             : undefined,
-        params: PARAMS_INDICACIONES,
+        params: paramsIndicaciones,
         cacheTimeMs: 20000,
     });
 
@@ -672,7 +679,7 @@ export default function IndicacionesSection({
                             <span className={styles.addIcon} aria-hidden>
                                 +
                             </span>
-                            Indicación
+                            Agregar indicación
                         </button>
                         <ExportButton
                             data={rows}
@@ -698,6 +705,8 @@ export default function IndicacionesSection({
                         onChange={(e) => setQuery(e.target.value)}
                     />
                 </div>
+
+                <PeriodFilter value={periodo} onChange={setPeriodo} disabled={reindicando} />
 
                 <button
                     type="button"
@@ -775,7 +784,7 @@ export default function IndicacionesSection({
                                             ? `Hay ${cantidadSuspendidas} ${cantidadSuspendidas === 1 ? 'indicación dejada' : 'indicaciones dejadas'} sin efecto. Activá "Ver sin efecto" para verlas.`
                                             : 'Cargá una indicación con el botón de arriba.'
                             }
-                            actionLabel={rowsPorEstado.length === 0 && !mostrarSuspendidas ? 'Nueva Indicación' : undefined}
+                            actionLabel={rowsPorEstado.length === 0 && !mostrarSuspendidas ? 'Agregar indicación' : undefined}
                             onAction={rowsPorEstado.length === 0 && !mostrarSuspendidas ? onAddIndicacion : undefined}
                         />
                     ) : (

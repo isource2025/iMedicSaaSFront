@@ -168,8 +168,14 @@ export type ExportSectionKey =
   | 'medicamentos'
   | 'evoluciones'
   | 'estudios'
+  | 'interconsultas'
   | 'protocolos'
   | 'epicrisis'
+  | 'controles'
+  | 'dietas'
+  | 'balanceHidrico'
+  | 'evolucionEnfermeria'
+  | 'insumos'
   | 'adjuntos';
 
 export interface ExportSelectivoBody {

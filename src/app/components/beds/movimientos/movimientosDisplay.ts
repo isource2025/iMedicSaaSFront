@@ -115,6 +115,20 @@ export function formatFechaHoraMovimiento(
 	return `${padDmy(fecha)} ${hora}`;
 }
 
+function fechaIsoMovimiento(iso: unknown, clarion: unknown): string | null {
+	const s = String(iso || '').trim();
+	if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+	return Number(clarion) > 0 ? clarionDateToISO(Number(clarion)) || null : null;
+}
+
+/** [ingreso, egreso] en YYYY-MM-DD; egreso null si sigue abierto. */
+export function rangoMovimiento(m: MovimientoRowLike): [string | null, string | null] {
+	return [
+		fechaIsoMovimiento(m.FechaAdmisionISO, m.FechaAdmision),
+		movimientoAbierto(m) ? null : fechaIsoMovimiento(m.FechaEgresoISO, m.FechaEgreso),
+	];
+}
+
 function tsIngreso(m: MovimientoRowLike): number {
 	const iso = String(m.FechaAdmisionISO || '').trim();
 	const fecha = /^\d{4}-\d{2}-\d{2}/.test(iso)
@@ -142,12 +156,14 @@ export function ordenarMovimientos<T extends MovimientoRowLike>(rows: T[]): T[] 
  * Egreso = último movimiento ya cerrado.
  * Internado = ingreso original (el más antiguo).
  * Traslado = cambios de cama intermedios.
+ * Si la fila trae `EstadoUi` (calculado sobre la lista completa antes de filtrar), se respeta.
  */
 export function clasificarEstadoMovimiento(
 	m: MovimientoRowLike,
 	idx: number,
 	list: MovimientoRowLike[],
 ): MovimientoEstadoUi {
+	if (m.EstadoUi) return m.EstadoUi as MovimientoEstadoUi;
 	const abierto = movimientoAbierto(m);
 	if (idx === 0) return abierto ? 'Actual' : 'Egreso';
 	if (idx === list.length - 1) return 'Internado';

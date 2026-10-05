@@ -15,6 +15,7 @@ import styles from '../indicaciones/IndicacionesSection.module.css';
 import tableStyles from './MedicacionSuministradaSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
@@ -85,12 +86,16 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   );
 
 
+  const [periodo, setPeriodo] = useState<Periodo>('0');
+  const paramsPeriodo = useMemo(() => (periodo === '0' ? undefined : { days: periodo }), [periodo]);
+
   // Usar useBedSectionFetch igual que Indicaciones
   const { data, isLoading, error, refetch, url } = useBedSectionFetch<any>({
     enabled: !!medicacionPath && activeSection === 'medicacion-suministrada',
     endpointOverride: medicacionPath
       ? { 'medicacion-suministrada': medicacionPath }
       : undefined,
+    params: paramsPeriodo,
     cacheTimeMs: 15000,
   });
 
@@ -103,6 +108,24 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
       : [];
     return list;
   }, [data]);
+
+  const [query, setQuery] = useState('');
+  const medicacionesVisibles = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return medicacionesAgrupadas;
+    const hay = (v: unknown) => v != null && String(v).toLowerCase().includes(q);
+    return medicacionesAgrupadas.filter((m: any) =>
+      hay(m.NombreMedicamento) ||
+      hay(m.DescripcionMedicamento) ||
+      hay(m.Sector) ||
+      hay(m.ProfesionalFullName) ||
+      hay(m.OperadorFullName) ||
+      hay(m.Observaciones) ||
+      (m.adicionales || []).some((a: MedicacionControl) =>
+        hay(a.NombreMedicamento) || hay(a.DescripcionMedicamento) || hay(a.FormaAdicional),
+      ),
+    );
+  }, [medicacionesAgrupadas, query]);
 
   const handleVerDetalle = (medicacion: MedicacionControl) => {
     setSelectedMedicacion(medicacion);
@@ -173,7 +196,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
       const empresaInfo = await obtenerInfoEmpresa();
       const fd = fechaFormateada;
 
-      const parts = medicacionesAgrupadas.map((row: any, idx: number) => ({
+      const parts = medicacionesVisibles.map((row: any, idx: number) => ({
         title: `Medicación ${idx + 1}`,
         fields: [
           { label: 'Fecha', value: formatearFecha(row.FechaControl) },
@@ -235,7 +258,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
           </span>
           <div className={styles.dateActions}>
             <ExportButton
-              data={medicacionesAgrupadas}
+              data={medicacionesVisibles}
               fileName={`medicacion_${fechaISO}.pdf`}
               onExport={handleExport}
               options={['pdf']}
@@ -243,6 +266,20 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
           </div>
         </div>
       )}
+
+      <div className={styles.toolbar}>
+        <div className={styles.searchWrap}>
+          <span className={styles.searchIcon} aria-hidden>🔎</span>
+          <input
+            className={styles.searchInput}
+            type="text"
+            placeholder="Buscar por medicamento, profesional, sector…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <PeriodFilter value={periodo} onChange={setPeriodo} />
+      </div>
 
       {/* Contenido */}
       <div className={styles.content}>
@@ -255,7 +292,14 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
               description="No hay registros de medicación suministrada para esta fecha."
             />
           )}
-          {!isLoading && !error && medicacionesAgrupadas.length > 0 && (
+          {!isLoading && !error && medicacionesAgrupadas.length > 0 && medicacionesVisibles.length === 0 && (
+            <EmptyState
+              variant="medicacion"
+              text="Sin resultados"
+              description="Probá con otro criterio de búsqueda o período."
+            />
+          )}
+          {!isLoading && !error && medicacionesVisibles.length > 0 && (
       <>
       <div className={tableStyles.tableContainer}>
         <table className={tableStyles.table}>
@@ -273,7 +317,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
             </tr>
           </thead>
           <tbody>
-            {medicacionesAgrupadas.map((medicacion: any) => (
+            {medicacionesVisibles.map((medicacion: any) => (
               <tr key={medicacion.IDCtrlMedica}>
                 <td>{formatearFecha(medicacion.FechaControl)}</td>
                 <td>{formatearHora(medicacion.HoraControl)}</td>
@@ -339,7 +383,7 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
         </table>
       </div>
       <div className={tableStyles.mobileCards}>
-        {medicacionesAgrupadas.map((medicacion: any) => (
+        {medicacionesVisibles.map((medicacion: any) => (
           <article key={`med-m-${medicacion.IDCtrlMedica}`} className={tableStyles.mobileCard}>
             <div className={tableStyles.mobileCardHeader}>
               <span>{formatearFecha(medicacion.FechaControl)} {formatearHora(medicacion.HoraControl)}</span>

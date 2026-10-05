@@ -20,6 +20,14 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import ConfirmationModal from '../shared/ConfirmationModal';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import PeriodFilter, { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
+
+const PERIODOS_ALCANCE: Record<Periodo, string> = {
+	'0': 'Día seleccionado',
+	'7': 'Última semana',
+	'30': 'Último mes',
+	all: 'Toda la internación',
+};
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
@@ -60,7 +68,8 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const [editing, setEditing] = useState<BalanceHidrico | null>(null);
 	const [aEliminar, setAEliminar] = useState<BalanceHidrico | null>(null);
 	const [query, setQuery] = useState('');
-	const [soloDia, setSoloDia] = useState(true);
+	const [periodo, setPeriodo] = useState<Periodo>('0');
+	const soloDia = periodo === '0';
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
 	const puedeCrear = puede('INTERNACION.BALANCE_HIDRICO.CREAR');
@@ -97,10 +106,15 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	});
 
 	const registros: BalanceHidrico[] = useMemo(() => {
-		if (Array.isArray(data)) return data as BalanceHidrico[];
-		if (data && Array.isArray(data.data)) return data.data;
-		return [];
-	}, [data]);
+		const list: BalanceHidrico[] = Array.isArray(data)
+			? (data as BalanceHidrico[])
+			: data && Array.isArray(data.data)
+				? data.data
+				: [];
+		return soloDia ? list : filtrarPorPeriodo(list, periodo, (r) => r.Fecha, selectedDate);
+	}, [data, soloDia, periodo, selectedDate]);
+
+	const alcance = PERIODOS_ALCANCE[periodo];
 
 	const filtrados = useMemo(() => {
 		let list = registros;
@@ -221,9 +235,9 @@ const BalanceHidricoSection: React.FC<Props> = ({
 
 		await exportToPDF({
 			title: 'Balance Hídrico',
-			subtitle: soloDia ? `Fecha: ${fechaISO}` : 'Toda la internación',
+			subtitle: soloDia ? `Fecha: ${fechaISO}` : alcance,
 			parts,
-			fileName: `balance_hidrico_${soloDia ? fechaISO : 'internacion'}.pdf`,
+			fileName: `balance_hidrico_${soloDia ? fechaISO : periodo === 'all' ? 'internacion' : `${periodo}d_${fechaISO}`}.pdf`,
 			orientation: 'portrait',
 			empresaInfo,
 			patientInfo: {
@@ -252,7 +266,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 					<span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
 					<span className={styles.dateText}>
 						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
-						{!soloDia && <span className={bh.scopeTag}>Toda la internación</span>}
+						{!soloDia && <span className={bh.scopeTag}>{alcance}</span>}
 					</span>
 					<div className={styles.dateActions}>
 						{puedeCrear && (
@@ -263,7 +277,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 								<span className={styles.addIcon} aria-hidden>
 									+
 								</span>
-								Agregar
+								Agregar registro
 							</button>
 						)}
 						<ExportButton
@@ -291,17 +305,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 					/>
 				</div>
 
-				<label className={bh.switch}>
-					<input
-						type="checkbox"
-						checked={soloDia}
-						onChange={(e) => setSoloDia(e.target.checked)}
-					/>
-					<span className={bh.switchTrack} aria-hidden>
-						<span className={bh.switchThumb} />
-					</span>
-					<span className={bh.switchText}>Sólo el día seleccionado</span>
-				</label>
+				<PeriodFilter value={periodo} onChange={setPeriodo} />
 			</div>
 
 			<div className={styles.content}>
@@ -317,7 +321,9 @@ const BalanceHidricoSection: React.FC<Props> = ({
 									? 'Sin registros para esta búsqueda'
 									: soloDia
 										? 'No hay registros de balance hídrico para esta fecha'
-										: 'No hay registros de balance hídrico en la internación'
+										: periodo === 'all'
+											? 'No hay registros de balance hídrico en la internación'
+											: `No hay registros de balance hídrico (${alcance.toLowerCase()})`
 							}
 							description={
 								registros.length

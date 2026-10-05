@@ -15,6 +15,7 @@ import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
 import { exportToPDF, generarPDFInterconsulta } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
@@ -167,6 +168,7 @@ export default function InterconsultaSection({
 	const [editingPedido, setEditingPedido] = useState<InterconsultaRow | null>(null);
 	const [editingRespuesta, setEditingRespuesta] = useState<InterconsultaRow | null>(null);
 	const [query, setQuery] = useState('');
+	const [periodo, setPeriodo] = useState<Periodo>('all');
 
 	const loadVisita = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
@@ -197,9 +199,10 @@ export default function InterconsultaSection({
 	}, [loadVisita]);
 
 	const filtered = useMemo(() => {
+		const enPeriodo = filtrarPorPeriodo(rows, periodo, (r) => r.FechaSolicitud);
 		const q = query.trim().toLowerCase();
-		if (!q) return rows;
-		return rows.filter((r) => {
+		if (!q) return enPeriodo;
+		return enPeriodo.filter((r) => {
 			const hay = (v?: string | number | null) =>
 				v != null && String(v).toLowerCase().includes(q);
 			return (
@@ -213,7 +216,7 @@ export default function InterconsultaSection({
 				hay(r.Estado)
 			);
 		});
-	}, [rows, query]);
+	}, [rows, query, periodo]);
 
 	const handleRowClick = (row: InterconsultaRow) => {
 		setSelected(row);
@@ -342,7 +345,7 @@ export default function InterconsultaSection({
 			<BedSectionLayout
 				title="Interconsultas"
 				subtitle="El servicio destino las atiende desde la bandeja de pedidos"
-				addLabel={canCreate ? 'Interconsulta' : undefined}
+				addLabel={canCreate ? 'Agregar interconsulta' : undefined}
 				onAdd={canCreate ? () => setShowSolicitar(true) : undefined}
 				exportSlot={
 					<ExportButton
@@ -357,6 +360,7 @@ export default function InterconsultaSection({
 					onChange: setQuery,
 					placeholder: 'Buscar por destino, motivo, profesional, estado…',
 				}}
+				period={{ value: periodo, onChange: setPeriodo }}
 			>
 				{error && <div className={styles.error}>{error}</div>}
 				{filtered.length === 0 ? (
@@ -365,10 +369,10 @@ export default function InterconsultaSection({
 						text={rows.length === 0 ? 'Sin interconsultas' : 'Sin resultados'}
 						description={
 							rows.length === 0
-								? 'Solicitá una interconsulta con el botón + Interconsulta.'
-								: 'Probá con otro criterio de búsqueda.'
+								? 'Solicitá una interconsulta con el botón Agregar interconsulta.'
+								: 'Probá con otro criterio de búsqueda o período.'
 						}
-						actionLabel={canCreate && rows.length === 0 ? 'Interconsulta' : undefined}
+						actionLabel={canCreate && rows.length === 0 ? 'Agregar interconsulta' : undefined}
 						onAction={canCreate && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
 					/>
 				) : (

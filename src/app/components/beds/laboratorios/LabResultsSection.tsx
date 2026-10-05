@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { laboratoriosService } from '@/app/services/laboratoriosService';
 import { ExamenLabCompleto } from '@/app/types/laboratorios';
 import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
@@ -10,6 +10,7 @@ import LabFormModal from './LabFormModal';
 import LabResultsTable from './LabResultsTable';
 import LabAnalysisView from './LabAnalysisView';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -46,6 +47,11 @@ export default function LabResultsSection({
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'lista' | 'analisis'>('analisis');
+  const [periodo, setPeriodo] = useState<Periodo>('all');
+  const examenesVisibles = useMemo(
+    () => filtrarPorPeriodo(examenes, periodo, (e) => e.FechaExamen),
+    [examenes, periodo],
+  );
 
   useEffect(() => {
     if (numeroVisita) {
@@ -120,7 +126,7 @@ export default function LabResultsSection({
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const parts = examenes.map((e, idx) => ({
+      const parts = examenesVisibles.map((e, idx) => ({
         title: `Laboratorio ${idx + 1}`,
         fields: [
           { label: 'Fecha', value: laboratoriosService.formatDate(e.FechaExamen) },
@@ -173,22 +179,23 @@ export default function LabResultsSection({
       <BedSectionLayout
         title="Laboratorio"
         subtitle="Resultados de esta internación"
-        addLabel="Laboratorio"
+        addLabel="Agregar laboratorio"
         onAdd={() => setShowUploadModal(true)}
         exportSlot={
           <ExportButton
-            data={examenes}
+            data={examenesVisibles}
             fileName={`laboratorios_${numeroVisita}.pdf`}
             onExport={handleExport}
             options={['pdf']}
           />
         }
+        period={{ value: periodo, onChange: setPeriodo }}
         extraToolbar={
           <div className={styles.tabs}>
             <button
               className={`${styles.tab} ${activeTab === 'analisis' ? styles.activeTab : ''}`}
               onClick={() => setActiveTab('analisis')}
-              disabled={examenes.length === 0}
+              disabled={examenesVisibles.length === 0}
               type="button"
             >
               Análisis comparativo
@@ -208,15 +215,21 @@ export default function LabResultsSection({
           <EmptyState
             variant="laboratorios"
             text="Sin estudios de laboratorio"
-            description="Cargá un examen con el botón + Laboratorio."
-            actionLabel="Laboratorio"
+            description="Cargá un examen con el botón Agregar laboratorio."
+            actionLabel="Agregar laboratorio"
             onAction={() => setShowUploadModal(true)}
           />
+        ) : examenesVisibles.length === 0 ? (
+          <EmptyState
+            variant="laboratorios"
+            text="Sin resultados"
+            description="No hay exámenes en el período elegido. Probá con otro período."
+          />
         ) : activeTab === 'analisis' ? (
-          <LabAnalysisView examenes={examenes} />
+          <LabAnalysisView examenes={examenesVisibles} />
         ) : (
         <div className={styles.examenesGrid}>
-          {examenes.map((examen) => (
+          {examenesVisibles.map((examen) => (
             <div key={examen.IdExamen} className={styles.examenCard}>
               <div className={styles.cardHeader}>
                 <div className={styles.cardTitle}>

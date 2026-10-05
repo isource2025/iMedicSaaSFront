@@ -11,6 +11,7 @@ import SolicitarEstudioModal from './SolicitarEstudioModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
 import { exportToPDF } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './EstudiosSection.module.css';
@@ -133,6 +134,7 @@ export default function EstudiosSection({
 	const [deletingBusy, setDeletingBusy] = useState(false);
 	const [showSolicitar, setShowSolicitar] = useState(false);
 	const [query, setQuery] = useState('');
+	const [periodo, setPeriodo] = useState<Periodo>('all');
 
 	const loadVisita = useCallback(async (modo?: unknown) => {
 		if (!numeroVisita) return;
@@ -161,9 +163,10 @@ export default function EstudiosSection({
 	}, [loadVisita]);
 
 	const filtered = useMemo(() => {
+		const enPeriodo = filtrarPorPeriodo(rows, periodo, (r) => r.FechaPedidoISO);
 		const q = query.trim().toLowerCase();
-		if (!q) return rows;
-		return rows.filter((r) => {
+		if (!q) return enPeriodo;
+		return enPeriodo.filter((r) => {
 			const hay = (v?: string | number | null) =>
 				v != null && String(v).toLowerCase().includes(q);
 			return (
@@ -176,7 +179,7 @@ export default function EstudiosSection({
 				hay(r.EstadoWorkflow)
 			);
 		});
-	}, [rows, query]);
+	}, [rows, query, periodo]);
 
 	const handleRowClick = (row: PedidoEstudio) => {
 		setSelected(row);
@@ -285,7 +288,7 @@ export default function EstudiosSection({
 			<BedSectionLayout
 				title="Estudios"
 				subtitle="Pedidos de este paciente · el servicio destino los atiende en la bandeja"
-				addLabel={puedeCrear ? 'Estudio' : undefined}
+				addLabel={puedeCrear ? 'Agregar estudio' : undefined}
 				onAdd={puedeCrear ? () => setShowSolicitar(true) : undefined}
 				addDisabled={!origenPedido}
 				addTitle={!origenPedido ? 'Sin sector de sesión' : undefined}
@@ -302,6 +305,7 @@ export default function EstudiosSection({
 					onChange: setQuery,
 					placeholder: 'Buscar por práctica, código, notas, profesional…',
 				}}
+				period={{ value: periodo, onChange: setPeriodo }}
 			>
 				{error && <div className={styles.error}>{error}</div>}
 				{filtered.length === 0 ? (
@@ -310,10 +314,10 @@ export default function EstudiosSection({
 						text={rows.length === 0 ? 'Sin pedidos de estudios' : 'Sin resultados'}
 						description={
 							rows.length === 0
-								? 'Solicitá un estudio con el botón + Estudio.'
-								: 'Probá con otro criterio de búsqueda.'
+								? 'Solicitá un estudio con el botón Agregar estudio.'
+								: 'Probá con otro criterio de búsqueda o período.'
 						}
-						actionLabel={puedeCrear && rows.length === 0 ? 'Estudio' : undefined}
+						actionLabel={puedeCrear && rows.length === 0 ? 'Agregar estudio' : undefined}
 						onAction={puedeCrear && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
 					/>
 				) : (

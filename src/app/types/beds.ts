@@ -47,6 +47,8 @@ export interface Bed {
 	egresada?: boolean;
 	/** Indicaciones médicas aún no revisadas por enfermería (compartido). */
 	indicacionesNuevasEnfermeria?: number;
+	/** Estudios e interconsultas de la visita con resultado cargado. */
+	estudiosRespondidos?: number;
 }
 
 export interface BedState {

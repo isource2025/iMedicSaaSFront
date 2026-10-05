@@ -469,15 +469,6 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 						Informe de Evolución
 					</button>
 					)}
-					{!mostrarSoloOtrasFunciones && (
-					<button
-						type="button"
-						className={styles.navButton}
-						onClick={() => window.dispatchEvent(new Event('imedic:notifications-open'))}
-					>
-						Notificaciones
-					</button>
-					)}
 					{onExportDetalle && (
 					<button
 						type="button"
