@@ -152,7 +152,9 @@ function SideTabConPreview({
 						<ul className={styles.indicacionesPreviewList}>
 							{items.map((item, idx) => (
 								<li key={`${item.nombre}-${idx}`} className={styles.indicacionesPreviewItem}>
-									<span className={styles.indicacionesPreviewName}>{item.nombre}</span>
+									<span className={styles.indicacionesPreviewName} title={item.nombre}>
+										{item.nombre.replace(/\//g, '/\u200B')}
+									</span>
 									{item.meta ? (
 										<span className={styles.indicacionesPreviewMeta}>{item.meta}</span>
 									) : null}
