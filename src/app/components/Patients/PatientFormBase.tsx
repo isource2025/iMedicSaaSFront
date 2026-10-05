@@ -75,6 +75,33 @@ const normalizeHora = (raw: any): string => {
 	return str; // fallback sin tocar
 };
 
+const normalizeFecha = (raw: any): string => {
+	const val = toStr(raw).trim();
+	if (!/^\d+$/.test(val)) return val;
+	if (Number(val) === 0) return '';
+	const date = clarionDateToDate(val);
+	if (!date) return val;
+	const y = date.getFullYear();
+	const m = String(date.getMonth() + 1).padStart(2, '0');
+	const d = String(date.getDate()).padStart(2, '0');
+	return `${y}-${m}-${d}`;
+};
+
+const esVacio = (v: unknown) => {
+	const s = String(v ?? '').trim();
+	return !s || s === '0';
+};
+
+/** Campos que RENAPER puede informar; si alguno falta en la ficha local se consulta igual. */
+const CAMPOS_RENAPER = [
+	'ApellidoyNombre',
+	'Domicilio',
+	'Provincia',
+	'CUIT',
+	'FechaNacimiento',
+	'ValorLocalidad',
+] as const;
+
 const buildInitialFormData = (d?: Partial<PatientFormData>): PatientFormData => ({
 	IDPaciente: d?.IDPaciente,
 	NumeroHC: toStr(d?.NumeroHC),
@@ -290,80 +317,105 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		setMatchesCobertura([]);
 		setResultadoAfiliado(null);
 		setBuscandoCoberturas(false);
-		const sexoOpt = SexoVal === 'F' ? 1 : 2;
-
 		// Sin esto quedan datos de la persona anterior en los campos que la nueva fuente no informa
 		if (!isEditing) limpiarFormularioParaDocumento(String(NumeroDocumento), SexoVal);
 
 		try {
-			// Paso 1: ficha local. RENAPER y obras sociales solo si ese documento no existe.
+			// Paso 1: ficha local. Si existe y está completa no se consulta RENAPER ni obras sociales.
 			setAvisoDocumento('Buscando en la base de pacientes…');
+			let fichaLocal: PatientFormData | null = null;
+			let sexoLocal = '';
 			try {
 				const local = await patientService.buscarPacientePorDocumento(NumeroDocumento);
 				if (!vigente()) return;
 				if (local) {
+					fichaLocal = buildInitialFormData({
+						...(local as Partial<PatientFormData>),
+						FechaNacimiento: normalizeFecha(local.FechaNacimiento),
+					});
+					sexoLocal = /^[MF]$/i.test(toStr(local.Sexo).trim())
+						? toStr(local.Sexo).trim().toUpperCase()
+						: '';
 					autoProvinciaAppliedRef.current = false;
 					setFotoFile(null);
-					setFormData(buildInitialFormData(local as Partial<PatientFormData>));
+					setFormData(fichaLocal);
 					datosDeBusquedaRef.current = true;
 					setAvisoDocumento(
 						'Este documento ya está registrado. Se cargaron los datos de la ficha.',
 					);
-					return;
 				}
 			} catch (localErr) {
 				console.error('Error buscando paciente en la base:', localErr);
 			}
 
-			// Paso 3 (en segundo plano, con su propio loader): obras sociales que validan por documento
-			void buscarCoberturasPorDocumento(String(NumeroDocumento), vigente);
+			const local = fichaLocal;
+			const faltantes = local ? CAMPOS_RENAPER.filter((k) => esVacio(local[k])) : [];
+			if (local && !faltantes.length) return;
 
-			// Paso 2: RENAPER
-			if (!SexoVal) {
-				setAvisoDocumento('No está en la base. Seleccione el sexo para consultar RENAPER.');
+			// Paso 3 (en segundo plano, con su propio loader): obras sociales que validan por documento
+			if (!local || esVacio(local.Cobertura))
+				void buscarCoberturasPorDocumento(String(NumeroDocumento), vigente);
+
+			// Paso 2: RENAPER. Con ficha local solo se completan los campos vacíos.
+			const prefijo = local ? 'Ficha registrada con datos incompletos.' : 'No está en la base.';
+			const prefijoOk = local
+				? 'Ficha registrada. Se completaron los datos faltantes desde RENAPER.'
+				: 'Datos cargados desde RENAPER.';
+			const sexoConsulta = sexoLocal || SexoVal;
+			if (!sexoConsulta) {
+				setAvisoDocumento(`${prefijo} Seleccione el sexo para consultar RENAPER.`);
 				return;
 			}
-			setAvisoDocumento('No está en la base. Buscando en RENAPER…');
+			setAvisoDocumento(`${prefijo} Buscando en RENAPER…`);
 			let persona: Record<string, unknown> | null = null;
 			try {
 				const { data } = await apiService.get<PersonaResponse>(
-					`/renaper/buscar-persona/${NumeroDocumento}/${sexoOpt}`,
+					`/renaper/buscar-persona/${NumeroDocumento}/${sexoConsulta === 'F' ? 1 : 2}`,
 				);
 				persona = (data?.persona as Record<string, unknown>) || null;
 			} catch (renaperErr) {
 				console.error('Error Renaper:', renaperErr);
-				if (vigente()) setAvisoDocumento('No está en la base. No se pudo consultar RENAPER.');
+				if (vigente()) setAvisoDocumento(`${prefijo} No se pudo consultar RENAPER.`);
 				return;
 			}
 			if (!vigente()) return;
 			if (!persona) {
-				setAvisoDocumento('No se encontró el documento en la base ni en RENAPER.');
+				setAvisoDocumento(
+					local
+						? `${prefijo} El documento no figura en RENAPER.`
+						: 'No se encontró el documento en la base ni en RENAPER.',
+				);
 				return;
 			}
 
 			const mapped = mapRenaperToPatientFields(persona);
 			datosDeBusquedaRef.current = true;
+			const completar = (actual: string | undefined, nuevo: string | undefined) =>
+				local ? (esVacio(actual) ? nuevo || actual : actual) : nuevo || actual;
 			setFormData((prev) => ({
 				...prev,
-				IDPaciente: undefined,
-				NumeroDocumento: mapped.NumeroDocumento || prev.NumeroDocumento,
-				ApellidoyNombre: mapped.ApellidoyNombre || prev.ApellidoyNombre,
-				Domicilio: mapped.Domicilio || prev.Domicilio,
-				Provincia: mapped.Provincia || prev.Provincia,
-				Nacionalidad: mapped.Nacionalidad || prev.Nacionalidad,
-				CUIT: mapped.CUIT || prev.CUIT,
-				FechaNacimiento: mapped.FechaNacimiento ?? prev.FechaNacimiento,
-				Sexo: mapped.Sexo ?? prev.Sexo,
+				IDPaciente: local ? prev.IDPaciente : undefined,
+				NumeroDocumento: local
+					? prev.NumeroDocumento
+					: mapped.NumeroDocumento || prev.NumeroDocumento,
+				ApellidoyNombre: completar(prev.ApellidoyNombre, mapped.ApellidoyNombre) ?? '',
+				Domicilio: completar(prev.Domicilio, mapped.Domicilio) ?? '',
+				Provincia: completar(prev.Provincia, mapped.Provincia) ?? '',
+				Nacionalidad: completar(prev.Nacionalidad, mapped.Nacionalidad) ?? '',
+				CUIT: completar(prev.CUIT, mapped.CUIT) ?? '',
+				FechaNacimiento: completar(prev.FechaNacimiento, mapped.FechaNacimiento) ?? '',
+				Sexo: local && sexoLocal ? prev.Sexo : (mapped.Sexo ?? prev.Sexo),
 			}));
-			setAvisoDocumento('Datos cargados desde RENAPER.');
+			setAvisoDocumento(prefijoOk);
 
+			if (local && !esVacio(local.ValorLocalidad)) return;
 			const ciudadNorm = normalizeCity(mapped.ciudadNorm);
 			if (!ciudadNorm) return;
 			const { localidad, error: errorLocalidad } = await resolverLocalidadRenaper(persona);
 			if (!vigente()) return;
 			if (!localidad) {
 				setAvisoDocumento(
-					`Datos cargados desde RENAPER. ${errorLocalidad || `No se pudo cargar la localidad "${ciudadNorm}"`}: selecciónela manualmente.`,
+					`${prefijoOk} ${errorLocalidad || `No se pudo cargar la localidad "${ciudadNorm}"`}: selecciónela manualmente.`,
 				);
 				return;
 			}
@@ -385,7 +437,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			if (valorProvincia) await handleGetProvincia(valorProvincia);
 			if (localidad.creada) {
 				setAvisoDocumento(
-					`Datos cargados desde RENAPER. Se agregó la localidad "${localidad.NombreLocalidad}" al catálogo.`,
+					`${prefijoOk} Se agregó la localidad "${localidad.NombreLocalidad}" al catálogo.`,
 				);
 			}
 		} catch (err) {
