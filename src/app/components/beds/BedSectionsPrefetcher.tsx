@@ -35,6 +35,7 @@ const CHUNKS: Record<string, () => Promise<unknown>> = {
 	epicrisis: () => import('./epicrisis/EpicrisisSection'),
 	procedimientos: () => import('./procedimientos/ProcedimientosSection'),
 	'balance-hidrico': () => import('./balance-hidrico/BalanceHidricoSection'),
+	dieta: () => import('./dieta/DietaSection'),
 };
 
 /** Mismos endpoints y parámetros que usa cada sección con `useBedSectionFetch` (si no, la clave no coincide). */
@@ -54,6 +55,7 @@ function tareasPorFecha(nv: number, date: Date | null): Tarea[] {
 		fetch('controles-frecuentes', `/controles-frecuentes/${nv}/byDate`),
 		fetch('medicacion-suministrada', `/medicacion-control/${nv}/byDate`),
 		fetch('balance-hidrico', `/balance-hidrico/${nv}/byDate`),
+		fetch('dieta', `/dieta-control/${nv}/byDate`),
 		fetch('insumos', `/indicaciones/${nv}/insumos/byDate`),
 		fetch('epicrisis', `/epicrisis/${nv}`),
 		fetch('movimientos', `/visita-movimientos/visita/${nv}`, { admissionId: nv }),
