@@ -260,7 +260,7 @@ function EstudiosRespondidosBadge({
 							? `Interconsulta${item.especialidad ? ` · ${item.especialidad}` : ''}`
 							: item.descripcion || 'Estudio sin descripción';
 						return {
-							nombre: item.codigo ? `${item.codigo} · ${nombre}` : nombre,
+							nombre,
 							meta: [
 								esInterconsulta ? '' : item.especialidad || '',
 								fechaHoraCorta(item.fechaResultado) ? `Resp. ${fechaHoraCorta(item.fechaResultado)}` : '',

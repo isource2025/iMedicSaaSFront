@@ -1,4 +1,4 @@
-/* Estilos fusionados y mejorados provenientes de BedsList y BedCard para la tarjeta de cama */
+﻿/* Estilos fusionados y mejorados provenientes de BedsList y BedCard para la tarjeta de cama */
 /* Migración UI v1 - 4 Feb 2026 */
 
 .bedCard {
@@ -444,7 +444,7 @@
  * Ancho + ensanche deben dejar aire dentro del gap de .bedsGrid (20px).
  */
 .sideTabs {
-  --side-tab-w: 15px;
+  --side-tab-w: 16px;
   --side-tab-grow: 2px;
   position: absolute;
   top: 46px;
@@ -487,7 +487,7 @@
 }
 
 .sideTabCount {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 800;
   line-height: 1;
 }
