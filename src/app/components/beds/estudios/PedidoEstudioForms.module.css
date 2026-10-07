@@ -520,6 +520,20 @@
 	font-size: 0.85rem;
 }
 
+.results button.resultRepetido {
+	color: #94a3b8;
+	cursor: not-allowed;
+}
+
+.results button.resultRepetido:hover {
+	background: #fef2f2;
+}
+
+.results button.resultRepetido span {
+	color: #b91c1c;
+	font-weight: 600;
+}
+
 .selectedTipo {
 	display: flex;
 	align-items: center;

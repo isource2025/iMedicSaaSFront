@@ -40,11 +40,22 @@ function pedidoBloqueado(pedido: PedidoEstudio) {
 	return !!(pedido.Cumplido || Number(pedido.IdProtocolo) > 0 || pedido.Tomado);
 }
 
+export const MENSAJE_SERVICIO_AGRUPADO =
+	'Esta práctica es parte de un pedido agrupado y no se puede cambiar de servicio. ' +
+	'Eliminá la práctica y hacé un pedido nuevo al servicio que corresponde.';
+
+function mensajeRepetida(t: { descripcion?: string; idPractica?: number }) {
+	const nombre = String(t.descripcion || '').trim() || String(t.idPractica || '');
+	return `${nombre} ya está en este pedido: no se puede pedir la misma práctica dos veces.`;
+}
+
 type Props = {
 	open: boolean;
 	sectorSolicitante: string;
 	idVisita: number;
 	pedido?: PedidoEstudio | null;
+	/** Al editar una práctica de un pedido agrupado: las demás prácticas de esa solicitud. */
+	practicasHermanas?: { idPractica: number; descripcion: string }[];
 	onClose: () => void;
 	onCreated: () => void;
 };
@@ -54,10 +65,12 @@ export default function SolicitarEstudioModal({
 	sectorSolicitante,
 	idVisita,
 	pedido,
+	practicasHermanas,
 	onClose,
 	onCreated,
 }: Props) {
 	const editando = Boolean(pedido?.IdPedido);
+	const agrupado = editando && Number(pedido?.IdSolicitud) > 0;
 	const bloqueado = editando && pedido ? pedidoBloqueado(pedido) : false;
 	const [term, setTerm] = useState('');
 	const [tipos, setTipos] = useState<TipoPedidoEstudio[]>([]);
@@ -114,8 +127,8 @@ export default function SolicitarEstudioModal({
 	const puedeAgregar =
 		!bloqueado && (editando ? seleccion.length === 0 : seleccion.length < MAX_ESTUDIOS);
 	// Con una práctica ya cargada y su servicio definido, solo se ofrecen las prácticas que
-	// realiza ese servicio (sus prefijos de práctica).
-	const servicioFiltro = seleccion.length > 0 ? idServicioDestino.trim() : '';
+	// realiza ese servicio (sus prefijos de práctica). En un pedido agrupado el servicio es fijo.
+	const servicioFiltro = seleccion.length > 0 || agrupado ? idServicioDestino.trim() : '';
 
 	useEffect(() => {
 		const t = term.trim();
@@ -146,11 +159,11 @@ export default function SolicitarEstudioModal({
 	// La primera práctica define el servicio destino; las siguientes ya se buscan dentro de él.
 	// Si la práctica no tiene un servicio asociado, se vacía para que se elija a mano.
 	useEffect(() => {
-		if (!tipoElegido || !servicios.length) return;
+		if (!tipoElegido || !servicios.length || agrupado) return;
 		if (tipoAplicadoRef.current === tipoElegido) return;
 		tipoAplicadoRef.current = tipoElegido;
 		setIdServicioDestino(resolveReceptorPorTipo(tipoElegido, servicios));
-	}, [tipoElegido, servicios]);
+	}, [tipoElegido, servicios, agrupado]);
 
 	const opcionesServicio = useMemo(() => {
 		const opts = servicios.map((s) => ({
@@ -174,10 +187,15 @@ export default function SolicitarEstudioModal({
 	const nombreServicioFiltro = servicioFiltro
 		? servicios.find((s) => s.valor === servicioFiltro)?.descripcion || servicioFiltro
 		: '';
-	const resultados = tipos.filter((t) => !seleccion.some((s) => s.idPractica === t.idPractica));
+	const yaEnPedido = (t: TipoPedidoEstudio) =>
+		seleccion.some((s) => s.idPractica === t.idPractica) ||
+		(practicasHermanas || []).some((h) => h.idPractica === t.idPractica);
 
 	const agregar = (t: TipoPedidoEstudio) => {
-		if (seleccion.some((s) => s.idPractica === t.idPractica)) return;
+		if (yaEnPedido(t)) {
+			setError(mensajeRepetida(t));
+			return;
+		}
 		if (seleccion.length === 0) setTipoElegido(t);
 		setSeleccion((prev) => [...prev, t]);
 		setTerm('');
@@ -255,6 +273,11 @@ export default function SolicitarEstudioModal({
 							Ya fue tomado o respondido: solo podés editar las notas y la urgencia.
 						</p>
 					) : null}
+					{agrupado ? (
+						<p className={formStyles.hint}>
+							Las notas y la urgencia se aplican a todas las prácticas de este pedido.
+						</p>
+					) : null}
 
 					<div className={formStyles.label}>
 						{seleccion.length > 1 ? `Estudios (${seleccion.length})` : 'Tipo de estudio'}
@@ -302,23 +325,32 @@ export default function SolicitarEstudioModal({
 									</div>
 								) : null}
 								{loadingTipos && <div className={formStyles.hint}>Buscando…</div>}
-								{!loadingTipos && term.trim().length >= 2 && resultados.length === 0 ? (
+								{!loadingTipos && term.trim().length >= 2 && tipos.length === 0 ? (
 									<div className={formStyles.hint}>
 										{nombreServicioFiltro
 											? `No hay estudios de ${nombreServicioFiltro} que coincidan.`
 											: 'Sin resultados.'}
 									</div>
 								) : null}
-								{resultados.length > 0 && (
+								{tipos.length > 0 && (
 									<ul className={formStyles.results}>
-										{resultados.map((t) => (
-											<li key={`${t.idPractica}-${t.idTipoPedido}`}>
-												<button type="button" onClick={() => agregar(t)}>
-													{t.descripcion}
-													<span>{t.idPractica}</span>
-												</button>
-											</li>
-										))}
+										{tipos.map((t) => {
+											const repetida = yaEnPedido(t);
+											return (
+												<li key={`${t.idPractica}-${t.idTipoPedido}`}>
+													<button
+														type="button"
+														className={repetida ? formStyles.resultRepetido : undefined}
+														aria-disabled={repetida}
+														title={repetida ? 'Ya está en este pedido' : undefined}
+														onClick={() => agregar(t)}
+													>
+														{t.descripcion}
+														<span>{repetida ? 'Ya agregado' : t.idPractica}</span>
+													</button>
+												</li>
+											);
+										})}
 									</ul>
 								)}
 							</>
@@ -333,9 +365,22 @@ export default function SolicitarEstudioModal({
 							isLoading={loadingServicios}
 							disabled={bloqueado}
 							value={idServicioDestino}
-							onChange={(val) => setIdServicioDestino(String(val))}
+							onChange={(val) => {
+								const v = String(val);
+								if (agrupado && v !== idServicioDestino) {
+									setError(MENSAJE_SERVICIO_AGRUPADO);
+									return;
+								}
+								setIdServicioDestino(v);
+							}}
 							options={opcionesServicio}
 						/>
+						{agrupado && !bloqueado ? (
+							<div className={formStyles.hint}>
+								Pedido agrupado: el servicio no se puede cambiar. Para pedirla a otro servicio,
+								eliminá la práctica y hacé un pedido nuevo.
+							</div>
+						) : null}
 						{!loadingServicios && servicios.length === 0 ? (
 							<div className={formStyles.hint}>
 								No hay servicios en el catálogo. Configúrelos en Personal / Servicios.

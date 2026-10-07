@@ -82,8 +82,8 @@ function tareasPorVisita(nv: number): Tarea[] {
 		{
 			seccion: 'solicitudEstudios',
 			run: () =>
-				precargarVisita(visitaCacheKey('estudios', nv), async () =>
-					(await import('@/app/services/estudiosService')).default.listarPorVisita(nv),
+				precargarVisita(visitaCacheKey('solicitudesEstudios', nv), async () =>
+					(await import('@/app/services/solicitudesEstudiosService')).default.listarPorVisitaConRespaldo(nv),
 				),
 		},
 		{

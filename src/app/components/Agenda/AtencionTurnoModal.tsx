@@ -152,6 +152,7 @@ export default function AtencionTurnoModal({
 
 	const [procedimientos, setProcedimientos] = useState<ProcedimientoItem[]>([]);
 	const [pedidosEstudios, setPedidosEstudios] = useState<PedidoEstudioItem[]>([]);
+	const [estudioRepetido, setEstudioRepetido] = useState<string | null>(null);
 	const [pedidosInterconsultas, setPedidosInterconsultas] = useState<PedidoInterconsultaItem[]>([]);
 	const [icDestinoDraft, setIcDestinoDraft] = useState('');
 	const [icMotivoDraft, setIcMotivoDraft] = useState('');
@@ -221,6 +222,7 @@ export default function AtencionTurnoModal({
 		setDiagSel(null);
 		setProcedimientos([]);
 		setPedidosEstudios([]);
+		setEstudioRepetido(null);
 		setPedidosInterconsultas([]);
 		setIcDestinoDraft('');
 		setIcMotivoDraft('');
@@ -709,7 +711,14 @@ export default function AtencionTurnoModal({
 							<TipoPedidoEstudioPicker
 								id='pedido-estudio-buscar'
 								label='Agregar pedido de estudio'
-								onSelect={(tipo) =>
+								onSelect={(tipo) => {
+									if (pedidosEstudios.some((p) => p.tipo.idPractica === tipo.idPractica)) {
+										setEstudioRepetido(
+											`${tipo.descripcion || tipo.idPractica} ya está en los pedidos: no se puede pedir la misma práctica dos veces.`,
+										);
+										return;
+									}
+									setEstudioRepetido(null);
 									setPedidosEstudios((prev) => [
 										...prev,
 										{
@@ -719,9 +728,10 @@ export default function AtencionTurnoModal({
 											estadoUrgencia: 'Normal',
 											idSectorReceptor: '',
 										},
-									])
-								}
+									]);
+								}}
 							/>
+							{estudioRepetido ? <p className={styles.error}>{estudioRepetido}</p> : null}
 							{pedidosEstudios.length > 0 ? (
 								<div className={styles.itemGrid}>
 									{pedidosEstudios.map((p, idx) => {

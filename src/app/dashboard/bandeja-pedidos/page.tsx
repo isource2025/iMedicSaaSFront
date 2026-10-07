@@ -8,6 +8,10 @@ import {
 	type InterconsultaRow,
 } from '@/app/services/interconsultasService';
 import type { PedidoEstudio } from '@/app/types/estudios';
+import solicitudesEstudiosService from '@/app/services/solicitudesEstudiosService';
+import type { SolicitudEstudio } from '@/app/types/solicitudesEstudios';
+import CumplirSolicitudModal from '@/app/components/beds/estudios/CumplirSolicitudModal';
+import solStyles from '@/app/components/beds/estudios/SolicitudesEstudios.module.css';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
@@ -149,6 +153,35 @@ function TituloInterconsulta({ r }: { r: InterconsultaRow }) {
 	);
 }
 
+function fingerprintSolicitudes(rows: SolicitudEstudio[]) {
+	return rows
+		.map(
+			(s) =>
+				`${s.Clave}:${s.Estado}:${s.ItemsCumplidos}/${s.TotalItems}:${s.MatriculaToma || 0}:${s.TomadoPor || ''}`,
+		)
+		.join('|');
+}
+
+function nombreItemSolicitud(it: PedidoEstudio) {
+	return (it.PracticaSolicitada || it.NomencladorDescripcion || '').trim() || `Pedido #${it.IdPedido}`;
+}
+
+function TituloSolicitud({ s }: { s: SolicitudEstudio }) {
+	if (s.Items.length === 1) return <TituloPracticaEstudio r={s.Items[0]} />;
+	const notas = (s.NotasObservacion || '').trim();
+	return (
+		<>
+			<strong className={styles.practicaNombre}>{s.TotalItems} estudios</strong>
+			{s.Estado === 'PARCIAL' ? (
+				<span className={solStyles.progreso} style={{ marginLeft: '0.5rem' }}>
+					{s.ItemsCumplidos}/{s.TotalItems} informados
+				</span>
+			) : null}
+			{notas ? <span className={styles.practicaNotas}>{notas}</span> : null}
+		</>
+	);
+}
+
 function fingerprintEstudios(rows: PedidoEstudio[]) {
 	return rows
 		.map((r) => `${r.IdPedido}:${r.Tomado ? 1 : 0}:${r.MatriculaToma || 0}:${r.NombreToma || ''}`)
@@ -189,6 +222,13 @@ function BandejaPedidosContent() {
 		porServicio: [],
 	});
 	const [estudios, setEstudios] = useState<PedidoEstudio[]>([]);
+	// Estudios agrupados por solicitud; si el circuito agrupado falla se vuelve a la lista por práctica.
+	const [multi, setMulti] = useState(true);
+	const multiRef = useRef(multi);
+	multiRef.current = multi;
+	const [solicitudes, setSolicitudes] = useState<SolicitudEstudio[]>([]);
+	const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudEstudio | null>(null);
+	const [cumplirSolicitud, setCumplirSolicitud] = useState<SolicitudEstudio | null>(null);
 	const [interconsultas, setInterconsultas] = useState<InterconsultaRow[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -251,7 +291,9 @@ function BandejaPedidosContent() {
 
 	const loadResumen = useCallback(async () => {
 		try {
-			const data = await estudiosService.contarLibres({ soloMios: true });
+			const data = multiRef.current
+				? await solicitudesEstudiosService.contarLibresBandeja({ soloMios: true })
+				: await estudiosService.contarLibres({ soloMios: true });
 			setResumen({
 				estudios: data.estudios || 0,
 				interconsultas: data.interconsultas || 0,
@@ -272,6 +314,7 @@ function BandejaPedidosContent() {
 		if (!sec) {
 			fpRef.current = '';
 			setEstudios([]);
+			setSolicitudes([]);
 			setInterconsultas([]);
 			setLoading(false);
 			void loadResumen();
@@ -284,7 +327,24 @@ function BandejaPedidosContent() {
 				fechaDesde: filtroRef.current.fechaDesde.trim() || undefined,
 				fechaHasta: filtroRef.current.fechaHasta.trim() || undefined,
 			};
-			if (currentTab === 'estudios') {
+			let agrupadas: SolicitudEstudio[] | null = null;
+			if (currentTab === 'estudios' && multiRef.current) {
+				try {
+					agrupadas = await solicitudesEstudiosService.listarPendientes(sec, filtros);
+				} catch (e) {
+					console.warn('Bandeja agrupada no disponible, se usa la lista por práctica:', e);
+					multiRef.current = false;
+					fpRef.current = '';
+					setMulti(false);
+				}
+			}
+			if (agrupadas) {
+				const fp = fingerprintSolicitudes(agrupadas);
+				if (fp !== fpRef.current || !silent) {
+					fpRef.current = fp;
+					setSolicitudes(agrupadas);
+				}
+			} else if (currentTab === 'estudios') {
 				const rows = await estudiosService.listarPendientes(sec, filtros);
 				const fp = fingerprintEstudios(rows);
 				if (fp !== fpRef.current || !silent) {
@@ -303,6 +363,7 @@ function BandejaPedidosContent() {
 			if (!silent) {
 				setError(e instanceof Error ? e.message : 'Error al cargar la bandeja');
 				setEstudios([]);
+				setSolicitudes([]);
 				setInterconsultas([]);
 			}
 		} finally {
@@ -360,6 +421,38 @@ function BandejaPedidosContent() {
 		Number(r.MatriculaToma) === Number(matriculaSesion);
 
 	const icId = (r: InterconsultaRow) => Number(r.IdPedido || r.IdInterconsulta) || 0;
+
+	const esMiaSolicitud = (s: SolicitudEstudio) =>
+		matriculaSesion != null &&
+		s.MatriculaToma != null &&
+		Number(s.MatriculaToma) === Number(matriculaSesion);
+
+	const aceptarSolicitud = async (s: SolicitudEstudio) => {
+		setBusyId(s.Clave);
+		setError(null);
+		try {
+			await solicitudesEstudiosService.tomar(s.Clave);
+			await load({ silent: true });
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo aceptar (puede que otro ya la tomó)');
+			await load({ silent: true });
+		} finally {
+			setBusyId(null);
+		}
+	};
+
+	const liberarSolicitud = async (s: SolicitudEstudio) => {
+		setBusyId(s.Clave);
+		setError(null);
+		try {
+			await solicitudesEstudiosService.liberar(s.Clave);
+			await load({ silent: true });
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo liberar');
+		} finally {
+			setBusyId(null);
+		}
+	};
 
 	const aceptarEstudio = async (r: PedidoEstudio) => {
 		setBusyId(r.IdPedido);
@@ -442,15 +535,22 @@ function BandejaPedidosContent() {
 
 	const rowsEstudio = estudios;
 	const rowsIc = interconsultas;
-	const libres =
-		tab === 'estudios'
+	const enSolicitudes = tab === 'estudios' && multi;
+	const libres = enSolicitudes
+		? solicitudes.filter((s) => s.MatriculaToma == null).length
+		: tab === 'estudios'
 			? rowsEstudio.filter((r) => !r.Tomado).length
 			: rowsIc.filter((r) => !r.Tomado).length;
-	const mios =
-		tab === 'estudios'
+	const mios = enSolicitudes
+		? solicitudes.filter((s) => esMiaSolicitud(s)).length
+		: tab === 'estudios'
 			? rowsEstudio.filter((r) => esMioEstudio(r)).length
 			: rowsIc.filter((r) => esMioIc(r)).length;
-	const total = tab === 'estudios' ? rowsEstudio.length : rowsIc.length;
+	const total = enSolicitudes
+		? solicitudes.length
+		: tab === 'estudios'
+			? rowsEstudio.length
+			: rowsIc.length;
 	const vistaPanorama = !sector.trim() && sectores.length > 1;
 	const servicioActual = sectores.find((s) => s.valor === sector);
 	const baseConteo =
@@ -506,13 +606,13 @@ function BandejaPedidosContent() {
 		if (!puedeVolver) return;
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== 'Escape') return;
-			if (selectedEstudio || selectedIc || cumplirEstudio || cumplirIc) return;
+			if (selectedEstudio || selectedIc || cumplirEstudio || cumplirIc || selectedSolicitud || cumplirSolicitud) return;
 			setSector('');
 			setQServicio('');
 		};
 		window.addEventListener('keydown', onKey);
 		return () => window.removeEventListener('keydown', onKey);
-	}, [puedeVolver, selectedEstudio, selectedIc, cumplirEstudio, cumplirIc]);
+	}, [puedeVolver, selectedEstudio, selectedIc, cumplirEstudio, cumplirIc, selectedSolicitud, cumplirSolicitud]);
 
 	return (
 		<div className={styles.page}>
@@ -791,6 +891,118 @@ function BandejaPedidosContent() {
 				</div>
 			) : loading ? (
 				<p className={styles.empty}>Cargando…</p>
+			) : enSolicitudes ? (
+				solicitudes.length === 0 ? (
+					<div className={styles.emptyCard}>
+						<p className={styles.emptyTitle}>Sin estudios pendientes</p>
+						<p className={styles.emptyHint}>Cuando llegue una solicitud para este servicio, aparece acá.</p>
+					</div>
+				) : (
+					<ul className={styles.cardList}>
+						{solicitudes.map((s) => {
+							const libre = s.MatriculaToma == null;
+							const mia = esMiaSolicitud(s);
+							const pendientes = s.Items.filter((i) => !(i.Cumplido || Number(i.IdProtocolo) > 0));
+							const primero = s.Items[0];
+							return (
+								<li
+									key={s.Clave}
+									className={`${styles.card} ${!libre && !mia ? styles.cardTaken : ''} ${mia ? styles.cardMine : ''} ${libre ? styles.cardLibre : ''}`}
+								>
+									<div className={styles.cardMain}>
+										<div className={styles.cardTop}>
+											{libre ? (
+												<span className={styles.badgeLibre}>Libre</span>
+											) : mia ? (
+												<span className={styles.badgeMio}>Aceptado por vos</span>
+											) : (
+												<span className={styles.badgeOtro}>
+													Aceptado · {s.TomadoPor || 'otro'}
+												</span>
+											)}
+											{s.EstadoUrgencia ? (
+												<span className={styles.urgencia}>{s.EstadoUrgencia}</span>
+											) : null}
+										</div>
+										<button
+											type="button"
+											className={styles.cardTitleBtn}
+											onClick={() => setSelectedSolicitud(s)}
+										>
+											<TituloSolicitud s={s} />
+										</button>
+										{s.Items.length > 1 ? (
+											<ul className={solStyles.practicasLista}>
+												{s.Items.map((it) => {
+													const hecho = Boolean(it.Cumplido || Number(it.IdProtocolo) > 0);
+													return (
+														<li
+															key={it.IdPedido}
+															className={`${solStyles.practicaLinea} ${hecho ? solStyles.practicaLineaHecha : ''}`}
+														>
+															{it.CodigoPractica ? (
+																<span className={solStyles.practicaLineaCod}>{it.CodigoPractica}</span>
+															) : null}
+															<span>{nombreItemSolicitud(it)}</span>
+														</li>
+													);
+												})}
+											</ul>
+										) : null}
+										<p className={styles.cardPatient}>{pacienteNombre(primero)}</p>
+										{ubicacionLinea(primero) ? (
+											<p className={styles.cardLocation}>{ubicacionLinea(primero)}</p>
+										) : null}
+										{pacienteSecundario(primero) ? (
+											<p className={styles.cardMeta}>{pacienteSecundario(primero)}</p>
+										) : null}
+										{(s.MedicoSolicitanteNombre || s.SectorSolicitanteNombre || s.SectorSolicitante) && (
+											<p className={styles.cardOrigen}>
+												<OrigenPedido r={s} />
+											</p>
+										)}
+										<p className={styles.cardMeta}>
+											{[s.FechaPedidoISO || '', s.HoraPedido || ''].filter(Boolean).join(' ') || 'Sin fecha'}
+											{` · Visita ${s.IdVisita}`}
+										</p>
+									</div>
+									<div className={styles.cardActions}>
+										{libre ? (
+											<button
+												type="button"
+												className={styles.btnPrimary}
+												disabled={busyId === s.Clave}
+												onClick={() => void aceptarSolicitud(s)}
+											>
+												Aceptar{pendientes.length > 1 ? ` (${pendientes.length})` : ''}
+											</button>
+										) : null}
+										{mia ? (
+											<>
+												<button
+													type="button"
+													className={styles.btnPrimary}
+													disabled={busyId === s.Clave}
+													onClick={() => setCumplirSolicitud(s)}
+												>
+													Completar
+												</button>
+												<button
+													type="button"
+													className={styles.btnSecondary}
+													disabled={busyId === s.Clave}
+													onClick={() => void liberarSolicitud(s)}
+												>
+													Liberar
+												</button>
+											</>
+										) : null}
+									</div>
+								</li>
+							);
+						})}
+					</ul>
+				)
 			) : tab === 'estudios' ? (
 				rowsEstudio.length === 0 ? (
 					<div className={styles.emptyCard}>
@@ -1021,6 +1233,57 @@ function BandejaPedidosContent() {
 				/>
 			) : null}
 
+			{selectedSolicitud ? (
+				<PedidoDetalleModal
+					title={
+						selectedSolicitud.Items.length > 1
+							? `${selectedSolicitud.TotalItems} estudios`
+							: tituloPracticaEstudio(selectedSolicitud.Items[0])
+					}
+					urgencia={selectedSolicitud.EstadoUrgencia || undefined}
+					fields={[
+						...buildPacienteFields(selectedSolicitud),
+						{ label: 'Visita', value: selectedSolicitud.IdVisita },
+						{
+							label: 'Fecha',
+							value: [selectedSolicitud.FechaPedidoISO || '', selectedSolicitud.HoraPedido || '']
+								.filter(Boolean)
+								.join(' '),
+						},
+						{
+							label: 'Sector origen',
+							value: selectedSolicitud.SectorSolicitanteNombre || selectedSolicitud.SectorSolicitante,
+						},
+						{ label: 'Profesional', value: selectedSolicitud.MedicoSolicitanteNombre },
+						{ label: 'Aceptado por', value: selectedSolicitud.TomadoPor },
+						{
+							label: 'Servicio destino',
+							value: selectedSolicitud.ServicioDescripcion || selectedSolicitud.SectorReceptor,
+						},
+					]}
+					textBlocks={[
+						{
+							label: `Estudios (${selectedSolicitud.TotalItems})`,
+							value: selectedSolicitud.Items.map(
+								(it) =>
+									`• ${nombreItemSolicitud(it)}${it.CodigoPractica ? ` (${it.CodigoPractica})` : ''}${
+										it.Cumplido || Number(it.IdProtocolo) > 0 ? ' — informado' : ''
+									}`,
+							).join('\n'),
+						},
+						{ label: 'Pedido', value: selectedSolicitud.NotasObservacion },
+					]}
+					onClose={() => setSelectedSolicitud(null)}
+				/>
+			) : null}
+
+			<CumplirSolicitudModal
+				open={!!cumplirSolicitud}
+				solicitud={cumplirSolicitud}
+				sectorServicio={sector || undefined}
+				onClose={() => setCumplirSolicitud(null)}
+				onCumplido={() => void load({ silent: true })}
+			/>
 
 			<CumplirEstudioModal
 				open={!!cumplirEstudio}

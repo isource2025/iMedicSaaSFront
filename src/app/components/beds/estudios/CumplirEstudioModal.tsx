@@ -7,6 +7,7 @@ import type { PedidoEstudio } from '@/app/types/estudios';
 import type { TipoImagenHC } from '@/app/types/adjuntos';
 import styles from '../shared/PedidoDetalleModal.module.css';
 import formStyles from './PedidoEstudioForms.module.css';
+import solStyles from './SolicitudesEstudios.module.css';
 import PedidoAdjuntosField, { sugerirTipoImagen } from './PedidoAdjuntosField';
 import PacientePedidoHeader from './PacientePedidoHeader';
 import { getIdSectorFromToken } from '@/app/utils/jwtSession';
@@ -16,6 +17,8 @@ type Props = {
 	pedido: PedidoEstudio | null;
 	sectorServicio?: string;
 	modoEdicion?: boolean;
+	/** Otras prácticas con el mismo informe: al editarlo cambia para todas. */
+	compartidoCon?: string[];
 	guardarInforme?: (texto: string) => Promise<void>;
 	onClose: () => void;
 	onCumplido: (pedido: PedidoEstudio) => void;
@@ -34,6 +37,7 @@ export default function CumplirEstudioModal({
 	pedido,
 	sectorServicio,
 	modoEdicion = false,
+	compartidoCon,
 	guardarInforme,
 	onClose,
 	onCumplido,
@@ -149,6 +153,17 @@ export default function CumplirEstudioModal({
 				</div>
 				<div className={styles.modalBody}>
 					{error && <div className={formStyles.error}>{error}</div>}
+
+					{modoEdicion && compartidoCon && compartidoCon.length > 0 ? (
+						<div className={solStyles.avisoCompartido} role="alert">
+							Este informe es compartido. Al guardarlo también cambia en:
+							<ul>
+								{compartidoCon.map((n, i) => (
+									<li key={`${n}-${i}`}>{n}</li>
+								))}
+							</ul>
+						</div>
+					) : null}
 
 					<PacientePedidoHeader paciente={pedido} idVisita={pedido.IdVisita} />
 

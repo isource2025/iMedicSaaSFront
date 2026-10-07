@@ -56,6 +56,8 @@ export interface PedidoEstudio extends DatosPacientePedido {
   NombreToma?: string | null;
   FechaToma?: string | null;
   EstadoWorkflow?: 'PENDIENTE' | 'TOMADO' | 'CUMPLIDO' | string;
+  /** Cabecera cuando la práctica se pidió junto con otras al mismo servicio. */
+  IdSolicitud?: number | null;
 }
 
 export interface SectorReceptorEstudio {
