@@ -12,6 +12,7 @@ import {
 	HeartPulse,
 	IdCard,
 	ClipboardList,
+	KeyRound,
 	Receipt,
 	RefreshCw,
 	ShieldCheck,
@@ -67,8 +68,9 @@ import {
 } from '@/app/services/miPerfilService';
 import styles from './profile.module.css';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import CambiarPasswordForm from './CambiarPasswordForm';
 
-type TabId = 'resumen' | 'produccion';
+type TabId = 'resumen' | 'produccion' | 'seguridad';
 
 const PIE_COLORS = ['#0891b2', '#0e7490', '#164e63', '#06b6d4', '#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626'];
 const BAR_COLORS = ['#0891b2', '#06b6d4', '#22d3ee', '#67e8f9', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc'];
@@ -567,6 +569,21 @@ export default function MiPerfilPage() {
 						Mi Producción
 					</button>
 					)}
+					<button
+						type="button"
+						className={`${styles.tabBtn} ${tab === 'seguridad' ? styles.tabBtnActive : ''}`}
+						onClick={() => setTab('seguridad')}
+					>
+						<KeyRound size={15} strokeWidth={2.2} />
+						Seguridad
+					</button>
+				</div>
+			)}
+
+			{/* ── Seguridad ── */}
+			{!loading && tab === 'seguridad' && perfil && (
+				<div className={styles.stack}>
+					<CambiarPasswordForm />
 				</div>
 			)}
 

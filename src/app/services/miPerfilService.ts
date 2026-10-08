@@ -88,6 +88,10 @@ export const miPerfilService = {
 		return res.data;
 	},
 
+	async cambiarPassword(passwordActual: string, passwordNueva: string): Promise<void> {
+		await apiService.put('/mi-perfil/password', { passwordActual, passwordNueva });
+	},
+
 	async obtenerProduccionMes(query?: ProduccionMesQuery): Promise<ProduccionMesResponse> {
 		const params: Record<string, string> = {};
 		if (query?.desde) params.desde = query.desde;
