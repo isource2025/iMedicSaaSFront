@@ -176,22 +176,28 @@ const solicitudesEstudiosService = {
       const res = await solicitudesReq;
       const json = await parseJson<{
         solicitudes?: number;
-        porServicio?: { valor: string; solicitudes?: number }[];
+        porServicio?: { valor: string; solicitudes?: number; urgentes?: number }[];
       }>(res);
       if (!res.ok || !json?.success || !json.data) {
         if (opts?.lanzarError) throw new Error('conteo solicitudes');
         return base;
       }
       const porValor = new Map(
-        (json.data.porServicio || []).map((s) => [String(s.valor || '').trim(), Number(s.solicitudes) || 0]),
+        (json.data.porServicio || []).map((s) => [
+          String(s.valor || '').trim(),
+          { solicitudes: Number(s.solicitudes) || 0, urgentes: Number(s.urgentes) || 0 },
+        ]),
       );
       const porServicio = base.porServicio.map((s) => {
-        const estudios = porValor.get(s.valor) ?? 0;
-        return { ...s, estudios, total: estudios + s.interconsultas };
+        const hit = porValor.get(s.valor);
+        const estudios = hit?.solicitudes ?? 0;
+        const urgentes = (hit?.urgentes ?? 0) + (s.urgentesInterconsultas ?? 0);
+        return { ...s, estudios, urgentes, total: estudios + s.interconsultas };
       });
       const merged: BandejaConteo = {
         ...base,
         estudios: porServicio.reduce((n, s) => n + s.estudios, 0),
+        urgentes: porServicio.reduce((n, s) => n + s.urgentes, 0),
         porServicio,
       };
       setCachedBandejaCount(merged);

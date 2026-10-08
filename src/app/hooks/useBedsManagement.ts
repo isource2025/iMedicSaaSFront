@@ -68,15 +68,17 @@ function seedSectorFromSession(): { id: string; valor: string; descripcion: stri
 }
 
 function readPreferredSector(urlSector?: string | null): string {
+	if (typeof window !== 'undefined') {
+		try {
+			const stored = String(getStoredBedsListFilters()?.sector || '').trim();
+			if (stored) return stored.toLowerCase() === 'all' ? 'all' : stored;
+		} catch {
+			/* ignore */
+		}
+	}
 	const url = String(urlSector || '').trim();
 	if (url && url.toLowerCase() !== 'all') return url;
 	if (typeof window === 'undefined') return 'all';
-	try {
-		const stored = String(getStoredBedsListFilters()?.sector || '').trim();
-		if (stored && stored.toLowerCase() !== 'all') return stored;
-	} catch {
-		/* ignore */
-	}
 	const session = readSessionSector();
 	return session || 'all';
 }
@@ -290,6 +292,10 @@ export const useBedsManagement = (options: UseBedsManagementOptions = {}) => {
 		};
 
 		const storedRaw = String(getStoredBedsListFilters()?.sector || '').trim();
+		if (storedRaw.toLowerCase() === 'all') {
+			setSectorFilter('all');
+			return;
+		}
 		const stored = matchCatalog(storedRaw);
 		if (stored) {
 			setSectorFilter(stored);

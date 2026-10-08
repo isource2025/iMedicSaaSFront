@@ -31,6 +31,7 @@ export type BandejaServicioConteo = {
   estudios: number;
   interconsultas: number;
   urgentes: number;
+  urgentesInterconsultas?: number;
   total: number;
 };
 
@@ -349,6 +350,7 @@ const estudiosService = {
               estudios: Number(s.estudios) || 0,
               interconsultas: Number(s.interconsultas) || 0,
               urgentes: Number(s.urgentes) || 0,
+              urgentesInterconsultas: Number(s.urgentesInterconsultas) || 0,
               total: Number(s.total) || Number(s.estudios) + Number(s.interconsultas) || 0,
             }))
           : [];
