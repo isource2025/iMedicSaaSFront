@@ -193,8 +193,10 @@ describe("SolicitarEstudioModal · varias prácticas del mismo servicio", () => 
         expect(screen.getByText(/Solo se muestran estudios que realiza Rayos/)).toBeInTheDocument();
         // De laboratorio (otro servicio) no aparece aunque coincida el texto
         expect(screen.queryByRole("button", { name: /RADIOINMUNOENSAYO/ })).not.toBeInTheDocument();
-        // La ya agregada tampoco se vuelve a ofrecer
-        expect(screen.queryByRole("button", { name: /^RADIOGRAFIA DE TORAX/ })).not.toBeInTheDocument();
+        // La ya agregada aparece marcada y no se puede volver a agregar
+        const repetida = screen.getByRole("button", { name: /^RADIOGRAFIA DE TORAX/ });
+        expect(repetida).toHaveAttribute("aria-disabled", "true");
+        expect(repetida).toHaveTextContent("Ya agregado");
         expect(vi.mocked(solicitudesEstudiosService.buscarTipos).mock.calls.at(-1)?.[2]).toBe("RAYOS");
     });
 
