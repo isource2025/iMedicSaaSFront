@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import protocolosService from '@/app/services/protocolosService';
-import type { ProtocoloClinico } from '@/app/types/protocolos';
+import type { PracticaEnProtocolo, ProtocoloClinico } from '@/app/types/protocolos';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '@/app/hooks/useUsuarioActual';
@@ -42,24 +42,69 @@ function formatFecha(v?: string | null) {
 	}
 }
 
-function resumenEquipo(p: ProtocoloClinico) {
-	const profs = p.practicas?.flatMap((x) => x.profesionales || []) || [];
+function equipoDe(prac: PracticaEnProtocolo) {
+	const profs = prac.profesionales || [];
 	if (!profs.length) return '—';
 	return profs
 		.map((x) => `${x.funcionNombre}: ${x.apellidoNombre || 'Sin identificar'}`)
 		.join(' · ');
 }
 
+/** Equipo de todo el protocolo sin repetir (para la grilla y la búsqueda). */
+function resumenEquipo(p: ProtocoloClinico) {
+	const vistos = new Set<string>();
+	const partes: string[] = [];
+	for (const prac of p.practicas || []) {
+		for (const x of prac.profesionales || []) {
+			const k = `${x.funcionNombre}: ${x.apellidoNombre || 'Sin identificar'}`;
+			if (vistos.has(k)) continue;
+			vistos.add(k);
+			partes.push(k);
+		}
+	}
+	return partes.length ? partes.join(' · ') : '—';
+}
+
+function resumenPracticas(p: ProtocoloClinico) {
+	const list = p.practicas || [];
+	if (!list.length) return '—';
+	return list
+		.map((x) => `${x.descripcion || x.codigoPractica}${x.cantidad > 1 ? ` ×${x.cantidad}` : ''}`)
+		.join(' · ');
+}
+
+function resumenMedicamentos(p: ProtocoloClinico) {
+	const list = p.medicamentos || [];
+	if (!list.length) return '—';
+	return list
+		.map((m) => {
+			const cant = m.cantidad != null && m.cantidad > 0 ? ` ×${m.cantidad}${m.unidad ? ` ${m.unidad}` : ''}` : '';
+			return `${m.descripcion}${cant}`;
+		})
+		.join(' · ');
+}
+
 function buildFields(p: ProtocoloClinico) {
-	const prac = p.practicas?.[0];
+	const practicas = p.practicas || [];
+	const porPractica = practicas.flatMap((prac, i) => [
+		{
+			label: practicas.length > 1 ? `Práctica ${i + 1}` : 'Práctica',
+			value: `${prac.descripcion || prac.codigoPractica} (${prac.codigoPractica} · ${prac.tipoPractica}${
+				prac.cantidad > 1 ? ` · ×${prac.cantidad}` : ''
+			})${prac.facturada ? ' · facturada' : ''}`,
+			full: true,
+		},
+		{ label: practicas.length > 1 ? `Equipo ${i + 1}` : 'Equipo', value: equipoDe(prac), full: true },
+	]);
 	return [
-		{ label: 'Fecha', value: formatFecha(p.fecha) },
+		{ label: 'Fecha carga', value: formatFecha(p.fecha) },
 		{ label: 'Nº protocolo', value: p.numeroProtocolo },
 		{ label: 'Tipo', value: p.tipoDescripcion || p.tipoProtocolo || '—' },
 		{ label: 'Cargado por', value: p.operadorNombre },
-		{ label: 'Práctica', value: prac?.descripcion || prac?.codigoPractica },
-		{ label: 'Código', value: prac?.codigoPractica },
-		{ label: 'Equipo', value: resumenEquipo(p), full: true },
+		{ label: 'Inicio', value: formatFecha(p.fechaHoraInicio) },
+		{ label: 'Fin', value: formatFecha(p.fechaHoraFin) },
+		...porPractica,
+		{ label: 'Medicamentos', value: resumenMedicamentos(p), full: true },
 		{ label: 'Técnica', value: p.tecnica },
 		{ label: 'Estado', value: p.estado },
 		{ label: 'Id', value: p.idProtocolo },
@@ -100,6 +145,17 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 		setShowCargar(true);
 	};
 
+	const pedirEliminar = (p: ProtocoloClinico) => {
+		if (p.tieneFacturadas) {
+			setError(
+				'No se puede borrar: tiene prácticas que ya pasaron a facturación. Pedí a facturación que las libere.',
+			);
+			return;
+		}
+		setError(null);
+		setAEliminar(p);
+	};
+
 	const confirmarEliminar = async () => {
 		if (!aEliminar) return;
 		const p = aEliminar;
@@ -109,7 +165,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 			setRows((prev) => prev.filter((r) => r.idProtocolo !== p.idProtocolo));
 			void load();
 		} catch (e) {
-			setError(e instanceof Error ? e.message : 'No se pudo borrar el protocolo');
+			setError(e instanceof Error ? e.message : 'No se pudo borrar el protocolo. Intentá de nuevo.');
 		}
 	};
 
@@ -146,15 +202,14 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 		return enPeriodo.filter((r) => {
 			const hay = (v?: string | number | null) =>
 				v != null && String(v).toLowerCase().includes(q);
-			const prac = r.practicas?.[0];
 			return (
 				hay(r.tipoDescripcion) ||
 				hay(r.tipoProtocolo) ||
 				hay(r.numeroProtocolo) ||
-				hay(prac?.descripcion) ||
-				hay(prac?.codigoPractica) ||
+				(r.practicas || []).some((prac) => hay(prac.descripcion) || hay(prac.codigoPractica)) ||
 				hay(r.operadorNombre) ||
-				hay(resumenEquipo(r))
+				hay(resumenEquipo(r)) ||
+				hay(resumenMedicamentos(r))
 			);
 		});
 	}, [rows, query, periodo]);
@@ -163,14 +218,24 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
 			const parts = filtered.map((r, idx) => {
-				const prac = r.practicas?.[0];
+				const practicas = r.practicas || [];
 				return {
 					title: `Protocolo ${idx + 1}${r.numeroProtocolo ? ` · N° ${r.numeroProtocolo}` : ''}`,
 					fields: [
 						{ label: 'Fecha', value: formatFecha(r.fecha) },
 						{ label: 'Tipo', value: r.tipoDescripcion || r.tipoProtocolo || '—' },
-						{ label: 'Práctica', value: prac?.descripcion || prac?.codigoPractica || '—' },
-						{ label: 'Equipo', value: resumenEquipo(r) },
+						{ label: 'Inicio', value: formatFecha(r.fechaHoraInicio) },
+						{ label: 'Fin', value: formatFecha(r.fechaHoraFin) },
+						...practicas.flatMap((prac, i) => [
+							{
+								label: practicas.length > 1 ? `Práctica ${i + 1}` : 'Práctica',
+								value: `${prac.descripcion || prac.codigoPractica} (${prac.codigoPractica}${
+									prac.cantidad > 1 ? ` ×${prac.cantidad}` : ''
+								})`,
+							},
+							{ label: practicas.length > 1 ? `Equipo ${i + 1}` : 'Equipo', value: equipoDe(prac) },
+						]),
+						{ label: 'Medicamentos', value: resumenMedicamentos(r) },
 						{ label: 'Técnica', value: r.tecnica || '—' },
 						{ label: 'Estado', value: r.estado || '—' },
 					],
@@ -250,7 +315,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 								<tr>
 									<th>Fecha</th>
 									<th>Tipo</th>
-									<th>Práctica</th>
+									<th>Prácticas</th>
 									<th>Equipo</th>
 									<th>Cargado por</th>
 									<th className={tableStyles.colAccion}>Acciones</th>
@@ -258,14 +323,14 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 							</thead>
 							<tbody className={tableStyles.tbody}>
 								{filtered.map((r) => {
-									const prac = r.practicas?.[0];
+									const nPrac = r.practicas?.length || 0;
 									return (
 										<tr
 											key={r.idProtocolo}
 											className={`${tableStyles.row} ${styles.clickableRow}`}
 											onClick={() => setSelected(r)}
 										>
-											<td className={tableStyles.meta}>{formatFecha(r.fecha)}</td>
+											<td className={tableStyles.meta}>{formatFecha(r.fechaHoraFin || r.fecha)}</td>
 											<td>
 												<div className={tableStyles.practica}>
 													{r.tipoDescripcion || r.tipoProtocolo || '—'}
@@ -275,7 +340,14 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 												) : null}
 											</td>
 											<td className={tableStyles.practica}>
-												{prac?.descripcion || prac?.codigoPractica || '—'}
+												{resumenPracticas(r)}
+												{nPrac > 1 ? (
+													<div className={tableStyles.meta}>
+														{nPrac} prácticas{r.tieneFacturadas ? ' · con facturadas' : ''}
+													</div>
+												) : r.tieneFacturadas ? (
+													<div className={tableStyles.meta}>facturada</div>
+												) : null}
 											</td>
 											<td className={tableStyles.meta}>{resumenEquipo(r)}</td>
 											<td className={tableStyles.meta}>{r.operadorNombre || '—'}</td>
@@ -306,7 +378,7 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 														<button
 															type="button"
 															className={tableStyles.btnAction}
-															onClick={() => setAEliminar(r)}
+															onClick={() => pedirEliminar(r)}
 															title="Borrar"
 														>
 															<IoTrashOutline color="#5BC0DE" size={18} />
@@ -350,9 +422,9 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 					aEliminar
 						? `${aEliminar.tipoDescripcion || aEliminar.tipoProtocolo || 'Protocolo'}${
 								aEliminar.numeroProtocolo ? ` #${aEliminar.numeroProtocolo}` : ''
-							} · ${formatFecha(aEliminar.fecha)}\n${
-								aEliminar.practicas?.[0]?.descripcion || ''
-							}\n\nSe borran también la práctica y el equipo asociados. Esta acción no se puede deshacer.`
+							} · ${formatFecha(aEliminar.fechaHoraFin || aEliminar.fecha)}\n${resumenPracticas(
+								aEliminar,
+							)}\n\nSe borran también las prácticas, los equipos y los medicamentos asociados. Esta acción no se puede deshacer.`
 						: ''
 				}
 				confirmText="Borrar"

@@ -33,13 +33,50 @@ export type ProfesionalEnProtocolo = {
 	funcionNombre: string;
 };
 
+/** Práctica facturable de la cirugía (imFacPracticas por IdProtocolo) con su equipo. */
 export type PracticaEnProtocolo = {
 	valorPractica: number;
 	codigoPractica: number;
 	tipoPractica: string;
 	descripcion: string;
 	cantidad: number;
+	/** Facturada o valorizada por facturación (Status 100): no se puede tocar. */
+	facturada: boolean;
+	status: number;
 	profesionales: ProfesionalEnProtocolo[];
+};
+
+export type RubroMedicamento = 'Medicamento' | 'Descartable';
+
+/** Producto del vademécum (imVademecum.Troquel). */
+export type MedicamentoBusqueda = {
+	idProducto: number;
+	nombre: string;
+	presentacion: string | null;
+	rubro: RubroMedicamento;
+	unidad: string | null;
+};
+
+/** Default de un tipo de protocolo (HCTiposProtocolosMeds). */
+export type MedicamentoPorDefecto = {
+	idProducto: number;
+	rubro: RubroMedicamento;
+	cantidad: number | null;
+	unidad: string | null;
+	descripcion: string;
+	presentacion: string | null;
+};
+
+/** Medicamento/descartable usado en el protocolo (HCProtocolosMedicamentos). */
+export type MedicamentoEnProtocolo = {
+	idProtocoloMedicamento: number;
+	idProducto: number;
+	rubro: string;
+	cantidad: number | null;
+	unidad: string | null;
+	orden: number;
+	descripcion: string;
+	presentacion: string | null;
 };
 
 export type ProtocoloClinico = {
@@ -47,6 +84,7 @@ export type ProtocoloClinico = {
 	numeroProtocolo: number;
 	numeroVisita: number;
 	idPaciente: number;
+	/** "YYYY-MM-DDTHH:mm:ss" hora de pared (sin zona). */
 	fecha: string | null;
 	tipoProtocolo: string;
 	tipoDescripcion: string | null;
@@ -61,6 +99,27 @@ export type ProtocoloClinico = {
 	operadorNombre: string | null;
 	operadorMatricula: number | null;
 	practicas: PracticaEnProtocolo[];
+	tieneFacturadas: boolean;
+	medicamentos: MedicamentoEnProtocolo[];
+};
+
+export type ProfesionalPayload = { valorPersonal: number; funcion: number };
+
+export type PracticaPayload = {
+	/** Solo en edición: Valor de imFacPracticas de una práctica ya existente. */
+	valorPractica?: number;
+	idPractica: number;
+	tipoPractica: string;
+	cantidad?: number;
+	profesionales: ProfesionalPayload[];
+};
+
+export type MedicamentoPayload = {
+	idProducto: number;
+	rubro: RubroMedicamento | string;
+	cantidad?: number | null;
+	unidad?: string | null;
+	descripcion?: string | null;
 };
 
 export type CrearProtocoloPayload = {
@@ -70,22 +129,30 @@ export type CrearProtocoloPayload = {
 	tecnica?: string;
 	diagnosticoPre?: string;
 	diagnosticoPos?: string;
+	/** Hora de pared "YYYY-MM-DDTHH:mm" (datetime-local). */
 	fechaHoraInicio?: string | null;
-	fechaHoraFin?: string | null;
+	/** Obligatoria: es la fecha de las prácticas facturables. */
+	fechaHoraFin: string;
 	estado?: string;
 	idOperador?: number;
 	sector?: string;
-	idPractica: number;
-	tipoPractica?: string;
-	profesionales: { valorPersonal: number; funcion: number }[];
+	practicas: PracticaPayload[];
+	medicamentos?: MedicamentoPayload[];
 };
 
-/** La práctica no se edita (ya está registrada para facturación). */
+/**
+ * Edición: las prácticas facturadas no se pueden modificar ni quitar; el resto se puede
+ * editar, quitar o agregar. `practicas` ausente → no se tocan; `medicamentos` ausente → no se tocan.
+ */
 export type ActualizarProtocoloPayload = {
 	texto: string;
 	tecnica?: string;
 	diagnosticoPre?: string;
 	diagnosticoPos?: string;
 	estado?: string;
-	profesionales?: { valorPersonal: number; funcion: number }[];
+	fechaHoraInicio?: string | null;
+	fechaHoraFin?: string;
+	sector?: string;
+	practicas?: PracticaPayload[];
+	medicamentos?: MedicamentoPayload[];
 };

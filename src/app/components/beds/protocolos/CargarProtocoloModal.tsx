@@ -4,9 +4,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import protocolosService from '@/app/services/protocolosService';
 import type {
 	FuncionRequerida,
+	MedicamentoBusqueda,
+	MedicamentoPayload,
+	PracticaPayload,
 	PracticaProtocolo,
 	ProfesionalBusqueda,
 	ProtocoloClinico,
+	TipoProtocolo,
 } from '@/app/types/protocolos';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { adjuntosService } from '@/app/services/adjuntosService';
@@ -32,6 +36,32 @@ type Asignacion = {
 	searching?: boolean;
 };
 
+/** Una práctica de la cirugía con su propio equipo (una fila de imFacPracticas). */
+type PracticaForm = {
+	key: string;
+	/** Valor de imFacPracticas si ya existe (edición). */
+	valorPractica: number | null;
+	practica: PracticaProtocolo | null;
+	query: string;
+	results: PracticaProtocolo[];
+	loading: boolean;
+	cantidad: string;
+	asignaciones: Asignacion[];
+	addFuncionCodigo: string;
+	/** Facturada / valorizada: se muestra pero no se toca. */
+	facturada: boolean;
+};
+
+type MedForm = {
+	key: string;
+	idProducto: number;
+	rubro: string;
+	descripcion: string;
+	presentacion: string | null;
+	cantidad: string;
+	unidad: string;
+};
+
 const FALLBACK_ESP: FuncionRequerida = {
 	codigo: 1,
 	nombre: 'Especialista',
@@ -48,6 +78,42 @@ const FUNCIONES_CATALOGO: FuncionRequerida[] = [
 	{ codigo: 6, nombre: 'Monitoreo', unidad: 0 },
 ];
 
+let keySeq = 0;
+const nextKey = (p: string) => `${p}-${Date.now().toString(36)}-${(keySeq += 1)}`;
+
+function practicaVacia(): PracticaForm {
+	return {
+		key: nextKey('prac'),
+		valorPractica: null,
+		practica: null,
+		query: '',
+		results: [],
+		loading: false,
+		cantidad: '1',
+		asignaciones: [],
+		addFuncionCodigo: '',
+		facturada: false,
+	};
+}
+
+/** "YYYY-MM-DDTHH:mm:ss" de pared → valor para <input type="datetime-local">. */
+function aDatetimeLocal(v?: string | null) {
+	if (!v) return '';
+	const s = String(v).trim().replace(' ', 'T');
+	return s.length >= 16 ? s.slice(0, 16) : '';
+}
+
+/** Ahora en hora local del navegador como "YYYY-MM-DDTHH:mm". */
+function ahoraDatetimeLocal() {
+	const d = new Date();
+	const p = (n: number) => String(n).padStart(2, '0');
+	return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function etiquetaProfesional(p: ProfesionalBusqueda) {
+	return p.matricula != null ? `Mat. ${p.matricula}` : `Id ${p.valorPersonal}`;
+}
+
 export default function CargarProtocoloModal({
 	open,
 	numeroVisita,
@@ -58,16 +124,20 @@ export default function CargarProtocoloModal({
 }: Props) {
 	const usuario = useUsuarioActual();
 	const isEdit = !!protocoloToEdit;
-	const [practicaQuery, setPracticaQuery] = useState('');
-	const [practicas, setPracticas] = useState<PracticaProtocolo[]>([]);
-	const [practica, setPractica] = useState<PracticaProtocolo | null>(null);
-	const [loadingPracticas, setLoadingPracticas] = useState(false);
-	const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
+
+	const [tipos, setTipos] = useState<TipoProtocolo[]>([]);
+	const [tipoProtocolo, setTipoProtocolo] = useState('');
+	const [fechaHoraInicio, setFechaHoraInicio] = useState('');
+	const [fechaHoraFin, setFechaHoraFin] = useState('');
+	const [practicas, setPracticas] = useState<PracticaForm[]>([]);
+	const [meds, setMeds] = useState<MedForm[]>([]);
+	const [medQuery, setMedQuery] = useState('');
+	const [medResults, setMedResults] = useState<MedicamentoBusqueda[]>([]);
+	const [medSearching, setMedSearching] = useState(false);
 	const [texto, setTexto] = useState('');
 	const [tecnica, setTecnica] = useState('');
 	const [diagnosticoPre, setDiagnosticoPre] = useState('');
 	const [diagnosticoPos, setDiagnosticoPos] = useState('');
-	const [addFuncionCodigo, setAddFuncionCodigo] = useState('');
 	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 	const [subirOpen, setSubirOpen] = useState(false);
 	const [tipoAdjunto, setTipoAdjunto] = useState('');
@@ -76,35 +146,59 @@ export default function CargarProtocoloModal({
 	);
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const profTimers = useRef<Record<number, number>>({});
+	const timers = useRef<Record<string, number>>({});
+	const bodyRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (error) bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+	}, [error]);
 
 	useEffect(() => {
 		if (!open) return;
-		setPracticas([]);
-		setAddFuncionCodigo('');
+		setError(null);
+		setMedQuery('');
+		setMedResults([]);
 		if (protocoloToEdit) {
-			const prac = protocoloToEdit.practicas?.[0];
-			setPractica(
-				prac
-					? {
-							idPractica: prac.codigoPractica,
-							tipoPractica: prac.tipoPractica,
-							descripcion: prac.descripcion,
-							funcionesRequeridas: [],
-						}
-					: null,
-			);
-			setPracticaQuery(prac?.descripcion || '');
-			setAsignaciones(
-				(prac?.profesionales || []).map((p) => ({
-					funcion: { codigo: p.funcion, nombre: p.funcionNombre, unidad: 0 },
-					profesional: {
-						valorPersonal: p.valorPersonal,
-						matricula: p.matricula ?? null,
-						apellidoNombre: p.apellidoNombre || `Id ${p.valorPersonal}`,
+			setTipoProtocolo(protocoloToEdit.tipoProtocolo || '');
+			setFechaHoraInicio(aDatetimeLocal(protocoloToEdit.fechaHoraInicio));
+			setFechaHoraFin(aDatetimeLocal(protocoloToEdit.fechaHoraFin) || ahoraDatetimeLocal());
+			setPracticas(
+				(protocoloToEdit.practicas || []).map((prac) => ({
+					key: nextKey('prac'),
+					valorPractica: prac.valorPractica,
+					practica: {
+						idPractica: prac.codigoPractica,
+						tipoPractica: prac.tipoPractica,
+						descripcion: prac.descripcion,
+						funcionesRequeridas: [],
 					},
-					query: '',
+					query: prac.descripcion || '',
 					results: [],
+					loading: false,
+					cantidad: String(prac.cantidad || 1),
+					addFuncionCodigo: '',
+					facturada: !!prac.facturada,
+					asignaciones: (prac.profesionales || []).map((p) => ({
+						funcion: { codigo: p.funcion, nombre: p.funcionNombre, unidad: 0 },
+						profesional: {
+							valorPersonal: p.valorPersonal,
+							matricula: p.matricula ?? null,
+							apellidoNombre: p.apellidoNombre || `Id ${p.valorPersonal}`,
+						},
+						query: '',
+						results: [],
+					})),
+				})),
+			);
+			setMeds(
+				(protocoloToEdit.medicamentos || []).map((m) => ({
+					key: nextKey('med'),
+					idProducto: m.idProducto,
+					rubro: m.rubro || 'Medicamento',
+					descripcion: m.descripcion,
+					presentacion: m.presentacion,
+					cantidad: m.cantidad != null ? String(m.cantidad) : '',
+					unidad: m.unidad || '',
 				})),
 			);
 			setTexto(protocoloToEdit.texto || '');
@@ -112,9 +206,11 @@ export default function CargarProtocoloModal({
 			setDiagnosticoPre(protocoloToEdit.diagnosticoPre || '');
 			setDiagnosticoPos(protocoloToEdit.diagnosticoPos || '');
 		} else {
-			setPracticaQuery('');
-			setPractica(null);
-			setAsignaciones([]);
+			setTipoProtocolo('');
+			setFechaHoraInicio('');
+			setFechaHoraFin(ahoraDatetimeLocal());
+			setPracticas([practicaVacia()]);
+			setMeds([]);
 			setTexto('');
 			setTecnica('');
 			setDiagnosticoPre('');
@@ -122,173 +218,331 @@ export default function CargarProtocoloModal({
 		}
 		setPendingFiles([]);
 		setTipoAdjunto('');
-		setError(null);
 		void adjuntosService
 			.getTiposImagenes()
 			.then((rows) => setTiposAdjunto(rows || []))
 			.catch(() => setTiposAdjunto([]));
+		void protocolosService
+			.listarTipos()
+			.then((rows) => setTipos(rows.filter((t) => t.tipoProtocolo || t.descripcion)))
+			.catch(() => setTipos([]));
 	}, [open, protocoloToEdit]);
 
+	// Búsqueda de medicamentos (una sola caja, agrega filas).
 	useEffect(() => {
-		const t = practicaQuery.trim();
-		if (practica || t.length < 2) {
-			setPracticas([]);
+		const t = medQuery.trim();
+		if (t.length < 2) {
+			setMedResults([]);
+			setMedSearching(false);
 			return;
 		}
 		let cancel = false;
-		setLoadingPracticas(true);
-		const h = setTimeout(async () => {
+		setMedSearching(true);
+		const h = window.setTimeout(async () => {
 			try {
-				const rows = await protocolosService.buscarPracticas(t, 25);
-				if (!cancel) setPracticas(rows);
+				const rows = await protocolosService.buscarMedicamentos(t, 25);
+				if (!cancel) setMedResults(rows);
 			} catch {
-				if (!cancel) setPracticas([]);
+				if (!cancel) setMedResults([]);
 			} finally {
-				if (!cancel) setLoadingPracticas(false);
+				if (!cancel) setMedSearching(false);
 			}
 		}, 280);
 		return () => {
 			cancel = true;
-			clearTimeout(h);
+			window.clearTimeout(h);
 		};
-	}, [practicaQuery, practica]);
+	}, [medQuery]);
 
-	const seleccionarPractica = (p: PracticaProtocolo) => {
-		setPractica(p);
-		setPracticaQuery(p.descripcion || '');
-		setPracticas([]);
-		const req = p.funcionesRequeridas?.length > 0 ? p.funcionesRequeridas : [FALLBACK_ESP];
-		setAsignaciones(
-			req.map((funcion) => ({
-				funcion,
-				profesional: null,
-				query: '',
-				results: [],
-			})),
-		);
-		setError(null);
-	};
-
-	const rolesPendientes = useMemo(
-		() => asignaciones.filter((a) => !a.profesional).map((a) => a.funcion.nombre),
-		[asignaciones],
+	const practicasPendientes = useMemo(
+		() => practicas.filter((p) => !p.practica).length,
+		[practicas],
 	);
-
-	const equipoCompleto = practica != null && asignaciones.length > 0 && rolesPendientes.length === 0;
+	const rolesPendientes = useMemo(
+		() =>
+			practicas.flatMap((p, i) =>
+				p.asignaciones
+					.filter((a) => !a.profesional)
+					.map((a) => `${a.funcion.nombre} (práctica ${i + 1})`),
+			),
+		[practicas],
+	);
 
 	if (!open) return null;
 
-	const onProfQuery = (idx: number, query: string) => {
-		setAsignaciones((prev) =>
-			prev.map((a, i) =>
-				i === idx ? { ...a, query, profesional: null, results: [], searching: false } : a,
-			),
-		);
+	const updPractica = (key: string, fn: (p: PracticaForm) => PracticaForm) =>
+		setPracticas((prev) => prev.map((p) => (p.key === key ? fn(p) : p)));
+
+	// ---- Tipo de protocolo: proforma + medicamentos por defecto
+	const onTipoChange = async (tipo: string) => {
+		setTipoProtocolo(tipo);
+		if (!tipo) return;
+		const def = tipos.find((t) => t.tipoProtocolo === tipo);
+		try {
+			if (def?.tieneProForma && !texto.trim()) {
+				const pf = await protocolosService.obtenerProForma(tipo);
+				if (pf.proForma) setTexto(pf.proForma);
+			}
+			const defaults = await protocolosService.medicamentosPorDefecto(tipo);
+			if (defaults.length) {
+				setMeds((prev) => {
+					const ya = new Set(prev.map((m) => m.idProducto));
+					const nuevos = defaults
+						.filter((d) => !ya.has(d.idProducto))
+						.map((d) => ({
+							key: nextKey('med'),
+							idProducto: d.idProducto,
+							rubro: d.rubro,
+							descripcion: d.descripcion,
+							presentacion: d.presentacion,
+							cantidad: d.cantidad != null ? String(d.cantidad) : '',
+							unidad: d.unidad || '',
+						}));
+					return [...prev, ...nuevos];
+				});
+			}
+		} catch {
+			/* la proforma / defaults son una ayuda, no bloquean */
+		}
+	};
+
+	// ---- Prácticas
+	const onPracticaQuery = (key: string, query: string) => {
+		updPractica(key, (p) => ({ ...p, query, practica: null, results: [], loading: false }));
 		const t = query.trim();
-		if (profTimers.current[idx]) window.clearTimeout(profTimers.current[idx]);
+		const tk = `prac:${key}`;
+		if (timers.current[tk]) window.clearTimeout(timers.current[tk]);
 		if (t.length < 2) return;
-		setAsignaciones((prev) => prev.map((a, i) => (i === idx ? { ...a, searching: true } : a)));
-		profTimers.current[idx] = window.setTimeout(() => {
+		updPractica(key, (p) => ({ ...p, loading: true }));
+		timers.current[tk] = window.setTimeout(() => {
+			void protocolosService
+				.buscarPracticas(t, 25)
+				.then((rows) =>
+					updPractica(key, (p) =>
+						p.query.trim() === t ? { ...p, results: rows, loading: false } : { ...p, loading: false },
+					),
+				)
+				.catch(() => updPractica(key, (p) => ({ ...p, results: [], loading: false })));
+		}, 280);
+	};
+
+	const seleccionarPractica = (key: string, prac: PracticaProtocolo) => {
+		const req = prac.funcionesRequeridas?.length > 0 ? prac.funcionesRequeridas : [FALLBACK_ESP];
+		updPractica(key, (p) => ({
+			...p,
+			practica: prac,
+			query: prac.descripcion || '',
+			results: [],
+			loading: false,
+			// Si ya tenía equipo (cambio de código), se conserva; si no, los roles requeridos.
+			asignaciones: p.asignaciones.length
+				? p.asignaciones
+				: req.map((funcion) => ({ funcion, profesional: null, query: '', results: [] })),
+		}));
+		setError(null);
+	};
+
+	const agregarPractica = () => setPracticas((prev) => [...prev, practicaVacia()]);
+
+	const quitarPractica = (key: string) => {
+		if (practicas.length <= 1) {
+			setError(
+				isEdit
+					? 'El protocolo debe tener al menos una práctica. Para descartarlo entero, borrá el protocolo.'
+					: 'Tiene que haber al menos una práctica. Si no corresponde, cancelá la carga.',
+			);
+			return;
+		}
+		setPracticas((prev) => prev.filter((p) => p.key !== key || p.facturada));
+	};
+
+	const copiarEquipoAnterior = (idx: number) => {
+		if (idx <= 0) return;
+		const origen = practicas[idx - 1];
+		if (!origen) return;
+		const copia = origen.asignaciones
+			.filter((a) => a.profesional)
+			.map((a) => ({ ...a, query: '', results: [], searching: false }));
+		if (!copia.length) {
+			setError(`La práctica ${idx} todavía no tiene equipo para copiar. Asignalo primero.`);
+			return;
+		}
+		setError(null);
+		setPracticas((prev) =>
+			prev.map((p, i) => (i === idx ? { ...p, asignaciones: copia } : p)),
+		);
+	};
+
+	// ---- Equipo por práctica
+	const updAsignacion = (key: string, idx: number, fn: (a: Asignacion) => Asignacion) =>
+		updPractica(key, (p) => ({
+			...p,
+			asignaciones: p.asignaciones.map((a, i) => (i === idx ? fn(a) : a)),
+		}));
+
+	const onProfQuery = (key: string, idx: number, query: string) => {
+		updAsignacion(key, idx, (a) => ({ ...a, query, profesional: null, results: [], searching: false }));
+		const t = query.trim();
+		const tk = `prof:${key}:${idx}`;
+		if (timers.current[tk]) window.clearTimeout(timers.current[tk]);
+		if (t.length < 2) return;
+		updAsignacion(key, idx, (a) => ({ ...a, searching: true }));
+		timers.current[tk] = window.setTimeout(() => {
 			void protocolosService
 				.buscarProfesionales(t, 20)
-				.then((rows) => {
-					setAsignaciones((prev) =>
-						prev.map((a, i) =>
-							i === idx && a.query.trim() === t
-								? { ...a, results: rows, searching: false }
-								: i === idx
-									? { ...a, searching: false }
-									: a,
-						),
-					);
-				})
-				.catch(() => {
-					setAsignaciones((prev) =>
-						prev.map((a, i) => (i === idx ? { ...a, searching: false, results: [] } : a)),
-					);
-				});
+				.then((rows) =>
+					updAsignacion(key, idx, (a) =>
+						a.query.trim() === t ? { ...a, results: rows, searching: false } : { ...a, searching: false },
+					),
+				)
+				.catch(() => updAsignacion(key, idx, (a) => ({ ...a, searching: false, results: [] })));
 		}, 250);
 	};
 
-	const agregarFuncion = () => {
-		const codigo = Number(addFuncionCodigo);
-		const f = FUNCIONES_CATALOGO.find((x) => x.codigo === codigo);
-		if (!f) return;
-		setAsignaciones((prev) => [
-			...prev,
-			{ funcion: { ...f }, profesional: null, query: '', results: [] },
-		]);
-		setAddFuncionCodigo('');
+	const agregarFuncion = (key: string) => {
+		updPractica(key, (p) => {
+			const codigo = Number(p.addFuncionCodigo);
+			const f = FUNCIONES_CATALOGO.find((x) => x.codigo === codigo);
+			if (!f) return p;
+			return {
+				...p,
+				addFuncionCodigo: '',
+				asignaciones: [
+					...p.asignaciones,
+					{ funcion: { ...f }, profesional: null, query: '', results: [] },
+				],
+			};
+		});
 	};
 
-	const quitarAsignacion = (idx: number) => {
-		setAsignaciones((prev) => prev.filter((_, i) => i !== idx));
-	};
+	const quitarAsignacion = (key: string, idx: number) =>
+		updPractica(key, (p) => ({ ...p, asignaciones: p.asignaciones.filter((_, i) => i !== idx) }));
 
+	// ---- Medicamentos
+	const agregarMed = (m: MedicamentoBusqueda) => {
+		setMeds((prev) =>
+			prev.some((x) => x.idProducto === m.idProducto)
+				? prev
+				: [
+						...prev,
+						{
+							key: nextKey('med'),
+							idProducto: m.idProducto,
+							rubro: m.rubro,
+							descripcion: m.nombre,
+							presentacion: m.presentacion,
+							cantidad: '1',
+							unidad: m.unidad || '',
+						},
+					],
+		);
+		setMedQuery('');
+		setMedResults([]);
+	};
+	const updMed = (key: string, patch: Partial<MedForm>) =>
+		setMeds((prev) => prev.map((m) => (m.key === key ? { ...m, ...patch } : m)));
+	const quitarMed = (key: string) => setMeds((prev) => prev.filter((m) => m.key !== key));
+
+	// ---- Guardar
 	const submit = async () => {
-		if (!practica && !isEdit) {
-			setError('Seleccioná la práctica / procedimiento');
+		const nro = (pred: (p: PracticaForm) => boolean) =>
+			practicas
+				.map((p, i) => (pred(p) ? i + 1 : 0))
+				.filter(Boolean)
+				.join(', ');
+		if (!fechaHoraFin) {
+			setError('Falta la fecha y hora de fin. Es la fecha con la que se facturan las prácticas.');
 			return;
 		}
-		if (!texto.trim()) {
-			setError('La descripción del protocolo es obligatoria');
+		if (fechaHoraInicio && fechaHoraInicio > fechaHoraFin) {
+			setError('El inicio es posterior al fin. Corregí alguna de las dos fechas.');
+			return;
+		}
+		if (!practicas.length) {
+			setError('El protocolo necesita al menos una práctica. Agregá una.');
+			return;
+		}
+		if (practicasPendientes > 0) {
+			setError(
+				`Práctica ${nro((p) => !p.practica)} sin código. Buscala y elegila de la lista, o quitala.`,
+			);
+			return;
+		}
+		const sinEquipo = nro((p) => !p.facturada && !p.asignaciones.length);
+		if (sinEquipo) {
+			setError(`Práctica ${sinEquipo} sin equipo. Asigná al menos un profesional.`);
 			return;
 		}
 		if (rolesPendientes.length) {
-			setError(`Completá el equipo: ${rolesPendientes.join(', ')}`);
+			setError(`Falta asignar: ${rolesPendientes.join(', ')}. Buscá al profesional o quitá el rol.`);
+			return;
+		}
+		const malaCantidad = nro((p) => !(Number(p.cantidad) >= 1 && Number(p.cantidad) <= 999));
+		if (malaCantidad) {
+			setError(`Práctica ${malaCantidad}: la cantidad debe ser un número entre 1 y 999.`);
+			return;
+		}
+		if (!texto.trim()) {
+			setError('Falta la descripción del protocolo. Escribí el texto clínico.');
 			return;
 		}
 		if (pendingFiles.length > 0 && !tipoAdjunto.trim()) {
-			setError('Seleccioná el tipo de estudio para los adjuntos');
+			setError('Elegí el tipo de estudio de los adjuntos.');
 			return;
 		}
 		setSubmitting(true);
 		setError(null);
-		const equipo = asignaciones
-			.filter((a) => a.profesional)
-			.map((a) => ({
-				valorPersonal: a.profesional!.valorPersonal,
-				funcion: a.funcion.codigo,
-			}));
-		if (isEdit && protocoloToEdit) {
-			try {
+
+		const practicasPayload: PracticaPayload[] = practicas.map((p) => ({
+			...(p.valorPractica ? { valorPractica: p.valorPractica } : {}),
+			idPractica: p.practica!.idPractica,
+			tipoPractica: p.practica!.tipoPractica,
+			cantidad: Number(p.cantidad) || 1,
+			profesionales: p.asignaciones
+				.filter((a) => a.profesional)
+				.map((a) => ({ valorPersonal: a.profesional!.valorPersonal, funcion: a.funcion.codigo })),
+		}));
+		const medsPayload: MedicamentoPayload[] = meds.map((m) => ({
+			idProducto: m.idProducto,
+			rubro: m.rubro,
+			cantidad: m.cantidad.trim() === '' ? null : Number(m.cantidad),
+			unidad: m.unidad.trim() || null,
+			descripcion: m.descripcion,
+		}));
+
+		try {
+			let idProtocolo: number | null = null;
+			if (isEdit && protocoloToEdit) {
 				await protocolosService.actualizar(protocoloToEdit.idProtocolo, {
 					texto: texto.trim(),
 					tecnica: tecnica.trim(),
 					diagnosticoPre: diagnosticoPre.trim(),
 					diagnosticoPos: diagnosticoPos.trim(),
-					profesionales: practica ? equipo : undefined,
+					fechaHoraInicio: fechaHoraInicio || null,
+					fechaHoraFin,
+					sector: sector || undefined,
+					practicas: practicasPayload,
+					medicamentos: medsPayload,
 				});
-				if (pendingFiles.length > 0) {
-					try {
-						await adjuntosService.subirArchivos(numeroVisita, pendingFiles, tipoAdjunto, 'PROTOCOLO');
-					} catch (upErr) {
-						console.warn('[CargarProtocolo] adjuntos:', upErr);
-					}
-				}
-				onCreated();
-				onClose();
-			} catch (e) {
-				setError(e instanceof Error ? e.message : 'No se pudo actualizar el protocolo');
-			} finally {
-				setSubmitting(false);
+				idProtocolo = protocoloToEdit.idProtocolo;
+			} else {
+				const created = await protocolosService.crear({
+					numeroVisita,
+					tipoProtocolo: tipoProtocolo || undefined,
+					texto: texto.trim(),
+					tecnica: tecnica.trim() || undefined,
+					diagnosticoPre: diagnosticoPre.trim() || undefined,
+					diagnosticoPos: diagnosticoPos.trim() || undefined,
+					fechaHoraInicio: fechaHoraInicio || null,
+					fechaHoraFin,
+					sector: sector || undefined,
+					idOperador: usuario?.valorPersonal ?? undefined,
+					practicas: practicasPayload,
+					medicamentos: medsPayload,
+				});
+				idProtocolo = created?.idProtocolo ?? null;
 			}
-			return;
-		}
-		try {
-			const created = await protocolosService.crear({
-				numeroVisita,
-				texto: texto.trim(),
-				tecnica: tecnica.trim() || undefined,
-				diagnosticoPre: diagnosticoPre.trim() || undefined,
-				diagnosticoPos: diagnosticoPos.trim() || undefined,
-				idPractica: practica!.idPractica,
-				tipoPractica: practica!.tipoPractica,
-				sector: sector || undefined,
-				idOperador: usuario?.valorPersonal ?? undefined,
-				profesionales: equipo,
-			});
-			if (pendingFiles.length > 0 && created?.idProtocolo != null) {
+			if (pendingFiles.length > 0 && idProtocolo != null) {
 				try {
 					await adjuntosService.subirArchivos(numeroVisita, pendingFiles, tipoAdjunto, 'PROTOCOLO');
 				} catch (upErr) {
@@ -298,11 +552,130 @@ export default function CargarProtocoloModal({
 			onCreated();
 			onClose();
 		} catch (e) {
-			setError(e instanceof Error ? e.message : 'No se pudo guardar el protocolo');
+			setError(
+				e instanceof Error
+					? e.message
+					: isEdit
+						? 'No se pudieron guardar los cambios. Intentá de nuevo.'
+						: 'No se pudo guardar el protocolo. Intentá de nuevo.',
+			);
 		} finally {
 			setSubmitting(false);
 		}
 	};
+
+	const renderEquipo = (p: PracticaForm) => (
+		<div className={styles.equipoList}>
+			{p.asignaciones.map((a, idx) => {
+				const ok = Boolean(a.profesional);
+				return (
+					<article
+						key={`${a.funcion.codigo}-${idx}`}
+						className={`${styles.roleCard} ${ok ? styles.roleCardOk : ''}`}
+					>
+						<div className={styles.roleTop}>
+							<div className={styles.roleTitle}>
+								<span className={ok ? styles.statusDotOk : styles.statusDotPending} />
+								<strong>{a.funcion.nombre}</strong>
+							</div>
+							{!p.facturada && (
+								<button
+									type="button"
+									className={styles.ghostBtn}
+									onClick={() => quitarAsignacion(p.key, idx)}
+								>
+									Quitar
+								</button>
+							)}
+						</div>
+
+						{a.profesional ? (
+							<div className={styles.selectedCardCompact}>
+								<div>
+									<strong>{a.profesional.apellidoNombre}</strong>
+									<span>{etiquetaProfesional(a.profesional)}</span>
+								</div>
+								{!p.facturada && (
+									<button
+										type="button"
+										className={styles.linkBtn}
+										onClick={() =>
+											updAsignacion(p.key, idx, (x) => ({
+												...x,
+												profesional: null,
+												query: '',
+												results: [],
+											}))
+										}
+									>
+										Cambiar
+									</button>
+								)}
+							</div>
+						) : (
+							<div className={styles.searchWrap}>
+								<input
+									className={styles.input}
+									value={a.query}
+									onChange={(e) => onProfQuery(p.key, idx, e.target.value)}
+									placeholder="Nombre o matrícula…"
+									autoComplete="off"
+								/>
+								{a.searching ? <p className={styles.hint}>Buscando…</p> : null}
+								{a.results.length > 0 ? (
+									<ul className={styles.results}>
+										{a.results.map((prof) => (
+											<li key={prof.valorPersonal}>
+												<button
+													type="button"
+													onClick={() =>
+														updAsignacion(p.key, idx, (x) => ({
+															...x,
+															profesional: prof,
+															query: '',
+															results: [],
+														}))
+													}
+												>
+													<span className={styles.resultTitle}>{prof.apellidoNombre}</span>
+													<span className={styles.resultMeta}>{etiquetaProfesional(prof)}</span>
+												</button>
+											</li>
+										))}
+									</ul>
+								) : null}
+							</div>
+						)}
+					</article>
+				);
+			})}
+			{!p.facturada && (
+				<div className={styles.addRoleRow}>
+					<select
+						className={styles.input}
+						value={p.addFuncionCodigo}
+						onChange={(e) => updPractica(p.key, (x) => ({ ...x, addFuncionCodigo: e.target.value }))}
+						aria-label="Agregar función a demanda"
+					>
+						<option value="">Agregar rol…</option>
+						{FUNCIONES_CATALOGO.map((f) => (
+							<option key={f.codigo} value={f.codigo}>
+								{f.nombre}
+							</option>
+						))}
+					</select>
+					<button
+						type="button"
+						className={styles.secondaryBtn}
+						onClick={() => agregarFuncion(p.key)}
+						disabled={!p.addFuncionCodigo}
+					>
+						Agregar
+					</button>
+				</div>
+			)}
+		</div>
+	);
 
 	return (
 		<div className={shell.modalOverlay} onClick={onClose}>
@@ -321,237 +694,306 @@ export default function CargarProtocoloModal({
 					</button>
 				</header>
 
-				<div className={styles.body}>
-					{error ? <div className={styles.error}>{error}</div> : null}
+				<div className={styles.body} ref={bodyRef}>
+					{error ? (
+						<div className={styles.error} role="alert">
+							{error}
+						</div>
+					) : null}
 
+					{/* 1. Procedimiento */}
 					<section className={styles.section}>
 						<div className={styles.sectionHead}>
 							<span className={styles.step}>1</span>
 							<div>
-								<h4>Práctica / procedimiento</h4>
+								<h4>Procedimiento</h4>
+								<p>Tipo de protocolo (opcional) y fecha/hora. La fecha de fin es la de las prácticas.</p>
+							</div>
+						</div>
+						<div className={styles.grid3}>
+							<label className={styles.field}>
+								<span>Tipo de protocolo</span>
+								<select
+									className={styles.input}
+									value={tipoProtocolo}
+									onChange={(e) => void onTipoChange(e.target.value)}
+									disabled={isEdit}
+									title={isEdit ? 'El tipo no se puede cambiar' : undefined}
+								>
+									<option value="">Sin tipo</option>
+									{tipos.map((t) => (
+										<option key={t.tipoProtocolo || '__kit'} value={t.tipoProtocolo}>
+											{t.descripcion || t.tipoProtocolo}
+											{t.tipoProtocolo ? ` (${t.tipoProtocolo})` : ''}
+										</option>
+									))}
+								</select>
+							</label>
+							<label className={styles.field}>
+								<span>Inicio</span>
+								<input
+									type="datetime-local"
+									className={styles.input}
+									value={fechaHoraInicio}
+									onChange={(e) => setFechaHoraInicio(e.target.value)}
+									max={fechaHoraFin || undefined}
+								/>
+							</label>
+							<label className={styles.field}>
+								<span>
+									Fin <em>*</em>
+								</span>
+								<input
+									type="datetime-local"
+									className={styles.input}
+									value={fechaHoraFin}
+									onChange={(e) => setFechaHoraFin(e.target.value)}
+									required
+								/>
+							</label>
+						</div>
+						{isEdit ? (
+							<p className={styles.notice}>
+								El tipo de protocolo no se puede cambiar. Si es incorrecto, borrá el protocolo y crealo
+								de nuevo con el tipo correcto.
+							</p>
+						) : null}
+					</section>
+
+					{/* 2. Prácticas */}
+					<section className={styles.section}>
+						<div className={styles.sectionHead}>
+							<span className={styles.step}>2</span>
+							<div>
+								<h4>Prácticas y equipo</h4>
 								<p>
-									{isEdit
-										? 'La práctica ya está registrada para facturación y no se puede cambiar.'
-										: 'Buscá por código o descripción y elegí una opción.'}
+									Una fila por práctica realizada en la cirugía, cada una con su equipo.
+									{rolesPendientes.length ? (
+										<span className={styles.warnBadge}> Faltan: {rolesPendientes.join(', ')}</span>
+									) : practicas.length && practicasPendientes === 0 ? (
+										<span className={styles.okBadge}> Equipos completos</span>
+									) : null}
 								</p>
 							</div>
 						</div>
 
-						{practica ? (
-							<div className={styles.selectedCard}>
-								<div className={styles.selectedMain}>
-									<strong>{practica.descripcion}</strong>
-									<span className={styles.metaChips}>
-										<span className={styles.chip}>{practica.idPractica}</span>
-										<span className={styles.chip}>{practica.tipoPractica}</span>
-										{practica.funcionesRequeridas?.length ? (
-											<span className={styles.chip}>
-												{practica.funcionesRequeridas.length} roles
-											</span>
-										) : null}
-									</span>
-								</div>
-								{!isEdit && (
-									<button
-										type="button"
-										className={styles.linkBtn}
-										onClick={() => {
-											setPractica(null);
-											setPracticaQuery('');
-											setAsignaciones([]);
-											setPracticas([]);
-										}}
-									>
-										Cambiar
-									</button>
-								)}
-							</div>
-						) : (
-							<div className={styles.searchWrap}>
-								<input
-									className={styles.input}
-									value={practicaQuery}
-									onChange={(e) => setPracticaQuery(e.target.value)}
-									placeholder="Ej. 269532 o dinámica de tránsito…"
-									autoComplete="off"
-									autoFocus
-								/>
-								{loadingPracticas ? <p className={styles.hint}>Buscando…</p> : null}
-								{practicas.length > 0 ? (
-									<ul className={styles.results}>
-										{practicas.map((p) => (
-											<li key={`${p.tipoPractica}-${p.idPractica}`}>
-												<button type="button" onClick={() => seleccionarPractica(p)}>
-													<span className={styles.resultTitle}>{p.descripcion}</span>
-													<span className={styles.resultMeta}>
-														{p.idPractica} · {p.tipoPractica}
-														{p.funcionesRequeridas.length
-															? ` · ${p.funcionesRequeridas.length} roles`
-															: ''}
-													</span>
-												</button>
-											</li>
-										))}
-									</ul>
-								) : null}
-								{!loadingPracticas && practicaQuery.trim().length >= 2 && practicas.length === 0 ? (
-									<p className={styles.hint}>Sin resultados para “{practicaQuery.trim()}”.</p>
-								) : null}
-							</div>
-						)}
-					</section>
+						{practicas.some((p) => p.facturada) ? (
+							<p className={styles.notice}>
+								Las prácticas que ya pasaron a facturación no se pueden cambiar ni quitar. Para
+								corregirlas, pedí a facturación que las libere. Sí podés agregar prácticas nuevas.
+							</p>
+						) : null}
 
-					{practica ? (
-						<section className={styles.section}>
-							<div className={styles.sectionHead}>
-								<span className={styles.step}>2</span>
-								<div>
-									<h4>Equipo del procedimiento</h4>
-									<p>
-										Asigná profesionales por apellido/nombre o matrícula.
-										{equipoCompleto ? (
-											<span className={styles.okBadge}> Completo</span>
-										) : rolesPendientes.length ? (
-											<span className={styles.warnBadge}>
-												{' '}
-												Faltan: {rolesPendientes.join(', ')}
-											</span>
-										) : null}
-									</p>
-								</div>
-							</div>
-
-							<div className={styles.equipoList}>
-								{asignaciones.map((a, idx) => {
-									const ok = Boolean(a.profesional);
-									return (
-										<article
-											key={`${a.funcion.codigo}-${idx}`}
-											className={`${styles.roleCard} ${ok ? styles.roleCardOk : ''}`}
-										>
-											<div className={styles.roleTop}>
-												<div className={styles.roleTitle}>
-													<span className={ok ? styles.statusDotOk : styles.statusDotPending} />
-													<strong>{a.funcion.nombre}</strong>
-												</div>
+						<div className={styles.practicasList}>
+							{practicas.map((p, idx) => (
+								<article
+									key={p.key}
+									className={`${styles.practicaCard} ${p.facturada ? styles.practicaCardLocked : ''}`}
+								>
+									<div className={styles.practicaTop}>
+										<div className={styles.practicaTitle}>
+											<span className={styles.practicaIdx}>{idx + 1}</span>
+											<strong>Práctica {idx + 1}</strong>
+											{p.facturada ? (
+												<span className={styles.lockedChip}>En facturación · solo lectura</span>
+											) : null}
+										</div>
+										<div className={styles.practicaActions}>
+											{!p.facturada && idx > 0 && (
 												<button
 													type="button"
 													className={styles.ghostBtn}
-													onClick={() => quitarAsignacion(idx)}
+													onClick={() => copiarEquipoAnterior(idx)}
+													title="Copiar el equipo de la práctica anterior"
+												>
+													Copiar equipo anterior
+												</button>
+											)}
+											{!p.facturada && (
+												<button
+													type="button"
+													className={styles.ghostBtn}
+													onClick={() => quitarPractica(p.key)}
 												>
 													Quitar
 												</button>
-											</div>
+											)}
+										</div>
+									</div>
 
-											{a.profesional ? (
-												<div className={styles.selectedCardCompact}>
-													<div>
-														<strong>{a.profesional.apellidoNombre}</strong>
-														<span>
-															{a.profesional.matricula != null
-																? `Mat. ${a.profesional.matricula}`
-																: `Id ${a.profesional.valorPersonal}`}
+									{p.practica ? (
+										<div className={styles.selectedCard}>
+											<div className={styles.selectedMain}>
+												<strong>{p.practica.descripcion}</strong>
+												<span className={styles.metaChips}>
+													<span className={styles.chip}>{p.practica.idPractica}</span>
+													<span className={styles.chip}>{p.practica.tipoPractica}</span>
+													{p.practica.funcionesRequeridas?.length ? (
+														<span className={styles.chip}>
+															{p.practica.funcionesRequeridas.length} roles
 														</span>
-													</div>
+													) : null}
+												</span>
+											</div>
+											<div className={styles.cantidadBox}>
+												<label className={styles.field}>
+													<span>Cantidad</span>
+													<input
+														type="number"
+														min={1}
+														max={999}
+														className={styles.input}
+														value={p.cantidad}
+														disabled={p.facturada}
+														onChange={(e) => updPractica(p.key, (x) => ({ ...x, cantidad: e.target.value }))}
+													/>
+												</label>
+												{!p.facturada && (
 													<button
 														type="button"
 														className={styles.linkBtn}
 														onClick={() =>
-															setAsignaciones((prev) =>
-																prev.map((x, i) =>
-																	i === idx
-																		? {
-																				...x,
-																				profesional: null,
-																				query: '',
-																				results: [],
-																			}
-																		: x,
-																),
-															)
+															updPractica(p.key, (x) => ({ ...x, practica: null, query: '', results: [] }))
 														}
 													>
-														Cambiar
+														Cambiar código
 													</button>
-												</div>
-											) : (
-												<div className={styles.searchWrap}>
-													<input
-														className={styles.input}
-														value={a.query}
-														onChange={(e) => onProfQuery(idx, e.target.value)}
-														placeholder="Nombre o matrícula…"
-														autoComplete="off"
-													/>
-													{a.searching ? <p className={styles.hint}>Buscando…</p> : null}
-													{a.results.length > 0 ? (
-														<ul className={styles.results}>
-															{a.results.map((p) => (
-																<li key={p.valorPersonal}>
-																	<button
-																		type="button"
-																		onClick={() =>
-																			setAsignaciones((prev) =>
-																				prev.map((x, i) =>
-																					i === idx
-																						? {
-																								...x,
-																								profesional: p,
-																								query: '',
-																								results: [],
-																							}
-																						: x,
-																				),
-																			)
-																		}
-																	>
-																		<span className={styles.resultTitle}>{p.apellidoNombre}</span>
-																		<span className={styles.resultMeta}>
-																			{p.matricula != null
-																				? `Mat. ${p.matricula}`
-																				: `Id ${p.valorPersonal}`}
-																		</span>
-																	</button>
-																</li>
-															))}
-														</ul>
-													) : null}
-												</div>
-											)}
-										</article>
-									);
-								})}
-							</div>
+												)}
+											</div>
+										</div>
+									) : (
+										<div className={styles.searchWrap}>
+											<input
+												className={styles.input}
+												value={p.query}
+												onChange={(e) => onPracticaQuery(p.key, e.target.value)}
+												placeholder="Código o descripción de la práctica…"
+												autoComplete="off"
+												autoFocus={idx === practicas.length - 1}
+											/>
+											{p.loading ? <p className={styles.hint}>Buscando…</p> : null}
+											{p.results.length > 0 ? (
+												<ul className={styles.results}>
+													{p.results.map((r) => (
+														<li key={`${r.tipoPractica}-${r.idPractica}`}>
+															<button type="button" onClick={() => seleccionarPractica(p.key, r)}>
+																<span className={styles.resultTitle}>{r.descripcion}</span>
+																<span className={styles.resultMeta}>
+																	{r.idPractica} · {r.tipoPractica}
+																	{r.funcionesRequeridas.length
+																		? ` · ${r.funcionesRequeridas.length} roles`
+																		: ''}
+																</span>
+															</button>
+														</li>
+													))}
+												</ul>
+											) : null}
+											{!p.loading && p.query.trim().length >= 2 && p.results.length === 0 ? (
+												<p className={styles.hint}>Sin resultados para “{p.query.trim()}”.</p>
+											) : null}
+										</div>
+									)}
 
-							<div className={styles.addRoleRow}>
-								<select
-									className={styles.input}
-									value={addFuncionCodigo}
-									onChange={(e) => setAddFuncionCodigo(e.target.value)}
-									aria-label="Agregar función a demanda"
-								>
-									<option value="">Agregar rol a demanda…</option>
-									{FUNCIONES_CATALOGO.map((f) => (
-										<option key={f.codigo} value={f.codigo}>
-											{f.nombre}
-										</option>
-									))}
-								</select>
-								<button
-									type="button"
-									className={styles.secondaryBtn}
-									onClick={agregarFuncion}
-									disabled={!addFuncionCodigo}
-								>
-									Agregar
-								</button>
-							</div>
-						</section>
-					) : null}
+									{p.practica ? (
+										<div className={styles.equipoBlock}>
+											<p className={styles.equipoLabel}>Equipo de esta práctica</p>
+											{renderEquipo(p)}
+										</div>
+									) : null}
+								</article>
+							))}
+						</div>
 
+						<button type="button" className={styles.addPracticaBtn} onClick={agregarPractica}>
+							+ Agregar otra práctica
+						</button>
+					</section>
+
+					{/* 3. Medicamentos */}
 					<section className={styles.section}>
 						<div className={styles.sectionHead}>
-							<span className={styles.step}>{practica ? '3' : '2'}</span>
+							<span className={styles.step}>3</span>
+							<div>
+								<h4>Medicamentos y descartables</h4>
+								<p>Opcional. Al elegir un tipo de protocolo se precargan los habituales.</p>
+							</div>
+						</div>
+
+						<div className={styles.searchWrap}>
+							<input
+								className={styles.input}
+								value={medQuery}
+								onChange={(e) => setMedQuery(e.target.value)}
+								placeholder="Buscar en vademécum por nombre, droga o troquel…"
+								autoComplete="off"
+							/>
+							{medSearching ? <p className={styles.hint}>Buscando…</p> : null}
+							{medResults.length > 0 ? (
+								<ul className={styles.results}>
+									{medResults.map((m) => (
+										<li key={m.idProducto}>
+											<button type="button" onClick={() => agregarMed(m)}>
+												<span className={styles.resultTitle}>{m.nombre}</span>
+												<span className={styles.resultMeta}>
+													{m.rubro}
+													{m.presentacion ? ` · ${m.presentacion}` : ''} · {m.idProducto}
+												</span>
+											</button>
+										</li>
+									))}
+								</ul>
+							) : null}
+						</div>
+
+						{meds.length > 0 ? (
+							<ul className={styles.medList}>
+								{meds.map((m) => (
+									<li key={m.key} className={styles.medItem}>
+										<div className={styles.medMain}>
+											<strong>{m.descripcion}</strong>
+											<span>
+												{m.rubro}
+												{m.presentacion ? ` · ${m.presentacion}` : ''}
+											</span>
+										</div>
+										<input
+											type="number"
+											min={0}
+											className={`${styles.input} ${styles.medCant}`}
+											value={m.cantidad}
+											onChange={(e) => updMed(m.key, { cantidad: e.target.value })}
+											placeholder="Cant."
+											aria-label="Cantidad"
+										/>
+										<input
+											className={`${styles.input} ${styles.medUnidad}`}
+											value={m.unidad}
+											onChange={(e) => updMed(m.key, { unidad: e.target.value })}
+											placeholder="Unidad"
+											maxLength={20}
+											aria-label="Unidad"
+										/>
+										<button
+											type="button"
+											className={styles.adjRemove}
+											onClick={() => quitarMed(m.key)}
+											aria-label={`Quitar ${m.descripcion}`}
+										>
+											×
+										</button>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className={styles.hint}>Sin medicamentos cargados.</p>
+						)}
+					</section>
+
+					{/* 4. Datos clínicos */}
+					<section className={styles.section}>
+						<div className={styles.sectionHead}>
+							<span className={styles.step}>4</span>
 							<div>
 								<h4>Datos clínicos</h4>
 								<p>Diagnósticos, técnica y texto del protocolo.</p>
@@ -606,9 +1048,10 @@ export default function CargarProtocoloModal({
 						</label>
 					</section>
 
+					{/* 5. Adjuntos */}
 					<section className={styles.section}>
 						<div className={styles.sectionHead}>
-							<span className={styles.step}>{practica ? '4' : '3'}</span>
+							<span className={styles.step}>5</span>
 							<div>
 								<h4>Adjuntos</h4>
 								<p>
@@ -628,10 +1071,7 @@ export default function CargarProtocoloModal({
 										}`
 									: 'Sin archivos seleccionados'}
 							</p>
-							<SubirAdjuntoButton
-								onClick={() => setSubirOpen(true)}
-								disabled={submitting}
-							/>
+							<SubirAdjuntoButton onClick={() => setSubirOpen(true)} disabled={submitting} />
 						</div>
 						{pendingFiles.length > 0 ? (
 							<ul className={styles.adjList}>
@@ -668,12 +1108,7 @@ export default function CargarProtocoloModal({
 				</div>
 
 				<footer className={styles.footer}>
-					<button
-						type="button"
-						className={styles.secondaryBtn}
-						onClick={onClose}
-						disabled={submitting}
-					>
+					<button type="button" className={styles.secondaryBtn} onClick={onClose} disabled={submitting}>
 						Cancelar
 					</button>
 					<button

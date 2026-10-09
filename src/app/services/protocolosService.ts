@@ -2,6 +2,8 @@ import { apiFetch } from '@/app/utils/authFetch';
 import type {
 	ActualizarProtocoloPayload,
 	CrearProtocoloPayload,
+	MedicamentoBusqueda,
+	MedicamentoPorDefecto,
 	PracticaProtocolo,
 	ProfesionalBusqueda,
 	ProtocoloClinico,
@@ -92,6 +94,40 @@ const protocolosService = {
 		}>(res);
 		if (!res.ok || !json?.success) {
 			throw new Error(json?.mensaje || 'No se pudieron buscar profesionales');
+		}
+		return Array.isArray(json.data) ? json.data : [];
+	},
+
+	async buscarMedicamentos(q: string, limit = 30): Promise<MedicamentoBusqueda[]> {
+		const params = new URLSearchParams({ q, limit: String(limit) });
+		const res = await apiFetch(`/protocolos/medicamentos/buscar?${params}`, {
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json' },
+		});
+		const json = await parseJson<{
+			success?: boolean;
+			data?: MedicamentoBusqueda[];
+			mensaje?: string;
+		}>(res);
+		if (!res.ok || !json?.success) {
+			throw new Error(json?.mensaje || 'No se pudieron buscar medicamentos');
+		}
+		return Array.isArray(json.data) ? json.data : [];
+	},
+
+	async medicamentosPorDefecto(tipoProtocolo: string): Promise<MedicamentoPorDefecto[]> {
+		const params = new URLSearchParams({ tipo: tipoProtocolo });
+		const res = await apiFetch(`/protocolos/tipos/medicamentos?${params}`, {
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json' },
+		});
+		const json = await parseJson<{
+			success?: boolean;
+			data?: MedicamentoPorDefecto[];
+			mensaje?: string;
+		}>(res);
+		if (!res.ok || !json?.success) {
+			throw new Error(json?.mensaje || 'No se pudieron cargar los medicamentos del tipo');
 		}
 		return Array.isArray(json.data) ? json.data : [];
 	},
