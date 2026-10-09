@@ -96,6 +96,11 @@ function practicaVacia(): PracticaForm {
 	};
 }
 
+/** Solo 1–999: descarta lo que no sea dígito y los ceros a la izquierda (el 0 no entra). */
+function cantidadPractica(v: string) {
+	return v.replace(/\D/g, '').replace(/^0+/, '').slice(0, 3);
+}
+
 /** "YYYY-MM-DDTHH:mm:ss" de pared → valor para <input type="datetime-local">. */
 function aDatetimeLocal(v?: string | null) {
 	if (!v) return '';
@@ -345,14 +350,6 @@ export default function CargarProtocoloModal({
 	const agregarPractica = () => setPracticas((prev) => [...prev, practicaVacia()]);
 
 	const quitarPractica = (key: string) => {
-		if (practicas.length <= 1) {
-			setError(
-				isEdit
-					? 'El protocolo debe tener al menos una práctica. Para descartarlo entero, borrá el protocolo.'
-					: 'Tiene que haber al menos una práctica. Si no corresponde, cancelá la carga.',
-			);
-			return;
-		}
 		setPracticas((prev) => prev.filter((p) => p.key !== key || p.facturada));
 	};
 
@@ -459,7 +456,11 @@ export default function CargarProtocoloModal({
 			return;
 		}
 		if (!practicas.length) {
-			setError('El protocolo necesita al menos una práctica. Agregá una.');
+			setError(
+				isEdit
+					? 'El protocolo debe tener al menos una práctica. Agregá una, o para descartarlo entero, borrá el protocolo.'
+					: 'Tiene que haber al menos una práctica. Agregá una, o si no corresponde, cancelá la carga.',
+			);
 			return;
 		}
 		if (practicasPendientes > 0) {
@@ -839,13 +840,18 @@ export default function CargarProtocoloModal({
 												<label className={styles.field}>
 													<span>Cantidad</span>
 													<input
-														type="number"
-														min={1}
-														max={999}
+														type="text"
+														inputMode="numeric"
+														maxLength={3}
 														className={styles.input}
 														value={p.cantidad}
 														disabled={p.facturada}
-														onChange={(e) => updPractica(p.key, (x) => ({ ...x, cantidad: e.target.value }))}
+														onChange={(e) =>
+															updPractica(p.key, (x) => ({ ...x, cantidad: cantidadPractica(e.target.value) }))
+														}
+														onBlur={() =>
+															updPractica(p.key, (x) => (x.cantidad ? x : { ...x, cantidad: '1' }))
+														}
 													/>
 												</label>
 												{!p.facturada && (
@@ -905,8 +911,9 @@ export default function CargarProtocoloModal({
 							))}
 						</div>
 
+						{!practicas.length ? <p className={styles.hint}>Sin prácticas cargadas.</p> : null}
 						<button type="button" className={styles.addPracticaBtn} onClick={agregarPractica}>
-							+ Agregar otra práctica
+							{practicas.length ? '+ Agregar otra práctica' : '+ Agregar práctica'}
 						</button>
 					</section>
 
