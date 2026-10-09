@@ -155,10 +155,10 @@ export default function NuevaEvolucionModal({
                     />
                 </div>
 
-                {/* Sector - Viene de localStorage (deshabilitado) */}
+                {/* Sector del profesional logueado (el backend lo valida contra sus sectores asignados) */}
                 <div className={styles.formGroup}>
                     <label className={styles.label}>
-                        Sector <span className={styles.required}>*</span>
+                        Sector del profesional <span className={styles.required}>*</span>
                     </label>
                     <input
                         type="text"
