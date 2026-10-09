@@ -11,6 +11,7 @@ interface NuevaEvolucionModalProps {
     onClose: () => void;
     onSave: (data: NuevaEvolucionPayload) => Promise<any> | any;
     defaultIdVisita: number | null;
+    sectorInternacion?: string;
     documentoPaciente?: string;
     idEvolucion?: number | null;
     refetch?: () => Promise<void>;
@@ -56,6 +57,7 @@ export default function NuevaEvolucionModal({
     onClose,
     onSave,
     defaultIdVisita,
+    sectorInternacion,
     documentoPaciente,
     idEvolucion = null,
     registro = null,
@@ -64,15 +66,16 @@ export default function NuevaEvolucionModal({
     const { idsector, sectorSeleccionado } = useAppContext();
     const idPersonal = sectorSeleccionado?.idPersonal || '';
     const documentoEfectivo = String(documentoPaciente || '').trim();
+    const sectorActual = String(sectorInternacion || '').trim() || idsector || '';
 
     const initial = useMemo(
         () => emptyPayload(
             defaultIdVisita,
             documentoEfectivo,
-            idsector || '',
+            sectorActual,
             idPersonal
         ),
-        [defaultIdVisita, documentoEfectivo, idsector, idPersonal]
+        [defaultIdVisita, documentoEfectivo, sectorActual, idPersonal]
     );
     const [form, setForm] = useState<NuevaEvolucionPayload>(initial);
     const [loading, setLoading] = useState(false);
@@ -87,13 +90,13 @@ export default function NuevaEvolucionModal({
             IdVisita: registro.idVisita,
             FechaEv: String(registro.fechaEv || '').slice(0, 10),
             HoraEv: String(registro.horaEv || '').slice(0, 5),
-            IdSector: registro.idSector || idsector || '',
+            IdSector: registro.idSector || sectorActual,
             Evolucion: registro.evolucion || '',
             NumeroDocumento: registro.numeroDocumento || documentoEfectivo,
             Profecional: registro.profesional,
         });
         setLoading(false);
-    }, [idEvolucion, registro, initial, idsector, documentoEfectivo]);
+    }, [idEvolucion, registro, initial, sectorActual, documentoEfectivo]);
 
     const set = (field: keyof NuevaEvolucionPayload, value: any) =>
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -155,10 +158,10 @@ export default function NuevaEvolucionModal({
                     />
                 </div>
 
-                {/* Sector del profesional logueado (el backend lo valida contra sus sectores asignados) */}
+                {/* Sector donde está actualmente la internación (el backend lo toma de la cama ocupada) */}
                 <div className={styles.formGroup}>
                     <label className={styles.label}>
-                        Sector del profesional <span className={styles.required}>*</span>
+                        Sector de internación <span className={styles.required}>*</span>
                     </label>
                     <input
                         type="text"

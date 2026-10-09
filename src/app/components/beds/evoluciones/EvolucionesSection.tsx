@@ -39,6 +39,7 @@ export default function EvolucionesSection({
     numeroVisita,
     patientName,
     patientLocation,
+    sectorInternacion,
     documentoPaciente,
     fechaIngreso,
     horaIngreso,
@@ -48,6 +49,7 @@ export default function EvolucionesSection({
     numeroVisita: number | null;
     patientName?: string;
     patientLocation?: string;
+    sectorInternacion?: string;
     documentoPaciente?: string;
     fechaIngreso?: string;
     horaIngreso?: string;
@@ -379,6 +381,7 @@ export default function EvolucionesSection({
                     }}
                     onSave={handleSave}
                     defaultIdVisita={numeroVisita}
+                    sectorInternacion={sectorInternacion}
                     documentoPaciente={documentoPaciente}
                     idEvolucion={selectedId}
                     registro={selectedId != null ? baseRows.find((r) => r.id === selectedId) ?? null : null}

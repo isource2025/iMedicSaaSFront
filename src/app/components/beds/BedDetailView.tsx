@@ -217,6 +217,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
 								patientLocation={bed?.ubicacionPaciente}
+								sectorInternacion={bed?.sector || undefined}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
