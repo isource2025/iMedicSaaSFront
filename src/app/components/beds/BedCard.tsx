@@ -16,7 +16,7 @@ import {
 	IoTimeOutline,
 	IoAddOutline,
 } from 'react-icons/io5';
-import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft, ClipboardList } from 'lucide-react';
+import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft, ClipboardList, FileSearch } from 'lucide-react';
 import { indicacionesService } from '../../services/indicacionesService';
 import estudiosService from '../../services/estudiosService';
 
@@ -45,12 +45,12 @@ function fechaHoraCorta(valor?: string | null): string {
 	return `${m[3]}/${m[2]}${m[4] ? ` ${m[4]}:${m[5]}` : ''}`;
 }
 
-type SideTabPreviewItem = { nombre: string; meta: string };
+type AlertaPreviewItem = { nombre: string; meta: string };
 
 const PREVIEW_LIMIT = 3;
 
-/** Pestaña lateral de la card con preview al hover (indicaciones nuevas / estudios respondidos). */
-function SideTabConPreview({
+/** Círculo de alerta en la fila de acciones, con contador y preview al hover (indicaciones nuevas / estudios respondidos). */
+function AlertaConPreview({
 	count,
 	titulo,
 	className,
@@ -64,12 +64,12 @@ function SideTabConPreview({
 	className: string;
 	icon: React.ReactNode;
 	ariaLabel: string;
-	cargar: () => Promise<{ total: number; items: SideTabPreviewItem[] }>;
+	cargar: () => Promise<{ total: number; items: AlertaPreviewItem[] }>;
 	onOpen: () => void;
 }) {
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const [items, setItems] = useState<SideTabPreviewItem[] | null>(null);
+	const [items, setItems] = useState<AlertaPreviewItem[] | null>(null);
 	const [total, setTotal] = useState(count);
 	const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const wrapRef = useRef<HTMLSpanElement>(null);
@@ -181,7 +181,7 @@ function SideTabConPreview({
 		>
 			<button
 				type="button"
-				className={`${styles.sideTab} ${className}`}
+				className={`${styles.alertCircle} ${className}`}
 				aria-label={ariaLabel}
 				onClick={(e) => {
 					e.stopPropagation();
@@ -189,7 +189,7 @@ function SideTabConPreview({
 				}}
 			>
 				{icon}
-				<span className={styles.sideTabCount}>{count}</span>
+				<span className={styles.alertCount}>{count}</span>
 			</button>
 			{preview}
 		</span>
@@ -206,11 +206,11 @@ function IndicacionesNuevasBadge({
 	onOpen: () => void;
 }) {
 	return (
-		<SideTabConPreview
+		<AlertaConPreview
 			count={count}
 			titulo="Indicaciones nuevas"
-			className={styles.sideTabIndicaciones}
-			icon={<ClipboardList size={14} strokeWidth={2.4} aria-hidden />}
+			className={styles.alertIndicaciones}
+			icon={<ClipboardList strokeWidth={2.2} aria-hidden />}
 			ariaLabel={`${count} indicación${count === 1 ? '' : 'es'} nueva${count === 1 ? '' : 's'} sin revisar por enfermería. Abrir indicaciones`}
 			onOpen={onOpen}
 			cargar={async () => {
@@ -245,11 +245,11 @@ function EstudiosRespondidosBadge({
 	onOpen: () => void;
 }) {
 	return (
-		<SideTabConPreview
+		<AlertaConPreview
 			count={count}
 			titulo="Estudios e interconsultas respondidos"
-			className={styles.sideTabEstudios}
-			icon={<IoFlaskOutline size={14} aria-hidden />}
+			className={styles.alertEstudios}
+			icon={<FileSearch strokeWidth={2.2} aria-hidden />}
 			ariaLabel={`${count} estudios e interconsultas respondidos. Abrir estudios`}
 			onOpen={onOpen}
 			cargar={async () => {
@@ -412,33 +412,9 @@ function CamaOConsultorioCard({
 			className={`${styles.bedCard} ${wrapperMod} ${estadoClass} ${puedeAsignar ? styles.bedCardAssignable : ''}`}
 			onClick={() => onBedClick && onBedClick(bed.id)}
 		>
-			{mostrarBadgeIndicaciones || mostrarBadgeEstudios ? (
-				<div className={styles.sideTabs}>
-					{mostrarBadgeIndicaciones ? (
-						<IndicacionesNuevasBadge
-							numeroVisita={Number(bed.numeroVisita)}
-							count={nuevasIndicaciones}
-							onOpen={() => {
-								if (onOpenSection) onOpenSection(bed.id, 'indicaciones');
-								else if (onRecentIndications) onRecentIndications(bed.id);
-								else onBedClick?.(bed.id);
-							}}
-						/>
-					) : null}
-					{mostrarBadgeEstudios ? (
-						<EstudiosRespondidosBadge
-							numeroVisita={Number(bed.numeroVisita)}
-							count={estudiosRespondidos}
-							onOpen={() => {
-								if (onOpenSection) onOpenSection(bed.id, 'solicitudEstudios');
-								else onBedClick?.(bed.id);
-							}}
-						/>
-					) : null}
-				</div>
-			) : null}
 			<div className={styles.cardHeader}>
 				<div className={styles.bedInfo}>
+					<span className={styles.sectorLabel}>{bed.sector}</span>
 					{variant === 'consultorio' && (
 						<span className={styles.tipoBadgeConsultorio} title={etiquetaTipoRecurso(bed, 'Consultorio')}>
 							<Stethoscope size={14} strokeWidth={2.2} aria-hidden />
@@ -450,7 +426,6 @@ function CamaOConsultorioCard({
 							{etiquetaTipoRecurso(bed, 'Cama')}
 						</span>
 					)}
-					<span className={styles.sectorLabel}>{bed.sector}</span>
 					<span className={styles.bedNumber}>{bed.numeroCama}</span>
 				</div>
 				{bed.numeroVisita && bed.numeroVisita !== 0 ? (
@@ -501,7 +476,28 @@ function CamaOConsultorioCard({
 								<p className={styles.diagnostic}>{bed.diagnosticoDescripcion}</p>
 							</div>
 						)}
-						<div className={styles.iconsContainer}>
+						<div className={`${styles.iconsContainer} ${styles.accionesPaciente}`}>
+							{mostrarBadgeIndicaciones ? (
+								<IndicacionesNuevasBadge
+									numeroVisita={Number(bed.numeroVisita)}
+									count={nuevasIndicaciones}
+									onOpen={() => {
+										if (onOpenSection) onOpenSection(bed.id, 'indicaciones');
+										else if (onRecentIndications) onRecentIndications(bed.id);
+										else onBedClick?.(bed.id);
+									}}
+								/>
+							) : null}
+							{mostrarBadgeEstudios ? (
+								<EstudiosRespondidosBadge
+									numeroVisita={Number(bed.numeroVisita)}
+									count={estudiosRespondidos}
+									onOpen={() => {
+										if (onOpenSection) onOpenSection(bed.id, 'solicitudEstudios');
+										else onBedClick?.(bed.id);
+									}}
+								/>
+							) : null}
 							{variant === 'cama' && (
 								<span
 									className={styles.iconWrapper}

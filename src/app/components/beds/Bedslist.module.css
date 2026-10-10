@@ -22,10 +22,8 @@
 }
 
 /* Migración UI v1 - 4 Feb 2026 */
-/* padding-left: lugar para las pestañas laterales de la primera columna (ver .sideTabs en BedCard). */
 .bedsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
-  padding-left: 20px;
 }
