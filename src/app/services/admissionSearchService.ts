@@ -176,7 +176,20 @@ export type ExportSectionKey =
   | 'balanceHidrico'
   | 'evolucionEnfermeria'
   | 'insumos'
+  | 'laboratorios'
+  | 'movimientos'
   | 'adjuntos';
+
+export interface VisitaResumenIa {
+  resumen: string;
+  puntos: string[];
+  pendientes: string[];
+  generadoConIA: boolean;
+  fuente: 'openai' | 'plantilla' | 'plantilla_fallback';
+  modelo?: string;
+  generadoEn: string;
+  aviso?: string;
+}
 
 export interface ExportSelectivoBody {
   sections: ExportSectionKey[];
@@ -244,6 +257,15 @@ export const admissionSearchService = {
       { timeout: 60000 },
     );
     return response.data?.data;
+  },
+
+  async resumenIa(numeroVisita: number): Promise<VisitaResumenIa> {
+    const response = await apiService.post<{ success: boolean; data: VisitaResumenIa }>(
+      `/admission-search/${numeroVisita}/resumen-ia`,
+      {},
+      { timeout: 90000 },
+    );
+    return response.data.data;
   },
 
   async getDatosPrincipales(numeroVisita: number): Promise<AdmissionDatosPrincipalesPayload> {

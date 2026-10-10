@@ -8,17 +8,24 @@ type SectionDef = { id: ExportSectionKey; label: string; hint?: string };
 
 /** Mismo orden que el menú del detalle de cama (Gestión Médica → Gestión Enfermería → Otras). */
 const GROUPS: { titulo: string | null; items: SectionDef[] }[] = [
-  { titulo: null, items: [{ id: 'admision', label: 'Datos de admisión' }] },
+  {
+    titulo: 'Internación',
+    items: [
+      { id: 'admision', label: 'Datos de admisión' },
+      { id: 'movimientos', label: 'Movimientos de cama', hint: 'Ingreso, traslados y egreso' },
+    ],
+  },
   {
     titulo: 'Gestión médica',
     items: [
       { id: 'hcIngreso', label: 'HC de ingreso' },
-      { id: 'indicaciones', label: 'Indicaciones' },
-      { id: 'estudios', label: 'Estudios', hint: 'Pedidos y resultados' },
+      { id: 'indicaciones', label: 'Indicaciones', hint: 'Con quién indicó y suspendidas' },
+      { id: 'evoluciones', label: 'Evoluciones' },
       { id: 'interconsultas', label: 'Interconsultas', hint: 'Pedido y respuesta' },
+      { id: 'estudios', label: 'Estudios', hint: 'Pedidos y resultados' },
+      { id: 'laboratorios', label: 'Laboratorio', hint: 'Parámetros y valores' },
       { id: 'protocolos', label: 'Protocolos' },
       { id: 'practicas', label: 'Procedimientos' },
-      { id: 'evoluciones', label: 'Evoluciones' },
       { id: 'epicrisis', label: 'Epicrisis' },
     ],
   },
@@ -27,13 +34,13 @@ const GROUPS: { titulo: string | null; items: SectionDef[] }[] = [
     items: [
       { id: 'controles', label: 'Controles' },
       { id: 'medicamentos', label: 'Medicación suministrada' },
-      { id: 'dietas', label: 'Dietas' },
-      { id: 'balanceHidrico', label: 'Balance hídrico' },
       { id: 'evolucionEnfermeria', label: 'Evolución de enfermería' },
+      { id: 'balanceHidrico', label: 'Balance hídrico' },
+      { id: 'dietas', label: 'Dietas' },
       { id: 'insumos', label: 'Insumos' },
     ],
   },
-  { titulo: 'Otras', items: [{ id: 'adjuntos', label: 'Adjuntos', hint: 'Solo metadatos, sin archivos' }] },
+  { titulo: 'Documentación', items: [{ id: 'adjuntos', label: 'Adjuntos', hint: 'Índice, imágenes y PDFs anexos' }] },
 ];
 
 const SECTIONS: SectionDef[] = GROUPS.flatMap((g) => g.items);
@@ -314,7 +321,7 @@ export default function AdmissionVisitExportModal({
             <p className={styles.subtitle}>
               {modeGeneral
                 ? 'Incluye todas las visitas del paciente. Elegí el período y qué bloques van al PDF.'
-                : 'Elegí el período y qué bloques van al PDF. No se descargan archivos adjuntos binarios.'}
+                : 'Elegí el período y qué bloques van al PDF. Cada registro sale con el profesional, su matrícula y su firma.'}
             </p>
           </div>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
@@ -371,7 +378,8 @@ export default function AdmissionVisitExportModal({
                 </div>
                 <p className={styles.hint}>
                   Cada bloque usa su fecha habitual: HC del registro, medicación del control, estudios del
-                  examen, adjuntos de la carga.
+                  pedido, adjuntos de la carga. Los movimientos de cama se incluyen si se superponen con el
+                  período.
                 </p>
               </div>
             )}

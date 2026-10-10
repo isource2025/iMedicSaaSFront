@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { FileDown } from 'lucide-react';
 import Modal from '@/app/components/UI/Modal';
 import AdmissionVisitDetailContent from './AdmissionVisitDetailContent';
 import AdmissionVisitExportModal from './AdmissionVisitExportModal';
@@ -16,6 +17,11 @@ export type VisitDetailPayload = {
     NumeroHC?: string;
     FechaAdmision?: string;
     HoraAdmision?: string;
+    FechaEgreso?: string | null;
+    HoraEgreso?: string | null;
+    DiasEstadia?: number | null;
+    Egresada?: boolean;
+    [campo: string]: unknown;
   };
   historialClinico?: Record<string, unknown>[];
   practicasPaciente?: Array<{
@@ -107,18 +113,34 @@ export type VisitDetailPayload = {
     practicas?: Array<Record<string, unknown>>;
   }>;
   evolucionesMedicas?: Record<string, unknown>[];
+  interconsultas?: Record<string, unknown>[];
+  controles?: Record<string, unknown>[];
+  balanceHidrico?: Record<string, unknown>[];
+  evolucionesEnfermeria?: Record<string, unknown>[];
+  dietas?: Record<string, unknown>[];
+  insumos?: Record<string, unknown>[];
+  movimientos?: Record<string, unknown>[];
 };
 
 export type VisitDetailTabId =
   | 'resumen'
+  | 'movimientos'
+  | 'egreso'
   | 'hcIngreso'
-  | 'practicas'
   | 'indicaciones'
-  | 'medicamentos'
   | 'evoluciones'
+  | 'interconsultas'
   | 'estudios'
+  | 'laboratorios'
   | 'protocolos'
+  | 'practicas'
   | 'epicrisis'
+  | 'controles'
+  | 'medicamentos'
+  | 'evolucionEnfermeria'
+  | 'balanceHidrico'
+  | 'dietas'
+  | 'insumos'
   | 'adjuntos';
 
 interface AdmissionVisitDetailModalProps {
@@ -172,7 +194,8 @@ export default function AdmissionVisitDetailModal({
                 onClick={() => setExportModalOpen(true)}
                 disabled={!numeroVisita || loading || !data}
               >
-                Exportar…
+                <FileDown size={16} aria-hidden />
+                Exportar PDF
               </button>
             }
           />
