@@ -97,6 +97,8 @@ export interface PreviewLiquidacion {
 	resumen: ResumenLiquidacion;
 	hash: string;
 	importacionPrevia: ImportacionResumen | null;
+	/** Importaciones vigentes que ya dejaron cargados los renglones SIN_CAMBIO. */
+	importacionesOrigen?: (ImportacionResumen & { renglones: number })[];
 	aplicado: {
 		idImport: number;
 		filasAplicadas: number;

@@ -373,6 +373,11 @@ export default function LiquidacionesPage() {
 						Estado: 'APLICADO',
 					});
 				}}
+				onVerImportacion={(imp) => {
+					setImportOpen(false);
+					setArchivo(null);
+					setDetalle(imp);
+				}}
 			/>
 
 			<DetalleLiquidacionModal

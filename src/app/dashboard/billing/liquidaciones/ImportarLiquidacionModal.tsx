@@ -7,23 +7,26 @@ import Modal from '@/app/components/UI/Modal';
 import { mensajeDeError } from '@/app/utils/apiError';
 import {
 	liquidacionImportService,
+	type ImportacionResumen,
 	type PreviewLiquidacion,
 } from '@/app/services/liquidacionImportService';
 import ui from '../../profile/profile.module.css';
 import styles from './liquidaciones.module.css';
 import FilasLiquidacionTable from './FilasLiquidacionTable';
-import { filaDesdePreview, formatImporte } from './liquidacionesShared';
+import { filaDesdePreview, formatFechaHora, formatImporte } from './liquidacionesShared';
 
 export default function ImportarLiquidacionModal({
 	file,
 	isOpen,
 	onClose,
 	onAplicado,
+	onVerImportacion,
 }: {
 	file: File | null;
 	isOpen: boolean;
 	onClose: () => void;
 	onAplicado: (idImport: number, archivo: string) => void;
+	onVerImportacion: (importacion: ImportacionResumen) => void;
 }) {
 	const [preview, setPreview] = useState<PreviewLiquidacion | null>(null);
 	const [cargando, setCargando] = useState(false);
@@ -92,6 +95,28 @@ export default function ImportarLiquidacionModal({
 		preview.resumen.aplicables > 0 &&
 		(preview.resumen.rechazadas === 0 || confirmarParcial);
 
+	const avisoSinAplicables = (() => {
+		if (!preview || aplicado || preview.resumen.aplicables > 0) return null;
+		const { sinCambio, filas: total } = preview.resumen;
+		if (sinCambio === total) {
+			return `Los ${total} renglones ya tienen ese importe liquidado en la facturación: no hay nada para actualizar.`;
+		}
+		if (sinCambio > 0) {
+			return `Ningún renglón tiene un importe nuevo para aplicar: ${sinCambio} ya estaban liquidados y el resto no coincide con la facturación.`;
+		}
+		return 'Ningún renglón del archivo coincide con la facturación de esta base.';
+	})();
+
+	const importacionesYaCargadas = useMemo(() => {
+		if (!preview || aplicado) return [];
+		const lista: (ImportacionResumen & { renglones?: number })[] = [
+			...(preview.importacionesOrigen || []),
+		];
+		const previa = preview.importacionPrevia;
+		if (previa && !lista.some((i) => i.IdImport === previa.IdImport)) lista.push(previa);
+		return lista;
+	}, [preview, aplicado]);
+
 	return (
 		<Modal
 			isOpen={isOpen}
@@ -159,6 +184,43 @@ export default function ImportarLiquidacionModal({
 								</div>
 							</div>
 						</div>
+
+						{(avisoSinAplicables || importacionesYaCargadas.length > 0) && (
+							<div className={styles.aviso}>
+								{avisoSinAplicables && <p className={styles.avisoTexto}>{avisoSinAplicables}</p>}
+								{importacionesYaCargadas.length > 0 && (
+									<>
+										<p className={styles.avisoTexto}>
+											{importacionesYaCargadas.length === 1
+												? 'Ya está cargado en:'
+												: 'Ya está cargado en estas importaciones:'}
+										</p>
+										<ul className={styles.avisoLista}>
+											{importacionesYaCargadas.map((imp) => (
+												<li key={imp.IdImport}>
+													<button
+														type="button"
+														className={styles.avisoLink}
+														onClick={() => onVerImportacion(imp)}
+													>
+														{imp.Archivo} (#{imp.IdImport})
+													</button>
+													<span>
+														{' · '}
+														{formatFechaHora(imp.FechaHora)}
+														{imp.Usuario ? ` por ${imp.Usuario}` : ''}
+														{imp.renglones != null
+															? ` · ${imp.renglones} de ${preview.resumen.filas} renglones`
+															: ' · mismo archivo'}
+														{imp.Estado === 'REVERTIDO' ? ' · revertida' : ''}
+													</span>
+												</li>
+											))}
+										</ul>
+									</>
+								)}
+							</div>
+						)}
 
 						<div className={styles.modalToolbar}>
 							{preview.resumen.rechazadas > 0 && (
