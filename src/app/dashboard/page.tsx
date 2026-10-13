@@ -10,7 +10,13 @@ import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
 // import type { ResumenProduccionMes } from '../types/produccionHospital';
 // import { entero, monedaCompacta } from './reports/facturacion/produccionFormat';
 import { authService } from '../services/authService';
+import { usePermiso } from '../hooks/usePermiso';
+import { consumoIaService } from '../services/consumoIaService';
 import styles from './DashboardPage.module.css';
+
+function isoLocal(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
   <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style={style}>
@@ -90,6 +96,23 @@ export default function Dashboard() {
   const router = useRouter();
   const { count: pedidosPendientes } = useBandejaPedidosCount(true);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  const { loaded: permisosCargados, puede } = usePermiso();
+  const puedeVerConsumoIa = permisosCargados && puede('CONFIGURACION.CONSUMO_IA.VER');
+  const [consumoIaMes, setConsumoIaMes] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!puedeVerConsumoIa) return;
+    let vigente = true;
+    const hoy = new Date();
+    consumoIaService
+      .reporte({ desde: isoLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), hasta: isoLocal(hoy) })
+      .then((r) => vigente && setConsumoIaMes(r.totales?.costoUsd ?? 0))
+      .catch(() => vigente && setConsumoIaMes(null));
+    return () => {
+      vigente = false;
+    };
+  }, [puedeVerConsumoIa]);
 
   // Producción del hospital: sólo quien tiene el permiso (hoy, el administrador).
   // const { loaded: permisosCargados, puede } = usePermiso();
@@ -474,7 +497,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className={styles.shortcutsRow}>
+        <div className={`${styles.shortcutsRow} ${puedeVerConsumoIa ? styles.shortcutsRow4 : ''}`}>
           <button
             type="button"
             className={styles.shortcutCard}
@@ -506,6 +529,21 @@ export default function Dashboard() {
             </span>
             <span className={styles.shortcutHint}>Abrir agenda</span>
           </button>
+          {puedeVerConsumoIa ? (
+            <button
+              type="button"
+              className={`${styles.shortcutCard} ${styles.shortcutCardIa}`}
+              onClick={() => router.push('/dashboard/configuracion/consumo-ia')}
+            >
+              <span className={styles.shortcutLabel}>Consumo IA del mes</span>
+              <span className={styles.shortcutValue}>
+                {consumoIaMes == null
+                  ? '—'
+                  : `US$ ${consumoIaMes.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+              <span className={styles.shortcutHint}>Ver consumo por usuario</span>
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

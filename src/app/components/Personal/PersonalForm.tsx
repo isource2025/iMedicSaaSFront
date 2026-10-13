@@ -1035,8 +1035,9 @@ export default function PersonalForm({
 					<PersonalAsignacionesTab
 						draft
 						draftSectores={formData.Sectores || []}
-						onDraftChange={({ sectores }) =>
-							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: [] }))
+						draftServicios={formData.Servicios || []}
+						onDraftChange={({ sectores, servicios }) =>
+							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: servicios }))
 						}
 					/>
 				</div>

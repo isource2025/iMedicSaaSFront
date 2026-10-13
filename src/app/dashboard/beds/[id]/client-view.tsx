@@ -7,6 +7,7 @@ import Loader from '../../../components/Loader/Loader';
 import { BedDetailProvider } from '../../../components/beds/contexts/BedDetailContext';
 import type { Bed } from '../../../types/beds';
 import type { SidebarSection } from '../../../components/beds/contexts/BedDetailContext';
+import { seccionDesdeUrl } from '../../../components/beds/seccionesUrl';
 import { apiFetch } from '@/app/utils/authFetch';
 import { authService } from '@/app/services/authService';
 import { normalizeBedFromApi } from '@/app/services/bedsService';
@@ -18,8 +19,6 @@ import {
 
 type Props = { id: string };
 
-/** Secciones a las que se puede entrar directo con ?seccion= (badges de la card). */
-const SECCIONES_DESDE_URL = new Set<string>(['indicaciones', 'solicitudEstudios']);
 
 export default function ClientBedView({ id }: Props) {
 	const router = useRouter();
@@ -109,14 +108,8 @@ export default function ClientBedView({ id }: Props) {
 	}
 
 	const rol = authService.getCurrentRol()?.nombre?.toUpperCase();
-	const seccionUrl =
-		typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('seccion') : null;
 	const initialSection: SidebarSection =
-		rol === 'CARGA_HC'
-			? 'adjuntos'
-			: seccionUrl && SECCIONES_DESDE_URL.has(seccionUrl)
-				? (seccionUrl as SidebarSection)
-				: 'indicaciones';
+		rol === 'CARGA_HC' ? 'adjuntos' : seccionDesdeUrl() ?? 'indicaciones';
 
 	return (
 		<BedDetailProvider

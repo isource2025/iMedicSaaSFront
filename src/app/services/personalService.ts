@@ -167,6 +167,15 @@ export const getServicios = async (): Promise<CatalogoItemTexto[]> => {
 	}
 };
 
+/** Servicios asignables al personal: solo el catálogo de la nube. */
+export const getServiciosNube = async (): Promise<CatalogoItemTexto[]> => {
+	const res = await apiService.get<ApiResponse<CatalogoItemTexto[]>>(
+		'/personal/catalogos/servicios-nube',
+	);
+	if (!res.data.success) throw new Error(res.data.mensaje || 'Error al obtener servicios');
+	return (res.data.data || []).filter((r) => String(r.valor || '').trim());
+};
+
 export const getCategorias = async (): Promise<CatalogoItemNumerico[]> => {
 	const res = await apiService.get<ApiResponse<CatalogoItemNumerico[]>>(
 		'/personal/catalogos/categorias',
@@ -807,6 +816,7 @@ export const personalService = {
 	getEspecialidades,
 	getFunciones,
 	getServicios,
+	getServiciosNube,
 	getCategorias,
 	getClases,
 	getEmpresasCatalogo,

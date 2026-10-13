@@ -215,7 +215,26 @@ export default function PatientMiniHeader({
 	}
 
 	return (
-		<div className={s.wrap}>
+		<div
+			className={s.wrap}
+			data-asistente-visita={numeroVisita || undefined}
+			data-asistente-paciente={pacienteData?.apellidoYNombre || undefined}
+			data-asistente-documento={
+				pacienteData?.numeroDocumento && pacienteData.numeroDocumento !== 'N/A'
+					? pacienteData.numeroDocumento
+					: undefined
+			}
+			data-asistente-sector={
+				pacienteData?.valorSector && pacienteData.valorSector !== 'N/A'
+					? pacienteData.valorSector
+					: undefined
+			}
+			data-asistente-cama={
+				pacienteData?.valorHabitacionCama && pacienteData.valorHabitacionCama !== 'N/A'
+					? pacienteData.valorHabitacionCama
+					: undefined
+			}
+		>
 			<div className={s.headerLeft}>
 				<div className={s.documentoRow}>
 					{pacienteData?.numeroDocumento &&

@@ -249,6 +249,13 @@
   border-color: #ea580c;
 }
 
+.footer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
 .tab:focus-visible {
   outline: 3px solid #bae6fd;
   outline-offset: 2px;

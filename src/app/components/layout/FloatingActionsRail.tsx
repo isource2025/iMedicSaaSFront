@@ -16,6 +16,8 @@ interface FloatingActionsRailProps {
 	className?: string;
 	/** Queda por encima de los modales (los modales que abren estos botones). */
 	overModals?: boolean;
+	/** Acción primaria siempre visible debajo de la pestaña (no se pliega). */
+	footer?: ReactNode;
 }
 
 /**
@@ -28,6 +30,7 @@ export default function FloatingActionsRail({
 	ariaLabel,
 	className = '',
 	overModals = false,
+	footer,
 }: FloatingActionsRailProps) {
 	const [open, setOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
@@ -145,6 +148,7 @@ export default function FloatingActionsRail({
 					<path d="M15 6l-6 6 6 6" />
 				</svg>
 			</button>
+			{footer ? <div className={styles.footer}>{footer}</div> : null}
 		</div>,
 		document.body,
 	);

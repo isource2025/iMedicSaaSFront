@@ -7,6 +7,7 @@ import Loader from '@/app/components/Loader/Loader';
 import { BedDetailProvider } from '@/app/components/beds/contexts/BedDetailContext';
 import type { Bed } from '@/app/types/beds';
 import type { SidebarSection } from '@/app/components/beds/contexts/BedDetailContext';
+import { seccionDesdeUrl } from '@/app/components/beds/seccionesUrl';
 import { apiFetch } from '@/app/utils/authFetch';
 import { authService } from '@/app/services/authService';
 import { normalizeBedFromApi } from '@/app/services/bedsService';
@@ -77,7 +78,7 @@ export default function VisitaClinicaClient() {
 
 	const rol = authService.getCurrentRol()?.nombre?.toUpperCase();
 	const initialSection: SidebarSection =
-		rol === 'CARGA_HC' ? 'adjuntos' : 'indicaciones';
+		rol === 'CARGA_HC' ? 'adjuntos' : seccionDesdeUrl() ?? 'indicaciones';
 
 	return (
 		<>
