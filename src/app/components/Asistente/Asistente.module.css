@@ -555,6 +555,61 @@
   margin: 6px 0 2px;
 }
 
+.seccion {
+  margin: 10px 0;
+}
+
+.seccion > .heading {
+  margin: 0 0 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.seccion.tonoSintesis,
+.seccion.tonoAlerta,
+.seccion.tonoSugerencia {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border-left: 3px solid;
+}
+
+.seccion.tonoSintesis > .heading,
+.seccion.tonoAlerta > .heading,
+.seccion.tonoSugerencia > .heading {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tonoSintesis {
+  background: #f8fafc;
+  border-left-color: #64748b;
+}
+
+.tonoAlerta {
+  background: #fffbeb;
+  border-left-color: #f59e0b;
+}
+
+.tonoAlerta > .heading {
+  color: #92400e;
+}
+
+.tonoSugerencia {
+  background: #eff6ff;
+  border-left-color: #3b82f6;
+}
+
+.tonoSugerencia > .heading {
+  color: #1e40af;
+}
+
+.subheading {
+  font-weight: 600;
+  color: #334155;
+  margin: 8px 0 2px;
+}
+
 .spacer {
   height: 6px;
 }
@@ -566,6 +621,11 @@
 
 .list li {
   margin: 2px 0;
+}
+
+.list .list {
+  margin: 2px 0 4px;
+  color: #334155;
 }
 
 .tableWrap {
@@ -587,6 +647,17 @@
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   white-space: nowrap;
+}
+
+.table td {
+  white-space: normal;
+  vertical-align: top;
+  min-width: 64px;
+}
+
+.table td:first-child {
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .table th {
