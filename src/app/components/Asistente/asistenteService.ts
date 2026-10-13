@@ -45,9 +45,13 @@ export type AsistenteRespuesta = {
   consultas?: AsistenteConsulta[];
   inserciones?: AsistenteInsercion[];
   idConversacion?: string;
+  /** Internado del que se viene hablando: se reenvía si el backend perdió la sesión. */
+  foco?: AsistenteFoco | null;
   modo?: "ia" | "local";
   mensaje?: string;
 };
+
+export type AsistenteFoco = { numeroVisita: number; paciente: string | null };
 
 export type AsistenteMensajeUi = {
   id: string;
@@ -82,6 +86,9 @@ export type AsistentePayload = {
   idConversacion?: string | null;
   contexto?: Record<string, string | null>;
   pantalla?: PantallaSnapshot | null;
+  /** Solo lo usa el backend si ya no tiene la conversación (p. ej. tras reiniciarse). */
+  historial?: { role: "user" | "assistant"; content: string }[];
+  foco?: AsistenteFoco | null;
 };
 
 export async function aplicarInsercion(

@@ -14,6 +14,7 @@ import {
   confirmarPendiente,
   enviarMensaje,
   enviarMensajeStream,
+  type AsistenteFoco,
   type AsistenteInsercion,
   type AsistenteMensajeUi,
   type EventoEstado,
@@ -30,7 +31,19 @@ type Tab = {
   idConversacion: string | null;
   mensajes: AsistenteMensajeUi[];
   borrador: string;
+  foco?: AsistenteFoco | null;
 };
+
+const MAX_HISTORIAL = 8;
+const MAX_CHARS_HISTORIAL = 2000;
+
+/** Lo que se reenvía para retomar la charla si el backend ya no la tiene. */
+function historialDe(mensajes: AsistenteMensajeUi[]) {
+  return mensajes
+    .filter((m) => !m.resultado && m.content)
+    .slice(-MAX_HISTORIAL)
+    .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CHARS_HISTORIAL) }));
+}
 
 type Persistido = {
   tabs: Tab[];
@@ -375,6 +388,7 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
       const tabId = tab?.id;
       const mensaje = mensajeRaw.trim();
       if (!tabId || !mensaje || ocupadas[tabId]) return;
+      const historial = historialDe(tab.mensajes);
       setError(tabId, "");
       setOcupada(tabId, "Pensando…");
       setProgreso(tabId, () => ({
@@ -399,6 +413,8 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
           rutaActual: pathname || "/dashboard",
           idConversacion: actual?.idConversacion ?? null,
           pantalla: pantallaSegura(),
+          historial,
+          foco: actual?.foco ?? null,
         };
         let data: Awaited<ReturnType<typeof enviarMensaje>> | null = null;
         try {
@@ -413,6 +429,7 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
         actualizarTab(tabId, (t) => ({
           ...t,
           idConversacion: r.idConversacion || t.idConversacion,
+          foco: r.foco !== undefined ? r.foco : t.foco,
           mensajes: [
             ...t.mensajes,
             {
