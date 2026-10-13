@@ -124,6 +124,10 @@ const NOMBRES_HERRAMIENTA: Record<string, string> = {
   trasladar_cama: "Preparando el traslado",
   asignar_cama: "Preparando la asignación de cama",
   revertir_egreso: "Revisando el egreso",
+  resumen_internacion: "Leyendo la internación",
+  pase_de_guardia: "Armando el pase de guardia",
+  listar_internados: "Revisando el censo de internados",
+  habilitar_cargas: "Preparando la carga",
 };
 
 function etiquetaHerramienta(nombre: string) {

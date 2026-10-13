@@ -82,6 +82,10 @@ const FRASES_HERRAMIENTA: Record<string, string[]> = {
   trasladar_cama: ["Preparando el traslado", "Buscando la cama destino"],
   asignar_cama: ["Preparando la asignación de cama", "Buscando la cama destino"],
   revertir_egreso: ["Revisando el egreso"],
+  resumen_internacion: ["Leyendo la internación", "Juntando evoluciones, indicaciones y estudios"],
+  pase_de_guardia: ["Armando el pase de guardia", "Leyendo la última evolución de cada cama"],
+  listar_internados: ["Revisando el censo de internados"],
+  habilitar_cargas: ["Preparando la carga"],
 };
 
 const HECHO: Record<string, string> = {
@@ -119,6 +123,10 @@ const HECHO: Record<string, string> = {
   trasladar_cama: "Traslado preparado",
   asignar_cama: "Asignación preparada",
   revertir_egreso: "Egreso revisado",
+  resumen_internacion: "Internación leída",
+  pase_de_guardia: "Pase de guardia listo",
+  listar_internados: "Censo revisado",
+  habilitar_cargas: "Carga lista para armar",
 };
 
 function frasesDe(
