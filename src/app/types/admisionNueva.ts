@@ -41,6 +41,17 @@ export interface RequisitoVisita {
   tieneArchivo: boolean;
 }
 
+/** Documento escaneado del paciente en alguna de sus visitas. */
+export interface DocumentoPaciente {
+  numeroVisita: number;
+  valor: number;
+  descripcion: string;
+  aplicable: string;
+  /** yyyy-mm-dd, o null si Clarion no guardó la fecha. */
+  fecha: string | null;
+  nombreArchivo: string;
+}
+
 /**
  * Datos de la última admisión del paciente. Se usan como sugerencia al abrir el
  * formulario: nunca pisan un valor que el usuario ya haya cargado.

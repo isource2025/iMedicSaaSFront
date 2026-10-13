@@ -3,6 +3,7 @@ import type {
   AdmisionCreada,
   AdmisionNuevaCatalogos,
   AdmisionNuevaPayload,
+  DocumentoPaciente,
   RequisitoCobertura,
   RequisitoVisita,
   UltimaVisitaPaciente,
@@ -65,6 +66,25 @@ export const admisionNuevaService = {
       `${BASE}/paciente/${Number(idPaciente)}/ultima-visita`,
     );
     return data.data ?? null;
+  },
+
+  async getDocumentosPaciente(idPaciente: number): Promise<DocumentoPaciente[]> {
+    const { data } = await apiService.get<Envelope<DocumentoPaciente[]>>(
+      `${BASE}/paciente/${Number(idPaciente)}/documentos`,
+    );
+    return data.data ?? [];
+  },
+
+  async getArchivoDocumentoPaciente(
+    idPaciente: number,
+    doc: Pick<DocumentoPaciente, 'numeroVisita' | 'valor'>,
+  ): Promise<{ blob: Blob; blobUrl: string }> {
+    const { data } = await apiService.get<Blob>(
+      `${BASE}/paciente/${Number(idPaciente)}/documentos/${Number(doc.numeroVisita)}/${Number(doc.valor)}/archivo`,
+      { responseType: 'blob' },
+    );
+    if (!data.size) throw new Error('El archivo está vacío o no se pudo obtener');
+    return { blob: data, blobUrl: URL.createObjectURL(data) };
   },
 
   async crear(payload: AdmisionNuevaPayload): Promise<AdmisionCreada> {
