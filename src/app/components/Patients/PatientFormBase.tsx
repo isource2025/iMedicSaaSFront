@@ -803,7 +803,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 							}`}
 							onClick={() => setActiveTab('archivos')}
 						>
-							Archivos Escaneados
+							Archivos Adjuntos
 						</div>
 					) : null}
 					<div className={styles.indicator} style={indicatorStyle} />

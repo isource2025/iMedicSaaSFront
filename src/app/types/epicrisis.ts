@@ -10,6 +10,9 @@ export interface Epicrisis {
 	sectorDescripcion?: string;
 	profesional?: number;
 	profesionalNombreCompleto?: string;
+	/** imPersonal.Valor del profesional resuelto (Profecional puede ser matrícula o Valor). */
+	idPersonal?: number;
+	matricula?: number;
 	epicrisis: string;
 	numeroDocumento?: string | number;
 	diagnostico?: string;

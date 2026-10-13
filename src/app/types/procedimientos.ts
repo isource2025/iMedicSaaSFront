@@ -18,5 +18,6 @@ export type FacPracticaVisita = {
 	IdProtocolo?: number | null;
 	SolicitanteNombre?: string | null;
 	Realizadores?: string[];
+	Firmantes?: Array<{ nombre?: string; matricula?: number | null; valor?: number | null }>;
 	Profesionales?: string | null;
 };

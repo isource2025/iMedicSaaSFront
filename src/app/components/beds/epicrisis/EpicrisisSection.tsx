@@ -68,6 +68,8 @@ export default function EpicrisisSection({
 			idSector: x.IdSector ?? x.idSector,
 			sectorDescripcion: x.SectorDescripcion ?? x.sectorDescripcion,
 			profesional: x.Profecional ?? x.profesional,
+			idPersonal: x.IdPersonal ?? x.idPersonal ?? undefined,
+			matricula: x.Matricula ?? x.matricula ?? undefined,
 			profesionalNombreCompleto:
 				x.ProfesionalNombreCompleto ?? x.profesionalNombreCompleto,
 			epicrisis: x.Epicrisis ?? x.epicrisis ?? '',
@@ -144,7 +146,8 @@ export default function EpicrisisSection({
 			text: row.epicrisis || '—',
 			profesional: {
 				nombre: row.profesionalNombreCompleto || 'PROFESIONAL',
-				matricula: row.profesional ?? undefined,
+				matricula: row.matricula ?? row.profesional ?? undefined,
+				idPersonal: row.idPersonal ?? undefined,
 			},
 		}));
 

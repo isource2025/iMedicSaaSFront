@@ -39,7 +39,7 @@ export default function ArchivosEscaneadosTab({ idPaciente }: Props) {
 				if (!cancelado) setDocumentos(docs);
 			})
 			.catch(() => {
-				if (!cancelado) setError('No se pudieron obtener los archivos escaneados.');
+				if (!cancelado) setError('No se pudieron obtener los archivos adjuntos.');
 			})
 			.finally(() => {
 				if (!cancelado) setCargando(false);
@@ -72,7 +72,7 @@ export default function ArchivosEscaneadosTab({ idPaciente }: Props) {
 	if (!id) {
 		return (
 			<div className={styles.contenedor}>
-				<p className={styles.ayuda}>Guardá el paciente para ver sus archivos escaneados.</p>
+				<p className={styles.ayuda}>Guardá el paciente para ver sus archivos adjuntos.</p>
 			</div>
 		);
 	}
@@ -82,9 +82,9 @@ export default function ArchivosEscaneadosTab({ idPaciente }: Props) {
 			{error && <p className={styles.error}>{error}</p>}
 
 			{cargando ? (
-				<p className={styles.ayuda}>Cargando archivos escaneados…</p>
+				<p className={styles.ayuda}>Cargando archivos adjuntos…</p>
 			) : documentos.length === 0 ? (
-				<p className={styles.ayuda}>El paciente no tiene archivos escaneados.</p>
+				<p className={styles.ayuda}>El paciente no tiene archivos adjuntos.</p>
 			) : (
 				<ul className={styles.lista}>
 					{documentos.map((doc) => (

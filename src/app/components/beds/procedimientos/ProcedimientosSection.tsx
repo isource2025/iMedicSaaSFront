@@ -140,6 +140,13 @@ export default function ProcedimientosSection({
 				{ label: 'Estado', value: r.Estado ?? '—' },
 				{ label: 'Profesionales', value: r.Profesionales || '—' },
 			],
+			profesional: r.Firmantes?.[0]
+				? {
+						nombre: r.Firmantes[0].nombre,
+						matricula: r.Firmantes[0].matricula ?? undefined,
+						idPersonal: r.Firmantes[0].valor ?? undefined,
+					}
+				: null,
 		}));
 
 		await exportToPDF({

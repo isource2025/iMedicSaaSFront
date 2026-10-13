@@ -13,6 +13,8 @@ export type EpicrisisPdfData = {
 	epicrisis?: string | null;
 	profesionalNombreCompleto?: string | null;
 	profesional?: number | string | null;
+	idPersonal?: number | string | null;
+	matricula?: number | string | null;
 	idSector?: string | null;
 	sectorDescripcion?: string | null;
 	numeroDocumento?: string | number | null;
@@ -209,7 +211,8 @@ export async function generarPDFEpicrisis(
 		doc,
 		await withPersonalFirma({
 			nombre: String(profesional),
-			matricula: data.profesional,
+			matricula: data.matricula ?? data.profesional,
+			idPersonal: data.idPersonal,
 		}),
 		y,
 	);
