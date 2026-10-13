@@ -13,6 +13,12 @@ import styles from "./consumoIa.module.css";
 
 const LIMITE = 50;
 
+const TIPOS_IA: Record<string, string> = {
+  EPICRISIS_IA: "Epicrisis IA",
+  RESUMEN_VISITA_IA: "Resumen de visita IA",
+  BOT_WHATSAPP: "Bot WhatsApp",
+};
+
 const ROTULO_PARTE: Record<string, string> = {
   sistema: "Prompt de sistema",
   definicionesHerramientas: "Definiciones de herramientas",
@@ -337,11 +343,11 @@ export default function ConsumoIaPage() {
                 mensajes.filas.map((m) => (
                   <tr key={m.id} className={m.error ? styles.filaError : ""}>
                     <td className={styles.nowrap}>{fechaCorta(m.fecha)}</td>
-                    <td>{m.nombre || `Personal ${m.actor ?? "?"}`}</td>
+                    <td>{m.nombre || (m.actor == null ? "—" : `Personal ${m.actor}`)}</td>
                     <td className={styles.pregunta} title={m.pregunta || ""}>
                       {m.tipo !== "CHAT" ? (
                         <span className={styles.badge}>
-                          {m.tipo === "EPICRISIS_IA" ? "Epicrisis IA" : m.tipo}
+                          {TIPOS_IA[m.tipo] || m.tipo}
                         </span>
                       ) : null}
                       {m.error ? (
