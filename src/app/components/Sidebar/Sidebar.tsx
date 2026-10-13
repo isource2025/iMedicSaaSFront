@@ -80,6 +80,7 @@ const menuItems: MenuItem[] = [
     id: 'internacion', moduloId: 'INTERNACION', label: 'Internación', icon: Bed,
     subItems: [
       { submoduloId: 'CAMAS',     label: 'Gestión de Camas',   path: '/dashboard/beds' },
+      { submoduloId: 'CAMAS',     label: 'Admisiones vigentes', path: '/dashboard/beds/vigentes' },
       { submoduloId: 'ESTUDIOS',  label: 'Bandeja de pedidos', path: '/dashboard/bandeja-pedidos' },
     ]
   },

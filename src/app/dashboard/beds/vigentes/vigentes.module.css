@@ -1,0 +1,302 @@
+.contenedor {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1.5rem;
+}
+
+.encabezado {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.titulo {
+	margin: 0;
+	font-size: 1.5rem;
+	color: #1e293b;
+}
+
+.subtitulo {
+	margin: 0.25rem 0 0;
+	color: #64748b;
+	font-size: 0.9rem;
+}
+
+.acciones {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.botonPrimario,
+.botonSecundario {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 1rem;
+	border-radius: 8px;
+	font-size: 0.9rem;
+	cursor: pointer;
+}
+
+.botonPrimario {
+	border: none;
+	background: var(--pantone-311c, #0ea5b7);
+	color: #fff;
+}
+
+.botonSecundario {
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #334155;
+}
+
+.botonPrimario:disabled,
+.botonSecundario:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.filtros {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.select,
+.input {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	font-size: 0.9rem;
+	background: #fff;
+}
+
+.input {
+	flex: 1;
+	min-width: 240px;
+}
+
+.total {
+	color: #64748b;
+	font-size: 0.85rem;
+}
+
+.error {
+	margin: 0;
+	color: #b91c1c;
+}
+
+.vacio {
+	color: #64748b;
+}
+
+.cargando {
+	position: relative;
+	min-height: 200px;
+}
+
+.grupo {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.grupoTitulo {
+	margin: 0;
+	font-size: 1rem;
+	color: #1e293b;
+}
+
+.grupoTitulo span {
+	font-weight: normal;
+	color: #64748b;
+}
+
+.tablaWrap {
+	overflow-x: auto;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.tabla {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+
+.tabla th,
+.tabla td {
+	padding: 0.5rem 0.65rem;
+	text-align: left;
+	vertical-align: top;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.tabla th {
+	background: #f8fafc;
+	color: #475569;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.cama {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.meta {
+	color: #94a3b8;
+	font-size: 0.75rem;
+}
+
+.tarjetas {
+	display: none;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.tarjeta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+}
+
+.tarjetaCabecera {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+}
+
+.tarjetaCama {
+	flex-shrink: 0;
+	min-width: 2.75rem;
+	padding: 0.35rem 0.5rem;
+	border-radius: 8px;
+	background: #e0f2fe;
+	color: #0369a1;
+	font-weight: 700;
+	text-align: center;
+}
+
+.tarjetaPaciente {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	font-size: 0.92rem;
+	color: #1e293b;
+	word-break: break-word;
+}
+
+.tarjetaDias {
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-weight: 700;
+	font-size: 1rem;
+	color: #334155;
+	line-height: 1.1;
+}
+
+.tarjetaDias small {
+	font-weight: normal;
+	font-size: 0.65rem;
+	color: #94a3b8;
+}
+
+.tarjetaDiagnostico {
+	margin: 0;
+	font-size: 0.85rem;
+	color: #334155;
+}
+
+.tarjetaDatos {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.2rem 0.75rem;
+	margin: 0;
+	font-size: 0.8rem;
+}
+
+.tarjetaDatos dt {
+	color: #64748b;
+}
+
+.tarjetaDatos dd {
+	margin: 0;
+	color: #1e293b;
+	word-break: break-word;
+}
+
+@media (max-width: 768px) {
+	.contenedor {
+		padding: 1rem 0.75rem;
+		gap: 0.75rem;
+	}
+
+	.titulo {
+		font-size: 1.25rem;
+	}
+
+	.subtitulo {
+		font-size: 0.82rem;
+	}
+
+	.acciones {
+		width: 100%;
+	}
+
+	.botonPrimario,
+	.botonSecundario {
+		flex: 1;
+		justify-content: center;
+		padding: 0.65rem 1rem;
+	}
+
+	.filtros {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.5rem;
+	}
+
+	.select,
+	.input {
+		width: 100%;
+		min-width: 0;
+		font-size: 16px;
+		padding: 0.65rem 0.75rem;
+	}
+
+	.total {
+		align-self: flex-end;
+	}
+
+	.grupoTitulo {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		padding: 0.4rem 0;
+		background: #f8fafc;
+	}
+
+	.tablaWrap {
+		display: none;
+	}
+
+	.tarjetas {
+		display: flex;
+	}
+}

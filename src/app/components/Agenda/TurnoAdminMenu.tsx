@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Eye } from 'lucide-react';
 import type { TurnoAdminRow } from '@/app/services/turnosAdminService';
 import {
 	opcionesMenuTurnoAdmin,
@@ -95,9 +96,10 @@ export default function TurnoAdminMenu({
 					<li key={opt.id}>
 						<button
 							type='button'
-							className={`${styles.item} ${opt.danger ? styles.itemDanger : ''}`}
+							className={`${styles.item} ${opt.danger ? styles.itemDanger : ''} ${opt.destacado ? styles.itemDestacado : ''}`}
 							onClick={() => onAction(opt.id, row)}
 						>
+							{opt.destacado ? <Eye size={16} aria-hidden='true' /> : null}
 							<span>{opt.label}</span>
 						</button>
 					</li>
