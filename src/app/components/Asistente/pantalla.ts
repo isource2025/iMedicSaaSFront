@@ -2,6 +2,7 @@
  * Lee lo que el usuario tiene a la vista (formularios, pestañas, selección)
  * para darle contexto al asistente y poder escribir en los campos.
  */
+import { erroresRecientes, type ErrorApiReciente } from "./erroresRecientes";
 
 export type CampoPantalla = {
   id: string;
@@ -32,6 +33,9 @@ export type PantallaSnapshot = {
   campos: CampoPantalla[];
   internado: InternadoPantalla | null;
   internadosVisibles: InternadoPantalla[];
+  errores: ErrorApiReciente[];
+  alertas: string[];
+  deshabilitados: string[];
 };
 
 const ATTR = "data-asistente-campo";
@@ -227,7 +231,27 @@ export function leerPantalla(): PantallaSnapshot {
     campos,
     internado: internadosVisibles[0] || null,
     internadosVisibles,
+    errores: erroresRecientes(),
+    alertas: textos(document, '[role="alert"], [role="alertdialog"], [aria-live="assertive"]', 5, 200),
+    deshabilitados: botonesDeshabilitados(root === document.body ? main || root : root),
   };
+}
+
+/** «No me deja» suele ser un botón en gris: va el texto y, si lo tiene, el motivo del title. */
+function botonesDeshabilitados(root: ParentNode): string[] {
+  const out: string[] = [];
+  for (const el of Array.from(
+    root.querySelectorAll('button[disabled], button[aria-disabled="true"], [role="button"][aria-disabled="true"]'),
+  )) {
+    if (out.length >= 10) break;
+    if (!fueraDelAsistente(el) || !visible(el)) continue;
+    const texto = limpio(el.textContent || el.getAttribute("aria-label"), 50);
+    if (!texto) continue;
+    const motivo = limpio(el.getAttribute("title"), 80);
+    const linea = motivo ? `${texto} (${motivo})` : texto;
+    if (!out.includes(linea)) out.push(linea);
+  }
+  return out;
 }
 
 function internadosDom(): InternadoPantalla[] {

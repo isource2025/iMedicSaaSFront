@@ -6,7 +6,8 @@ import {
 	isSessionIdleOpen,
 	notifySessionIdle,
 } from '@/app/utils/sessionIdle';
-import { detalleDeError } from '@/app/utils/apiError';
+import { detalleDeError, mensajeDeError } from '@/app/utils/apiError';
+import { registrarErrorApi } from '@/app/components/Asistente/erroresRecientes';
 import { repararStringsDeepUi } from '@/app/utils/repararTextoUi';
 
 const envApiBase = getEnvApiBaseUrl();
@@ -94,6 +95,16 @@ axiosInstance.interceptors.response.use(
 	(error: any) => {
 		// Handle different error scenarios
 		const { response } = error;
+		const canceladoAntes =
+			error?.name === 'CanceledError' || error?.name === 'AbortError' || String(error?.code || '') === 'ERR_CANCELED';
+		if (!canceladoAntes) {
+			registrarErrorApi({
+				metodo: error?.config?.method,
+				url: error?.config?.url,
+				status: response?.status,
+				mensaje: mensajeDeError(error, ''),
+			});
+		}
 
 		if (response) {
 			if (response.status === 401) {

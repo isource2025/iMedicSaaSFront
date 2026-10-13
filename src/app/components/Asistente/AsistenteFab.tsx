@@ -103,6 +103,7 @@ const NOMBRES_HERRAMIENTA: Record<string, string> = {
   escribir_en_campo: "Redactando para el campo",
   navegar: "Abriendo la pantalla",
   buscar_en_manual: "Buscando en el manual",
+  diagnosticar: "Revisando por qué no anda",
   buscar_internado: "Buscando al internado",
   ver_estudios: "Revisando los estudios",
   ver_evoluciones: "Leyendo las evoluciones",
