@@ -7,6 +7,8 @@ import { erroresRecientes, type ErrorApiReciente } from "./erroresRecientes";
 export type CampoPantalla = {
   id: string;
   etiqueta: string;
+  /** Sección del formulario donde está («Datos del paciente», «Acompañantes › #2»). */
+  grupo: string | null;
   tipo: string;
   multilinea: boolean;
   valor: string;
@@ -139,6 +141,52 @@ function etiquetaDe(el: HTMLElement): string {
   return limpio(el.getAttribute("name")) || "Campo";
 }
 
+const TITULOS =
+  'legend, h1, h2, h3, h4, h5, h6, [role="heading"], [data-asistente-titulo]';
+const GRUPO_ATTR = "data-asistente-grupo";
+const FILA_ATTR = "data-asistente-fila";
+
+function precede(a: Element, b: Element) {
+  return Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
+/** Último título dentro de `anc` que está antes de `el` (el más cercano por arriba). */
+function tituloPrevio(anc: Element, el: Element): string | null {
+  let ultimo: Element | null = null;
+  for (const t of Array.from(anc.querySelectorAll(TITULOS))) {
+    if (t.contains(el) || !precede(t, el) || !visible(t)) continue;
+    ultimo = t;
+  }
+  return ultimo ? limpio(ultimo.getAttribute("data-asistente-titulo") || ultimo.textContent, 50) || null : null;
+}
+
+/**
+ * Sección del campo: `data-asistente-grupo` explícito o los títulos de las cajas que lo
+ * contienen (de afuera hacia adentro, hasta 2), más el número de fila si es una lista repetida.
+ */
+function grupoDe(el: HTMLElement, root: Element): string | null {
+  const explicito = el.closest(`[${GRUPO_ATTR}]`);
+  const partes: string[] = [];
+  if (explicito) partes.push(limpio(explicito.getAttribute(GRUPO_ATTR), 50));
+  else {
+    let p: Element | null = el.parentElement;
+    const vistos = new Set<string>();
+    while (p && p !== document.body && partes.length < 2) {
+      const t = tituloPrevio(p, el);
+      if (t && !vistos.has(t) && t !== etiquetaDe(el)) {
+        vistos.add(t);
+        partes.unshift(t);
+      }
+      if (p === root) break;
+      p = p.parentElement;
+    }
+  }
+  const fila = el.closest(`[${FILA_ATTR}]`)?.getAttribute(FILA_ATTR);
+  if (fila) partes.push(`#${fila}`);
+  const out = partes.filter(Boolean).join(" › ");
+  return out || null;
+}
+
 function raizActiva(): Element {
   const dialogos = Array.from(
     document.querySelectorAll(
@@ -173,7 +221,7 @@ export function leerPantalla(): PantallaSnapshot {
     root.querySelectorAll('textarea, input, [contenteditable="true"]'),
   );
   for (const el of nodos) {
-    if (campos.length >= 30) break;
+    if (campos.length >= 40) break;
     if (!fueraDelAsistente(el) || !esEditable(el) || !visible(el)) continue;
     const h = el as HTMLElement;
     let id = h.getAttribute(ATTR);
@@ -192,6 +240,7 @@ export function leerPantalla(): PantallaSnapshot {
     campos.push({
       id,
       etiqueta: etiquetaDe(h),
+      grupo: grupoDe(h, root),
       tipo:
         h instanceof HTMLInputElement
           ? h.type || "text"

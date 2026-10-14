@@ -168,6 +168,7 @@ export default function CerrarTurnoModal({
 							<input
 								type='search'
 								placeholder='Buscar por código u descripción…'
+								aria-label='Diagnóstico CIE-10 del turno (buscar)'
 								value={
 									diagSel ? `${diagSel.codigo} — ${diagSel.descripcion}` : diagQuery
 								}

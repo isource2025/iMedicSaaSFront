@@ -309,6 +309,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
                             className={styles.cellInput}
                             disabled={saving}
                             placeholder="Nombre"
+                            aria-label={`Fila ${index + 1} · Parámetro`}
                             required
                           />
                         </td>
@@ -320,6 +321,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
                             className={`${styles.cellInput} ${styles.cellInputResult}`}
                             disabled={saving}
                             placeholder="Valor"
+                            aria-label={`Fila ${index + 1}${param.NombreParametro ? ` (${param.NombreParametro})` : ''} · Resultado`}
                             required
                           />
                         </td>
@@ -331,6 +333,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
                             className={styles.cellInput}
                             disabled={saving}
                             placeholder="g/dl"
+                            aria-label={`Fila ${index + 1}${param.NombreParametro ? ` (${param.NombreParametro})` : ''} · Unidad`}
                           />
                         </td>
                         <td>
@@ -341,6 +344,7 @@ export default function LabFormModal({ numeroVisita, ocrResult, examenExistente,
                             className={styles.cellInput}
                             disabled={saving}
                             placeholder="13-17"
+                            aria-label={`Fila ${index + 1}${param.NombreParametro ? ` (${param.NombreParametro})` : ''} · Referencia`}
                           />
                         </td>
                         <td className={styles.colAction}>

@@ -122,7 +122,7 @@ export default function AcompanantesNovedadesAlta({
       {error ? <p className={styles.errorInline}>{error}</p> : null}
 
       <h3 className={styles.subBloqueTitulo}>Acompañantes</h3>
-      <div className={styles.grillaCampos}>
+      <div className={styles.grillaCampos} data-asistente-grupo="Acompañante (familiar o contacto, no el paciente)">
         <label className={`${styles.campo} ${styles.campoAncho}`}>
           <span>Apellido y nombre</span>
           <input

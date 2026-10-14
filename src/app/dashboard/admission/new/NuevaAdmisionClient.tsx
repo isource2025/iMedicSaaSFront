@@ -873,6 +873,7 @@ export default function NuevaAdmisionClient() {
                       : ''
                 }
                 placeholder="Buscar por código CIE-10 o descripción"
+                aria-label="Diagnóstico de ingreso (buscar CIE-10)"
                 disabled={bloqueado}
                 onFocus={() => {
                   setDiagAbierto(true);
@@ -936,6 +937,7 @@ export default function NuevaAdmisionClient() {
                       type="text"
                       value={activo ? profBusqueda : nombre}
                       placeholder="Buscar por apellido o matrícula"
+                      aria-label={`${etiquetas[campo]} (buscar por apellido o matrícula)`}
                       disabled={bloqueado}
                       onFocus={() => {
                         setProfCampo(campo);

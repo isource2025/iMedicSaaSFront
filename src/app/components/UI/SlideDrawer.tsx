@@ -71,7 +71,7 @@ export default function SlideDrawer({
 					</button>
 				</div>
 
-				<div className={styles.drawerBody} data-modal-root="true" role="dialog">{children}</div>
+				<div className={styles.drawerBody} data-modal-root="true" role="dialog" aria-label={title} data-asistente-grupo={title}>{children}</div>
 
 				{footer && <div className={styles.drawerFooter}>{footer}</div>}
 			</div>

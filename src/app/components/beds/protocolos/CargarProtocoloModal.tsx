@@ -844,6 +844,7 @@ export default function CargarProtocoloModal({
 														inputMode="numeric"
 														maxLength={3}
 														className={styles.input}
+														aria-label={`Práctica ${idx + 1} (${p.practica.descripcion}) · Cantidad`}
 														value={p.cantidad}
 														disabled={p.facturada}
 														onChange={(e) =>
@@ -874,6 +875,7 @@ export default function CargarProtocoloModal({
 												value={p.query}
 												onChange={(e) => onPracticaQuery(p.key, e.target.value)}
 												placeholder="Código o descripción de la práctica…"
+												aria-label={`Práctica ${idx + 1} · buscar código o descripción`}
 												autoComplete="off"
 												autoFocus={idx === practicas.length - 1}
 											/>
@@ -971,7 +973,7 @@ export default function CargarProtocoloModal({
 											value={m.cantidad}
 											onChange={(e) => updMed(m.key, { cantidad: e.target.value })}
 											placeholder="Cant."
-											aria-label="Cantidad"
+											aria-label={`${m.descripcion} · Cantidad`}
 										/>
 										<input
 											className={`${styles.input} ${styles.medUnidad}`}
@@ -979,7 +981,7 @@ export default function CargarProtocoloModal({
 											onChange={(e) => updMed(m.key, { unidad: e.target.value })}
 											placeholder="Unidad"
 											maxLength={20}
-											aria-label="Unidad"
+											aria-label={`${m.descripcion} · Unidad`}
 										/>
 										<button
 											type="button"

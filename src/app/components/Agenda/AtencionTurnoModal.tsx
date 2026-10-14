@@ -749,7 +749,12 @@ export default function AtencionTurnoModal({
 										const servicioUnico = matches.length === 1;
 										const color = colorPorIndice(idx);
 										return (
-										<article key={p.key} className={styles.itemCard} style={{ borderTopColor: color }}>
+										<article
+											key={p.key}
+											className={styles.itemCard}
+											style={{ borderTopColor: color }}
+											data-asistente-grupo={`Estudio ${idx + 1}: ${p.tipo.descripcion}`}
+										>
 											<div className={styles.itemCardHeader}>
 												<div className={styles.itemCardHead}>
 													<span

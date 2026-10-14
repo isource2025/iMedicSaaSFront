@@ -236,7 +236,7 @@ export default function AdmissionAcompanantesNovedades({
           Personas que acompañan al paciente durante esta visita.
         </p>
 
-        <div className={styles.formGrid}>
+        <div className={styles.formGrid} data-asistente-grupo="Acompañante (familiar o contacto, no el paciente)">
           <label className={styles.field}>
             <span className={styles.label}>Apellido y nombre *</span>
             <input
