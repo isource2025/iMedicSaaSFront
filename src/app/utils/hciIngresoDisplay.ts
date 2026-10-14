@@ -110,14 +110,7 @@ function obtenerTituloSeccion(fieldKey: string): string | null {
 /** Palabras conocidas para partir claves ALLCAPS (SV_PESOACTUAL → Peso actual). */
 const HCI_LABEL_WORDS = [
   'HEMIDIAFRAGMAS',
-  'SENOSCOSTOFRENICOS',
-  'CAMPOSPULMONARES',
-  'CIRCULACIONCOLATERAL',
-  'ESTADONUTRICIONAL',
-  'IMPRESIONGENERAL',
-  'PESOHABITUAL',
-  'PESOACTUAL',
-  'SILUETACARDIO',
+  'COSTOFRENICOS',
   'CONCLUSIONES',
   'LINFANGITIS',
   'ADENOMEGALIAS',
@@ -137,12 +130,31 @@ const HCI_LABEL_WORDS = [
   'PESO',
 ];
 
+/** Las columnas de imHCI no llevan tildes: se restauran para mostrar. */
+const ACENTOS: Record<string, string> = {
+  auscultacion: 'auscultación',
+  inspeccion: 'inspección',
+  palpacion: 'palpación',
+  percusion: 'percusión',
+  decubito: 'decúbito',
+  impresion: 'impresión',
+  circulacion: 'circulación',
+  costofrenicos: 'costofrénicos',
+  diagnostico: 'diagnóstico',
+  torax: 'tórax',
+  linfatico: 'linfático',
+  organos: 'órganos',
+  musculos: 'músculos',
+  region: 'región',
+};
+
 function titleWords(s: string): string {
   return s
     .toLowerCase()
     .split(/\s+/)
     .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((w) => ACENTOS[w] || w)
+    .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(' ');
 }
 

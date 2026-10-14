@@ -36,6 +36,12 @@ export type IndicacionRow = {
     vigenteDesde?: string;
     horaCarga?: string;
     tipo?: string;
+    /** Descripción del tipo (imInterTipoIndicacion), p. ej. "MEDICACION ENDOVENOSA". */
+    tipoDescripcion?: string | null;
+    tipoUnidad?: string | null;
+    matricula?: string | number | null;
+    idPersonal?: string | number | null;
+    especialidad?: string | null;
     promptCodigo?: string;
     ordenTipo?: number;
     nro?: string | number;

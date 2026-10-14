@@ -14,7 +14,7 @@ import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFIndicaciones } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import ResultadoReindicarModal, {
     ReindicarItemTrack,
@@ -131,6 +131,10 @@ type IndicacionDTO = {
     horaCarga?: string;
     nro?: number | string;
     tipo?: string,
+    tipoDescripcion?: string | null;
+    tipoUnidad?: string | null;
+    idPersonal?: string | number | null;
+    especialidad?: string | null;
     idSector?: string;
     medicamento?: string;
     ultimaAplicacion?: string;
@@ -249,6 +253,10 @@ export default function IndicacionesSection({
             horaCarga: x.horaCarga,
             nro: x.nro,
             tipo: x.tipo,
+            tipoDescripcion: x.tipoDescripcion ?? null,
+            tipoUnidad: x.tipoUnidad ?? null,
+            idPersonal: x.idPersonal ?? null,
+            especialidad: x.especialidad ?? null,
             promptCodigo: (x as any).promptCodigo,
             ordenTipo: (x as any).ordenTipo,
             idSector: x.idSector,
@@ -619,31 +627,34 @@ export default function IndicacionesSection({
         if (option === 'pdf') {
             const empresaInfo = await obtenerInfoEmpresa();
 
-            const parts = rows.map((row, idx) => ({
-                title: `Indicación ${idx + 1}${row.nro != null ? ` · N° ${row.nro}` : ''}`,
-                fields: [
-                    ...(row.suspendida ? [{ label: 'Estado', value: 'Dejada sin efecto' }] : []),
-                    { label: 'Tipo', value: row.tipo || '—' },
-                    { label: 'Descripción', value: row.descripcion || '—' },
-                    { label: 'Cantidad', value: row.cantidad ?? '—' },
-                    { label: 'Frecuencia', value: row.frecuencia || '—' },
-                    { label: 'Observaciones', value: row.observaciones || '—' },
-                    { label: 'Sector', value: row.idSector || '—' },
-                ],
-                profesional: {
-                    nombre: row.fullName || 'PROFESIONAL',
-                    matricula: (row as any).matricula ?? undefined,
-                },
-            }));
-
-            await exportToPDF({
-                title: mostrarSuspendidas ? 'Indicaciones Médicas dejadas sin efecto' : 'Indicaciones Médicas',
-                subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                parts,
-                fileName: `indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-                orientation: 'portrait',
+            await generarPDFIndicaciones({
+                title: mostrarSuspendidas ? 'Indicaciones sin efecto' : 'Indicaciones médicas',
+                items: rows.map((row) => ({
+                    fecha: row.vigenteDesde,
+                    hora: row.horaCarga,
+                    tipo: row.tipoDescripcion || row.tipo,
+                    descripcion: row.descripcion,
+                    cantidad: row.cantidad,
+                    unidad: row.tipoUnidad,
+                    frecuencia: row.frecuencia,
+                    intervalo: row.intervalo,
+                    observaciones: row.observaciones,
+                    adicionales: (row.indicacionesHijas ?? []).map((h) => ({
+                        descripcion: h.descripcion || h.medicamento,
+                        cantidad: h.cantidad,
+                        unidad: h.tipoUnidad,
+                        forma: h.formaAdicional,
+                    })),
+                    profesional: {
+                        nombre: row.fullName || undefined,
+                        matricula: row.matricula ?? undefined,
+                        idPersonal: row.idPersonal ?? undefined,
+                        especialidad: row.especialidad || undefined,
+                    },
+                })),
+                fileName: `indicaciones_${numeroVisita ?? ''}_${selectedDate?.toISOString().split('T')[0] ?? ''}.pdf`,
                 empresaInfo,
-                patientInfo: {
+                patient: {
                     numeroVisita: numeroVisita || undefined,
                     nombre: patientName,
                     numeroDocumento: documentoPaciente,

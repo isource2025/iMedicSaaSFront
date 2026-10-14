@@ -20,6 +20,12 @@ export interface DatosFiliatoriosPaciente {
 	PacienteTelefono?: string | null;
 	PacienteTelefonoAlternativo?: string | null;
 	PacienteEmail?: string | null;
+	/** Sólo en la HC de ingreso (descripciones ya resueltas de los catálogos). */
+	PacienteEstadoCivil?: string | null;
+	PacienteOcupacion?: string | null;
+	PacienteProvincia?: string | null;
+	PacienteNacionalidad?: string | null;
+	PacienteCodigoPostal?: string | null;
 	/** Sólo en pedidos e interconsultas. */
 	TipoAtencion?: 'AMBULATORIO' | 'INTERNADO' | string | null;
 	/** Sólo en pedidos e interconsultas. */

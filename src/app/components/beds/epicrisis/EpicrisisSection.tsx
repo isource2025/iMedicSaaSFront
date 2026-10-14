@@ -9,10 +9,9 @@ import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { epicrisisService } from '../../../services/epicrisisService';
 import EpicrisisTable, { EpicrisisRow } from './EpicrisisTable';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
-import { exportToPDF, generarPDFEpicrisis } from '../../../utils/pdfExportLazy';
+import { generarPDFEpicrisis } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { usePermiso } from '@/app/hooks/usePermiso';
-import { formatSqlDate } from '../../../utils/dateUtils';
 import styles from '../evoluciones/EvolucionesSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -24,12 +23,16 @@ export default function EpicrisisSection({
 	documentoPaciente,
 	bedSector,
 	patientLocation,
+	fechaIngreso,
+	horaIngreso,
 }: {
 	numeroVisita: number | null;
 	patientName?: string;
 	documentoPaciente?: string;
 	bedSector?: string;
 	patientLocation?: string;
+	fechaIngreso?: string;
+	horaIngreso?: string;
 }) {
 	const { activeSection } = useBedDetail();
 	const { puede } = usePermiso();
@@ -68,12 +71,16 @@ export default function EpicrisisSection({
 			idSector: x.IdSector ?? x.idSector,
 			sectorDescripcion: x.SectorDescripcion ?? x.sectorDescripcion,
 			profesional: x.Profecional ?? x.profesional,
+			idPersonal: x.IdPersonal ?? x.idPersonal ?? undefined,
+			matricula: x.Matricula ?? x.matricula ?? undefined,
 			profesionalNombreCompleto:
 				x.ProfesionalNombreCompleto ?? x.profesionalNombreCompleto,
 			epicrisis: x.Epicrisis ?? x.epicrisis ?? '',
 			numeroDocumento: x.NumeroDocumento ?? x.numeroDocumento,
 			diagnostico: x.Diagnostico ?? x.diagnostico ?? '',
 			diagnosticoText: x.DiagnosticoText ?? x.diagnosticoText ?? '',
+			diagnosticoDescripcion: x.DiagnosticoDescripcion ?? x.diagnosticoDescripcion ?? undefined,
+			especialidad: x.EspecialidadDescripcion ?? x.especialidad ?? undefined,
 		}));
 	}, [data]);
 
@@ -99,8 +106,10 @@ export default function EpicrisisSection({
 			documento: documentoPaciente,
 			numeroVisita: numeroVisita ?? undefined,
 			ubicacion: patientLocation,
+			fechaIngreso,
+			horaIngreso,
 		}),
-		[patientName, documentoPaciente, numeroVisita, patientLocation],
+		[patientName, documentoPaciente, numeroVisita, patientLocation, fechaIngreso, horaIngreso],
 	);
 
 	const selectedRow = useMemo(
@@ -124,44 +133,7 @@ export default function EpicrisisSection({
 	const handleExport = async (option: ExportOption, _data: EpicrisisRow[]) => {
 		if (option !== 'pdf') return;
 		const empresaInfo = await obtenerInfoEmpresa();
-		const parts = rows.map((row, idx) => ({
-			title: `Epicrisis ${idx + 1}`,
-			fields: [
-				{
-					label: 'Fecha',
-					value: row.fecha
-						? formatSqlDate(row.fecha, { showTime: false, showDate: true, showYear: true })
-						: '—',
-				},
-				{ label: 'Hora', value: row.hora || '—' },
-				{
-					label: 'Diagnóstico',
-					value: [row.diagnostico, row.diagnosticoText].filter(Boolean).join(' — ') || '—',
-				},
-				{ label: 'Sector', value: row.sectorDescripcion || row.idSector || '—' },
-			],
-			textLabel: 'Epicrisis',
-			text: row.epicrisis || '—',
-			profesional: {
-				nombre: row.profesionalNombreCompleto || 'PROFESIONAL',
-				matricula: row.profesional ?? undefined,
-			},
-		}));
-
-		await exportToPDF({
-			title: 'Epicrisis',
-			subtitle: numeroVisita ? `Visita: ${numeroVisita}` : undefined,
-			parts,
-			fileName: `epicrisis_${numeroVisita || 'visita'}.pdf`,
-			orientation: 'portrait',
-			empresaInfo,
-			patientInfo: {
-				numeroVisita: numeroVisita || undefined,
-				nombre: patientName,
-				numeroDocumento: documentoPaciente,
-				ubicacion: patientLocation,
-			},
-		});
+		await generarPDFEpicrisis(rows, patientInfo, empresaInfo, `epicrisis_${numeroVisita || 'visita'}.pdf`);
 	};
 
 	if (activeSection !== 'epicrisis') return null;

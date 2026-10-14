@@ -13,7 +13,7 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFEvoluciones } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 type EvolucionDTO = {
@@ -212,32 +212,22 @@ export default function EvolucionesSection({
         if (option === 'pdf') {
             const empresaInfo = await obtenerInfoEmpresa();
 
-            const parts = rows.map((row, idx) => ({
-                title: `Evolución ${idx + 1}`,
-                fields: [
-                    { label: 'Fecha', value: row.fechaEv || '—' },
-                    { label: 'Hora', value: row.horaEv || '—' },
-                    { label: 'Sector', value: row.idSector || '—' },
-                    { label: 'Especialidad', value: row.especialidadDescripcion || '—' },
-                ],
-                textLabel: 'Evolución',
-                text: row.evolucion || '—',
-                profesional: {
-                    nombre: row.profesionalNombreCompleto || 'PROFESIONAL',
-                    matricula: row.matricula ?? undefined,
-                    idPersonal: row.idPersonal ?? undefined,
-                    especialidad: row.especialidadDescripcion || undefined,
-                },
-            }));
-
-            await exportToPDF({
-                title: 'Evoluciones Médicas',
-                subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                parts,
-                fileName: `evoluciones_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-                orientation: 'portrait',
+            await generarPDFEvoluciones({
+                title: 'Evoluciones',
+                items: rows.map((row) => ({
+                    fecha: row.fechaEv,
+                    hora: row.horaEv,
+                    texto: row.evolucion,
+                    profesional: {
+                        nombre: row.profesionalNombreCompleto || undefined,
+                        matricula: row.matricula ?? undefined,
+                        idPersonal: row.idPersonal ?? undefined,
+                        especialidad: row.especialidadDescripcion || undefined,
+                    },
+                })),
+                fileName: `evoluciones_${numeroVisita ?? ''}_${selectedDate?.toISOString().split('T')[0] ?? ''}.pdf`,
                 empresaInfo,
-                patientInfo: {
+                patient: {
                     numeroVisita: numeroVisita || undefined,
                     nombre: patientName,
                     numeroDocumento: documentoPaciente,

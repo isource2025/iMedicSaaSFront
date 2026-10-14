@@ -29,6 +29,9 @@ export type ProfesionalEnProtocolo = {
 	valorPersonal: number;
 	matricula?: number | null;
 	apellidoNombre?: string | null;
+	/** imPersonal.Valor resuelto (para buscar la firma). */
+	idPersonal?: number | null;
+	especialidad?: string | null;
 	funcion: number;
 	funcionNombre: string;
 };
@@ -92,6 +95,9 @@ export type ProtocoloClinico = {
 	fechaHoraFin: string | null;
 	diagnosticoPre: string | null;
 	diagnosticoPos: string | null;
+	/** Descripción CIE del código (imDiagnosticos), si se encontró. */
+	diagnosticoPreDescripcion?: string | null;
+	diagnosticoPosDescripcion?: string | null;
 	tecnica: string | null;
 	texto: string;
 	estado: string | null;

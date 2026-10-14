@@ -9,6 +9,7 @@ export type FacPracticaVisita = {
 	HoraPracticaInicio?: string | null;
 	HoraPracticaFin?: string | null;
 	ValorSector?: string | null;
+	SectorDescripcion?: string | null;
 	Estado?: string | number | null;
 	Factura?: string | number | null;
 	Autorizada?: string | number | null;
@@ -18,5 +19,6 @@ export type FacPracticaVisita = {
 	IdProtocolo?: number | null;
 	SolicitanteNombre?: string | null;
 	Realizadores?: string[];
+	Firmantes?: Array<{ nombre?: string; matricula?: number | null; valor?: number | null }>;
 	Profesionales?: string | null;
 };

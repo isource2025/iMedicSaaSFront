@@ -540,7 +540,8 @@ export default function HCIngresoSection({
                 selectedRecord,
                 patientName || 'N/A',
                 documentoPaciente || 'N/A',
-                empresaInfo
+                empresaInfo,
+                patientLocation
             );
         }
     };

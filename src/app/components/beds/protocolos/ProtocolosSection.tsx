@@ -15,7 +15,7 @@ import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFProtocolos } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
@@ -23,6 +23,11 @@ import tableStyles from '../shared/BedTable.module.css';
 type Props = {
 	numeroVisita: number | null;
 	sector?: string | null;
+	patientName?: string;
+	patientLocation?: string;
+	documentoPaciente?: string;
+	fechaIngreso?: string;
+	horaIngreso?: string;
 };
 
 function formatFecha(v?: string | null) {
@@ -111,7 +116,15 @@ function buildFields(p: ProtocoloClinico) {
 	];
 }
 
-export default function ProtocolosSection({ numeroVisita, sector }: Props) {
+export default function ProtocolosSection({
+	numeroVisita,
+	sector,
+	patientName,
+	patientLocation,
+	documentoPaciente,
+	fechaIngreso,
+	horaIngreso,
+}: Props) {
 	const { puede } = usePermiso();
 	const puedeCrear = puede('INTERNACION.PROTOCOLOS.CREAR');
 	const puedeEditar = puede('INTERNACION.PROTOCOLOS.EDITAR');
@@ -217,43 +230,18 @@ export default function ProtocolosSection({ numeroVisita, sector }: Props) {
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = filtered.map((r, idx) => {
-				const practicas = r.practicas || [];
-				return {
-					title: `Protocolo ${idx + 1}${r.numeroProtocolo ? ` · N° ${r.numeroProtocolo}` : ''}`,
-					fields: [
-						{ label: 'Fecha', value: formatFecha(r.fecha) },
-						{ label: 'Tipo', value: r.tipoDescripcion || r.tipoProtocolo || '—' },
-						{ label: 'Inicio', value: formatFecha(r.fechaHoraInicio) },
-						{ label: 'Fin', value: formatFecha(r.fechaHoraFin) },
-						...practicas.flatMap((prac, i) => [
-							{
-								label: practicas.length > 1 ? `Práctica ${i + 1}` : 'Práctica',
-								value: `${prac.descripcion || prac.codigoPractica} (${prac.codigoPractica}${
-									prac.cantidad > 1 ? ` ×${prac.cantidad}` : ''
-								})`,
-							},
-							{ label: practicas.length > 1 ? `Equipo ${i + 1}` : 'Equipo', value: equipoDe(prac) },
-						]),
-						{ label: 'Medicamentos', value: resumenMedicamentos(r) },
-						{ label: 'Técnica', value: r.tecnica || '—' },
-						{ label: 'Estado', value: r.estado || '—' },
-					],
-					profesional: {
-						nombre: r.operadorNombre || 'PROFESIONAL',
-						matricula: r.operadorMatricula ?? r.idOperador ?? undefined,
-					},
-				};
-			});
-
-			await exportToPDF({
-				title: 'Protocolos',
-				subtitle: `Visita: ${numeroVisita}`,
-				parts,
-				fileName: `protocolos_${numeroVisita}.pdf`,
-				orientation: 'portrait',
+			await generarPDFProtocolos({
+				protocolos: filtered,
 				empresaInfo,
-				patientInfo: { numeroVisita: numeroVisita || undefined },
+				patient: {
+					numeroVisita: numeroVisita || undefined,
+					nombre: patientName,
+					numeroDocumento: documentoPaciente,
+					ubicacion: patientLocation,
+					fechaIngreso,
+					horaIngreso,
+				},
+				fileName: `protocolos_${numeroVisita}.pdf`,
 			});
 		}
 	};
