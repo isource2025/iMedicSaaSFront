@@ -2,6 +2,17 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EmpresaInfo } from '../services/empresaService';
 import {
+	PDF_CONTENT_TOP,
+	PDF_FOOTER_SPACE,
+	PDF_MARGIN_X,
+	PDF_COLORS,
+	drawDocumentFooters,
+	drawDocumentHeader,
+	drawRunningHeaders,
+	type PDFHeaderOptions,
+	type PDFHeaderPatient,
+} from './pdfHeader';
+import {
 	getFirmaParaPdf,
 	getPersonalFirma,
 	getPersonalFirmaByIdPublic,
@@ -38,15 +49,7 @@ export interface PDFExportOptions {
 	fileName?: string;
 	orientation?: 'portrait' | 'landscape';
 	empresaInfo?: EmpresaInfo;
-	patientInfo?: {
-		numeroVisita?: string | number;
-		nombre?: string;
-		documento?: string;
-		numeroDocumento?: string;
-		ubicacion?: string;
-		fechaIngreso?: string;
-		horaIngreso?: string;
-	};
+	patientInfo?: PDFHeaderPatient;
 	/** Firma global al final (solo si no hay `parts`). */
 	profesionalInfo?: ProfesionalFirmaInfo;
 	columnStyles?: Record<number, { cellWidth?: number | 'auto' | 'wrap'; minCellWidth?: number }>;
@@ -250,11 +253,19 @@ export async function withPersonalFirma(
 	return attachFirma(info, firmas);
 }
 
-function ensureSpace(doc: jsPDF, y: number, needed: number, bottom = 18): number {
+/** Igual que `withPersonalFirma` pero para varios profesionales (una búsqueda por persona). */
+export async function withPersonalFirmas<T extends ProfesionalFirmaInfo | null | undefined>(
+	infos: T[],
+): Promise<Array<ProfesionalFirmaInfo | null | undefined>> {
+	const firmas = await resolveFirmasFromPersonal(infos);
+	return infos.map((i) => attachFirma(i, firmas));
+}
+
+function ensureSpace(doc: jsPDF, y: number, needed: number, bottom = PDF_FOOTER_SPACE + 2): number {
 	const pageH = doc.internal.pageSize.getHeight();
 	if (y + needed > pageH - bottom) {
 		doc.addPage();
-		return 14;
+		return PDF_CONTENT_TOP;
 	}
 	return y;
 }
@@ -267,7 +278,7 @@ export async function drawProfesionalFirmaBlock(
 	doc: jsPDF,
 	profesional: ProfesionalFirmaInfo | null | undefined,
 	startY: number,
-	opts?: { align?: 'center' | 'left'; left?: number },
+	opts?: { align?: 'center' | 'left'; left?: number; lineW?: number },
 ): Promise<number> {
 	const info = normalizeProfesionalFirma(profesional);
 	if (!info) return startY;
@@ -275,10 +286,10 @@ export async function drawProfesionalFirmaBlock(
 	const pageWidth = doc.internal.pageSize.getWidth();
 	const align = opts?.align || 'center';
 	const imgH = 18;
-	const imgW = 52;
+	const lineW = opts?.lineW ?? 60;
+	const imgW = Math.min(52, lineW);
 	let y = ensureSpace(doc, startY, imgH + 28);
 
-	const lineW = 60;
 	const centerX = pageWidth / 2;
 	const leftX = opts?.left ?? 14;
 	const lineX = align === 'center' ? centerX - lineW / 2 : leftX;
@@ -325,193 +336,31 @@ export async function drawProfesionalFirmaBlock(
 	doc.line(lineX, y, lineX + lineW, y);
 
 	y += 5;
-	doc.setFontSize(9);
+	const nombre = String(info.nombre || '').toUpperCase();
+	const anchoNombre = lineW + 6;
+	let fontNombre = 9;
 	doc.setFont('helvetica', 'bold');
+	doc.setFontSize(fontNombre);
+	while (fontNombre > 7 && doc.getTextWidth(nombre) > anchoNombre) doc.setFontSize((fontNombre -= 0.5));
 	doc.setTextColor(0, 0, 0);
-	doc.text(String(info.nombre || '').toUpperCase(), textX, y, { align: textAlign });
+	const lineasNombre = doc.splitTextToSize(nombre, anchoNombre) as string[];
+	lineasNombre.forEach((l, i) => doc.text(l, textX, y + i * 3.6, { align: textAlign }));
+	y += (lineasNombre.length - 1) * 3.6;
 
 	y += 4;
 	doc.setFont('helvetica', 'normal');
 	doc.setFontSize(8);
-	if (info.matricula) {
-		doc.text(`Mat. ${info.matricula}`, textX, y, { align: textAlign });
+	doc.setTextColor(...PDF_COLORS.muted);
+	const detalle = [info.matricula && `Mat. ${info.matricula}`, info.especialidad?.toUpperCase()]
+		.filter(Boolean)
+		.join('  ·  ');
+	if (detalle) {
+		doc.text(detalle, textX, y, { align: textAlign });
 		y += 4;
 	}
-	if (info.especialidad) {
-		doc.text(info.especialidad.toUpperCase(), textX, y, { align: textAlign });
-		y += 4;
-	}
+	doc.setTextColor(0, 0, 0);
 
 	return y + 4;
-}
-
-function drawEmpresaHeader(
-	doc: jsPDF,
-	title: string,
-	empresaInfo?: EmpresaInfo,
-): number {
-	const pageWidth = doc.internal.pageSize.getWidth();
-	let currentY = 10;
-
-	doc.setDrawColor(0, 0, 0);
-	doc.setLineWidth(0.5);
-	doc.rect(10, currentY, pageWidth - 20, 35);
-
-	doc.setFillColor(240, 240, 240);
-	doc.rect(12, currentY + 2, 30, 30, 'F');
-	doc.setFontSize(8);
-	doc.setTextColor(100, 100, 100);
-	doc.text('LOGO', 27, currentY + 18, { align: 'center' });
-
-	const empresaX = 45;
-	const empresaStartY = currentY + 5;
-
-	doc.setFillColor(0, 0, 0);
-	doc.rect(empresaX, empresaStartY - 3, pageWidth - empresaX - 12, 6, 'F');
-	doc.setTextColor(255, 255, 255);
-	doc.setFontSize(12);
-	doc.setFont('helvetica', 'bold');
-	doc.text(title.toUpperCase(), empresaX + 2, empresaStartY + 1);
-
-	doc.setTextColor(0, 0, 0);
-	doc.setFontSize(8);
-	doc.setFont('helvetica', 'normal');
-
-	const col1X = empresaX + 2;
-	const col2X = pageWidth - 70;
-	let infoY = empresaStartY + 8;
-
-	const direccionCompleta =
-		[empresaInfo?.calle, empresaInfo?.calle_nro, empresaInfo?.Depto, empresaInfo?.piso]
-			.filter(Boolean)
-			.join(' ') || '-';
-
-	doc.setFont('helvetica', 'bold');
-	doc.text('RAZÓN SOCIAL:', col1X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.razonSocial || empresaInfo?.descripcion || 'HOSPITAL', col1X + 28, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('DIRECCIÓN:', col1X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(direccionCompleta, col1X + 28, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('LOCALIDAD:', col1X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.localidad || '-', col1X + 28, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('TELÉFONO:', col1X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.telefono || '-', col1X + 28, infoY);
-
-	infoY = empresaStartY + 8;
-	doc.setFont('helvetica', 'bold');
-	doc.text('C.U.I.T.:', col2X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.cuit || '-', col2X + 15, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('CONDICIÓN:', col2X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.condicionIva || '-', col2X + 22, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('ING. BRUTOS:', col2X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.ingresosBrutos || '-', col2X + 22, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('PROVINCIA:', col2X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.provincia || '-', col2X + 22, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('EMAIL:', col2X, infoY);
-	doc.setFont('helvetica', 'normal');
-	const emailText = empresaInfo?.email || '-';
-	doc.text(emailText.length > 25 ? emailText.substring(0, 25) + '...' : emailText, col2X + 15, infoY);
-
-	infoY += 4;
-	doc.setFont('helvetica', 'bold');
-	doc.text('FAX:', col2X, infoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(empresaInfo?.fax || '-', col2X + 15, infoY);
-
-	return currentY + 37;
-}
-
-function drawPatientInfo(
-	doc: jsPDF,
-	patientInfo: NonNullable<PDFExportOptions['patientInfo']>,
-	startY: number,
-): number {
-	let currentY = startY + 3;
-	doc.setFontSize(9);
-	doc.setFont('helvetica', 'bold');
-
-	let patInfoY = currentY;
-	const leftCol = 12;
-
-	doc.text(`Nro Visita: `, leftCol, patInfoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(`${patientInfo.numeroVisita || '-'}`, leftCol + 20, patInfoY);
-
-	doc.setFont('helvetica', 'bold');
-	doc.text(`Fecha: `, leftCol + 50, patInfoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(`${patientInfo.fechaIngreso || '-'}`, leftCol + 62, patInfoY);
-
-	doc.setFont('helvetica', 'bold');
-	doc.text(`Hora: `, leftCol + 95, patInfoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(`${patientInfo.horaIngreso || '-'}`, leftCol + 105, patInfoY);
-
-	doc.setFont('helvetica', 'bold');
-	doc.text(`Nro Documento: `, leftCol + 130, patInfoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(`${patientInfo.numeroDocumento || patientInfo.documento || '-'}`, leftCol + 158, patInfoY);
-
-	patInfoY += 5;
-	doc.setFont('helvetica', 'bold');
-	doc.text(`Apellido y Nombre: `, leftCol, patInfoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(`${patientInfo.nombre || '-'}`, leftCol + 35, patInfoY);
-
-	patInfoY += 5;
-	doc.setFont('helvetica', 'bold');
-	doc.text(`Ubicación: `, leftCol, patInfoY);
-	doc.setFont('helvetica', 'normal');
-	doc.text(`${patientInfo.ubicacion || '-'}`, leftCol + 20, patInfoY);
-
-	return startY + 17;
-}
-
-function drawFooters(doc: jsPDF) {
-	const pageWidth = doc.internal.pageSize.getWidth();
-	const pageHeight = doc.internal.pageSize.getHeight();
-	const pageCount = doc.getNumberOfPages();
-	const now = new Date();
-	const dateStr = now.toLocaleDateString('es-AR');
-	const timeStr = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-
-	for (let i = 1; i <= pageCount; i++) {
-		doc.setPage(i);
-		doc.setFontSize(7);
-		doc.setTextColor(100, 100, 100);
-		doc.setFont('helvetica', 'normal');
-		doc.text(`Date: ${dateStr}`, 12, pageHeight - 5);
-		doc.text(`Time: ${timeStr}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
-		doc.text(`Page: ${i}/${pageCount}`, pageWidth - 12, pageHeight - 5, { align: 'right' });
-	}
 }
 
 async function drawParts(doc: jsPDF, parts: PDFPart[], startY: number): Promise<number> {
@@ -641,18 +490,14 @@ export const exportToPDF = async ({
 		format: 'a4',
 	});
 
-	const pageWidth = doc.internal.pageSize.getWidth();
-	let currentY = drawEmpresaHeader(doc, title, empresaInfo);
-
-	if (patientInfo) {
-		currentY = drawPatientInfo(doc, patientInfo, currentY);
-	}
+	const headerOpts: PDFHeaderOptions = { title, empresaInfo, patient: patientInfo, emittedAt: new Date() };
+	let currentY = await drawDocumentHeader(doc, headerOpts);
 
 	if (subtitle) {
-		doc.setFontSize(10);
-		doc.setFont('helvetica', 'italic');
-		doc.setTextColor(60, 60, 60);
-		doc.text(subtitle, pageWidth / 2, currentY, { align: 'center' });
+		doc.setFontSize(9);
+		doc.setFont('helvetica', 'normal');
+		doc.setTextColor(...PDF_COLORS.muted);
+		doc.text(subtitle, PDF_MARGIN_X, currentY);
 		currentY += 6;
 		doc.setTextColor(0, 0, 0);
 	}
@@ -700,7 +545,7 @@ export const exportToPDF = async ({
 			alternateRowStyles: {
 				fillColor: [245, 247, 250],
 			},
-			margin: { top: 10, right: 10, bottom: 30, left: 10 },
+			margin: { top: PDF_CONTENT_TOP, right: 10, bottom: PDF_FOOTER_SPACE + 4, left: 10 },
 		});
 
 		if (profesionalWithFirma?.nombre) {
@@ -709,6 +554,7 @@ export const exportToPDF = async ({
 		}
 	}
 
-	drawFooters(doc);
+	drawRunningHeaders(doc, headerOpts);
+	drawDocumentFooters(doc, headerOpts);
 	doc.save(fileName);
 };

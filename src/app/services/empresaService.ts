@@ -22,6 +22,7 @@ export interface EmpresaInfo {
   telefono?: string;
   email?: string;
   condicionIva?: string;
+  idTipoIva?: number | null;
   ingresosBrutos?: string;
   fax?: string;
   logo?: string;
@@ -75,6 +76,120 @@ export const obtenerInfoEmpresaLocal = (): EmpresaInfo | null => {
     console.error('Error al leer información de empresa del localStorage:', error);
   }
   return null;
+};
+
+export interface EmpresaLogoResponse {
+  hasLogo: boolean;
+  mime?: string;
+  dataUrl?: string;
+}
+
+let logoCache: Promise<string | null> | null = null;
+let logoCacheEmpresa: string | null = null;
+
+/** Logo de la empresa activa como data URL (null si no tiene). Se cachea en memoria por empresa. */
+export const obtenerLogoEmpresa = (): Promise<string | null> => {
+  const empresa = String(getIdEmpresaFromToken() ?? '');
+  if (logoCacheEmpresa !== empresa) logoCache = null;
+  if (!logoCache) {
+    logoCacheEmpresa = empresa;
+    logoCache = apiService
+      .get<{ success: boolean; data?: EmpresaLogoResponse }>('/empresa/logo')
+      .then((r) => (r.data.success && r.data.data?.hasLogo ? r.data.data.dataUrl || null : null))
+      .catch(() => {
+        logoCache = null;
+        return null;
+      });
+  }
+  return logoCache;
+};
+
+export const subirLogoEmpresa = async (archivo: Blob, nombre = 'logo.png'): Promise<void> => {
+  const fd = new FormData();
+  fd.append('archivo', archivo, nombre);
+  const res = await apiService.put<{ success: boolean; mensaje?: string }>('/empresa/logo', fd, {
+    transformRequest: [
+      (data: unknown, headers: Record<string, string>) => {
+        if (data instanceof FormData) delete headers['Content-Type'];
+        return data;
+      },
+    ],
+  });
+  logoCache = null;
+  if (!res.data.success) throw new Error(res.data.mensaje || 'Error al subir el logo');
+};
+
+export const eliminarLogoEmpresa = async (): Promise<void> => {
+  const res = await apiService.delete<{ success: boolean; mensaje?: string }>('/empresa/logo');
+  logoCache = null;
+  if (!res.data.success) throw new Error(res.data.mensaje || 'Error al quitar el logo');
+};
+
+let disenoCache: Promise<unknown | null> | null = null;
+let disenoCacheEmpresa: string | null = null;
+
+/** Diseño de PDF guardado (JSON crudo; lo normaliza `pdfDiseno.normalizarDiseno`). Cacheado por empresa. */
+export const obtenerPdfDiseno = (): Promise<unknown | null> => {
+  const empresa = String(getIdEmpresaFromToken() ?? '');
+  if (disenoCacheEmpresa !== empresa) disenoCache = null;
+  if (!disenoCache) {
+    disenoCacheEmpresa = empresa;
+    disenoCache = apiService
+      .get<{ success: boolean; data?: unknown }>('/empresa/pdf-diseno')
+      .then((r) => (r.data.success ? r.data.data ?? null : null))
+      .catch(() => {
+        disenoCache = null;
+        return null;
+      });
+  }
+  return disenoCache;
+};
+
+/** `diseno` null restablece el diseño por defecto. */
+export const guardarPdfDiseno = async (diseno: object | null): Promise<unknown | null> => {
+  const res = await apiService.put<{ success: boolean; data?: unknown; mensaje?: string }>('/empresa/pdf-diseno', {
+    diseno,
+  });
+  disenoCache = null;
+  if (!res.data.success) throw new Error(res.data.mensaje || 'Error al guardar el diseño');
+  return res.data.data ?? null;
+};
+
+/** Campos que el admin de la clínica puede corregir desde Configuración → Institución. */
+export interface DatosInstitucion {
+  descripcion: string;
+  cuit: string;
+  idTipoIva: number | null;
+  ingresosBrutos: string;
+  calle: string;
+  calle_nro: string;
+  piso: string;
+  depto: string;
+  localidad: string;
+  provincia: string;
+  telefono: string;
+  email: string;
+}
+
+export interface CatalogosInstitucion {
+  iva: Array<{ valor: number; descripcion: string }>;
+  provincias: string[];
+}
+
+export const obtenerCatalogosInstitucion = async (): Promise<CatalogosInstitucion> => {
+  const res = await apiService.get<{ success: boolean; data?: CatalogosInstitucion; mensaje?: string }>(
+    '/empresa/catalogos',
+  );
+  if (!res.data.success || !res.data.data) throw new Error(res.data.mensaje || 'Error al obtener los catálogos');
+  return res.data.data;
+};
+
+export const actualizarDatosInstitucion = async (datos: DatosInstitucion): Promise<EmpresaInfo> => {
+  const res = await apiService.put<{ success: boolean; data?: EmpresaInfo; mensaje?: string }>('/empresa', datos);
+  if (!res.data.success || !res.data.data) throw new Error(res.data.mensaje || 'Error al guardar los datos');
+  const local = obtenerInfoEmpresaLocal();
+  if (!local || String(local.id) === String(res.data.data.id)) guardarInfoEmpresaLocal(res.data.data);
+  return res.data.data;
 };
 
 /**

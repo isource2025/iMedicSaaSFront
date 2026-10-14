@@ -70,6 +70,10 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	const headerSnapshot = bedToHeaderSnapshot(bed);
 	const numeroVisita = bed?.NumeroVisita ?? bed?.numeroVisita ?? null;
 	const sectorOrigen = getIdSectorFromToken() || bed?.sector || null;
+	// `ubicacionPaciente` es el domicilio; en los PDF la ubicación es sector + cama.
+	const ubicacionCama =
+		[String(bed?.sector || '').trim(), String(bed?.numeroCama || '').trim()].filter(Boolean).join(' · ') ||
+		undefined;
 	useMarcarIndicacionesVistasAlSalir(numeroVisita);
 
 	return (
@@ -121,7 +125,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<IndicacionesSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
@@ -132,7 +136,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<ControlesFrecuentesSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
@@ -143,7 +147,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<MedicacionSuministradaSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
@@ -154,7 +158,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<ControlesFrecuentesSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
@@ -165,7 +169,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<EvolucionEnfermeriaSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
@@ -175,7 +179,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<DietaSection
 							numeroVisita={bed?.NumeroVisita || null}
 							patientName={bed?.NombrePaciente}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
 							documentoPaciente={bed?.documentoPaciente}
 							fechaIngreso={bed?.fechaIngresoSQL}
 							horaIngreso={bed?.horaIngresoSQL}
@@ -185,7 +189,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<BalanceHidricoSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
@@ -197,7 +201,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<InsumosSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}
@@ -207,7 +211,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<HCIngresoSection
 							numeroVisita={bed?.NumeroVisita || null}
 							patientName={bed?.NombrePaciente}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
 							documentoPaciente={bed?.documentoPaciente}
 							bedSector={bed?.sector}
 						/>
@@ -216,7 +220,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<EvolucionesSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								sectorInternacion={bed?.sector || undefined}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
@@ -229,7 +233,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							sectorSolicitante={sectorOrigen}
 							patientName={bed?.NombrePaciente}
 							documentoPaciente={bed?.documentoPaciente}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
 						/>
 					) : activeSection === 'solicitudEstudios' ? (
 						<EstudiosSection
@@ -237,13 +243,15 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							sectorSolicitante={sectorOrigen}
 							patientName={bed?.NombrePaciente}
 							documentoPaciente={bed?.documentoPaciente}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
 						/>
 					) : activeSection === 'laboratorios' ? (
 						<LabResultsSection
 							numeroVisita={bed?.NumeroVisita || null}
 							patientName={bed?.NombrePaciente}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
 							documentoPaciente={bed?.documentoPaciente}
 							fechaIngreso={bed?.fechaIngresoSQL}
 							horaIngreso={bed?.horaIngresoSQL}
@@ -252,6 +260,11 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 						<ProtocolosSection
 							numeroVisita={bed?.NumeroVisita || null}
 							sector={bed?.sector || null}
+							patientName={bed?.NombrePaciente}
+							patientLocation={ubicacionCama}
+							documentoPaciente={bed?.documentoPaciente}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
 						/>
 					) : activeSection === 'epicrisis' ? (
 						<EpicrisisSection
@@ -259,20 +272,24 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							patientName={bed?.NombrePaciente}
 							documentoPaciente={bed?.documentoPaciente}
 							bedSector={bed?.sector || undefined}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
 						/>
 					) : activeSection === 'procedimientos' ? (
 						<ProcedimientosSection
 							numeroVisita={bed?.NumeroVisita || null}
 							patientName={bed?.NombrePaciente}
 							documentoPaciente={bed?.documentoPaciente}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
+							fechaIngreso={bed?.fechaIngresoSQL}
+							horaIngreso={bed?.horaIngresoSQL}
 						/>
 					) : activeSection === 'movimientos' ? (
 						<MovimientosSection
 							numeroVisita={bed?.NumeroVisita || null}
 							patientName={bed?.NombrePaciente}
-							patientLocation={bed?.ubicacionPaciente}
+							patientLocation={ubicacionCama}
 							documentoPaciente={bed?.documentoPaciente}
 							fechaIngreso={bed?.fechaIngresoSQL}
 							horaIngreso={bed?.horaIngresoSQL}
@@ -284,7 +301,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							<AdjuntosSection
 								numeroVisita={bed?.NumeroVisita || null}
 								patientName={bed?.NombrePaciente}
-								patientLocation={bed?.ubicacionPaciente}
+								patientLocation={ubicacionCama}
 								documentoPaciente={bed?.documentoPaciente}
 								fechaIngreso={bed?.fechaIngresoSQL}
 								horaIngreso={bed?.horaIngresoSQL}

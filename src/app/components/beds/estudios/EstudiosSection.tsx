@@ -14,7 +14,7 @@ import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFEstudios } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './EstudiosSection.module.css';
 import solStyles from './SolicitudesEstudios.module.css';
@@ -32,6 +32,8 @@ type Props = {
 	patientName?: string;
 	documentoPaciente?: string;
 	patientLocation?: string;
+	fechaIngreso?: string;
+	horaIngreso?: string;
 };
 
 function urgenciaClass(estado?: string | null) {
@@ -152,6 +154,8 @@ export default function EstudiosSection({
 	patientName,
 	documentoPaciente,
 	patientLocation,
+	fechaIngreso,
+	horaIngreso,
 }: Props) {
 	const { puede } = usePermiso();
 	const usuarioActual = useUsuarioActual();
@@ -301,47 +305,18 @@ export default function EstudiosSection({
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const items = filtered.flatMap((s) => s.Items);
-			const parts = items.map((r, idx) => ({
-				title: `Estudio ${idx + 1}`,
-				fields: [
-					{ label: 'Estado', value: itemCumplido(r) ? 'Cumplido' : r.Tomado ? 'Tomado' : 'Pendiente' },
-					{ label: 'Fecha / hora', value: formatFecha(r) },
-					{ label: 'Código', value: r.CodigoPractica ?? '—' },
-					{ label: 'Práctica', value: r.PracticaSolicitada || '—' },
-					{
-						label: 'Servicio destino',
-						value: r.ServicioDescripcion || r.SectorReceptorNombre || '—',
-					},
-					{ label: 'Fecha resultado', value: r.FechaResultado || '—' },
-					{ label: 'Realizado por', value: r.RealizadorNombre || '—' },
-				],
-				textBlocks: [
-					{ label: 'Pedido', value: r.NotasObservacion || '—' },
-					{
-						label: 'Respuesta',
-						value: r.TextoResultado || (itemCumplido(r) ? '(sin texto)' : 'Sin respuesta cargada'),
-					},
-				],
-				profesional: {
-					nombre: r.RealizadorNombre || r.MedicoSolicitanteNombre || 'PROFESIONAL',
-					matricula: r.MatriculaRealizador ?? r.MatriculaSolicitante ?? undefined,
-				},
-			}));
-
-			await exportToPDF({
-				title: 'Pedidos de estudios',
-				subtitle: `Visita: ${numeroVisita}`,
-				parts,
-				fileName: `estudios_${numeroVisita}.pdf`,
-				orientation: 'portrait',
+			await generarPDFEstudios({
+				items: filtered.flatMap((s) => s.Items).filter(itemCumplido),
 				empresaInfo,
-				patientInfo: {
+				patient: {
 					numeroVisita: numeroVisita || undefined,
 					nombre: patientName,
 					numeroDocumento: documentoPaciente,
 					ubicacion: patientLocation,
+					fechaIngreso,
+					horaIngreso,
 				},
+				fileName: `estudios_${numeroVisita}.pdf`,
 			});
 		}
 	};

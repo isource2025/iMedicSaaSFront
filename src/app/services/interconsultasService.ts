@@ -27,6 +27,10 @@ export type InterconsultaRow = DatosPacientePedido & {
 	EstadoUrgencia?: string;
 	Respuesta?: string;
 	FechaRespuesta?: string;
+	FechaCargaRespuesta?: string | null;
+	NroProtocolo?: number | null;
+	EspecialidadSolicitante?: string | null;
+	EspecialidadRealizador?: string | null;
 	IdProtocolo?: number;
 	SectorSolicitante?: string;
 	SectorSolicitanteNombre?: string;

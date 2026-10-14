@@ -11,7 +11,7 @@ import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFProcedimientos } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from '../estudios/EstudiosSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
@@ -21,6 +21,8 @@ type Props = {
 	patientName?: string;
 	documentoPaciente?: string;
 	patientLocation?: string;
+	fechaIngreso?: string;
+	horaIngreso?: string;
 };
 
 function formatYmd(ymd?: string | null): string {
@@ -68,6 +70,8 @@ export default function ProcedimientosSection({
 	patientName,
 	documentoPaciente,
 	patientLocation,
+	fechaIngreso,
+	horaIngreso,
 }: Props) {
 	const [rows, setRows] = useState<FacPracticaVisita[]>(
 		() => peekVisita<FacPracticaVisita[]>(visitaCacheKey('procedimientos', numeroVisita)) ?? [],
@@ -127,34 +131,18 @@ export default function ProcedimientosSection({
 
 	const handleExport = async (option: ExportOption) => {
 		if (option !== 'pdf') return;
-		const empresaInfo = await obtenerInfoEmpresa();
-		const parts = filtered.map((r, idx) => ({
-			title: `Práctica ${idx + 1}`,
-			fields: [
-				{ label: 'Código', value: r.Practica ?? '—' },
-				{ label: 'Práctica', value: practicaTitulo(r) },
-				{ label: 'Tipo', value: r.TipoPractica || '—' },
-				{ label: 'Cantidad', value: r.CantidadPractica ?? '—' },
-				{ label: 'Fecha / hora', value: formatFechaHora(r) },
-				{ label: 'Sector', value: r.ValorSector || '—' },
-				{ label: 'Estado', value: r.Estado ?? '—' },
-				{ label: 'Profesionales', value: r.Profesionales || '—' },
-			],
-		}));
-
-		await exportToPDF({
-			title: 'Prácticas de la visita',
-			subtitle: `Visita: ${numeroVisita}`,
-			parts,
-			fileName: `procedimientos_${numeroVisita}.pdf`,
-			orientation: 'portrait',
-			empresaInfo,
-			patientInfo: {
+		await generarPDFProcedimientos({
+			items: filtered,
+			empresaInfo: await obtenerInfoEmpresa(),
+			patient: {
 				numeroVisita: numeroVisita || undefined,
 				nombre: patientName,
 				numeroDocumento: documentoPaciente,
 				ubicacion: patientLocation,
+				fechaIngreso,
+				horaIngreso,
 			},
+			fileName: `procedimientos_${numeroVisita}.pdf`,
 		});
 	};
 

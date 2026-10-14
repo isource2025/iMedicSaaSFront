@@ -16,7 +16,7 @@ import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
-import { exportToPDF, generarPDFInterconsulta } from '../../../utils/pdfExportLazy';
+import { generarPDFEstudios } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
@@ -31,6 +31,8 @@ type Props = {
 	patientName?: string;
 	documentoPaciente?: string;
 	patientLocation?: string;
+	fechaIngreso?: string;
+	horaIngreso?: string;
 };
 
 function urgenciaClass(estado?: string) {
@@ -143,12 +145,31 @@ function interconsultaComoPedido(row: InterconsultaRow): PedidoEstudio {
 	};
 }
 
+function interconsultaParaPdf(row: InterconsultaRow): PedidoEstudio {
+	return {
+		...interconsultaComoPedido(row),
+		Cumplido: esCumplida(row),
+		Tomado: row.Tomado,
+		CodigoPractica: row.CodigoPractica,
+		EstadoUrgencia: row.EstadoUrgencia,
+		IdProtocolo: row.IdProtocolo,
+		ServicioDescripcion: row.ServicioDescripcion || row.Especialidad,
+		FechaResultado: row.FechaRespuesta || null,
+		FechaCargaResultado: row.FechaCargaRespuesta,
+		NroProtocolo: row.NroProtocolo,
+		EspecialidadSolicitante: row.EspecialidadSolicitante,
+		EspecialidadRealizador: row.EspecialidadRealizador,
+	};
+}
+
 export default function InterconsultaSection({
 	numeroVisita,
 	sectorSolicitante,
 	patientName,
 	documentoPaciente,
 	patientLocation,
+	fechaIngreso,
+	horaIngreso,
 }: Props) {
 	const { puede } = usePermiso();
 	const usuarioActual = useUsuarioActual();
@@ -244,57 +265,19 @@ export default function InterconsultaSection({
 		numeroVisita: numeroVisita || undefined,
 		nombre: patientName,
 		numeroDocumento: documentoPaciente,
-		documento: documentoPaciente,
 		ubicacion: patientLocation,
+		fechaIngreso,
+		horaIngreso,
 	};
 
 	const handleExport = async (option: ExportOption, _data?: InterconsultaRow[]) => {
 		if (option === 'pdf') {
-			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = filtered.map((r, idx) => {
-				const tomado = !!r.Tomado;
-				const cumplido = esCumplida(r);
-				return {
-					title: `Interconsulta ${idx + 1}`,
-					fields: [
-						{ label: 'Fecha / hora', value: formatFecha(r) },
-						{
-							label: 'Servicio destino',
-							value: r.ServicioDescripcion || r.SectorReceptorNombre || r.Especialidad || '—',
-						},
-						{
-							label: 'Estado',
-							value:
-								r.EstadoWorkflow ||
-								(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente'),
-						},
-						{ label: 'Fecha respuesta', value: r.FechaRespuesta || '—' },
-						{
-							label: 'Respondido por',
-							value: (cumplido && autorRespuesta(r)) || '—',
-						},
-					],
-					textBlocks: [
-						{ label: 'Pedido', value: r.Motivo || '—' },
-						{
-							label: 'Respuesta',
-							value: r.Respuesta || (cumplido ? '(sin texto)' : 'Sin respuesta cargada'),
-						},
-					],
-					profesional: {
-						nombre: r.MedicoSolicitanteNombre || 'PROFESIONAL',
-					},
-				};
-			});
-
-			await exportToPDF({
-				title: 'Interconsultas',
-				subtitle: `Visita: ${numeroVisita}`,
-				parts,
+			await generarPDFEstudios({
+				tipo: 'interconsulta',
+				items: filtered.map(interconsultaParaPdf),
+				empresaInfo: await obtenerInfoEmpresa(),
+				patient: patientInfo,
 				fileName: `interconsultas_${numeroVisita}.pdf`,
-				orientation: 'portrait',
-				empresaInfo,
-				patientInfo,
 			});
 		}
 	};
@@ -303,19 +286,11 @@ export default function InterconsultaSection({
 		if (!selected) return;
 		setExportingDetail(true);
 		try {
-			const empresaInfo = await obtenerInfoEmpresa();
-			const title =
-				selected.ServicioDescripcion ||
-				selected.Especialidad ||
-				selected.PracticaSolicitada ||
-				'Interconsulta';
-			await generarPDFInterconsulta({
-				title,
-				fields: buildInterconsultaFields(selected),
-				textBlocks: selectedTextBlocks,
-				urgencia: selected.EstadoUrgencia,
+			await generarPDFEstudios({
+				tipo: 'interconsulta',
+				items: [interconsultaParaPdf(selected)],
+				empresaInfo: await obtenerInfoEmpresa(),
 				patient: patientInfo,
-				empresaInfo,
 				fileName: `interconsulta_${numeroVisita}_${selected.IdPedido || selected.IdInterconsulta || 'detalle'}.pdf`,
 			});
 		} catch (err) {

@@ -46,6 +46,11 @@ export interface PedidoEstudio extends DatosPacientePedido {
   CategoriaPedido?: string;
   TextoResultado?: string | null;
   FechaResultado?: string | null;
+  /** Cuándo se cargó el informe (puede diferir de FechaResultado). */
+  FechaCargaResultado?: string | null;
+  NroProtocolo?: number | null;
+  EspecialidadSolicitante?: string | null;
+  EspecialidadRealizador?: string | null;
   PracticaFacturada?: number | null;
   MatriculaRealizador?: number | null;
   RealizadorNombre?: string | null;

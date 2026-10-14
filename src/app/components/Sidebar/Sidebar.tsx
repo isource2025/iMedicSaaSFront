@@ -125,6 +125,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { submoduloId: 'PERSONAL', label: 'Personal', path: '/dashboard/personal' },
       { submoduloId: 'ROLES', label: 'Matriz de permisos', path: '/dashboard/configuracion/permisos' },
+      { submoduloId: 'INSTITUCION', label: 'Institución', path: '/dashboard/configuracion/institucion' },
       { submoduloId: 'TABLA', permisoModuloId: 'TURNOS',      label: 'Tabla de Turnos',      path: '/dashboard/turnos/tabla' },
       { submoduloId: 'TABLA', permisoModuloId: 'ADMISION',    label: 'Tabla de Admisiones',  path: '/dashboard/admission/tables' },
       { submoduloId: 'TABLA', permisoModuloId: 'INTERNACION', label: 'Tabla de Internación', path: '/dashboard/beds/tables' },
