@@ -16,6 +16,8 @@ export interface BedCardProps {
   onOpenAdjuntos?: (bed: Bed) => void;
   /** Asignar internado sin cama a esta cama libre */
   onAssignPatient?: (bed: Bed) => void;
+  /** Cambiar el estado de una cama vacía (sin paciente) */
+  onChangeStatus?: (bed: Bed) => void;
 }
 
 /**

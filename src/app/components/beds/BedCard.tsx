@@ -15,6 +15,7 @@ import {
 	IoExitOutline,
 	IoTimeOutline,
 	IoAddOutline,
+	IoSyncOutline,
 } from 'react-icons/io5';
 import { Stethoscope, Warehouse, PackagePlus, Boxes, ArrowRightLeft, ClipboardList, FileSearch } from 'lucide-react';
 import { indicacionesService } from '../../services/indicacionesService';
@@ -286,6 +287,7 @@ const BedCard: React.FC<BedCardProps> = ({
 	onLabResults,
 	onDischarge,
 	onAssignPatient,
+	onChangeStatus,
 	onOpenAdjuntos,
 	onOpenSection,
 }) => {
@@ -313,6 +315,7 @@ const BedCard: React.FC<BedCardProps> = ({
 				onLabResults={onLabResults}
 				onDischarge={onDischarge}
 				onAssignPatient={onAssignPatient}
+				onChangeStatus={onChangeStatus}
 				onOpenAdjuntos={onOpenAdjuntos}
 				onRecentIndications={onRecentIndications}
 				onOpenSection={onOpenSection}
@@ -330,6 +333,7 @@ const BedCard: React.FC<BedCardProps> = ({
 			onLabResults={onLabResults}
 			onDischarge={onDischarge}
 			onAssignPatient={onAssignPatient}
+			onChangeStatus={onChangeStatus}
 			onOpenAdjuntos={onOpenAdjuntos}
 			onRecentIndications={onRecentIndications}
 			onOpenSection={onOpenSection}
@@ -347,6 +351,7 @@ function CamaOConsultorioCard({
 	onLabResults,
 	onDischarge,
 	onAssignPatient,
+	onChangeStatus,
 	onOpenAdjuntos,
 	onRecentIndications,
 	onOpenSection,
@@ -405,7 +410,8 @@ function CamaOConsultorioCard({
 	const wrapperMod =
 		variant === 'consultorio' ? styles.tipoConsultorio : styles.tipoCamaInternacion;
 
-	const puedeAsignar = variant === 'cama' && isLibre && !!onAssignPatient;
+	const puedeAsignar = variant === 'cama' && bed.estado === 'desocupada' && !!onAssignPatient;
+	const puedeCambiarEstado = !isOcupada && !bed.numeroVisita && !!onChangeStatus;
 
 	return (
 		<div
@@ -574,6 +580,20 @@ function CamaOConsultorioCard({
 								}}
 							>
 								<IoAddOutline size={28} />
+							</button>
+						)}
+						{puedeCambiarEstado && (
+							<button
+								type="button"
+								className={styles.changeStatusBtn}
+								title="Cambiar estado"
+								aria-label="Cambiar estado de la cama"
+								onClick={(e) => {
+									e.stopPropagation();
+									onChangeStatus?.(bed);
+								}}
+							>
+								<IoSyncOutline size={18} />
 							</button>
 						)}
 					</div>

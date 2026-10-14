@@ -181,6 +181,15 @@ export const bedsService = {
 		}
 	},
 
+	/** Cambia el estado de una cama vacía (valor de imEstadoCama; ocupada no se permite). */
+	updateBedStatus: async (bedId: string, valorEstado: string): Promise<void> => {
+		const { data: json } = await apiService.put<ApiResp<unknown>>(
+			`/beds/${encodeURIComponent(bedId)}/status`,
+			{ valorEstado },
+		);
+		if (!json.success) throw new Error(json.mensaje || 'Error al cambiar el estado de la cama');
+	},
+
 	getSectores: async (): Promise<{ id: string; valor: string; descripcion: string }[]> => {
 		try {
 			const { data: json } = await apiService.get<

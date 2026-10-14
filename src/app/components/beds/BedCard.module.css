@@ -661,6 +661,31 @@
   color: #fff;
 }
 
+.changeStatusBtn {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.95);
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.changeStatusBtn:hover,
+.changeStatusBtn:focus-visible {
+  background: #0083a9;
+  border-color: #0083a9;
+  color: #fff;
+}
+
 .cardBody {
   position: relative;
   padding: 0.7rem;
