@@ -415,7 +415,7 @@ function CamaOConsultorioCard({
 
 	return (
 		<div
-			className={`${styles.bedCard} ${wrapperMod} ${estadoClass} ${puedeAsignar ? styles.bedCardAssignable : ''}`}
+			className={`${styles.bedCard} ${wrapperMod} ${estadoClass} ${puedeAsignar || puedeCambiarEstado ? styles.bedCardAssignable : ''}`}
 			onClick={() => onBedClick && onBedClick(bed.id)}
 			data-asistente-visita={isOcupada && bed.numeroVisita ? bed.numeroVisita : undefined}
 			data-asistente-paciente={isOcupada ? bed.NombrePaciente || undefined : undefined}
@@ -573,33 +573,43 @@ function CamaOConsultorioCard({
 				) : (
 					<div className={styles.freeBodyContent}>
 						<span className={styles.statusBadge}>{bed.estadoDescripcion || 'Sin estado'}</span>
-						{puedeAsignar && (
-							<button
-								type="button"
-								className={styles.assignPlusBtn}
-								title="Asignar internado sin cama"
-								aria-label="Asignar paciente a esta cama"
-								onClick={(e) => {
-									e.stopPropagation();
-									onAssignPatient?.(bed);
-								}}
-							>
-								<IoAddOutline size={28} />
-							</button>
-						)}
-						{puedeCambiarEstado && (
-							<button
-								type="button"
-								className={styles.changeStatusBtn}
-								title="Cambiar estado"
-								aria-label="Cambiar estado de la cama"
-								onClick={(e) => {
-									e.stopPropagation();
-									onChangeStatus?.(bed);
-								}}
-							>
-								<IoSyncOutline size={18} />
-							</button>
+						{(puedeAsignar || puedeCambiarEstado) && (
+							<div className={styles.freeActions}>
+								{puedeAsignar && (
+									<button
+										type="button"
+										className={styles.freeActionBtn}
+										title="Asignar internado sin cama"
+										aria-label="Asignar paciente a esta cama"
+										onClick={(e) => {
+											e.stopPropagation();
+											onAssignPatient?.(bed);
+										}}
+									>
+										<span className={styles.freeActionIcon}>
+											<IoAddOutline size={26} />
+										</span>
+										<span className={styles.freeActionLabel}>Asignar</span>
+									</button>
+								)}
+								{puedeCambiarEstado && (
+									<button
+										type="button"
+										className={styles.freeActionBtn}
+										title="Cambiar estado de la cama"
+										aria-label="Cambiar estado de la cama"
+										onClick={(e) => {
+											e.stopPropagation();
+											onChangeStatus?.(bed);
+										}}
+									>
+										<span className={styles.freeActionIcon}>
+											<IoSyncOutline size={22} />
+										</span>
+										<span className={styles.freeActionLabel}>Estado</span>
+									</button>
+								)}
+							</div>
 						)}
 					</div>
 				)}

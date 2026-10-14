@@ -624,66 +624,80 @@
   position: relative;
 }
 
-.assignPlusBtn {
+.freeActions {
   position: absolute;
   inset: 0;
-  margin: auto;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: 2px solid #0083a9;
-  background: rgba(255, 255, 255, 0.95);
-  color: #0083a9;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  gap: 1.25rem;
   opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
-  box-shadow: 0 4px 12px rgba(0, 131, 169, 0.25);
+  transform: scale(0.9);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
   z-index: 2;
 }
 
-.bedCardAssignable:hover .assignPlusBtn,
-.bedCardAssignable:focus-within .assignPlusBtn {
+.bedCardAssignable:hover .freeActions,
+.bedCardAssignable:focus-within .freeActions {
   opacity: 1;
   transform: scale(1);
+  pointer-events: auto;
 }
 
 .bedCardAssignable:hover .statusBadge {
-  opacity: 0.35;
+  opacity: 0.2;
 }
 
-.assignPlusBtn:hover {
+.freeActionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: #0083a9;
+}
+
+.freeActionIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #0083a9;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 131, 169, 0.25);
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.freeActionLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.freeActionBtn:hover .freeActionIcon,
+.freeActionBtn:focus-visible .freeActionIcon {
   background: #00b5e2;
   border-color: #00b5e2;
   color: #fff;
 }
 
-.changeStatusBtn {
-  position: absolute;
-  right: 0.25rem;
-  bottom: 0.25rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #cbd5e1;
-  background: rgba(255, 255, 255, 0.95);
-  color: #475569;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 3;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-}
+@media (hover: none) {
+  .bedCardAssignable .freeActions {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
 
-.changeStatusBtn:hover,
-.changeStatusBtn:focus-visible {
-  background: #0083a9;
-  border-color: #0083a9;
-  color: #fff;
+  .bedCardAssignable .statusBadge {
+    opacity: 0.2;
+  }
 }
 
 .cardBody {
