@@ -307,8 +307,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 	],
 
 	/**
-	 * ADMINISTRATIVO — ve todo (incl. clínica), gestiona pacientes/admisiones/camas/agenda.
-	 * No crea ni edita lo médico ni de enfermería. Distinto de ADMIN.
+	 * ADMINISTRATIVO — ve todo (incl. clínica), gestiona pacientes/admisiones/agenda.
+	 * Internación es SOLO lectura (sin camas, movimientos ni export). Distinto de ADMIN.
 	 */
 	ADMINISTRATIVO: [
 		..._soloVer('TURNOS'),
@@ -325,15 +325,6 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		..._todas('ADMISION', 'PACIENTES'),
 		'ADMISION.NUEVA.CREAR',
 		'ADMISION.TABLA.EXPORTAR',
-
-		// Flujo de internación (cama / traslado), no clínica
-		'INTERNACION.CAMAS.CREAR',
-		'INTERNACION.CAMAS.EDITAR',
-		'INTERNACION.CAMAS.ELIMINAR',
-		'INTERNACION.CAMAS.GESTIONAR',
-		'INTERNACION.MOVIMIENTOS.TRASLADAR',
-		'INTERNACION.MOVIMIENTOS.GESTIONAR',
-		'INTERNACION.TABLA.EXPORTAR',
 
 		// Agenda de turnos (citas del paciente)
 		'TURNOS.AGENDA.CREAR',

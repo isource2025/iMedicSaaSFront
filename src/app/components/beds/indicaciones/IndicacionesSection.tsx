@@ -8,6 +8,7 @@ import styles from './IndicacionesSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import IndicativoColors from "./IdicativosColors";
+import { usePermiso } from "../../../hooks/usePermiso";
 import NuevaIndicacionModal from "../../indicaciones/NuevaIndicacionModal";
 import { NuevaIndicacionPayload } from "../../../types/indicaciones";
 import ModalBasePaciente from "../../modals/ModalBasePaciente";
@@ -167,6 +168,8 @@ export default function IndicacionesSection({
     horaIngreso,
 }: IndicacionesSectionProps) {
     const { activeSection, selectedDate, setSelectedDate, marcarSeccionInicialLista } = useBedDetail();
+    const { puede } = usePermiso();
+    const puedeCrear = puede('INTERNACION.INDICACIONES.CREAR');
     const fechaHoy = toLocalYmd(new Date());
     const fechaManana = addDaysYmd(fechaHoy, 1);
 
@@ -683,15 +686,17 @@ export default function IndicacionesSection({
                         {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
                     </span>
                     <div className={styles.dateActions}>
-                        <button
-                            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-                            onClick={onAddIndicacion}
-                        >
-                            <span className={styles.addIcon} aria-hidden>
-                                +
-                            </span>
-                            Agregar indicación
-                        </button>
+                        {puedeCrear && (
+                            <button
+                                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+                                onClick={onAddIndicacion}
+                            >
+                                <span className={styles.addIcon} aria-hidden>
+                                    +
+                                </span>
+                                Agregar indicación
+                            </button>
+                        )}
                         <ExportButton
                             data={rows}
                             fileName={`indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`}
@@ -793,10 +798,12 @@ export default function IndicacionesSection({
                                         ? 'No hay indicaciones dejadas sin efecto para este día.'
                                         : cantidadSuspendidas > 0
                                             ? `Hay ${cantidadSuspendidas} ${cantidadSuspendidas === 1 ? 'indicación dejada' : 'indicaciones dejadas'} sin efecto. Activá "Ver sin efecto" para verlas.`
-                                            : 'Cargá una indicación con el botón de arriba.'
+                                            : puedeCrear
+                                                ? 'Cargá una indicación con el botón de arriba.'
+                                                : 'Todavía no hay indicaciones cargadas para este día.'
                             }
-                            actionLabel={rowsPorEstado.length === 0 && !mostrarSuspendidas ? 'Agregar indicación' : undefined}
-                            onAction={rowsPorEstado.length === 0 && !mostrarSuspendidas ? onAddIndicacion : undefined}
+                            actionLabel={puedeCrear && rowsPorEstado.length === 0 && !mostrarSuspendidas ? 'Agregar indicación' : undefined}
+                            onAction={puedeCrear && rowsPorEstado.length === 0 && !mostrarSuspendidas ? onAddIndicacion : undefined}
                         />
                     ) : (
                         <IndicacionesTable
