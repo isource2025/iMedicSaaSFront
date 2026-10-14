@@ -338,3 +338,64 @@ export function escribirEnCampo(
   el.focus();
   return { ok: true };
 }
+
+const CLICKEABLES =
+  'button, a, [role="button"], [role="tab"], [role="menuitem"], [role="option"], summary, label, li, [title], [aria-label]';
+
+function normal(s: string) {
+  return limpio(s, 120)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function buscarOpcion(texto: string): HTMLElement | null {
+  const q = normal(texto);
+  if (!q) return null;
+  let parcial: HTMLElement | null = null;
+  for (const el of Array.from(document.querySelectorAll<HTMLElement>(CLICKEABLES))) {
+    if (!fueraDelAsistente(el) || !visible(el)) continue;
+    const nombres = [
+      el.getAttribute("aria-label"),
+      el.getAttribute("title"),
+      el.textContent,
+    ].map((s) => normal(s || ""));
+    if (nombres.some((n) => n === q)) return el;
+    if (!parcial && nombres.some((n) => n.includes(q) && n.length <= q.length + 30))
+      parcial = el;
+  }
+  return parcial;
+}
+
+/**
+ * Señala una opción de la pantalla por su texto («Cambiar Cama», «Nuevo turno»).
+ * Reintenta mientras la página termina de cargar; devuelve false si no apareció.
+ */
+export async function resaltarOpcion(
+  texto: string,
+  { esperaMs = 6000, enRuta }: { esperaMs?: number; enRuta?: string } = {},
+): Promise<boolean> {
+  const hasta = Date.now() + esperaMs;
+  const buscar = () =>
+    !enRuta || window.location.pathname === enRuta ? buscarOpcion(texto) : null;
+  let el = buscar();
+  while (!el && Date.now() < hasta) {
+    await new Promise((r) => setTimeout(r, 300));
+    el = buscar();
+  }
+  if (!el) return false;
+  el.scrollIntoView({ block: "center", behavior: "smooth" });
+  el.animate(
+    [
+      { boxShadow: "0 0 0 0 rgba(139, 92, 246, 0.9)" },
+      { boxShadow: "0 0 0 8px rgba(139, 92, 246, 0)" },
+    ],
+    { duration: 900, iterations: 4 },
+  );
+  const previo = el.style.outline;
+  el.style.outline = "2px solid #8b5cf6";
+  setTimeout(() => {
+    el.style.outline = previo;
+  }, 4000);
+  return true;
+}

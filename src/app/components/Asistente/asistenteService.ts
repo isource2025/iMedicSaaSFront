@@ -6,6 +6,8 @@ export type AsistenteNavegacion = {
   href: string;
   query?: Record<string, string> | null;
   motivo?: string | null;
+  /** Opción de la pantalla a señalar al llegar («Cambiar Cama»). */
+  resaltar?: string | null;
 };
 
 export type AsistentePendiente = {

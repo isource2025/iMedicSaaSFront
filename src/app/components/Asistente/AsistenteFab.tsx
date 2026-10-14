@@ -7,7 +7,7 @@ import styles from "./Asistente.module.css";
 import MarkdownLite from "./MarkdownLite";
 import LoaderIa, { type ProgresoIa } from "./LoaderIa";
 import ResultadoAccion from "./ResultadoAccion";
-import { escribirEnCampo, iniciarSeguimiento, leerPantalla } from "./pantalla";
+import { escribirEnCampo, iniciarSeguimiento, leerPantalla, resaltarOpcion } from "./pantalla";
 import {
   aplicarInsercion,
   cancelarPendiente,
@@ -352,13 +352,18 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
   );
 
   const irA = useCallback(
-    (href: string) => {
-      const destino = href.split("?")[0];
+    (href: string, resaltar?: string | null) => {
+      const [destino, qs] = href.split("?");
       if (destino === pathname) {
+        if (resaltar && (!qs || window.location.search === `?${qs}`)) {
+          void resaltarOpcion(resaltar);
+          return;
+        }
         window.location.assign(href);
         return;
       }
       router.push(href);
+      if (resaltar) void resaltarOpcion(resaltar, { esperaMs: 8000, enRuta: destino });
     },
     [router, pathname],
   );
@@ -763,12 +768,15 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
                           <div className={styles.chips}>
                             {m.navegaciones.map((n) => (
                               <button
-                                key={n.href}
+                                key={`${n.href}|${n.resaltar || ""}`}
                                 type="button"
                                 className={styles.chipLink}
-                                onClick={() => irA(n.href)}
+                                onClick={() => irA(n.href, n.resaltar)}
+                                title={n.resaltar ? `Abre la pantalla y señala «${n.resaltar}»` : undefined}
                               >
-                                ↗ {n.motivo || n.path}
+                                {n.href.split("?")[0] === pathname && n.resaltar
+                                  ? `◎ Mostrarme «${n.resaltar}»`
+                                  : `↗ ${n.motivo || n.path}${n.resaltar ? ` · «${n.resaltar}»` : ""}`}
                               </button>
                             ))}
                           </div>
