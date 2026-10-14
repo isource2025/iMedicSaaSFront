@@ -84,7 +84,6 @@ const tarjeta = (id: string) => within(screen.getByTestId(`indicacion-card-${id}
 
 beforeEach(() => {
     permisos.clear();
-    permisos.add("INTERNACION.INDICACIONES.CREAR");
     permisos.add("INTERNACION.INDICACIONES.EDITAR");
     rolNombre = "MEDICO";
     vi.spyOn(console, "log").mockImplementation(() => {});
@@ -92,23 +91,16 @@ beforeEach(() => {
 });
 
 describe("Indicaciones · vista móvil · volver a indicar", () => {
-    it("cada tarjeta tiene el botón «Volver a indicar» para quien puede crear indicaciones", () => {
+    it("cada tarjeta tiene el botón «Volver a indicar» para quien puede editar", () => {
         renderTabla();
         expect(tarjeta("1").getByRole("button", { name: "Volver a indicar" })).toBeInTheDocument();
         expect(tarjeta("2").getByRole("button", { name: "Volver a indicar" })).toBeInTheDocument();
     });
 
-    it("no aparece para quien no puede crear indicaciones (enfermería)", () => {
+    it("no aparece para quien no puede editar (enfermería)", () => {
         permisos.clear();
         permisos.add("INTERNACION.INDICACIONES.APLICAR");
         rolNombre = "ENFERMERO";
-        renderTabla();
-        expect(screen.queryByRole("button", { name: "Volver a indicar" })).not.toBeInTheDocument();
-    });
-
-    it("no aparece para quien solo puede editar, porque reindicar crea indicaciones nuevas", () => {
-        permisos.clear();
-        permisos.add("INTERNACION.INDICACIONES.EDITAR");
         renderTabla();
         expect(screen.queryByRole("button", { name: "Volver a indicar" })).not.toBeInTheDocument();
     });

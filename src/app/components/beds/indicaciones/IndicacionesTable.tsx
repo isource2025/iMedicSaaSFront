@@ -139,7 +139,6 @@ export default function IndicacionesTable({
     //   ENFERMERO → SOLO puede aplicar. No puede editar ni eliminar.
     //   ADMIN     → puede todo (aplica + edita + elimina sin restricción de propiedad).
     const puedeAplicar   = puede('INTERNACION.INDICACIONES.APLICAR');
-    const puedeCrear     = puede('INTERNACION.INDICACIONES.CREAR');
     const puedeEditar    = puede('INTERNACION.INDICACIONES.EDITAR');
     const puedeEliminar  = puede('INTERNACION.INDICACIONES.ELIMINAR');
     const rolNombre      = (rol?.nombre || '').toUpperCase();
@@ -502,8 +501,8 @@ export default function IndicacionesTable({
                                                     <IoMedicalOutline color="#10b981" size="18px" />
                                                 </button>)}
 
-                                                {/* Reindicar crea indicaciones nuevas: exige CREAR (no enfermero) */}
-                                                {puedeCrear && (
+                                                {/* Reindicar: solo médicos (y admin) — no enfermero */}
+                                                {puedeEditar && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Volver a Indicar"
@@ -644,8 +643,8 @@ export default function IndicacionesTable({
                             >
                                 <IoMedicalOutline color="#10b981" />
                             </button>)}
-                            {/* Volver a indicar crea indicaciones nuevas: exige CREAR. Activa el modo y deja esta tarjeta marcada. */}
-                            {puedeCrear && (
+                            {/* Volver a indicar: solo médicos (y admin). Activa el modo y deja esta tarjeta marcada. */}
+                            {puedeEditar && (
                             <button
                                 type="button"
                                 className={`${styles.btnAction} ${styles.btnEdit}`}
