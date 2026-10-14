@@ -6,6 +6,8 @@ import LabResultsModal from './laboratorios/LabResultsModal';
 import ModalEgresoPaciente from '../modals/ModalEgresoPaciente';
 import ModalCambiarCama from '../modals/ModalCambiarCama';
 import ModalAsignarCama from '../modals/ModalAsignarCama';
+import ModalCambiarEstadoCama from '../modals/ModalCambiarEstadoCama';
+import { usePermiso } from '../../hooks/usePermiso';
 import AdjuntosModal from './adjuntos/AdjuntosModal';
 import BedCard from './BedCard';
 import BedFilters from './BedFilters';
@@ -50,6 +52,9 @@ const BedsList = () => {
 	const [cambiarCamaModalOpen, setCambiarCamaModalOpen] = useState(false);
 	const [asignarCamaModalOpen, setAsignarCamaModalOpen] = useState(false);
 	const [adjuntosModalOpen, setAdjuntosModalOpen] = useState(false);
+	const [bedCambioEstado, setBedCambioEstado] = useState<Bed | null>(null);
+	const { puede } = usePermiso();
+	const puedeGestionarCamas = puede('INTERNACION.CAMAS.GESTIONAR');
 	const [selectedBed, setSelectedBed] = useState<{
 		numeroVisita: number;
 		nombrePaciente: string;
@@ -130,9 +135,13 @@ const BedsList = () => {
 		}
 	};
 
+	const handleChangeStatus = (bed: Bed) => {
+		if (bed.estado === 'ocupada' || bed.numeroVisita || bed.tipoRecurso === 'insumos') return;
+		setBedCambioEstado(bed);
+	};
+
 	const handleAssignPatient = (bed: Bed) => {
-		const isLibre = bed.estado === 'desocupada' || bed.estado === 'disponible';
-		if (!isLibre || bed.tipoRecurso === 'insumos') return;
+		if (bed.estado !== 'desocupada' || bed.tipoRecurso === 'insumos') return;
 
 		setSelectedBed({
 			numeroVisita: 0,
@@ -239,6 +248,7 @@ const BedsList = () => {
 							onLabResults={() => handleLabResults(bed.id)}
 							onDischarge={() => handleDischarge(bed.id)}
 							onAssignPatient={handleAssignPatient}
+							onChangeStatus={puedeGestionarCamas ? handleChangeStatus : undefined}
 						/>
 					))}
 				</div>
@@ -305,6 +315,20 @@ const BedsList = () => {
 					bedSector={selectedBed.sector}
 					numeroCama={selectedBed.numeroCama || selectedBed.id}
 					clasePacienteDefault="I"
+				/>
+			)}
+
+			{bedCambioEstado && (
+				<ModalCambiarEstadoCama
+					isOpen
+					onClose={() => setBedCambioEstado(null)}
+					onSuccess={handleRefreshBeds}
+					bedId={bedCambioEstado.id}
+					bedSector={bedCambioEstado.sector}
+					numeroCama={bedCambioEstado.numeroCama}
+					estadoActual={bedCambioEstado.valorEstadoOriginal || ''}
+					estadoActualDescripcion={bedCambioEstado.estadoDescripcion}
+					estados={bedStates}
 				/>
 			)}
 		</div>
