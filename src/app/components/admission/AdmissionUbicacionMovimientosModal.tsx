@@ -144,7 +144,7 @@ export default function AdmissionUbicacionMovimientosModal({
   const [operadorEgreso, setOperadorEgreso] = useState('');
   const [revertBusy, setRevertBusy] = useState(false);
   const [estadoRevertir, setEstadoRevertir] = useState<EstadoRevertirEgreso | null>(null);
-  const [confirmarLimpiar, setConfirmarLimpiar] = useState(false);
+  const [editandoEgreso, setEditandoEgreso] = useState(false);
   const [aviso, setAviso] = useState<{ title: string; message: string; tone: MessageModalTone } | null>(null);
   const [asignarCamaOpen, setAsignarCamaOpen] = useState(false);
   const [cambiarCamaOpen, setCambiarCamaOpen] = useState(false);
@@ -220,6 +220,7 @@ export default function AdmissionUbicacionMovimientosModal({
         setDiagnosticoEgresoDesc('');
         setOperadorEgreso('');
       }
+      setEditandoEgreso(false);
       setDiagOpen(false);
       setDiagTyping(false);
       setDiagQuery('');
@@ -282,6 +283,7 @@ export default function AdmissionUbicacionMovimientosModal({
   const bedId = hab;
   const yaEgresado = tieneEgresoGuardado(visita);
   const canEgreso = Boolean(numeroVisita);
+  const egresoBloqueado = yaEgresado && !editandoEgreso;
   /** Sin habitación/cama actual (cabecera o último movimiento). */
   const sinUbicacion = Boolean(numeroVisita) && !hab;
 
@@ -290,7 +292,7 @@ export default function AdmissionUbicacionMovimientosModal({
       {yaEgresado ? (
         <>
           <p className={styles.hintSinCama}>
-            Esta visita figura egresada y sin cama. Revertí el egreso para poder
+            Esta visita figura egresada y sin cama. Eliminá el egreso para poder
             asignarle una ubicación.
           </p>
           {puedeRevertirEgreso ? (
@@ -300,7 +302,7 @@ export default function AdmissionUbicacionMovimientosModal({
               disabled={loading || revertBusy}
               onClick={() => void onRevertirEgreso()}
             >
-              {revertBusy ? 'Revisando…' : 'Revertir egreso y asignar cama'}
+              {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
             </button>
           ) : null}
         </>
@@ -363,7 +365,7 @@ export default function AdmissionUbicacionMovimientosModal({
       const estado = await visitaMovimientoService.getEstadoRevertirEgreso(numeroVisita);
       if (!estado.puedeRevertir) {
         setAviso({
-          title: 'No se puede revertir el egreso',
+          title: 'No se puede eliminar el egreso',
           message: textoConfirmacionRevertir(estado),
           tone: 'warning',
         });
@@ -372,7 +374,7 @@ export default function AdmissionUbicacionMovimientosModal({
       setEstadoRevertir(estado);
     } catch (e: unknown) {
       setAviso({
-        title: 'No se puede revertir el egreso',
+        title: 'No se puede eliminar el egreso',
         message: mensajeErrorHttp(e, 'No se pudo revisar el egreso'),
         tone: 'error',
       });
@@ -389,38 +391,28 @@ export default function AdmissionUbicacionMovimientosModal({
       const res = await visitaMovimientoService.revertirEgreso(numeroVisita);
       setEstadoRevertir(null);
       await load();
-      // Flujo típico post-Binaria: egreso anulado → elegir cama real
-      setAsignarCamaOpen(true);
+      const quedoSinCama = res.data?.sinCama !== false;
+      if (quedoSinCama) setAsignarCamaOpen(true);
       setAviso({
-        title: 'Egreso anulado',
+        title: 'Egreso eliminado',
         message:
           res.mensaje ||
           res.message ||
-          'Se anuló el egreso. Elegí una cama libre para ubicar al paciente.',
+          (quedoSinCama
+            ? 'Se eliminó el egreso. El paciente quedó internado sin cama.'
+            : 'Se eliminó el egreso. El paciente volvió a su cama.'),
         tone: 'success',
       });
     } catch (e: unknown) {
       setEstadoRevertir(null);
       setAviso({
-        title: 'No se pudo anular el egreso',
-        message: mensajeErrorHttp(e, 'Error al revertir el egreso'),
+        title: 'No se pudo eliminar el egreso',
+        message: mensajeErrorHttp(e, 'Error al eliminar el egreso'),
         tone: 'error',
       });
     } finally {
       setRevertBusy(false);
     }
-  };
-
-  const onLimpiarEgreso = () => {
-    setFechaEgreso('');
-    setHoraEgreso('');
-    setDisposicionEgreso('');
-    setDiagnosticoEgreso('');
-    setDiagnosticoEgresoDesc('');
-    setDiagQuery('');
-    setDiagOpen(false);
-    setDiagResults([]);
-    setConfirmarLimpiar(false);
   };
 
   if (!isOpen) return null;
@@ -502,15 +494,29 @@ export default function AdmissionUbicacionMovimientosModal({
               <div className={styles.egresoGrid}>
                 <label className={styles.field}>
                   <span>Fecha de egreso</span>
-                  <input type="date" value={fechaEgreso} onChange={(e) => setFechaEgreso(e.target.value)} />
+                  <input
+                    type="date"
+                    value={fechaEgreso}
+                    disabled={egresoBloqueado}
+                    onChange={(e) => setFechaEgreso(e.target.value)}
+                  />
                 </label>
                 <label className={styles.field}>
                   <span>Hora de egreso</span>
-                  <input type="time" value={horaEgreso} onChange={(e) => setHoraEgreso(e.target.value)} />
+                  <input
+                    type="time"
+                    value={horaEgreso}
+                    disabled={egresoBloqueado}
+                    onChange={(e) => setHoraEgreso(e.target.value)}
+                  />
                 </label>
                 <label className={styles.field}>
                   <span>Condición de egreso</span>
-                  <select value={disposicionEgreso} onChange={(e) => setDisposicionEgreso(e.target.value)}>
+                  <select
+                    value={disposicionEgreso}
+                    disabled={egresoBloqueado}
+                    onChange={(e) => setDisposicionEgreso(e.target.value)}
+                  >
                     <option value="">—</option>
                     {disposiciones.map((d) => (
                       <option key={String(d.Valor)} value={String(Number(d.Valor) || d.Valor)}>
@@ -528,6 +534,7 @@ export default function AdmissionUbicacionMovimientosModal({
                           ? diagQuery
                           : etiquetaDiagnosticoEgreso(diagnosticoEgreso, diagnosticoEgresoDesc)
                       }
+                      disabled={egresoBloqueado}
                       onChange={(e) => {
                         const v = e.target.value;
                         setDiagTyping(true);
@@ -542,7 +549,7 @@ export default function AdmissionUbicacionMovimientosModal({
                       }}
                       placeholder="Código o descripción CIE"
                     />
-                    {diagOpen ? (
+                    {diagOpen && !egresoBloqueado ? (
                       <div className={styles.diagPanel}>
                         {diagLoading ? <div className={styles.diagItem}>Buscando…</div> : null}
                         {!diagLoading && diagQuery.trim() && diagResults.length === 0 ? (
@@ -583,34 +590,57 @@ export default function AdmissionUbicacionMovimientosModal({
                 </label>
               </div>
               <div className={styles.actions} style={{ marginTop: 10 }}>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  disabled={loading || !canEgreso}
-                  onClick={() => void onEgresoRapido()}
-                >
-                  {yaEgresado ? 'Actualizar egreso' : 'Registrar egreso'}
-                </button>
-                <button
-                  type="button"
-                  className={styles.btn}
-                  disabled={loading || revertBusy}
-                  onClick={() => setConfirmarLimpiar(true)}
-                  title="Borra fecha, hora, condición y diagnóstico de esta pantalla para cargarlos de nuevo"
-                >
-                  Limpiar
-                </button>
-                {yaEgresado && puedeRevertirEgreso ? (
+                {!yaEgresado ? (
                   <button
                     type="button"
-                    className={`${styles.btn} ${styles.btnDanger}`}
-                    disabled={loading || revertBusy}
-                    onClick={() => void onRevertirEgreso()}
-                    title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda sin cama para asignarle una"
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    disabled={loading || !canEgreso}
+                    onClick={() => void onEgresoRapido()}
                   >
-                    {revertBusy ? 'Revisando…' : 'Revertir egreso'}
+                    Registrar egreso
                   </button>
-                ) : null}
+                ) : editandoEgreso ? (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      disabled={loading || !canEgreso}
+                      onClick={() => void onEgresoRapido()}
+                    >
+                      Guardar cambios
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btn}
+                      disabled={loading}
+                      onClick={() => void load()}
+                    >
+                      Cancelar
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      disabled={loading || revertBusy}
+                      onClick={() => setEditandoEgreso(true)}
+                    >
+                      Modificar
+                    </button>
+                    {puedeRevertirEgreso ? (
+                      <button
+                        type="button"
+                        className={`${styles.btn} ${styles.btnDanger}`}
+                        disabled={loading || revertBusy}
+                        onClick={() => void onRevertirEgreso()}
+                        title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda internado sin cama"
+                      >
+                        {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
+                      </button>
+                    ) : null}
+                  </>
+                )}
               </div>
             </section>
           ) : null}
@@ -623,9 +653,9 @@ export default function AdmissionUbicacionMovimientosModal({
     <>
       <ConfirmationModal
         isOpen={Boolean(estadoRevertir)}
-        title="Anular egreso"
+        title="Eliminar egreso"
         message={estadoRevertir ? textoConfirmacionRevertir(estadoRevertir) : ''}
-        confirmText={revertBusy ? 'Anulando…' : 'Anular egreso'}
+        confirmText={revertBusy ? 'Eliminando…' : 'Confirmar'}
         cancelText="Cancelar"
         onClose={() => {
           if (!revertBusy) setEstadoRevertir(null);
@@ -633,19 +663,6 @@ export default function AdmissionUbicacionMovimientosModal({
         onConfirm={() => {
           if (!revertBusy) void confirmarRevertirEgreso();
         }}
-      />
-      <ConfirmationModal
-        isOpen={confirmarLimpiar}
-        title="Limpiar egreso"
-        message={
-          yaEgresado
-            ? 'Se van a borrar fecha, hora, condición y diagnóstico de esta pantalla para cargarlos de nuevo. Lo ya guardado no cambia hasta que actualices. Si el paciente tiene que volver a internación, usá Revertir egreso.'
-            : 'Se van a borrar fecha, hora, condición y diagnóstico de esta pantalla para cargarlos de nuevo.'
-        }
-        confirmText="Limpiar"
-        cancelText="Cancelar"
-        onClose={() => setConfirmarLimpiar(false)}
-        onConfirm={onLimpiarEgreso}
       />
       <MessageModal
         open={Boolean(aviso)}
