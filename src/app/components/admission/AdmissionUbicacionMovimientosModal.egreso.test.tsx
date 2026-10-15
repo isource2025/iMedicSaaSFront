@@ -86,16 +86,81 @@ describe("Modificar admisión · egreso de internado", () => {
         expect(bloque.slice(0, bloque.indexOf("/>"))).toMatch(/focusSection="all"/);
     });
 
-    it("muestra el egreso cargado, editable, y el botón para quitarlo (admin)", async () => {
+    it("muestra el egreso cargado bloqueado, con solo Modificar y Eliminar egreso (admin)", async () => {
         renderEmbebido();
 
-        expect(await screen.findByDisplayValue("2026-10-01")).toBeInTheDocument();
-        expect(screen.getByDisplayValue("21:29")).toBeInTheDocument();
-        expect(screen.getByDisplayValue("D64 — ANEMIA DE TIPO NO ESPECIFICADO")).toBeInTheDocument();
+        expect(await screen.findByDisplayValue("2026-10-01")).toBeDisabled();
+        expect(screen.getByDisplayValue("21:29")).toBeDisabled();
+        expect(screen.getByDisplayValue("D64 — ANEMIA DE TIPO NO ESPECIFICADO")).toBeDisabled();
         expect(screen.getByDisplayValue("EMERGENCIAS (33)")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Actualizar egreso" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Revertir egreso" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Modificar" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Eliminar egreso" })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Actualizar egreso" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Limpiar" })).not.toBeInTheDocument();
         expect(screen.getByText("Última ubicación (egresado)")).toBeInTheDocument();
+    });
+
+    it("Modificar habilita los campos y Guardar cambios actualiza el egreso", async () => {
+        const user = userEvent.setup();
+        vi.mocked(visitaMovimientoService.actualizarUltimoMovimiento).mockReset().mockResolvedValue({ success: true });
+        renderEmbebido();
+
+        await user.click(await screen.findByRole("button", { name: "Modificar" }));
+        const hora = screen.getByDisplayValue("21:29");
+        expect(hora).toBeEnabled();
+        expect(screen.getByDisplayValue("2026-10-01")).toBeEnabled();
+        expect(screen.queryByRole("button", { name: "Eliminar egreso" })).not.toBeInTheDocument();
+
+        await user.clear(hora);
+        await user.type(hora, "22:15");
+        await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+        await waitFor(() =>
+            expect(visitaMovimientoService.actualizarUltimoMovimiento).toHaveBeenCalledWith(
+                500,
+                expect.objectContaining({ fechaEgreso: "2026-10-01", horaEgreso: "22:15", disposicionEgreso: 1 }),
+            ),
+        );
+        expect(await screen.findByRole("button", { name: "Modificar" })).toBeInTheDocument();
+    });
+
+    it("Cancelar descarta lo editado y vuelve a bloquear los campos", async () => {
+        const user = userEvent.setup();
+        renderEmbebido();
+
+        await user.click(await screen.findByRole("button", { name: "Modificar" }));
+        const hora = screen.getByDisplayValue("21:29");
+        await user.clear(hora);
+        await user.type(hora, "10:00");
+        await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+        expect(await screen.findByDisplayValue("21:29")).toBeDisabled();
+        expect(visitaMovimientoService.actualizarUltimoMovimiento).not.toHaveBeenCalled();
+    });
+
+    it("si la cama sigue libre, eliminar el egreso lo devuelve ahí y no pide elegir cama", async () => {
+        const user = userEvent.setup();
+        vi.mocked(visitaMovimientoService.getEstadoRevertirEgreso).mockResolvedValue({
+            pacienteNombre: "PEREZ JUAN",
+            camaEstado: "libre",
+            puedeRevertir: true,
+            mensaje: "Se va a anular el egreso de PEREZ JUAN. Volverá a internación en la cama 02.",
+            conflictos: [],
+            avisos: [],
+        } as any);
+        vi.mocked(visitaMovimientoService.revertirEgreso).mockResolvedValue({
+            success: true,
+            mensaje: "Se anuló el egreso. PEREZ JUAN volvió a la cama 02.",
+            data: { sinCama: false, cama: "02", sector: "EME" },
+        } as any);
+
+        renderEmbebido();
+        await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
+        expect(await screen.findByText(/Volverá a internación en la cama 02/)).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Confirmar" }));
+
+        expect(await screen.findByText(/volvió a la cama 02/)).toBeInTheDocument();
+        expect(screen.queryByTestId("asignar-cama")).not.toBeInTheDocument();
     });
 
     it("quitar el egreso: avisa qué va a pasar con la cama, lo anula y abre la elección de cama", async () => {
@@ -118,14 +183,17 @@ describe("Modificar admisión · egreso de internado", () => {
                 { ValorSector: "", ValorHabitacionCama: "", FechaAdmision: 82000, HoraAdmision: 7000000, FechaEgreso: 0 },
                 movCerrado,
             ] as any);
-            return { mensaje: "Se anuló el egreso. PEREZ JUAN quedó en internación sin cama." } as any;
+            return {
+                mensaje: "Se anuló el egreso. PEREZ JUAN quedó en internación sin cama.",
+                data: { sinCama: true },
+            } as any;
         });
 
         renderEmbebido();
-        await user.click(await screen.findByRole("button", { name: "Revertir egreso" }));
+        await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
 
         expect(await screen.findByText(/Hoy está GOMEZ ANA/)).toBeInTheDocument();
-        await user.click(screen.getByRole("button", { name: "Anular egreso" }));
+        await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
         await waitFor(() => expect(visitaMovimientoService.revertirEgreso).toHaveBeenCalledWith(500));
         expect(await screen.findByTestId("asignar-cama")).toBeInTheDocument();
@@ -147,9 +215,9 @@ describe("Modificar admisión · egreso de internado", () => {
         } as any);
 
         renderEmbebido();
-        await user.click(await screen.findByRole("button", { name: "Revertir egreso" }));
+        await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
 
-        expect(await screen.findByText("No se puede revertir el egreso")).toBeInTheDocument();
+        expect(await screen.findByText("No se puede eliminar el egreso")).toBeInTheDocument();
         expect(screen.getByText(/otra internación abierta/)).toBeInTheDocument();
         expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
     });
@@ -158,6 +226,7 @@ describe("Modificar admisión · egreso de internado", () => {
         estado.admin = false;
         renderEmbebido();
         expect(await screen.findByDisplayValue("2026-10-01")).toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: "Revertir egreso" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Eliminar egreso" })).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Modificar" })).toBeInTheDocument();
     });
 });
