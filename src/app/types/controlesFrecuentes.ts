@@ -28,6 +28,11 @@ export interface ControlFrecuente {
   IMC: number | null;
   IdTurno: number | null;
   IdHci: number | null;
+  Matricula?: number | string | null;
+  /** Matrícula de quien hizo el control (Profesional); `Matricula` prioriza al operador. */
+  MatriculaProfesional?: number | string | null;
+  /** imPersonal.Valor resuelto de `Profesional` (para buscar la firma). */
+  ValorPersonalProfesional?: number | null;
 }
 
 export interface ControlesFrecuentesResponse {

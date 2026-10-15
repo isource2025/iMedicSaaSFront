@@ -7,6 +7,7 @@ import HeaderAddPatient from './AddPatient/HeaderAddPatient';
 import PersonalDataTab from './AddPatient/PersonalDataTab';
 import OtherDataTab from './AddPatient/OtherDataTab';
 import LaboralDataTab from './AddPatient/LaboralDataTab';
+import ArchivosEscaneadosTab from './AddPatient/ArchivosEscaneadosTab';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
 import styles from './PatientFormBase.module.css';
 import React, { useState, useEffect, useRef } from 'react';
@@ -36,7 +37,7 @@ interface PatientFormBaseProps {
 	onClose: () => void;
 }
 
-type Tab = 'personal' | 'other' | 'laboral';
+type Tab = 'personal' | 'other' | 'laboral' | 'archivos';
 
 // Adaptamos a formato {value,label} que esperan los subcomponentes
 const tiposDocumento = [
@@ -723,7 +724,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 
 	// Indicador tabs
 	useEffect(() => {
-		const ids: Tab[] = ['personal', 'other', 'laboral'];
+		const ids: Tab[] = ['personal', 'other', 'laboral', 'archivos'];
 		const idx = ids.indexOf(activeTab);
 		const node = tabsRef.current[idx];
 		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
@@ -792,6 +793,19 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					>
 						Datos Laborales
 					</div>
+					{formData.IDPaciente ? (
+						<div
+							ref={(el) => {
+								if (el) tabsRef.current[3] = el;
+							}}
+							className={`${styles.tab} ${
+								activeTab === 'archivos' ? styles.tabActive : ''
+							}`}
+							onClick={() => setActiveTab('archivos')}
+						>
+							Archivos Adjuntos
+						</div>
+					) : null}
 					<div className={styles.indicator} style={indicatorStyle} />
 				</div>
 
@@ -838,6 +852,9 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 										formData={formData}
 										setFormData={setFormData}
 									/>
+								)}
+								{activeTab === 'archivos' && (
+									<ArchivosEscaneadosTab idPaciente={formData.IDPaciente} />
 								)}
 							</div>
 						</CSSTransition>

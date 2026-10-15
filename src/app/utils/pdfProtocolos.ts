@@ -8,6 +8,7 @@ import {
 	drawDocumentFooters,
 	drawDocumentHeader,
 	drawRunningHeaders,
+	entregarPDF,
 	PDF_COLORS,
 	PDF_CONTENT_TOP,
 	type PDFHeaderOptions,
@@ -272,5 +273,5 @@ export async function generarPDFProtocolos({ protocolos, empresaInfo, patient, f
 
 	drawRunningHeaders(doc, headerOpts);
 	drawDocumentFooters(doc, headerOpts);
-	doc.save(fileName || `Protocolos_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
+	entregarPDF(doc, fileName || `Protocolos_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
 }

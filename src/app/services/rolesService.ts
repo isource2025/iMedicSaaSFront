@@ -1,4 +1,5 @@
 import { apiService } from './axios';
+import { etiquetaRol } from '@/app/utils/permisos';
 
 export interface Rol {
 	IdRol: number;
@@ -7,6 +8,24 @@ export interface Rol {
 	Nivel: number;
 	Activo: boolean;
 	EsPrincipal?: boolean;
+	EsSistema?: boolean;
+	RolBase?: RolBase;
+}
+
+/** Los roles del sistema usan IdRol 1..999; los personalizados de la clínica, 1000 en adelante. */
+export const ID_ROL_PERSONALIZADO_MIN = 1000;
+
+export function esRolPersonalizado(r: Pick<Rol, 'IdRol' | 'EsSistema'>): boolean {
+	return r.EsSistema === false || Number(r.IdRol) >= ID_ROL_PERSONALIZADO_MIN;
+}
+
+/**
+ * Etiqueta visible de un rol del catálogo. Los personalizados se muestran por su
+ * nombre: al duplicar heredan la descripción del original y se confundirían con él.
+ */
+export function etiquetaRolCatalogo(r: Pick<Rol, 'IdRol' | 'EsSistema' | 'Nombre' | 'Descripcion'>): string {
+	if (esRolPersonalizado(r)) return String(r.Nombre || '').trim();
+	return etiquetaRol({ nombre: r.Nombre, descripcion: r.Descripcion }) || r.Descripcion || r.Nombre;
 }
 
 export interface RolesDePersonal {
@@ -164,7 +183,7 @@ export const rolesService = {
 
 	async duplicarRol(
 		idRol: number,
-		datos: { nombre?: string; descripcion?: string } = {},
+		datos: { nombre?: string; descripcion?: string; rolBase?: RolBase } = {},
 	): Promise<{ idRol: number; nombre: string }> {
 		const res = await apiService.post<ApiOk<{ idRol: number; nombre: string }>>(
 			`/roles/${idRol}/duplicar`,

@@ -1,44 +1,16 @@
 /**
  * Wrappers lazy de los exportadores PDF.
  *
- * `pdfExport.ts` arrastra jsPDF + autotable (~400 KB) y las secciones de la
- * ficha de cama lo importaban estáticamente, así que el bundle de /beds/[id]
- * lo descargaba y parseaba aunque nadie exportara nada. Con `import()` el
- * chunk recién se baja al primer click en "Exportar PDF".
+ * jsPDF y los módulos de cada PDF pesan varios cientos de KB; las secciones de la
+ * ficha de cama los importan por acá para que el chunk recién se baje al primer
+ * click en "Exportar PDF".
  *
- * Misma firma que las funciones originales (ambas ya eran async).
+ * Misma firma que las funciones originales (todas async).
  */
-import type { PDFExportOptions } from './pdfExport';
 
 type GenerarPDFEpicrisis = typeof import('./pdfEpicrisis').generarPDFEpicrisis;
-
-let pdfExportMod: Promise<typeof import('./pdfExport')> | null = null;
-let pdfEpicrisisMod: Promise<typeof import('./pdfEpicrisis')> | null = null;
-
-function cargarPdfExport() {
-	if (!pdfExportMod) {
-		pdfExportMod = import('./pdfExport').catch((e) => {
-			pdfExportMod = null; // permitir reintento si falló la descarga del chunk
-			throw e;
-		});
-	}
-	return pdfExportMod;
-}
-
-function cargarPdfEpicrisis() {
-	if (!pdfEpicrisisMod) {
-		pdfEpicrisisMod = import('./pdfEpicrisis').catch((e) => {
-			pdfEpicrisisMod = null;
-			throw e;
-		});
-	}
-	return pdfEpicrisisMod;
-}
-
-export const exportToPDF = async (opts: PDFExportOptions) => (await cargarPdfExport()).exportToPDF(opts);
-
 export const generarPDFEpicrisis: GenerarPDFEpicrisis = async (...args) =>
-	(await cargarPdfEpicrisis()).generarPDFEpicrisis(...args);
+	(await import('./pdfEpicrisis')).generarPDFEpicrisis(...args);
 
 type GenerarPDFHistoriaClinica = typeof import('./pdfHCIngreso').generarPDFHistoriaClinica;
 export const generarPDFHistoriaClinica: GenerarPDFHistoriaClinica = async (...args) =>
@@ -64,9 +36,34 @@ type GenerarPDFEstudios = typeof import('./pdfEstudios').generarPDFEstudios;
 export const generarPDFEstudios: GenerarPDFEstudios = async (...args) =>
 	(await import('./pdfEstudios')).generarPDFEstudios(...args);
 
-/** Precarga opcional (p. ej. al hacer hover sobre el botón de exportar). */
-export const precargarPdfExport = () => {
-	void cargarPdfExport();
-};
+type GenerarPDFMedicacion = typeof import('./pdfMedicacion').generarPDFMedicacion;
+export const generarPDFMedicacion: GenerarPDFMedicacion = async (...args) =>
+	(await import('./pdfMedicacion')).generarPDFMedicacion(...args);
 
-export type { PDFExportOptions };
+type GenerarPDFControles = typeof import('./pdfControles').generarPDFControles;
+export const generarPDFControles: GenerarPDFControles = async (...args) =>
+	(await import('./pdfControles')).generarPDFControles(...args);
+
+type GenerarPDFDieta = typeof import('./pdfDieta').generarPDFDieta;
+export const generarPDFDieta: GenerarPDFDieta = async (...args) =>
+	(await import('./pdfDieta')).generarPDFDieta(...args);
+
+type GenerarPDFBalanceHidrico = typeof import('./pdfBalanceHidrico').generarPDFBalanceHidrico;
+export const generarPDFBalanceHidrico: GenerarPDFBalanceHidrico = async (...args) =>
+	(await import('./pdfBalanceHidrico')).generarPDFBalanceHidrico(...args);
+
+type GenerarPDFInsumos = typeof import('./pdfInsumos').generarPDFInsumos;
+export const generarPDFInsumos: GenerarPDFInsumos = async (...args) =>
+	(await import('./pdfInsumos')).generarPDFInsumos(...args);
+
+type GenerarPDFLaboratorio = typeof import('./pdfLaboratorio').generarPDFLaboratorio;
+export const generarPDFLaboratorio: GenerarPDFLaboratorio = async (...args) =>
+	(await import('./pdfLaboratorio')).generarPDFLaboratorio(...args);
+
+type GenerarPDFMovimientos = typeof import('./pdfMovimientos').generarPDFMovimientos;
+export const generarPDFMovimientos: GenerarPDFMovimientos = async (...args) =>
+	(await import('./pdfMovimientos')).generarPDFMovimientos(...args);
+
+type GenerarPDFAdjuntos = typeof import('./pdfAdjuntos').generarPDFAdjuntos;
+export const generarPDFAdjuntos: GenerarPDFAdjuntos = async (...args) =>
+	(await import('./pdfAdjuntos')).generarPDFAdjuntos(...args);

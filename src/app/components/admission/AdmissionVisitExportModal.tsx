@@ -128,6 +128,7 @@ export default function AdmissionVisitExportModal({
   const [fechaFin, setFechaFin] = useState('');
   const [serviceSelected, setServiceSelected] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
+  const [progreso, setProgreso] = useState('');
   const [error, setError] = useState('');
 
   const evolucionesFiltradas = useMemo(() => {
@@ -278,28 +279,26 @@ export default function AdmissionVisitExportModal({
         fechaFin: exportAll ? '' : fechaFin.trim(),
         ...(selection.evoluciones && subsetServices ? { evolucionServicioIds: picked } : {}),
       };
-      const blob = modeGeneral
-        ? await admissionSearchService.exportGeneralPaciente(idp, body)
-        : await admissionSearchService.exportSelectivo(nv, body);
-      if (!(blob instanceof Blob)) {
-        throw new Error('No se pudo generar el PDF (respuesta inválida del servidor)');
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = modeGeneral
-        ? `paciente_${idp}_carpeta.pdf`
-        : `visita_${nv}_export.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      setProgreso('Buscando los datos');
+      const [visitas, { exportarHistoriaPdf }] = await Promise.all([
+        modeGeneral
+          ? admissionSearchService.exportGeneralPaciente(idp, body)
+          : admissionSearchService.exportSelectivo(nv, body).then((v) => [v]),
+        import('@/app/utils/pdfExportHistoria'),
+      ]);
+      if (!visitas.length) throw new Error('El paciente no tiene visitas para exportar');
+      await exportarHistoriaPdf(visitas, {
+        carpeta: modeGeneral,
+        fileName: modeGeneral ? `paciente_${idp}_carpeta.pdf` : `visita_${nv}_historia.pdf`,
+        onProgress: setProgreso,
+      });
       onClose();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'No se pudo generar el archivo';
       setError(msg);
     } finally {
       setBusy(false);
+      setProgreso('');
     }
   };
 
@@ -321,7 +320,7 @@ export default function AdmissionVisitExportModal({
             <p className={styles.subtitle}>
               {modeGeneral
                 ? 'Incluye todas las visitas del paciente. Elegí el período y qué bloques van al PDF.'
-                : 'Elegí el período y qué bloques van al PDF. Cada registro sale con el profesional, su matrícula y su firma.'}
+                : 'Elegí el período y qué bloques van al PDF. Cada bloque sale igual que su export individual, con un índice al principio.'}
             </p>
           </div>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
@@ -464,7 +463,7 @@ export default function AdmissionVisitExportModal({
         </div>
 
         <div className={styles.footer}>
-          <p className={styles.summary}>{summaryText}</p>
+          <p className={styles.summary}>{busy && progreso ? `Generando: ${progreso}…` : summaryText}</p>
           <div className={styles.actions}>
             <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={busy}>
               Cancelar

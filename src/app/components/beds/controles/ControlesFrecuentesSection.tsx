@@ -17,7 +17,7 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFControles } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import NuevoControlModal from './NuevoControlModal';
@@ -128,37 +128,11 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = controlsFiltrados.map((r, idx) => ({
-				title: `Control ${idx + 1}`,
-				fields: [
-					{ label: 'Fecha', value: formatearFecha(r.FechaControl) },
-					{ label: 'Hora', value: formatearHora(r.HoraControl) },
-					{ label: 'Pulso', value: r.Pulso || '—' },
-					{ label: 'Presión', value: `${r.Maximo || '—'}/${r.Minimo || '—'}` },
-					{ label: 'Temperatura', value: r.Axilar ? `${Number(r.Axilar).toFixed(1)}°C` : '—' },
-					{ label: 'Frec. Resp.', value: r.FrecuenciaRespiratoria || '—' },
-					{ label: 'Saturación', value: r.Saturometria ? `${r.Saturometria}%` : '—' },
-					{ label: 'Glucemia', value: r.Hgt && String(r.Hgt) !== '0' ? `${r.Hgt} mg/dL` : '—' },
-					{ label: 'Observaciones', value: r.Observaciones || '—' },
-				],
-				profesional: {
-					nombre:
-						obtenerNombreCompleto(r.OperadorApellido, r.OperadorNombres) !== '-'
-							? obtenerNombreCompleto(r.OperadorApellido, r.OperadorNombres)
-							: obtenerNombreCompleto(r.ProfesionalApellido, r.ProfesionalNombres),
-					matricula: (r as any).Matricula ?? undefined,
-					especialidad: 'Enfermería',
-				},
-			}));
-
-			await exportToPDF({
-				title: 'Controles Frecuentes',
-				subtitle: `Fecha: ${fechaISO}`,
-				parts,
-				fileName: `controles_${fechaISO}.pdf`,
-				orientation: 'portrait',
+			await generarPDFControles({
+				items: controlsFiltrados,
 				empresaInfo,
-				patientInfo: {
+				fileName: `controles_${numeroVisita ?? ''}_${fechaISO ?? ''}.pdf`,
+				patient: {
 					numeroVisita: numeroVisita || undefined,
 					nombre: patientName,
 					numeroDocumento: documentoPaciente,

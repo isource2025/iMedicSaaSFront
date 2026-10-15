@@ -6,6 +6,7 @@ import {
 	drawDocumentFooters,
 	drawDocumentHeader,
 	drawRunningHeaders,
+	entregarPDF,
 	PDF_COLORS,
 	PDF_CONTENT_TOP,
 	PDF_FOOTER_SPACE,
@@ -186,5 +187,5 @@ export async function generarPDFEvoluciones({
 
 	drawRunningHeaders(doc, headerOpts);
 	drawDocumentFooters(doc, headerOpts);
-	doc.save(fileName || `Evoluciones_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
+	entregarPDF(doc, fileName || `Evoluciones_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
 }

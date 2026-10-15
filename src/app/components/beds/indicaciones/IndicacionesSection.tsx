@@ -16,6 +16,7 @@ import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { generarPDFIndicaciones } from '../../../utils/pdfExportLazy';
+import { esIndicacionSuspendida, indicacionParaPdf } from '../../../utils/pdfAdaptadores';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import ResultadoReindicarModal, {
     ReindicarItemTrack,
@@ -29,10 +30,6 @@ import {
 } from "../../../utils/indicacionesNuevasSesion";
 
 const PARAMS_INDICACIONES = { incluirSuspendidas: 1 };
-
-function esIndicacionSuspendida(x: { suspendida?: boolean; estado?: string }): boolean {
-    return Boolean(x.suspendida) || String(x.estado ?? "").trim().toUpperCase() === "S";
-}
 
 function toLocalYmd(date: Date): string {
     const y = date.getFullYear();
@@ -632,29 +629,7 @@ export default function IndicacionesSection({
 
             await generarPDFIndicaciones({
                 title: mostrarSuspendidas ? 'Indicaciones sin efecto' : 'Indicaciones médicas',
-                items: rows.map((row) => ({
-                    fecha: row.vigenteDesde,
-                    hora: row.horaCarga,
-                    tipo: row.tipoDescripcion || row.tipo,
-                    descripcion: row.descripcion,
-                    cantidad: row.cantidad,
-                    unidad: row.tipoUnidad,
-                    frecuencia: row.frecuencia,
-                    intervalo: row.intervalo,
-                    observaciones: row.observaciones,
-                    adicionales: (row.indicacionesHijas ?? []).map((h) => ({
-                        descripcion: h.descripcion || h.medicamento,
-                        cantidad: h.cantidad,
-                        unidad: h.tipoUnidad,
-                        forma: h.formaAdicional,
-                    })),
-                    profesional: {
-                        nombre: row.fullName || undefined,
-                        matricula: row.matricula ?? undefined,
-                        idPersonal: row.idPersonal ?? undefined,
-                        especialidad: row.especialidad || undefined,
-                    },
-                })),
+                items: rows.map((row) => indicacionParaPdf(row)),
                 fileName: `indicaciones_${numeroVisita ?? ''}_${selectedDate?.toISOString().split('T')[0] ?? ''}.pdf`,
                 empresaInfo,
                 patient: {

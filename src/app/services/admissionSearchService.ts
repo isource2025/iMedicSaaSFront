@@ -202,28 +202,36 @@ export interface ExportSelectivoBody {
   evolucionSectorIds?: string[];
 }
 
-async function parseBlobError(blob: Blob): Promise<string> {
-  try {
-    const text = await blob.text();
-    const j = JSON.parse(text) as { message?: string };
-    return j.message || text || 'Error al exportar';
-  } catch {
-    return 'Error al exportar';
-  }
-}
+type Fila = Record<string, unknown>;
 
-function asPdfBlob(data: unknown): Blob {
-  if (typeof Blob !== 'undefined' && data instanceof Blob) return data;
-  if (typeof ArrayBuffer !== 'undefined' && data instanceof ArrayBuffer) {
-    return new Blob([data], { type: 'application/pdf' });
-  }
-  if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView(data)) {
-    const view = data as ArrayBufferView;
-    const copy = new Uint8Array(view.byteLength);
-    copy.set(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
-    return new Blob([copy], { type: 'application/pdf' });
-  }
-  throw new Error('No se pudo generar el PDF (respuesta inválida del servidor)');
+/**
+ * Payload de `exportarAdmisionSelectivo`: cada bloque tiene la misma forma que
+ * el endpoint de su sección (solo viene si se pidió).
+ */
+export interface ExportVisitaData {
+  numeroVisita: number;
+  generadoEn: string;
+  paciente: Fila;
+  criterios: { exportAll: boolean; fechaInicio: string | null; fechaFin: string | null; sections: ExportSectionKey[] };
+  admision?: Fila;
+  historialClinico?: Fila[];
+  practicasPaciente?: Fila[];
+  indicaciones?: Fila[];
+  medicamentos?: Fila[];
+  evolucionesMedicas?: Fila[];
+  /** Solicitudes agrupadas (`SolicitudEstudio`), como en la sección de estudios. */
+  estudios?: Fila[];
+  protocolos?: Fila[];
+  epicrisis?: Fila[];
+  interconsultas?: Fila[];
+  practicas?: { laboratorios?: Fila[] };
+  controles?: Fila[];
+  dietas?: Fila[];
+  balanceHidrico?: Fila[];
+  evolucionesEnfermeria?: Fila[];
+  insumos?: Fila[];
+  movimientos?: Fila[];
+  adjuntos?: Fila[];
 }
 
 export function admissionApiErrorMessage(e: unknown, fallback: string): string {
@@ -325,39 +333,31 @@ export const admissionSearchService = {
     return response.data?.data ?? [];
   },
 
-  async exportSelectivo(numeroVisita: number, body: ExportSelectivoBody): Promise<Blob> {
+  /** Datos de la visita para armar el PDF global (ver `exportVisitaPdf`). */
+  async exportSelectivo(numeroVisita: number, body: ExportSelectivoBody): Promise<ExportVisitaData> {
     try {
-      const response = await apiService.post<Blob>(
+      const response = await apiService.post<{ success: boolean; data: ExportVisitaData }>(
         `/admission-search/${numeroVisita}/export-selective`,
         body,
-        { responseType: 'blob', timeout: 120000 },
+        { timeout: 120000 },
       );
-      return asPdfBlob(response.data);
+      return response.data.data;
     } catch (e: unknown) {
-      const err = e as { response?: { data?: Blob } };
-      const blob = err.response?.data;
-      if (blob instanceof Blob) {
-        throw new Error(await parseBlobError(blob));
-      }
-      throw e instanceof Error ? e : new Error('Error al exportar');
+      throw new Error(admissionApiErrorMessage(e, 'Error al exportar'));
     }
   },
 
-  async exportGeneralPaciente(idPaciente: number, body: ExportSelectivoBody): Promise<Blob> {
+  /** Datos de todas las visitas del paciente (carpeta), de la más reciente a la más antigua. */
+  async exportGeneralPaciente(idPaciente: number, body: ExportSelectivoBody): Promise<ExportVisitaData[]> {
     try {
-      const response = await apiService.post<Blob>(
+      const response = await apiService.post<{ success: boolean; data: { visitas: ExportVisitaData[] } }>(
         `/admission-search/paciente/${idPaciente}/export-general`,
         body,
-        { responseType: 'blob', timeout: 300000 },
+        { timeout: 300000 },
       );
-      return asPdfBlob(response.data);
+      return response.data.data?.visitas ?? [];
     } catch (e: unknown) {
-      const err = e as { response?: { data?: Blob } };
-      const blob = err.response?.data;
-      if (blob instanceof Blob) {
-        throw new Error(await parseBlobError(blob));
-      }
-      throw e instanceof Error ? e : new Error('Error al exportar');
+      throw new Error(admissionApiErrorMessage(e, 'Error al exportar'));
     }
   },
 };

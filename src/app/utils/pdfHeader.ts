@@ -499,6 +499,39 @@ export function drawRunningHeaders(doc: jsPDF, opts: PDFHeaderOptions) {
 	}
 }
 
+/** Dónde va "Página N de T" (mm desde arriba / izquierda); null si el diseño no numera. */
+export type PiePaginaPdf = { y: number; x1: number } | null;
+
+export type PdfCapturado = { bytes: ArrayBuffer; pie: PiePaginaPdf };
+
+let capturados: PdfCapturado[] | null = null;
+let piePendiente: PiePaginaPdf = null;
+
+/** Cierre común de los módulos: descarga el archivo, o lo junta si corre dentro de `capturarPDFs`. */
+export function entregarPDF(doc: jsPDF, fileName: string) {
+	if (capturados) capturados.push({ bytes: doc.output('arraybuffer'), pie: piePendiente });
+	else doc.save(fileName);
+	piePendiente = null;
+}
+
+/**
+ * Corre `generar` juntando los PDF que produzcan los módulos en lugar de descargarlos.
+ * El export de la historia arma así cada bloque con el mismo módulo que el export individual.
+ * Los pies salen sin número de página: lo agrega quien une los documentos, con la numeración total.
+ * No admite capturas concurrentes: los bloques se generan de a uno.
+ */
+export async function capturarPDFs(generar: () => Promise<unknown>): Promise<PdfCapturado[]> {
+	const previos = capturados;
+	const propios: PdfCapturado[] = [];
+	capturados = propios;
+	try {
+		await generar();
+		return propios;
+	} finally {
+		capturados = previos;
+	}
+}
+
 export function drawDocumentFooters(doc: jsPDF, opts: PDFHeaderOptions) {
 	const pageWidth = doc.internal.pageSize.getWidth();
 	const pageHeight = doc.internal.pageSize.getHeight();
@@ -510,6 +543,7 @@ export function drawDocumentFooters(doc: jsPDF, opts: PDFHeaderOptions) {
 	const texto = pie.texto.trim();
 	const y = pageHeight - (texto ? 9 : 7);
 	const izquierda = pie.institucion ? `${nombreInstitucion(opts.empresaInfo)}  ·  ${opts.title}` : opts.title;
+	piePendiente = pie.paginas ? { y, x1 } : null;
 
 	for (let i = 1; i <= total; i++) {
 		doc.setPage(i);
@@ -519,7 +553,7 @@ export function drawDocumentFooters(doc: jsPDF, opts: PDFHeaderOptions) {
 		setFont(doc, 7, 'normal', PDF_COLORS.muted);
 		doc.text(fitText(doc, izquierda, (x1 - x0) / 2 - 20), x0, y);
 		if (pie.generado) doc.text(`Generado ${emision}`, pageWidth / 2, y, { align: 'center' });
-		if (pie.paginas) {
+		if (pie.paginas && !capturados) {
 			setFont(doc, 7, 'bold', PDF_COLORS.text);
 			doc.text(`Página ${i} de ${total}`, x1, y, { align: 'right' });
 		}

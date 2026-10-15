@@ -11,7 +11,7 @@ import LabResultsTable from './LabResultsTable';
 import LabAnalysisView from './LabAnalysisView';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFLaboratorio } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
@@ -125,30 +125,11 @@ export default function LabResultsSection({
 
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
-      const empresaInfo = await obtenerInfoEmpresa();
-      const parts = examenesVisibles.map((e, idx) => ({
-        title: `Laboratorio ${idx + 1}`,
-        fields: [
-          { label: 'Fecha', value: laboratoriosService.formatDate(e.FechaExamen) },
-          { label: 'Tipo', value: laboratoriosService.getTipoEstudioNombre(e.TipoEstudio) },
-          { label: 'Laboratorio', value: e.Laboratorio || '—' },
-          { label: 'Protocolo', value: e.Protocolo || '—' },
-          { label: 'Parámetros', value: String(e.totalParametros || 0) },
-          { label: 'Fuera de rango', value: String(e.parametrosFueraDeRango || 0) },
-        ],
-        profesional: {
-          nombre: (e as any).NombreUsuario || (e as any).CargadoPorNombre || 'OPERADOR',
-        },
-      }));
-
-      await exportToPDF({
-        title: 'Resultados de Laboratorio',
-        subtitle: `Visita: ${numeroVisita}`,
-        parts,
+      await generarPDFLaboratorio({
+        items: examenesVisibles,
         fileName: `laboratorios_${numeroVisita}.pdf`,
-        orientation: 'portrait',
-        empresaInfo,
-        patientInfo: {
+        empresaInfo: await obtenerInfoEmpresa(),
+        patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,
           numeroDocumento: documentoPaciente,

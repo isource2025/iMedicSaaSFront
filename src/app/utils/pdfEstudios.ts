@@ -8,6 +8,7 @@ import {
 	drawDocumentFooters,
 	drawDocumentHeader,
 	drawRunningHeaders,
+	entregarPDF,
 	PDF_COLORS,
 	type PDFHeaderOptions,
 	type PDFHeaderPatient,
@@ -267,5 +268,5 @@ export async function generarPDFEstudios({ items, tipo = 'estudio', empresaInfo,
 
 	drawRunningHeaders(doc, headerOpts);
 	drawDocumentFooters(doc, headerOpts);
-	doc.save(fileName || `${tipo === 'estudio' ? 'Estudios' : 'Interconsultas'}_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
+	entregarPDF(doc, fileName || `${tipo === 'estudio' ? 'Estudios' : 'Interconsultas'}_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
 }

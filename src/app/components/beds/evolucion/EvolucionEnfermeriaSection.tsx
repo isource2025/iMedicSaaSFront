@@ -16,7 +16,8 @@ import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFEvoluciones } from '../../../utils/pdfExportLazy';
+import { evolucionEnfermeriaParaPdf } from '../../../utils/pdfAdaptadores';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 interface EvolucionEnfermeriaSectionProps {
@@ -157,36 +158,12 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
 
-      const parts = filteredEvoluciones.map((ev: any, idx: number) => {
-        const nombre =
-          `${ev.ProfesionalApellido || ''} ${ev.ProfesionalNombres || ''}`.trim() ||
-          `${ev.OperadorApellido || ''} ${ev.OperadorNombres || ''}`.trim() ||
-          'PROFESIONAL';
-        return {
-          title: `Evolución de enfermería ${idx + 1}`,
-          fields: [
-            { label: 'Fecha', value: ev.FechaControl || ev.FechaEv || '—' },
-            { label: 'Hora', value: ev.HoraControl || ev.HoraEv || '—' },
-          ],
-          textLabel: 'Observaciones',
-          text: ev.Observaciones || '—',
-          profesional: {
-            nombre,
-            matricula: ev.Matricula ?? undefined,
-            idPersonal: ev.Profesional ?? undefined,
-            especialidad: 'Enfermería',
-          },
-        };
-      });
-
-      await exportToPDF({
+      await generarPDFEvoluciones({
         title: 'Evolución de Enfermería',
-        subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-        parts,
-        fileName: `evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-        orientation: 'portrait',
+        items: filteredEvoluciones.map((ev) => evolucionEnfermeriaParaPdf(ev)),
+        fileName: `evolucion_enfermeria_${numeroVisita ?? ''}_${selectedDate?.toISOString().split('T')[0] ?? ''}.pdf`,
         empresaInfo,
-        patientInfo: {
+        patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,
           numeroDocumento: documentoPaciente,

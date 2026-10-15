@@ -7,6 +7,7 @@ import {
 	drawDocumentFooters,
 	drawDocumentHeader,
 	drawRunningHeaders,
+	entregarPDF,
 	PDF_COLORS,
 	PDF_CONTENT_TOP,
 	type PDFHeaderOptions,
@@ -189,7 +190,8 @@ export async function generarPDFEpicrisis(
 	drawDocumentFooters(doc, headerOpts);
 
 	const visita = patient.numeroVisita ?? primera?.idVisita ?? 'sin_visita';
-	doc.save(
+	entregarPDF(
+		doc,
 		fileName ||
 			(lista.length === 1 ? `epicrisis_${visita}_${primera?.fecha || 'doc'}.pdf` : `epicrisis_${visita}.pdf`),
 	);

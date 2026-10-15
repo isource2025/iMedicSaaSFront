@@ -35,6 +35,11 @@ export interface MedicacionControl {
   DescripcionMedicamento: string | null;
   NroAdicional: number | null;
   FormaAdicional: string | null;
+  Matricula?: number | string | null;
+  /** Matrícula de quien aplicó (Profesional); `Matricula` prioriza al operador. */
+  MatriculaProfesional?: number | string | null;
+  /** imPersonal.Valor resuelto de `Profesional` (para buscar la firma). */
+  ValorPersonalProfesional?: number | null;
   adicionales?: MedicacionControl[]; // Indicaciones adicionales agrupadas (viene del backend)
 }
 

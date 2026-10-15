@@ -12,6 +12,8 @@ export type InsumoRow = {
     descripcion?: string;
     profesional?: string;
     fullName?: string;
+    matricula?: string | number | null;
+    idPersonal?: number | null;
     observaciones?: string;
     vigenteDesde?: string;
     horaCarga?: string;

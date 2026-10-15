@@ -262,6 +262,7 @@ export interface DetalleAtencionTurno {
 		especialidad: number;
 	};
 	paciente: {
+		idPaciente?: number | null;
 		nombre: string | null;
 		numeroDocumento: number | string | null;
 		numeroHC: string | null;

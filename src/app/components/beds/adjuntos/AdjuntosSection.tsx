@@ -9,7 +9,7 @@ import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFAdjuntos } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -191,38 +191,12 @@ export default function AdjuntosSection({
 
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
-      const empresaInfo = await obtenerInfoEmpresa();
-      const parts = adjuntosVisibles.map((a, idx) => ({
-        title: `Adjunto ${idx + 1}`,
-        fields: [
-          { label: 'Nombre', value: a.NombreArchivo || '—' },
-          { label: 'Tipo', value: a.TipoImagenNombre || a.TipoArchivo || a.TipoImagen || '—' },
-          {
-            label: 'Fecha',
-            value: a.FechaCarga
-              ? new Date(a.FechaCarga).toLocaleString('es-AR', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : '—',
-          },
-        ],
-        profesional: {
-          nombre: (a as any).NombreUsuario || (a as any).CargadoPorNombre || 'OPERADOR',
-        },
-      }));
-
-      await exportToPDF({
-        title: 'Archivos Adjuntos',
-        subtitle: `Visita: ${numeroVisita}`,
-        parts,
+      await generarPDFAdjuntos({
+        items: adjuntosVisibles,
+        cargarArchivo: async (a) => (await adjuntosService.cargarBlobAdjunto(a.IdAdjunto)).blob,
         fileName: `adjuntos_${numeroVisita}.pdf`,
-        orientation: 'portrait',
-        empresaInfo,
-        patientInfo: {
+        empresaInfo: await obtenerInfoEmpresa(),
+        patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,
           numeroDocumento: documentoPaciente,

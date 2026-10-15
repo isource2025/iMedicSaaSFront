@@ -8,6 +8,7 @@ import {
 	drawDocumentFooters,
 	drawDocumentHeader,
 	drawRunningHeaders,
+	entregarPDF,
 	type PDFHeaderOptions,
 } from './pdfHeader';
 
@@ -239,5 +240,5 @@ export const generarPDFHistoriaClinica = async (
 
 	drawRunningHeaders(doc, headerOpts);
 	drawDocumentFooters(doc, headerOpts);
-	doc.save(`HC_Ingreso_${data.NumeroVisita}_${Date.now()}.pdf`);
+	entregarPDF(doc, `HC_Ingreso_${data.NumeroVisita}_${Date.now()}.pdf`);
 };
