@@ -142,7 +142,6 @@ export function useSeccionesCama() {
 		if (adjuntosEnOtras) otras.push({ id: 'adjuntos', label: 'Archivos adjuntos' });
 		if (!mostrarSoloOtrasFunciones) {
 			otras.push({ id: 'movimientos', label: 'Movimientos' });
-			otras.push({ id: 'informe_evo', label: 'Informe de evolución' });
 		}
 		out.push({ id: 'otras', label: 'Otras funciones', items: filtrar(otras) });
 		return out.filter((g) => g.items.length > 0);

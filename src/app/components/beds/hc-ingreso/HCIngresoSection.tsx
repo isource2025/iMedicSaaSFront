@@ -542,7 +542,7 @@ export default function HCIngresoSection({
             <div className={styles.root}>
                 <BedSectionHeader title="HC de Ingreso" date={selectedDate} actionsClassName={styles.dateActions}>
                     <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`} onClick={handleAdd}>
-                        <span className={styles.addIcon}>+</span> Agregar HC
+                        Agregar HC
                     </button>
                     <ExportButton
                         data={selectedRecord ? [selectedRecord] : []}
@@ -677,7 +677,7 @@ export default function HCIngresoSection({
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddMobile}`} 
                                 onClick={handleAdd}
                             >
-                                <span className={styles.addIcon}>+</span> Agregar HC
+                                Agregar HC
                             </button>
                             <button 
                                 className={styles.btnSecondary} 

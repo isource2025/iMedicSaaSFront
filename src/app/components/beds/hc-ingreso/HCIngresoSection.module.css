@@ -949,7 +949,7 @@
     }
 
     .btnAddDate {
-        padding: 8px 16px;
+        padding: 8px 12px;
         font-size: 0.8rem;
     }
 }
@@ -963,7 +963,7 @@
     }
 
     .btnAddDate {
-        padding: 10px 20px;
+        padding: 10px 12px;
         font-size: 0.85rem;
     }
 
@@ -1262,7 +1262,7 @@
 /* ===== RESPONSIVE: SMALL MOBILE (480px) ===== */
 @media (max-width: 480px) {
     .btnAddDate {
-        padding: 8px 16px;
+        padding: 8px 10px;
         font-size: 0.8rem;
     }
 

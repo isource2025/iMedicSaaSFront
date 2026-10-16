@@ -44,46 +44,48 @@ function SectionPickerSheet({
 
 	return (
 		<BedSheet title='Ir a sección' onClose={onClose} wide>
-			{grupos.map((g) => (
-				<section key={g.id} className={styles.grupo}>
-					<h3 className={styles.grupoTitulo}>{g.label}</h3>
-					<div className={styles.grid}>
-						{g.items.map((it) => {
-							const activo = activeSection === it.id;
-							return (
-								<button
-									key={it.id}
-									type='button'
-									className={`${styles.item} ${activo ? styles.itemActivo : ''}`}
-									aria-current={activo ? 'page' : undefined}
-									onClick={() => {
-										navigateToSection(it.id);
-										onClose();
-									}}
-								>
-									<span className={styles.itemLabel}>{it.label}</span>
-									{it.id === 'adjuntos' && adjuntosTotalCount > 0 ? (
-										<span className={styles.badge}>{adjuntosTotalCount}</span>
-									) : null}
-								</button>
-							);
-						})}
-					</div>
-				</section>
-			))}
-			{onExportDetalle ? (
-				<button
-					type='button'
-					className={styles.export}
-					onClick={() => {
-						onClose();
-						onExportDetalle();
-					}}
-				>
-					<FiDownload aria-hidden />
-					Exportar detalle
-				</button>
-			) : null}
+			<div className={styles.root}>
+				{grupos.map((g) => (
+					<section key={g.id} className={styles.grupo}>
+						<h3 className={styles.grupoTitulo}>{g.label}</h3>
+						<div className={styles.grid}>
+							{g.items.map((it) => {
+								const activo = activeSection === it.id;
+								return (
+									<button
+										key={it.id}
+										type='button'
+										className={`${styles.item} ${activo ? styles.itemActivo : ''}`}
+										aria-current={activo ? 'page' : undefined}
+										onClick={() => {
+											navigateToSection(it.id);
+											onClose();
+										}}
+									>
+										<span className={styles.itemLabel}>{it.label}</span>
+										{it.id === 'adjuntos' && adjuntosTotalCount > 0 ? (
+											<span className={styles.badge}>{adjuntosTotalCount}</span>
+										) : null}
+									</button>
+								);
+							})}
+						</div>
+					</section>
+				))}
+				{onExportDetalle ? (
+					<button
+						type='button'
+						className={styles.export}
+						onClick={() => {
+							onClose();
+							onExportDetalle();
+						}}
+					>
+						<FiDownload aria-hidden />
+						Exportar detalle
+					</button>
+				) : null}
+			</div>
 		</BedSheet>
 	);
 }

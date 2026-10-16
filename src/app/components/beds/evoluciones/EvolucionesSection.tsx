@@ -228,9 +228,6 @@ export default function EvolucionesSection({
                     className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
                     onClick={onAddEvolucion}
                 >
-                    <span className={styles.addIcon} aria-hidden>
-                        +
-                    </span>
                     Agregar evolución
                 </button>
                 <ExportButton

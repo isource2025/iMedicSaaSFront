@@ -47,8 +47,8 @@ export default function LabResultsTable({ examen }: LabResultsTableProps) {
         )}
       </div>
 
-      {/* Tabla de resultados */}
-      <div className={styles.tableContainer}>
+      {/* Tabla de resultados (desktop) */}
+      <div className={`${styles.tableContainer} ${styles.desktopOnly}`}>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -112,6 +112,40 @@ export default function LabResultsTable({ examen }: LabResultsTableProps) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Cards (mobile) */}
+      <div className={styles.mobileCards}>
+        {examen.detalles && examen.detalles.length > 0 ? (
+          examen.detalles.map((detalle, index) => (
+            <article key={`lab-det-m-${detalle.IdDetalle || index}`} className={styles.mobileCard}>
+              <div className={styles.mobileCardHeader}>
+                <p className={styles.mobileTitle}>{detalle.NombreParametro}</p>
+                {detalle.FueraDeRango ? (
+                  <span className={styles.badgeWarning}>Fuera de rango</span>
+                ) : (
+                  <span className={styles.badgeSuccess}>Normal</span>
+                )}
+              </div>
+              <p className={styles.mobileResultado} style={{ color: detalle.FueraDeRango ? '#f59e0b' : '#10b981' }}>
+                {detalle.Resultado}
+                {detalle.UnidadMedida ? ` ${detalle.UnidadMedida}` : ''}
+              </p>
+              <p className={styles.mobileMeta}>
+                Ref:{' '}
+                {detalle.ValorReferencia ||
+                  (detalle.ValorMinimo && detalle.ValorMaximo
+                    ? `${detalle.ValorMinimo} - ${detalle.ValorMaximo}`
+                    : '—')}
+              </p>
+              {detalle.Metodo ? (
+                <p className={styles.mobileMeta}>Método: {detalle.Metodo}</p>
+              ) : null}
+            </article>
+          ))
+        ) : (
+          <p className={styles.emptyCell}>No hay parámetros registrados</p>
+        )}
       </div>
 
       {/* Resumen */}

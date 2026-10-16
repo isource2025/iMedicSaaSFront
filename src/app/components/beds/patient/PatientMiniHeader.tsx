@@ -67,7 +67,28 @@ export default function PatientMiniHeader({
 
 	const [pacienteData, setPacienteData] = useState<PacienteData | null>(fromProps);
 	const [loading, setLoading] = useState(!fromProps);
+	const [toastCopiadoKey, setToastCopiadoKey] = useState(0);
 	const cargadoRef = useRef<string | null>(null);
+	const copiadoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const copiarNumeroVisita = useCallback(async () => {
+		const valor = String(numeroVisita || '').trim();
+		if (!valor) return;
+		try {
+			await navigator.clipboard.writeText(valor);
+			setToastCopiadoKey((k) => k + 1);
+			if (copiadoTimerRef.current) clearTimeout(copiadoTimerRef.current);
+			copiadoTimerRef.current = setTimeout(() => setToastCopiadoKey(0), 1600);
+		} catch {
+			/* clipboard no disponible */
+		}
+	}, [numeroVisita]);
+
+	useEffect(() => {
+		return () => {
+			if (copiadoTimerRef.current) clearTimeout(copiadoTimerRef.current);
+		};
+	}, []);
 
 	useEffect(() => {
 		if (fromProps) {
@@ -215,7 +236,26 @@ export default function PatientMiniHeader({
 	}
 
 	return (
-		<div className={s.wrap}>
+		<div
+			className={s.wrap}
+			data-asistente-visita={numeroVisita || undefined}
+			data-asistente-paciente={pacienteData?.apellidoYNombre || undefined}
+			data-asistente-documento={
+				pacienteData?.numeroDocumento && pacienteData.numeroDocumento !== 'N/A'
+					? pacienteData.numeroDocumento
+					: undefined
+			}
+			data-asistente-sector={
+				pacienteData?.valorSector && pacienteData.valorSector !== 'N/A'
+					? pacienteData.valorSector
+					: undefined
+			}
+			data-asistente-cama={
+				pacienteData?.valorHabitacionCama && pacienteData.valorHabitacionCama !== 'N/A'
+					? pacienteData.valorHabitacionCama
+					: undefined
+			}
+		>
 			<div className={s.headerLeft}>
 				<div className={s.documentoRow}>
 					{pacienteData?.numeroDocumento &&
@@ -278,9 +318,24 @@ export default function PatientMiniHeader({
 			<div className={s.headerRight}>
 				{numeroVisita ? (
 					<div className={s.visitaBlock}>
-						<span className={s.visitaNumber}>
-							{String(numeroVisita).split('').join(' ')}
-						</span>
+						{toastCopiadoKey > 0 ? (
+							<span
+								key={toastCopiadoKey}
+								className={s.copiadoToast}
+								aria-live='polite'
+							>
+								copiado
+							</span>
+						) : null}
+						<button
+							type='button'
+							className={s.visitaNumber}
+							onClick={copiarNumeroVisita}
+							title='Copiar N° de visita'
+							aria-label={`Copiar número de visita ${numeroVisita}`}
+						>
+							<span className={s.visitaDigits}>{String(numeroVisita)}</span>
+						</button>
 						<span className={s.visitaLabel}>N° DE VISITA</span>
 					</div>
 				) : null}

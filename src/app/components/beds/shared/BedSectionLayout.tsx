@@ -54,9 +54,6 @@ export default function BedSectionLayout({
 								disabled={addDisabled}
 								title={addTitle}
 							>
-								<span className={styles.addIcon} aria-hidden>
-									+
-								</span>
 								{addLabel}
 							</button>
 						) : null}

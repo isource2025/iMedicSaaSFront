@@ -378,6 +378,62 @@ export default function EstudiosSection({
 		</div>
 	);
 
+	const accionesSolicitud = (s: SolicitudEstudio, varias: boolean, abierta: boolean, primero: PedidoEstudio) => (
+		<div className={`${tableStyles.actionBtns} ${styles.mobileActions}`}>
+			{varias ? (
+				<button
+					type="button"
+					className={tableStyles.btnAction}
+					title={abierta ? 'Ocultar estudios' : 'Ver estudios'}
+					onClick={() => alternarAbierta(s.Clave)}
+				>
+					<IoEyeOutline color="#5BC0DE" size={18} />
+				</button>
+			) : (
+				<>
+					<button
+						type="button"
+						className={tableStyles.btnAction}
+						title="Ver detalle"
+						onClick={() => setSelected(primero)}
+					>
+						<IoEyeOutline color="#5BC0DE" size={18} />
+					</button>
+					{puedeEditarPedido(primero) && (
+						<button
+							type="button"
+							className={tableStyles.btnAction}
+							title="Editar pedido"
+							onClick={() => abrirEdicionPedido(primero)}
+						>
+							<IoPencilOutline color="#5BC0DE" size={18} />
+						</button>
+					)}
+					{puedeEditarRespuesta(primero) && (
+						<button
+							type="button"
+							className={tableStyles.btnAction}
+							title="Editar respuesta"
+							onClick={() => abrirEdicionRespuesta(primero)}
+						>
+							<IoPencilOutline color="#5BC0DE" size={18} />
+						</button>
+					)}
+				</>
+			)}
+			{puedeEliminarSolicitud(s) && (
+				<button
+					type="button"
+					className={tableStyles.btnAction}
+					title={varias ? 'Eliminar solicitud' : 'Eliminar'}
+					onClick={() => setDeleting(s)}
+				>
+					<IoTrashOutline color="#5BC0DE" size={18} />
+				</button>
+			)}
+		</div>
+	);
+
 	const filaSolicitud = (s: SolicitudEstudio) => {
 		const varias = s.TotalItems > 1;
 		const abierta = varias && abiertas.has(s.Clave);
@@ -441,30 +497,7 @@ export default function EstudiosSection({
 					<td className={tableStyles.notas}>{respuestaSolicitud(s)}</td>
 					<td className={tableStyles.meta}>{s.MedicoSolicitanteNombre || '—'}</td>
 					<td className={tableStyles.cellAccion}>
-						<div className={tableStyles.actionBtns}>
-							{varias ? (
-								<button
-									type="button"
-									className={tableStyles.btnAction}
-									title={abierta ? 'Ocultar estudios' : 'Ver estudios'}
-									onClick={() => alternarAbierta(s.Clave)}
-								>
-									<IoEyeOutline color="#5BC0DE" size={18} />
-								</button>
-							) : (
-								accionesItem(primero)
-							)}
-							{puedeEliminarSolicitud(s) && (
-								<button
-									type="button"
-									className={tableStyles.btnAction}
-									title={varias ? 'Eliminar solicitud' : 'Eliminar'}
-									onClick={() => setDeleting(s)}
-								>
-									<IoTrashOutline color="#5BC0DE" size={18} />
-								</button>
-							)}
-						</div>
+						{accionesSolicitud(s, varias, abierta, primero)}
 					</td>
 				</tr>
 				{abierta &&
@@ -503,6 +536,100 @@ export default function EstudiosSection({
 						);
 					})}
 			</Fragment>
+		);
+	};
+
+	const tarjetaSolicitud = (s: SolicitudEstudio) => {
+		const varias = s.TotalItems > 1;
+		const abierta = varias && abiertas.has(s.Clave);
+		const primero = s.Items[0];
+		const estado = estadoSolicitud(s);
+		const servicio = s.ServicioDescripcion || s.SectorReceptorNombre;
+		const titulo = varias
+			? `${nombreItem(primero)} y ${s.TotalItems - 1} más`
+			: primero.PracticaSolicitada || nombreItem(primero);
+		const informeMostrado = new Map<number, string>();
+
+		return (
+			<article key={`est-m-${s.Clave}`} className={styles.mobileCard}>
+				<div className={styles.mobileCardHeader}>
+					<div className={styles.mobileCardHeaderLeft}>
+						<span
+							className={`${tableStyles.urgencia} ${urgenciaClass(s.EstadoUrgencia)}`}
+							title={s.EstadoUrgencia || 'Sin urgencia'}
+						/>
+						{varias ? (
+							<span className={`${solStyles.estadoBadge} ${estado.clase}`}>{estado.texto}</span>
+						) : (
+							<span className={`${solStyles.estadoBadge} ${claseEstadoItem(primero)}`}>
+								{estadoItem(primero)}
+							</span>
+						)}
+					</div>
+					<span className={styles.mobileFecha}>{formatFecha(s) || '—'}</span>
+				</div>
+
+				<p className={styles.mobileTitle}>{titulo}</p>
+				<p className={styles.mobileMeta}>
+					{!varias && primero.CodigoPractica ? `Cód. ${primero.CodigoPractica}` : null}
+					{!varias && primero.CodigoPractica && servicio ? ' · ' : null}
+					{varias ? `${s.TotalItems} estudios` : null}
+					{varias && servicio ? ' · ' : null}
+					{servicio ? `Servicio: ${servicio}` : null}
+				</p>
+				{s.NotasObservacion ? (
+					<p className={styles.mobileMeta}>Pedido: {previewText(s.NotasObservacion)}</p>
+				) : null}
+				<p className={styles.mobileMeta}>Respuesta: {respuestaSolicitud(s)}</p>
+				<p className={styles.mobileProfesional}>
+					{s.MedicoSolicitanteNombre || 'Sin solicitante'}
+				</p>
+
+				{varias ? (
+					<button
+						type="button"
+						className={styles.mobileExpandBtn}
+						aria-expanded={abierta}
+						onClick={() => alternarAbierta(s.Clave)}
+					>
+						{abierta ? 'Ver menos' : 'Ver más'}
+					</button>
+				) : null}
+
+				{abierta ? (
+					<div className={styles.mobileSubList}>
+						{s.Items.map((r) => {
+							const prot = Number(r.IdProtocolo) || 0;
+							const yaMostrado = prot > 0 ? informeMostrado.get(prot) : undefined;
+							if (prot > 0 && !yaMostrado) informeMostrado.set(prot, nombreItem(r));
+							return (
+								<div key={r.IdPedido} className={styles.mobileSubCard}>
+									<div className={styles.mobileCardHeader}>
+										<span
+											className={`${solStyles.estadoBadge} ${solStyles.estadoItem} ${claseEstadoItem(r)}`}
+										>
+											{estadoItem(r)}
+										</span>
+										<span className={styles.mobileFecha}>{r.FechaResultado || '—'}</span>
+									</div>
+									<p className={styles.mobileTitle}>{nombreItem(r)}</p>
+									<p className={styles.mobileMeta}>
+										{r.CodigoPractica ? `Cód. ${r.CodigoPractica}` : null}
+										{r.CodigoPractica && r.RealizadorNombre ? ' · ' : null}
+										{r.RealizadorNombre || null}
+									</p>
+									<p className={styles.mobileMeta}>
+										{yaMostrado ? `Mismo informe que ${yaMostrado}` : respuestaItem(r)}
+									</p>
+									{accionesItem(r, true)}
+								</div>
+							);
+						})}
+					</div>
+				) : null}
+
+				{accionesSolicitud(s, varias, abierta, primero)}
+			</article>
 		);
 	};
 
@@ -545,26 +672,29 @@ export default function EstudiosSection({
 						onAction={puedeCrear && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
 					/>
 				) : (
-					<div className={tableStyles.tableWrap}>
-						<div className={tableStyles.scrollArea}>
-						<table className={tableStyles.table}>
-							<thead className={tableStyles.thead}>
-								<tr>
-									<th>Urg.</th>
-									<th>Estado</th>
-									<th>Fecha / hora</th>
-									<th>Cód.</th>
-									<th>Práctica solicitada</th>
-									<th>Pedido</th>
-									<th>Respuesta</th>
-									<th>Solicitado por</th>
-									<th className={tableStyles.colAccion}>Acciones</th>
-								</tr>
-							</thead>
-							<tbody className={tableStyles.tbody}>{filtered.map(filaSolicitud)}</tbody>
-						</table>
+					<>
+						<div className={`${tableStyles.tableWrap} ${styles.desktopTable}`}>
+							<div className={tableStyles.scrollArea}>
+								<table className={tableStyles.table}>
+									<thead className={tableStyles.thead}>
+										<tr>
+											<th>Urg.</th>
+											<th>Estado</th>
+											<th>Fecha / hora</th>
+											<th>Cód.</th>
+											<th>Práctica solicitada</th>
+											<th>Pedido</th>
+											<th>Respuesta</th>
+											<th>Solicitado por</th>
+											<th className={tableStyles.colAccion}>Acciones</th>
+										</tr>
+									</thead>
+									<tbody className={tableStyles.tbody}>{filtered.map(filaSolicitud)}</tbody>
+								</table>
+							</div>
 						</div>
-					</div>
+						<div className={styles.mobileCards}>{filtered.map(tarjetaSolicitud)}</div>
+					</>
 				)}
 			</BedSectionLayout>
 

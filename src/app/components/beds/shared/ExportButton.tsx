@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { IoChevronDown, IoDocumentTextOutline } from 'react-icons/io5';
+import { IoChevronDown, IoDocumentTextOutline, IoDownloadOutline } from 'react-icons/io5';
 import styles from './ExportButton.module.css';
 
 export type ExportOption = 'pdf' | 'excel' | 'csv';
@@ -67,10 +67,19 @@ export default function ExportButton({
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || data.length === 0}
         type="button"
+        aria-label="Exportar"
+        title="Exportar"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
-        <IoDocumentTextOutline size={16} />
-        <span>Exportar</span>
-        <IoChevronDown size={14} className={isOpen ? styles.iconRotated : ''} />
+        <IoDocumentTextOutline size={16} className={styles.iconDoc} aria-hidden />
+        <span className={styles.label}>Exportar</span>
+        <IoChevronDown
+          size={14}
+          className={`${styles.chevron} ${isOpen ? styles.iconRotated : ''}`}
+          aria-hidden
+        />
+        <IoDownloadOutline size={20} className={styles.iconDownload} aria-hidden />
       </button>
 
       {isOpen && (

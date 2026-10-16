@@ -285,6 +285,11 @@
 		overflow-x: hidden;
 	}
 
+	.btnAddDate {
+		padding: 10px 12px !important;
+		font-size: 0.85rem !important;
+	}
+
 	.toolbar {
 		flex-direction: column;
 		gap: 12px;

@@ -191,51 +191,84 @@ export default function ProcedimientosSection({
 						}
 					/>
 				) : (
-					<div className={tableStyles.tableWrap}>
-						<div className={tableStyles.scrollArea}>
-						<table className={tableStyles.table}>
-							<thead className={tableStyles.thead}>
-								<tr>
-									<th>Fecha / hora</th>
-									<th>Cód.</th>
-									<th>Práctica</th>
-									<th>Tipo</th>
-									<th>Cant.</th>
-									<th>Sector</th>
-									<th>Profesionales</th>
-									<th className={tableStyles.colAccion}>Acciones</th>
-								</tr>
-							</thead>
-							<tbody className={tableStyles.tbody}>
-								{filtered.map((r) => (
-									<tr key={r.Valor} className={tableStyles.row}>
-										<td className={tableStyles.meta}>{formatFechaHora(r)}</td>
-										<td className={tableStyles.codigo}>{r.Practica ?? '—'}</td>
-										<td>
-											<div className={tableStyles.practica}>{practicaTitulo(r)}</div>
-										</td>
-										<td className={tableStyles.meta}>{r.TipoPractica || '—'}</td>
-										<td className={tableStyles.meta}>{r.CantidadPractica ?? '—'}</td>
-										<td className={tableStyles.meta}>{r.ValorSector || '—'}</td>
-										<td className={tableStyles.meta}>{r.Profesionales || '—'}</td>
-										<td className={tableStyles.cellAccion}>
-											<div className={tableStyles.actionBtns}>
-												<button
-													type="button"
-													className={tableStyles.btnAction}
-													title="Ver detalle"
-													onClick={() => setSelected(r)}
-												>
-													<IoEyeOutline color="#5BC0DE" size={18} />
-												</button>
-											</div>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
+					<>
+						<div className={`${tableStyles.tableWrap} ${tableStyles.desktopOnly}`}>
+							<div className={tableStyles.scrollArea}>
+								<table className={tableStyles.table}>
+									<thead className={tableStyles.thead}>
+										<tr>
+											<th>Fecha / hora</th>
+											<th>Cód.</th>
+											<th>Práctica</th>
+											<th>Tipo</th>
+											<th>Cant.</th>
+											<th>Sector</th>
+											<th>Profesionales</th>
+											<th className={tableStyles.colAccion}>Acciones</th>
+										</tr>
+									</thead>
+									<tbody className={tableStyles.tbody}>
+										{filtered.map((r) => (
+											<tr key={r.Valor} className={tableStyles.row}>
+												<td className={tableStyles.meta}>{formatFechaHora(r)}</td>
+												<td className={tableStyles.codigo}>{r.Practica ?? '—'}</td>
+												<td>
+													<div className={tableStyles.practica}>{practicaTitulo(r)}</div>
+												</td>
+												<td className={tableStyles.meta}>{r.TipoPractica || '—'}</td>
+												<td className={tableStyles.meta}>{r.CantidadPractica ?? '—'}</td>
+												<td className={tableStyles.meta}>{r.ValorSector || '—'}</td>
+												<td className={tableStyles.meta}>{r.Profesionales || '—'}</td>
+												<td className={tableStyles.cellAccion}>
+													<div className={tableStyles.actionBtns}>
+														<button
+															type="button"
+															className={tableStyles.btnAction}
+															title="Ver detalle"
+															onClick={() => setSelected(r)}
+														>
+															<IoEyeOutline color="#5BC0DE" size={18} />
+														</button>
+													</div>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
 						</div>
-					</div>
+						<div className={tableStyles.mobileCards}>
+							{filtered.map((r) => (
+								<article key={`proc-m-${r.Valor}`} className={tableStyles.mobileCard}>
+									<div className={tableStyles.mobileCardHeader}>
+										<span className={tableStyles.mobileFecha}>{formatFechaHora(r) || '—'}</span>
+										<span className={tableStyles.mobileFecha}>
+											{r.Practica != null ? `Cód. ${r.Practica}` : '—'}
+										</span>
+									</div>
+									<p className={tableStyles.mobileTitle}>{practicaTitulo(r)}</p>
+									<p className={tableStyles.mobileMetaLine}>
+										{r.TipoPractica || '—'}
+										{r.CantidadPractica != null ? ` · Cant. ${r.CantidadPractica}` : ''}
+										{r.ValorSector ? ` · ${r.ValorSector}` : ''}
+									</p>
+									<p className={tableStyles.mobileProfesional}>
+										{r.Profesionales || 'Sin profesionales'}
+									</p>
+									<div className={`${tableStyles.actionBtns} ${tableStyles.mobileActions}`}>
+										<button
+											type="button"
+											className={tableStyles.btnAction}
+											title="Ver detalle"
+											onClick={() => setSelected(r)}
+										>
+											<IoEyeOutline color="#5BC0DE" size={18} />
+										</button>
+									</div>
+								</article>
+							))}
+						</div>
+					</>
 				)}
 			</BedSectionLayout>
 

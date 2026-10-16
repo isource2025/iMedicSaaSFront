@@ -27,6 +27,7 @@ export default function DayPickerSheet({ onClose }: Props) {
 		<BedSheet
 			title='Elegí un día'
 			onClose={onClose}
+			wide
 			headerExtra={
 				<button type='button' className={styles.hoy} onClick={irAHoy}>
 					Hoy
