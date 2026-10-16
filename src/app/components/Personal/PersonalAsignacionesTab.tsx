@@ -207,7 +207,7 @@ export default function PersonalAsignacionesTab({
 			{!editing && !draft ? (
 				<div className={formStyles.asignColHead} style={{ marginBottom: '0.75rem' }}>
 					<p className={formStyles.usuarioHint} style={{ margin: 0 }}>
-						Sectores de internación, login y camas. Los pedidos se solicitan a servicios.
+						Sectores de internación, login y camas. Los destinos de pedidos se asignan en Servicios.
 					</p>
 					<button type="button" className={styles.btnPrimary} onClick={abrirEdicion}>
 						Editar / asignar
@@ -225,7 +225,7 @@ export default function PersonalAsignacionesTab({
 				<div>
 					<h3 className={formStyles.subsectionTitle}>Sectores</h3>
 					<p className={formStyles.usuarioHint}>
-						Login, internación y camas. La bandeja de pedidos usa la solapa Servicios.
+						Login, internación y camas. La bandeja de pedidos se asigna en la solapa Servicios.
 					</p>
 				</div>
 				{editing ? (

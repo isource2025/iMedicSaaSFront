@@ -71,9 +71,9 @@ export interface PersonalFormData {
 	IdRol?: string;
 	/** Alta: roles asignados (el principal va en IdRol). */
 	IdRoles?: number[];
-	/** Alta: sectores opcionales (imPersonalSectores). El servicio sale de imSectores.ValorServicio. */
+	/** Alta: sectores opcionales (imPersonalSectores). */
 	Sectores?: string[];
-	/** @deprecated Alta ya no asigna imPersonalServicios; se ignora. */
+	/** Alta: servicios destino opcionales (imPersonalServicios / bandeja de pedidos). */
 	Servicios?: string[];
 }
 

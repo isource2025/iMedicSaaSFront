@@ -422,7 +422,7 @@ export const removePersonalServicioPedido = async (
 
 export const replacePersonalAsignaciones = async (
 	id: number,
-	body: { sectores: string[]; servicios?: string[] },
+	body: { sectores?: string[]; servicios?: string[] },
 ): Promise<{ sectores: PersonalSectorAsignado[]; servicios: PersonalServicioAsignado[] }> => {
 	try {
 		const res = await apiService.put<

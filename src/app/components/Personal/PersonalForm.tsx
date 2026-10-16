@@ -24,6 +24,7 @@ import AgendaTab from './AgendaTab/AgendaTab';
 import PersonalCuentaTab, { type PersonalCuentaTabHandle } from './PersonalCuentaTab';
 import PersonalAccesoYRolesFields from './PersonalAccesoYRolesFields';
 import PersonalAsignacionesTab from './PersonalAsignacionesTab';
+import PersonalServiciosTab from './PersonalServiciosTab';
 import PersonalFirmaTab from './PersonalFirmaTab';
 import PersonalFirmaPad, { type PersonalFirmaPadRef } from './PersonalFirmaPad';
 import { usePermiso } from '../../hooks/usePermiso';
@@ -43,7 +44,7 @@ interface PersonalFormProps {
 	onDelete?: () => void;
 }
 
-type Tab = 'personal' | 'profesional' | 'firma' | 'asignaciones' | 'cuenta' | 'agenda';
+type Tab = 'personal' | 'profesional' | 'firma' | 'asignaciones' | 'servicios' | 'cuenta' | 'agenda';
 
 const TIPOS_DOCUMENTO = [
 	{ value: 'DNI', label: 'DNI' },
@@ -241,7 +242,7 @@ export default function PersonalForm({
 	const showFirmaTab = true;
 	const matriculaProfesional = Number(formData.MatriculaProvincial) || null;
 
-	const tabIds: Tab[] = ['personal', 'profesional', 'cuenta', 'asignaciones', 'firma'];
+	const tabIds: Tab[] = ['personal', 'profesional', 'cuenta', 'asignaciones', 'servicios', 'firma'];
 	if (showAgendaTab) tabIds.push('agenda');
 
 	useEffect(() => {
@@ -500,7 +501,8 @@ export default function PersonalForm({
 			isEditing &&
 			(activeTab === 'firma' ||
 				activeTab === 'agenda' ||
-				activeTab === 'asignaciones')
+				activeTab === 'asignaciones' ||
+				activeTab === 'servicios')
 		) {
 			return;
 		}
@@ -603,6 +605,17 @@ export default function PersonalForm({
 						onClick={() => goTab('asignaciones')}
 					>
 						Sectores
+					</div>
+				)}
+				{showAsignacionesTab && (
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[tabIds.indexOf('servicios')] = el;
+						}}
+						className={`${styles.tab} ${activeTab === 'servicios' ? styles.tabActive : ''}`}
+						onClick={() => goTab('servicios')}
+					>
+						Servicios
 					</div>
 				)}
 				{showFirmaTab && (
@@ -1036,7 +1049,23 @@ export default function PersonalForm({
 						draft
 						draftSectores={formData.Sectores || []}
 						onDraftChange={({ sectores }) =>
-							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: [] }))
+							setFormData((prev) => ({ ...prev, Sectores: sectores }))
+						}
+					/>
+				</div>
+			)}
+
+			{isEditing && formData.Valor ? (
+				<div className={activeTab !== 'servicios' ? styles.tabHidden : undefined}>
+					<PersonalServiciosTab personalId={formData.Valor} />
+				</div>
+			) : (
+				<div className={activeTab !== 'servicios' ? styles.tabHidden : undefined}>
+					<PersonalServiciosTab
+						draft
+						draftServicios={formData.Servicios || []}
+						onDraftChange={({ servicios }) =>
+							setFormData((prev) => ({ ...prev, Servicios: servicios }))
 						}
 					/>
 				</div>
@@ -1121,6 +1150,7 @@ export default function PersonalForm({
 				activeTab === 'cuenta' ||
 				(activeTab !== 'agenda' &&
 					activeTab !== 'asignaciones' &&
+					activeTab !== 'servicios' &&
 					activeTab !== 'firma')) ? (
 			<div className={styles.actions}>
 				<div className={styles.actionsButtons}>
