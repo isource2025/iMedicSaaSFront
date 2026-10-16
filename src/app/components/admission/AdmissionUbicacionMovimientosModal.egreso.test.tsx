@@ -222,11 +222,22 @@ describe("Modificar admisión · egreso de internado", () => {
         expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
     });
 
-    it("un usuario que no es admin ve el egreso pero no puede quitarlo", async () => {
+    it("un usuario que no es admin ve Eliminar egreso y al click se le explica el rol ADMIN", async () => {
+        const user = userEvent.setup();
         estado.admin = false;
         renderEmbebido();
         expect(await screen.findByDisplayValue("2026-10-01")).toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: "Eliminar egreso" })).not.toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Modificar" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Eliminar egreso" })).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Eliminar egreso" }));
+
+        expect(await screen.findByText("No se puede eliminar el egreso")).toBeInTheDocument();
+        expect(
+            screen.getByText(/Solo un administrador \(rol ADMIN\) puede eliminar un egreso/),
+        ).toBeInTheDocument();
+        expect(screen.getByText(/INTERNACION\.MOVIMIENTOS\.GESTIONAR/)).toBeInTheDocument();
+        expect(visitaMovimientoService.getEstadoRevertirEgreso).not.toHaveBeenCalled();
+        expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
     });
 });

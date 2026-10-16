@@ -74,8 +74,19 @@ function codigoCieDesdeTexto(raw: string): string {
   return v;
 }
 
+const MSG_SIN_PERMISO_EGRESO =
+  'No tiene permiso para registrar egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)';
+const MSG_SOLO_ADMIN_ELIMINAR_EGRESO =
+  'Solo un administrador (rol ADMIN) puede eliminar un egreso. No alcanza con INTERNACION.MOVIMIENTOS.GESTIONAR.';
+
 function mensajeErrorHttp(e: unknown, fallback: string): string {
-  const err = e as { response?: { data?: { message?: string; mensaje?: string } }; message?: string };
+  const err = e as {
+    response?: { status?: number; data?: { message?: string; mensaje?: string } };
+    message?: string;
+  };
+  if (err?.response?.status === 403) {
+    return err?.response?.data?.mensaje || err?.response?.data?.message || MSG_SIN_PERMISO_EGRESO;
+  }
   return err?.response?.data?.mensaje || err?.response?.data?.message || err?.message || fallback;
 }
 
@@ -295,16 +306,14 @@ export default function AdmissionUbicacionMovimientosModal({
             Esta visita figura egresada y sin cama. Eliminá el egreso para poder
             asignarle una ubicación.
           </p>
-          {puedeRevertirEgreso ? (
-            <button
-              type="button"
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              disabled={loading || revertBusy}
-              onClick={() => void onRevertirEgreso()}
-            >
-              {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnPrimary}`}
+            disabled={loading || revertBusy}
+            onClick={() => void onRevertirEgreso()}
+          >
+            {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
+          </button>
         </>
       ) : (
         <button
@@ -359,6 +368,14 @@ export default function AdmissionUbicacionMovimientosModal({
 
   const onRevertirEgreso = async () => {
     if (!numeroVisita) return;
+    if (!puedeRevertirEgreso) {
+      setAviso({
+        title: 'No se puede eliminar el egreso',
+        message: MSG_SOLO_ADMIN_ELIMINAR_EGRESO,
+        tone: 'warning',
+      });
+      return;
+    }
     try {
       setRevertBusy(true);
       setError('');
@@ -628,17 +645,15 @@ export default function AdmissionUbicacionMovimientosModal({
                     >
                       Modificar
                     </button>
-                    {puedeRevertirEgreso ? (
-                      <button
-                        type="button"
-                        className={`${styles.btn} ${styles.btnDanger}`}
-                        disabled={loading || revertBusy}
-                        onClick={() => void onRevertirEgreso()}
-                        title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda internado sin cama"
-                      >
-                        {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
-                      </button>
-                    ) : null}
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      disabled={loading || revertBusy}
+                      onClick={() => void onRevertirEgreso()}
+                      title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda internado sin cama"
+                    >
+                      {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
+                    </button>
                   </>
                 )}
               </div>
