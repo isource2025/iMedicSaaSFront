@@ -74,7 +74,7 @@ function codigoCieDesdeTexto(raw: string): string {
 }
 
 const MSG_SIN_PERMISO_EGRESO =
-  'No tiene permiso para registrar egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)';
+  'No tiene permiso para gestionar el egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)';
 
 function mensajeErrorHttp(e: unknown, fallback: string): string {
   const err = e as {
