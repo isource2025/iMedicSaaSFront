@@ -1,18 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Printer, RefreshCw } from 'lucide-react';
+import { FileDown, Printer, RefreshCw, X } from 'lucide-react';
 import admisionesVigentesService, {
 	type AdmisionVigente,
 } from '@/app/services/admisionesVigentesService';
 import Loader from '@/app/components/Loader/Loader';
+import {
+	descripcionSectoresSeleccionados,
+	generarPDFAdmisionesVigentes,
+	type GrupoAdmisionVigente,
+} from '@/app/utils/pdfAdmisionesVigentes';
 import styles from './vigentes.module.css';
 
-interface Grupo {
-	clave: string;
-	titulo: string;
-	filas: AdmisionVigente[];
-}
+type Grupo = GrupoAdmisionVigente;
 
 function fechaCorta(iso: string | null): string {
 	if (!iso) return '—';
@@ -125,6 +126,9 @@ export default function AdmisionesVigentesPage() {
 	const [error, setError] = useState('');
 	const [sector, setSector] = useState('');
 	const [busqueda, setBusqueda] = useState('');
+	const [modalExport, setModalExport] = useState(false);
+	const [sectoresExport, setSectoresExport] = useState<string[]>([]);
+	const [exportandoPdf, setExportandoPdf] = useState(false);
 
 	const cargar = useCallback(async () => {
 		setCargando(true);
@@ -142,27 +146,82 @@ export default function AdmisionesVigentesPage() {
 		void cargar();
 	}, [cargar]);
 
-	const sectores = useMemo(() => agrupar(filas).map((g) => ({ clave: g.clave, titulo: g.titulo })), [filas]);
+	const sectores = useMemo(
+		() => agrupar(filas).map((g) => ({ clave: g.clave, titulo: g.titulo, cantidad: g.filas.length })),
+		[filas],
+	);
+
+	const filtradasPorBusqueda = useMemo(() => {
+		const q = normalizar(busqueda.trim());
+		if (!q) return filas;
+		return filas.filter((f) =>
+			normalizar(
+				`${f.paciente} ${f.documento || ''} ${f.cama || ''} ${f.medico || ''} ${f.numeroVisita}`,
+			).includes(q),
+		);
+	}, [filas, busqueda]);
 
 	const filtradas = useMemo(() => {
-		const q = normalizar(busqueda.trim());
-		return filas.filter((f) => {
-			if (sector && (f.sector || '—') !== sector) return false;
-			if (!q) return true;
-			return normalizar(
-				`${f.paciente} ${f.documento || ''} ${f.cama || ''} ${f.medico || ''} ${f.numeroVisita}`,
-			).includes(q);
-		});
-	}, [filas, sector, busqueda]);
+		if (!sector) return filtradasPorBusqueda;
+		return filtradasPorBusqueda.filter((f) => (f.sector || '—') === sector);
+	}, [filtradasPorBusqueda, sector]);
 
 	const grupos = useMemo(() => agrupar(filtradas), [filtradas]);
 
-	const descripcionFiltro = [
-		sector ? sectores.find((s) => s.clave === sector)?.titulo || sector : '',
-		busqueda.trim() ? `"${busqueda.trim()}"` : '',
-	]
-		.filter(Boolean)
-		.join(' · ');
+	const abrirExport = useCallback(() => {
+		const claves =
+			sector && sectores.some((s) => s.clave === sector)
+				? [sector]
+				: sectores.map((s) => s.clave);
+		setSectoresExport(claves);
+		setModalExport(true);
+	}, [sector, sectores]);
+
+	const toggleSectorExport = (clave: string) => {
+		setSectoresExport((prev) =>
+			prev.includes(clave) ? prev.filter((c) => c !== clave) : [...prev, clave],
+		);
+	};
+
+	const gruposExport = useMemo(() => {
+		const set = new Set(sectoresExport);
+		return agrupar(filtradasPorBusqueda.filter((f) => set.has(f.sector || '—')));
+	}, [filtradasPorBusqueda, sectoresExport]);
+
+	const totalExport = useMemo(
+		() => gruposExport.reduce((n, g) => n + g.filas.length, 0),
+		[gruposExport],
+	);
+
+	const descripcionExport = useMemo(() => {
+		const partes = [
+			descripcionSectoresSeleccionados(gruposExport, sectores.length),
+			busqueda.trim() ? `"${busqueda.trim()}"` : '',
+		];
+		return partes.filter(Boolean).join(' · ');
+	}, [gruposExport, sectores.length, busqueda]);
+
+	const onImprimir = () => {
+		if (gruposExport.length === 0) return;
+		imprimir(gruposExport, totalExport, descripcionExport);
+		setModalExport(false);
+	};
+
+	const onPdf = async () => {
+		if (gruposExport.length === 0 || exportandoPdf) return;
+		setExportandoPdf(true);
+		try {
+			await generarPDFAdmisionesVigentes({
+				grupos: gruposExport,
+				filtro: descripcionExport,
+			});
+			setModalExport(false);
+		} catch {
+			setError('No se pudo generar el PDF.');
+		} finally {
+			setExportandoPdf(false);
+		}
+	};
 
 	return (
 		<div className={styles.contenedor}>
@@ -185,10 +244,10 @@ export default function AdmisionesVigentesPage() {
 					<button
 						type='button'
 						className={styles.botonPrimario}
-						onClick={() => imprimir(grupos, filtradas.length, descripcionFiltro)}
-						disabled={cargando || filtradas.length === 0}
+						onClick={abrirExport}
+						disabled={cargando || filas.length === 0}
 					>
-						<Printer size={15} /> Imprimir
+						<Printer size={15} /> Imprimir / PDF
 					</button>
 				</div>
 			</div>
@@ -313,6 +372,117 @@ export default function AdmisionesVigentesPage() {
 					</section>
 				))
 			)}
+
+			{modalExport ? (
+				<div
+					className={styles.modalOverlay}
+					role='presentation'
+					onClick={() => !exportandoPdf && setModalExport(false)}
+				>
+					<div
+						className={styles.modal}
+						role='dialog'
+						aria-modal='true'
+						aria-labelledby='export-vigentes-title'
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className={styles.modalCabecera}>
+							<div>
+								<p className={styles.modalKicker}>Recorrido de sala</p>
+								<h2 id='export-vigentes-title' className={styles.modalTitulo}>
+									Elegí los sectores
+								</h2>
+								<p className={styles.modalAyuda}>
+									Marcá qué sectores van a la impresión o al PDF
+									{busqueda.trim() ? ' (respeta la búsqueda actual)' : ''}.
+								</p>
+							</div>
+							<button
+								type='button'
+								className={styles.modalCerrar}
+								onClick={() => setModalExport(false)}
+								disabled={exportandoPdf}
+								aria-label='Cerrar'
+							>
+								<X size={18} />
+							</button>
+						</div>
+
+						<div className={styles.modalAccionesRapidas}>
+							<button
+								type='button'
+								className={styles.linkBtn}
+								onClick={() => setSectoresExport(sectores.map((s) => s.clave))}
+							>
+								Todos
+							</button>
+							<button
+								type='button'
+								className={styles.linkBtn}
+								onClick={() => setSectoresExport([])}
+							>
+								Ninguno
+							</button>
+						</div>
+
+						<ul className={styles.listaSectores}>
+							{sectores.map((s) => {
+								const checked = sectoresExport.includes(s.clave);
+								const id = `sector-export-${s.clave}`;
+								return (
+									<li key={s.clave}>
+										<label htmlFor={id} className={styles.sectorItem}>
+											<input
+												id={id}
+												type='checkbox'
+												checked={checked}
+												onChange={() => toggleSectorExport(s.clave)}
+											/>
+											<span className={styles.sectorNombre}>{s.titulo}</span>
+											<span className={styles.sectorCantidad}>{s.cantidad}</span>
+										</label>
+									</li>
+								);
+							})}
+						</ul>
+
+						<p className={styles.modalResumen}>
+							{totalExport} paciente{totalExport === 1 ? '' : 's'}
+							{sectoresExport.length > 0
+								? ` · ${sectoresExport.length} sector${sectoresExport.length === 1 ? '' : 'es'}`
+								: ' · elegí al menos un sector'}
+						</p>
+
+						<div className={styles.modalFooter}>
+							<button
+								type='button'
+								className={styles.botonSecundario}
+								onClick={() => setModalExport(false)}
+								disabled={exportandoPdf}
+							>
+								Cancelar
+							</button>
+							<button
+								type='button'
+								className={styles.botonSecundario}
+								onClick={() => void onPdf()}
+								disabled={totalExport === 0 || exportandoPdf}
+							>
+								<FileDown size={15} />
+								{exportandoPdf ? 'Generando…' : 'Descargar PDF'}
+							</button>
+							<button
+								type='button'
+								className={styles.botonPrimario}
+								onClick={onImprimir}
+								disabled={totalExport === 0 || exportandoPdf}
+							>
+								<Printer size={15} /> Imprimir
+							</button>
+						</div>
+					</div>
+				</div>
+			) : null}
 		</div>
 	);
 }
