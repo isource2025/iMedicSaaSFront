@@ -213,31 +213,29 @@
 }
 
 /*
- * Mobile: dos líneas.
- * 1) nombre · N° de visita · botón de menú
- * 2) DNI + sexo · sector/cama · fecha/hora de admisión · cobertura
+ * Mobile: todo centrado.
+ * 1) nombre
+ * 2) N° de visita
+ * 3) DNI + sexo · sector/cama · fecha/hora de admisión · cobertura
+ * Los costados quedan libres: a la izquierda flota el botón ☰ del layout
+ * (fijo, 48px desde left: 16px) y a la derecha va la cruz para cerrar.
  * Sin etiquetas: el formato de cada dato ya lo identifica.
  */
 @media (max-width: 768px) {
 	.wrap {
 		flex-wrap: wrap;
+		justify-content: center;
 		align-items: center;
-		padding: 8px 12px;
-		gap: 4px 10px;
-		border-radius: 12px;
+		padding: 10px 52px;
+		gap: 2px 10px;
+		border-radius: 14px;
+		text-align: center;
 	}
 
 	.headerLeft,
 	.headerRight,
 	.infoRow {
 		display: contents;
-	}
-
-	.wrap::before {
-		content: '';
-		order: 4;
-		flex-basis: 100%;
-		height: 0;
 	}
 
 	.infoLabel,
@@ -248,10 +246,10 @@
 
 	.nombrePaciente {
 		order: 1;
-		flex: 1 1 0;
+		flex: 0 0 100%;
 		min-width: 0;
 		margin: 0;
-		font-size: 0.92rem;
+		font-size: 0.95rem;
 		line-height: 1.25;
 		white-space: nowrap;
 		overflow: hidden;
@@ -260,20 +258,23 @@
 
 	.visitaBlock {
 		order: 2;
-		flex: none;
+		flex: 0 0 100%;
+		align-items: center;
+		margin-bottom: 4px;
 	}
 
 	.visitaNumber {
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		font-weight: 500;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.22em;
 		color: #475569;
 	}
 
 	.menuButtonContainer {
-		order: 3;
-		position: static;
-		flex: none;
+		position: absolute;
+		top: 50%;
+		right: 8px;
+		transform: translateY(-50%);
 	}
 
 	.menuButtonContainer:empty {
@@ -307,9 +308,9 @@
 
 	.coberturaBlock {
 		order: 8;
-		margin-left: auto;
+		align-items: center;
 		min-width: 0;
-		max-width: 45%;
+		max-width: 100%;
 	}
 
 	.coberturaValue {

@@ -2,7 +2,10 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { IoClose } from 'react-icons/io5';
 import { Bed } from '../../types/beds';
+import { bedsListHref } from '../../utils/bedsListFilters';
 import styles from './BedDetailView.module.css';
 import Loader from '../Loader/Loader';
 
@@ -10,6 +13,7 @@ import Loader from '../Loader/Loader';
 import PatientMiniHeader from './patient/PatientMiniHeader';
 import CalendarPanel from './sidebar/CalendarPanel';
 import SidebarFilters from './sidebar/SidebarFilters';
+import { SectionPickerProvider } from './shared/SectionPicker';
 import { useBedDetail } from './contexts/BedDetailContext';
 import { getIdSectorFromToken } from '../../utils/jwtSession';
 import { useMarcarIndicacionesVistasAlSalir } from '../../hooks/useMarcarIndicacionesVistasAlSalir';
@@ -57,8 +61,7 @@ interface BedDetailViewProps {
 }
 
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
-	// Drawer (sidebar) en mobile
-	const [drawerOpen, setDrawerOpen] = useState(false);
+	const router = useRouter();
 	// Modal de archivos adjuntos
 	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
 	const [showNursingModal, setShowNursingModal] = useState(false);
@@ -77,6 +80,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	useMarcarIndicacionesVistasAlSalir(numeroVisita);
 
 	return (
+		<SectionPickerProvider onExportDetalle={numeroVisita ? () => setShowExportAll(true) : undefined}>
 		<div className={styles.root}>
 			<BedSectionsPrefetcher numeroVisita={bed?.NumeroVisita || null} />
 			{/* ====== HEADER (arriba de todo) ====== */}
@@ -86,11 +90,12 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					header={headerSnapshot}
 					burgerButton={
 						<button
-							className={styles.burger}
-							onClick={() => setDrawerOpen(true)}
-							aria-label='Abrir menú'
+							type='button'
+							className={styles.closeDetail}
+							onClick={() => router.replace(bedsListHref())}
+							aria-label='Cerrar detalle de cama'
 						>
-							<span className={styles.chevronIcon}>›</span>
+							<IoClose aria-hidden />
 						</button>
 					}
 				/>
@@ -98,12 +103,9 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 
 			{/* ====== MAIN CONTENT (sidebar + body) ====== */}
 			<div className={styles.mainContent}>
-				{/* LEFT (calendar + sidebar) */}
-				<aside className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''}`}>
+				{/* LEFT (calendar + sidebar) — en mobile lo reemplazan los selectores de sección y de día del encabezado */}
+				<aside className={styles.left}>
 					<div className={styles.leftInner}>
-						<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
-							✕
-						</button>
 						<CalendarPanel
 							selected={selectedDate ?? undefined}
 							fechaIngreso={bed?.fechaIngresoSQL}
@@ -111,7 +113,6 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							egresada={Boolean(bed?.egresada)}
 						/>
 						<SidebarFilters
-							onCloseDrawer={() => setDrawerOpen(false)}
 							onExportDetalle={numeroVisita ? () => setShowExportAll(true) : undefined}
 						/>
 					</div>
@@ -373,12 +374,8 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					numeroVisita={numeroVisita}
 				/>
 			) : null}
-
-			{/* Backdrop del drawer */}
-			{drawerOpen && (
-				<div className={styles.backdrop} onClick={() => setDrawerOpen(false)} />
-			)}
 		</div>
+		</SectionPickerProvider>
 	);
 };
 

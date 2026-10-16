@@ -1,7 +1,10 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import styles from './BedSectionHeader.module.css';
+import { FiChevronDown } from 'react-icons/fi';
+import DayPickerSheet from './DayPickerSheet';
+import { useAbrirSectionPicker } from './SectionPicker';
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -58,26 +61,50 @@ export default function BedSectionHeader({
 	const rel = fechaValida ? relativo(fechaValida) : null;
 	const mismoAnio = fechaValida?.getFullYear() === new Date().getFullYear();
 	const claveFecha = fechaValida ? inicioDelDia(fechaValida) : 'sin-fecha';
+	const [pickerAbierto, setPickerAbierto] = useState(false);
+	const cerrarPicker = useCallback(() => setPickerAbierto(false), []);
+	const abrirSecciones = useAbrirSectionPicker();
 
 	return (
 		<header className={styles.header}>
 			{fechaValida ? (
-				<time
+				<button
 					key={claveFecha}
+					type='button'
 					className={`${styles.tile} ${rel?.tono === 'hoy' ? styles.tileHoy : ''}`}
-					dateTime={fechaValida.toISOString().slice(0, 10)}
-					title={`${DIAS[fechaValida.getDay()]} ${fechaValida.getDate()} de ${MESES[fechaValida.getMonth()]} de ${fechaValida.getFullYear()}`}
+					onClick={() => setPickerAbierto(true)}
+					aria-haspopup='dialog'
+					aria-expanded={pickerAbierto}
+					aria-label={`Cambiar día (${DIAS[fechaValida.getDay()]} ${fechaValida.getDate()} de ${MESES[fechaValida.getMonth()]})`}
+					title={`${DIAS[fechaValida.getDay()]} ${fechaValida.getDate()} de ${MESES[fechaValida.getMonth()]} de ${fechaValida.getFullYear()} · tocá para cambiar el día`}
 				>
-					<span className={styles.tileMes}>{MESES_CORTOS[fechaValida.getMonth()]}</span>
-					<span className={styles.tileDia}>{fechaValida.getDate()}</span>
-				</time>
+					<time dateTime={fechaValida.toISOString().slice(0, 10)} className={styles.tileInner}>
+						<span className={styles.tileMes}>{MESES_CORTOS[fechaValida.getMonth()]}</span>
+						<span className={styles.tileDia}>{fechaValida.getDate()}</span>
+					</time>
+				</button>
 			) : (
 				<span className={styles.accent} aria-hidden />
 			)}
 
 			<div className={styles.text}>
 				<div className={styles.titleRow}>
-					<h2 className={styles.title}>{title}</h2>
+					<h2 className={styles.title}>
+						{abrirSecciones ? (
+							<button
+								type='button'
+								className={styles.titleButton}
+								onClick={abrirSecciones}
+								aria-haspopup='dialog'
+								aria-label={`${title} — cambiar de sección`}
+							>
+								<span className={styles.titleText}>{title}</span>
+								<FiChevronDown className={styles.titleChevron} aria-hidden />
+							</button>
+						) : (
+							title
+						)}
+					</h2>
 					{tag ? <span className={styles.tag}>{tag}</span> : null}
 				</div>
 				{(fechaValida || extra) && (
@@ -97,6 +124,8 @@ export default function BedSectionHeader({
 			</div>
 
 			{children ? <div className={`${styles.actions} ${actionsClassName ?? ''}`}>{children}</div> : null}
+
+			{pickerAbierto ? <DayPickerSheet onClose={cerrarPicker} /> : null}
 		</header>
 	);
 }

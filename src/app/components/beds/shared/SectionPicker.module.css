@@ -1,0 +1,88 @@
+.grupo + .grupo {
+	margin-top: 14px;
+}
+
+.grupoTitulo {
+	margin: 0 2px 8px;
+	color: #64748b;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	min-height: 48px;
+	padding: 10px 12px;
+	border: 1px solid transparent;
+	border-radius: 12px;
+	background: #fff;
+	color: #1e293b;
+	font-family: inherit;
+	font-size: 0.85rem;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	transition: transform 0.12s ease, border-color 0.15s ease;
+}
+
+.item:active {
+	transform: scale(0.97);
+}
+
+.itemActivo {
+	background: linear-gradient(135deg, #00b5e2 0%, #0083a9 100%);
+	color: #fff;
+	box-shadow: 0 6px 14px -6px rgba(0, 131, 169, 0.6);
+}
+
+.itemLabel {
+	min-width: 0;
+	line-height: 1.2;
+}
+
+.badge {
+	flex-shrink: 0;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	border-radius: 999px;
+	background: #0083a9;
+	color: #fff;
+	font-size: 0.7rem;
+	line-height: 20px;
+	text-align: center;
+}
+
+.itemActivo .badge {
+	background: rgba(255, 255, 255, 0.28);
+}
+
+.export {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	width: 100%;
+	margin-top: 14px;
+	padding: 12px;
+	border: 1px dashed #7dd3ea;
+	border-radius: 12px;
+	background: transparent;
+	color: #0083a9;
+	font-family: inherit;
+	font-size: 0.85rem;
+	font-weight: 700;
+	cursor: pointer;
+}

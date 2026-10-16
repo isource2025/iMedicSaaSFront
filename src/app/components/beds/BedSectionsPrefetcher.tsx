@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useBedDetail } from './contexts/BedDetailContext';
 import { prefetchBedSection, toISODate } from './contexts/useBedSectionQuery';
-import { SECTION_TO_PERM } from './sidebar/SidebarFilters';
+import { SECTION_TO_PERM } from './sidebar/useSeccionesCama';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { precargarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 
