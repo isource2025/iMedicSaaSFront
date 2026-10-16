@@ -5,6 +5,7 @@ import { useBedDetail } from "../contexts/BedDetailContext";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import InsumosTable, { InsumoRow } from "./InsumosTable";
 import styles from './InsumosSection.module.css';
+import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
@@ -73,20 +74,6 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
         setSelectedInsumoId(String(id));
     };
 
-    // Formatear fecha seleccionada para mostrar
-    const formatSelectedDate = () => {
-        if (!selectedDate) return null;
-        const date = new Date(selectedDate);
-        const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        const diaSemana = dias[date.getDay()];
-        const diaMes = date.getDate();
-        const mes = meses[date.getMonth()];
-        return { diaSemana, diaMes, mes };
-    };
-
-    const fechaFormateada = formatSelectedDate();
-
     const handleExport = async (option: ExportOption) => {
         if (option === 'pdf') {
             await generarPDFInsumos({
@@ -145,22 +132,14 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
 
     return (
         <div className={styles.root}>
-            {/* Fecha seleccionada + botón agregar */}
-            {fechaFormateada && (
-                <div className={styles.dateHeader}>
-                    <h2 className={styles.sectionTitle}>Insumos</h2>
-                    <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
-                    <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
-                    <div className={styles.dateActions}>
-                        <ExportButton
-                            data={insumosFiltered}
-                            fileName={`insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`}
-                            onExport={handleExport}
-                            options={['pdf']}
-                        />
-                    </div>
-                </div>
-            )}
+            <BedSectionHeader title="Insumos" date={selectedDate}>
+                <ExportButton
+                    data={insumosFiltered}
+                    fileName={`insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`}
+                    onExport={handleExport}
+                    options={['pdf']}
+                />
+            </BedSectionHeader>
 
             {/* Toolbar: búsqueda */}
             <div className={styles.toolbar}>

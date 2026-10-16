@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import styles from './HCIngresoSection.module.css';
+import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import { buildPacienteFields } from '../shared/pacientePedidoFields';
 import EmptyState from '../shared/EmptyState';
@@ -321,20 +322,6 @@ export default function HCIngresoSection({
         return records.find((r: HCIngresoRecord) => r.IdHCIngreso === selectedRecordId) || null;
     }, [selectedRecordId, records]);
 
-    // Formatear fecha seleccionada para mostrar
-    const formatSelectedDate = () => {
-        if (!selectedDate) return null;
-        const date = new Date(selectedDate);
-        const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-        const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        const diaSemana = dias[date.getDay()];
-        const diaMes = date.getDate();
-        const mes = meses[date.getMonth()];
-        return { diaSemana, diaMes, mes };
-    };
-
-    const fechaFormateada = formatSelectedDate();
-
     // Generar título descriptivo para HC
     const generarTituloHC = (record: HCIngresoRecord) => {
         const fecha = record.FechaFormateada || "Sin fecha";
@@ -553,28 +540,18 @@ export default function HCIngresoSection({
         }
         return (
             <div className={styles.root}>
-                {/* Header con fecha */}
-                {fechaFormateada && (
-                    <div className={styles.dateHeader}>
-                        <h2 className={styles.sectionTitle}>HC de Ingreso</h2>
-                        <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
-                        <span className={styles.dateText}>
-                            {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
-                        </span>
-                        <div className={styles.dateActions}>
-                            <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`} onClick={handleAdd}>
-                                <span className={styles.addIcon}>+</span> Agregar HC
-                            </button>
-                            <ExportButton
-                                data={selectedRecord ? [selectedRecord] : []}
-                                fileName={`hc_ingreso_${numeroVisita}.pdf`}
-                                onExport={handleExport}
-                                options={['pdf']}
-                                disabled={!selectedRecord}
-                            />
-                        </div>
-                    </div>
-                )}
+                <BedSectionHeader title="HC de Ingreso" date={selectedDate} actionsClassName={styles.dateActions}>
+                    <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`} onClick={handleAdd}>
+                        <span className={styles.addIcon}>+</span> Agregar HC
+                    </button>
+                    <ExportButton
+                        data={selectedRecord ? [selectedRecord] : []}
+                        fileName={`hc_ingreso_${numeroVisita}.pdf`}
+                        onExport={handleExport}
+                        options={['pdf']}
+                        disabled={!selectedRecord}
+                    />
+                </BedSectionHeader>
 
                 {error && (
                     <div className={styles.errorMessage}>
@@ -835,16 +812,7 @@ export default function HCIngresoSection({
     // ===== RENDER: MODO ADD/EDIT =====
     return (
         <div className={styles.root}>
-            {/* Header con fecha */}
-            {fechaFormateada && (
-                <div className={styles.dateHeader}>
-                    <h2 className={styles.sectionTitle}>HC de Ingreso</h2>
-                    <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
-                    <span className={styles.dateText}>
-                        {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
-                    </span>
-                </div>
-            )}
+            <BedSectionHeader title="HC de Ingreso" date={selectedDate} />
 
             {/* Contenido del formulario */}
             <div className={styles.editContent}>

@@ -5,6 +5,7 @@ import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import IndicacionesTable, { IndicacionRow } from "./IndicacionesTable";
 import { useBedDetail } from "../contexts/BedDetailContext";
 import styles from './IndicacionesSection.module.css';
+import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import IndicativoColors from "./IdicativosColors";
@@ -609,20 +610,6 @@ export default function IndicacionesSection({
         }
     };
 
-    // Formatear fecha seleccionada para mostrar
-    const formatSelectedDate = () => {
-        if (!selectedDate) return null;
-        const date = new Date(selectedDate);
-        const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        const diaSemana = dias[date.getDay()];
-        const diaMes = date.getDate();
-        const mes = meses[date.getMonth()];
-        return { diaSemana, diaMes, mes };
-    };
-
-    const fechaFormateada = formatSelectedDate();
-
     const handleExport = async (option: ExportOption, data: any[]) => {
         if (option === 'pdf') {
             const empresaInfo = await obtenerInfoEmpresa();
@@ -650,37 +637,29 @@ export default function IndicacionesSection({
 
     return (
         <div className={styles.root}>
-            {/* Fecha seleccionada + botón agregar */}
-            {fechaFormateada && (
-                <div className={styles.dateHeader}>
-                    <h2 className={styles.sectionTitle}>
-                        {mostrarSuspendidas ? 'Indicaciones sin efecto' : 'Indicaciones'}
-                    </h2>
-                    <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
-                    <span className={styles.dateText}>
-                        {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
-                    </span>
-                    <div className={styles.dateActions}>
-                        {puedeCrear && (
-                            <button
-                                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-                                onClick={onAddIndicacion}
-                            >
-                                <span className={styles.addIcon} aria-hidden>
-                                    +
-                                </span>
-                                Agregar indicación
-                            </button>
-                        )}
-                        <ExportButton
-                            data={rows}
-                            fileName={`indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`}
-                            onExport={handleExport}
-                            options={['pdf']}
-                        />
-                    </div>
-                </div>
-            )}
+            <BedSectionHeader
+                title="Indicaciones"
+                date={selectedDate}
+                tag={mostrarSuspendidas ? 'Sin efecto' : undefined}
+            >
+                {puedeCrear && (
+                    <button
+                        className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+                        onClick={onAddIndicacion}
+                    >
+                        <span className={styles.addIcon} aria-hidden>
+                            +
+                        </span>
+                        Agregar indicación
+                    </button>
+                )}
+                <ExportButton
+                    data={rows}
+                    fileName={`indicaciones_${selectedDate?.toISOString().split('T')[0]}.pdf`}
+                    onExport={handleExport}
+                    options={['pdf']}
+                />
+            </BedSectionHeader>
 
             {/* Toolbar: búsqueda + acciones */}
             <div className={styles.toolbar}>

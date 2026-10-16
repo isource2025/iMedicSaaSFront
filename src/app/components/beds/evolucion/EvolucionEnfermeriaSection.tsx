@@ -11,6 +11,7 @@ import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from './EvolucionEnfermeriaSection.module.css';
+import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EvolucionEnfermeriaTable from './EvolucionEnfermeriaTable';
 import EmptyState from '../shared/EmptyState';
@@ -140,20 +141,6 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
     setEditingEvolucion(null);
   };
 
-  // Formatear fecha seleccionada para mostrar
-  const formatSelectedDate = () => {
-    if (!selectedDate) return null;
-    const date = new Date(selectedDate);
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    const diaSemana = dias[date.getDay()];
-    const diaMes = date.getDate();
-    const mes = meses[date.getMonth()];
-    return { diaSemana, diaMes, mes };
-  };
-
-  const fechaFormateada = formatSelectedDate();
-
   const handleExport = async (option: ExportOption, data: any[]) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
@@ -186,31 +173,23 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
 
   return (
     <div className={styles.root}>
-      {/* Fecha seleccionada + botón agregar */}
-      {fechaFormateada && (
-        <div className={styles.dateHeader}>
-          <h2 className={styles.sectionTitle}>Evolución de Enfermería</h2>
-          <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
-          <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
-          <div className={styles.dateActions}>
-            <button
-              className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-              onClick={onAddEvolucion}
-            >
-              <span className={styles.addIcon} aria-hidden>
-                +
-              </span>
-              Agregar evolución
-            </button>
-            <ExportButton
-              data={filteredEvoluciones}
-              fileName={`evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`}
-              onExport={handleExport}
-              options={['pdf']}
-            />
-          </div>
-        </div>
-      )}
+      <BedSectionHeader title="Evolución de Enfermería" date={selectedDate}>
+        <button
+          className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+          onClick={onAddEvolucion}
+        >
+          <span className={styles.addIcon} aria-hidden>
+            +
+          </span>
+          Agregar evolución
+        </button>
+        <ExportButton
+          data={filteredEvoluciones}
+          fileName={`evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`}
+          onExport={handleExport}
+          options={['pdf']}
+        />
+      </BedSectionHeader>
 
       {/* Buscador y filtros de período */}
       <div className={styles.toolbar}>

@@ -166,7 +166,6 @@ export default function EpicrisisSection({
 		<>
 			<BedSectionLayout
 				title="Epicrisis"
-				subtitle="Resumen del episodio de hospitalización"
 				addLabel="Agregar epicrisis"
 				onAdd={() => {
 					setSelectedId(null);

@@ -164,7 +164,6 @@ export default function ProcedimientosSection({
 		<>
 			<BedSectionLayout
 				title="Procedimientos"
-				subtitle="Todas las prácticas de esta visita · más adelante se filtra por tipo"
 				exportSlot={
 					<ExportButton
 						data={filtered}

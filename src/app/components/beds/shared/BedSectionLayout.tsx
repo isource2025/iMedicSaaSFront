@@ -2,6 +2,8 @@
 
 import { ReactNode } from 'react';
 import styles from '../indicaciones/IndicacionesSection.module.css';
+import { useBedDetail } from '../contexts/BedDetailContext';
+import BedSectionHeader from './BedSectionHeader';
 import PeriodFilter, { Periodo } from './PeriodFilter';
 
 type SearchProps = {
@@ -12,8 +14,7 @@ type SearchProps = {
 
 type Props = {
 	title: string;
-	subtitle?: string;
-	dateBadge?: string | number;
+	date?: Date | string | null;
 	addLabel?: string;
 	onAdd?: () => void;
 	addDisabled?: boolean;
@@ -27,8 +28,7 @@ type Props = {
 
 export default function BedSectionLayout({
 	title,
-	subtitle,
-	dateBadge,
+	date,
 	addLabel,
 	onAdd,
 	addDisabled,
@@ -39,32 +39,31 @@ export default function BedSectionLayout({
 	extraToolbar,
 	children,
 }: Props) {
+	const { selectedDate } = useBedDetail();
+
 	return (
 		<div className={styles.root}>
-			<div className={styles.dateHeader}>
-				<h2 className={styles.sectionTitle}>{title}</h2>
-				{dateBadge != null && dateBadge !== '' ? (
-					<span className={styles.dateNumber}>{dateBadge}</span>
+			<BedSectionHeader title={title} date={date ?? selectedDate}>
+				{(onAdd && addLabel) || exportSlot ? (
+					<>
+						{onAdd && addLabel ? (
+							<button
+								type="button"
+								className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+								onClick={onAdd}
+								disabled={addDisabled}
+								title={addTitle}
+							>
+								<span className={styles.addIcon} aria-hidden>
+									+
+								</span>
+								{addLabel}
+							</button>
+						) : null}
+						{exportSlot}
+					</>
 				) : null}
-				{subtitle ? <span className={styles.dateText}>{subtitle}</span> : null}
-				<div className={styles.dateActions}>
-					{onAdd && addLabel ? (
-						<button
-							type="button"
-							className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-							onClick={onAdd}
-							disabled={addDisabled}
-							title={addTitle}
-						>
-							<span className={styles.addIcon} aria-hidden>
-								+
-							</span>
-							{addLabel}
-						</button>
-					) : null}
-					{exportSlot}
-				</div>
-			</div>
+			</BedSectionHeader>
 
 			{(search || period || extraToolbar) && (
 				<div className={styles.toolbar}>

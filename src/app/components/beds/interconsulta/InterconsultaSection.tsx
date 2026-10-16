@@ -261,7 +261,6 @@ export default function InterconsultaSection({
 		<>
 			<BedSectionLayout
 				title="Interconsultas"
-				subtitle="El servicio destino las atiende desde la bandeja de pedidos"
 				addLabel={canCreate ? 'Agregar interconsulta' : undefined}
 				onAdd={canCreate ? () => setShowSolicitar(true) : undefined}
 				exportSlot={
