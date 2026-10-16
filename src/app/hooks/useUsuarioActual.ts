@@ -56,11 +56,38 @@ export function useUsuarioActual(): UsuarioActual | null {
  * Si el campo no existe en el registro devuelve `null` (no se puede
  * determinar propiedad → la capa de UI debe decidir si bloquear o no).
  */
+function nombreEsAdminClinico(nombre: unknown): boolean {
+	const n = String(nombre || '')
+		.trim()
+		.toUpperCase()
+		.replace(/\s+/g, '_');
+	return n === 'ADMIN' || n === 'SUPER_ADMIN';
+}
+
+/** ADMIN / SUPER_ADMIN en sesión (rol principal o alguno de los asignados). */
 export function esAdminClinico(): boolean {
 	if (typeof window === 'undefined') return false;
 	const rol = authService.getCurrentRol();
-	if (!rol) return false;
-	return rol.nombre === 'ADMIN' || rol.id === 1;
+	if (rol && (nombreEsAdminClinico(rol.nombre) || Number(rol.id) === 1 || Number(rol.id) === 5)) {
+		return true;
+	}
+	try {
+		const raw = localStorage.getItem('roles');
+		const arr = raw ? JSON.parse(raw) : [];
+		if (!Array.isArray(arr)) return false;
+		return arr.some((r) => {
+			if (typeof r === 'string') return nombreEsAdminClinico(r);
+			return (
+				nombreEsAdminClinico(r?.nombre) ||
+				Number(r?.id) === 1 ||
+				Number(r?.id) === 5 ||
+				Number(r?.IdRol) === 1 ||
+				Number(r?.IdRol) === 5
+			);
+		});
+	} catch {
+		return false;
+	}
 }
 
 function nombreEsEnfermero(nombre: unknown): boolean {

@@ -7,9 +7,6 @@ import AdmissionUbicacionMovimientosModal from "./AdmissionUbicacionMovimientosM
 import visitaMovimientoService from "@/app/services/visitaMovimientoService";
 import { admissionSearchService } from "@/app/services/admissionSearchService";
 
-const { estado } = vi.hoisted(() => ({ estado: { admin: true } }));
-
-vi.mock("@/app/hooks/useUsuarioActual", () => ({ esAdminClinico: () => estado.admin }));
 vi.mock("@/app/services/admissionSearchService", () => ({
     admissionSearchService: { getDatosPrincipales: vi.fn() },
 }));
@@ -68,7 +65,6 @@ const renderEmbebido = () =>
     );
 
 beforeEach(() => {
-    estado.admin = true;
     vi.mocked(admissionSearchService.getDatosPrincipales).mockReset().mockResolvedValue({ visita: visitaEgresada } as any);
     vi.mocked(visitaMovimientoService.getMovimientosVisita).mockReset().mockResolvedValue([movCerrado] as any);
     vi.mocked(visitaMovimientoService.getUltimoMovimiento).mockReset().mockResolvedValue(movCerrado as any);
@@ -222,22 +218,24 @@ describe("Modificar admisión · egreso de internado", () => {
         expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
     });
 
-    it("un usuario que no es admin ve Eliminar egreso y al click se le explica el rol ADMIN", async () => {
+    it("Eliminar egreso siempre visible y llama al API (autoriza GESTIONAR en el servidor)", async () => {
         const user = userEvent.setup();
-        estado.admin = false;
+        vi.mocked(visitaMovimientoService.getEstadoRevertirEgreso).mockResolvedValue({
+            puedeRevertir: true,
+            mensaje: "Se va a anular el egreso de PEREZ JUAN.",
+            conflictos: [],
+            avisos: [],
+        } as any);
+
         renderEmbebido();
         expect(await screen.findByDisplayValue("2026-10-01")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Modificar" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Eliminar egreso" })).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: "Eliminar egreso" }));
 
-        expect(await screen.findByText("No se puede eliminar el egreso")).toBeInTheDocument();
-        expect(
-            screen.getByText(/Solo un administrador \(rol ADMIN\) puede eliminar un egreso/),
-        ).toBeInTheDocument();
-        expect(screen.getByText(/INTERNACION\.MOVIMIENTOS\.GESTIONAR/)).toBeInTheDocument();
-        expect(visitaMovimientoService.getEstadoRevertirEgreso).not.toHaveBeenCalled();
-        expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
+        await waitFor(() =>
+            expect(visitaMovimientoService.getEstadoRevertirEgreso).toHaveBeenCalledWith(500),
+        );
+        expect(await screen.findByText(/Se va a anular el egreso/)).toBeInTheDocument();
     });
 });

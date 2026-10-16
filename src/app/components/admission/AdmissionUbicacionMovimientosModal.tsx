@@ -11,7 +11,6 @@ import { getDisposicionesEgreso } from '@/app/services/disposicionEgresoService'
 import diagnosticosService from '@/app/services/diagnosticosService';
 import type { DisposicionEgreso } from '@/app/types/disposicionEgreso.types';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
-import { esAdminClinico } from '@/app/hooks/useUsuarioActual';
 import { detalleDeError, mensajeDeError } from '@/app/utils/apiError';
 import {
   catalogoDisposiciones,
@@ -76,8 +75,6 @@ function codigoCieDesdeTexto(raw: string): string {
 
 const MSG_SIN_PERMISO_EGRESO =
   'No tiene permiso para registrar egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)';
-const MSG_SOLO_ADMIN_ELIMINAR_EGRESO =
-  'Solo un administrador (rol ADMIN) puede eliminar un egreso. No alcanza con INTERNACION.MOVIMIENTOS.GESTIONAR.';
 
 function mensajeErrorHttp(e: unknown, fallback: string): string {
   const err = e as {
@@ -159,7 +156,6 @@ export default function AdmissionUbicacionMovimientosModal({
   const [aviso, setAviso] = useState<{ title: string; message: string; tone: MessageModalTone } | null>(null);
   const [asignarCamaOpen, setAsignarCamaOpen] = useState(false);
   const [cambiarCamaOpen, setCambiarCamaOpen] = useState(false);
-  const puedeRevertirEgreso = esAdminClinico();
 
   const load = useCallback(async () => {
     if (!numeroVisita) return;
@@ -368,14 +364,6 @@ export default function AdmissionUbicacionMovimientosModal({
 
   const onRevertirEgreso = async () => {
     if (!numeroVisita) return;
-    if (!puedeRevertirEgreso) {
-      setAviso({
-        title: 'No se puede eliminar el egreso',
-        message: MSG_SOLO_ADMIN_ELIMINAR_EGRESO,
-        tone: 'warning',
-      });
-      return;
-    }
     try {
       setRevertBusy(true);
       setError('');
