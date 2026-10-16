@@ -153,7 +153,8 @@ describe("Modificar admisión · egreso de internado", () => {
         renderEmbebido();
         await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
         expect(await screen.findByText(/Volverá a internación en la cama 02/)).toBeInTheDocument();
-        await user.click(screen.getByRole("button", { name: "Confirmar" }));
+        const confirmarLibre = screen.getAllByRole("button", { name: "Eliminar egreso" });
+        await user.click(confirmarLibre[confirmarLibre.length - 1]);
 
         expect(await screen.findByText(/volvió a la cama 02/)).toBeInTheDocument();
         expect(screen.queryByTestId("asignar-cama")).not.toBeInTheDocument();
@@ -189,7 +190,8 @@ describe("Modificar admisión · egreso de internado", () => {
         await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
 
         expect(await screen.findByText(/Hoy está GOMEZ ANA/)).toBeInTheDocument();
-        await user.click(screen.getByRole("button", { name: "Confirmar" }));
+        const confirmarOcupada = screen.getAllByRole("button", { name: "Eliminar egreso" });
+        await user.click(confirmarOcupada[confirmarOcupada.length - 1]);
 
         await waitFor(() => expect(visitaMovimientoService.revertirEgreso).toHaveBeenCalledWith(500));
         expect(await screen.findByTestId("asignar-cama")).toBeInTheDocument();
@@ -201,21 +203,34 @@ describe("Modificar admisión · egreso de internado", () => {
         expect(screen.getByText("Ubicación actual")).toBeInTheDocument();
     });
 
-    it("si el backend no permite quitarlo (otra internación abierta) lo explica y no anula nada", async () => {
+    it("si hay otra internación abierta advierte y deja confirmar Eliminar egreso o Cancelar", async () => {
         const user = userEvent.setup();
         vi.mocked(visitaMovimientoService.getEstadoRevertirEgreso).mockResolvedValue({
-            puedeRevertir: false,
-            mensaje: "PEREZ JUAN ya tiene otra internación abierta.",
-            conflictos: [{ codigo: "otra_internacion", mensaje: "PEREZ JUAN ya tiene otra internación abierta." }],
-            avisos: [],
+            puedeRevertir: true,
+            mensaje: "Se va a anular el egreso de PEREZ JUAN. Quedará en internación sin cama; después podés asignarle ubicación en movimientos.",
+            conflictos: [],
+            avisos: [{
+                codigo: "otra_internacion",
+                mensaje: "PEREZ JUAN ya tiene otra internación en curso. Si anulás este egreso, quedarán dos internaciones abiertas a la vez.",
+            }],
+        } as any);
+        vi.mocked(visitaMovimientoService.revertirEgreso).mockResolvedValue({
+            success: true,
+            mensaje: "Se anuló el egreso.",
+            data: { camaEstado: "sin_cama" },
         } as any);
 
         renderEmbebido();
         await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
 
-        expect(await screen.findByText("No se puede eliminar el egreso")).toBeInTheDocument();
-        expect(screen.getByText(/otra internación abierta/)).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: "Eliminar egreso" })).toBeInTheDocument();
+        expect(screen.getByText(/dos internaciones abiertas/)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
         expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
+
+        const botonesEliminar = screen.getAllByRole("button", { name: "Eliminar egreso" });
+        await user.click(botonesEliminar[botonesEliminar.length - 1]);
+        await waitFor(() => expect(visitaMovimientoService.revertirEgreso).toHaveBeenCalledWith(500));
     });
 
     it("Eliminar egreso siempre visible y llama al API (autoriza GESTIONAR en el servidor)", async () => {

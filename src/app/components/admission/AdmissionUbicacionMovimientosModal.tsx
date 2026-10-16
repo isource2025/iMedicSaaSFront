@@ -73,8 +73,7 @@ function codigoCieDesdeTexto(raw: string): string {
   return v;
 }
 
-const MSG_SIN_PERMISO_EGRESO =
-  'No tiene permiso para gestionar el egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)';
+const MSG_SIN_PERMISO_EGRESO = 'Permiso requerido: INTERNACION.MOVIMIENTOS.GESTIONAR';
 
 function mensajeErrorHttp(e: unknown, fallback: string): string {
   const err = e as {
@@ -369,6 +368,7 @@ export default function AdmissionUbicacionMovimientosModal({
       setError('');
       const estado = await visitaMovimientoService.getEstadoRevertirEgreso(numeroVisita);
       if (!estado.puedeRevertir) {
+        // Solo bloqueos duros del servidor: se muestra aviso y no se ofrece confirmar.
         setAviso({
           title: 'No se puede eliminar el egreso',
           message: textoConfirmacionRevertir(estado),
@@ -376,10 +376,11 @@ export default function AdmissionUbicacionMovimientosModal({
         });
         return;
       }
+      // Avisos (otra internación, cama ocupada, etc.): confirmación Eliminar / Cancelar.
       setEstadoRevertir(estado);
     } catch (e: unknown) {
       setAviso({
-        title: 'No se puede eliminar el egreso',
+        title: 'No se pudo revisar el egreso',
         message: mensajeErrorHttp(e, 'No se pudo revisar el egreso'),
         tone: 'error',
       });
@@ -658,7 +659,7 @@ export default function AdmissionUbicacionMovimientosModal({
         isOpen={Boolean(estadoRevertir)}
         title="Eliminar egreso"
         message={estadoRevertir ? textoConfirmacionRevertir(estadoRevertir) : ''}
-        confirmText={revertBusy ? 'Eliminando…' : 'Confirmar'}
+        confirmText={revertBusy ? 'Eliminando…' : 'Eliminar egreso'}
         cancelText="Cancelar"
         onClose={() => {
           if (!revertBusy) setEstadoRevertir(null);

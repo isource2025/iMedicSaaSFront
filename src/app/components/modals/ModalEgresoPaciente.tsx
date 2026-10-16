@@ -358,7 +358,7 @@ const ModalEgresoPaciente: React.FC<ModalEgresoPacienteProps> = ({
       console.error('Error al procesar el egreso:', detalleDeError(err));
       const generico =
         err?.response?.status === 403
-          ? 'No tiene permiso para gestionar el egreso (se requiere INTERNACION.MOVIMIENTOS.GESTIONAR)'
+          ? 'Permiso requerido: INTERNACION.MOVIMIENTOS.GESTIONAR'
           : 'Error al procesar el egreso';
       setError(mensajeDeError(err, generico));
     } finally {
