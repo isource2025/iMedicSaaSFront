@@ -15,6 +15,7 @@ function etiquetaOrigen(raw: unknown): string {
   return ORIGEN_ADJUNTO_LABEL[o] ?? '';
 }
 import { isDicom, isImage } from '@/app/utils/adjuntoFileTypes';
+import { formatFechaHoraWall } from '@/app/utils/fechaHoraWall';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import {
   useUsuarioActual,
@@ -36,16 +37,7 @@ function isImageMime(m: string): boolean {
 }
 
 function formatearFecha(fecha: string | Date | null | undefined): string {
-  if (fecha == null || fecha === '') return '';
-  const date = fecha instanceof Date ? fecha : new Date(fecha);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatFechaHoraWall(fecha);
 }
 
 function parseIdOperador(raw: Record<string, unknown>): number | null {

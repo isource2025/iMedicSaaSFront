@@ -12,6 +12,7 @@ import {
   esRegistroPropio,
 } from '@/app/hooks/useUsuarioActual';
 import { isImage, isVideo, isPdf, isOfficeDoc } from '@/app/utils/adjuntoFileTypes';
+import { formatFechaHoraWall } from '@/app/utils/fechaHoraWall';
 import EmptyState from '../shared/EmptyState';
 import styles from './FileList.module.css';
 
@@ -223,18 +224,8 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
     setPendingDeleteId(null);
   };
 
-  const formatearFecha = (fecha: string | Date | null | undefined): string => {
-    if (fecha == null || fecha === '') return '';
-    const date = fecha instanceof Date ? fecha : new Date(fecha);
-    if (Number.isNaN(date.getTime())) return '';
-    return date.toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const formatearFecha = (fecha: string | Date | null | undefined): string =>
+    formatFechaHoraWall(fecha);
 
   const adjuntosAgrupados = useMemo(() => {
     const grupos: { [key: string]: Adjunto[] } = {};
