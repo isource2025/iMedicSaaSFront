@@ -12,6 +12,7 @@ type ErrorApi = {
     data?: { mensaje?: string; message?: string; error?: string };
   };
   message?: string;
+  code?: string;
 };
 
 const texto = (v: unknown): string => String(v ?? '').trim();
@@ -28,7 +29,17 @@ export function mensajeDeError(error: unknown, generico = 'Ocurrió un error ine
   const status = Number(e?.response?.status);
   if (Number.isFinite(status) && status >= 500) return generico;
 
-  return texto(e?.message) || generico;
+  const msg = texto(e?.message);
+  if (!e?.response) {
+    if (e?.code === 'ECONNABORTED' || e?.code === 'ETIMEDOUT' || /^timeout of \d+ms exceeded$/.test(msg)) {
+      return 'El servidor tardó demasiado en responder. Probá de nuevo.';
+    }
+    if (e?.code === 'ERR_NETWORK' || msg === 'Network Error') {
+      return 'No se pudo conectar con el servidor. Revisá la conexión y probá de nuevo.';
+    }
+  }
+
+  return msg || generico;
 }
 
 /**
