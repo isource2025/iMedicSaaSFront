@@ -860,6 +860,18 @@
 	font-weight: 600;
 }
 
+.colAccionesLista {
+	width: 5.5rem;
+	text-align: right !important;
+}
+
+.accionesFila {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 2px;
+}
+
 .iconBtn {
 	display: inline-flex;
 	align-items: center;
@@ -877,6 +889,11 @@
 .iconBtn:hover {
 	color: #b91c1c;
 	background: #fee2e2;
+}
+
+.iconBtnAccion:hover {
+	color: #0083a9;
+	background: #e6f6fb;
 }
 
 .iconBtnRestaurar:hover {
@@ -976,4 +993,71 @@
 	font-size: 0.9rem;
 	font-weight: 700;
 	color: #0f172a;
+}
+
+/* Rendición: pacientes arriba, prácticas de la admisión elegida abajo. */
+.maestroDetalle {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.grillaMaestro {
+	max-height: min(34vh, 340px);
+}
+
+.grillaDetalle {
+	max-height: min(38vh, 380px);
+}
+
+.filaSeleccionada td,
+.grilla tbody tr.filaSeleccionada:hover td {
+	background: #e6f6fb;
+	box-shadow: inset 0 1px 0 #bae6fd, inset 0 -1px 0 #bae6fd;
+}
+
+.filaSeleccionada td:first-child {
+	box-shadow: inset 3px 0 0 #0083a9, inset 0 1px 0 #bae6fd, inset 0 -1px 0 #bae6fd;
+}
+
+/* Totalizador arriba del menú del detalle (como "Resultados" del escritorio). */
+.navResumen {
+	padding: 12px;
+	border-bottom: 1px solid #e2e8f0;
+	background: linear-gradient(180deg, #f3fbfe 0%, #ffffff 100%);
+}
+
+.navResumenTitulo {
+	margin: 0 0 8px;
+	font-size: 0.74rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #0083a9;
+}
+
+.navResumen dl {
+	margin: 0;
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 4px 8px;
+	font-size: 0.8rem;
+}
+
+.navResumen dt {
+	color: #64748b;
+}
+
+.navResumen dd {
+	margin: 0;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	color: #0f172a;
+	font-weight: 600;
+}
+
+.navResumenTotal {
+	padding-top: 4px;
+	border-top: 1px solid #e2e8f0;
+	font-weight: 800 !important;
 }
