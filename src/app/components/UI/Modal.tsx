@@ -33,16 +33,17 @@ export default function Modal({
 		return () => document.removeEventListener('keydown', handleKeyDown);
 	}, [isOpen, onClose]);
 
-	// Bloquear scroll cuando el modal está abierto
+	// Bloquear scroll del body y del <main> del layout (el listado de atrás).
 	useEffect(() => {
-		if (isOpen) {
-			document.body.style.overflow = 'hidden';
-		} else {
-			document.body.style.overflow = 'unset';
-		}
-
+		if (!isOpen) return;
+		const main = document.querySelector('main');
+		const prevBody = document.body.style.overflow;
+		const prevMain = main instanceof HTMLElement ? main.style.overflow : '';
+		document.body.style.overflow = 'hidden';
+		if (main instanceof HTMLElement) main.style.overflow = 'hidden';
 		return () => {
-			document.body.style.overflow = 'unset';
+			document.body.style.overflow = prevBody;
+			if (main instanceof HTMLElement) main.style.overflow = prevMain;
 		};
 	}, [isOpen]);
 

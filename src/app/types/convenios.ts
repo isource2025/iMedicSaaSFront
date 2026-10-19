@@ -2,7 +2,7 @@
 
 export type EstadoVigencia = 'vigente' | 'futuro' | 'vencido' | 'sin_vigencia';
 
-export type PestanaId = 'valores' | 'nomenclador' | 'moduladas' | 'vademecum' | 'genericos' | 'complejidad';
+export type PestanaId = 'valores' | 'nomenclador' | 'moduladas' | 'vademecum' | 'genericos' | 'categorias' | 'complejidad';
 
 export type TipoColumna =
 	| 'texto'

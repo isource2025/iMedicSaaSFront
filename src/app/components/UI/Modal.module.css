@@ -10,6 +10,7 @@
 	justify-content: center;
 	z-index: 50;
 	padding: 0;
+	overscroll-behavior: contain;
 }
 
 .modalOverlayHigh {
@@ -111,6 +112,7 @@
 	margin-top: 0;
 	margin-bottom: 0;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	flex: 1;
 	min-height: 0;
 	display: flex;

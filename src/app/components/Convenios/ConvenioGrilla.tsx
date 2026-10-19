@@ -62,7 +62,7 @@ function claseColumna(col: ColumnaDef): string {
 	if (col.kind === 'flag') return c.colFlag;
 	if (col.kind === 'complejidad') return c.colCorta;
 	if (col.kind === 'tipoValor') return c.colTipo;
-	if (col.kind === 'letra' || col.kind === 'funcion') return c.colSelect;
+	if (col.kind === 'letra' || col.kind === 'funcion' || col.kind === 'categoria') return c.colSelect;
 	if (col.name === 'Descripcion') return c.colDescripcion;
 	return c.colNum;
 }
@@ -138,6 +138,7 @@ function Editor({
 	if (col.kind === 'letra') return select(catalogos.letras.map((l) => ({ value: l.valor, label: l.descripcion || l.valor })));
 	if (col.kind === 'funcion') return select(catalogos.funciones.map((f) => ({ value: f.valor, label: f.descripcion })));
 	if (col.kind === 'complejidad') return select(catalogos.complejidades.map((n) => ({ value: n, label: String(n) })));
+	if (col.kind === 'categoria') return select(catalogos.categorias.map((x) => ({ value: x.valor, label: x.descripcion })));
 
 	const esTexto = col.sqlType === 'VarChar' || col.sqlType === 'Char';
 	const esImporte = col.kind === 'importe';

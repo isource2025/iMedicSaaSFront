@@ -635,13 +635,15 @@
 	white-space: nowrap;
 }
 
-/* Contenedor con scroll lateral propio: la grilla no se encoge, se desplaza. */
+/* Scroll propio (X e Y): sticky del thead solo funciona si el wrap es el scrollport. */
 .grillaWrap {
 	max-width: 100%;
-	overflow-x: auto;
-	overflow-y: visible;
+	max-height: min(62vh, calc(100dvh - 20rem));
+	overflow: auto;
+	overscroll-behavior: contain;
 	border: 1px solid #e2e8f0;
 	border-radius: 8px;
+	background: #fff;
 	-webkit-overflow-scrolling: touch;
 	scrollbar-gutter: stable;
 }
@@ -649,7 +651,8 @@
 .grilla {
 	width: max-content;
 	min-width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 	font-size: 0.82rem;
 	table-layout: auto;
 }
@@ -657,10 +660,11 @@
 .grilla th {
 	position: sticky;
 	top: 0;
-	z-index: 1;
+	z-index: 2;
 	padding: 7px 6px;
 	background: #f1f7fa;
 	border-bottom: 1px solid #e2e8f0;
+	box-shadow: 0 1px 0 #e2e8f0;
 	color: #64748b;
 	font-size: 0.68rem;
 	font-weight: 700;

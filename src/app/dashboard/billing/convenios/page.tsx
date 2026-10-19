@@ -25,7 +25,7 @@ const KPIS: { id: EstadoVigencia | ''; label: string; clave: keyof ListadoConven
 	{ id: 'sin_vigencia', label: 'Sin vigencia', clave: 'sin_vigencia' },
 ];
 
-const PESTANAS: PestanaId[] = ['valores', 'nomenclador', 'moduladas', 'vademecum', 'genericos', 'complejidad'];
+const PESTANAS: PestanaId[] = ['valores', 'nomenclador', 'moduladas', 'vademecum', 'genericos', 'categorias', 'complejidad'];
 
 export default function ConveniosPage() {
 	const { puede, loaded } = usePermiso();

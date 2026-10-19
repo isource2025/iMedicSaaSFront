@@ -11,6 +11,7 @@ import {
 	Save,
 	Stethoscope,
 	Syringe,
+	UserCheck,
 	type LucideIcon,
 } from 'lucide-react';
 import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
@@ -33,10 +34,12 @@ import c from '@/app/components/Facturacion/Facturacion.module.css';
 type SeccionId = 'datos' | 'uso' | PestanaId;
 
 const GRUPOS: { id: string; label: string; icono: LucideIcon; secciones: SeccionId[] }[] = [
-	{ id: 'convenio', label: 'Convenio', icono: FileText, secciones: ['datos', 'uso'] },
+	// 'uso' oculto por ahora (Uso en facturación).
+	{ id: 'convenio', label: 'Convenio', icono: FileText, secciones: ['datos'] },
 	{ id: 'valores', label: 'Valores', icono: Calculator, secciones: ['valores'] },
 	{ id: 'practicas', label: 'Prácticas', icono: Stethoscope, secciones: ['nomenclador', 'moduladas'] },
 	{ id: 'medicamentos', label: 'Medicamentos', icono: Pill, secciones: ['vademecum', 'genericos'] },
+	{ id: 'categorias', label: 'Categorías', icono: UserCheck, secciones: ['categorias'] },
 	{ id: 'anestesia', label: 'Anestesia', icono: Syringe, secciones: ['complejidad'] },
 ];
 
@@ -108,10 +111,7 @@ export default function ConvenioDetalleModal({ codigo, catalogos, permisos, onCl
 		setErrorCab(null);
 		if (!codigo) return;
 		cargar();
-		conveniosService
-			.uso(codigo)
-			.then(setUso)
-			.catch(() => setUso([]));
+		// Uso en facturación oculto por ahora: no pedir conteos.
 	}, [codigo, cargar]);
 
 	const cabeceraSucia = useMemo(

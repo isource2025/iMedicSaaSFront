@@ -14,6 +14,7 @@ export const PESTANA_CORTA: Record<PestanaId, string> = {
 	moduladas: 'Modul.',
 	vademecum: 'Vadem.',
 	genericos: 'Genér.',
+	categorias: 'Categ.',
 	complejidad: 'Anest.',
 };
 
