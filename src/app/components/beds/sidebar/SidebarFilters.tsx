@@ -1,16 +1,43 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { CSSTransition } from 'react-transition-group';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import styles from './SidebarFilters.module.css';
 import { useBedDetail } from '../contexts/BedDetailContext';
+import { usePermiso } from '@/app/hooks/usePermiso';
 import { bedsListHref } from '@/app/utils/bedsListFilters';
-import { useSeccionesCama } from './useSeccionesCama';
 
 type Props = {
 	bedId?: string;
 	onCloseDrawer?: () => void;
 	onExportDetalle?: () => void;
+};
+
+/**
+ * Mapeo entre cada `activeSection` del sidebar y su submódulo de permisos
+ * dentro del módulo INTERNACION.
+ *
+ * Si una sección no aparece en este mapa, se considera siempre visible
+ * (caso de "informe_evo" o utilitarios).
+ */
+export const SECTION_TO_PERM: Record<string, string> = {
+	hcIngreso: 'HISTORIA_CLINICA',
+	indicaciones: 'INDICACIONES',
+	evoluciones: 'EVOLUCIONES',
+	interconsulta: 'INTERCONSULTAS',
+	'evolucion-enfermeria': 'EVOLUCION_ENFERMERIA',
+	'controles-frecuentes': 'SIGNOS_VITALES',
+	'medicacion-suministrada': 'MEDICACION',
+	dieta: 'DIETA',
+	'balance-hidrico': 'BALANCE_HIDRICO',
+	insumos: 'INSUMOS',
+	solicitudEstudios: 'ESTUDIOS',
+	laboratorios: 'ADJUNTOS',
+	protocolos: 'PROTOCOLOS',
+	procedimientos: 'PROCEDIMIENTOS',
+	movimientos: 'MOVIMIENTOS',
+	adjuntos: 'ADJUNTOS',
+	epicrisis: 'EPICRISIS',
 };
 
 // --- Componente de colapso con altura automática animada (enter/exit distintos) ---
@@ -120,14 +147,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 		adjuntosRecientesCount,
 	} = useBedDetail();
 	const router = useRouter();
-	const {
-		puedeVerSeccion,
-		puedeGestionMedica,
-		puedeGestionEnfermeria,
-		puedeCargaDocumental,
-		mostrarSoloOtrasFunciones,
-		adjuntosEnOtras,
-	} = useSeccionesCama();
+	const { puedeSubmodulo, puede, rol, loaded } = usePermiso();
 
 	const clickItem = (section: typeof activeSection) => {
 		navigateToSection(section);
@@ -135,6 +155,60 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	};
 
 	const isActive = (section: string) => activeSection === section;
+
+	/**
+	 * Visibilidad de un item DENTRO de su grupo.
+	 * Un item se muestra si el usuario tiene CUALQUIER acción sobre el submódulo.
+	 */
+	const puedeVerSeccion = useMemo(
+		() => (section: string) => {
+			if (!loaded) return true;
+			const sub = SECTION_TO_PERM[section];
+			if (!sub) return true;
+			if (!rol) return false;
+			return puedeSubmodulo('INTERNACION', sub);
+		},
+		[puedeSubmodulo, rol, loaded],
+	);
+
+	/**
+	 * Visibilidad del GRUPO entero.
+	 *
+	 * Gestión Médica: se muestra con VER o CREAR en HC / evoluciones / indicaciones.
+	 * Administrativo tiene lectura clínica y debe ver el grupo; las acciones de
+	 * escritura siguen gated dentro de cada sección. Enfermero conserva solo
+	 * lectura clínica pero no el menú médico (sigue usando Gestión Enfermería).
+	 *
+	 * Gestión Enfermería: se muestra con VER o CREAR. El médico tiene lectura
+	 * de enfermería en la matriz; antes el grupo exigía CREAR y quedaba oculto.
+	 * Las acciones de escritura siguen gated dentro de cada sección.
+	 */
+	const esEnfermero = loaded && String(rol?.nombre || '').toUpperCase() === 'ENFERMERO';
+	const puedeGestionMedica = !loaded
+		? true
+		: !esEnfermero &&
+		  (puedeSubmodulo('INTERNACION', 'HISTORIA_CLINICA') ||
+			puedeSubmodulo('INTERNACION', 'EVOLUCIONES') ||
+			puedeSubmodulo('INTERNACION', 'INDICACIONES'));
+
+	const puedeGestionEnfermeria = !loaded
+		? true
+		: puedeSubmodulo('INTERNACION', 'EVOLUCION_ENFERMERIA') ||
+		  puedeSubmodulo('INTERNACION', 'SIGNOS_VITALES') ||
+		  puedeSubmodulo('INTERNACION', 'MEDICACION') ||
+		  puedeSubmodulo('INTERNACION', 'DIETA') ||
+		  puedeSubmodulo('INTERNACION', 'BALANCE_HIDRICO') ||
+		  puedeSubmodulo('INTERNACION', 'INSUMOS');
+
+	const puedeCargaDocumental =
+		loaded &&
+		(puede('INTERNACION.ADJUNTOS.CREAR') || puede('INTERNACION.ESTUDIOS.CREAR')) &&
+		!puedeGestionMedica &&
+		!puedeGestionEnfermeria;
+
+	const esCargaHc = loaded && String(rol?.nombre || '').toUpperCase() === 'CARGA_HC';
+	/** CARGA_HC: solo panel Otras Funciones (adjuntos + cerrar). */
+	const mostrarSoloOtrasFunciones = esCargaHc;
 
 	return (
 		<div className={styles.wrapper}>
@@ -365,7 +439,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 					<span>Otras Funciones</span>
 				</div>
 				<nav className={styles.fixedNav}>
-					{adjuntosEnOtras && (
+					{(mostrarSoloOtrasFunciones || (!puedeGestionMedica && !puedeGestionEnfermeria && puedeVerSeccion('adjuntos'))) && puedeVerSeccion('adjuntos') && (
 					<button
 						className={`${styles.navButton} ${adjuntosTotalCount > 0 ? styles.navButtonFlex : ''} ${isActive('adjuntos') ? styles.active : ''}`}
 						onClick={() => clickItem('adjuntos')}
