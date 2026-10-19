@@ -55,7 +55,7 @@ export default function PersonalServiciosTab({
 				setCatalogo(cat);
 				if (!cat.length) {
 					setError(
-						'No se pudieron cargar los servicios del hospital. Probá de nuevo o revisá el catálogo de servicios.',
+						'No hay servicios en el catálogo. Revisá Tablas maestras (Internación → Tablas → Servicios).',
 					);
 				}
 

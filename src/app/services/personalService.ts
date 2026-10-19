@@ -145,6 +145,7 @@ export const getFunciones = async (): Promise<CatalogoItemNumerico[]> => {
 	return res.data.success && res.data.data ? res.data.data : [];
 };
 
+/** Catálogo imServicios unificado (nube reconciliada con escritorio / tablas maestras). */
 export const getServicios = async (): Promise<CatalogoItemTexto[]> => {
 	try {
 		const res = await apiService.get<ApiResponse<CatalogoItemTexto[]>>(
