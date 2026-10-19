@@ -228,180 +228,107 @@ function LabAnalysisTableBlock({ examenes }: { examenes: ExamenLabCompleto[] }) 
   }
 
   return (
-    <>
-      <div
-        className={`${styles.tableContainer} ${styles.desktopOnly}`}
-        style={
-          {
-            "--lab-date-count": dateCount,
-          } as CSSProperties
-        }
-      >
-        <table className={`${styles.table} ${styles.tableDynamic}`}>
-          <thead>
-            <tr>
-              <th className={styles.stickyCol} scope="col">
-                <div className={styles.stickyHeaderInner}>
-                  <label className={styles.headerGraphCheckLabel} title="Gráfico en todas las filas">
-                    <input
-                      ref={headerGraphCheckRef}
-                      type="checkbox"
-                      className={styles.headerGraphCheck}
-                      checked={allRowsGraph}
-                      onChange={toggleAllRowsGraph}
-                      aria-label="Mostrar gráfico en todas las filas"
-                    />
-                  </label>
-                  <div className={styles.stickyHeaderText}>
-                    <span className={styles.stickyHeaderTitle}>Parámetro</span>
-                    <span className={styles.stickyHeaderHint}>Marcar = todas en gráfico</span>
-                  </div>
-                </div>
-              </th>
-              {columnasEstudio.map((col) => (
-                <th
-                  key={col.key}
-                  className={styles.dateColHeader}
-                  scope="col"
-                  title={col.titleTip || undefined}
-                >
-                  <span className={styles.colHeaderMain}>{col.label}</span>
-                  {col.sublabel ? <span className={styles.colHeaderSub}>{col.sublabel}</span> : null}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {todosParametros.map((param) => {
-              const unidad = unidadPorParametro.get(param);
-              const isOpen = graphParams.has(param);
-
-              return (
-                <tr
-                  key={param}
-                  className={isOpen ? `${styles.rowActive} ${styles.rowChartMode}` : undefined}
-                >
-                  <td className={`${styles.stickyCol} ${styles.paramCell}`}>
-                    <div className={styles.stickyInner}>
-                      <button
-                        type="button"
-                        className={`${styles.rowChartBtn} ${isOpen ? styles.rowChartBtnActive : ""}`}
-                        onClick={() => toggleGraphParam(param)}
-                        aria-label={
-                          isOpen ? `Volver a tabla para ${param}` : `Ver gráfico de ${param}`
-                        }
-                        aria-pressed={isOpen}
-                        title={isOpen ? "Mostrar valores en tabla" : "Mostrar gráfico en esta fila"}
-                      >
-                        {isOpen ? <IconTabla /> : <IconGrafico />}
-                      </button>
-                      <div className={styles.paramTextBlock}>
-                        <span className={styles.paramName}>{param}</span>
-                        {unidad ? <span className={styles.paramUnit}>{unidad}</span> : null}
-                      </div>
-                    </div>
-                  </td>
-                  {isOpen ? (
-                    <td colSpan={dateCount} className={styles.chartInlineCell}>
-                      <LabParameterChart
-                        compact
-                        hideHeader
-                        data={chartSeriesByParam.get(param) ?? []}
-                        parametro={param}
-                        unidad={unidad}
-                      />
-                    </td>
-                  ) : (
-                    columnasEstudio.map((col) => {
-                      const detalle = detalleParametroEnExamen(col.examen, param);
-                      return (
-                        <td key={col.key} className={styles.valueCell}>
-                          {detalle ? (
-                            <>
-                              <span
-                                className={`${styles.value} ${detalle.FueraDeRango ? styles.valueAlert : ""}`}
-                              >
-                                {detalle.Resultado}
-                              </span>
-                              {detalle.ValorReferencia ? (
-                                <span className={styles.reference}>({detalle.ValorReferencia})</span>
-                              ) : null}
-                            </>
-                          ) : (
-                            <span className={styles.noData}>—</span>
-                          )}
-                        </td>
-                      );
-                    })
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className={styles.mobileCards}>
-        {todosParametros.map((param) => {
-          const unidad = unidadPorParametro.get(param);
-          const isOpen = graphParams.has(param);
-          return (
-            <article key={`lab-m-${param}`} className={styles.mobileCard}>
-              <div className={styles.mobileCardHeader}>
-                <div>
-                  <p className={styles.mobileTitle}>{param}</p>
-                  {unidad ? <p className={styles.mobileMeta}>{unidad}</p> : null}
-                </div>
-                <button
-                  type="button"
-                  className={`${styles.rowChartBtn} ${isOpen ? styles.rowChartBtnActive : ""}`}
-                  onClick={() => toggleGraphParam(param)}
-                  aria-label={isOpen ? `Ocultar gráfico de ${param}` : `Ver gráfico de ${param}`}
-                  aria-pressed={isOpen}
-                >
-                  {isOpen ? <IconTabla /> : <IconGrafico />}
-                </button>
-              </div>
-              {isOpen ? (
-                <div className={styles.mobileChart}>
-                  <LabParameterChart
-                    compact
-                    hideHeader
-                    data={chartSeriesByParam.get(param) ?? []}
-                    parametro={param}
-                    unidad={unidad}
+    <div
+      className={styles.tableContainer}
+      style={
+        {
+          "--lab-date-count": dateCount,
+        } as CSSProperties
+      }
+    >
+      <table className={`${styles.table} ${styles.tableDynamic}`}>
+        <thead>
+          <tr>
+            <th className={styles.stickyCol} scope="col">
+              <div className={styles.stickyHeaderInner}>
+                <label className={styles.headerGraphCheckLabel} title="Gráfico en todas las filas">
+                  <input
+                    ref={headerGraphCheckRef}
+                    type="checkbox"
+                    className={styles.headerGraphCheck}
+                    checked={allRowsGraph}
+                    onChange={toggleAllRowsGraph}
+                    aria-label="Mostrar gráfico en todas las filas"
                   />
+                </label>
+                <div className={styles.stickyHeaderText}>
+                  <span className={styles.stickyHeaderTitle}>Parámetro</span>
+                  <span className={styles.stickyHeaderHint}>Marcar = todas en gráfico</span>
                 </div>
-              ) : (
-                <ul className={styles.mobileValueList}>
-                  {columnasEstudio.map((col) => {
+              </div>
+            </th>
+            {columnasEstudio.map((col) => (
+              <th key={col.key} className={styles.dateColHeader} scope="col" title={col.titleTip || undefined}>
+                <span className={styles.colHeaderMain}>{col.label}</span>
+                {col.sublabel ? <span className={styles.colHeaderSub}>{col.sublabel}</span> : null}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {todosParametros.map((param) => {
+            const unidad = unidadPorParametro.get(param);
+            const isOpen = graphParams.has(param);
+
+            return (
+              <tr key={param} className={isOpen ? `${styles.rowActive} ${styles.rowChartMode}` : undefined}>
+                <td className={`${styles.stickyCol} ${styles.paramCell}`}>
+                  <div className={styles.stickyInner}>
+                    <button
+                      type="button"
+                      className={`${styles.rowChartBtn} ${isOpen ? styles.rowChartBtnActive : ""}`}
+                      onClick={() => toggleGraphParam(param)}
+                      aria-label={isOpen ? `Volver a tabla para ${param}` : `Ver gráfico de ${param}`}
+                      aria-pressed={isOpen}
+                      title={isOpen ? "Mostrar valores en tabla" : "Mostrar gráfico en esta fila"}
+                    >
+                      {isOpen ? <IconTabla /> : <IconGrafico />}
+                    </button>
+                    <div className={styles.paramTextBlock}>
+                      <span className={styles.paramName}>{param}</span>
+                      {unidad ? <span className={styles.paramUnit}>{unidad}</span> : null}
+                    </div>
+                  </div>
+                </td>
+                {isOpen ? (
+                  <td colSpan={dateCount} className={styles.chartInlineCell}>
+                    <LabParameterChart
+                      compact
+                      hideHeader
+                      data={chartSeriesByParam.get(param) ?? []}
+                      parametro={param}
+                      unidad={unidad}
+                    />
+                  </td>
+                ) : (
+                  columnasEstudio.map((col) => {
                     const detalle = detalleParametroEnExamen(col.examen, param);
-                    const fechaHora = col.sublabel ? `${col.label} ${col.sublabel}` : col.label;
                     return (
-                      <li key={col.key} className={styles.mobileValueRow}>
-                        <span className={styles.mobileFecha}>{fechaHora}</span>
+                      <td key={col.key} className={styles.valueCell}>
                         {detalle ? (
-                          <span
-                            className={`${styles.value} ${detalle.FueraDeRango ? styles.valueAlert : ""}`}
-                          >
-                            {detalle.Resultado}
+                          <>
+                            <span
+                              className={`${styles.value} ${detalle.FueraDeRango ? styles.valueAlert : ""}`}
+                            >
+                              {detalle.Resultado}
+                            </span>
                             {detalle.ValorReferencia ? (
-                              <span className={styles.reference}> ({detalle.ValorReferencia})</span>
+                              <span className={styles.reference}>({detalle.ValorReferencia})</span>
                             ) : null}
-                          </span>
+                          </>
                         ) : (
                           <span className={styles.noData}>—</span>
                         )}
-                      </li>
+                      </td>
                     );
-                  })}
-                </ul>
-              )}
-            </article>
-          );
-        })}
-      </div>
-    </>
+                  })
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

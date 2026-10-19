@@ -201,8 +201,7 @@
 	}
 
 	.btnAddDate {
-		width: auto;
-		padding: 10px 12px !important;
+		width: 100%;
 	}
 
 	.toolbar {

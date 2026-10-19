@@ -62,7 +62,7 @@ export default function EmptyState({
 					className={styles.actionBtn}
 					onClick={onAction}
 				>
-					{actionLabel}
+					<span aria-hidden>+</span> {actionLabel}
 				</button>
 			)}
 		</div>

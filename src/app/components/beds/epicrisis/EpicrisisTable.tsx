@@ -53,58 +53,6 @@ export default function EpicrisisTable({
 		}
 	};
 
-	const accionesFila = (r: EpicrisisRow) => (
-		<div className={styles.actionBtns}>
-			<button
-				className={styles.btnAction}
-				title="Ver epicrisis"
-				onClick={(e) => {
-					e.stopPropagation();
-					setViewing(r);
-				}}
-			>
-				<IoEyeOutline color="#5BC0DE" size="18px" />
-			</button>
-			{canPrint && onPrint && (
-				<button
-					className={styles.btnAction}
-					title="Imprimir PDF"
-					disabled={printing}
-					onClick={(e) => {
-						e.stopPropagation();
-						void onPrint(r);
-					}}
-				>
-					<IoPrintOutline color="#5BC0DE" size="18px" />
-				</button>
-			)}
-			{puedeModificar(r) && (
-				<>
-					<button
-						className={styles.btnAction}
-						title="Editar"
-						onClick={(e) => {
-							e.stopPropagation();
-							onSelectRow?.(r.id);
-						}}
-					>
-						<IoPencilOutline color="#5BC0DE" size="18px" />
-					</button>
-					<button
-						className={styles.btnAction}
-						title="Eliminar"
-						onClick={(e) => {
-							e.stopPropagation();
-							setDeletingId(r.id);
-						}}
-					>
-						<IoTrashOutline color="#5BC0DE" size="18px" />
-					</button>
-				</>
-			)}
-		</div>
-	);
-
 	return (
 		<>
 			<div className={styles.tableWrap}>
@@ -158,54 +106,63 @@ export default function EpicrisisTable({
 												{r.profesionalNombreCompleto || '-'}
 											</td>
 											<td className={styles.cellSector}>{r.idSector || '-'}</td>
-											<td className={styles.cellAccion}>{accionesFila(r)}</td>
+											<td className={styles.cellAccion}>
+												<div className={styles.actionBtns}>
+													<button
+														className={styles.btnAction}
+														title="Ver epicrisis"
+														onClick={(e) => {
+															e.stopPropagation();
+															setViewing(r);
+														}}
+													>
+														<IoEyeOutline color="#5BC0DE" size="18px" />
+													</button>
+													{canPrint && onPrint && (
+														<button
+															className={styles.btnAction}
+															title="Imprimir PDF"
+															disabled={printing}
+															onClick={(e) => {
+																e.stopPropagation();
+																void onPrint(r);
+															}}
+														>
+															<IoPrintOutline color="#5BC0DE" size="18px" />
+														</button>
+													)}
+													{puedeModificar(r) && (
+														<>
+															<button
+																className={styles.btnAction}
+																title="Editar"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	onSelectRow?.(r.id);
+																}}
+															>
+																<IoPencilOutline color="#5BC0DE" size="18px" />
+															</button>
+															<button
+																className={styles.btnAction}
+																title="Eliminar"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	setDeletingId(r.id);
+																}}
+															>
+																<IoTrashOutline color="#5BC0DE" size="18px" />
+															</button>
+														</>
+													)}
+												</div>
+											</td>
 										</tr>
 									))
 								: null}
 						</tbody>
 					</table>
 				</div>
-			</div>
-
-			<div className={styles.mobileList}>
-				{hasRows
-					? rows.map((r, index) => (
-							<article
-								key={`epicrisis-m-${r.id}-${index}`}
-								className={`${styles.mobileCard} ${
-									selectedId === r.id ? styles.mobileCardActive : ''
-								}`}
-							>
-								<div className={styles.mobileCardHeader}>
-									<span className={styles.mobileDate}>
-										{r.fecha
-											? formatSqlDate(r.fecha, {
-													showTime: false,
-													showDate: true,
-													showYear: true,
-												})
-											: '-'}
-									</span>
-									<span className={styles.mobileHour}>{r.hora || '-'}</span>
-								</div>
-								<div className={styles.mobileMeta}>
-									{r.idSector ? (
-										<span className={styles.mobileBadge}>{`Sector ${r.idSector}`}</span>
-									) : null}
-								</div>
-								{(r.diagnostico || r.diagnosticoText) && (
-									<p className={styles.mobileProfesional}>
-										{[r.diagnostico, r.diagnosticoText].filter(Boolean).join(' — ')}
-									</p>
-								)}
-								<p className={styles.mobileEvolucion}>{r.epicrisis || '-'}</p>
-								<p className={styles.mobileProfesional}>
-									{r.profesionalNombreCompleto || '-'}
-								</p>
-								<div className={styles.mobileActions}>{accionesFila(r)}</div>
-							</article>
-						))
-					: null}
 			</div>
 
 			<ConfirmationModal

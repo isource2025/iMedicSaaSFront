@@ -203,6 +203,9 @@ const BalanceHidricoSection: React.FC<Props> = ({
 						className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
 						onClick={abrirNuevo}
 					>
+						<span className={styles.addIcon} aria-hidden>
+							+
+						</span>
 						Agregar registro
 					</button>
 				)}

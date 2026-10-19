@@ -178,6 +178,9 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
           className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
           onClick={onAddEvolucion}
         >
+          <span className={styles.addIcon} aria-hidden>
+            +
+          </span>
           Agregar evolución
         </button>
         <ExportButton

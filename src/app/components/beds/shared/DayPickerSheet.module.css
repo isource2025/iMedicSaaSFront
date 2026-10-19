@@ -8,27 +8,12 @@
 	font-size: 0.78rem;
 	font-weight: 700;
 	cursor: pointer;
-	flex-shrink: 0;
 }
 
-.calendar {
-	padding: 2px 0 4px;
-	border-radius: 14px;
-	background: #fff;
-	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-	overflow: hidden;
-}
-
-@media (max-width: 980px) {
-	.calendar :global(button[aria-pressed]) {
-		min-height: 2.5rem;
-		font-size: 0.9rem;
-	}
-}
-
+/* Celdas más grandes para el dedo */
 @media (max-width: 768px) {
 	.calendar :global(button[aria-pressed]) {
-		min-height: 2.65rem;
+		height: 2.6rem;
 		font-size: 0.95rem;
 	}
 }

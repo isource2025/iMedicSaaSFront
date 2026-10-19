@@ -205,6 +205,9 @@ const DietaSection: React.FC<Props> = ({
 						className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
 						onClick={abrirNuevo}
 					>
+						<span className={styles.addIcon} aria-hidden>
+							+
+						</span>
 						Agregar dieta
 					</button>
 				)}

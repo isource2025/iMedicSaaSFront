@@ -505,77 +505,6 @@
   min-height: 120px;
 }
 
-.desktopOnly {
-  display: block;
-}
-
-.mobileCards {
-  display: none;
-}
-
-.mobileCard {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.mobileCardHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.mobileTitle {
-  margin: 0;
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
-}
-
-.mobileMeta {
-  margin: 2px 0 0;
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.mobileFecha {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.mobileValueList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.mobileValueRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 0;
-  border-top: 1px solid #f1f5f9;
-}
-
-.mobileValueRow:first-child {
-  border-top: none;
-  padding-top: 0;
-}
-
-.mobileChart {
-  min-height: 160px;
-}
-
 @media (max-width: 768px) {
   .container {
     padding: 16px;
@@ -616,15 +545,5 @@
   .headerGraphCheckLabel {
     flex-basis: 36px;
     width: 36px;
-  }
-
-  .desktopOnly {
-    display: none;
-  }
-
-  .mobileCards {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
   }
 }

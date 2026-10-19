@@ -295,158 +295,91 @@ export default function ProtocolosSection({
 						onAction={puedeCrear && rows.length === 0 ? abrirNuevo : undefined}
 					/>
 				) : (
-					<>
-						<div className={`${tableStyles.tableWrap} ${tableStyles.desktopOnly}`}>
-							<div className={tableStyles.scrollArea}>
-								<table className={tableStyles.table}>
-									<thead className={tableStyles.thead}>
-										<tr>
-											<th>Fecha</th>
-											<th>Tipo</th>
-											<th>Prácticas</th>
-											<th>Equipo</th>
-											<th>Cargado por</th>
-											<th className={tableStyles.colAccion}>Acciones</th>
-										</tr>
-									</thead>
-									<tbody className={tableStyles.tbody}>
-										{filtered.map((r) => {
-											const nPrac = r.practicas?.length || 0;
-											return (
-												<tr
-													key={r.idProtocolo}
-													className={`${tableStyles.row} ${styles.clickableRow}`}
-													onClick={() => setSelected(r)}
-												>
-													<td className={tableStyles.meta}>
-														{formatFecha(r.fechaHoraFin || r.fecha)}
-													</td>
-													<td>
-														<div className={tableStyles.practica}>
-															{r.tipoDescripcion || r.tipoProtocolo || '—'}
-														</div>
-														{r.numeroProtocolo ? (
-															<div className={tableStyles.meta}>#{r.numeroProtocolo}</div>
-														) : null}
-													</td>
-													<td className={tableStyles.practica}>
-														{resumenPracticas(r)}
-														{nPrac > 1 ? (
-															<div className={tableStyles.meta}>
-																{nPrac} prácticas
-																{r.tieneFacturadas ? ' · con facturadas' : ''}
-															</div>
-														) : r.tieneFacturadas ? (
-															<div className={tableStyles.meta}>facturada</div>
-														) : null}
-													</td>
-													<td className={tableStyles.meta}>{resumenEquipo(r)}</td>
-													<td className={tableStyles.meta}>{r.operadorNombre || '—'}</td>
-													<td
-														className={tableStyles.cellAccion}
-														onClick={(e) => e.stopPropagation()}
-													>
-														<div className={tableStyles.actionBtns}>
-															<button
-																type="button"
-																className={tableStyles.btnAction}
-																onClick={() => setSelected(r)}
-																title="Ver detalle"
-															>
-																<IoEyeOutline color="#5BC0DE" size={18} />
-															</button>
-															{puedeEditar && puedeGestionarFila(r) && (
-																<button
-																	type="button"
-																	className={tableStyles.btnAction}
-																	onClick={() => abrirEditar(r)}
-																	title="Editar"
-																>
-																	<IoPencilOutline color="#5BC0DE" size={18} />
-																</button>
-															)}
-															{puedeEliminar && puedeGestionarFila(r) && (
-																<button
-																	type="button"
-																	className={tableStyles.btnAction}
-																	onClick={() => pedirEliminar(r)}
-																	title="Borrar"
-																>
-																	<IoTrashOutline color="#5BC0DE" size={18} />
-																</button>
-															)}
-														</div>
-													</td>
-												</tr>
-											);
-										})}
-									</tbody>
-								</table>
-							</div>
-						</div>
-						<div className={tableStyles.mobileCards}>
-							{filtered.map((r) => {
-								const nPrac = r.practicas?.length || 0;
-								return (
-									<article key={`prot-m-${r.idProtocolo}`} className={tableStyles.mobileCard}>
-										<div className={tableStyles.mobileCardHeader}>
-											<span className={tableStyles.mobileFecha}>
-												{formatFecha(r.fechaHoraFin || r.fecha)}
-											</span>
-											{r.numeroProtocolo ? (
-												<span className={tableStyles.mobileFecha}>#{r.numeroProtocolo}</span>
-											) : null}
-										</div>
-										<p className={tableStyles.mobileTitle}>
-											{r.tipoDescripcion || r.tipoProtocolo || '—'}
-										</p>
-										<p className={tableStyles.mobileMetaLine}>{resumenPracticas(r)}</p>
-										{nPrac > 1 || r.tieneFacturadas ? (
-											<p className={tableStyles.mobileMetaLine}>
-												{nPrac > 1 ? `${nPrac} prácticas` : null}
-												{nPrac > 1 && r.tieneFacturadas ? ' · ' : null}
-												{r.tieneFacturadas ? (nPrac > 1 ? 'con facturadas' : 'facturada') : null}
-											</p>
-										) : null}
-										<p className={tableStyles.mobileMetaLine}>Equipo: {resumenEquipo(r)}</p>
-										<p className={tableStyles.mobileProfesional}>
-											{r.operadorNombre || 'Sin operador'}
-										</p>
-										<div className={`${tableStyles.actionBtns} ${tableStyles.mobileActions}`}>
-											<button
-												type="button"
-												className={tableStyles.btnAction}
-												onClick={() => setSelected(r)}
-												title="Ver detalle"
+					<div className={tableStyles.tableWrap}>
+						<div className={tableStyles.scrollArea}>
+						<table className={tableStyles.table}>
+							<thead className={tableStyles.thead}>
+								<tr>
+									<th>Fecha</th>
+									<th>Tipo</th>
+									<th>Prácticas</th>
+									<th>Equipo</th>
+									<th>Cargado por</th>
+									<th className={tableStyles.colAccion}>Acciones</th>
+								</tr>
+							</thead>
+							<tbody className={tableStyles.tbody}>
+								{filtered.map((r) => {
+									const nPrac = r.practicas?.length || 0;
+									return (
+										<tr
+											key={r.idProtocolo}
+											className={`${tableStyles.row} ${styles.clickableRow}`}
+											onClick={() => setSelected(r)}
+										>
+											<td className={tableStyles.meta}>{formatFecha(r.fechaHoraFin || r.fecha)}</td>
+											<td>
+												<div className={tableStyles.practica}>
+													{r.tipoDescripcion || r.tipoProtocolo || '—'}
+												</div>
+												{r.numeroProtocolo ? (
+													<div className={tableStyles.meta}>#{r.numeroProtocolo}</div>
+												) : null}
+											</td>
+											<td className={tableStyles.practica}>
+												{resumenPracticas(r)}
+												{nPrac > 1 ? (
+													<div className={tableStyles.meta}>
+														{nPrac} prácticas{r.tieneFacturadas ? ' · con facturadas' : ''}
+													</div>
+												) : r.tieneFacturadas ? (
+													<div className={tableStyles.meta}>facturada</div>
+												) : null}
+											</td>
+											<td className={tableStyles.meta}>{resumenEquipo(r)}</td>
+											<td className={tableStyles.meta}>{r.operadorNombre || '—'}</td>
+											<td
+												className={tableStyles.cellAccion}
+												onClick={(e) => e.stopPropagation()}
 											>
-												<IoEyeOutline color="#5BC0DE" size={18} />
-											</button>
-											{puedeEditar && puedeGestionarFila(r) && (
-												<button
-													type="button"
-													className={tableStyles.btnAction}
-													onClick={() => abrirEditar(r)}
-													title="Editar"
-												>
-													<IoPencilOutline color="#5BC0DE" size={18} />
-												</button>
-											)}
-											{puedeEliminar && puedeGestionarFila(r) && (
-												<button
-													type="button"
-													className={tableStyles.btnAction}
-													onClick={() => pedirEliminar(r)}
-													title="Borrar"
-												>
-													<IoTrashOutline color="#5BC0DE" size={18} />
-												</button>
-											)}
-										</div>
-									</article>
-								);
-							})}
+												<div className={tableStyles.actionBtns}>
+													<button
+														type="button"
+														className={tableStyles.btnAction}
+														onClick={() => setSelected(r)}
+														title="Ver detalle"
+													>
+														<IoEyeOutline color="#5BC0DE" size={18} />
+													</button>
+													{puedeEditar && puedeGestionarFila(r) && (
+														<button
+															type="button"
+															className={tableStyles.btnAction}
+															onClick={() => abrirEditar(r)}
+															title="Editar"
+														>
+															<IoPencilOutline color="#5BC0DE" size={18} />
+														</button>
+													)}
+													{puedeEliminar && puedeGestionarFila(r) && (
+														<button
+															type="button"
+															className={tableStyles.btnAction}
+															onClick={() => pedirEliminar(r)}
+															title="Borrar"
+														>
+															<IoTrashOutline color="#5BC0DE" size={18} />
+														</button>
+													)}
+												</div>
+											</td>
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
 						</div>
-					</>
+					</div>
 				)}
 			</BedSectionLayout>
 

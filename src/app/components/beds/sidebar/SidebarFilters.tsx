@@ -386,6 +386,15 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 					>
 						Movimientos
 					</button>)}
+					{!mostrarSoloOtrasFunciones && (
+					<button
+						className={`${styles.navButton} ${isActive('informe_evo') ? styles.active : ''
+							}`}
+						onClick={() => clickItem('informe_evo')}
+					>
+						Informe de Evolución
+					</button>
+					)}
 					{onExportDetalle && (
 					<button
 						type="button"

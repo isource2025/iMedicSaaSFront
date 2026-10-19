@@ -110,7 +110,8 @@
 	letter-spacing: -0.01em;
 	line-height: 1.15;
 	white-space: nowrap;
-	flex-shrink: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /* En desktop el título es solo texto (el menú está en el sidebar); en mobile abre el selector de secciones */
@@ -118,7 +119,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	flex-shrink: 0;
+	max-width: 100%;
 	padding: 0;
 	border: none;
 	background: none;
@@ -130,6 +131,9 @@
 }
 
 .titleText {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
@@ -267,73 +271,27 @@
 
 @media (max-width: 768px) {
 	.header {
-		flex-wrap: nowrap;
-		align-items: center;
-		gap: 8px 6px;
+		flex-wrap: wrap;
+		gap: 10px 12px;
 		padding-top: 8px;
 	}
 
 	.tile {
-		width: 42px;
-		border-radius: 10px;
-	}
-
-	.tileMes {
-		padding: 2px 0 1px;
-		font-size: 9px;
-		letter-spacing: 0.12em;
+		width: 46px;
 	}
 
 	.tileDia {
-		padding: 4px 0 5px;
-		font-size: 17px;
-	}
-
-	.tileHoy::after {
-		top: 3px;
-		right: 4px;
-		width: 5px;
-		height: 5px;
-	}
-
-	.text {
-		flex: 0 1 auto;
-		min-width: 0;
-		gap: 2px;
+		font-size: 19px;
 	}
 
 	.title {
-		font-size: 1.02rem;
+		font-size: 1.1rem;
 	}
 
-	.titleButton {
-		gap: 4px;
-	}
-
-	.titleChevron {
-		width: 22px;
-		height: 22px;
-		padding: 4px;
-	}
-
-	.meta {
-		font-size: 0.74rem;
-		gap: 4px 6px;
-	}
-
-	.rel {
-		padding: 0 6px;
-		font-size: 0.66rem;
-	}
-
-	/* Acciones a la derecha del título (todas las secciones del detalle) */
 	.actions {
-		width: auto;
-		justify-content: flex-end;
-		flex-wrap: wrap;
-		gap: 6px;
-		margin-left: auto;
-		flex-shrink: 1;
-		min-width: 0;
+		width: 100%;
+		justify-content: center;
+		gap: 12px;
+		margin-left: 0;
 	}
 }

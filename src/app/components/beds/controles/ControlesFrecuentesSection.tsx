@@ -149,6 +149,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 						setModalOpen(true);
 					}}
 				>
+					<span className={styles.addIcon} aria-hidden>+</span>
 					Agregar control
 				</button>
 				<ExportButton

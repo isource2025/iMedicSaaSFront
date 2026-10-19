@@ -647,6 +647,9 @@ export default function IndicacionesSection({
                         className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
                         onClick={onAddIndicacion}
                     >
+                        <span className={styles.addIcon} aria-hidden>
+                            +
+                        </span>
                         Agregar indicación
                     </button>
                 )}

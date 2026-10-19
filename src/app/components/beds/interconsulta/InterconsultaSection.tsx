@@ -292,192 +292,104 @@ export default function InterconsultaSection({
 						onAction={canCreate && rows.length === 0 ? () => setShowSolicitar(true) : undefined}
 					/>
 				) : (
-					<>
-						<div className={`${tableStyles.tableWrap} ${tableStyles.desktopOnly}`}>
-							<div className={tableStyles.scrollArea}>
-								<table className={tableStyles.table}>
-									<thead className={tableStyles.thead}>
-										<tr>
-											<th>Urg.</th>
-											<th>Fecha / hora</th>
-											<th>Servicio destino</th>
-											<th>Pedido</th>
-											<th>Respuesta</th>
-											<th>Solicitado por</th>
-											<th>Estado</th>
-											<th className={tableStyles.colAccion}>Acciones</th>
-										</tr>
-									</thead>
-									<tbody className={tableStyles.tbody}>
-										{filtered.map((r) => {
-											const id = r.IdPedido || r.IdInterconsulta;
-											const tomado = !!r.Tomado;
-											const cumplido = esCumplida(r);
-											const responsable = cumplido
-												? autorRespuesta(r)
-												: tomado
-													? r.NombreToma || null
-													: null;
-											return (
-												<tr key={`${r.Origen || 'LEGACY'}-${id}`} className={tableStyles.row}>
-													<td>
-														<span
-															className={`${tableStyles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
-															title={r.EstadoUrgencia || r.Estado || 'Sin urgencia'}
-														/>
-													</td>
-													<td className={tableStyles.meta}>{formatFecha(r)}</td>
-													<td>
-														<div className={tableStyles.destino}>
-															{r.ServicioDescripcion ||
-																r.SectorReceptorNombre ||
-																r.Especialidad ||
-																'—'}
-														</div>
-														{r.Origen === 'WEB' && (
-															<div className={tableStyles.meta}>Registro web (legado)</div>
-														)}
-													</td>
-													<td className={tableStyles.motivo}>{previewText(r.Motivo)}</td>
-													<td className={tableStyles.motivo}>
-														{r.Respuesta
-															? previewText(r.Respuesta)
-															: cumplido
-																? '(sin texto)'
-																: '—'}
-													</td>
-													<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
-													<td className={tableStyles.meta}>
-														{r.EstadoWorkflow ||
-															(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
-														{responsable ? ` · ${responsable}` : ''}
-													</td>
-													<td className={tableStyles.cellAccion}>
-														<div className={tableStyles.actionBtns}>
-															<button
-																type="button"
-																className={tableStyles.btnAction}
-																title="Ver detalle"
-																onClick={() => handleRowClick(r)}
-															>
-																<IoEyeOutline color="#5BC0DE" size={18} />
-															</button>
-															{puedeEditarPedido(r) && (
-																<button
-																	type="button"
-																	className={tableStyles.btnAction}
-																	title="Editar pedido"
-																	onClick={() => abrirEdicionPedido(r)}
-																>
-																	<IoPencilOutline color="#5BC0DE" size={18} />
-																</button>
-															)}
-															{puedeEditarRespuesta(r) && (
-																<button
-																	type="button"
-																	className={tableStyles.btnAction}
-																	title="Editar respuesta"
-																	onClick={() => abrirEdicionRespuesta(r)}
-																>
-																	<IoPencilOutline color="#5BC0DE" size={18} />
-																</button>
-															)}
-														</div>
-													</td>
-												</tr>
-											);
-										})}
-									</tbody>
-								</table>
-							</div>
-						</div>
-						<div className={tableStyles.mobileCards}>
-							{filtered.map((r) => {
-								const id = r.IdPedido || r.IdInterconsulta;
-								const tomado = !!r.Tomado;
-								const cumplido = esCumplida(r);
-								const responsable = cumplido
-									? autorRespuesta(r)
-									: tomado
-										? r.NombreToma || null
-										: null;
-								const destino =
-									r.ServicioDescripcion ||
-									r.SectorReceptorNombre ||
-									r.Especialidad ||
-									'—';
-								const estado =
-									r.EstadoWorkflow ||
-									(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente');
-								return (
-									<article
-										key={`ic-m-${r.Origen || 'LEGACY'}-${id}`}
-										className={tableStyles.mobileCard}
-									>
-										<div className={tableStyles.mobileCardHeader}>
-											<div className={tableStyles.mobileCardHeaderLeft}>
+					<div className={tableStyles.tableWrap}>
+						<div className={tableStyles.scrollArea}>
+						<table className={tableStyles.table}>
+							<thead className={tableStyles.thead}>
+								<tr>
+									<th>Urg.</th>
+									<th>Fecha / hora</th>
+									<th>Servicio destino</th>
+									<th>Pedido</th>
+									<th>Respuesta</th>
+									<th>Solicitado por</th>
+									<th>Estado</th>
+									<th className={tableStyles.colAccion}>Acciones</th>
+								</tr>
+							</thead>
+							<tbody className={tableStyles.tbody}>
+								{filtered.map((r) => {
+									const id = r.IdPedido || r.IdInterconsulta;
+									const tomado = !!r.Tomado;
+									const cumplido = esCumplida(r);
+									const responsable = cumplido
+										? autorRespuesta(r)
+										: tomado
+											? r.NombreToma || null
+											: null;
+									return (
+										<tr key={`${r.Origen || 'LEGACY'}-${id}`} className={tableStyles.row}>
+											<td>
 												<span
 													className={`${tableStyles.urgencia} ${urgenciaClass(r.EstadoUrgencia || r.Estado)}`}
 													title={r.EstadoUrgencia || r.Estado || 'Sin urgencia'}
 												/>
-												<span className={tableStyles.mobileFecha}>{estado}</span>
-											</div>
-											<span className={tableStyles.mobileFecha}>{formatFecha(r) || '—'}</span>
-										</div>
-										<p className={tableStyles.mobileTitle}>{destino}</p>
-										{r.Origen === 'WEB' ? (
-											<p className={tableStyles.mobileMetaLine}>Registro web (legado)</p>
-										) : null}
-										<p className={tableStyles.mobileMetaLine}>
-											Pedido: {previewText(r.Motivo)}
-										</p>
-										<p className={tableStyles.mobileMetaLine}>
-											Respuesta:{' '}
-											{r.Respuesta
-												? previewText(r.Respuesta)
-												: cumplido
-													? '(sin texto)'
-													: '—'}
-										</p>
-										<p className={tableStyles.mobileProfesional}>
-											{r.MedicoSolicitanteNombre || 'Sin solicitante'}
-											{responsable ? ` · ${responsable}` : ''}
-										</p>
-										<div className={`${tableStyles.actionBtns} ${tableStyles.mobileActions}`}>
-											<button
-												type="button"
-												className={tableStyles.btnAction}
-												title="Ver detalle"
-												onClick={() => handleRowClick(r)}
-											>
-												<IoEyeOutline color="#5BC0DE" size={18} />
-											</button>
-											{puedeEditarPedido(r) && (
+											</td>
+											<td className={tableStyles.meta}>{formatFecha(r)}</td>
+											<td>
+												<div className={tableStyles.destino}>
+													{r.ServicioDescripcion ||
+														r.SectorReceptorNombre ||
+														r.Especialidad ||
+														'—'}
+												</div>
+												{r.Origen === 'WEB' && (
+													<div className={tableStyles.meta}>Registro web (legado)</div>
+												)}
+											</td>
+											<td className={tableStyles.motivo}>{previewText(r.Motivo)}</td>
+											<td className={tableStyles.motivo}>
+												{r.Respuesta
+													? previewText(r.Respuesta)
+													: cumplido
+														? '(sin texto)'
+														: '—'}
+											</td>
+											<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
+											<td className={tableStyles.meta}>
+												{r.EstadoWorkflow ||
+													(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
+												{responsable ? ` · ${responsable}` : ''}
+											</td>
+											<td className={tableStyles.cellAccion}>
+												<div className={tableStyles.actionBtns}>
 												<button
 													type="button"
 													className={tableStyles.btnAction}
-													title="Editar pedido"
-													onClick={() => abrirEdicionPedido(r)}
+													title="Ver detalle"
+													onClick={() => handleRowClick(r)}
 												>
-													<IoPencilOutline color="#5BC0DE" size={18} />
+													<IoEyeOutline color="#5BC0DE" size={18} />
 												</button>
-											)}
-											{puedeEditarRespuesta(r) && (
-												<button
-													type="button"
-													className={tableStyles.btnAction}
-													title="Editar respuesta"
-													onClick={() => abrirEdicionRespuesta(r)}
-												>
-													<IoPencilOutline color="#5BC0DE" size={18} />
-												</button>
-											)}
-										</div>
-									</article>
-								);
-							})}
+												{puedeEditarPedido(r) && (
+													<button
+														type="button"
+														className={tableStyles.btnAction}
+														title="Editar pedido"
+														onClick={() => abrirEdicionPedido(r)}
+													>
+														<IoPencilOutline color="#5BC0DE" size={18} />
+													</button>
+												)}
+												{puedeEditarRespuesta(r) && (
+													<button
+														type="button"
+														className={tableStyles.btnAction}
+														title="Editar respuesta"
+														onClick={() => abrirEdicionRespuesta(r)}
+													>
+														<IoPencilOutline color="#5BC0DE" size={18} />
+													</button>
+												)}
+												</div>
+											</td>
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
 						</div>
-					</>
+					</div>
 				)}
 			</BedSectionLayout>
 
