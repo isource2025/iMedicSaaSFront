@@ -512,6 +512,7 @@ export default function EstudiosSection({
 		<>
 			<BedSectionLayout
 				title="Estudios"
+				subtitle="Pedidos de este paciente · el servicio destino los atiende en la bandeja"
 				addLabel={puedeCrear ? 'Agregar estudio' : undefined}
 				onAdd={puedeCrear ? () => setShowSolicitar(true) : undefined}
 				addDisabled={!origenPedido}

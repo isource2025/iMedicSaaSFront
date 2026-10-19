@@ -13,7 +13,6 @@ import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from '../indicaciones/IndicacionesSection.module.css';
 import tableStyles from './ControlesFrecuentesSection.module.css';
-import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
@@ -104,6 +103,18 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 		});
 	}, [controles, query]);
 
+	const formatSelectedDate = () => {
+		if (!selectedDate) return null;
+		const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+		const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+		return {
+			diaSemana: dias[selectedDate.getDay()],
+			diaMes: selectedDate.getDate(),
+			mes: meses[selectedDate.getMonth()],
+		};
+	};
+	const fechaFormateada = formatSelectedDate();
+
 	const handleEliminar = async (control: ControlFrecuente) => {
 		if (!confirm(`¿Eliminar este control?\n\nFecha: ${formatearFecha(control.FechaControl)}\nHora: ${formatearHora(control.HoraControl)}`)) return;
 		try {
@@ -141,24 +152,34 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 
 	return (
 		<div className={styles.root}>
-			<BedSectionHeader title="Controles" date={selectedDate}>
-				<button
-					className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-					onClick={() => {
-						setEditingControl(null);
-						setModalOpen(true);
-					}}
-				>
-					<span className={styles.addIcon} aria-hidden>+</span>
-					Agregar control
-				</button>
-				<ExportButton
-					data={controlsFiltrados}
-					fileName={`controles_${fechaISO}.pdf`}
-					onExport={handleExport}
-					options={['pdf']}
-				/>
-			</BedSectionHeader>
+			{/* Header */}
+			{fechaFormateada && (
+				<div className={styles.dateHeader}>
+					<h2 className={styles.sectionTitle}>Controles</h2>
+					<span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+					<span className={styles.dateText}>
+						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+					</span>
+					<div className={styles.dateActions}>
+						<button
+							className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+							onClick={() => {
+								setEditingControl(null);
+								setModalOpen(true);
+							}}
+						>
+							<span className={styles.addIcon} aria-hidden>+</span>
+							Agregar control
+						</button>
+						<ExportButton
+							data={controlsFiltrados}
+							fileName={`controles_${fechaISO}.pdf`}
+							onExport={handleExport}
+							options={['pdf']}
+						/>
+					</div>
+				</div>
+			)}
 
 			{/* Buscador */}
 			<div className={styles.toolbar}>

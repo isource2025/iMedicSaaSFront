@@ -15,7 +15,6 @@ import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from '../indicaciones/IndicacionesSection.module.css';
 import tableStyles from '../medicacion/MedicacionSuministradaSection.module.css';
 import ds from './DietaSection.module.css';
-import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import ConfirmationModal from '../shared/ConfirmationModal';
@@ -126,6 +125,31 @@ const DietaSection: React.FC<Props> = ({
 	const soloDia = periodo === '0';
 	const alcance = PERIODOS_ALCANCE[periodo];
 
+	const formatSelectedDate = () => {
+		if (!selectedDate) return null;
+		const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+		const meses = [
+			'Enero',
+			'Febrero',
+			'Marzo',
+			'Abril',
+			'Mayo',
+			'Junio',
+			'Julio',
+			'Agosto',
+			'Septiembre',
+			'Octubre',
+			'Noviembre',
+			'Diciembre',
+		];
+		return {
+			diaSemana: dias[selectedDate.getDay()],
+			diaMes: selectedDate.getDate(),
+			mes: meses[selectedDate.getMonth()],
+		};
+	};
+	const fechaFormateada = formatSelectedDate();
+
 	const abrirNuevo = () => {
 		setEditing(null);
 		setModalOpen(true);
@@ -199,25 +223,34 @@ const DietaSection: React.FC<Props> = ({
 
 	return (
 		<div className={styles.root}>
-			<BedSectionHeader title="Dietas" date={selectedDate}>
-				{puedeCrear && (
-					<button
-						className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-						onClick={abrirNuevo}
-					>
-						<span className={styles.addIcon} aria-hidden>
-							+
-						</span>
-						Agregar dieta
-					</button>
-				)}
-				<ExportButton
-					data={filtrados}
-					fileName={`dietas_${fechaISO}.pdf`}
-					onExport={handleExport}
-					options={['pdf']}
-				/>
-			</BedSectionHeader>
+			{fechaFormateada && (
+				<div className={styles.dateHeader}>
+					<h2 className={styles.sectionTitle}>Dietas</h2>
+					<span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+					<span className={styles.dateText}>
+						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+					</span>
+					<div className={styles.dateActions}>
+						{puedeCrear && (
+							<button
+								className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+								onClick={abrirNuevo}
+							>
+								<span className={styles.addIcon} aria-hidden>
+									+
+								</span>
+								Agregar dieta
+							</button>
+						)}
+						<ExportButton
+							data={filtrados}
+							fileName={`dietas_${fechaISO}.pdf`}
+							onExport={handleExport}
+							options={['pdf']}
+						/>
+					</div>
+				</div>
+			)}
 
 			<div className={styles.toolbar}>
 				<div className={styles.searchWrap}>

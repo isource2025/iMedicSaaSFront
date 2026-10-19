@@ -225,6 +225,7 @@ export default function AdjuntosSection({
   return (
     <BedSectionLayout
       title="Adjuntos"
+      subtitle="Archivos de esta internación"
       exportSlot={
         <ExportButton
           data={adjuntosVisibles}

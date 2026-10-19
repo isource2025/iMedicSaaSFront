@@ -8,7 +8,6 @@ import ModalIntercambiarCama from "../../modals/ModalIntercambiarCama";
 import type { PatientHeaderSnapshot } from "../../../utils/bedHeader";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import styles from "../indicaciones/IndicacionesSection.module.css";
-import BedSectionHeader from "../shared/BedSectionHeader";
 import BedSectionLoading from "../shared/BedSectionLoading";
 import EmptyState from "../shared/EmptyState";
 import ExportButton, { ExportOption } from "../shared/ExportButton";
@@ -95,6 +94,18 @@ export default function MovimientosSection({
 		[movimientos, periodo],
 	);
 
+	const formatSelectedDate = () => {
+		if (!selectedDate) return null;
+		const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+		const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+		return {
+			diaSemana: dias[selectedDate.getDay()],
+			diaMes: selectedDate.getDate(),
+			mes: meses[selectedDate.getMonth()],
+		};
+	};
+	const fechaFormateada = formatSelectedDate();
+
 	const handleExport = async (option: ExportOption) => {
 		if (option === "pdf") {
 			await generarPDFMovimientos({
@@ -122,24 +133,34 @@ export default function MovimientosSection({
 
 	return (
 		<div className={styles.root}>
-			<BedSectionHeader title="Movimientos" date={selectedDate}>
-				{puedeIntercambiar && (
-					<button
-						type="button"
-						className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-						onClick={() => setIntercambioOpen(true)}
-						title="Intercambiar la cama con otro paciente internado"
-					>
-						⇄ Intercambiar cama
-					</button>
-				)}
-				<ExportButton
-					data={movimientosVisibles}
-					fileName={`movimientos_${numeroVisita}.pdf`}
-					onExport={handleExport}
-					options={["pdf"]}
-				/>
-			</BedSectionHeader>
+			{/* Header */}
+			{fechaFormateada && (
+				<div className={styles.dateHeader}>
+					<h2 className={styles.sectionTitle}>Movimientos</h2>
+					<span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+					<span className={styles.dateText}>
+						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+					</span>
+					<div className={styles.dateActions}>
+						{puedeIntercambiar && (
+							<button
+								type="button"
+								className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+								onClick={() => setIntercambioOpen(true)}
+								title="Intercambiar la cama con otro paciente internado"
+							>
+								⇄ Intercambiar cama
+							</button>
+						)}
+						<ExportButton
+							data={movimientosVisibles}
+							fileName={`movimientos_${numeroVisita}.pdf`}
+							onExport={handleExport}
+							options={["pdf"]}
+						/>
+					</div>
+				</div>
+			)}
 
 			<div className={styles.toolbar}>
 				<PeriodFilter value={periodo} onChange={setPeriodo} />

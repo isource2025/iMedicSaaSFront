@@ -16,7 +16,6 @@ import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from '../indicaciones/IndicacionesSection.module.css';
 import tableStyles from '../controles/ControlesFrecuentesSection.module.css';
 import bh from './BalanceHidricoSection.module.css';
-import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import ConfirmationModal from '../shared/ConfirmationModal';
@@ -141,6 +140,31 @@ const BalanceHidricoSection: React.FC<Props> = ({
 
 	const totales = useMemo(() => sumarTotales(filtrados), [filtrados]);
 
+	const formatSelectedDate = () => {
+		if (!selectedDate) return null;
+		const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+		const meses = [
+			'Enero',
+			'Febrero',
+			'Marzo',
+			'Abril',
+			'Mayo',
+			'Junio',
+			'Julio',
+			'Agosto',
+			'Septiembre',
+			'Octubre',
+			'Noviembre',
+			'Diciembre',
+		];
+		return {
+			diaSemana: dias[selectedDate.getDay()],
+			diaMes: selectedDate.getDate(),
+			mes: meses[selectedDate.getMonth()],
+		};
+	};
+	const fechaFormateada = formatSelectedDate();
+
 	const abrirNuevo = () => {
 		setEditing(null);
 		setModalOpen(true);
@@ -193,29 +217,35 @@ const BalanceHidricoSection: React.FC<Props> = ({
 
 	return (
 		<div className={styles.root}>
-			<BedSectionHeader
-				title="Balance Hídrico"
-				date={selectedDate}
-				extra={!soloDia ? <span className={bh.scopeTag}>{alcance}</span> : undefined}
-			>
-				{puedeCrear && (
-					<button
-						className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-						onClick={abrirNuevo}
-					>
-						<span className={styles.addIcon} aria-hidden>
-							+
-						</span>
-						Agregar registro
-					</button>
-				)}
-				<ExportButton
-					data={filtrados}
-					fileName={`balance_hidrico_${fechaISO}.pdf`}
-					onExport={handleExport}
-					options={['pdf']}
-				/>
-			</BedSectionHeader>
+			{fechaFormateada && (
+				<div className={styles.dateHeader}>
+					<h2 className={styles.sectionTitle}>Balance Hídrico</h2>
+					<span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+					<span className={styles.dateText}>
+						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+						{!soloDia && <span className={bh.scopeTag}>{alcance}</span>}
+					</span>
+					<div className={styles.dateActions}>
+						{puedeCrear && (
+							<button
+								className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+								onClick={abrirNuevo}
+							>
+								<span className={styles.addIcon} aria-hidden>
+									+
+								</span>
+								Agregar registro
+							</button>
+						)}
+						<ExportButton
+							data={filtrados}
+							fileName={`balance_hidrico_${fechaISO}.pdf`}
+							onExport={handleExport}
+							options={['pdf']}
+						/>
+					</div>
+				</div>
+			)}
 
 			{/* Toolbar: búsqueda · sólo el día */}
 			<div className={bh.toolbar}>

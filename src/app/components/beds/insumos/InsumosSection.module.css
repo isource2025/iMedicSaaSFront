@@ -9,6 +9,61 @@
 	padding: 0 16px;
 }
 
+/* Título de sección */
+.sectionTitle {
+	font-size: 1.2rem;
+	font-weight: 600;
+	color: rgba(0, 0, 0, 0.5);
+	margin: 0;
+	padding: 0;
+	letter-spacing: 0.15em;
+	text-transform: uppercase;
+	border-right: solid rgba(0, 0, 0, 0.486) 2px;
+	padding-right: 8px;
+}
+
+/* Fecha seleccionada - Migración UI v1 */
+.dateHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0px;
+    margin-bottom: 0;
+}
+
+.dateNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    background-color: #00B5E2;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+}
+
+.dateText {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #1e293b;
+	flex: 1;
+}
+
+.dateActions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.dateActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+}
+
 .btnAddDate {
 	border-radius: 24px !important;
 	padding: 10px 20px !important;
@@ -198,6 +253,16 @@
 @media (max-width: 768px) {
 	.root {
 		padding: 0 8px;
+	}
+
+	.dateHeader {
+		flex-wrap: wrap;
+	}
+
+	.dateActions {
+		width: 100%;
+		margin-left: 0;
+		margin-top: 8px;
 	}
 
 	.btnAddDate {

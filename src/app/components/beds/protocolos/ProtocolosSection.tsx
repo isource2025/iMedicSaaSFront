@@ -264,6 +264,7 @@ export default function ProtocolosSection({
 		<>
 			<BedSectionLayout
 				title="Protocolos"
+				subtitle="Post-práctica / cirugía · equipo por rol y descripción clínica"
 				addLabel={puedeCrear ? 'Agregar protocolo' : undefined}
 				onAdd={puedeCrear ? abrirNuevo : undefined}
 				exportSlot={

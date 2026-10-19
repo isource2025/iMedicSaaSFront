@@ -159,6 +159,7 @@ export default function LabResultsSection({
     <>
       <BedSectionLayout
         title="Laboratorio"
+        subtitle="Resultados de esta internación"
         addLabel="Agregar laboratorio"
         onAdd={() => setShowUploadModal(true)}
         exportSlot={

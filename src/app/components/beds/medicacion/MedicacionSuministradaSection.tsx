@@ -12,7 +12,6 @@ import {
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
 import styles from '../indicaciones/IndicacionesSection.module.css';
-import BedSectionHeader from '../shared/BedSectionHeader';
 import tableStyles from './MedicacionSuministradaSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
@@ -183,6 +182,15 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
     }
   };
 
+  // formatear fecha para el header y el PDF
+  const formatSelectedDate = () => {
+    if (!selectedDate) return null;
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return { diaSemana: dias[selectedDate.getDay()], diaMes: selectedDate.getDate(), mes: meses[selectedDate.getMonth()] };
+  };
+  const fechaFormateada = formatSelectedDate();
+
   const handleExport = async (option: ExportOption) => {
     if (option !== 'pdf') return;
     const empresaInfo = await obtenerInfoEmpresa();
@@ -212,14 +220,24 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
 
   return (
     <div className={styles.root}>
-      <BedSectionHeader title="Medicación" date={selectedDate}>
-        <ExportButton
-          data={medicacionesVisibles}
-          fileName={`medicacion_${fechaISO}.pdf`}
-          onExport={handleExport}
-          options={['pdf']}
-        />
-      </BedSectionHeader>
+      {/* Header idéntico al de Indicaciones */}
+      {fechaFormateada && (
+        <div className={styles.dateHeader}>
+          <h2 className={styles.sectionTitle}>Medicación</h2>
+          <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+          <span className={styles.dateText}>
+            {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+          </span>
+          <div className={styles.dateActions}>
+            <ExportButton
+              data={medicacionesVisibles}
+              fileName={`medicacion_${fechaISO}.pdf`}
+              onExport={handleExport}
+              options={['pdf']}
+            />
+          </div>
+        </div>
+      )}
 
       <div className={styles.toolbar}>
         <div className={styles.searchWrap}>

@@ -9,7 +9,6 @@ import ModalBasePaciente from "../../modals/ModalBasePaciente";
 import { evolucionesService } from "../../../services/evolucionesService";
 import EvolucionesTable, { EvolucionRow } from "./EvolucionesTable";
 import styles from './EvolucionesSection.module.css';
-import BedSectionHeader from '../shared/BedSectionHeader';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
@@ -196,6 +195,20 @@ export default function EvolucionesSection({
         }
     };
 
+    // Formatear fecha seleccionada para mostrar
+    const formatSelectedDate = () => {
+        if (!selectedDate) return null;
+        const date = new Date(selectedDate);
+        const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const diaSemana = dias[date.getDay()];
+        const diaMes = date.getDate();
+        const mes = meses[date.getMonth()];
+        return { diaSemana, diaMes, mes };
+    };
+
+    const fechaFormateada = formatSelectedDate();
+
     const handleExport = async (option: ExportOption, data: any[]) => {
         if (option === 'pdf') {
             const empresaInfo = await obtenerInfoEmpresa();
@@ -223,23 +236,31 @@ export default function EvolucionesSection({
 
     return (
         <div className={styles.root}>
-            <BedSectionHeader title="Evoluciones" date={selectedDate}>
-                <button
-                    className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-                    onClick={onAddEvolucion}
-                >
-                    <span className={styles.addIcon} aria-hidden>
-                        +
-                    </span>
-                    Agregar evolución
-                </button>
-                <ExportButton
-                    data={rows}
-                    fileName={`evoluciones_${selectedDate?.toISOString().split('T')[0]}.pdf`}
-                    onExport={handleExport}
-                    options={['pdf']}
-                />
-            </BedSectionHeader>
+            {/* Fecha seleccionada + botón agregar */}
+            {fechaFormateada && (
+                <div className={styles.dateHeader}>
+                    <h2 className={styles.sectionTitle}>Evoluciones</h2>
+                    <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+                    <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
+                    <div className={styles.dateActions}>
+                        <button
+                            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+                            onClick={onAddEvolucion}
+                        >
+                            <span className={styles.addIcon} aria-hidden>
+                                +
+                            </span>
+                            Agregar evolución
+                        </button>
+                        <ExportButton
+                            data={rows}
+                            fileName={`evoluciones_${selectedDate?.toISOString().split('T')[0]}.pdf`}
+                            onExport={handleExport}
+                            options={['pdf']}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Buscador y filtros */}
             <div className={styles.toolbar}>
