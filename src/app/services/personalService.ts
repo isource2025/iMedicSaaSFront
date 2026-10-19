@@ -167,7 +167,7 @@ export const getServicios = async (): Promise<CatalogoItemTexto[]> => {
 	}
 };
 
-/** Servicios asignables al personal: solo el catálogo de la nube. */
+/** Servicios asignables al personal (bandeja): catálogo unificado nube/escritorio (imServicios). */
 export const getServiciosNube = async (): Promise<CatalogoItemTexto[]> => {
 	const res = await apiService.get<ApiResponse<CatalogoItemTexto[]>>(
 		'/personal/catalogos/servicios-nube',

@@ -85,7 +85,7 @@ export default function PersonalAsignacionesTab({
 				].filter(Boolean);
 				if (faltan.length) {
 					setError(
-						`No hay ${faltan.join(' ni ')} en la nube para esta empresa. Cargalos desde Super Admin (migración del servidor físico a la nube).`,
+						`No hay ${faltan.join(' ni ')} en el catálogo de la empresa. Revisá Tablas maestras o sincronizá desde el servidor físico.`,
 					);
 				}
 
