@@ -9,6 +9,7 @@ import AdjuntoFileViewer, {
 import SubirAdjuntoModal from '@/app/components/beds/adjuntos/SubirAdjuntoModal';
 import SubirAdjuntoButton from '@/app/components/beds/adjuntos/SubirAdjuntoButton';
 import type { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
+import { formatFechaHoraWall } from '@/app/utils/fechaHoraWall';
 import Loader from '../Loader/Loader';
 import styles from './AgendaAdjuntosTab.module.css';
 
@@ -137,9 +138,7 @@ export default function AgendaAdjuntosTab({ idTurno, onUploadingChange }: Props)
 							</button>
 							<span className={styles.meta}>
 								{a.TipoImagenNombre || '—'} ·{' '}
-								{a.FechaCarga
-									? new Date(a.FechaCarga).toLocaleString('es-AR')
-									: '—'}
+								{a.FechaCarga ? formatFechaHoraWall(a.FechaCarga) || '—' : '—'}
 							</span>
 						</li>
 					))}
