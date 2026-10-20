@@ -99,9 +99,20 @@ export const responsable = {
   interRespuesta: (r: Row) =>
     str(r.Respuesta) ? prof(r.RealizadorNombre, r.MatriculaRealizador, 'Respondió') : null,
   protocolo: (r: Row) => prof(r.operadorNombre, r.operadorMatricula),
-  control: (r: Row) => prof(joinNombre(r.ProfesionalApellido, r.ProfesionalNombres), r.Matricula),
+  control: (r: Row) =>
+    prof(
+      joinNombre(r.ProfesionalApellido, r.ProfesionalNombres) ||
+        joinNombre(r.OperadorApellido, r.OperadorNombres),
+      r.Matricula,
+    ),
   medicacion: (r: Row) =>
-    prof(str(r.ProfesionalFullName) || joinNombre(r.ProfesionalApellido, r.ProfesionalNombres), r.Matricula),
+    prof(
+      str(r.ProfesionalFullName) ||
+        joinNombre(r.ProfesionalApellido, r.ProfesionalNombres) ||
+        str(r.OperadorFullName) ||
+        joinNombre(r.OperadorApellido, r.OperadorNombres),
+      r.Matricula,
+    ),
   dieta: (r: Row) => prof(r.ProfesionalFullName || r.OperadorFullName, r.Matricula),
   insumo: (r: Row) => prof(r.fullName, null),
 };
