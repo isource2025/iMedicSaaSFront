@@ -39,6 +39,13 @@ function toISODate(d: Date | null | undefined): string | null {
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** Quién cargó: cuenta (OperadorCarga) y, si no hay nombre, la ficha (Profesional). */
+function nombreQuienCargo(c: ControlFrecuente): string {
+	const op = obtenerNombreCompleto(c.OperadorApellido, c.OperadorNombres);
+	if (op !== '-') return op;
+	return obtenerNombreCompleto(c.ProfesionalApellido, c.ProfesionalNombres);
+}
+
 const ControlesFrecuentesSection: React.FC<Props> = ({
 	numeroVisita,
 	patientName,
@@ -97,9 +104,9 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 		if (!query.trim()) return controles;
 		const q = query.toLowerCase();
 		return controles.filter((c) => {
-			const op = `${c.OperadorApellido || ''} ${c.OperadorNombres || ''}`.toLowerCase();
+			const quien = nombreQuienCargo(c).toLowerCase();
 			const obs = (c.Observaciones || '').toLowerCase();
-			return op.includes(q) || obs.includes(q);
+			return quien.includes(q) || obs.includes(q);
 		});
 	}, [controles, query]);
 
@@ -188,7 +195,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 					<input
 						className={styles.searchInput}
 						type="text"
-						placeholder="Buscar por operador, observaciones…"
+						placeholder="Buscar por profesional, observaciones…"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 					/>
@@ -246,7 +253,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 													{c.IdHci && c.IdHci > 0 ? 'HC' : 'ENF'}
 												</span>
 											</td>
-											<td>{obtenerNombreCompleto(c.OperadorApellido, c.OperadorNombres)}</td>
+											<td>{nombreQuienCargo(c)}</td>
 											<td className={tableStyles.observaciones}>{c.Observaciones || '-'}</td>
 											<td className={tableStyles.cellAccion}>
 												<div className={tableStyles.actionBtns}>
@@ -290,7 +297,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 										Pulso {c.Pulso || '—'} · TA {c.Maximo || '—'}/{c.Minimo || '—'} · Sat {c.Saturometria ? `${c.Saturometria}%` : '—'}
 									</p>
 									<p className={tableStyles.mobileProfesional}>
-										{obtenerNombreCompleto(c.OperadorApellido, c.OperadorNombres)}
+										{nombreQuienCargo(c)}
 									</p>
 									<div className={tableStyles.actionBtns}>
 										<button className={tableStyles.btnAction} onClick={() => setSelectedControl(c)} title="Ver detalle">

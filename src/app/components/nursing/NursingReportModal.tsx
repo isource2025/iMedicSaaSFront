@@ -32,7 +32,21 @@ const formatTime = (timeString: string) => {
 };
 
 /** Nunca se muestra el código/matrícula: solo el nombre resuelto. */
-const nombreProfesional = (control: ControlFrecuente) => String(control.ProfesionalNombre ?? '').trim();
+function nombreProfesional(control: ControlFrecuente): string {
+	const extra = control as ControlFrecuente & {
+		ProfesionalApellido?: string | null;
+		ProfesionalNombres?: string | null;
+		OperadorApellido?: string | null;
+		OperadorNombres?: string | null;
+	};
+	const partes = (a?: string | null, b?: string | null) =>
+		[String(a ?? '').trim(), String(b ?? '').trim()].filter(Boolean).join(' ');
+	return (
+		String(control.ProfesionalNombre ?? '').trim() ||
+		partes(extra.ProfesionalApellido, extra.ProfesionalNombres) ||
+		partes(extra.OperadorApellido, extra.OperadorNombres)
+	);
+}
 
 const vacio = (v: unknown) => v == null || String(v).trim() === '' || String(v).trim() === '-' || Number(v) === 0;
 
