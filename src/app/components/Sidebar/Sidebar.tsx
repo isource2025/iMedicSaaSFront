@@ -242,8 +242,9 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
 
         const permisoModulo = (sub: SubItem) => sub.permisoModuloId || item.moduloId
 
-        // Configuración: visible si el usuario tiene acceso a cualquier subítem
-        // (incluye tablas cuyos permisos viven en otros módulos).
+        // Configuración: siempre completa respecto de packs. Las "Tabla de …"
+        // reutilizan permisos de otros módulos (TURNOS/ADMISION/INTERNACION/…);
+        // puedeSubmodulo ya no exige el pack para submódulo TABLA, sólo el rol.
         if (item.id === 'configuracion') {
           const subs = item.subItems.filter((sub) => {
             if (!sub.submoduloId) return true
