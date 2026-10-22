@@ -209,4 +209,21 @@ export const interconsultasService = {
 		}
 		return json.data as InterconsultaRow;
 	},
+
+	async eliminar(
+		idPedido: number,
+		origen: 'LEGACY' | 'WEB' = 'LEGACY',
+	): Promise<{ idPedido: number }> {
+		const q = origen === 'WEB' ? '?origen=WEB' : '';
+		const res = await apiFetch(`/interconsultas/${idPedido}${q}`, { method: 'DELETE' });
+		const json = await parseJson<{
+			success?: boolean;
+			data?: { idPedido: number };
+			mensaje?: string;
+		}>(res);
+		if (!res.ok || !json?.success) {
+			throw new Error(json?.mensaje || 'No se pudo eliminar la interconsulta');
+		}
+		return json.data || { idPedido };
+	},
 };
