@@ -5,6 +5,7 @@ import railStyles from '@/app/components/layout/FloatingActionsRail.module.css';
 import NotificationsFab from '@/app/components/layout/NotificationsFab';
 import PatientFolderFab from '@/app/components/layout/PatientFolderFab';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { useBedDetail } from './contexts/BedDetailContext';
 import styles from './BedFloatingActions.module.css';
 
 interface BedFloatingActionsProps {
@@ -15,13 +16,17 @@ interface BedFloatingActionsProps {
 
 /**
  * Acciones rápidas en detalle de cama (según permisos del usuario).
+ * El enfermero también tiene Evoluciones e Interconsultas (mismas secciones
+ * que en Gestión Médica; las abre en el cuerpo de la ficha).
  */
 export default function BedFloatingActions({
   onOpenAdjuntos,
   onOpenNursing,
   onOpenLaboratorios,
 }: BedFloatingActionsProps) {
-  const { puede } = usePermiso();
+  const { puede, rol, loaded } = usePermiso();
+  const { navigateToSection, activeSection } = useBedDetail();
+  const esEnfermero = loaded && String(rol?.nombre || '').toUpperCase() === 'ENFERMERO';
   const showAdjuntos = puede('INTERNACION.ADJUNTOS.VER') || puede('INTERNACION.ADJUNTOS.CREAR');
   const showLabs = puede('INTERNACION.ESTUDIOS.VER') || puede('INTERNACION.ESTUDIOS.CREAR');
   const showNursing =
@@ -29,8 +34,10 @@ export default function BedFloatingActions({
     puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') ||
     puede('INTERNACION.SIGNOS_VITALES.VER') ||
     puede('INTERNACION.SIGNOS_VITALES.CREAR');
+  const showEvoluciones = esEnfermero && puede('INTERNACION.EVOLUCIONES.VER');
+  const showInterconsulta = esEnfermero && puede('INTERNACION.INTERCONSULTAS.VER');
 
-  if (!showAdjuntos && !showLabs && !showNursing) {
+  if (!showAdjuntos && !showLabs && !showNursing && !showEvoluciones && !showInterconsulta) {
     return (
       <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root} overModals>
         <NotificationsFab stack />
@@ -56,6 +63,38 @@ export default function BedFloatingActions({
           <path d="M9 6h6" />
           <path d="M9 11h6" />
           <path d="M9 15h4" />
+        </svg>
+      </button>
+      )}
+      {showEvoluciones && (
+      <button
+        type="button"
+        className={`${railStyles.item} ${styles.fabEvoluciones} ${activeSection === 'evoluciones' ? railStyles.itemActive : ''}`}
+        onClick={() => navigateToSection('evoluciones')}
+        title="Evoluciones"
+        aria-label="Abrir evoluciones"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+          <path d="M8 13h8" />
+          <path d="M8 17h5" />
+        </svg>
+      </button>
+      )}
+      {showInterconsulta && (
+      <button
+        type="button"
+        className={`${railStyles.item} ${styles.fabInterconsulta} ${activeSection === 'interconsulta' ? railStyles.itemActive : ''}`}
+        onClick={() => navigateToSection('interconsulta')}
+        title="Interconsultas"
+        aria-label="Abrir interconsultas"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       </button>
       )}
