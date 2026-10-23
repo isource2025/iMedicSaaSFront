@@ -18,6 +18,7 @@ import {
 	IoBriefcaseOutline,
 	IoRibbonOutline,
 	IoCardOutline,
+	IoCreateOutline,
 	IoEllipsisVertical,
 	IoEyeOutline,
 	IoPencil,
@@ -180,8 +181,19 @@ export default function PersonalList({
 													{iniciales(p.ApellidoNombre)}
 												</div>
 												<div className={styles.personInfo}>
-													<span className={styles.nameText}>
-														{p.ApellidoNombre}
+													<span className={styles.nameRow}>
+														<span className={styles.nameText}>
+															{p.ApellidoNombre}
+														</span>
+														{p.hasFirma ? (
+															<span
+																className={styles.firmaBadge}
+																title='Firma digital enrolada'
+																aria-label='Firma digital enrolada'
+															>
+																<IoCreateOutline size={13} aria-hidden />
+															</span>
+														) : null}
 													</span>
 													<div className={styles.secondaryLine}>
 														<IoLocationOutline size={12} />
@@ -309,7 +321,16 @@ export default function PersonalList({
 										<div className={styles.avatar}>{iniciales(p.ApellidoNombre)}</div>
 										<div className={styles.mobileItemLeft}>
 											<div className={styles.mobileItemName}>
-												{p.ApellidoNombre}
+												<span>{p.ApellidoNombre}</span>
+												{p.hasFirma ? (
+													<span
+														className={styles.firmaBadge}
+														title='Firma digital enrolada'
+														aria-label='Firma digital enrolada'
+													>
+														<IoCreateOutline size={13} aria-hidden />
+													</span>
+												) : null}
 											</div>
 											<div className={styles.mobileItemTags}>
 												<span className={styles.mobileTag}>

@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { NotificacionItem } from '@/app/services/notificacionesService';
+import { usePermiso } from '@/app/hooks/usePermiso';
 import {
 	descartarAvisosPedido,
 	markEntranceShown,
 	marcarNotificacionLeida,
 	marcarTodasNotificacionesLeidas,
 	refreshList,
+	refreshSinCama,
 	useNotificacionesStore,
 } from '@/app/utils/notificacionesStore';
 import railStyles from './FloatingActionsRail.module.css';
@@ -16,6 +18,7 @@ import styles from './NotificationsFab.module.css';
 
 const OPEN_EVENT = 'imedic:notifications-open';
 const BANDEJA_PATH = '/dashboard/bandeja-pedidos';
+const CAMAS_PATH = '/dashboard/beds';
 
 function esNotificacionWhatsApp(n: NotificacionItem): boolean {
 	const tipo = String(n.TipoNotificacion || '').toUpperCase();
@@ -43,6 +46,7 @@ function esInterconsultaNotif(n: NotificacionItem): boolean {
 
 export default function NotificationsFab({ stack = false }: { stack?: boolean }) {
 	const router = useRouter();
+	const { puede, loaded: permisosLoaded } = usePermiso();
 	const notif = useNotificacionesStore();
 	const {
 		userId,
@@ -53,8 +57,10 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		listError,
 		estudios: bandejaEstudios,
 		interconsultas: bandejaIc,
+		sinCama,
 	} = notif;
 	const bandejaLibres = bandejaEstudios + bandejaIc;
+	const puedeVerSinCama = permisosLoaded && puede('INTERNACION.MOVIMIENTOS.VER');
 	const [open, setOpen] = useState(false);
 	const panelRef = useRef<HTMLDivElement>(null);
 	/** Se decide una sola vez por montaje: solo anima la primera aparición de la sesión. */
@@ -73,7 +79,8 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 	useEffect(() => {
 		if (!open || !userId) return;
 		void refreshList();
-	}, [open, userId]);
+		if (puedeVerSinCama) void refreshSinCama();
+	}, [open, userId, puedeVerSinCama]);
 
 	const closePanel = useCallback(() => {
 		setOpen(false);
@@ -116,6 +123,11 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		closePanel();
 		const qs = tab ? `?tab=${tab}` : '';
 		router.push(`${BANDEJA_PATH}${qs}`);
+	};
+
+	const irCamas = () => {
+		closePanel();
+		router.push(CAMAS_PATH);
 	};
 
 	const abrirNotificacion = async (n: NotificacionItem) => {
@@ -161,13 +173,15 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	const hasUnread = count > 0;
 	const hasPedidos = bandejaLibres > 0;
-	const fabHighlight = hasUnread || hasPedidos;
-	const badgeTotal = hasUnread ? count : bandejaLibres;
+	const hasSinCama = puedeVerSinCama && sinCama > 0;
+	const extrasAlert = bandejaLibres + (puedeVerSinCama ? sinCama : 0);
+	const fabHighlight = hasUnread || hasPedidos || hasSinCama;
+	const badgeTotal = hasUnread ? count : extrasAlert;
 	const fabClass = stack
-		? `${railStyles.item} ${styles.railItem} ${hasUnread ? styles.railAlert : hasPedidos ? styles.railPedidos : ''} ${
+		? `${railStyles.item} ${styles.railItem} ${hasUnread ? styles.railAlert : hasPedidos || hasSinCama ? styles.railPedidos : ''} ${
 				open ? railStyles.itemActive : ''
 			}`
-		: `${styles.fab} ${hasUnread ? styles.fabAlert : hasPedidos ? styles.fabPedidos : styles.fabIdle}`;
+		: `${styles.fab} ${hasUnread ? styles.fabAlert : hasPedidos || hasSinCama ? styles.fabPedidos : styles.fabIdle}`;
 
 	return (
 		<div className={`${styles.wrap} ${stack ? styles.wrapInStack : ''}`} ref={panelRef}>
@@ -196,7 +210,10 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 						<path d="M13.73 21a2 2 0 0 1-3.46 0" />
 					</svg>
 					{fabHighlight ? (
-						<span className={`${styles.badge} ${hasPedidos ? styles.badgePedidos : ''}`} aria-hidden>
+						<span
+							className={`${styles.badge} ${!hasUnread && (hasPedidos || hasSinCama) ? styles.badgePedidos : ''}`}
+							aria-hidden
+						>
 							{badgeTotal > 99 ? '99+' : badgeTotal}
 						</span>
 					) : null}
@@ -213,6 +230,29 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 							</button>
 						) : null}
 					</div>
+
+					{puedeVerSinCama ? (
+						<button
+							type="button"
+							className={`${styles.sinCamaCard} ${hasSinCama ? styles.sinCamaCardActive : ''}`}
+							onClick={irCamas}
+						>
+							<div className={styles.bandejaCardTop}>
+								<span className={styles.sinCamaTag}>Internación</span>
+								{hasSinCama ? (
+									<span className={styles.bandejaCount}>{sinCama > 99 ? '99+' : sinCama}</span>
+								) : (
+									<span className={styles.bandejaCountMuted}>0</span>
+								)}
+							</div>
+							<p className={styles.sinCamaTitle}>Pacientes sin cama</p>
+							<p className={styles.sinCamaHint}>
+								{hasSinCama
+									? `${sinCama} internado${sinCama === 1 ? '' : 's'} pendiente${sinCama === 1 ? '' : 's'} de ubicar`
+									: 'No hay internados pendientes de ubicar'}
+							</p>
+						</button>
+					) : null}
 
 					<button
 						type="button"
@@ -286,8 +326,8 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 							<p className={styles.muted}>{listError}</p>
 						) : items.length === 0 ? (
 							<p className={styles.muted}>
-								{hasPedidos
-									? 'Los pedidos libres están arriba. Todavía no hay avisos individuales.'
+								{hasPedidos || hasSinCama
+									? 'Los avisos de arriba ya resumen lo pendiente. Todavía no hay avisos individuales.'
 									: 'No hay notificaciones'}
 							</p>
 						) : (
