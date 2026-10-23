@@ -9,6 +9,7 @@ import {
 import { personalService } from '../../services/personalService';
 import { etiquetaCatalogo, mapaCatalogoTexto } from '../../utils/etiquetaCatalogo';
 import styles from './PersonalList.module.css';
+import PersonalFirmaThumb from './PersonalFirmaThumb';
 import Pagination from '../UI/Pagination';
 import Loader from '../Loader/Loader';
 import {
@@ -18,7 +19,6 @@ import {
 	IoBriefcaseOutline,
 	IoRibbonOutline,
 	IoCardOutline,
-	IoCreateOutline,
 	IoEllipsisVertical,
 	IoEyeOutline,
 	IoPencil,
@@ -133,6 +133,7 @@ export default function PersonalList({
 						<tr>
 							<th scope='col' className={styles.colId}>ID / Matrícula</th>
 							<th scope='col' className={styles.colPerson}>Apellido y Nombre</th>
+							<th scope='col' className={styles.colFirma}>Firma</th>
 							<th scope='col'>Especialidad / Categoría</th>
 							<th scope='col'>Servicio</th>
 							<th scope='col'>Estado</th>
@@ -142,13 +143,13 @@ export default function PersonalList({
 					<tbody>
 						{loading ? (
 							<tr>
-								<td colSpan={6} className={styles.loadingContainer}>
+								<td colSpan={7} className={styles.loadingContainer}>
 									<Loader />
 								</td>
 							</tr>
 						) : personalList.length === 0 ? (
 							<tr>
-								<td colSpan={6} className={styles.noResults}>
+								<td colSpan={7} className={styles.noResults}>
 									No se encontró personal
 								</td>
 							</tr>
@@ -181,19 +182,8 @@ export default function PersonalList({
 													{iniciales(p.ApellidoNombre)}
 												</div>
 												<div className={styles.personInfo}>
-													<span className={styles.nameRow}>
-														<span className={styles.nameText}>
-															{p.ApellidoNombre}
-														</span>
-														{p.hasFirma ? (
-															<span
-																className={styles.firmaBadge}
-																title='Firma digital enrolada'
-																aria-label='Firma digital enrolada'
-															>
-																<IoCreateOutline size={13} aria-hidden />
-															</span>
-														) : null}
+													<span className={styles.nameText}>
+														{p.ApellidoNombre}
 													</span>
 													<div className={styles.secondaryLine}>
 														<IoLocationOutline size={12} />
@@ -212,6 +202,12 @@ export default function PersonalList({
 													) : null}
 												</div>
 											</div>
+										</td>
+										<td
+											className={styles.cellFirma}
+											onClick={(e) => e.stopPropagation()}
+										>
+											<PersonalFirmaThumb id={p.Valor} hasFirma={p.hasFirma} />
 										</td>
 										<td className={styles.cellStacked}>
 											<div className={styles.cellMain}>
@@ -322,16 +318,16 @@ export default function PersonalList({
 										<div className={styles.mobileItemLeft}>
 											<div className={styles.mobileItemName}>
 												<span>{p.ApellidoNombre}</span>
-												{p.hasFirma ? (
-													<span
-														className={styles.firmaBadge}
-														title='Firma digital enrolada'
-														aria-label='Firma digital enrolada'
-													>
-														<IoCreateOutline size={13} aria-hidden />
-													</span>
-												) : null}
 											</div>
+											{p.hasFirma ? (
+												<div className={styles.mobileFirma}>
+													<PersonalFirmaThumb
+														id={p.Valor}
+														hasFirma={p.hasFirma}
+														compact
+													/>
+												</div>
+											) : null}
 											<div className={styles.mobileItemTags}>
 												<span className={styles.mobileTag}>
 													<span className={styles.mobileTagLabel}>ID</span> {p.Valor}
