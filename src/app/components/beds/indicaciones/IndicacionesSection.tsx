@@ -91,7 +91,8 @@ function descripcionIndicacionReindicar(row: IndicacionRow): string {
 
 /** Mensajes claros para el usuario (sin códigos HTTP ni jerga técnica). */
 function motivoErrorReindicar(error: unknown): string {
-    const raw = String((error as Error)?.message || error || "").toLowerCase();
+    const original = String((error as Error)?.message || error || "").trim();
+    const raw = original.toLowerCase();
     if (
         raw.includes("ya existe") ||
         raw.includes("duplicate") ||
@@ -106,10 +107,22 @@ function motivoErrorReindicar(error: unknown): string {
     if (raw.includes("network") || raw.includes("failed to fetch") || raw.includes("timeout")) {
         return "No se pudo completar por un problema de conexión. Intentá de nuevo en unos segundos.";
     }
-    if (raw.includes("identidad") || raw.includes("profesional") || raw.includes("operador")) {
+    // El back ya explica el problema de vinculación: no taparlo con un mensaje genérico.
+    if (
+        raw.startsWith("no se puede grabar") ||
+        raw.includes("impassword") ||
+        raw.includes("no tiene cuenta") ||
+        raw.includes("vincul")
+    ) {
+        return original.length > 240 ? `${original.slice(0, 237)}…` : original;
+    }
+    if (
+        raw.includes("sesión sin") ||
+        raw.includes("codoperador") ||
+        (raw.includes("identidad") && raw.includes("profesional"))
+    ) {
         return "Falta identificar correctamente al profesional que indica. Cerrá sesión, volvé a ingresar e intentá otra vez.";
     }
-    const original = String((error as Error)?.message || "").trim();
     if (original && original.length < 160 && !/^\d+$/.test(original)) {
         return original;
     }
@@ -718,6 +731,17 @@ export default function IndicacionesSection({
                 </div>
 
                 <PeriodFilter value={periodo} onChange={setPeriodo} disabled={reindicando} />
+
+                <button
+                    type="button"
+                    className={styles.btnHelpColors}
+                    onClick={() => setHelpOpen(true)}
+                    title="Referencia de colores de las indicaciones"
+                    aria-label="Ver referencia de colores de las indicaciones"
+                >
+                    <span className={styles.btnHelpDot} aria-hidden />
+                    Colores
+                </button>
 
                 <button
                     type="button"

@@ -34,6 +34,8 @@ export interface Personal {
 	Observaciones: string | null;
 	/** Rol asignado (IdRol de imRoles). null si el personal no tiene rol. */
 	Rol: number | null;
+	/** True si hay firma digital (PNG) cargada en imPersonal.Firma. */
+	hasFirma?: boolean;
 }
 
 export interface PersonalFormData {

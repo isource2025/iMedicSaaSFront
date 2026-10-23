@@ -166,6 +166,18 @@ const visitaMovimientoService = {
     }
   },
 
+  /** Conteo de internados vigentes sin habitación/cama (campanita). */
+  contarInternadosSinCama: async (): Promise<number> => {
+    const response = await apiService.get<{ success?: boolean; count?: number; mensaje?: string }>(
+      `${BASE_URL}/patients/visitas/internados-sin-cama/conteo`,
+    );
+    if (!response.data?.success) {
+      throw new Error(response.data?.mensaje || 'Error al contar internados sin cama');
+    }
+    const n = Number(response.data.count ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  },
+
   /**
    * Primera asignación de cama a un internado sin ubicación
    */

@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { notificacionesService, type NotificacionItem } from '@/app/services/notificacionesService';
 import estudiosService from '@/app/services/estudiosService';
+import visitaMovimientoService from '@/app/services/visitaMovimientoService';
 import { peekCachedBandejaCount } from '@/app/utils/serviciosReceptorCache';
 import { getIdEmpresaFromToken } from '@/app/utils/jwtSession';
 import { apiFetch } from '@/app/utils/authFetch';
@@ -22,6 +23,9 @@ export type NotificacionesState = {
 	estudios: number;
 	interconsultas: number;
 	bandejaLoaded: boolean;
+	/** Internados vigentes (tipo I) sin habitación/cama asignada. */
+	sinCama: number;
+	sinCamaLoaded: boolean;
 	items: NotificacionItem[];
 	itemsLoaded: boolean;
 	loadingList: boolean;
@@ -33,7 +37,14 @@ export type NotificacionesState = {
 
 type Persisted = Pick<
 	NotificacionesState,
-	'userKey' | 'count' | 'estudios' | 'interconsultas' | 'items' | 'itemsLoaded' | 'entranceShown'
+	| 'userKey'
+	| 'count'
+	| 'estudios'
+	| 'interconsultas'
+	| 'sinCama'
+	| 'items'
+	| 'itemsLoaded'
+	| 'entranceShown'
 >;
 
 const STORAGE_KEY = 'imedic:notificaciones:v1';
@@ -62,6 +73,8 @@ const initialState: NotificacionesState = {
 	estudios: 0,
 	interconsultas: 0,
 	bandejaLoaded: false,
+	sinCama: 0,
+	sinCamaLoaded: false,
 	items: [],
 	itemsLoaded: false,
 	loadingList: false,
@@ -106,6 +119,7 @@ function persist() {
 		count: state.count,
 		estudios: state.estudios,
 		interconsultas: state.interconsultas,
+		sinCama: state.sinCama,
 		items: state.items,
 		itemsLoaded: state.itemsLoaded,
 		entranceShown: state.entranceShown,
@@ -154,6 +168,7 @@ let countJob: Promise<void> | null = null;
 let bandejaJob: Promise<void> | null = null;
 let bandejaRetryTimer: number | null = null;
 let bandejaRetryDelay = BANDEJA_RETRY_MIN_MS;
+let sinCamaJob: Promise<void> | null = null;
 let listJob: Promise<void> | null = null;
 let lastFullRefresh = 0;
 
@@ -222,6 +237,24 @@ export function refreshBandeja(): Promise<void> {
 	return bandejaJob;
 }
 
+export function refreshSinCama(): Promise<void> {
+	if (sinCamaJob) return sinCamaJob;
+	const { userKey } = state;
+	if (!userKey) return Promise.resolve();
+	sinCamaJob = (async () => {
+		try {
+			const total = await visitaMovimientoService.contarInternadosSinCama();
+			if (sameUser(userKey)) setState({ sinCama: total, sinCamaLoaded: true });
+		} catch {
+			/* 403 u otros: sin permiso o fallo → badge en 0, no bloquear la campanita */
+			if (sameUser(userKey)) setState({ sinCama: 0, sinCamaLoaded: true });
+		} finally {
+			sinCamaJob = null;
+		}
+	})();
+	return sinCamaJob;
+}
+
 export function refreshList(): Promise<void> {
 	if (listJob) return listJob;
 	const { userId, userKey } = state;
@@ -247,27 +280,34 @@ function refreshAll({ list = true }: { list?: boolean } = {}) {
 	lastFullRefresh = Date.now();
 	void refreshCount();
 	void refreshBandeja();
+	void refreshSinCama();
 	if (list && state.itemsLoaded) void refreshList();
 }
 
-let pendingFlags = { notificaciones: false, bandeja: false };
+let pendingFlags = { notificaciones: false, bandeja: false, internacion: false };
 let debounceTimer: number | null = null;
 
-function scheduleRefresh(flags: { notificaciones?: boolean; bandeja?: boolean }) {
+function scheduleRefresh(flags: {
+	notificaciones?: boolean;
+	bandeja?: boolean;
+	internacion?: boolean;
+}) {
 	pendingFlags = {
 		notificaciones: pendingFlags.notificaciones || Boolean(flags.notificaciones),
 		bandeja: pendingFlags.bandeja || Boolean(flags.bandeja),
+		internacion: pendingFlags.internacion || Boolean(flags.internacion),
 	};
 	if (debounceTimer != null) return;
 	debounceTimer = window.setTimeout(() => {
 		debounceTimer = null;
 		const f = pendingFlags;
-		pendingFlags = { notificaciones: false, bandeja: false };
+		pendingFlags = { notificaciones: false, bandeja: false, internacion: false };
 		if (f.notificaciones) {
 			void refreshCount();
 			if (state.itemsLoaded) void refreshList();
 		}
 		if (f.bandeja) void refreshBandeja();
+		if (f.internacion) void refreshSinCama();
 	}, EVENT_DEBOUNCE_MS);
 }
 
@@ -314,7 +354,9 @@ function handleStreamEvent(event: string, data: string) {
 		return;
 	}
 	if (event === 'cambio') {
-		let flags: { notificaciones?: boolean; bandeja?: boolean } = { notificaciones: true };
+		let flags: { notificaciones?: boolean; bandeja?: boolean; internacion?: boolean } = {
+			notificaciones: true,
+		};
 		try {
 			flags = JSON.parse(data || '{}');
 		} catch {
@@ -444,7 +486,7 @@ function stopTimers() {
 	firstLoadTimer = null;
 	hiddenTimer = null;
 	debounceTimer = null;
-	pendingFlags = { notificaciones: false, bandeja: false };
+	pendingFlags = { notificaciones: false, bandeja: false, internacion: false };
 }
 
 function stop() {
@@ -468,6 +510,8 @@ function start(userId: number, userKey: string) {
 		estudios: saved?.estudios ?? localBandeja?.estudios ?? 0,
 		interconsultas: saved?.interconsultas ?? localBandeja?.interconsultas ?? 0,
 		bandejaLoaded: Boolean(saved),
+		sinCama: saved?.sinCama ?? 0,
+		sinCamaLoaded: Boolean(saved),
 		items: saved?.items ?? [],
 		itemsLoaded: saved?.itemsLoaded ?? false,
 		entranceShown: saved?.entranceShown ?? false,

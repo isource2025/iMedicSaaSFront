@@ -83,12 +83,20 @@ export default function FloatingActionsRail({
 		animateBellRef.current = !notif.entranceShown;
 	}
 	const pedidos = notif.estudios + notif.interconsultas;
+	const sinCama = notif.sinCama || 0;
 	const hasUnread = notif.count > 0;
 	const hasPedidos = pedidos > 0;
-	const badgeTotal = hasUnread ? notif.count : pedidos;
+	const hasSinCama = sinCama > 0;
+	const badgeTotal = hasUnread ? notif.count : pedidos + sinCama;
 	const showBell = bellReady && !open;
 	const showLoader = !bellReady && !open;
-	const tone = !showBell ? '' : hasUnread ? styles.tabAlert : hasPedidos ? styles.tabPedidos : '';
+	const tone = !showBell
+		? ''
+		: hasUnread
+			? styles.tabAlert
+			: hasPedidos || hasSinCama
+				? styles.tabPedidos
+				: '';
 
 	const tabLabel = open
 		? 'Ocultar acciones rápidas'
@@ -116,7 +124,7 @@ export default function FloatingActionsRail({
 				{showBell ? (
 					<span className={`${styles.tabBell} ${animateBellRef.current ? styles.tabBellEntrance : ''}`}>
 						<svg
-							className={hasUnread || hasPedidos ? styles.tabBellRing : undefined}
+							className={hasUnread || hasPedidos || hasSinCama ? styles.tabBellRing : undefined}
 							width="20"
 							height="20"
 							viewBox="0 0 24 24"
@@ -129,7 +137,10 @@ export default function FloatingActionsRail({
 							<path d="M13.73 21a2 2 0 0 1-3.46 0" />
 						</svg>
 						{badgeTotal > 0 ? (
-							<span className={`${styles.tabBadge} ${!hasUnread ? styles.tabBadgePedidos : ''}`} aria-hidden>
+							<span
+								className={`${styles.tabBadge} ${!hasUnread && (hasPedidos || hasSinCama) ? styles.tabBadgePedidos : ''}`}
+								aria-hidden
+							>
 								{badgeTotal > 99 ? '99+' : badgeTotal}
 							</span>
 						) : null}
