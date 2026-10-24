@@ -139,10 +139,10 @@ export default function PersonalList({
 						<tr>
 							<th scope='col' className={styles.colId}>ID / Matrícula</th>
 							<th scope='col' className={styles.colPerson}>Apellido y Nombre</th>
-							<th scope='col' className={styles.colFirma}>Firma</th>
 							<th scope='col'>Especialidad / Categoría</th>
 							<th scope='col'>Servicio</th>
 							<th scope='col'>Estado</th>
+							<th scope='col' className={styles.colFirma}>Firma</th>
 							<th scope='col' className={styles.colActions}>Acciones</th>
 						</tr>
 					</thead>
@@ -209,17 +209,6 @@ export default function PersonalList({
 												</div>
 											</div>
 										</td>
-										<td
-											className={styles.cellFirma}
-											onClick={(e) => e.stopPropagation()}
-										>
-											<PersonalFirmaThumb
-												id={p.Valor}
-												hasFirma={p.hasFirma}
-												revision={firmaRevision}
-												onEdit={() => onEditFirma(p)}
-											/>
-										</td>
 										<td className={styles.cellStacked}>
 											<div className={styles.cellMain}>
 												<IoMedicalOutline size={12} className={styles.cellIcon} />
@@ -255,6 +244,17 @@ export default function PersonalList({
 											</div>
 										</td>
 										<td>{renderEstadoBadge(p.Estado)}</td>
+										<td
+											className={styles.cellFirma}
+											onClick={(e) => e.stopPropagation()}
+										>
+											<PersonalFirmaThumb
+												id={p.Valor}
+												hasFirma={p.hasFirma}
+												revision={firmaRevision}
+												onEdit={() => onEditFirma(p)}
+											/>
+										</td>
 										<td className={styles.actionCell} onClick={(e) => e.stopPropagation()}>
 											<div className={styles.actionToolbar}>
 												<button
