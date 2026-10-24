@@ -32,6 +32,10 @@ interface PersonalListProps {
 	currentPage: number;
 	totalPages: number;
 	onEdit: (p: Personal) => void;
+	/** Abre el modal de firma digital (pestaña/acción Firma). */
+	onEditFirma: (p: Personal) => void;
+	/** Versión de cache de miniaturas (tras guardar firma). */
+	firmaRevision?: number;
 	onView: (p: Personal) => void;
 	onDelete: (p: Personal) => void;
 	onOpenMenu: (p: Personal, anchor?: { x: number; y: number }) => void;
@@ -46,6 +50,8 @@ export default function PersonalList({
 	totalPages,
 	onPageChange,
 	onEdit,
+	onEditFirma,
+	firmaRevision = 0,
 	onView,
 	onDelete,
 	onOpenMenu,
@@ -207,7 +213,12 @@ export default function PersonalList({
 											className={styles.cellFirma}
 											onClick={(e) => e.stopPropagation()}
 										>
-											<PersonalFirmaThumb id={p.Valor} hasFirma={p.hasFirma} />
+											<PersonalFirmaThumb
+												id={p.Valor}
+												hasFirma={p.hasFirma}
+												revision={firmaRevision}
+												onEdit={() => onEditFirma(p)}
+											/>
 										</td>
 										<td className={styles.cellStacked}>
 											<div className={styles.cellMain}>
@@ -319,15 +330,18 @@ export default function PersonalList({
 											<div className={styles.mobileItemName}>
 												<span>{p.ApellidoNombre}</span>
 											</div>
-											{p.hasFirma ? (
-												<div className={styles.mobileFirma}>
-													<PersonalFirmaThumb
-														id={p.Valor}
-														hasFirma={p.hasFirma}
-														compact
-													/>
-												</div>
-											) : null}
+											<div
+												className={styles.mobileFirma}
+												onClick={(e) => e.stopPropagation()}
+											>
+												<PersonalFirmaThumb
+													id={p.Valor}
+													hasFirma={p.hasFirma}
+													revision={firmaRevision}
+													compact
+													onEdit={() => onEditFirma(p)}
+												/>
+											</div>
 											<div className={styles.mobileItemTags}>
 												<span className={styles.mobileTag}>
 													<span className={styles.mobileTagLabel}>ID</span> {p.Valor}
