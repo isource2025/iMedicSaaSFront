@@ -16,6 +16,7 @@ import PersonalRowMenu, {
 import PersonalActionModals, {
 	type PersonalExtraKind,
 } from '@/app/components/Personal/PersonalActionModals';
+import { invalidateFirmaThumbCache } from '@/app/components/Personal/PersonalFirmaThumb';
 import SyncFisicoInforme from '@/app/components/Personal/SyncFisicoInforme';
 import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
@@ -79,6 +80,7 @@ export default function PersonalPage() {
 	const [exportOpen, setExportOpen] = useState(false);
 	const [exportFields, setExportFields] = useState<ExportFieldOption[]>([]);
 	const [exporting, setExporting] = useState(false);
+	const [firmaRevision, setFirmaRevision] = useState(0);
 
 	useEffect(() => {
 		if (!initialized) initialize();
@@ -276,6 +278,8 @@ export default function PersonalPage() {
 					totalPages={totalPages}
 					onPageChange={handlePageChange}
 					onEdit={openEditModal}
+					onEditFirma={(p) => setExtraModal({ kind: 'firma', personal: p })}
+					firmaRevision={firmaRevision}
 					onView={openViewModal}
 					onDelete={openDeleteModal}
 					onOpenMenu={handleOpenMenu}
@@ -296,7 +300,13 @@ export default function PersonalPage() {
 					kind={extraModal?.kind ?? null}
 					personal={extraModal?.personal ?? null}
 					onClose={() => setExtraModal(null)}
-					onSaved={refreshList}
+					onSaved={async () => {
+						if (extraModal?.kind === 'firma' && extraModal.personal) {
+							invalidateFirmaThumbCache(extraModal.personal.Valor);
+							setFirmaRevision((n) => n + 1);
+						}
+						await refreshList();
+					}}
 				/>
 
 				<Modal
