@@ -504,12 +504,16 @@ export type PiePaginaPdf = { y: number; x1: number } | null;
 
 export type PdfCapturado = { bytes: ArrayBuffer; pie: PiePaginaPdf };
 
+export type PdfPreviewResult = { blob: Blob; fileName: string };
+
 let capturados: PdfCapturado[] | null = null;
+let previewSink: ((blob: Blob, fileName: string) => void) | null = null;
 let piePendiente: PiePaginaPdf = null;
 
-/** Cierre común de los módulos: descarga el archivo, o lo junta si corre dentro de `capturarPDFs`. */
+/** Cierre común de los módulos: descarga, junta (`capturarPDFs`) o previsualiza (`previsualizarPDF`). */
 export function entregarPDF(doc: jsPDF, fileName: string) {
 	if (capturados) capturados.push({ bytes: doc.output('arraybuffer'), pie: piePendiente });
+	else if (previewSink) previewSink(doc.output('blob'), fileName);
 	else doc.save(fileName);
 	piePendiente = null;
 }
@@ -529,6 +533,26 @@ export async function capturarPDFs(generar: () => Promise<unknown>): Promise<Pdf
 		return propios;
 	} finally {
 		capturados = previos;
+	}
+}
+
+/**
+ * Corre `generar` y captura el PDF que entregue el módulo (blob + nombre) para previsualizar,
+ * en lugar de descargarlo. Si no se entregó ninguno, devuelve null.
+ */
+export async function previsualizarPDF(
+	generar: () => Promise<unknown>,
+): Promise<PdfPreviewResult | null> {
+	let resultado: PdfPreviewResult | null = null;
+	const prev = previewSink;
+	previewSink = (blob, fileName) => {
+		resultado = { blob, fileName };
+	};
+	try {
+		await generar();
+		return resultado;
+	} finally {
+		previewSink = prev;
 	}
 }
 

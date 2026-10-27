@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { IoChevronDown, IoDocumentTextOutline } from 'react-icons/io5';
+import { usePdfPreviewOptional } from './PdfPreviewContext';
 import styles from './ExportButton.module.css';
 
 export type ExportOption = 'pdf' | 'excel' | 'csv';
@@ -9,7 +10,7 @@ export type ExportOption = 'pdf' | 'excel' | 'csv';
 interface ExportButtonProps {
   data: any[];
   fileName?: string;
-  onExport?: (option: ExportOption, data: any[]) => void;
+  onExport?: (option: ExportOption, data: any[]) => void | Promise<void>;
   disabled?: boolean;
   options?: ExportOption[];
 }
@@ -23,6 +24,8 @@ export default function ExportButton({
 }: ExportButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pdfPreview = usePdfPreviewOptional();
+  const singleOption = options.length === 1 ? options[0] : null;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,11 +43,14 @@ export default function ExportButton({
     };
   }, [isOpen]);
 
-  const handleExport = (option: ExportOption) => {
+  const handleExport = async (option: ExportOption) => {
     setIsOpen(false);
-    if (onExport) {
-      onExport(option, data);
+    if (!onExport) return;
+    if (option === 'pdf' && pdfPreview) {
+      await pdfPreview.run(() => Promise.resolve(onExport(option, data)));
+      return;
     }
+    await onExport(option, data);
   };
 
   const getOptionLabel = (option: ExportOption): string => {
@@ -64,29 +70,38 @@ export default function ExportButton({
     <div className={styles.container} ref={dropdownRef}>
       <button
         className={`${styles.btn} ${styles.btnSecondary}`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (singleOption) {
+            void handleExport(singleOption);
+            return;
+          }
+          setIsOpen(!isOpen);
+        }}
         disabled={disabled || data.length === 0}
         type="button"
+        title={fileName}
       >
         <IoDocumentTextOutline size={16} />
         <span>Exportar</span>
-        <IoChevronDown size={14} className={isOpen ? styles.iconRotated : ''} />
+        {!singleOption ? (
+          <IoChevronDown size={14} className={isOpen ? styles.iconRotated : ''} />
+        ) : null}
       </button>
 
-      {isOpen && (
+      {!singleOption && isOpen ? (
         <div className={styles.dropdown}>
           {options.map((option) => (
             <button
               key={option}
               className={styles.dropdownItem}
-              onClick={() => handleExport(option)}
+              onClick={() => void handleExport(option)}
               type="button"
             >
               {getOptionLabel(option)}
             </button>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

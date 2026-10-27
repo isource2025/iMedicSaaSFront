@@ -24,6 +24,7 @@ import NursingReportModal from '../nursing/NursingReportModal';
 import LabResultsModal from './laboratorios/LabResultsModal';
 import { bedToHeaderSnapshot } from '../../utils/bedHeader';
 import AdmissionVisitExportModal from '../admission/AdmissionVisitExportModal';
+import { PdfPreviewProvider } from './shared/PdfPreviewContext';
 
 /**
  * El resto de las secciones se renderiza de a una (según `activeSection`), así
@@ -77,6 +78,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	useMarcarIndicacionesVistasAlSalir(numeroVisita);
 
 	return (
+		<PdfPreviewProvider>
 		<div className={styles.root}>
 			<BedSectionsPrefetcher numeroVisita={bed?.NumeroVisita || null} />
 			{/* ====== HEADER (arriba de todo) ====== */}
@@ -379,6 +381,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 				<div className={styles.backdrop} onClick={() => setDrawerOpen(false)} />
 			)}
 		</div>
+		</PdfPreviewProvider>
 	);
 };
 
