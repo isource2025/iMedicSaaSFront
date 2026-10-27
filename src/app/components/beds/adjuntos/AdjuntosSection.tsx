@@ -9,7 +9,7 @@ import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFAdjuntos } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
@@ -17,7 +17,6 @@ import styles from './AdjuntosSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import { useBedDetail } from '../contexts/BedDetailContext';
-import { formatFechaHoraWall } from '@/app/utils/fechaHoraWall';
 
 function etiquetaUsuarioActual(): string {
   const u = authService.getCurrentUser() as Record<string, unknown> | null;
@@ -193,29 +192,11 @@ export default function AdjuntosSection({
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const parts = adjuntosVisibles.map((a, idx) => ({
-        title: `Adjunto ${idx + 1}`,
-        fields: [
-          { label: 'Nombre', value: a.NombreArchivo || '—' },
-          { label: 'Tipo', value: a.TipoImagenNombre || a.TipoArchivo || a.TipoImagen || '—' },
-          {
-            label: 'Fecha',
-            value: a.FechaCarga ? formatFechaHoraWall(a.FechaCarga) || '—' : '—',
-          },
-        ],
-        profesional: {
-          nombre: (a as any).NombreUsuario || (a as any).CargadoPorNombre || 'OPERADOR',
-        },
-      }));
-
-      await exportToPDF({
-        title: 'Archivos Adjuntos',
-        subtitle: `Visita: ${numeroVisita}`,
-        parts,
+      await generarPDFAdjuntos({
+        items: adjuntosVisibles,
         fileName: `adjuntos_${numeroVisita}.pdf`,
-        orientation: 'portrait',
         empresaInfo,
-        patientInfo: {
+        patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,
           numeroDocumento: documentoPaciente,

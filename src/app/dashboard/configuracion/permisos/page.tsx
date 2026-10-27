@@ -7,6 +7,7 @@ import {
 	type EventoAuditoriaRol,
 	type MatrizRoles,
 	type ModuloCatalogo,
+	type RolBase,
 	type RolMatriz,
 	type SubmoduloCatalogo,
 	type UsuarioDeRol,
@@ -19,8 +20,17 @@ type Pestania = 'permisos' | 'usuarios' | 'historial';
 interface Borrador {
 	nombre: string;
 	descripcion: string;
+	rolBase: RolBase;
 	permisos: Set<string>;
 }
+
+const OPCIONES_ROL_BASE: { valor: RolBase; rotulo: string }[] = [
+	{ valor: 'NINGUNO', rotulo: 'Ninguno (sólo los permisos marcados)' },
+	{ valor: 'MEDICO', rotulo: 'Médico' },
+	{ valor: 'ENFERMERO', rotulo: 'Enfermero' },
+	{ valor: 'ADMINISTRATIVO', rotulo: 'Administrativo' },
+	{ valor: 'CARGA_HC', rotulo: 'Carga de adjuntos' },
+];
 
 const ROTULO_ACCION: Record<string, string> = {
 	VER: 'Ver',
@@ -45,6 +55,7 @@ function borradorDe(rol: RolMatriz | null): Borrador {
 	return {
 		nombre: rol?.nombre ?? '',
 		descripcion: rol?.descripcion ?? '',
+		rolBase: rol?.rolBase ?? 'NINGUNO',
 		permisos: new Set(rol?.permisos ?? []),
 	};
 }
@@ -94,7 +105,12 @@ export default function MatrizPermisosPage() {
 	const [historial, setHistorial] = useState<EventoAuditoriaRol[] | null>(null);
 
 	const [modalNuevo, setModalNuevo] = useState(false);
-	const [nuevo, setNuevo] = useState({ nombre: '', descripcion: '', origen: '' });
+	const [nuevo, setNuevo] = useState<{ nombre: string; descripcion: string; origen: string; rolBase: RolBase }>({
+		nombre: '',
+		descripcion: '',
+		origen: '',
+		rolBase: 'NINGUNO',
+	});
 
 	const roles = useMemo(
 		() => (data ? [...data.sistema, ...data.personalizados] : []),
@@ -113,6 +129,7 @@ export default function MatrizPermisosPage() {
 		return (
 			borrador.nombre.trim() !== seleccionado.nombre ||
 			borrador.descripcion.trim() !== (seleccionado.descripcion || '') ||
+			borrador.rolBase !== (seleccionado.rolBase ?? 'NINGUNO') ||
 			!mismosPermisos(borrador.permisos, seleccionado.permisos)
 		);
 	}, [borrador, seleccionado]);
@@ -233,6 +250,7 @@ export default function MatrizPermisosPage() {
 			const r = await rolesService.actualizarRol(seleccionado.idRol, {
 				nombre: borrador.nombre,
 				descripcion: borrador.descripcion,
+				rolBase: borrador.rolBase,
 				permisos: Array.from(borrador.permisos),
 			});
 			await cargar(seleccionado.idRol);
@@ -270,7 +288,12 @@ export default function MatrizPermisosPage() {
 	const abrirNuevo = (origen = '') => {
 		if (sucio && !window.confirm('Hay cambios sin guardar. ¿Descartarlos?')) return;
 		const base = roles.find((r) => String(r.idRol) === origen);
-		setNuevo({ nombre: base ? `${base.nombre} (copia)` : '', descripcion: base?.descripcion ?? '', origen });
+		setNuevo({
+			nombre: base ? `${base.nombre} (copia)` : '',
+			descripcion: base?.descripcion ?? '',
+			origen,
+			rolBase: base?.rolBase ?? 'NINGUNO',
+		});
 		setModalNuevo(true);
 	};
 
@@ -282,12 +305,20 @@ export default function MatrizPermisosPage() {
 				? await rolesService.duplicarRol(Number(nuevo.origen), {
 						nombre: nuevo.nombre,
 						descripcion: nuevo.descripcion,
+						rolBase: nuevo.rolBase,
 					})
-				: await rolesService.crearRol({ nombre: nuevo.nombre, descripcion: nuevo.descripcion, permisos: [] });
+				: await rolesService.crearRol({
+						nombre: nuevo.nombre,
+						descripcion: nuevo.descripcion,
+						rolBase: nuevo.rolBase,
+						permisos: [],
+					});
 			setModalNuevo(false);
 			setPestania('permisos');
 			await cargar(creado.idRol);
-			setAviso(`Rol "${creado.nombre}" creado. Marcá los permisos que corresponda y guardá.`);
+			setAviso(
+				`Rol "${creado.nombre}" creado. Agregá o quitá permisos y guardá: queda disponible para asignar en Personal.`,
+			);
 		} catch (e) {
 			setError(mensajeDeError(e, 'No se pudo crear el rol'));
 		} finally {
@@ -336,21 +367,28 @@ export default function MatrizPermisosPage() {
 		);
 	}
 
-	const puedeCrearRoles = puedeCrear && !!data?.soportaPersonalizados;
+	const puedeCrearRoles =
+		puedeCrear && !!data?.soportaPersonalizados && !data?.plantillasCongeladas;
 
 	return (
 		<div className={styles.page}>
 			<header className={styles.header}>
 				<h1>Matriz de permisos</h1>
 				<p>
-					Roles de la clínica y los permisos que otorga cada uno. Los roles del sistema son de sólo lectura:
-					duplicalos para armar uno a medida.
+					Roles de la clínica y los permisos que otorga cada uno. El ajuste fino por persona se hace en
+					Personal (acceso y permisos individuales).
 				</p>
 			</header>
 
 			{error ? <div className={`${styles.banner} ${styles.bannerError}`}>{error}</div> : null}
 			{aviso ? <div className={`${styles.banner} ${styles.bannerOk}`}>{aviso}</div> : null}
-			{data && !data.soportaPersonalizados ? (
+			{data?.plantillasCongeladas ? (
+				<div className={`${styles.banner} ${styles.bannerInfo}`}>
+					Plantillas congeladas: podés consultar roles del sistema y los personalizados ya creados, pero no
+					crear ni editar plantillas. Para dar o quitar permisos a alguien, usá Personal → permisos
+					individuales.
+				</div>
+			) : data && !data.soportaPersonalizados ? (
 				<div className={`${styles.banner} ${styles.bannerInfo}`}>
 					La creación de roles personalizados todavía no está habilitada para esta clínica. Podés consultar los
 					roles del sistema; para activarla, contactá a soporte.
@@ -430,6 +468,23 @@ export default function MatrizPermisosPage() {
 											onChange={(e) => setBorrador((b) => ({ ...b, descripcion: e.target.value }))}
 										/>
 									</label>
+									{seleccionado.esSistema ? null : (
+										<label className={styles.field} title="Comportamiento del rol estándar que hereda (p. ej. pedir matrícula, agenda propia)">
+											Se comporta como
+											<select
+												className={styles.select}
+												value={borrador.rolBase}
+												disabled={!editable}
+												onChange={(e) => setBorrador((b) => ({ ...b, rolBase: e.target.value as RolBase }))}
+											>
+												{OPCIONES_ROL_BASE.map((o) => (
+													<option key={o.valor} value={o.valor}>
+														{o.rotulo}
+													</option>
+												))}
+											</select>
+										</label>
+									)}
 								</div>
 								<div className={styles.actions}>
 									<button
@@ -455,7 +510,13 @@ export default function MatrizPermisosPage() {
 
 							{seleccionado.esSistema ? (
 								<div className={`${styles.banner} ${styles.bannerInfo}`}>
-									Rol del sistema: sólo lectura. Usá «Duplicar» para crear una versión editable.
+									{data?.plantillasCongeladas
+										? 'Rol del sistema: sólo lectura. Para ajustar permisos de una persona, usá Personal.'
+										: 'Rol del sistema: sólo lectura. Usá «Duplicar» para crear una versión editable.'}
+								</div>
+							) : data?.plantillasCongeladas ? (
+								<div className={`${styles.banner} ${styles.bannerInfo}`}>
+									Plantilla congelada (sólo consulta). Los permisos individuales se editan en Personal.
 								</div>
 							) : !puedeEditar ? (
 								<div className={`${styles.banner} ${styles.bannerInfo}`}>
@@ -679,7 +740,11 @@ export default function MatrizPermisosPage() {
 							<select
 								className={styles.select}
 								value={nuevo.origen}
-								onChange={(e) => setNuevo((n) => ({ ...n, origen: e.target.value }))}
+								onChange={(e) => {
+									const origen = e.target.value;
+									const base = roles.find((r) => String(r.idRol) === origen);
+									setNuevo((n) => ({ ...n, origen, rolBase: base?.rolBase ?? 'NINGUNO' }));
+								}}
 							>
 								<option value="">Rol vacío (sin permisos)</option>
 								{roles
@@ -689,6 +754,20 @@ export default function MatrizPermisosPage() {
 											Copia de {r.nombre}
 										</option>
 									))}
+							</select>
+						</label>
+						<label className={styles.field}>
+							Se comporta como
+							<select
+								className={styles.select}
+								value={nuevo.rolBase}
+								onChange={(e) => setNuevo((n) => ({ ...n, rolBase: e.target.value as RolBase }))}
+							>
+								{OPCIONES_ROL_BASE.map((o) => (
+									<option key={o.valor} value={o.valor}>
+										{o.rotulo}
+									</option>
+								))}
 							</select>
 						</label>
 						<div className={styles.modalActions}>

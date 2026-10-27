@@ -28,7 +28,7 @@ const PERIODOS_ALCANCE: Record<Periodo, string> = {
 	'30': 'Último mes',
 	all: 'Toda la internación',
 };
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFBalanceHidrico } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import NuevoBalanceHidricoModal from './NuevoBalanceHidricoModal';
@@ -193,54 +193,11 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const handleExport = async (option: ExportOption) => {
 		if (option !== 'pdf') return;
 		const empresaInfo = await obtenerInfoEmpresa();
-		const ml = (v: number | null | undefined) => formatearMl(v);
-		const parts = filtrados.map((r, idx) => ({
-			title: `${formatearFechaCorta(r.Fecha)} ${formatearHora(r.Hora)} · ${r.Sector || '—'}  (registro ${idx + 1})`,
-			fields: [
-				{ label: 'Parenteral · Medicación', value: r.Medicacion || '—' },
-				{ label: 'Parenteral · Vía', value: r.Via || '—' },
-				{ label: 'Parenteral · Ingreso', value: ml(r.Ing_Par_Ingreso) },
-				{ label: 'Parenteral · Paso', value: ml(r.Ing_Par_Paso) },
-				{ label: 'Alim. enteral · Alimento', value: r.Ing_Aent_Alimento || '—' },
-				{ label: 'Alim. enteral · Ingreso', value: ml(r.Ing_Aent_Ingreso) },
-				{ label: 'Alim. enteral · Paso', value: ml(r.Ing_Aent_Paso) },
-				{ label: 'Alim. parenteral · Solución', value: r.Ing_Apar_Solucion || '—' },
-				{ label: 'Alim. parenteral · Ingreso', value: ml(r.Ing_Apar_Ingreso) },
-				{ label: 'Alim. parenteral · Paso', value: ml(r.Ing_Apar_paso) },
-				{ label: 'Transfusión · Ingreso', value: ml(r.Ing_Tranf_Ingreso) },
-				{ label: 'Transfusión · Paso', value: ml(r.Ing_Tranf_paso) },
-				{ label: 'Egreso · Diuresis', value: ml(r.Egr_Diuresis) },
-				{ label: 'Egreso · Catarsis', value: ml(r.Egr_Catarsis) },
-				{ label: 'Egreso · SNG / Vómito', value: ml(r.Egr_SNG_Vomito) },
-				{ label: 'Egreso · Drenajes', value: ml(r.Egr_Drenajes) },
-				{ label: 'Total ingresos', value: ml(r.TotalIngresos) },
-				{ label: 'Total egresos', value: ml(r.TotalEgresos) },
-				{ label: 'Balance', value: ml(r.Total) },
-			],
-			profesional: {
-				nombre: nombreProfesional(r.ProfesionalApellido, r.ProfesionalNombres),
-				matricula: r.Matricula ?? undefined,
-				especialidad: 'Enfermería',
-			},
-		}));
-		parts.push({
-			title: 'TOTALES',
-			fields: [
-				{ label: 'Ingresos', value: `${totales.ingresos} ml` },
-				{ label: 'Egresos', value: `${totales.egresos} ml` },
-				{ label: 'Total balance', value: `${signo(totales.balance)}${totales.balance} ml` },
-			],
-			profesional: { nombre: '', matricula: undefined, especialidad: '' },
-		});
-
-		await exportToPDF({
-			title: 'Balance Hídrico',
-			subtitle: soloDia ? `Fecha: ${fechaISO}` : alcance,
-			parts,
+		await generarPDFBalanceHidrico({
+			items: filtrados,
 			fileName: `balance_hidrico_${soloDia ? fechaISO : periodo === 'all' ? 'internacion' : `${periodo}d_${fechaISO}`}.pdf`,
-			orientation: 'portrait',
 			empresaInfo,
-			patientInfo: {
+			patient: {
 				numeroVisita: numeroVisita || undefined,
 				nombre: patientName,
 				numeroDocumento: documentoPaciente,

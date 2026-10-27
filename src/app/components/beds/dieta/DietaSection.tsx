@@ -20,7 +20,7 @@ import EmptyState from '../shared/EmptyState';
 import ConfirmationModal from '../shared/ConfirmationModal';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFDieta } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
@@ -178,31 +178,11 @@ const DietaSection: React.FC<Props> = ({
 	const handleExport = async (option: ExportOption) => {
 		if (option !== 'pdf') return;
 		const empresaInfo = await obtenerInfoEmpresa();
-		const parts = filtrados.map((d, idx) => ({
-			title: `Dieta ${idx + 1}`,
-			fields: [
-				{ label: 'Fecha', value: formatearFecha(fechaEfectiva(d)) },
-				{ label: 'Hora', value: formatearHora(horaEfectiva(d)) },
-				{ label: 'Tipo de dieta', value: d.DescripcionDieta || '—' },
-				{ label: 'Estado', value: estaSuministrada(d) ? 'Suministrada' : 'Indicada' },
-				{ label: 'Nro. indicación', value: d.NroIndicacion ? String(d.NroIndicacion) : '—' },
-				{ label: 'Observaciones', value: d.Observaciones || '—' },
-			],
-			profesional: {
-				nombre: profesional(d),
-				matricula: d.Matricula ?? undefined,
-				especialidad: 'Enfermería',
-			},
-		}));
-
-		await exportToPDF({
-			title: 'Dietas',
-			subtitle: soloDia ? `Fecha: ${fechaISO}` : alcance,
-			parts,
+		await generarPDFDieta({
+			items: filtrados,
 			fileName: `dietas_${soloDia ? fechaISO : periodo === 'all' ? 'internacion' : `${periodo}d_${fechaISO}`}.pdf`,
-			orientation: 'portrait',
 			empresaInfo,
-			patientInfo: {
+			patient: {
 				numeroVisita: numeroVisita || undefined,
 				nombre: patientName,
 				numeroDocumento: documentoPaciente,

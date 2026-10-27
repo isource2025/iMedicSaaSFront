@@ -18,6 +18,8 @@ export interface EvolucionEnfermeria {
   OperadorApellido: string | null;
   OperadorNombres: string | null;
   Matricula?: number | string | null;
+  /** imPersonal.Valor resuelto de `Profesional` (para buscar la firma). */
+  ValorPersonalProfesional?: number | null;
 }
 
 export interface EvolucionEnfermeriaResponse {

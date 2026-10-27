@@ -78,11 +78,6 @@
   color: #0f172a;
 }
 
-.panelSubtitle {
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
 .toolbar {
   display: flex;
   flex-wrap: nowrap;
@@ -126,12 +121,14 @@
   color: #fff;
 }
 
+/* Misma escala que .filterGroup (Tipo de paciente): label + control ~30px */
 .inlineField,
 .inlineFieldWide {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
+  align-self: flex-end;
 }
 
 .inlineField {
@@ -139,7 +136,9 @@
 }
 
 .inlineFieldWide {
-  flex: 1 1 280px;
+  flex: 0 1 320px;
+  width: 320px;
+  max-width: 100%;
 }
 
 .inlineField span,
@@ -149,34 +148,60 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #64748b;
+  line-height: 1.1;
+  margin: 0;
 }
 
 .inlineField input,
 .inlineFieldWide input {
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 7px 9px;
-  font-size: 0.82rem;
-  min-height: 34px;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  min-height: 30px;
+  height: 30px;
+  box-sizing: border-box;
   background: #fff;
 }
 
 .inlineField input:focus,
 .inlineFieldWide input:focus {
   outline: none;
-  border-color: #00b5e2;
-  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
+  border-color: #94a3b8;
+  box-shadow: none;
 }
 
-.periodoInline {
+.inlineField input:focus-visible,
+.inlineFieldWide input:focus-visible {
+  outline: 2px solid #00b5e2;
+  outline-offset: 1px;
+}
+
+.filterGroups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  flex-shrink: 0;
+}
+
+.filterGroup {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  flex-shrink: 0;
-  min-width: 220px;
+  min-width: 0;
+  padding: 0 10px 0 0;
+  border-right: 1px solid #e2e8f0;
 }
 
-.periodoInlineLabel {
+.filterGroup:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.filterGroupLabel {
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -184,13 +209,53 @@
   color: #64748b;
 }
 
-.periodoChips {
+.periodDateRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.periodDateField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.periodDateLabel {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.periodDateInput {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background: #fff;
+  min-height: 30px;
+  max-width: 138px;
+  font-family: inherit;
+}
+
+.periodDateInput:focus {
+  outline: none;
+  border-color: #00b5e2;
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
+}
+
+.filterChipRow {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-.periodoBtn {
+.filterChipBtn {
   border: 1px solid #cbd5e1;
   border-radius: 999px;
   padding: 5px 10px;
@@ -200,29 +265,77 @@
   background: #fff;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 
-.periodoBtn:hover {
+.filterChipBtn:hover {
   background: #f8fafc;
   border-color: #94a3b8;
 }
 
-.periodoBtn:focus-visible {
+.filterChipBtn:focus-visible {
   outline: 2px solid #00b5e2;
   outline-offset: 1px;
 }
 
-.periodoBtnActive {
+.filterChipBtnActive {
   border-color: #0083a9;
   background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
   color: #006b85;
 }
 
-.periodHint {
+/* Misma escala visual que .filterGroup (Tipo de paciente): label chico + control ~chip */
+.coberturaField {
+  flex: 0 1 220px;
+  min-width: 180px;
+  max-width: 260px;
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.coberturaField > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   margin: 0;
-  font-size: 0.73rem;
+  width: 100%;
+}
+
+.coberturaField label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: #64748b;
-  line-height: 1.3;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.coberturaField [role='combobox'] {
+  min-height: 30px;
+  height: 30px;
+  padding: 4px 28px 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background: #fff;
+  box-shadow: none;
+}
+
+.coberturaField [role='combobox']:hover,
+.coberturaField [role='combobox']:focus {
+  border-color: #94a3b8;
+  box-shadow: none;
+  outline: none;
+}
+
+.coberturaField [role='combobox']:focus-visible {
+  outline: 2px solid #00b5e2;
+  outline-offset: 1px;
 }
 
 .toolbarActions {
@@ -262,39 +375,26 @@
   background: #e2e8f0;
 }
 
-.searchPanelFooter {
-  margin-top: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.filterChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.filterChip,
-.filterChipMuted {
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.7rem;
+.actionExport {
+  border: 1px solid #00b5e2;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.79rem;
   font-weight: 700;
+  cursor: pointer;
+  min-height: 34px;
+  background: #fff;
+  color: #0083a9;
+  transition: background 0.15s, color 0.15s;
 }
 
-.filterChip {
-  background: #e0f2fe;
-  color: #0c4a6e;
-  border: 1px solid #bae6fd;
+.actionExport:hover:not(:disabled) {
+  background: #e0f7fa;
 }
 
-.filterChipMuted {
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px dashed #cbd5e1;
+.actionExport:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .actionPrimary:disabled,
@@ -340,6 +440,53 @@
   min-height: 140px;
 }
 
+.resultsTableShell {
+  overflow: hidden;
+}
+
+.resultsTableHead {
+  position: relative;
+  z-index: 2;
+}
+
+.resultsTableBody {
+  position: relative;
+  min-height: 120px;
+}
+
+.resultsTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.colIa {
+  width: 4%;
+}
+
+.colVisita {
+  width: 10%;
+}
+
+.colPaciente {
+  width: 18%;
+}
+
+.colCobertura {
+  width: 14%;
+}
+
+.colSector {
+  width: 18%;
+}
+
+.colFechas {
+  width: 12%;
+}
+
+.colAcciones {
+  width: 24%;
+}
+
 .resultsDimmed {
   opacity: 0.45;
   pointer-events: none;
@@ -356,8 +503,25 @@
   justify-content: center;
   gap: 10px;
   background: rgba(248, 250, 252, 0.72);
-  border-radius: 12px;
+  border-radius: 0 0 12px 12px;
   backdrop-filter: blur(1px);
+}
+
+.resultsLoaderCards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 120px;
+  padding: 20px;
+  background: rgba(248, 250, 252, 0.72);
+  border-radius: 12px;
+}
+
+.patientFoldersWrap {
+  position: relative;
+  min-height: 140px;
 }
 
 .resultsLoaderText {
@@ -427,11 +591,32 @@
   min-width: 110px;
 }
 
+.thNowrap {
+  white-space: nowrap;
+}
+
+.thStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+
+.thSub {
+  font-size: 0.75em;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
 .diagCell {
+  display: block;
   max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.78rem;
+  color: #334155;
+  font-weight: 500;
 }
 
 .cellStack {
@@ -440,6 +625,14 @@
   gap: 2px;
   min-width: 0;
   line-height: 1.25;
+}
+
+.cellSectorHab {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  min-width: 0;
 }
 
 .cellPrimary {
@@ -697,28 +890,52 @@
     flex: 1 1 100%;
   }
 
-  .periodoInline {
+  .filterGroups {
     width: 100%;
-    min-width: 0;
+    gap: 10px;
+    align-items: flex-start;
   }
 
-  .periodoChips {
+  /* Fechas en fila propia; Movimiento + Tipo de paciente a la misma altura */
+  .filterGroup {
+    flex: 1 1 calc(50% - 5px);
+    border-right: none;
+    padding-right: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .filterGroup:first-child {
+    flex: 1 1 100%;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .filterGroup:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .filterChipRow {
     width: 100%;
   }
 
-  .periodoBtn {
+  .filterChipBtn {
     flex: 1 1 auto;
     text-align: center;
+  }
+
+  .coberturaField {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    flex: 1 1 100%;
   }
 
   .toolbarActions {
     margin-left: 0;
     width: 100%;
     justify-content: flex-end;
-  }
-
-  .searchPanelFooter {
-    align-items: flex-start;
   }
 
   .resultsHeader {

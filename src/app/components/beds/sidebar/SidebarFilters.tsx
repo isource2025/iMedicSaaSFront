@@ -177,7 +177,8 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	 * Gestión Médica: se muestra con VER o CREAR en HC / evoluciones / indicaciones.
 	 * Administrativo tiene lectura clínica y debe ver el grupo; las acciones de
 	 * escritura siguen gated dentro de cada sección. Enfermero conserva solo
-	 * lectura clínica pero no el menú médico (sigue usando Gestión Enfermería).
+	 * lectura clínica pero no el menú médico (sigue usando Gestión Enfermería);
+	 * Evoluciones e Interconsultas se exponen ahí (mismas secciones que en médica).
 	 *
 	 * Gestión Enfermería: se muestra con VER o CREAR. El médico tiene lectura
 	 * de enfermería en la matriz; antes el grupo exigía CREAR y quedaba oculto.
@@ -199,6 +200,9 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 		  puedeSubmodulo('INTERNACION', 'DIETA') ||
 		  puedeSubmodulo('INTERNACION', 'BALANCE_HIDRICO') ||
 		  puedeSubmodulo('INTERNACION', 'INSUMOS');
+
+	/** Sin menú médico: Evoluciones / Interconsultas van en Gestión Enfermería. */
+	const mostrarClinicaEnEnfermeria = !puedeGestionMedica;
 
 	const puedeCargaDocumental =
 		loaded &&
@@ -387,6 +391,24 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 							onClick={() => clickItem('evolucion-enfermeria')}
 						>
 							Evolución de Enfermería
+						</button>)}
+
+						{mostrarClinicaEnEnfermeria && puedeVerSeccion('evoluciones') && (
+						<button
+							className={`${styles.navButton} ${isActive('evoluciones') ? styles.active : ''
+								}`}
+							onClick={() => clickItem('evoluciones')}
+						>
+							Evoluciones
+						</button>)}
+
+						{mostrarClinicaEnEnfermeria && puedeVerSeccion('interconsulta') && (
+						<button
+							className={`${styles.navButton} ${isActive('interconsulta') ? styles.active : ''
+								}`}
+							onClick={() => clickItem('interconsulta')}
+						>
+							Interconsultas
 						</button>)}
 
 						{puedeVerSeccion('insumos') && (

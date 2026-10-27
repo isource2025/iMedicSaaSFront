@@ -13,6 +13,10 @@ import AdjuntoFileViewer, {
 } from '@/app/components/beds/adjuntos/AdjuntoFileViewer';
 import { useModalLayer } from '@/app/hooks/useModalLayer';
 import { formatIMC } from '@/app/utils/antropometria';
+import { patientService } from '@/app/services/patientService';
+import type { Patient } from '@/app/types/PatientInterface';
+import Modal from '@/app/components/UI/Modal';
+import { PatientFormBase } from '@/app/components/Patients/PatientFormBase';
 import Loader from '../Loader/Loader';
 import styles from './DetalleTurnoModal.module.css';
 
@@ -56,6 +60,40 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 	const [error, setError] = useState<string | null>(null);
 	const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
 	const [viewerLoading, setViewerLoading] = useState(false);
+	const [ficha, setFicha] = useState<Patient | null>(null);
+	const [editandoPaciente, setEditandoPaciente] = useState(false);
+	const idPaciente = Number(data?.paciente?.idPaciente) || 0;
+
+	useEffect(() => {
+		if (!idPaciente) {
+			setFicha(null);
+			return;
+		}
+		let cancel = false;
+		patientService
+			.getPatientById(idPaciente)
+			.then((p) => {
+				if (!cancel) setFicha(p);
+			})
+			.catch(() => {
+				if (!cancel) setFicha(null);
+			});
+		return () => {
+			cancel = true;
+		};
+	}, [idPaciente]);
+
+	const guardarPaciente = async (datos: Record<string, unknown>) => {
+		try {
+			await patientService.updatePatient(idPaciente, datos);
+			setFicha(await patientService.getPatientById(idPaciente));
+			return true;
+		} catch (e: unknown) {
+			const err = e as { message?: string };
+			setError(err?.message || 'No se pudieron guardar los datos del paciente');
+			return false;
+		}
+	};
 
 	useEffect(() => {
 		if (!open || !idTurno) {
@@ -161,24 +199,82 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 					{data && !loading ? (
 						<>
 							<section className={styles.section}>
-								<h3 className={styles.sectionTitle}>Paciente y turno</h3>
+								<h3 className={`${styles.sectionTitle} ${styles.sectionTitleConAccion}`}>
+									Datos del paciente
+									{idPaciente ? (
+										<button
+											type='button'
+											className={styles.linkEditar}
+											onClick={() => setEditandoPaciente(true)}
+										>
+											Editar datos
+										</button>
+									) : null}
+								</h3>
 								<div className={styles.grid}>
 									<div className={styles.field}>
 										<span className={styles.lbl}>Paciente</span>
-										<span className={styles.val}>{val(p?.nombre)}</span>
+										<span className={styles.val}>{val(ficha?.ApellidoyNombre || p?.nombre)}</span>
 									</div>
 									<div className={styles.field}>
 										<span className={styles.lbl}>DNI</span>
-										<span className={styles.val}>{val(p?.numeroDocumento)}</span>
+										<span className={styles.val}>
+											{val(ficha?.NumeroDocumento || p?.numeroDocumento)}
+										</span>
 									</div>
 									<div className={styles.field}>
 										<span className={styles.lbl}>Historia clínica</span>
-										<span className={styles.val}>{val(p?.numeroHC)}</span>
+										<span className={styles.val}>{val(ficha?.NumeroHC || p?.numeroHC)}</span>
+									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>Nacimiento / edad</span>
+										<span className={styles.val}>
+											{p?.fechaNacimiento ? fmtFecha(p.fechaNacimiento) : '—'}
+											{p?.edad != null ? ` · ${p.edad} años` : ''}
+										</span>
+									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>Sexo</span>
+										<span className={styles.val}>{val(p?.sexo)}</span>
 									</div>
 									<div className={styles.field}>
 										<span className={styles.lbl}>Cobertura</span>
-										<span className={styles.val}>{val(p?.cobertura)}</span>
+										<span className={styles.val}>
+											{val(ficha?.CoberturaDescripcion || p?.cobertura)}
+										</span>
 									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>Nº afiliado</span>
+										<span className={styles.val}>{val(ficha?.nAfiliado)}</span>
+									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>CUIT / CUIL</span>
+										<span className={styles.val}>
+											{ficha?.CUIT && String(ficha.CUIT) !== '0' ? ficha.CUIT : '—'}
+										</span>
+									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>Teléfono</span>
+										<span className={styles.val}>{val(ficha?.TelefonoParticular)}</span>
+									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>Celular</span>
+										<span className={styles.val}>{val(ficha?.TelefonoCelular)}</span>
+									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>Correo</span>
+										<span className={styles.val}>{val(ficha?.Mail)}</span>
+									</div>
+									<div className={`${styles.field} ${styles.fieldWide}`}>
+										<span className={styles.lbl}>Domicilio</span>
+										<span className={styles.val}>{val(ficha?.Domicilio)}</span>
+									</div>
+								</div>
+							</section>
+
+							<section className={styles.section}>
+								<h3 className={styles.sectionTitle}>Turno</h3>
+								<div className={styles.grid}>
 									<div className={styles.field}>
 										<span className={styles.lbl}>Sector</span>
 										<span className={styles.val}>{val(t?.sector)}</span>
@@ -559,6 +655,29 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 				loading={viewerLoading}
 				onClose={closeViewer}
 			/>
+
+			{editandoPaciente ? (
+				<Modal
+					isOpen
+					onClose={() => setEditandoPaciente(false)}
+					title='Editar Paciente'
+					size='full'
+					priority='high'
+				>
+					{ficha ? (
+						<PatientFormBase
+							initialData={ficha}
+							isEditing
+							onSubmit={guardarPaciente}
+							onClose={() => setEditandoPaciente(false)}
+						/>
+					) : (
+						<div style={{ position: 'relative', minHeight: '200px' }}>
+							<Loader />
+						</div>
+					)}
+				</Modal>
+			) : null}
 		</div>
 	);
 

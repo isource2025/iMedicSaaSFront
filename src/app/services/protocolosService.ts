@@ -66,8 +66,15 @@ const protocolosService = {
 		return json.data || { proForma: '', descripcion: null };
 	},
 
-	async buscarPracticas(q: string, limit = 30): Promise<PracticaProtocolo[]> {
+	async buscarPracticas(
+		q: string,
+		limit = 30,
+		numeroVisita?: number | null,
+	): Promise<PracticaProtocolo[]> {
 		const params = new URLSearchParams({ q, limit: String(limit) });
+		if (numeroVisita != null && Number(numeroVisita) > 0) {
+			params.set('numeroVisita', String(numeroVisita));
+		}
 		const res = await apiFetch(`/protocolos/practicas/buscar?${params}`, {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' },

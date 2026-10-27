@@ -13,6 +13,7 @@ export type TurnoAdminOpcion = {
 	id: TurnoAdminAction;
 	label: string;
 	danger?: boolean;
+	destacado?: boolean;
 };
 
 function tienePaciente(row: TurnoAdminRow): boolean {
@@ -53,8 +54,8 @@ export function opcionesMenuTurnoAdmin(
 	if (opts.puedeRac && conPac && (ocupado || atendido)) {
 		list.push({ id: 'rac', label: 'RAC de enfermería' });
 	}
-	if (turnoTieneDatosAtencion(row)) {
-		list.unshift({ id: 'detalle', label: 'Ver detalle de atención' });
+	if (turnoTieneDatosAtencion(row) || (conPac && (ocupado || atendido))) {
+		list.unshift({ id: 'detalle', label: 'Ver detalle de atención', destacado: true });
 	}
 	if (opts.puedeEditar && ocupado && conPac) {
 		list.push({ id: 'cancelar', label: 'Cancelar turno', danger: true });

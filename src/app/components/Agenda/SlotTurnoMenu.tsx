@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Eye } from 'lucide-react';
 import type { AgendaSlot } from '@/app/services/agendaService';
 import styles from './SlotTurnoMenu.module.css';
 
@@ -137,22 +138,23 @@ export default function SlotTurnoMenu({
 			flowNext: flowNext != null && o.id === flowNext,
 		}));
 
-		const conDetalle: OpcionMenu[] = turnoTieneDatosAtencion(slot)
-			? [{ id: 'ver-detalle', label: 'Ver detalle de atención' }]
-			: [];
+		const conDetalle: OpcionMenu[] =
+			slot.idTurno && (esOcupado(slot) || turnoTieneDatosAtencion(slot))
+				? [{ id: 'ver-detalle', label: 'Ver detalle de atención' }]
+				: [];
 
 		const conEditar: OpcionMenu[] =
 			cerrado && puedeAtender && slot.idTurno
 				? [{ id: 'editar-atencion', label: 'Editar / agregar (24 h)' }]
 				: [];
 
-		const merged: OpcionMenu[] = [...conDetalle, ...conEditar, ...base];
-
 		// El RAC de enfermería solo se habilita si el paciente ya registró llegada
-		if (puedeRacEnfermeria && esOcupado(slot) && slot.idTurno && slot.horaLlegada) {
-			return [{ id: 'rac-enfermeria', label: 'RAC de enfermería' }, ...merged];
-		}
-		return merged;
+		const conRac: OpcionMenu[] =
+			puedeRacEnfermeria && esOcupado(slot) && slot.idTurno && slot.horaLlegada
+				? [{ id: 'rac-enfermeria', label: 'RAC de enfermería' }]
+				: [];
+
+		return [...conDetalle, ...conRac, ...conEditar, ...base];
 	}, [slot, puedeBorrar, puedeRacEnfermeria, puedeAtender, soloHistorial]);
 
 	useEffect(() => {
@@ -201,9 +203,10 @@ export default function SlotTurnoMenu({
 					<li key={opt.id}>
 						<button
 							type='button'
-							className={`${styles.item} ${opt.mock ? styles.itemMock : ''} ${opt.flowNext ? styles.itemFlowNext : ''}`}
+							className={`${styles.item} ${opt.mock ? styles.itemMock : ''} ${opt.flowNext ? styles.itemFlowNext : ''} ${opt.id === 'ver-detalle' ? styles.itemDestacado : ''}`}
 							onClick={() => onAction(opt.id, slot)}
 						>
+							{opt.id === 'ver-detalle' ? <Eye size={16} aria-hidden='true' /> : null}
 							<span>{opt.label}</span>
 							{opt.mock ? <span className={styles.mockTag}>próx.</span> : null}
 						</button>

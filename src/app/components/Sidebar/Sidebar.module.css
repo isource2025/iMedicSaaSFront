@@ -8,7 +8,6 @@
   left: 0;
   height: 100vh;
   width: 72px;
-  background: #ffffff;
   display: flex;
   flex-direction: column;
   padding-top: 16px;
@@ -19,7 +18,6 @@
 .sidebar.expanded {
   width: 320px;
   padding-top: 16px;
-  background: #ffffff;
 }
 
 /* =============================================

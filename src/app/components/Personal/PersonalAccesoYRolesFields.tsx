@@ -2,8 +2,7 @@
 
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
-import type { Rol } from '@/app/services/rolesService';
-import { etiquetaRol } from '@/app/utils/permisos';
+import { esRolPersonalizado, etiquetaRolCatalogo, type Rol } from '@/app/services/rolesService';
 import formStyles from './PersonalForm.module.css';
 import modalStyles from './PersonalActionModals.module.css';
 
@@ -40,13 +39,7 @@ type Props = {
 	alertSuccess?: string;
 };
 
-function rolLabel(r: Rol): string {
-	return (
-		etiquetaRol({ nombre: r.Nombre, descripcion: r.Descripcion }) ||
-		r.Descripcion ||
-		r.Nombre
-	);
-}
+const rolLabel = etiquetaRolCatalogo;
 
 export default function PersonalAccesoYRolesFields({
 	mode,
@@ -78,6 +71,20 @@ export default function PersonalAccesoYRolesFields({
 	const [showNewPassword, setShowNewPassword] = useState(false);
 
 	const busy = saving || loading;
+	const rolesSistema = roles.filter((r) => !esRolPersonalizado(r));
+	const rolesPropios = roles.filter((r) => esRolPersonalizado(r));
+
+	const filaRol = (r: Rol) => (
+		<label key={r.IdRol} className={modalStyles.checkRow}>
+			<input
+				type='checkbox'
+				checked={rolesAsignados.includes(r.IdRol)}
+				onChange={() => onToggleRol(r.IdRol)}
+				disabled={busy}
+			/>
+			<span title={r.Descripcion || undefined}>{rolLabel(r)}</span>
+		</label>
+	);
 	const loginEnabled = mode === 'edicion' || crearUsuario;
 	const showCreatePasswords = mode === 'alta' || !tieneCuenta;
 	const showNewPasswordField = mode === 'edicion' && tieneCuenta;
@@ -247,22 +254,14 @@ export default function PersonalAccesoYRolesFields({
 					<p className={formStyles.usuarioHint}>
 						Obligatorio. Define los permisos del personal en el sistema.
 					</p>
-					<div className={modalStyles.list}>
-						{roles.map((r) => {
-							const checked = rolesAsignados.includes(r.IdRol);
-							return (
-								<label key={r.IdRol} className={modalStyles.checkRow}>
-									<input
-										type='checkbox'
-										checked={checked}
-										onChange={() => onToggleRol(r.IdRol)}
-										disabled={busy}
-									/>
-									<span>{rolLabel(r)}</span>
-								</label>
-							);
-						})}
-					</div>
+					{rolesPropios.length ? (
+						<>
+							<p className={formStyles.usuarioHint}>Roles de la clínica (matriz de permisos)</p>
+							<div className={modalStyles.list}>{rolesPropios.map(filaRol)}</div>
+							<p className={formStyles.usuarioHint}>Roles del sistema</p>
+						</>
+					) : null}
+					<div className={modalStyles.list}>{rolesSistema.map(filaRol)}</div>
 					{errors.IdRol ? <span className={formStyles.error}>{errors.IdRol}</span> : null}
 					{roles.length === 0 && !loading ? (
 						<p className={modalStyles.muted}>

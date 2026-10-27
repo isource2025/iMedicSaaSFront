@@ -17,6 +17,8 @@ export interface DietaControl {
 	Profesional: number | null;
 	ProfesionalFullName: string | null;
 	Matricula: number | string | null;
+	/** imPersonal.Valor de quien registró: para buscar su firma digital. */
+	ValorPersonalProfesional?: number | null;
 }
 
 export interface TipoDieta {

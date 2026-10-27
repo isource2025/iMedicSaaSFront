@@ -20,9 +20,10 @@ import { generarPDFEstudios } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
 import tableStyles from '../shared/BedTable.module.css';
-import { IoEyeOutline, IoPencilOutline } from 'react-icons/io5';
+import { IoEyeOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import CumplirEstudioModal from '../estudios/CumplirEstudioModal';
+import ConfirmationModal from '../shared/ConfirmationModal';
 import type { PedidoEstudio } from '@/app/types/estudios';
 
 type Props = {
@@ -55,6 +56,14 @@ function previewText(value?: string | null, max = 100) {
 
 function esCumplida(row: InterconsultaRow) {
 	return !!row.Cumplido || (row.IdProtocolo != null && row.IdProtocolo > 0) || !!row.Respuesta;
+}
+
+function esPendiente(row: InterconsultaRow) {
+	if (esCumplida(row)) return false;
+	if (row.Tomado) return false;
+	const w = String(row.EstadoWorkflow || '').toUpperCase();
+	if (w === 'TOMADO' || w === 'CUMPLIDO' || w === 'RESPONDIDO') return false;
+	return true;
 }
 
 function buildInterconsultaFields(row: InterconsultaRow) {
@@ -175,6 +184,7 @@ export default function InterconsultaSection({
 	const usuarioActual = useUsuarioActual();
 	const canCreate = puede('INTERNACION.INTERCONSULTAS.CREAR');
 	const canEdit = puede('INTERNACION.INTERCONSULTAS.EDITAR') || canCreate;
+	const canDelete = puede('INTERNACION.INTERCONSULTAS.ELIMINAR') || canCreate;
 
 	const [rows, setRows] = useState<InterconsultaRow[]>(
 		() => peekVisita<InterconsultaRow[]>(visitaCacheKey('interconsulta', numeroVisita)) ?? [],
@@ -188,6 +198,8 @@ export default function InterconsultaSection({
 	const [selected, setSelected] = useState<InterconsultaRow | null>(null);
 	const [editingPedido, setEditingPedido] = useState<InterconsultaRow | null>(null);
 	const [editingRespuesta, setEditingRespuesta] = useState<InterconsultaRow | null>(null);
+	const [deleting, setDeleting] = useState<InterconsultaRow | null>(null);
+	const [deletingBusy, setDeletingBusy] = useState(false);
 	const [query, setQuery] = useState('');
 	const [periodo, setPeriodo] = useState<Periodo>('all');
 
@@ -248,6 +260,30 @@ export default function InterconsultaSection({
 
 	const puedeEditarRespuesta = (row: InterconsultaRow) =>
 		row.Origen !== 'WEB' && esCumplida(row) && esAutorRespuesta(row, usuarioActual);
+
+	const puedeEliminar = (row: InterconsultaRow) =>
+		canDelete && esSolicitante(row, usuarioActual) && esPendiente(row);
+
+	const handleConfirmDelete = async () => {
+		if (!deleting) return;
+		const id = deleting.IdPedido || deleting.IdInterconsulta;
+		if (!id) return;
+		setDeletingBusy(true);
+		setError(null);
+		try {
+			await interconsultasService.eliminar(
+				id,
+				deleting.Origen === 'WEB' ? 'WEB' : 'LEGACY',
+			);
+			setDeleting(null);
+			setSelected(null);
+			await loadVisita();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : 'No se pudo eliminar la interconsulta');
+		} finally {
+			setDeletingBusy(false);
+		}
+	};
 
 	const abrirEdicionPedido = (row: InterconsultaRow) => {
 		setSelected(null);
@@ -440,6 +476,16 @@ export default function InterconsultaSection({
 														<IoPencilOutline color="#5BC0DE" size={18} />
 													</button>
 												)}
+												{puedeEliminar(r) && (
+													<button
+														type="button"
+														className={tableStyles.btnAction}
+														title="Eliminar interconsulta"
+														onClick={() => setDeleting(r)}
+													>
+														<IoTrashOutline color="#5BC0DE" size={18} />
+													</button>
+												)}
 												</div>
 											</td>
 										</tr>
@@ -526,6 +572,30 @@ export default function InterconsultaSection({
 					}}
 				/>
 			) : null}
+
+			<ConfirmationModal
+				isOpen={Boolean(deleting)}
+				onClose={() => {
+					if (deletingBusy) return;
+					setDeleting(null);
+				}}
+				onConfirm={() => {
+					void handleConfirmDelete();
+				}}
+				title="Eliminar interconsulta"
+				message={
+					deleting
+						? `¿Eliminar la interconsulta a “${
+								deleting.ServicioDescripcion ||
+								deleting.SectorReceptorNombre ||
+								deleting.Especialidad ||
+								'otro servicio'
+							}”? Solo se puede mientras está pendiente.`
+						: ''
+				}
+				confirmText={deletingBusy ? 'Eliminando…' : 'Eliminar'}
+				cancelText="Cancelar"
+			/>
 		</>
 	);
 }

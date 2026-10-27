@@ -55,7 +55,7 @@ const menuItems: MenuItem[] = [
   {
     id: 'consulta-hc',
     moduloId: 'ADMISION',
-    label: 'Consultar Historia Clínica',
+    label: 'Consulta general de admisiones',
     icon: FileSearch,
     path: '/dashboard/admission/search',
     subItems: []
@@ -80,6 +80,7 @@ const menuItems: MenuItem[] = [
     id: 'internacion', moduloId: 'INTERNACION', label: 'Internación', icon: Bed,
     subItems: [
       { submoduloId: 'CAMAS',     label: 'Gestión de Camas',   path: '/dashboard/beds' },
+      { submoduloId: 'CAMAS',     label: 'Admisiones vigentes', path: '/dashboard/beds/vigentes' },
       { submoduloId: 'ESTUDIOS',  label: 'Bandeja de pedidos', path: '/dashboard/bandeja-pedidos' },
     ]
   },
@@ -96,8 +97,10 @@ const menuItems: MenuItem[] = [
     moduloId: 'ALMACEN',
     label: 'Almacén',
     icon: Warehouse,
-    path: '/dashboard/almacen',
-    subItems: [],
+    subItems: [
+      { submoduloId: 'PRODUCTOS', label: 'Productos', path: '/dashboard/almacen/productos' },
+      { submoduloId: 'REMITOS', label: 'Remitos', path: '/dashboard/almacen/remitos' },
+    ],
   },
   {
     id: 'reportes', moduloId: 'REPORTES', label: 'Reportes', icon: BarChart3,
@@ -242,8 +245,9 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
 
         const permisoModulo = (sub: SubItem) => sub.permisoModuloId || item.moduloId
 
-        // Configuración: visible si el usuario tiene acceso a cualquier subítem
-        // (incluye tablas cuyos permisos viven en otros módulos).
+        // Configuración: siempre completa respecto de packs. Las "Tabla de …"
+        // reutilizan permisos de otros módulos (TURNOS/ADMISION/INTERNACION/…);
+        // puedeSubmodulo ya no exige el pack para submódulo TABLA, sólo el rol.
         if (item.id === 'configuracion') {
           const subs = item.subItems.filter((sub) => {
             if (!sub.submoduloId) return true

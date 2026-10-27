@@ -28,6 +28,8 @@ export interface BalanceHidrico {
 	ProfesionalApellido?: string | null;
 	ProfesionalNombres?: string | null;
 	Matricula?: string | number | null;
+	/** imPersonal.Valor de quien cargó: para buscar su firma digital. */
+	ValorPersonalProfesional?: number | null;
 }
 
 export interface BalanceHidricoResumen {

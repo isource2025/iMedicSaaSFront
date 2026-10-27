@@ -298,6 +298,14 @@
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
+.selectCompact {
+    min-height: 32px;
+    height: 2rem;
+    padding: 0.3rem 1.9rem 0.3rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
 /* Hover/focus visual */
 .select:hover,
 .select:focus {

@@ -17,7 +17,7 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFControles } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import NuevoControlModal from './NuevoControlModal';
@@ -37,6 +37,13 @@ interface Props {
 function toISODate(d: Date | null | undefined): string | null {
 	if (!d) return null;
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Quién cargó: cuenta (OperadorCarga) y, si no hay nombre, la ficha (Profesional). */
+function nombreQuienCargo(c: ControlFrecuente): string {
+	const op = obtenerNombreCompleto(c.OperadorApellido, c.OperadorNombres);
+	if (op !== '-') return op;
+	return obtenerNombreCompleto(c.ProfesionalApellido, c.ProfesionalNombres);
 }
 
 const ControlesFrecuentesSection: React.FC<Props> = ({
@@ -97,9 +104,9 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 		if (!query.trim()) return controles;
 		const q = query.toLowerCase();
 		return controles.filter((c) => {
-			const op = `${c.OperadorApellido || ''} ${c.OperadorNombres || ''}`.toLowerCase();
+			const quien = nombreQuienCargo(c).toLowerCase();
 			const obs = (c.Observaciones || '').toLowerCase();
-			return op.includes(q) || obs.includes(q);
+			return quien.includes(q) || obs.includes(q);
 		});
 	}, [controles, query]);
 
@@ -128,37 +135,11 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 	const handleExport = async (option: ExportOption) => {
 		if (option === 'pdf') {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = controlsFiltrados.map((r, idx) => ({
-				title: `Control ${idx + 1}`,
-				fields: [
-					{ label: 'Fecha', value: formatearFecha(r.FechaControl) },
-					{ label: 'Hora', value: formatearHora(r.HoraControl) },
-					{ label: 'Pulso', value: r.Pulso || '—' },
-					{ label: 'Presión', value: `${r.Maximo || '—'}/${r.Minimo || '—'}` },
-					{ label: 'Temperatura', value: r.Axilar ? `${Number(r.Axilar).toFixed(1)}°C` : '—' },
-					{ label: 'Frec. Resp.', value: r.FrecuenciaRespiratoria || '—' },
-					{ label: 'Saturación', value: r.Saturometria ? `${r.Saturometria}%` : '—' },
-					{ label: 'Glucemia', value: r.Hgt && String(r.Hgt) !== '0' ? `${r.Hgt} mg/dL` : '—' },
-					{ label: 'Observaciones', value: r.Observaciones || '—' },
-				],
-				profesional: {
-					nombre:
-						obtenerNombreCompleto(r.OperadorApellido, r.OperadorNombres) !== '-'
-							? obtenerNombreCompleto(r.OperadorApellido, r.OperadorNombres)
-							: obtenerNombreCompleto(r.ProfesionalApellido, r.ProfesionalNombres),
-					matricula: (r as any).Matricula ?? undefined,
-					especialidad: 'Enfermería',
-				},
-			}));
-
-			await exportToPDF({
-				title: 'Controles Frecuentes',
-				subtitle: `Fecha: ${fechaISO}`,
-				parts,
+			await generarPDFControles({
+				items: controlsFiltrados,
 				fileName: `controles_${fechaISO}.pdf`,
-				orientation: 'portrait',
 				empresaInfo,
-				patientInfo: {
+				patient: {
 					numeroVisita: numeroVisita || undefined,
 					nombre: patientName,
 					numeroDocumento: documentoPaciente,
@@ -272,7 +253,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 													{c.IdHci && c.IdHci > 0 ? 'HC' : 'ENF'}
 												</span>
 											</td>
-											<td>{obtenerNombreCompleto(c.OperadorApellido, c.OperadorNombres)}</td>
+											<td>{nombreQuienCargo(c)}</td>
 											<td className={tableStyles.observaciones}>{c.Observaciones || '-'}</td>
 											<td className={tableStyles.cellAccion}>
 												<div className={tableStyles.actionBtns}>
@@ -316,7 +297,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 										Pulso {c.Pulso || '—'} · TA {c.Maximo || '—'}/{c.Minimo || '—'} · Sat {c.Saturometria ? `${c.Saturometria}%` : '—'}
 									</p>
 									<p className={tableStyles.mobileProfesional}>
-										{obtenerNombreCompleto(c.OperadorApellido, c.OperadorNombres)}
+										{nombreQuienCargo(c)}
 									</p>
 									<div className={tableStyles.actionBtns}>
 										<button className={tableStyles.btnAction} onClick={() => setSelectedControl(c)} title="Ver detalle">

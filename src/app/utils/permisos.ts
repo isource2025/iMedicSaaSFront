@@ -82,7 +82,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		label: 'Admisión',
 		submodulos: [
 			{ id: 'PACIENTES', label: 'Pacientes',           path: '/dashboard/patients',         acciones: [...CRUD] },
-			{ id: 'BUSQUEDA',  label: 'Consultar Historia Clínica',   path: '/dashboard/admission/search', acciones: [ACCIONES.VER] },
+			{ id: 'BUSQUEDA',  label: 'Consulta general de admisiones',   path: '/dashboard/admission/search', acciones: [ACCIONES.VER] },
 			{ id: 'NUEVA',     label: 'Nueva Admisión',      path: '/dashboard/admission/new',    acciones: [ACCIONES.CREAR] },
 			{ id: 'TABLA',     label: 'Tabla de Admisiones', path: '/dashboard/admission/tables', acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
 		],
@@ -133,14 +133,8 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		id: 'ALMACEN',
 		label: 'Almacén',
 		submodulos: [
-			{ id: 'STOCK',       label: 'Stock',                     path: '/dashboard/almacen',                    acciones: [ACCIONES.VER, ACCIONES.GESTIONAR, ACCIONES.EXPORTAR] },
-			{ id: 'ARTICULOS',   label: 'Artículos',                 path: '/dashboard/almacen?tab=articulos',       acciones: [...CRUD] },
-			{ id: 'PROVEEDORES', label: 'Proveedores',               path: '/dashboard/almacen?tab=proveedores',     acciones: [...CRUD] },
-			{ id: 'SOLICITUDES', label: 'Solicitudes de provisión',  path: '/dashboard/almacen?tab=solicitudes',     acciones: [...CRUD, ACCIONES.GESTIONAR, ACCIONES.IMPRIMIR] },
-			{ id: 'ORDENES',     label: 'Órdenes de provisión',      path: '/dashboard/almacen?tab=ordenes',         acciones: [...CRUD, ACCIONES.IMPRIMIR] },
-			{ id: 'ACTAS',       label: 'Actas de recepción',        path: '/dashboard/almacen?tab=actas',           acciones: [...CRUD, ACCIONES.IMPRIMIR] },
-			{ id: 'MOVIMIENTOS', label: 'Historial de movimientos', path: '/dashboard/almacen?tab=movimientos',     acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
-			{ id: 'CONFIG',     label: 'Configuración',             path: '/dashboard/almacen?tab=config',          acciones: [ACCIONES.VER, ACCIONES.EDITAR] },
+			{ id: 'PRODUCTOS', label: 'Productos', path: '/dashboard/almacen/productos', acciones: [...CRUD] },
+			{ id: 'REMITOS',   label: 'Remitos',   path: '/dashboard/almacen/remitos',   acciones: [...CRUD] },
 		],
 	},
 	{
@@ -285,6 +279,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.INDICACIONES.VER',
 		'INTERNACION.INDICACIONES.APLICAR',
 		'INTERNACION.EVOLUCIONES.VER',
+		'INTERNACION.INTERCONSULTAS.VER',
 		'INTERNACION.ESTUDIOS.VER',
 		'INTERNACION.PROTOCOLOS.VER',
 		'INTERNACION.PROCEDIMIENTOS.VER',
@@ -316,7 +311,9 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		..._soloVer('ADMISION'),
 		..._soloVer('INTERNACION', ['AUDITORIA_HC']),
 		..._soloVer('FACTURACION'),
-		..._soloVer('ALMACEN'),
+		// Almacén operativo: catálogo y remitos (sin escritura clínica).
+		..._todas('ALMACEN', 'PRODUCTOS'),
+		..._todas('ALMACEN', 'REMITOS'),
 		// Reportes → Facturación (producción del hospital) muestra montos por
 		// profesional y cobertura: queda reservado a ADMIN.
 		..._soloVer('REPORTES', ['FACTURACION']),
@@ -433,23 +430,22 @@ export function etiquetaRol(
 /**
  * Lista de permisos efectivos del usuario.
  *
- * Une la plantilla del rol principal (siempre al día) con la lista del login
- * (unión multi-rol). Así un ADMINISTRATIVO solo usa la matriz actual, y un
- * usuario multi-rol conserva los extras de los demás roles.
+ * Si `permisosUsuario` viene del servidor (array, aunque vacío), es la fuente
+ * de verdad: ya incluye unión de roles + grants − denies. No se re-mezcla la
+ * plantilla local (si no, un DENY del servidor reaparecería en el cliente).
+ *
+ * Sin lista del servidor (`null`/`undefined`), se usa la plantilla hardcoded
+ * del nombre de rol (compat / pantallas que sólo conocen el rol).
  */
 export function permisosDeRol(
 	rol: { nombre?: string } | string | null | undefined,
 	permisosUsuario?: ReadonlyArray<string> | null,
 ): ReadonlyArray<string> {
-	const n = nombreRol(rol);
-	const lista =
-		Array.isArray(permisosUsuario) && permisosUsuario.length > 0
-			? [...permisosUsuario]
-			: [];
-	if (n) {
-		return Array.from(new Set(PLANTILLAS[n].concat(lista)));
+	if (Array.isArray(permisosUsuario)) {
+		return [...permisosUsuario];
 	}
-	return lista;
+	const n = nombreRol(rol);
+	return n ? [...PLANTILLAS[n]] : [];
 }
 
 /** ¿Tiene el rol/permisos el código indicado? Acepta verificación parcial. */

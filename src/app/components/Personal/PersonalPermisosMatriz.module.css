@@ -1,0 +1,171 @@
+.wrap {
+	margin-top: 1rem;
+	padding-top: 0.85rem;
+	border-top: 1px solid #e2e8f0;
+}
+
+.head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.title {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.hint {
+	margin: 0 0 0.65rem;
+	font-size: 0.82rem;
+	color: #64748b;
+	line-height: 1.35;
+}
+
+.meta {
+	font-size: 0.78rem;
+	color: #64748b;
+}
+
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	margin-bottom: 0.65rem;
+}
+
+.search {
+	flex: 1;
+	min-width: 180px;
+	padding: 0.45rem 0.65rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	font: inherit;
+	font-size: 0.88rem;
+}
+
+.modulo {
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	margin-bottom: 0.45rem;
+	overflow: hidden;
+}
+
+.moduloHead {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.45rem 0.65rem;
+	background: #f8fafc;
+	cursor: pointer;
+	font-size: 0.85rem;
+	font-weight: 600;
+	user-select: none;
+}
+
+.moduloBody {
+	padding: 0.35rem 0.65rem 0.55rem;
+}
+
+.sub {
+	padding: 0.35rem 0;
+	border-top: 1px solid #f1f5f9;
+}
+
+.sub:first-child {
+	border-top: none;
+}
+
+.subTitle {
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.subDesc {
+	margin: 0.1rem 0 0.35rem;
+	font-size: 0.75rem;
+	color: #94a3b8;
+}
+
+.acciones {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 0.75rem;
+}
+
+.accion {
+	display: inline-flex;
+	align-items: flex-start;
+	gap: 0.3rem;
+	font-size: 0.78rem;
+	color: #334155;
+	cursor: pointer;
+	max-width: 220px;
+}
+
+.accionOff {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.accionLabel {
+	font-weight: 600;
+	display: block;
+}
+
+.accionDesc {
+	display: block;
+	font-size: 0.7rem;
+	color: #94a3b8;
+	line-height: 1.2;
+}
+
+.badgeExtra {
+	display: inline-block;
+	margin-left: 0.25rem;
+	padding: 0 0.3rem;
+	border-radius: 4px;
+	background: #dcfce7;
+	color: #166534;
+	font-size: 0.65rem;
+	font-weight: 700;
+}
+
+.badgeQuit {
+	display: inline-block;
+	margin-left: 0.25rem;
+	padding: 0 0.3rem;
+	border-radius: 4px;
+	background: #fee2e2;
+	color: #991b1b;
+	font-size: 0.65rem;
+	font-weight: 700;
+}
+
+.link {
+	border: none;
+	background: none;
+	color: #0083a9;
+	font: inherit;
+	font-size: 0.78rem;
+	cursor: pointer;
+	padding: 0;
+}
+
+.link:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.muted {
+	color: #94a3b8;
+	font-size: 0.82rem;
+}

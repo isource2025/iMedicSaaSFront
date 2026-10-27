@@ -11,19 +11,12 @@ import styles from "../indicaciones/IndicacionesSection.module.css";
 import BedSectionLoading from "../shared/BedSectionLoading";
 import EmptyState from "../shared/EmptyState";
 import ExportButton, { ExportOption } from "../shared/ExportButton";
-import { exportToPDF } from "../../../utils/pdfExportLazy";
+import { generarPDFMovimientos } from "../../../utils/pdfExportLazy";
 import { obtenerInfoEmpresa } from "../../../services/empresaService";
 import { getDisposicionesEgreso } from "../../../services/disposicionEgresoService";
 import {
 	catalogoDisposiciones,
 	clasificarEstadoMovimiento,
-	diagnosticoTexto,
-	disposicionTexto,
-	etiquetaCama,
-	etiquetaSector,
-	fechaHoraEgreso,
-	fechaHoraIngreso,
-	nombreOperador,
 	ordenarMovimientos,
 	rangoMovimiento,
 } from "./movimientosDisplay";
@@ -116,39 +109,12 @@ export default function MovimientosSection({
 	const handleExport = async (option: ExportOption) => {
 		if (option === "pdf") {
 			const empresaInfo = await obtenerInfoEmpresa();
-			const parts = movimientosVisibles.map((m, idx) => ({
-				title: `Movimiento ${idx + 1}`,
-				fields: [
-					{
-						label: "Estado",
-						value: clasificarEstadoMovimiento(m, idx, movimientosVisibles),
-					},
-					{ label: "Cama", value: etiquetaCama(m) },
-					{ label: "Sector", value: etiquetaSector(m) },
-					{ label: "Fecha/Hora Ingreso", value: fechaHoraIngreso(m) },
-					{ label: "Fecha/Hora Egreso", value: fechaHoraEgreso(m) },
-					{ label: "Diagnóstico", value: diagnosticoTexto(m) },
-					{ label: "Operador", value: nombreOperador(m) },
-					{ label: "Disposición", value: disposicionTexto(m, dispCatalogo) },
-				],
-				profesional: {
-					nombre: nombreOperador(m) !== "—" ? nombreOperador(m) : undefined,
-					matricula:
-						(m as any).OperadorEgreso ??
-						(m as any).OperadorAdmision ??
-						(m as any).Matricula ??
-						undefined,
-				},
-			}));
-
-			await exportToPDF({
-				title: "Movimientos / Traslados",
-				subtitle: `Visita: ${numeroVisita}`,
-				parts,
+			await generarPDFMovimientos({
+				items: movimientosVisibles,
+				disposiciones: dispCatalogo,
 				fileName: `movimientos_${numeroVisita}.pdf`,
-				orientation: "portrait",
 				empresaInfo,
-				patientInfo: {
+				patient: {
 					numeroVisita: numeroVisita || undefined,
 					nombre: patientName,
 					numeroDocumento: documentoPaciente,

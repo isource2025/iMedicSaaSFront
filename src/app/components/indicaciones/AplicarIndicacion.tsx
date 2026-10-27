@@ -11,7 +11,11 @@ import RenderControl from './renders_Indicacion/RenderControl';
 import RenderMedicacion from './renders_Indicacion/RenderMedicacion';
 import RenderAsistencial from './renders_Indicacion/RenderAsistencial';
 import {useAppContext} from "@/app/contexts/AppContext";
-import { parseValorPersonalId } from '@/app/utils/valorPersonal';
+import {
+	getUserCodOperador,
+	getUserMatricula,
+	getUserValorPersonal,
+} from '@/app/utils/sessionUser';
 
 interface Props {
     isOpen: boolean;
@@ -101,6 +105,9 @@ export default function AplicarIndicacion(props: Props) {
     const date = new Date();
     const { isOpen, onClose, numeroVisita, nroIndicacion, tipoIndicacion, onSuccess } = props;
     const {usuario} = useAppContext()
+    const idProfesionalAplicador =
+        getUserMatricula(usuario) ?? getUserValorPersonal(usuario) ?? getUserCodOperador(usuario);
+    const idOperadorAplicador = getUserCodOperador(usuario);
 
     const [formData, setFormData] = useState<FormData>({
         fechaCumplido: getLocalDateString(date),
@@ -108,11 +115,7 @@ export default function AplicarIndicacion(props: Props) {
         observaciones: '',
         fechaProximo: '',
         horaProximo: '',
-        profesionalAsiste: parseValorPersonalId(
-            usuario?.codigoOperador,
-            usuario?.valorPersonal,
-            usuario?.idValorpersonal,
-        ),
+        profesionalAsiste: idProfesionalAplicador,
         control: {
             pulso: '',
             presionArterialMax: '',
@@ -159,12 +162,8 @@ export default function AplicarIndicacion(props: Props) {
 
                 setFormData(prev => ({
                     ...prev,
-                    // Datos de la indicación
-                    profesionalAsiste: parseValorPersonalId(
-                        usuario?.codigoOperador,
-                        usuario?.valorPersonal,
-                        usuario?.idValorpersonal,
-                    ),
+                    // Quién aplica (sesión). El médico indicador sigue en data.ProfesionalAsiste / ProfesionalNombre.
+                    profesionalAsiste: idProfesionalAplicador,
                     profesionalNombre: data.ProfesionalNombre || '',
                     frecuencia: data.Frecuencia || '',
                     intervalo: data.Intervalo || undefined,
@@ -264,12 +263,8 @@ export default function AplicarIndicacion(props: Props) {
                 fechaProximo: formData.fechaProximo,
                 horaProximo: formData.horaProximo,
                 observaciones: formData.observaciones || '',
-                profesionalAsiste: formData.profesionalAsiste,
-                operadorCarga: parseValorPersonalId(
-                    usuario?.codigoOperador,
-                    usuario?.valorPersonal,
-                    usuario?.idValorpersonal,
-                ),
+                profesionalAsiste: formData.profesionalAsiste ?? idProfesionalAplicador,
+                operadorCarga: idOperadorAplicador,
                 control: {}, // Inicializar vacío
                 dieta: {
                     tipoDieta: null

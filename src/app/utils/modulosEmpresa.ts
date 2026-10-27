@@ -15,6 +15,19 @@ export function leerModulosEmpresaLocal(): ModulosEmpresa | null {
 	}
 }
 
+/**
+ * Tablas maestras (TURNOS/ADMISION/INTERNACION/FACTURACION.TABLA.*) viven bajo
+ * Configuración y deben poder usarse aunque el pack clínico no esté contratado
+ * (p. ej. sectores/servicios de agenda sin pack INTERNACION).
+ */
+export function esPermisoTablaMaestra(codigoOSubmodulo: string): boolean {
+	const s = String(codigoOSubmodulo || '').trim().toUpperCase();
+	if (!s) return false;
+	if (s === 'TABLA') return true;
+	const partes = s.split('.');
+	return partes[1] === 'TABLA';
+}
+
 /** Si no hay lista (sesión vieja / Super Admin), no recorta. */
 export function moduloEmpresaHabilitado(
 	modulos: ModulosEmpresa | null | undefined,

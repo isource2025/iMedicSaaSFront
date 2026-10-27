@@ -17,7 +17,7 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFMedicacion } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '../../../hooks/useUsuarioActual';
@@ -191,47 +191,20 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   };
   const fechaFormateada = formatSelectedDate();
 
-  const handleExport = async (option: ExportOption, data: any[]) => {
+  const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-      const fd = fechaFormateada;
-
-      const parts = medicacionesVisibles.map((row: any, idx: number) => ({
-        title: `Medicación ${idx + 1}`,
-        fields: [
-          { label: 'Fecha', value: formatearFecha(row.FechaControl) },
-          { label: 'Hora', value: formatearHora(row.HoraControl) },
-          { label: 'Sector', value: row.Sector || '—' },
-          {
-            label: 'Medicamento',
-            value: row.NombreMedicamento || row.DescripcionMedicamento || '—',
-          },
-          { label: 'Aplicado', value: row.CantidadIndicada ?? '—' },
-          { label: 'Unidad', value: row.TipoUnidad || '—' },
-          { label: 'Cantidad total', value: row.Cantidad ?? '—' },
-          { label: 'Observaciones', value: row.Observaciones || '—' },
-        ],
-        profesional: {
-          nombre: row.ProfesionalFullName || row.OperadorFullName || '-',
-          matricula: row.Matricula ?? undefined,
-          especialidad: 'Enfermería',
-        },
-      }));
-
-      await exportToPDF({
-        title: 'Medicación Suministrada',
-        subtitle: `Fecha: ${fd?.diaSemana} ${fd?.diaMes}, ${fd?.mes}`,
-        parts,
+      await generarPDFMedicacion({
+        items: medicacionesVisibles,
         fileName: `medicacion_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-        orientation: 'portrait',
         empresaInfo,
-        patientInfo: {
+        patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,
           numeroDocumento: documentoPaciente,
           ubicacion: patientLocation,
-          fechaIngreso: fechaIngreso,
-          horaIngreso: horaIngreso
+          fechaIngreso,
+          horaIngreso,
         },
       });
     }

@@ -1,0 +1,70 @@
+.overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10050;
+	background: #1e293b;
+	display: flex;
+	align-items: stretch;
+	justify-content: stretch;
+}
+
+.dialog {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: #1e293b;
+}
+
+/* A la izquierda del cluster descarga/imprimir del visor PDF del navegador. */
+.closeBtn {
+	position: absolute;
+	top: 10px;
+	right: 132px;
+	z-index: 2;
+	border: none;
+	background: transparent;
+	color: #e8eaed;
+	font-size: 1.25rem;
+	font-weight: 400;
+	line-height: 1;
+	cursor: pointer;
+	width: 34px;
+	height: 34px;
+	border-radius: 4px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.9;
+}
+
+.closeBtn:hover {
+	background: rgba(255, 255, 255, 0.12);
+	color: #fff;
+	opacity: 1;
+}
+
+.previewFrame {
+	flex: 1;
+	width: 100%;
+	min-height: 0;
+	border: 0;
+	background: #fff;
+}
+
+.centerMsg {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #cbd5e1;
+	font-size: 0.9rem;
+	text-align: center;
+	padding: 24px;
+}
+
+.error {
+	color: #fecaca;
+}

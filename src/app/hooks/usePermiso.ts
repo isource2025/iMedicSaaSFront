@@ -11,7 +11,11 @@ import {
 	type RolNombre,
 	type ModuloDef,
 } from '../utils/permisos';
-import { leerModulosEmpresaLocal, moduloEmpresaHabilitado } from '../utils/modulosEmpresa';
+import {
+	esPermisoTablaMaestra,
+	leerModulosEmpresaLocal,
+	moduloEmpresaHabilitado,
+} from '../utils/modulosEmpresa';
 
 export interface RolEnUso {
 	id: number;
@@ -27,31 +31,16 @@ interface PermisosState {
 
 /**
  * Lee de localStorage de forma segura (solo funciona en el cliente).
- * En SSR devuelve el estado vacío inicial.
+ * La lista guardada en login / refresh es la efectiva del servidor; no se
+ * re-expanden plantillas locales (desharían un DENY por persona).
  */
 function leerLocal(): PermisosState {
 	if (typeof window === 'undefined') {
 		return { rol: null, permisos: [], loaded: false };
 	}
-	const rol = authService.getCurrentRol();
-	const permisos = authService.getCurrentPermisos();
-	// Expandir plantillas de todos los roles (multi-rol) además de la lista guardada
-	let extras: string[] = [];
-	try {
-		const raw = localStorage.getItem('roles');
-		const arr = raw ? JSON.parse(raw) : [];
-		if (Array.isArray(arr)) {
-			for (const r of arr) {
-				extras = extras.concat([...permisosDeRol(r?.nombre || r)]);
-			}
-		}
-	} catch {
-		/* ignore */
-	}
-	const merged = Array.from(new Set(permisos.concat(extras)));
 	return {
-		rol,
-		permisos: merged,
+		rol: authService.getCurrentRol(),
+		permisos: authService.getCurrentPermisos(),
 		loaded: true,
 	};
 }
@@ -93,6 +82,9 @@ export function usePermiso() {
 	const { rol, permisos: lista, loaded } = state;
 	const efectivos = permisosDeRol(rol ?? undefined, lista);
 	const contratados = leerModulosEmpresaLocal();
+	const packOk = (idModulo: string, subOCodigo?: string) =>
+		esPermisoTablaMaestra(subOCodigo || '') ||
+		moduloEmpresaHabilitado(contratados, idModulo);
 	const moduloOk = (idModulo: string) =>
 		moduloEmpresaHabilitado(contratados, idModulo) &&
 		tieneAccesoAModulo(rol ?? undefined, idModulo, lista);
@@ -103,13 +95,25 @@ export function usePermiso() {
 		permisos: efectivos,
 		puede: (codigo: string): boolean => {
 			const idModulo = String(codigo || '').split('.')[0] || '';
-			if (!moduloEmpresaHabilitado(contratados, idModulo)) return false;
+			if (!packOk(idModulo, codigo)) return false;
 			return tienePermiso(rol ?? undefined, codigo, lista);
 		},
 		puedeModulo: (idModulo: string): boolean => moduloOk(idModulo),
-		puedeSubmodulo: (idModulo: string, idSubmodulo: string): boolean =>
-			moduloOk(idModulo) &&
-			tieneAccesoASubmodulo(rol ?? undefined, idModulo, idSubmodulo, lista),
+		puedeSubmodulo: (idModulo: string, idSubmodulo: string): boolean => {
+			// TABLA: Configuración completa sin exigir el pack del módulo origen.
+			if (esPermisoTablaMaestra(idSubmodulo)) {
+				return tieneAccesoASubmodulo(
+					rol ?? undefined,
+					idModulo,
+					idSubmodulo,
+					lista,
+				);
+			}
+			return (
+				moduloOk(idModulo) &&
+				tieneAccesoASubmodulo(rol ?? undefined, idModulo, idSubmodulo, lista)
+			);
+		},
 		menu: modulosVisibles(rol ?? undefined, lista) as ModuloDef[],
 	};
 }

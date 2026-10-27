@@ -9,7 +9,7 @@ import BedSectionLoading from '../shared/BedSectionLoading';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
-import { exportToPDF } from '../../../utils/pdfExportLazy';
+import { generarPDFInsumos } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 interface InsumosSectionProps {
@@ -87,38 +87,21 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
 
     const fechaFormateada = formatSelectedDate();
 
-    const handleExport = async (option: ExportOption, data: any[]) => {
+    const handleExport = async (option: ExportOption) => {
         if (option === 'pdf') {
             const empresaInfo = await obtenerInfoEmpresa();
-            const parts = insumosFiltered.map((row: any, idx: number) => ({
-                title: `Insumo ${idx + 1}`,
-                fields: [
-                    { label: 'Fecha', value: row.fecha || '—' },
-                    { label: 'Hora', value: row.hora || '—' },
-                    { label: 'Descripción', value: row.descripcion || '—' },
-                    { label: 'Cantidad', value: row.cantidad ?? '—' },
-                ],
-                profesional: {
-                    nombre: row.fullName || 'PROFESIONAL',
-                    matricula: row.matricula ?? undefined,
-                },
-            }));
-
-            await exportToPDF({
-                title: 'Insumos',
-                subtitle: `Fecha: ${fechaFormateada?.diaSemana} ${fechaFormateada?.diaMes}, ${fechaFormateada?.mes}`,
-                parts,
+            await generarPDFInsumos({
+                items: insumosFiltered,
                 fileName: `insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`,
-                orientation: 'portrait',
                 empresaInfo,
-                patientInfo: {
+                patient: {
                     numeroVisita: numeroVisita || undefined,
                     nombre: patientName,
                     numeroDocumento: documentoPaciente,
                     ubicacion: patientLocation,
-                    fechaIngreso: fechaIngreso,
-                    horaIngreso: horaIngreso
-                }
+                    fechaIngreso,
+                    horaIngreso,
+                },
             });
         }
     };

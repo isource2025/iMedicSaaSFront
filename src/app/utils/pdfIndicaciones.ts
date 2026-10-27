@@ -6,6 +6,7 @@ import {
 	drawDocumentFooters,
 	drawDocumentHeader,
 	drawRunningHeaders,
+	entregarPDF,
 	PDF_COLORS,
 	PDF_CONTENT_TOP,
 	PDF_FOOTER_SPACE,
@@ -328,5 +329,5 @@ export async function generarPDFIndicaciones({
 
 	drawRunningHeaders(doc, headerOpts);
 	drawDocumentFooters(doc, headerOpts);
-	doc.save(fileName || `Indicaciones_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
+	entregarPDF(doc, fileName || `Indicaciones_${cleanPdfValue(patient?.numeroVisita) || 'paciente'}_${Date.now()}.pdf`);
 }

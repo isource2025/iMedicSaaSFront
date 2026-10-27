@@ -1,10 +1,5 @@
-import { Suspense } from 'react';
-import AlmacenClient from './AlmacenClient';
+import { redirect } from 'next/navigation';
 
 export default function AlmacenPage() {
-	return (
-		<Suspense fallback={<div style={{ padding: '2rem', color: '#64748b' }}>Cargando almacén...</div>}>
-			<AlmacenClient />
-		</Suspense>
-	);
+	redirect('/dashboard/almacen/productos');
 }

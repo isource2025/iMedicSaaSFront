@@ -63,6 +63,7 @@ function fechaHoraDesdeRecord(record: HCIngresoRecord): { fecha: string; hora: s
     return fechaHoraLocal(d);
 }
 import ExportButton, { ExportOption } from '../shared/ExportButton';
+import { usePdfPreviewOptional } from '../shared/PdfPreviewContext';
 import { obtenerInfoEmpresa, EmpresaInfo } from "@/app/services/empresaService";
 import { generarPDFHistoriaClinica } from '@/app/utils/pdfExportLazy';
 import ExamenFisicoPielForm from "./examen-fisico/ExamenFisicoPiel";
@@ -213,6 +214,7 @@ export default function HCIngresoSection({
     const { selectedDate } = useBedDetail();
     const { usuario, sectorSeleccionado } = useAppContext();
     const { puede, loaded: permisosCargados } = usePermiso();
+    const pdfPreview = usePdfPreviewOptional();
     // El historial dice quién tocó cada HC: solo lo ven ADMIN y SUPER_ADMIN.
     const puedeVerAuditoria = permisosCargados && puede('INTERNACION.AUDITORIA_HC.VER');
     
@@ -658,7 +660,10 @@ export default function HCIngresoSection({
                                             disabled={!selectedRecord}
                                             onClick={() => {
                                                 setAccionesMobileOpen(false);
-                                                if (selectedRecord) void handleExport('pdf', [selectedRecord]);
+                                                if (!selectedRecord) return;
+                                                const run = () => handleExport('pdf', [selectedRecord]);
+                                                if (pdfPreview) void pdfPreview.run(run);
+                                                else void run();
                                             }}
                                         >
                                             <span className={styles.btnIcon}>📄</span> Exportar PDF

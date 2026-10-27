@@ -18,3 +18,13 @@
   --rail-item-accent: #00b5e2;
   --rail-item-accent-strong: #0098bf;
 }
+
+.fabEvoluciones {
+  --rail-item-accent: #2a7a6a;
+  --rail-item-accent-strong: #1f5f53;
+}
+
+.fabInterconsulta {
+  --rail-item-accent: #3d6e8f;
+  --rail-item-accent-strong: #2f5670;
+}

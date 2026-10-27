@@ -16,7 +16,7 @@ import {
 } from '@/app/types/personal';
 import { personalService } from '@/app/services/personalService';
 import { etiquetaCatalogo } from '@/app/utils/etiquetaCatalogo';
-import { rolesService, type Rol } from '@/app/services/rolesService';
+import { esRolPersonalizado, etiquetaRolCatalogo, rolesService, type Rol } from '@/app/services/rolesService';
 import styles from './PersonalActionModals.module.css';
 
 export type PersonalExtraKind =
@@ -93,7 +93,7 @@ export default function PersonalActionModals({
 				if (kind === 'servicio') {
 					const [dto, sv, asignados] = await Promise.all([
 						personalService.getPersonalServicio(id),
-						personalService.getServicios(),
+						personalService.getServiciosNube(),
 						personalService.getPersonalServiciosPedidos(id),
 					]);
 					if (!cancelled) {
@@ -149,7 +149,7 @@ export default function PersonalActionModals({
 						setRolPrincipal(principal != null ? String(principal) : '');
 						setRolActualLabel(
 							pack.roles?.length
-								? pack.roles.map((r) => r.Descripcion || r.Nombre).join(', ')
+								? pack.roles.map(etiquetaRolCatalogo).join(', ')
 								: 'Sin rol asignado',
 						);
 					}
@@ -211,7 +211,7 @@ export default function PersonalActionModals({
 			);
 			setRolActualLabel(
 				pack.roles?.length
-					? pack.roles.map((r) => r.Descripcion || r.Nombre).join(', ')
+					? pack.roles.map(etiquetaRolCatalogo).join(', ')
 					: 'Sin rol asignado',
 			);
 			await onSaved();
@@ -706,23 +706,28 @@ export default function PersonalActionModals({
 						</p>
 						<div>
 							<div className={styles.label}>Roles</div>
-							<div className={styles.list}>
-								{roles.map((r) => {
-									const checked = rolesAsignados.includes(r.IdRol);
-									return (
-										<label key={r.IdRol} className={styles.checkRow}>
-											<input
-												type='checkbox'
-												checked={checked}
-												onChange={() => toggleRol(r.IdRol)}
-											/>
-											<span>
-												{r.Descripcion || r.Nombre}
-											</span>
-										</label>
-									);
-								})}
-							</div>
+							{[
+								{ titulo: 'Roles de la clínica', lista: roles.filter((r) => esRolPersonalizado(r)) },
+								{ titulo: 'Roles del sistema', lista: roles.filter((r) => !esRolPersonalizado(r)) },
+							]
+								.filter((g) => g.lista.length)
+								.map((g) => (
+									<div key={g.titulo}>
+										<p className={styles.muted}>{g.titulo}</p>
+										<div className={styles.list}>
+											{g.lista.map((r) => (
+												<label key={r.IdRol} className={styles.checkRow}>
+													<input
+														type='checkbox'
+														checked={rolesAsignados.includes(r.IdRol)}
+														onChange={() => toggleRol(r.IdRol)}
+													/>
+													<span title={r.Descripcion || undefined}>{etiquetaRolCatalogo(r)}</span>
+												</label>
+											))}
+										</div>
+									</div>
+								))}
 						</div>
 						{rolesAsignados.length > 0 ? (
 							<div>
@@ -736,7 +741,7 @@ export default function PersonalActionModals({
 										.filter((r) => rolesAsignados.includes(r.IdRol))
 										.map((r) => (
 											<option key={r.IdRol} value={String(r.IdRol)}>
-												{r.Descripcion || r.Nombre}
+												{etiquetaRolCatalogo(r)}
 											</option>
 										))}
 								</select>

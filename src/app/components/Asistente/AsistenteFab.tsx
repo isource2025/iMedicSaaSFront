@@ -21,7 +21,7 @@ import {
   type AsistentePendiente,
 } from "./asistenteService";
 
-const STORAGE_KEY = "imedic:asistente";
+const STORAGE_KEY = "imedic:asistente:soporte";
 const MAX_TABS = 8;
 const TITULO_NUEVO = "Nuevo chat";
 
@@ -167,24 +167,47 @@ function ejemplosPara(pathname: string | null): string[] {
   const p = pathname || "";
   if (p.startsWith("/dashboard/beds") || p.startsWith("/dashboard/visita")) {
     return [
-      "Redactá la evolución en el campo abierto con los controles de hoy",
-      "Resumime las últimas evoluciones de este paciente",
-      "Abrí los controles de este paciente",
+      "¿Cómo cargo una evolución?",
+      "No me deja guardar, ¿por qué?",
       "¿Qué puedo hacer en esta pantalla?",
+      "Llevame al mapa de camas",
     ];
   }
   if (p.startsWith("/dashboard/turnos")) {
     return [
-      "¿Cuántos turnos hay hoy por profesional?",
-      `¿Hay disponibilidad el ${new Date().toISOString().slice(0, 10)}?`,
-      "¿Cómo reservo un turno en la agenda?",
+      "¿Cómo doy un turno?",
+      "Quiero reprogramar un turno",
+      "Llevame a la agenda",
+      "¿Qué pantallas de turnos tengo?",
+    ];
+  }
+  if (p.startsWith("/dashboard/admission") || p.startsWith("/dashboard/patients")) {
+    return [
+      "¿Cómo hago un ingreso?",
+      "¿Dónde busco un paciente?",
+      "Llevame a nueva admisión",
+      "No me deja crear la admisión",
+    ];
+  }
+  if (p.startsWith("/dashboard/almacen") || p.startsWith("/dashboard/billing")) {
+    return [
+      "¿Cómo pido un insumo al almacén?",
+      "¿Dónde están las rendiciones?",
+      "¿Qué pantallas de facturación tengo?",
+    ];
+  }
+  if (p.startsWith("/dashboard/configuracion") || p.startsWith("/dashboard/settings") || p.startsWith("/dashboard/personal") || p.startsWith("/dashboard/admin")) {
+    return [
+      "¿Cómo creo un rol nuevo?",
+      "¿Dónde está la matriz de permisos?",
+      "No veo un botón, ¿me falta un permiso?",
     ];
   }
   return [
-    "¿Cuántos pacientes internados hay por sector?",
-    "Abrí los controles de Pérez",
-    "Cargá una evolución a Pérez: paciente estable, afebril, buena tolerancia oral",
-    "¿Qué pacientes llevan más de 10 días internados?",
+    "¿Cómo hago un ingreso?",
+    "¿Qué pantallas tengo?",
+    "Llevame al mapa de camas",
+    "No me deja guardar, ¿por qué?",
   ];
 }
 
@@ -714,10 +737,11 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
               <div className={styles.messages} ref={listRef}>
                 {mensajes.length === 0 ? (
                   <div className={styles.empty}>
-                    <strong>¿En qué te ayudo?</strong>
-                    Consulto datos, cargo evoluciones, armo epicrisis, completo
-                    campos de la pantalla y te abro la ficha donde haga falta.
-                    Todo lo que guarda te lo muestro antes para confirmar.
+                    <strong>Soporte de iMedic</strong>
+                    Te ayudo a usar la plataforma: cómo hacer una tarea, dónde
+                    está una pantalla, por qué no ves un botón o qué significa
+                    un error. También puedo abrirte la ruta y ayudarte a
+                    completar un campo de texto.
                     <div className={styles.chips}>
                       {ejemplosPara(pathname).map((ej) => (
                         <button
@@ -909,7 +933,7 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
                   ref={inputRef}
                   className={styles.input}
                   rows={1}
-                  placeholder="Preguntá, pedí un dato o dictá una evolución…"
+                  placeholder="Preguntá cómo hacer algo, dónde está o por qué no te deja…"
                   value={tab.borrador}
                   disabled={busy}
                   onChange={(e) => {
