@@ -195,7 +195,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 		const empresaInfo = await obtenerInfoEmpresa();
 		await generarPDFBalanceHidrico({
 			items: filtrados,
-			fileName: `balance_hidrico_${numeroVisita ?? ''}_${soloDia ? fechaISO : periodo === 'all' ? 'internacion' : `${periodo}d_${fechaISO}`}.pdf`,
+			fileName: `balance_hidrico_${soloDia ? fechaISO : periodo === 'all' ? 'internacion' : `${periodo}d_${fechaISO}`}.pdf`,
 			empresaInfo,
 			patient: {
 				numeroVisita: numeroVisita || undefined,

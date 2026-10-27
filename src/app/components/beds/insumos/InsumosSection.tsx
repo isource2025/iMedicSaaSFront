@@ -89,18 +89,19 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
 
     const handleExport = async (option: ExportOption) => {
         if (option === 'pdf') {
+            const empresaInfo = await obtenerInfoEmpresa();
             await generarPDFInsumos({
                 items: insumosFiltered,
-                fileName: `insumos_${numeroVisita}.pdf`,
-                empresaInfo: await obtenerInfoEmpresa(),
+                fileName: `insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`,
+                empresaInfo,
                 patient: {
                     numeroVisita: numeroVisita || undefined,
                     nombre: patientName,
                     numeroDocumento: documentoPaciente,
                     ubicacion: patientLocation,
-                    fechaIngreso: fechaIngreso,
-                    horaIngreso: horaIngreso
-                }
+                    fechaIngreso,
+                    horaIngreso,
+                },
             });
         }
     };

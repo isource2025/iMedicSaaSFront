@@ -76,6 +76,7 @@ export default function RenderControlSimplificado({
                             <span className={styles.subLabel}>Max</span>
                             <input
                                 type="number"
+                                aria-label="Presión arterial máxima (sistólica)"
                                 placeholder="0"
                                 value={formData.control.presionArterialMax || ''}
                                 onChange={(e) => handleControlChange('presionArterialMax', e.target.value)}
@@ -85,6 +86,7 @@ export default function RenderControlSimplificado({
                             <span className={styles.subLabel}>Min</span>
                             <input
                                 type="number"
+                                aria-label="Presión arterial mínima (diastólica)"
                                 placeholder="0"
                                 value={formData.control.presionArterialMin || ''}
                                 onChange={(e) => handleControlChange('presionArterialMin', e.target.value)}

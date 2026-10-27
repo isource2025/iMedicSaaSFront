@@ -18,23 +18,12 @@ export type PDFAdjuntosOptions = {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/**
- * FechaCarga del HIS es hora de pared (sin zona). Si llega con Z (legado),
- * los componentes UTC son la hora local — no restar UTC-3.
- */
+/** FechaCarga viene como datetime ISO (UTC): se muestra en hora local, como en pantalla. */
 function fechaHoraLocal(v?: string | null): [string, string] {
 	const s = cleanPdfValue(v);
-	const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
-	if (m) return [`${m[1]}-${m[2]}-${m[3]}`, `${m[4]}:${m[5]}`];
 	const d = s ? new Date(s) : null;
 	if (!d || Number.isNaN(d.getTime())) return [s.slice(0, 10), ''];
-	const fromUtc = /Z$/i.test(s);
-	const y = fromUtc ? d.getUTCFullYear() : d.getFullYear();
-	const mo = (fromUtc ? d.getUTCMonth() : d.getMonth()) + 1;
-	const day = fromUtc ? d.getUTCDate() : d.getDate();
-	const h = fromUtc ? d.getUTCHours() : d.getHours();
-	const mi = fromUtc ? d.getUTCMinutes() : d.getMinutes();
-	return [`${y}-${pad(mo)}-${pad(day)}`, `${pad(h)}:${pad(mi)}`];
+	return [`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, `${pad(d.getHours())}:${pad(d.getMinutes())}`];
 }
 
 const extension = (a: AdjuntoPdf) => (cleanPdfValue(a.NombreArchivo).match(/\.([a-z0-9]+)$/i)?.[1] || '').toLowerCase();

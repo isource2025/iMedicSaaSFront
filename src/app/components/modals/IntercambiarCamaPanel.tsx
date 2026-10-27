@@ -174,6 +174,7 @@ export default function IntercambiarCamaPanel({
         type="search"
         className={styles.buscador}
         placeholder="Buscar por paciente, DNI, cama, sector o Nº de visita…"
+        aria-label="Paciente con quien intercambiar la cama (buscar)"
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
         disabled={bloqueado}

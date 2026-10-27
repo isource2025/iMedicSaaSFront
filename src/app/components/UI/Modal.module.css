@@ -108,7 +108,7 @@
 }
 
 .modalContent {
-	padding: 0 1.25rem;
+	padding: 0.85rem 1.25rem 0;
 	margin-top: 0;
 	margin-bottom: 0;
 	overflow-y: auto;

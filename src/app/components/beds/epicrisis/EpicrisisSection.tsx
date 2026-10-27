@@ -10,7 +10,6 @@ import { epicrisisService } from '../../../services/epicrisisService';
 import EpicrisisTable, { EpicrisisRow } from './EpicrisisTable';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { generarPDFEpicrisis } from '../../../utils/pdfExportLazy';
-import { epicrisisParaPdf } from '../../../utils/pdfAdaptadores';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import styles from '../evoluciones/EvolucionesSection.module.css';
@@ -62,10 +61,27 @@ export default function EpicrisisSection({
 				? data.data
 				: [];
 
-		return list.map((x) => {
-			const e = epicrisisParaPdf(x);
-			return { ...e, id: e.idHCEpicrisis } as EpicrisisRow;
-		});
+		return list.map((x) => ({
+			id: Number(x.IdHCEpicrisis ?? x.idHCEpicrisis),
+			idHCEpicrisis: Number(x.IdHCEpicrisis ?? x.idHCEpicrisis),
+			idVisita: Number(x.IdVisita ?? x.idVisita),
+			nroHC: x.NroHC ?? x.nroHC,
+			fecha: x.Fecha ?? x.fecha,
+			hora: x.Hora ?? x.hora,
+			idSector: x.IdSector ?? x.idSector,
+			sectorDescripcion: x.SectorDescripcion ?? x.sectorDescripcion,
+			profesional: x.Profecional ?? x.profesional,
+			idPersonal: x.IdPersonal ?? x.idPersonal ?? undefined,
+			matricula: x.Matricula ?? x.matricula ?? undefined,
+			profesionalNombreCompleto:
+				x.ProfesionalNombreCompleto ?? x.profesionalNombreCompleto,
+			epicrisis: x.Epicrisis ?? x.epicrisis ?? '',
+			numeroDocumento: x.NumeroDocumento ?? x.numeroDocumento,
+			diagnostico: x.Diagnostico ?? x.diagnostico ?? '',
+			diagnosticoText: x.DiagnosticoText ?? x.diagnosticoText ?? '',
+			diagnosticoDescripcion: x.DiagnosticoDescripcion ?? x.diagnosticoDescripcion ?? undefined,
+			especialidad: x.EspecialidadDescripcion ?? x.especialidad ?? undefined,
+		}));
 	}, [data]);
 
 	const rows = useMemo(() => {

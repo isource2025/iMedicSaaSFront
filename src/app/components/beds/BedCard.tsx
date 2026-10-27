@@ -417,6 +417,11 @@ function CamaOConsultorioCard({
 		<div
 			className={`${styles.bedCard} ${wrapperMod} ${estadoClass} ${puedeAsignar || puedeCambiarEstado ? styles.bedCardAssignable : ''}`}
 			onClick={() => onBedClick && onBedClick(bed.id)}
+			data-asistente-visita={isOcupada && bed.numeroVisita ? bed.numeroVisita : undefined}
+			data-asistente-paciente={isOcupada ? bed.NombrePaciente || undefined : undefined}
+			data-asistente-documento={isOcupada ? bed.documentoPaciente || undefined : undefined}
+			data-asistente-sector={bed.sector || undefined}
+			data-asistente-cama={bed.numeroCama || undefined}
 		>
 			<div className={styles.cardHeader}>
 				<div className={styles.bedInfo}>

@@ -97,8 +97,10 @@ const menuItems: MenuItem[] = [
     moduloId: 'ALMACEN',
     label: 'Almacén',
     icon: Warehouse,
-    path: '/dashboard/almacen',
-    subItems: [],
+    subItems: [
+      { submoduloId: 'PRODUCTOS', label: 'Productos', path: '/dashboard/almacen/productos' },
+      { submoduloId: 'REMITOS', label: 'Remitos', path: '/dashboard/almacen/remitos' },
+    ],
   },
   {
     id: 'reportes', moduloId: 'REPORTES', label: 'Reportes', icon: BarChart3,
@@ -126,6 +128,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { submoduloId: 'PERSONAL', label: 'Personal', path: '/dashboard/personal' },
       { submoduloId: 'ROLES', label: 'Matriz de permisos', path: '/dashboard/configuracion/permisos' },
+      { submoduloId: 'CONSUMO_IA', label: 'Consumo IA', path: '/dashboard/configuracion/consumo-ia' },
       { submoduloId: 'INSTITUCION', label: 'Institución', path: '/dashboard/configuracion/institucion' },
       { submoduloId: 'TABLA', permisoModuloId: 'TURNOS',      label: 'Tabla de Turnos',      path: '/dashboard/turnos/tabla' },
       { submoduloId: 'TABLA', permisoModuloId: 'ADMISION',    label: 'Tabla de Admisiones',  path: '/dashboard/admission/tables' },

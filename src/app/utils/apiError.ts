@@ -17,12 +17,19 @@ type ErrorApi = {
 
 const texto = (v: unknown): string => String(v ?? '').trim();
 
+function esTecnico(msg: string): boolean {
+  return /FOREIGN KEY|INSERT statement|constraint|Violation of|Request failed with status code|dbo\.|SQLSTATE/i.test(
+    msg,
+  );
+}
+
 /** Mensaje mostrable al usuario: primero el del backend, después el genérico. */
 export function mensajeDeError(error: unknown, generico = 'Ocurrió un error inesperado'): string {
   const e = error as ErrorApi;
   const data = e?.response?.data;
   const delBackend = texto(data?.mensaje) || texto(data?.message);
-  if (delBackend) return delBackend;
+  if (delBackend && !esTecnico(delBackend)) return delBackend;
+  if (delBackend && esTecnico(delBackend)) return generico;
 
   // Un 5xx sin mensaje es una falla inesperada: no tiene sentido mostrar el
   // texto de axios ni el detalle de SQL.

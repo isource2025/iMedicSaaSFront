@@ -14,7 +14,6 @@ import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { generarPDFEvoluciones } from '../../../utils/pdfExportLazy';
-import { evolucionMedicaParaPdf } from '../../../utils/pdfAdaptadores';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 
 type EvolucionDTO = {
@@ -215,7 +214,17 @@ export default function EvolucionesSection({
 
             await generarPDFEvoluciones({
                 title: 'Evoluciones',
-                items: rows.map((row) => evolucionMedicaParaPdf(row)),
+                items: rows.map((row) => ({
+                    fecha: row.fechaEv,
+                    hora: row.horaEv,
+                    texto: row.evolucion,
+                    profesional: {
+                        nombre: row.profesionalNombreCompleto || undefined,
+                        matricula: row.matricula ?? undefined,
+                        idPersonal: row.idPersonal ?? undefined,
+                        especialidad: row.especialidadDescripcion || undefined,
+                    },
+                })),
                 fileName: `evoluciones_${numeroVisita ?? ''}_${selectedDate?.toISOString().split('T')[0] ?? ''}.pdf`,
                 empresaInfo,
                 patient: {

@@ -1,5 +1,7 @@
 import { getResolvedApiBaseUrl } from '@/app/services/axios';
 import { getEnvApiBaseUrl, normalizeApiRequestPath } from '@/app/config/apiBaseUrl';
+import { registrarErrorApi } from '@/app/components/Asistente/erroresRecientes';
+import { motivoDeRespuesta } from '@/app/utils/apiError';
 
 /** Ruta relativa → URL absoluta del backend local/remoto configurado. */
 export function apiPath(path: string): string {
@@ -35,7 +37,17 @@ function getStoredToken(): string | null {
 export async function apiFetch(pathOrUrl: string, init?: RequestInit): Promise<Response> {
 	const normalized = normalizeApiRequestPath(pathOrUrl);
 	const url = /^https?:\/\//i.test(normalized) ? normalized : apiPath(normalized);
-	return fetch(url, { ...withAuthHeaders(init), credentials: 'include' });
+	const metodo = String(init?.method || 'GET');
+	try {
+		const res = await fetch(url, { ...withAuthHeaders(init), credentials: 'include' });
+		if (!res.ok) {
+			void motivoDeRespuesta(res, '').then((mensaje) => registrarErrorApi({ metodo, url, status: res.status, mensaje }));
+		}
+		return res;
+	} catch (err) {
+		if ((err as Error)?.name !== 'AbortError') registrarErrorApi({ metodo, url, status: 0, mensaje: 'Sin respuesta del servidor' });
+		throw err;
+	}
 }
 
 async function readFetchErrorMessage(response: Response, fallback: string): Promise<string> {

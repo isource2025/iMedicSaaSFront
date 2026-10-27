@@ -192,21 +192,22 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   const fechaFormateada = formatSelectedDate();
 
   const handleExport = async (option: ExportOption) => {
-    if (option !== 'pdf') return;
-    const empresaInfo = await obtenerInfoEmpresa();
-    await generarPDFMedicacion({
-      items: medicacionesVisibles,
-      empresaInfo,
-      fileName: `medicacion_${numeroVisita ?? ''}_${fechaISO ?? ''}.pdf`,
-      patient: {
-        numeroVisita: numeroVisita || undefined,
-        nombre: patientName,
-        numeroDocumento: documentoPaciente,
-        ubicacion: patientLocation,
-        fechaIngreso,
-        horaIngreso,
-      },
-    });
+    if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
+      await generarPDFMedicacion({
+        items: medicacionesVisibles,
+        fileName: `medicacion_${selectedDate?.toISOString().split('T')[0]}.pdf`,
+        empresaInfo,
+        patient: {
+          numeroVisita: numeroVisita || undefined,
+          nombre: patientName,
+          numeroDocumento: documentoPaciente,
+          ubicacion: patientLocation,
+          fechaIngreso,
+          horaIngreso,
+        },
+      });
+    }
   };
 
   // No renderizar si no es la sección activa

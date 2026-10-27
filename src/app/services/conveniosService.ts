@@ -50,6 +50,8 @@ export const conveniosService = {
 	actualizar: (codigo: number, cabecera: CabeceraConvenio) =>
 		dato<ConvenioDetalle>(apiService.put(`/convenios/${codigo}`, cabecera)),
 
+	eliminar: (codigo: number) => dato<{ codigo: number }>(apiService.delete(`/convenios/${codigo}`, LARGO)),
+
 	pestana: (
 		codigo: number,
 		pestana: PestanaId,

@@ -153,8 +153,7 @@ describe("Modificar admisión · egreso de internado", () => {
         renderEmbebido();
         await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
         expect(await screen.findByText(/Volverá a internación en la cama 02/)).toBeInTheDocument();
-        const confirmarLibre = screen.getAllByRole("button", { name: "Eliminar egreso" });
-        await user.click(confirmarLibre[confirmarLibre.length - 1]);
+        await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
         expect(await screen.findByText(/volvió a la cama 02/)).toBeInTheDocument();
         expect(screen.queryByTestId("asignar-cama")).not.toBeInTheDocument();
@@ -190,8 +189,7 @@ describe("Modificar admisión · egreso de internado", () => {
         await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
 
         expect(await screen.findByText(/Hoy está GOMEZ ANA/)).toBeInTheDocument();
-        const confirmarOcupada = screen.getAllByRole("button", { name: "Eliminar egreso" });
-        await user.click(confirmarOcupada[confirmarOcupada.length - 1]);
+        await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
         await waitFor(() => expect(visitaMovimientoService.revertirEgreso).toHaveBeenCalledWith(500));
         expect(await screen.findByTestId("asignar-cama")).toBeInTheDocument();
@@ -243,14 +241,18 @@ describe("Modificar admisión · egreso de internado", () => {
         } as any);
 
         renderEmbebido();
+        await user.click(await screen.findByRole("button", { name: "Eliminar egreso" }));
+
+        expect(await screen.findByText("No se puede eliminar el egreso")).toBeInTheDocument();
+        expect(screen.getByText(/otra internación abierta/)).toBeInTheDocument();
+        expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
+    });
+
+    it("un usuario que no es admin ve el egreso pero no puede quitarlo", async () => {
+        estado.admin = false;
+        renderEmbebido();
         expect(await screen.findByDisplayValue("2026-10-01")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Eliminar egreso" })).toBeInTheDocument();
-
-        await user.click(screen.getByRole("button", { name: "Eliminar egreso" }));
-
-        await waitFor(() =>
-            expect(visitaMovimientoService.getEstadoRevertirEgreso).toHaveBeenCalledWith(500),
-        );
-        expect(await screen.findByText(/Se va a anular el egreso/)).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Eliminar egreso" })).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Modificar" })).toBeInTheDocument();
     });
 });

@@ -16,6 +16,12 @@ interface CustomSelectProps {
     tabIndex?: number; // NEW: permitir orden de tabulación
     autoFocus?: boolean; // NEW: permitir autoFocus
     disabled?: boolean; // NEW: bloquear apertura mostrando el valor seleccionado
+    /** Si se define, el filtrado local se desactiva y se notifica el término (búsqueda remota). */
+    onSearchChange?: (term: string) => void;
+    /** Etiqueta a mostrar cuando el valor seleccionado no está en `options`. */
+    selectedLabel?: string;
+    /** Altura y tipografía más chicas (modales densos). */
+    compact?: boolean;
 }
 
 type Placement = "top" | "bottom";
@@ -30,6 +36,9 @@ export default function CustomSelect({
     tabIndex, // NEW
     autoFocus, // NEW
     disabled, // NEW
+    onSearchChange,
+    selectedLabel,
+    compact,
 }: CustomSelectProps) {
     const [mounted, setMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +50,8 @@ export default function CustomSelect({
     const triggerRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null); // NEW
+    const onSearchRef = useRef(onSearchChange);
+    onSearchRef.current = onSearchChange;
 
     const [activeIndex, setActiveIndex] = useState<number>(-1);
     const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
@@ -52,9 +63,20 @@ export default function CustomSelect({
     const mismoValor = (a: string | number, b: string | number) =>
         String(a) === String(b);
     const selected = options.find((o) => mismoValor(o.value, value));
-    const filtered = options.filter((o) =>
-        o.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const displayLabel = selected?.label || selectedLabel || null;
+    const filtered = onSearchChange
+        ? options
+        : options.filter((o) =>
+              o.label.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+
+    useEffect(() => {
+        if (!isOpen || !onSearchRef.current) return;
+        const t = window.setTimeout(() => {
+            onSearchRef.current?.(searchTerm);
+        }, 220);
+        return () => window.clearTimeout(t);
+    }, [searchTerm, isOpen]);
 
     const close = () => {
         setIsOpen(false);
@@ -125,6 +147,7 @@ export default function CustomSelect({
 
     const selectClasses = [
         styles.select,
+        compact ? styles.selectCompact : "",
         isLoading || disabled ? styles.selectDisabled : "",
         isLoading ? styles.selectLoading : "",
     ]
@@ -171,7 +194,10 @@ export default function CustomSelect({
     }, [activeIndex]);
 
     return (
-        <div className={`${label ? styles.formGroup : ""}`} ref={wrapperRef}>
+        <div
+            className={`${label ? (compact ? styles.formGroupCompact : styles.formGroup) : ""}`}
+            ref={wrapperRef}
+        >
             {label && (
                 <label className={styles.label} htmlFor={name}>
                     {label}
@@ -197,8 +223,8 @@ export default function CustomSelect({
                 >
                     {isLoading
                         ? "Cargando…"
-                        : selected
-                        ? selected.label
+                        : displayLabel
+                        ? displayLabel
                         : "Seleccione…"}
                     {isLoading && (
                         <div

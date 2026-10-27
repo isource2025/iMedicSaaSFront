@@ -180,7 +180,7 @@ const DietaSection: React.FC<Props> = ({
 		const empresaInfo = await obtenerInfoEmpresa();
 		await generarPDFDieta({
 			items: filtrados,
-			fileName: `dietas_${numeroVisita ?? ''}_${soloDia ? fechaISO : periodo === 'all' ? 'internacion' : `${periodo}d_${fechaISO}`}.pdf`,
+			fileName: `dietas_${soloDia ? fechaISO : periodo === 'all' ? 'internacion' : `${periodo}d_${fechaISO}`}.pdf`,
 			empresaInfo,
 			patient: {
 				numeroVisita: numeroVisita || undefined,

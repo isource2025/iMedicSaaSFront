@@ -125,10 +125,11 @@ export default function LabResultsSection({
 
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
       await generarPDFLaboratorio({
         items: examenesVisibles,
         fileName: `laboratorios_${numeroVisita}.pdf`,
-        empresaInfo: await obtenerInfoEmpresa(),
+        empresaInfo,
         patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,

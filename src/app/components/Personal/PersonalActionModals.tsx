@@ -93,7 +93,7 @@ export default function PersonalActionModals({
 				if (kind === 'servicio') {
 					const [dto, sv, asignados] = await Promise.all([
 						personalService.getPersonalServicio(id),
-						personalService.getServicios(),
+						personalService.getServiciosNube(),
 						personalService.getPersonalServiciosPedidos(id),
 					]);
 					if (!cancelled) {

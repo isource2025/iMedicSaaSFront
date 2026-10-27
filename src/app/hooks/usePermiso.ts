@@ -31,31 +31,16 @@ interface PermisosState {
 
 /**
  * Lee de localStorage de forma segura (solo funciona en el cliente).
- * En SSR devuelve el estado vacío inicial.
+ * La lista guardada en login / refresh es la efectiva del servidor; no se
+ * re-expanden plantillas locales (desharían un DENY por persona).
  */
 function leerLocal(): PermisosState {
 	if (typeof window === 'undefined') {
 		return { rol: null, permisos: [], loaded: false };
 	}
-	const rol = authService.getCurrentRol();
-	const permisos = authService.getCurrentPermisos();
-	// Expandir plantillas de todos los roles (multi-rol) además de la lista guardada
-	let extras: string[] = [];
-	try {
-		const raw = localStorage.getItem('roles');
-		const arr = raw ? JSON.parse(raw) : [];
-		if (Array.isArray(arr)) {
-			for (const r of arr) {
-				extras = extras.concat([...permisosDeRol(r?.nombre || r)]);
-			}
-		}
-	} catch {
-		/* ignore */
-	}
-	const merged = Array.from(new Set(permisos.concat(extras)));
 	return {
-		rol,
-		permisos: merged,
+		rol: authService.getCurrentRol(),
+		permisos: authService.getCurrentPermisos(),
 		loaded: true,
 	};
 }

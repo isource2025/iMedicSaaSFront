@@ -5,6 +5,8 @@ import railStyles from '@/app/components/layout/FloatingActionsRail.module.css';
 import NotificationsFab from '@/app/components/layout/NotificationsFab';
 import PatientFolderFab from '@/app/components/layout/PatientFolderFab';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import AsistenteFab from '@/app/components/Asistente/AsistenteFab';
+import { useRegistrarRailLocal } from '@/app/components/layout/railLocalStore';
 import { useBedDetail } from './contexts/BedDetailContext';
 import styles from './BedFloatingActions.module.css';
 
@@ -24,8 +26,10 @@ export default function BedFloatingActions({
   onOpenNursing,
   onOpenLaboratorios,
 }: BedFloatingActionsProps) {
+  useRegistrarRailLocal();
   const { puede, rol, loaded } = usePermiso();
   const { navigateToSection, activeSection } = useBedDetail();
+  const asistente = <AsistenteFab stack />;
   const esEnfermero = loaded && String(rol?.nombre || '').toUpperCase() === 'ENFERMERO';
   const showAdjuntos = puede('INTERNACION.ADJUNTOS.VER') || puede('INTERNACION.ADJUNTOS.CREAR');
   const showLabs = puede('INTERNACION.ESTUDIOS.VER') || puede('INTERNACION.ESTUDIOS.CREAR');
@@ -39,7 +43,7 @@ export default function BedFloatingActions({
 
   if (!showAdjuntos && !showLabs && !showNursing && !showEvoluciones && !showInterconsulta) {
     return (
-      <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root} overModals>
+      <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root} overModals footer={asistente}>
         <NotificationsFab stack />
         <PatientFolderFab stack />
       </FloatingActionsRail>
@@ -47,7 +51,7 @@ export default function BedFloatingActions({
   }
 
   return (
-    <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root} overModals>
+    <FloatingActionsRail ariaLabel="Acciones rápidas" className={styles.root} overModals footer={asistente}>
       <NotificationsFab stack />
       <PatientFolderFab stack />
       {showNursing && (

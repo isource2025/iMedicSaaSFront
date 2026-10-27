@@ -137,8 +137,8 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 			const empresaInfo = await obtenerInfoEmpresa();
 			await generarPDFControles({
 				items: controlsFiltrados,
+				fileName: `controles_${fechaISO}.pdf`,
 				empresaInfo,
-				fileName: `controles_${numeroVisita ?? ''}_${fechaISO ?? ''}.pdf`,
 				patient: {
 					numeroVisita: numeroVisita || undefined,
 					nombre: patientName,

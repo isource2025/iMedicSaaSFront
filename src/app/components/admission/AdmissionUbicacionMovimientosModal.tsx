@@ -301,14 +301,16 @@ export default function AdmissionUbicacionMovimientosModal({
             Esta visita figura egresada y sin cama. Eliminá el egreso para poder
             asignarle una ubicación.
           </p>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            disabled={loading || revertBusy}
-            onClick={() => void onRevertirEgreso()}
-          >
-            {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
-          </button>
+          {puedeRevertirEgreso ? (
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              disabled={loading || revertBusy}
+              onClick={() => void onRevertirEgreso()}
+            >
+              {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
+            </button>
+          ) : null}
         </>
       ) : (
         <button
@@ -380,7 +382,7 @@ export default function AdmissionUbicacionMovimientosModal({
       setEstadoRevertir(estado);
     } catch (e: unknown) {
       setAviso({
-        title: 'No se pudo revisar el egreso',
+        title: 'No se puede eliminar el egreso',
         message: mensajeErrorHttp(e, 'No se pudo revisar el egreso'),
         tone: 'error',
       });
@@ -634,15 +636,17 @@ export default function AdmissionUbicacionMovimientosModal({
                     >
                       Modificar
                     </button>
-                    <button
-                      type="button"
-                      className={`${styles.btn} ${styles.btnDanger}`}
-                      disabled={loading || revertBusy}
-                      onClick={() => void onRevertirEgreso()}
-                      title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda internado sin cama"
-                    >
-                      {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
-                    </button>
+                    {puedeRevertirEgreso ? (
+                      <button
+                        type="button"
+                        className={`${styles.btn} ${styles.btnDanger}`}
+                        disabled={loading || revertBusy}
+                        onClick={() => void onRevertirEgreso()}
+                        title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda internado sin cama"
+                      >
+                        {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
+                      </button>
+                    ) : null}
                   </>
                 )}
               </div>
@@ -659,7 +663,7 @@ export default function AdmissionUbicacionMovimientosModal({
         isOpen={Boolean(estadoRevertir)}
         title="Eliminar egreso"
         message={estadoRevertir ? textoConfirmacionRevertir(estadoRevertir) : ''}
-        confirmText={revertBusy ? 'Eliminando…' : 'Eliminar egreso'}
+        confirmText={revertBusy ? 'Eliminando…' : 'Confirmar'}
         cancelText="Cancelar"
         onClose={() => {
           if (!revertBusy) setEstadoRevertir(null);

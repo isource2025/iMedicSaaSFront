@@ -75,7 +75,6 @@ export interface PersonalFormData {
 	IdRoles?: number[];
 	/** Alta: sectores opcionales (imPersonalSectores). */
 	Sectores?: string[];
-	/** Alta: servicios destino opcionales (imPersonalServicios / bandeja de pedidos). */
 	Servicios?: string[];
 }
 

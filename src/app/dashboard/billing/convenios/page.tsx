@@ -1,10 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, ShieldCheck } from 'lucide-react';
+import { Copy, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import Pagination from '@/app/components/UI/Pagination';
+import { useToast } from '@/app/components/UI/ToastProvider';
 import ConvenioDetalleModal from '@/app/components/Convenios/ConvenioDetalleModal';
+import ConvenioDuplicarModal, { type ConvenioParaDuplicar } from '@/app/components/Convenios/ConvenioDuplicarModal';
 import ConvenioNuevoModal from '@/app/components/Convenios/ConvenioNuevoModal';
 import ConveniosMantenimientoModal from '@/app/components/Convenios/ConveniosMantenimientoModal';
 import { ESTADO_LABEL, PESTANA_CORTA, vigenciaTexto } from '@/app/components/Convenios/conveniosFormato';
@@ -12,7 +15,7 @@ import { fmtNumero } from '@/app/components/Facturacion/formato';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { conveniosService } from '@/app/services/conveniosService';
 import { mensajeDeError } from '@/app/utils/apiError';
-import type { CatalogosConvenio, EstadoVigencia, ListadoConvenios, PestanaId } from '@/app/types/convenios';
+import type { CatalogosConvenio, ConvenioListado, EstadoVigencia, ListadoConvenios, PestanaId } from '@/app/types/convenios';
 import c from '@/app/components/Facturacion/Facturacion.module.css';
 
 const TAM_PAGINA = 50;
@@ -28,10 +31,12 @@ const KPIS: { id: EstadoVigencia | ''; label: string; clave: keyof ListadoConven
 const PESTANAS: PestanaId[] = ['valores', 'nomenclador', 'moduladas', 'vademecum', 'genericos', 'categorias', 'complejidad'];
 
 export default function ConveniosPage() {
+	const toast = useToast();
 	const { puede, loaded } = usePermiso();
 	const puedeVer = puede('FACTURACION.CONVENIOS.VER');
 	const permisos = { crear: puede('FACTURACION.CONVENIOS.CREAR'), editar: puede('FACTURACION.CONVENIOS.EDITAR') };
 	const puedeEliminar = puede('FACTURACION.CONVENIOS.ELIMINAR');
+	const verAcciones = permisos.crear || puedeEliminar;
 
 	const [catalogos, setCatalogos] = useState<CatalogosConvenio | null>(null);
 	const [obraSocial, setObraSocial] = useState<number | ''>('');
@@ -45,6 +50,9 @@ export default function ConveniosPage() {
 	const [abierto, setAbierto] = useState<number | null>(null);
 	const [nuevoAbierto, setNuevoAbierto] = useState(false);
 	const [mantenimientoAbierto, setMantenimientoAbierto] = useState(false);
+	const [duplicarDe, setDuplicarDe] = useState<ConvenioParaDuplicar | null>(null);
+	const [borrarDe, setBorrarDe] = useState<ConvenioListado | null>(null);
+	const [borrando, setBorrando] = useState(false);
 	const [recarga, setRecarga] = useState(0);
 	const [intentoCatalogos, setIntentoCatalogos] = useState(0);
 
@@ -80,6 +88,22 @@ export default function ConveniosPage() {
 	}, [loaded, puedeVer, qAplicada, obraSocial, estado, pagina, recarga]);
 
 	const refrescar = useCallback(() => setRecarga((n) => n + 1), []);
+
+	const confirmarBorrado = async () => {
+		if (!borrarDe) return;
+		setBorrando(true);
+		try {
+			await conveniosService.eliminar(borrarDe.codigo);
+			toast.success(`Convenio #${borrarDe.codigo} borrado.`);
+			setBorrarDe(null);
+			if (abierto === borrarDe.codigo) setAbierto(null);
+			refrescar();
+		} catch (e) {
+			toast.error(mensajeDeError(e, 'No se pudo borrar el convenio'));
+		} finally {
+			setBorrando(false);
+		}
+	};
 
 	if (loaded && !puedeVer) {
 		return <p className={c.warning}>No tenés permiso para ver los convenios.</p>;
@@ -200,6 +224,11 @@ export default function ConveniosPage() {
 												{PESTANA_CORTA[p]}
 											</th>
 										))}
+										{verAcciones ? (
+											<th className={c.colAccionesLista} aria-label='Acciones'>
+												Acciones
+											</th>
+										) : null}
 									</tr>
 								</thead>
 								<tbody>
@@ -227,6 +256,34 @@ export default function ConveniosPage() {
 													{fmtNumero(f.conteos[p])}
 												</td>
 											))}
+											{verAcciones ? (
+												<td className={c.colAccionesLista} onClick={(e) => e.stopPropagation()}>
+													<div className={c.accionesFila}>
+														{permisos.crear ? (
+															<button
+																type='button'
+																className={`${c.iconBtn} ${c.iconBtnAccion}`}
+																title='Duplicar convenio'
+																aria-label={`Duplicar convenio ${f.codigo}`}
+																onClick={() => setDuplicarDe(f)}
+															>
+																<Copy size={15} aria-hidden />
+															</button>
+														) : null}
+														{puedeEliminar ? (
+															<button
+																type='button'
+																className={c.iconBtn}
+																title='Borrar convenio'
+																aria-label={`Borrar convenio ${f.codigo}`}
+																onClick={() => setBorrarDe(f)}
+															>
+																<Trash2 size={15} aria-hidden />
+															</button>
+														) : null}
+													</div>
+												</td>
+											) : null}
 										</tr>
 									))}
 								</tbody>
@@ -270,6 +327,33 @@ export default function ConveniosPage() {
 				puedeLimpiar={puedeEliminar}
 				onClose={() => setMantenimientoAbierto(false)}
 				onAbrirConvenio={setAbierto}
+			/>
+			{duplicarDe && catalogos ? (
+				<ConvenioDuplicarModal
+					open
+					convenio={duplicarDe}
+					catalogos={catalogos}
+					onClose={() => setDuplicarDe(null)}
+					onDuplicado={(codigo) => {
+						setDuplicarDe(null);
+						refrescar();
+						setAbierto(codigo);
+					}}
+				/>
+			) : null}
+			<ConfirmDialog
+				open={Boolean(borrarDe)}
+				title={borrarDe ? `Borrar convenio #${borrarDe.codigo}` : 'Borrar convenio'}
+				message={
+					borrarDe
+						? `Se va a borrar «${borrarDe.descripcion || 'Sin descripción'}» y todas sus filas de valores, prácticas y medicamentos. Si el convenio ya se usó en visitas, facturas o rendiciones, el sistema no lo deja borrar.`
+						: ''
+				}
+				confirmLabel='Borrar'
+				tone='danger'
+				busy={borrando}
+				onCancel={() => !borrando && setBorrarDe(null)}
+				onConfirm={confirmarBorrado}
 			/>
 		</div>
 	);

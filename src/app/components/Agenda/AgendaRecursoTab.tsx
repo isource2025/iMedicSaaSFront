@@ -222,6 +222,7 @@ export default function AgendaRecursoTab({ tipo, valor, readOnly = false }: Prop
 									<div className={styles.rango}>
 										<input
 											type="time"
+											aria-label={`${d} · Rango 1 desde`}
 											value={st.rango1.inicio}
 											disabled={readOnly}
 											onChange={(e) =>
@@ -237,6 +238,7 @@ export default function AgendaRecursoTab({ tipo, valor, readOnly = false }: Prop
 										<span>a</span>
 										<input
 											type="time"
+											aria-label={`${d} · Rango 1 hasta`}
 											value={st.rango1.fin}
 											disabled={readOnly}
 											onChange={(e) =>
@@ -254,6 +256,7 @@ export default function AgendaRecursoTab({ tipo, valor, readOnly = false }: Prop
 										<div className={styles.rango}>
 											<input
 												type="time"
+												aria-label={`${d} · Rango 2 desde`}
 												value={st.rango2.inicio}
 												disabled={readOnly}
 												onChange={(e) =>
@@ -269,6 +272,7 @@ export default function AgendaRecursoTab({ tipo, valor, readOnly = false }: Prop
 											<span>a</span>
 											<input
 												type="time"
+												aria-label={`${d} · Rango 2 hasta`}
 												value={st.rango2.fin}
 												disabled={readOnly}
 												onChange={(e) =>

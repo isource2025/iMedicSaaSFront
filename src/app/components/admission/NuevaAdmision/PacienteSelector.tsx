@@ -103,11 +103,12 @@ export default function PacienteSelector({
   }
 
   return (
-    <div className={styles.buscadorPaciente} ref={contenedor}>
+    <div className={styles.buscadorPaciente} ref={contenedor} data-asistente-grupo="Paciente de la admisión">
       <div className={styles.buscadorInput}>
         <Search size={16} />
         <input
           type="text"
+          aria-label="Buscar paciente por apellido, nombre, DNI o nº de visita"
           value={query}
           placeholder="Buscar por apellido, nombre, documento o nº de visita (mínimo 3 caracteres)"
           onChange={(e) => {

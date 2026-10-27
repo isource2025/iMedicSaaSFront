@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '../Sidebar/Sidebar';
 import LayoutFloatingStack from './LayoutFloatingStack';
+import AsistenteFab from '../Asistente/AsistenteFab';
+import { useHayRailLocal } from './railLocalStore';
 import styles from './LayoutShell.module.css';
 
 function isBedDetailPath(pathname: string | null) {
@@ -19,6 +21,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const hideGlobalNotificationsFab = isBedDetailPath(pathname);
+  const hayRailLocal = useHayRailLocal();
   const lockMainScroll = isChatsPath(pathname);
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         </div>
       </main>
 
-      {!hideGlobalNotificationsFab ? <LayoutFloatingStack /> : null}
+      {hayRailLocal ? null : hideGlobalNotificationsFab ? <AsistenteFab /> : <LayoutFloatingStack />}
     </div>
   );
 }

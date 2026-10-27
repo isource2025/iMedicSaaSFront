@@ -1,0 +1,162 @@
+.card {
+  align-self: flex-start;
+  display: flex;
+  gap: 10px;
+  max-width: 92%;
+  padding: 11px 13px;
+  border-radius: 14px 14px 14px 4px;
+  border: 1px solid;
+  animation: aparecer 0.3s ease-out;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.icono {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.cuerpo {
+  min-width: 0;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.resumen {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.motivo {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: #7f1d1d;
+  line-height: 1.4;
+}
+
+.nota {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: #6d28d9;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.acciones:empty {
+  display: none;
+}
+
+.link {
+  margin-top: 8px;
+  padding: 5px 11px;
+  border: none;
+  border-radius: 999px;
+  background: #15803d;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link:hover {
+  filter: brightness(1.08);
+}
+
+.detalleBtn {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #991b1b;
+  font: inherit;
+  font-size: 11.5px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.detalle {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #7f1d1d;
+  word-break: break-word;
+}
+
+.ok {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.ok .icono {
+  background: #16a34a;
+}
+
+.ok .titulo {
+  color: #14532d;
+}
+
+.eliminado {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.eliminado .icono {
+  background: #64748b;
+}
+
+.eliminado .titulo {
+  color: #1e293b;
+}
+
+.eliminado .link {
+  background: #475569;
+}
+
+.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.error .icono {
+  background: #dc2626;
+}
+
+.error .titulo {
+  color: #991b1b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

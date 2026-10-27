@@ -80,6 +80,8 @@ export interface ModuloCatalogo {
 
 export interface MatrizRoles {
 	soportaPersonalizados: boolean;
+	/** Fase 2: no se crean/editan plantillas; el ajuste fino es por persona. */
+	plantillasCongeladas?: boolean;
 	esquemaListo: boolean;
 	sistema: RolMatriz[];
 	personalizados: RolMatriz[];

@@ -1048,24 +1048,9 @@ export default function PersonalForm({
 					<PersonalAsignacionesTab
 						draft
 						draftSectores={formData.Sectores || []}
-						onDraftChange={({ sectores }) =>
-							setFormData((prev) => ({ ...prev, Sectores: sectores }))
-						}
-					/>
-				</div>
-			)}
-
-			{isEditing && formData.Valor ? (
-				<div className={activeTab !== 'servicios' ? styles.tabHidden : undefined}>
-					<PersonalServiciosTab personalId={formData.Valor} />
-				</div>
-			) : (
-				<div className={activeTab !== 'servicios' ? styles.tabHidden : undefined}>
-					<PersonalServiciosTab
-						draft
 						draftServicios={formData.Servicios || []}
-						onDraftChange={({ servicios }) =>
-							setFormData((prev) => ({ ...prev, Servicios: servicios }))
+						onDraftChange={({ sectores, servicios }) =>
+							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: servicios }))
 						}
 					/>
 				</div>

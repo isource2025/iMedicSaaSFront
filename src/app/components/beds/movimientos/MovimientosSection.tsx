@@ -108,10 +108,12 @@ export default function MovimientosSection({
 
 	const handleExport = async (option: ExportOption) => {
 		if (option === "pdf") {
+			const empresaInfo = await obtenerInfoEmpresa();
 			await generarPDFMovimientos({
 				items: movimientosVisibles,
 				disposiciones: dispCatalogo,
-				empresaInfo: await obtenerInfoEmpresa(),
+				fileName: `movimientos_${numeroVisita}.pdf`,
+				empresaInfo,
 				patient: {
 					numeroVisita: numeroVisita || undefined,
 					nombre: patientName,

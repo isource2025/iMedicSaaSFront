@@ -774,8 +774,33 @@
   font-weight: 500;
 }
 
+.shortcutsRow4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.shortcutCardIa {
+  background: linear-gradient(135deg, #faf5ff, #eef2ff);
+  border-color: #e9d5ff;
+}
+
+.shortcutCardIa:hover {
+  border-color: #a855f7;
+  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.15);
+}
+
+.shortcutCardIa .shortcutHint {
+  color: #6d28d9;
+}
+
+@media (max-width: 1100px) {
+  .shortcutsRow4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
-  .shortcutsRow {
+  .shortcutsRow,
+  .shortcutsRow4 {
     grid-template-columns: 1fr;
   }
 

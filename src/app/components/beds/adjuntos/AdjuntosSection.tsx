@@ -191,11 +191,11 @@ export default function AdjuntosSection({
 
   const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
+      const empresaInfo = await obtenerInfoEmpresa();
       await generarPDFAdjuntos({
         items: adjuntosVisibles,
-        cargarArchivo: async (a) => (await adjuntosService.cargarBlobAdjunto(a.IdAdjunto)).blob,
         fileName: `adjuntos_${numeroVisita}.pdf`,
-        empresaInfo: await obtenerInfoEmpresa(),
+        empresaInfo,
         patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,

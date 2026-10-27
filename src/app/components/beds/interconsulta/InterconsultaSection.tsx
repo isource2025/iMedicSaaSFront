@@ -24,11 +24,7 @@ import { IoEyeOutline, IoPencilOutline, IoTrashOutline } from 'react-icons/io5';
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import CumplirEstudioModal from '../estudios/CumplirEstudioModal';
 import ConfirmationModal from '../shared/ConfirmationModal';
-import {
-	interconsultaComoPedido,
-	interconsultaCumplida as esCumplida,
-	interconsultaParaPdf,
-} from '@/app/utils/pdfAdaptadores';
+import type { PedidoEstudio } from '@/app/types/estudios';
 
 type Props = {
 	numeroVisita: number | null;
@@ -64,6 +60,18 @@ function previewText(value?: string | null, max = 100) {
 	const t = String(value || '').trim();
 	if (!t) return '—';
 	return t.length > max ? `${t.slice(0, max)}…` : t;
+}
+
+function esCumplida(row: InterconsultaRow) {
+	return !!row.Cumplido || (row.IdProtocolo != null && row.IdProtocolo > 0) || !!row.Respuesta;
+}
+
+function esPendiente(row: InterconsultaRow) {
+	if (esCumplida(row)) return false;
+	if (row.Tomado) return false;
+	const w = String(row.EstadoWorkflow || '').toUpperCase();
+	if (w === 'TOMADO' || w === 'CUMPLIDO' || w === 'RESPONDIDO') return false;
+	return true;
 }
 
 function buildInterconsultaFields(row: InterconsultaRow) {
@@ -111,6 +119,64 @@ function buildInterconsultaTextBlocks(row: InterconsultaRow) {
 			fecha: row.FechaRespuesta || null,
 		},
 	];
+}
+
+function interconsultaComoPedido(row: InterconsultaRow): PedidoEstudio {
+	return {
+		IdPedido: Number(row.IdPedido || row.IdInterconsulta) || 0,
+		IdVisita: row.IdVisita,
+		FechaPedidoISO: row.FechaSolicitud,
+		HoraPedido: row.HoraSolicitud,
+		PracticaSolicitada:
+			row.PracticaSolicitada ||
+			row.ServicioDescripcion ||
+			row.Especialidad ||
+			'Interconsulta',
+		NotasObservacion: row.Motivo,
+		MedicoSolicitanteNombre: row.MedicoSolicitanteNombre,
+		MatriculaSolicitante: row.MedicoSolicitante,
+		TextoResultado: row.Respuesta || null,
+		SectorSolicitante: row.SectorSolicitante,
+		SectorSolicitanteNombre: row.SectorSolicitanteNombre,
+		SectorReceptor: row.SectorReceptor,
+		SectorReceptorNombre: row.SectorReceptorNombre,
+		ServicioDescripcion: row.ServicioDescripcion,
+		Cumplido: true,
+		MatriculaRealizador: row.MatriculaRealizador,
+		RealizadorNombre: row.RealizadorNombre,
+		MatriculaToma: row.MatriculaToma,
+		NombreToma: row.NombreToma,
+		CodOperadorResultado: row.CodOperadorResultado,
+		CodOperadorToma: row.CodOperadorToma,
+		PacienteNombre: row.PacienteNombre,
+		PacienteDocumento: row.PacienteDocumento,
+		PacienteTipoDocumento: row.PacienteTipoDocumento,
+		PacienteSexo: row.PacienteSexo,
+		PacienteSexoDescripcion: row.PacienteSexoDescripcion,
+		PacienteFechaNacimiento: row.PacienteFechaNacimiento,
+		PacienteEdad: row.PacienteEdad,
+		ObraSocial: row.ObraSocial,
+		Ubicacion: row.Ubicacion,
+		TipoAtencion: row.TipoAtencion,
+		IdPaciente: row.IdPaciente,
+	};
+}
+
+function interconsultaParaPdf(row: InterconsultaRow): PedidoEstudio {
+	return {
+		...interconsultaComoPedido(row),
+		Cumplido: esCumplida(row),
+		Tomado: row.Tomado,
+		CodigoPractica: row.CodigoPractica,
+		EstadoUrgencia: row.EstadoUrgencia,
+		IdProtocolo: row.IdProtocolo,
+		ServicioDescripcion: row.ServicioDescripcion || row.Especialidad,
+		FechaResultado: row.FechaRespuesta || null,
+		FechaCargaResultado: row.FechaCargaRespuesta,
+		NroProtocolo: row.NroProtocolo,
+		EspecialidadSolicitante: row.EspecialidadSolicitante,
+		EspecialidadRealizador: row.EspecialidadRealizador,
+	};
 }
 
 export default function InterconsultaSection({

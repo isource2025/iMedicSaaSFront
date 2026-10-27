@@ -367,21 +367,28 @@ export default function MatrizPermisosPage() {
 		);
 	}
 
-	const puedeCrearRoles = puedeCrear && !!data?.soportaPersonalizados;
+	const puedeCrearRoles =
+		puedeCrear && !!data?.soportaPersonalizados && !data?.plantillasCongeladas;
 
 	return (
 		<div className={styles.page}>
 			<header className={styles.header}>
 				<h1>Matriz de permisos</h1>
 				<p>
-					Roles de la clínica y los permisos que otorga cada uno. Los roles del sistema son de sólo lectura:
-					duplicalos para armar uno a medida.
+					Roles de la clínica y los permisos que otorga cada uno. El ajuste fino por persona se hace en
+					Personal (acceso y permisos individuales).
 				</p>
 			</header>
 
 			{error ? <div className={`${styles.banner} ${styles.bannerError}`}>{error}</div> : null}
 			{aviso ? <div className={`${styles.banner} ${styles.bannerOk}`}>{aviso}</div> : null}
-			{data && !data.soportaPersonalizados ? (
+			{data?.plantillasCongeladas ? (
+				<div className={`${styles.banner} ${styles.bannerInfo}`}>
+					Plantillas congeladas: podés consultar roles del sistema y los personalizados ya creados, pero no
+					crear ni editar plantillas. Para dar o quitar permisos a alguien, usá Personal → permisos
+					individuales.
+				</div>
+			) : data && !data.soportaPersonalizados ? (
 				<div className={`${styles.banner} ${styles.bannerInfo}`}>
 					La creación de roles personalizados todavía no está habilitada para esta clínica. Podés consultar los
 					roles del sistema; para activarla, contactá a soporte.
@@ -503,7 +510,13 @@ export default function MatrizPermisosPage() {
 
 							{seleccionado.esSistema ? (
 								<div className={`${styles.banner} ${styles.bannerInfo}`}>
-									Rol del sistema: sólo lectura. Usá «Duplicar» para crear una versión editable.
+									{data?.plantillasCongeladas
+										? 'Rol del sistema: sólo lectura. Para ajustar permisos de una persona, usá Personal.'
+										: 'Rol del sistema: sólo lectura. Usá «Duplicar» para crear una versión editable.'}
+								</div>
+							) : data?.plantillasCongeladas ? (
+								<div className={`${styles.banner} ${styles.bannerInfo}`}>
+									Plantilla congelada (sólo consulta). Los permisos individuales se editan en Personal.
 								</div>
 							) : !puedeEditar ? (
 								<div className={`${styles.banner} ${styles.bannerInfo}`}>

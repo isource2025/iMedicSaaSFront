@@ -16,7 +16,6 @@ import { indicacionesService } from "../../../services/indicacionesService";
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { generarPDFIndicaciones } from '../../../utils/pdfExportLazy';
-import { esIndicacionSuspendida, indicacionParaPdf } from '../../../utils/pdfAdaptadores';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import ResultadoReindicarModal, {
     ReindicarItemTrack,
@@ -642,7 +641,29 @@ export default function IndicacionesSection({
 
             await generarPDFIndicaciones({
                 title: mostrarSuspendidas ? 'Indicaciones sin efecto' : 'Indicaciones médicas',
-                items: rows.map((row) => indicacionParaPdf(row)),
+                items: rows.map((row) => ({
+                    fecha: row.vigenteDesde,
+                    hora: row.horaCarga,
+                    tipo: row.tipoDescripcion || row.tipo,
+                    descripcion: row.descripcion,
+                    cantidad: row.cantidad,
+                    unidad: row.tipoUnidad,
+                    frecuencia: row.frecuencia,
+                    intervalo: row.intervalo,
+                    observaciones: row.observaciones,
+                    adicionales: (row.indicacionesHijas ?? []).map((h) => ({
+                        descripcion: h.descripcion || h.medicamento,
+                        cantidad: h.cantidad,
+                        unidad: h.tipoUnidad,
+                        forma: h.formaAdicional,
+                    })),
+                    profesional: {
+                        nombre: row.fullName || undefined,
+                        matricula: row.matricula ?? undefined,
+                        idPersonal: row.idPersonal ?? undefined,
+                        especialidad: row.especialidad || undefined,
+                    },
+                })),
                 fileName: `indicaciones_${numeroVisita ?? ''}_${selectedDate?.toISOString().split('T')[0] ?? ''}.pdf`,
                 empresaInfo,
                 patient: {

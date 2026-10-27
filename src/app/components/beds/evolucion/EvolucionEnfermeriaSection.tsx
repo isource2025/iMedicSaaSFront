@@ -154,22 +154,21 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
 
   const fechaFormateada = formatSelectedDate();
 
-  const handleExport = async (option: ExportOption, data: any[]) => {
+  const handleExport = async (option: ExportOption) => {
     if (option === 'pdf') {
       const empresaInfo = await obtenerInfoEmpresa();
-
       await generarPDFEvoluciones({
         title: 'Evolución de Enfermería',
-        items: filteredEvoluciones.map((ev) => evolucionEnfermeriaParaPdf(ev)),
-        fileName: `evolucion_enfermeria_${numeroVisita ?? ''}_${selectedDate?.toISOString().split('T')[0] ?? ''}.pdf`,
+        items: filteredEvoluciones.map(evolucionEnfermeriaParaPdf),
+        fileName: `evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`,
         empresaInfo,
         patient: {
           numeroVisita: numeroVisita || undefined,
           nombre: patientName,
           numeroDocumento: documentoPaciente,
           ubicacion: patientLocation,
-          fechaIngreso: fechaIngreso,
-          horaIngreso: horaIngreso
+          fechaIngreso,
+          horaIngreso,
         },
       });
     }

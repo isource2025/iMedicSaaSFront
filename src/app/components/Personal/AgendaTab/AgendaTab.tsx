@@ -373,6 +373,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 										<span className={styles.rangoLabel}>Rango 1:</span>
 										<input
 											type='time'
+											aria-label={`${d} · Rango 1 desde`}
 											value={s.rango1.inicio}
 											onChange={(e) => updateRango(d, 1, 'inicio', e.target.value)}
 											disabled={readOnly}
@@ -380,6 +381,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 										<span>–</span>
 										<input
 											type='time'
+											aria-label={`${d} · Rango 1 hasta`}
 											value={s.rango1.fin}
 											onChange={(e) => updateRango(d, 1, 'fin', e.target.value)}
 											disabled={readOnly}
@@ -391,6 +393,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 											<span className={styles.rangoLabel}>Rango 2:</span>
 											<input
 												type='time'
+												aria-label={`${d} · Rango 2 desde`}
 												value={s.rango2.inicio}
 												onChange={(e) => updateRango(d, 2, 'inicio', e.target.value)}
 												disabled={readOnly}
@@ -398,6 +401,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 											<span>–</span>
 											<input
 												type='time'
+												aria-label={`${d} · Rango 2 hasta`}
 												value={s.rango2.fin}
 												onChange={(e) => updateRango(d, 2, 'fin', e.target.value)}
 												disabled={readOnly}

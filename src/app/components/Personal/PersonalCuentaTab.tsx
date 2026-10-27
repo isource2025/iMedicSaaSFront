@@ -1,10 +1,16 @@
 'use client';
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { personalService } from '@/app/services/personalService';
 import { rolesService, type Rol } from '@/app/services/rolesService';
+import {
+	permisosPersonalService,
+	type PermisosDePersonal,
+} from '@/app/services/permisosPersonalService';
+import type { ModuloCatalogo } from '@/app/services/rolesService';
 import type { PersonalCuentaEstado } from '@/app/types/personal';
 import PersonalAccesoYRolesFields from './PersonalAccesoYRolesFields';
+import PersonalPermisosMatriz from './PersonalPermisosMatriz';
 import formStyles from './PersonalForm.module.css';
 import styles from './PersonalActionModals.module.css';
 
@@ -44,6 +50,21 @@ function codOperadorDisplay(
 	return String(personalId);
 }
 
+function diffOverrides(base: string[], efectivos: Set<string>) {
+	const b = new Set(base);
+	return {
+		grants: [...efectivos].filter((c) => !b.has(c)),
+		denies: [...b].filter((c) => !efectivos.has(c)),
+	};
+}
+
+function aplicarOverrides(base: string[], grants: string[], denies: string[]) {
+	const s = new Set(base);
+	for (const c of grants) s.add(c);
+	for (const c of denies) s.delete(c);
+	return s;
+}
+
 const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function PersonalCuentaTab(
 	{
 		personalId,
@@ -72,14 +93,34 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 	const [rolesAsignados, setRolesAsignados] = useState<number[]>([]);
 	const [rolPrincipal, setRolPrincipal] = useState('');
 
+	const [catalogo, setCatalogo] = useState<ModuloCatalogo[]>([]);
+	const [basePermisos, setBasePermisos] = useState<string[]>([]);
+	const [marcados, setMarcados] = useState<Set<string>>(new Set());
+	const [permisosActor, setPermisosActor] = useState<string[]>([]);
+	const [permisosListos, setPermisosListos] = useState(false);
+	const marcadosRef = useRef(marcados);
+	const baseRef = useRef(basePermisos);
+	marcadosRef.current = marcados;
+	baseRef.current = basePermisos;
+
+	const aplicarPackPermisos = (pack: PermisosDePersonal) => {
+		setCatalogo(pack.catalogo || []);
+		setBasePermisos(pack.base || []);
+		setMarcados(new Set(pack.efectivos || []));
+		setPermisosActor(pack.permisosActor || []);
+		setPermisosListos(true);
+	};
+
 	const cargar = useCallback(async () => {
 		setLoading(true);
 		setError('');
+		setPermisosListos(false);
 		try {
-			const [data, cat, pack] = await Promise.all([
+			const [data, cat, packRoles, packPerm] = await Promise.all([
 				personalService.getPersonalCuenta(personalId),
 				rolesService.listar(),
 				rolesService.getRolesDePersonal(personalId),
+				permisosPersonalService.obtener(personalId).catch(() => null),
 			]);
 			setEstado(data);
 			setNombreRed(data.tieneCuenta && data.cuenta ? data.cuenta.NombreRed || '' : '');
@@ -87,14 +128,15 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 			setConfirmPassword('');
 			setNewPassword('');
 			setRoles((cat || []).filter((r) => r.Activo !== false));
-			const ids = (pack.roles || []).map((r) => r.IdRol);
+			const ids = (packRoles.roles || []).map((r) => r.IdRol);
 			setRolesAsignados(ids);
 			const principal =
-				pack.principal?.IdRol ??
-				pack.roles?.find((r) => r.EsPrincipal)?.IdRol ??
+				packRoles.principal?.IdRol ??
+				packRoles.roles?.find((r) => r.EsPrincipal)?.IdRol ??
 				ids[0] ??
 				null;
 			setRolPrincipal(principal != null ? String(principal) : '');
+			if (packPerm) aplicarPackPermisos(packPerm);
 		} catch (e) {
 			setError(extractError(e, 'Error al cargar acceso'));
 		} finally {
@@ -117,6 +159,22 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 		estado?.cuenta?.CodOperador,
 	);
 
+	const recalcularBasePorRoles = async (ids: number[], efectivosActuales: Set<string>, baseActual: string[]) => {
+		if (!ids.length) {
+			setBasePermisos([]);
+			setMarcados(new Set());
+			return;
+		}
+		try {
+			const nuevaBase = await permisosPersonalService.previewBase(ids);
+			const { grants, denies } = diffOverrides(baseActual, efectivosActuales);
+			setBasePermisos(nuevaBase);
+			setMarcados(aplicarOverrides(nuevaBase, grants, denies));
+		} catch {
+			/* si falla el preview, se mantiene lo visible */
+		}
+	};
+
 	const toggleRol = (idRol: number) => {
 		setRolesAsignados((prev) => {
 			const has = prev.includes(idRol);
@@ -127,6 +185,7 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 				if (!has && (p === '' || cur == null)) return String(idRol);
 				return p;
 			});
+			void recalcularBasePorRoles(next, marcadosRef.current, baseRef.current);
 			return next;
 		});
 	};
@@ -168,7 +227,17 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 
 			const principal = rolPrincipal === '' ? null : Number(rolPrincipal);
 			await rolesService.asignarRolesAPersonal(personalId, rolesAsignados, principal);
-			setSuccess('Acceso y roles guardados.');
+
+			if (permisosListos) {
+				const guardado = await permisosPersonalService.guardar(
+					personalId,
+					Array.from(marcados),
+				);
+				setBasePermisos(guardado.base);
+				setMarcados(new Set(guardado.efectivos));
+			}
+
+			setSuccess('Acceso, roles y permisos guardados.');
 			await onSaved?.();
 			return true;
 		} catch (e) {
@@ -218,6 +287,17 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 				alertSuccess={success}
 			/>
 
+			{permisosListos && catalogo.length > 0 ? (
+				<PersonalPermisosMatriz
+					catalogo={catalogo}
+					base={basePermisos}
+					marcados={marcados}
+					permisosActor={permisosActor}
+					disabled={saving || loading}
+					onChange={setMarcados}
+				/>
+			) : null}
+
 			{showActions ? (
 				<div
 					className={
@@ -235,7 +315,7 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 						onClick={() => void handleGuardar()}
 						disabled={saving}
 					>
-						{saving ? 'Guardando…' : 'Guardar acceso y roles'}
+						{saving ? 'Guardando…' : 'Guardar acceso, roles y permisos'}
 					</button>
 				</div>
 			) : null}

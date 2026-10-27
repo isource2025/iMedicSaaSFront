@@ -893,12 +893,20 @@
   .filterGroups {
     width: 100%;
     gap: 10px;
+    align-items: flex-start;
   }
 
+  /* Fechas en fila propia; Movimiento + Tipo de paciente a la misma altura */
   .filterGroup {
-    flex: 1 1 auto;
+    flex: 1 1 calc(50% - 5px);
     border-right: none;
     padding-right: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .filterGroup:first-child {
+    flex: 1 1 100%;
     padding-bottom: 8px;
     border-bottom: 1px solid #e2e8f0;
   }
