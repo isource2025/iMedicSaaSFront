@@ -82,7 +82,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		label: 'Admisión',
 		submodulos: [
 			{ id: 'PACIENTES', label: 'Pacientes',           path: '/dashboard/patients',         acciones: [...CRUD] },
-			{ id: 'BUSQUEDA',  label: 'Consultar Historia Clínica',   path: '/dashboard/admission/search', acciones: [ACCIONES.VER] },
+			{ id: 'BUSQUEDA',  label: 'Consulta general de admisiones',   path: '/dashboard/admission/search', acciones: [ACCIONES.VER] },
 			{ id: 'NUEVA',     label: 'Nueva Admisión',      path: '/dashboard/admission/new',    acciones: [ACCIONES.CREAR] },
 			{ id: 'TABLA',     label: 'Tabla de Admisiones', path: '/dashboard/admission/tables', acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
 		],

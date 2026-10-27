@@ -55,7 +55,7 @@ const menuItems: MenuItem[] = [
   {
     id: 'consulta-hc',
     moduloId: 'ADMISION',
-    label: 'Consultar Historia Clínica',
+    label: 'Consulta general de admisiones',
     icon: FileSearch,
     path: '/dashboard/admission/search',
     subItems: []

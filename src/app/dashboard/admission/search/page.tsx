@@ -12,15 +12,14 @@ import {
 } from '@/app/components/admission/AdmissionSearchClinicalBadges';
 import { useAdmissionVisitDetail } from '@/app/hooks/useAdmissionVisitDetail';
 import Loader from '@/app/components/Loader/Loader';
+import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
+import AdmissionSearchPdfPreviewModal from '@/app/components/admission/AdmissionSearchPdfPreviewModal';
 import styles from './search.module.css';
 import sharedStyles from '../tables/tables.module.css';
-import {
-  type AdmissionPeriodo,
-  formatDMY,
-  rangoDesdePeriodo,
-} from '@/app/utils/admissionDatePeriod';
+import { formatDMY } from '@/app/utils/admissionDatePeriod';
 import { groupRowsByPatient } from '@/app/utils/admissionSearchUtils';
 import { interpretarBusquedaUnificada } from '@/app/utils/busquedaPaciente';
+import DateInputDMY from '@/app/components/UI/DateInputDMY';
 
 const PAGE_LIMIT = 25;
 const PREFETCH_WINDOW = 5;
@@ -31,6 +30,12 @@ const initialFilters = {
   termino: '',
   fechaInicio: '',
   fechaFin: '',
+  porIngreso: false,
+  porEgreso: false,
+  /** '' | 'I' | 'A' */
+  tipoAtencion: '' as '' | 'I' | 'A',
+  /** Código imClientes.Valor / imVisita.CLIENTE */
+  cliente: '',
 };
 
 type SearchFilters = typeof initialFilters;
@@ -41,11 +46,26 @@ type CachedPage = {
   totalPages: number;
 };
 
+function parseTipoAtencionParam(raw: string | null): '' | 'I' | 'A' {
+  const t = String(raw || '').trim().toUpperCase();
+  if (t === 'I' || t === 'INTERNADO') return 'I';
+  if (t === 'A' || t === 'AMBULATORIO') return 'A';
+  return '';
+}
+
+function parseFlagParam(raw: string | null): boolean {
+  return ['1', 'true', 'yes'].includes(String(raw || '').trim().toLowerCase());
+}
+
 function filtersCacheKey(f: SearchFilters): string {
   return JSON.stringify({
     termino: f.termino.trim(),
     fechaInicio: f.fechaInicio,
     fechaFin: f.fechaFin,
+    porIngreso: Boolean(f.porIngreso),
+    porEgreso: Boolean(f.porEgreso),
+    tipoAtencion: f.tipoAtencion || '',
+    cliente: String(f.cliente || '').trim(),
   });
 }
 
@@ -71,6 +91,10 @@ function buildSearchHref(filtros: SearchFilters, pageNum: number): string {
   if (filtros.termino.trim()) params.set('termino', filtros.termino.trim());
   if (filtros.fechaInicio) params.set('fechaInicio', filtros.fechaInicio);
   if (filtros.fechaFin) params.set('fechaFin', filtros.fechaFin);
+  if (filtros.porIngreso) params.set('porIngreso', '1');
+  if (filtros.porEgreso) params.set('porEgreso', '1');
+  if (filtros.tipoAtencion) params.set('tipoAtencion', filtros.tipoAtencion);
+  if (String(filtros.cliente || '').trim()) params.set('cliente', String(filtros.cliente).trim());
   params.set('page', String(Math.max(1, pageNum)));
   const qs = params.toString();
   return qs ? `/dashboard/admission/search?${qs}` : '/dashboard/admission/search';
@@ -128,6 +152,10 @@ function AdmissionSearchPageContent() {
   const terminoUrl = (searchParams.get('termino') || searchParams.get('dni') || '').trim();
   const fechaInicioUrl = (searchParams.get('fechaInicio') || '').trim();
   const fechaFinUrl = (searchParams.get('fechaFin') || '').trim();
+  const porEgresoUrl = parseFlagParam(searchParams.get('porEgreso'));
+  const porIngresoUrl = parseFlagParam(searchParams.get('porIngreso')) && !porEgresoUrl;
+  const tipoAtencionUrl = parseTipoAtencionParam(searchParams.get('tipoAtencion'));
+  const clienteUrl = (searchParams.get('cliente') || '').trim();
   const pageFromUrl = parsePageParam(searchParams.get('page'));
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -135,8 +163,11 @@ function AdmissionSearchPageContent() {
     termino: terminoUrl,
     fechaInicio: fechaInicioUrl,
     fechaFin: fechaFinUrl,
+    porIngreso: porIngresoUrl,
+    porEgreso: porEgresoUrl,
+    tipoAtencion: tipoAtencionUrl,
+    cliente: clienteUrl,
   });
-  const [periodoActivo, setPeriodoActivo] = useState<AdmissionPeriodo | null>(null);
   const [rows, setRows] = useState<AdmissionSearchRow[]>([]);
   const [page, setPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(0);
@@ -144,6 +175,9 @@ function AdmissionSearchPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<'admisiones' | 'pacientes'>('admisiones');
+  const [coberturas, setCoberturas] = useState<{ Valor: number; Descripcion: string }[]>([]);
+  const [loadingCoberturas, setLoadingCoberturas] = useState(true);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [folderModal, setFolderModal] = useState<{
     patient: AdmissionSearchRow;
     visits: AdmissionSearchRow[];
@@ -308,10 +342,43 @@ function AdmissionSearchPageContent() {
       termino: terminoUrl,
       fechaInicio: fechaInicioUrl,
       fechaFin: fechaFinUrl,
+      porIngreso: porIngresoUrl,
+      porEgreso: porEgresoUrl,
+      tipoAtencion: tipoAtencionUrl,
+      cliente: clienteUrl,
     };
     setFilters(filtrosFromUrl);
     void runSearch(pageFromUrl, filtrosFromUrl);
-  }, [terminoUrl, fechaInicioUrl, fechaFinUrl, pageFromUrl, runSearch]);
+  }, [
+    terminoUrl,
+    fechaInicioUrl,
+    fechaFinUrl,
+    porIngresoUrl,
+    porEgresoUrl,
+    tipoAtencionUrl,
+    clienteUrl,
+    pageFromUrl,
+    runSearch,
+  ]);
+
+  useEffect(() => {
+    let cancel = false;
+    setLoadingCoberturas(true);
+    admissionSearchService
+      .getCoberturas()
+      .then((rows) => {
+        if (!cancel) setCoberturas(rows || []);
+      })
+      .catch(() => {
+        if (!cancel) setCoberturas([]);
+      })
+      .finally(() => {
+        if (!cancel) setLoadingCoberturas(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   const navigateSearch = useCallback(
     (filtros: SearchFilters, pageNum: number, mode: 'push' | 'replace' = 'push') => {
@@ -328,23 +395,58 @@ function AdmissionSearchPageContent() {
     navigateSearch(filters, 1, 'push');
   };
 
-  const aplicarPeriodo = (p: AdmissionPeriodo) => {
-    const { fechaInicio, fechaFin } = rangoDesdePeriodo(p);
-    setPeriodoActivo(p);
-    setFilters((f) => ({ ...f, fechaInicio, fechaFin }));
+  const aplicarFiltros = (next: SearchFilters) => {
+    setFilters(next);
+    resetPageCache(filtersCacheKey(next));
+    navigateSearch(next, 1, 'push');
   };
 
-  const togglePeriodo = (p: AdmissionPeriodo) => {
-    if (periodoActivo === p) {
-      setPeriodoActivo(null);
-      setFilters((f) => ({ ...f, fechaInicio: '', fechaFin: '' }));
-    } else {
-      aplicarPeriodo(p);
-    }
+  const togglePorIngreso = () => {
+    const next = !filters.porIngreso;
+    aplicarFiltros({
+      ...filters,
+      porIngreso: next,
+      porEgreso: next ? false : filters.porEgreso,
+    });
   };
+
+  const togglePorEgreso = () => {
+    const next = !filters.porEgreso;
+    aplicarFiltros({
+      ...filters,
+      porEgreso: next,
+      porIngreso: next ? false : filters.porIngreso,
+    });
+  };
+
+  /** Desde/Hasta filtran por admisión; con Egreso activo, por fecha de alta. */
+  const aplicarFecha = (campo: 'fechaInicio' | 'fechaFin', value: string) => {
+    aplicarFiltros({ ...filters, [campo]: value });
+  };
+
+  const toggleTipoAtencion = (tipo: 'I' | 'A') => {
+    aplicarFiltros({
+      ...filters,
+      tipoAtencion: filters.tipoAtencion === tipo ? '' : tipo,
+    });
+  };
+
+  const onCoberturaChange = (value: string | number) => {
+    aplicarFiltros({ ...filters, cliente: value == null || value === '' ? '' : String(value) });
+  };
+
+  const opcionesCobertura = useMemo(
+    () => [
+      { value: '', label: 'Todas las coberturas' },
+      ...coberturas.map((c) => ({
+        value: String(c.Valor),
+        label: String(c.Descripcion || c.Valor).trim() || String(c.Valor),
+      })),
+    ],
+    [coberturas],
+  );
 
   const onClear = async () => {
-    setPeriodoActivo(null);
     setFilters(initialFilters);
     setError('');
     closeVisitDetail();
@@ -362,6 +464,10 @@ function AdmissionSearchPageContent() {
         termino: terminoUrl,
         fechaInicio: fechaInicioUrl,
         fechaFin: fechaFinUrl,
+        porIngreso: porIngresoUrl,
+        porEgreso: porEgresoUrl,
+        tipoAtencion: tipoAtencionUrl,
+        cliente: clienteUrl,
       },
       targetPage,
       'push',
@@ -378,23 +484,11 @@ function AdmissionSearchPageContent() {
     router.push(`/dashboard/admission/new?numeroVisita=${numeroVisita}`);
   };
 
-  const filtrosActivos = useMemo(() => {
-    const out: string[] = [];
-    if (filters.termino.trim()) out.push(filters.termino.trim());
-    if (filters.fechaInicio || filters.fechaFin) {
-      out.push(`Rango: ${formatDMY(filters.fechaInicio || '') || '—'} — ${formatDMY(filters.fechaFin || '') || '—'}`);
-    }
-    return out;
-  }, [filters]);
-
   return (
     <div className={styles.container}>
       <div className={styles.pageHeader}>
         <div className={styles.pageIntro}>
-          <h1 className={styles.pageTitle}>Búsqueda de admisiones</h1>
-          <p className={styles.pageSubtitle}>
-            Consultá por visita o abrí la carpeta del paciente con sus admisiones ordenadas de la más reciente a la más antigua.
-          </p>
+          <h1 className={styles.pageTitle}>Consulta general de admisiones</h1>
         </div>
         <div className={styles.pageKpis}>
           <article className={styles.kpiCard}>
@@ -412,10 +506,7 @@ function AdmissionSearchPageContent() {
 
       <form className={styles.searchPanel} onSubmit={onSubmit}>
         <div className={styles.searchPanelHead}>
-          <h2 className={styles.panelTitle}>Filtros</h2>
-          <span className={styles.panelSubtitle}>
-            Buscá por nombre, DNI o número de visita. Un número de visita abre el detalle.
-          </span>
+          <h2 className={styles.panelTitle}>Búsqueda de admisiones</h2>
         </div>
         <div className={styles.toolbar}>
           <div className={styles.modeToggle} role="group" aria-label="Modo de vista">
@@ -436,42 +527,107 @@ function AdmissionSearchPageContent() {
           </div>
 
           <label className={styles.inlineFieldWide}>
-            <span>Nombre, DNI o nº de visita</span>
+            <span>Nombre, DNI o nº de admisión</span>
             <input
               value={filters.termino}
               onChange={(e) => setFilters((f) => ({ ...f, termino: e.target.value }))}
-              placeholder="Ej: Pérez, 32123456 o 236396"
             />
           </label>
 
-          <div className={styles.periodoInline}>
-            <span className={styles.periodoInlineLabel}>Período</span>
-            <div className={styles.periodoChips} role="group" aria-label="Filtrar por semana, mes o año">
-              <button
-                type="button"
-                className={`${styles.periodoBtn} ${periodoActivo === 'semana' ? styles.periodoBtnActive : ''}`}
-                aria-pressed={periodoActivo === 'semana'}
-                onClick={() => togglePeriodo('semana')}
+          <div className={styles.filterGroups}>
+            <div className={styles.filterGroup}>
+              <div
+                className={styles.periodDateRow}
+                role="group"
+                aria-label={
+                  filters.porEgreso
+                    ? 'Rango de fechas de egreso'
+                    : 'Rango de fechas de admisión'
+                }
               >
-                Semana
-              </button>
-              <button
-                type="button"
-                className={`${styles.periodoBtn} ${periodoActivo === 'mes' ? styles.periodoBtnActive : ''}`}
-                aria-pressed={periodoActivo === 'mes'}
-                onClick={() => togglePeriodo('mes')}
-              >
-                Mes
-              </button>
-              <button
-                type="button"
-                className={`${styles.periodoBtn} ${periodoActivo === 'ano' ? styles.periodoBtnActive : ''}`}
-                aria-pressed={periodoActivo === 'ano'}
-                onClick={() => togglePeriodo('ano')}
-              >
-                Año
-              </button>
+                <label className={styles.periodDateField}>
+                  <span className={styles.periodDateLabel}>Desde</span>
+                  <DateInputDMY
+                    value={filters.fechaInicio}
+                    max={filters.fechaFin || undefined}
+                    title={
+                      filters.porEgreso
+                        ? 'Egresos a partir de esta fecha (dd/mm/aaaa)'
+                        : 'Admisiones a partir de esta fecha (dd/mm/aaaa)'
+                    }
+                    onChange={(ymd) => aplicarFecha('fechaInicio', ymd)}
+                  />
+                </label>
+                <label className={styles.periodDateField}>
+                  <span className={styles.periodDateLabel}>Hasta</span>
+                  <DateInputDMY
+                    value={filters.fechaFin}
+                    min={filters.fechaInicio || undefined}
+                    title={
+                      filters.porEgreso
+                        ? 'Egresos hasta esta fecha (dd/mm/aaaa)'
+                        : 'Admisiones hasta esta fecha (dd/mm/aaaa)'
+                    }
+                    onChange={(ymd) => aplicarFecha('fechaFin', ymd)}
+                  />
+                </label>
+              </div>
             </div>
+
+            <div className={styles.filterGroup}>
+              <span className={styles.filterGroupLabel}>Movimiento</span>
+              <div className={styles.filterChipRow} role="group" aria-label="Filtrar por ingreso o egreso">
+                <button
+                  type="button"
+                  className={`${styles.filterChipBtn} ${filters.porIngreso ? styles.filterChipBtnActive : ''}`}
+                  aria-pressed={filters.porIngreso}
+                  onClick={togglePorIngreso}
+                >
+                  Ingreso
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.filterChipBtn} ${filters.porEgreso ? styles.filterChipBtnActive : ''}`}
+                  aria-pressed={filters.porEgreso}
+                  onClick={togglePorEgreso}
+                >
+                  Egreso
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <span className={styles.filterGroupLabel}>Tipo de paciente</span>
+              <div className={styles.filterChipRow} role="group" aria-label="Tipo de paciente">
+                <button
+                  type="button"
+                  className={`${styles.filterChipBtn} ${filters.tipoAtencion === 'I' ? styles.filterChipBtnActive : ''}`}
+                  aria-pressed={filters.tipoAtencion === 'I'}
+                  onClick={() => toggleTipoAtencion('I')}
+                >
+                  Internado
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.filterChipBtn} ${filters.tipoAtencion === 'A' ? styles.filterChipBtnActive : ''}`}
+                  aria-pressed={filters.tipoAtencion === 'A'}
+                  onClick={() => toggleTipoAtencion('A')}
+                >
+                  Ambulatorio
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.coberturaField}>
+            <CustomSelect
+              label="Cobertura"
+              name="cliente"
+              value={filters.cliente}
+              isLoading={loadingCoberturas}
+              onChange={onCoberturaChange}
+              options={opcionesCobertura}
+            />
           </div>
 
           <div className={styles.toolbarActions}>
@@ -481,28 +637,15 @@ function AdmissionSearchPageContent() {
             <button type="button" className={styles.actionSecondary} onClick={onClear} disabled={loading}>
               Limpiar
             </button>
-          </div>
-        </div>
-        <div className={styles.searchPanelFooter}>
-          <p className={styles.periodHint}>
-            {filters.fechaInicio && filters.fechaFin ? (
-              <>
-                Rango activo: {formatDMY(filters.fechaInicio)} — {formatDMY(filters.fechaFin)}
-              </>
-            ) : (
-              <>Elegí semana, mes o año en Período (clic otra vez para quitar).</>
-            )}
-          </p>
-          <div className={styles.filterChips}>
-            {filtrosActivos.length === 0 ? (
-              <span className={styles.filterChipMuted}>Sin filtros activos</span>
-            ) : (
-              filtrosActivos.map((txt) => (
-                <span key={txt} className={styles.filterChip}>
-                  {txt}
-                </span>
-              ))
-            )}
+            <button
+              type="button"
+              className={styles.actionExport}
+              onClick={() => setPdfPreviewOpen(true)}
+              disabled={loading || total === 0}
+              title={total === 0 ? 'Buscá resultados para exportar' : 'Exportar listado en PDF'}
+            >
+              Exportar PDF
+            </button>
           </div>
         </div>
       </form>
@@ -519,171 +662,228 @@ function AdmissionSearchPageContent() {
       </div>
 
       <section className={styles.resultsPanel}>
-        {loading ? (
-          <div className={styles.resultsLoader} aria-busy="true" aria-live="polite">
-            <Loader />
-            <span className={styles.resultsLoaderText}>Cargando admisiones…</span>
-          </div>
-        ) : null}
-        <div className={loading ? styles.resultsDimmed : undefined}>
         {viewMode === 'admisiones' ? (
           <div className={styles.admisionesResult}>
-            <div className={`${styles.tablaDesktop} ${sharedStyles.tableContainer}`}>
-            <table className={sharedStyles.table}>
-              <thead>
-                <tr>
-                  <th>I/A</th>
-                  <th>Nº Admisión</th>
-                  <th>Paciente</th>
-                  <th>Cobertura</th>
-                  <th>Ingreso / Egreso</th>
-                  <th>Ubicación</th>
-                  <th>Diagnóstico</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 && !loading ? (
-                  <tr>
-                    <td colSpan={8} className={styles.empty}>
-                      Sin resultados
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? null : (
-                  rows.map((row) => (
-                    <tr key={row.NumeroVisita}>
-                      <td>{iaLabel(row)}</td>
-                      <td>
-                        <div className={styles.cellStack}>
-                          <button
-                            type="button"
-                            className={styles.linkButton}
-                            onClick={() => openVisitDetail(row.NumeroVisita)}
-                            title="Ver historia clínica"
-                          >
-                            {row.NumeroVisita}
-                          </button>
-                          <span className={styles.cellSub}>
-                            Int. {String(row.NumeroInternacion || '').trim() || '—'}
-                          </span>
+            <div className={`${styles.tablaDesktop} ${sharedStyles.tableContainer} ${styles.resultsTableShell}`}>
+              <div className={styles.resultsTableHead}>
+                <table className={`${sharedStyles.table} ${styles.resultsTable}`}>
+                  <colgroup>
+                    <col className={styles.colIa} />
+                    <col className={styles.colVisita} />
+                    <col className={styles.colPaciente} />
+                    <col className={styles.colCobertura} />
+                    <col className={styles.colSector} />
+                    <col className={styles.colFechas} />
+                    <col className={styles.colAcciones} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>I/A</th>
+                      <th className={styles.thNowrap}>Nº Admisión</th>
+                      <th>
+                        <div className={styles.thStack}>
+                          <span>Paciente</span>
+                          <span className={styles.thSub}>DNI</span>
                         </div>
-                      </td>
-                      <td>
-                        <div className={styles.cellStack}>
-                          <span className={styles.cellPrimary}>
-                            {String(row.ApellidoYNombre || '').trim() || '—'}
-                          </span>
-                          <span className={styles.cellSub}>
-                            DNI {formatDocumento(row.NumeroDocumento)}
-                          </span>
+                      </th>
+                      <th>Cobertura</th>
+                      <th>
+                        <div className={styles.thStack}>
+                          <span>Sector</span>
+                          <span>Diagnóstico</span>
                         </div>
-                      </td>
-                      <td>
-                        <div className={styles.cellStack}>
-                          <span className={styles.cellPrimary}>
-                            {String(row.CoberturaOS || '').trim() || '—'}
-                          </span>
-                          <span className={styles.cellSub}>
-                            SSN {String(row.NumeroSSN || '').trim() || '—'}
-                          </span>
+                      </th>
+                      <th>
+                        <div className={styles.thStack}>
+                          <span>Ingreso</span>
+                          <span>Egreso</span>
                         </div>
-                      </td>
-                      <td>
-                        <div className={styles.cellStack}>
-                          <span className={styles.cellPrimary}>
-                            {ingresoLabel(row)}
-                            {row.HoraAdmision ? ` ${String(row.HoraAdmision).slice(0, 5)}` : ''}
-                          </span>
-                          <span className={styles.cellSub}>
-                            {egresoLabel(row)
-                              ? `Egr. ${egresoLabel(row)}${
-                                  row.HoraEgreso ? ` ${String(row.HoraEgreso).slice(0, 5)}` : ''
-                                }`
-                              : 'Egr. —'}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className={styles.cellStack}>
-                          <span className={styles.cellPrimary}>
-                            {String(row.Sector || '').trim() || '—'}
-                          </span>
-                          <span className={styles.cellSub}>
-                            Hab. {String(row.Habitacion || '').trim() || '—'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className={styles.diagCell} title={diagnosticoLabel(row)}>
-                        {diagnosticoLabel(row)}
-                      </td>
-                      <td>
-                        <div className={styles.rowActions}>
-                          <button
-                            type="button"
-                            className={styles.modifyBtn}
-                            onClick={() => irAModificar(row.NumeroVisita)}
-                          >
-                            Modificar
-                          </button>
-                          <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
-                        </div>
-                      </td>
+                      </th>
+                      <th>Acciones</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                </table>
+              </div>
+
+              <div className={styles.resultsTableBody}>
+                {loading ? (
+                  <div className={styles.resultsLoader} aria-busy="true" aria-live="polite">
+                    <Loader />
+                    <span className={styles.resultsLoaderText}>Cargando admisiones…</span>
+                  </div>
+                ) : null}
+                <div className={loading ? styles.resultsDimmed : undefined}>
+                  <table className={`${sharedStyles.table} ${styles.resultsTable}`}>
+                    <colgroup>
+                      <col className={styles.colIa} />
+                      <col className={styles.colVisita} />
+                      <col className={styles.colPaciente} />
+                      <col className={styles.colCobertura} />
+                      <col className={styles.colSector} />
+                      <col className={styles.colFechas} />
+                      <col className={styles.colAcciones} />
+                    </colgroup>
+                    <tbody>
+                      {rows.length === 0 && !loading ? (
+                        <tr>
+                          <td colSpan={7} className={styles.empty}>
+                            Sin resultados
+                          </td>
+                        </tr>
+                      ) : rows.length === 0 ? null : (
+                        rows.map((row) => (
+                          <tr key={row.NumeroVisita}>
+                            <td>{iaLabel(row)}</td>
+                            <td>
+                              <div className={styles.cellStack}>
+                                <button
+                                  type="button"
+                                  className={styles.linkButton}
+                                  onClick={() => openVisitDetail(row.NumeroVisita)}
+                                  title="Ver historia clínica"
+                                >
+                                  {row.NumeroVisita}
+                                </button>
+                                <span className={styles.cellSub}>
+                                  Int. {String(row.NumeroInternacion || '').trim() || '—'}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.cellStack}>
+                                <span className={styles.cellPrimary}>
+                                  {String(row.ApellidoYNombre || '').trim() || '—'}
+                                </span>
+                                <span className={styles.cellSub}>
+                                  DNI {formatDocumento(row.NumeroDocumento)}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.cellStack}>
+                                <span className={styles.cellPrimary}>
+                                  {String(row.CoberturaOS || '').trim() || '—'}
+                                </span>
+                                <span className={styles.cellSub}>
+                                  SSN {String(row.NumeroSSN || '').trim() || '—'}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.cellStack}>
+                                <span className={styles.cellSectorHab}>
+                                  <span className={styles.cellPrimary}>
+                                    {String(row.Sector || '').trim() || '—'}
+                                  </span>
+                                  <span className={styles.cellSub}>
+                                    Hab. {String(row.Habitacion || '').trim() || '—'}
+                                  </span>
+                                </span>
+                                <span className={styles.diagCell} title={diagnosticoLabel(row)}>
+                                  {diagnosticoLabel(row)}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.cellStack}>
+                                <span className={styles.cellPrimary}>
+                                  Ing. {ingresoLabel(row)}
+                                  {row.HoraAdmision ? ` ${String(row.HoraAdmision).slice(0, 5)}` : ''}
+                                </span>
+                                <span className={styles.cellSub}>
+                                  {egresoLabel(row)
+                                    ? `Egr. ${egresoLabel(row)}${
+                                        row.HoraEgreso ? ` ${String(row.HoraEgreso).slice(0, 5)}` : ''
+                                      }`
+                                    : 'Egr. —'}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.rowActions}>
+                                <button
+                                  type="button"
+                                  className={styles.modifyBtn}
+                                  onClick={() => irAModificar(row.NumeroVisita)}
+                                >
+                                  Modificar
+                                </button>
+                                <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
             <div className={styles.admissionCards} aria-live="polite">
-              {rows.length === 0 && !loading ? (
-                <div className={styles.mobileEmpty}>Sin resultados</div>
-              ) : rows.length === 0 ? null : (
-                rows.map((row) => (
-                  <article key={`card-${row.NumeroVisita}`} className={styles.admissionCard}>
-                    <div className={styles.admissionCardHead}>
-                      <button
-                        type="button"
-                        className={styles.linkButton}
-                        onClick={() => openVisitDetail(row.NumeroVisita)}
-                      >
-                        Admisión #{row.NumeroVisita}
-                      </button>
-                      <span className={styles.admissionCardDate}>{ingresoLabel(row)}</span>
-                    </div>
-                    <p className={styles.admissionCardMeta}>
-                      Int. {String(row.NumeroInternacion || '').trim() || '—'} · Egr.{' '}
-                      {egresoLabel(row) || '—'}
-                    </p>
-                    <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
-                    <p className={styles.admissionCardMeta}>
-                      I/A {iaLabel(row)} · DNI {formatDocumento(row.NumeroDocumento)}
-                    </p>
-                    <p className={styles.admissionCardMeta}>
-                      {String(row.CoberturaOS || '').trim() || 'Sin OS'} · SSN{' '}
-                      {String(row.NumeroSSN || '').trim() || '—'}
-                    </p>
-                    <p className={styles.admissionCardMeta}>
-                      {String(row.Sector || '').trim() || '—'} / Hab.{' '}
-                      {String(row.Habitacion || '').trim() || '—'} · {diagnosticoLabel(row)}
-                    </p>
-                    <div className={styles.rowActions}>
-                      <button
-                        type="button"
-                        className={styles.modifyBtn}
-                        onClick={() => irAModificar(row.NumeroVisita)}
-                      >
-                        Modificar
-                      </button>
-                      <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
-                    </div>
-                  </article>
-                ))
-              )}
+              {loading ? (
+                <div className={styles.resultsLoaderCards} aria-busy="true" aria-live="polite">
+                  <Loader />
+                  <span className={styles.resultsLoaderText}>Cargando admisiones…</span>
+                </div>
+              ) : null}
+              <div className={loading ? styles.resultsDimmed : undefined}>
+                {rows.length === 0 && !loading ? (
+                  <div className={styles.mobileEmpty}>Sin resultados</div>
+                ) : rows.length === 0 ? null : (
+                  rows.map((row) => (
+                    <article key={`card-${row.NumeroVisita}`} className={styles.admissionCard}>
+                      <div className={styles.admissionCardHead}>
+                        <button
+                          type="button"
+                          className={styles.linkButton}
+                          onClick={() => openVisitDetail(row.NumeroVisita)}
+                        >
+                          Admisión #{row.NumeroVisita}
+                        </button>
+                        <span className={styles.admissionCardDate}>{ingresoLabel(row)}</span>
+                      </div>
+                      <p className={styles.admissionCardMeta}>
+                        Int. {String(row.NumeroInternacion || '').trim() || '—'} · Egr.{' '}
+                        {egresoLabel(row) || '—'}
+                      </p>
+                      <p className={styles.admissionCardPatient}>{row.ApellidoYNombre}</p>
+                      <p className={styles.admissionCardMeta}>
+                        I/A {iaLabel(row)} · DNI {formatDocumento(row.NumeroDocumento)}
+                      </p>
+                      <p className={styles.admissionCardMeta}>
+                        {String(row.CoberturaOS || '').trim() || 'Sin OS'} · SSN{' '}
+                        {String(row.NumeroSSN || '').trim() || '—'}
+                      </p>
+                      <p className={styles.admissionCardMeta}>
+                        {String(row.Sector || '').trim() || '—'} / Hab.{' '}
+                        {String(row.Habitacion || '').trim() || '—'} · {diagnosticoLabel(row)}
+                      </p>
+                      <div className={styles.rowActions}>
+                        <button
+                          type="button"
+                          className={styles.modifyBtn}
+                          onClick={() => irAModificar(row.NumeroVisita)}
+                        >
+                          Modificar
+                        </button>
+                        <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         ) : (
-          <div className={styles.patientFolders}>
+          <div className={styles.patientFoldersWrap}>
+            {loading ? (
+              <div className={styles.resultsLoader} aria-busy="true" aria-live="polite">
+                <Loader />
+                <span className={styles.resultsLoaderText}>Cargando admisiones…</span>
+              </div>
+            ) : null}
+            <div className={`${styles.patientFolders} ${loading ? styles.resultsDimmed : ''}`}>
             {groupedByPatient.length === 0 && !loading ? (
               <div className={sharedStyles.noResults}>Sin resultados</div>
             ) : groupedByPatient.length === 0 ? null : (
@@ -728,9 +928,9 @@ function AdmissionSearchPageContent() {
                 </button>
               ))
             )}
+            </div>
           </div>
         )}
-        </div>
       </section>
 
       <div className={styles.pagination}>
@@ -765,6 +965,22 @@ function AdmissionSearchPageContent() {
         error={detailError}
         initialTab={detailInitialTab}
         onReloadData={() => void reloadVisitDetail()}
+      />
+
+      <AdmissionSearchPdfPreviewModal
+        isOpen={pdfPreviewOpen}
+        onClose={() => setPdfPreviewOpen(false)}
+        filtros={{
+          termino: filters.termino,
+          fechaInicio: filters.fechaInicio,
+          fechaFin: filters.fechaFin,
+          porIngreso: filters.porIngreso,
+          porEgreso: filters.porEgreso,
+          tipoAtencion: filters.tipoAtencion,
+          cliente: filters.cliente,
+        }}
+        rowsActuales={rows}
+        total={total}
       />
     </div>
   );

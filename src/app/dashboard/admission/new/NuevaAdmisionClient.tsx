@@ -15,6 +15,7 @@ import CamaSelector from '@/app/components/admission/NuevaAdmision/CamaSelector'
 import AdmissionAcompanantesNovedades from '@/app/components/admission/AdmissionAcompanantesNovedades';
 import AdmissionUbicacionMovimientosModal from '@/app/components/admission/AdmissionUbicacionMovimientosModal';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
+import DateInputDMY from '@/app/components/UI/DateInputDMY';
 import Loader from '@/app/components/Loader/Loader';
 
 import admisionNuevaService from '@/app/services/admisionNuevaService';
@@ -794,11 +795,13 @@ export default function NuevaAdmisionClient() {
         <div className={styles.grillaCampos}>
           <label className={styles.campo}>
             <span>Fecha de admisión *</span>
-            <input
-              type="date"
+            <DateInputDMY
               value={form.fechaAdmision}
               disabled={bloqueado}
-              onChange={(e) => setCampo('fechaAdmision', e.target.value)}
+              onChange={(v) => setCampo('fechaAdmision', v)}
+              wrapClassName={styles.fechaDMY}
+              className={styles.fechaDMYInput}
+              title="Fecha de admisión"
             />
           </label>
 
@@ -873,6 +876,7 @@ export default function NuevaAdmisionClient() {
                       : ''
                 }
                 placeholder="Buscar por código CIE-10 o descripción"
+                aria-label="Diagnóstico de ingreso (buscar CIE-10)"
                 disabled={bloqueado}
                 onFocus={() => {
                   setDiagAbierto(true);
@@ -936,6 +940,7 @@ export default function NuevaAdmisionClient() {
                       type="text"
                       value={activo ? profBusqueda : nombre}
                       placeholder="Buscar por apellido o matrícula"
+                      aria-label={`${etiquetas[campo]} (buscar por apellido o matrícula)`}
                       disabled={bloqueado}
                       onFocus={() => {
                         setProfCampo(campo);

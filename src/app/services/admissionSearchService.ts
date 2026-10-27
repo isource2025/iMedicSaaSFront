@@ -7,6 +7,14 @@ export interface AdmissionSearchFilters {
   nombreApellido?: string;
   fechaInicio?: string;
   fechaFin?: string;
+  /** Si true, el rango de fechas filtra por egreso (o solo egresados si no hay rango). */
+  porEgreso?: boolean | string;
+  /** Si true, el rango de fechas filtra por ingreso (admisión). */
+  porIngreso?: boolean | string;
+  /** I = Internado, A = Ambulatorio. */
+  tipoAtencion?: string;
+  /** Código de cobertura (imClientes.Valor / imVisita.CLIENTE). */
+  cliente?: string | number;
   page?: number;
   limit?: number;
 }
@@ -246,17 +254,31 @@ export function admissionApiErrorMessage(e: unknown, fallback: string): string {
   return msg;
 }
 
+export interface AdmissionCoberturaOption {
+  Valor: number;
+  Descripcion: string;
+}
+
 export const admissionSearchService = {
   async buscar(filters: AdmissionSearchFilters): Promise<AdmissionSearchResponse> {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && String(value).trim() !== '') {
+        // No mandar booleanos en false (el back solo mira flags "on").
+        if (typeof value === 'boolean' && value === false) return;
         params.set(key, String(value));
       }
     });
 
     const response = await apiService.get<AdmissionSearchResponse>(`/admission-search?${params.toString()}`);
     return response.data;
+  },
+
+  async getCoberturas(): Promise<AdmissionCoberturaOption[]> {
+    const response = await apiService.get<{ success: boolean; data: AdmissionCoberturaOption[] }>(
+      '/admission-search/coberturas',
+    );
+    return response.data?.data ?? [];
   },
 
   async detalle(numeroVisita: number): Promise<any> {

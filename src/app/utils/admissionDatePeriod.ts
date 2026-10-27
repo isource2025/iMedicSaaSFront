@@ -6,49 +6,46 @@ export function toYMDLocal(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Lunes de la semana calendario que contiene `d` (criterio habitual en ES). */
-export function startOfWeekMonday(d: Date): Date {
-  const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const day = copy.getDay(); // 0 dom … 6 sáb
-  const offset = day === 0 ? -6 : 1 - day;
-  copy.setDate(copy.getDate() + offset);
-  return copy;
-}
-
-export function endOfWeekMonday(d: Date): Date {
-  const start = startOfWeekMonday(d);
-  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
-  return end;
-}
-
-export type AdmissionPeriodo = 'semana' | 'mes' | 'ano';
-
-export function rangoDesdePeriodo(periodo: AdmissionPeriodo, referencia: Date = new Date()): {
-  fechaInicio: string;
-  fechaFin: string;
-} {
-  if (periodo === 'semana') {
-    const ini = startOfWeekMonday(referencia);
-    const fin = endOfWeekMonday(referencia);
-    return { fechaInicio: toYMDLocal(ini), fechaFin: toYMDLocal(fin) };
-  }
-  if (periodo === 'mes') {
-    const y = referencia.getFullYear();
-    const m = referencia.getMonth();
-    const first = new Date(y, m, 1);
-    const last = new Date(y, m + 1, 0);
-    return { fechaInicio: toYMDLocal(first), fechaFin: toYMDLocal(last) };
-  }
-  const y = referencia.getFullYear();
-  return {
-    fechaInicio: `${y}-01-01`,
-    fechaFin: `${y}-12-31`,
-  };
-}
-
 /** dd/mm/yyyy para mostrar en UI */
 export function formatDMY(ymd: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
   if (!m) return ymd;
   return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+/**
+ * Parsea dd/mm/yyyy (también d/m/yyyy o yyyy-mm-dd) → yyyy-mm-dd.
+ * Devuelve null si es inválida o incompleta.
+ */
+export function parseDMYToYMD(raw: string): string | null {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (iso) {
+    const y = Number(iso[1]);
+    const mo = Number(iso[2]);
+    const d = Number(iso[3]);
+    const dt = new Date(y, mo - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+    return toYMDLocal(dt);
+  }
+
+  const m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/.exec(s);
+  if (!m) return null;
+  const d = Number(m[1]);
+  const mo = Number(m[2]);
+  const y = Number(m[3]);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return toYMDLocal(dt);
+}
+
+/** Autocompleta barras mientras se tipea (solo dígitos → dd/mm/aaaa). */
+export function maskDMYInput(raw: string): string {
+  const digits = String(raw || '').replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }

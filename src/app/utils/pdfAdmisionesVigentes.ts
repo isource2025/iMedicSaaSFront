@@ -1,12 +1,51 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import type { AdmisionVigente } from '@/app/services/admisionesVigentesService';
+import { obtenerInfoEmpresa } from '@/app/services/empresaService';
+import {
+	drawDocumentFooters,
+	drawDocumentHeader,
+	drawRunningHeaders,
+	PDF_COLORS,
+	PDF_CONTENT_TOP,
+	PDF_FOOTER_SPACE,
+	PDF_MARGIN_X,
+	type PDFHeaderOptions,
+} from './pdfHeader';
 
-export type GrupoAdmisionVigente = {
-	clave: string;
-	titulo: string;
-	filas: AdmisionVigente[];
+export type PdfAdmisionesVigentesOpts = {
+	rows: AdmisionVigente[];
+	filtroDescripcion?: string;
+	fileName?: string;
 };
+
+type Col = { key: string; label: string; w: number };
+
+const COLS: Col[] = [
+	{ key: 'cama', label: 'Cama', w: 16 },
+	{ key: 'paciente', label: 'Paciente', w: 42 },
+	{ key: 'dni', label: 'DNI', w: 22 },
+	{ key: 'edad', label: 'Edad', w: 16 },
+	{ key: 'ingreso', label: 'Ingreso', w: 22 },
+	{ key: 'dias', label: 'Días', w: 12 },
+	{ key: 'diag', label: 'Diagnóstico', w: 40 },
+	{ key: 'cobertura', label: 'Cobertura', w: 32 },
+	{ key: 'medico', label: 'Médico', w: 32 },
+];
+
+const TITLE = 'Admisiones vigentes';
+
+type Grupo = { clave: string; titulo: string; filas: AdmisionVigente[] };
+
+function clean(v: unknown): string {
+	const s = String(v ?? '').trim();
+	return s || '—';
+}
+
+function fmtDoc(raw: unknown): string {
+	const digits = String(raw ?? '').replace(/\D+/g, '');
+	if (!digits) return '—';
+	return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
 
 function fechaCorta(iso: string | null): string {
 	if (!iso) return '—';
@@ -19,140 +58,186 @@ function edadSexo(a: AdmisionVigente): string {
 	return partes.filter(Boolean).join(' · ') || '—';
 }
 
-function ahoraEsAr(): string {
-	return new Date().toLocaleString('es-AR', {
-		day: '2-digit',
-		month: '2-digit',
-		year: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit',
-	});
-}
-
-export function descripcionSectoresSeleccionados(
-	grupos: GrupoAdmisionVigente[],
-	totalSectores: number,
-): string {
-	if (grupos.length === 0) return '';
-	if (grupos.length === totalSectores) return 'Todos los sectores';
-	if (grupos.length <= 3) return grupos.map((g) => g.titulo).join(', ');
-	return `${grupos.length} sectores`;
-}
-
-/** PDF apaisado con una tabla por sector (misma info que la impresión). */
-export async function generarPDFAdmisionesVigentes(opts: {
-	grupos: GrupoAdmisionVigente[];
-	filtro?: string;
-}): Promise<void> {
-	const { grupos, filtro = '' } = opts;
-	const total = grupos.reduce((n, g) => n + g.filas.length, 0);
-	const ahora = ahoraEsAr();
-
-	const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-	const margenX = 10;
-	const pageW = doc.internal.pageSize.getWidth();
-	const pageH = doc.internal.pageSize.getHeight();
-
-	doc.setFont('helvetica', 'bold');
-	doc.setFontSize(14);
-	doc.setTextColor(17, 17, 17);
-	doc.text('Admisiones vigentes · Recorrido de sala', margenX, 12);
-
-	doc.setFont('helvetica', 'normal');
-	doc.setFontSize(9);
-	doc.setTextColor(85, 85, 85);
-	const meta = [
-		ahora,
-		`${total} paciente${total === 1 ? '' : 's'}`,
-		filtro || null,
-	]
-		.filter(Boolean)
-		.join(' · ');
-	doc.text(meta, margenX, 18);
-
-	let cursorY = 22;
-
-	for (const g of grupos) {
-		if (cursorY > pageH - 28) {
-			doc.addPage();
-			cursorY = 12;
+function cell(row: AdmisionVigente, key: string): string {
+	switch (key) {
+		case 'cama':
+			return clean(row.cama);
+		case 'paciente':
+			return clean(row.paciente);
+		case 'dni':
+			return fmtDoc(row.documento);
+		case 'edad':
+			return edadSexo(row);
+		case 'ingreso': {
+			const f = fechaCorta(row.fechaIngreso);
+			const h = String(row.horaIngreso || '').slice(0, 5);
+			return h ? `${f} ${h}` : f;
 		}
+		case 'dias':
+			return row.diasInternacion != null ? String(row.diasInternacion) : '—';
+		case 'diag':
+			return clean(row.diagnostico);
+		case 'cobertura':
+			return clean(row.cobertura);
+		case 'medico':
+			return clean(row.medico);
+		default:
+			return '—';
+	}
+}
 
-		doc.setFont('helvetica', 'bold');
-		doc.setFontSize(11);
-		doc.setTextColor(17, 17, 17);
-		doc.text(`${g.titulo} (${g.filas.length})`, margenX, cursorY);
-		cursorY += 2;
+function agrupar(filas: AdmisionVigente[]): Grupo[] {
+	const mapa = new Map<string, Grupo>();
+	for (const f of filas) {
+		const clave = f.sector || '—';
+		if (!mapa.has(clave)) {
+			mapa.set(clave, { clave, titulo: f.sectorDescripcion || clave, filas: [] });
+		}
+		mapa.get(clave)!.filas.push(f);
+	}
+	return Array.from(mapa.values());
+}
 
-		autoTable(doc, {
-			startY: cursorY,
-			margin: { left: margenX, right: margenX, top: 10, bottom: 10 },
-			theme: 'grid',
-			styles: {
-				font: 'helvetica',
-				fontSize: 7.5,
-				cellPadding: 1.2,
-				valign: 'top',
-				textColor: [17, 17, 17],
-				lineColor: [153, 153, 153],
-				lineWidth: 0.2,
-				overflow: 'linebreak',
-			},
-			headStyles: {
-				fillColor: [238, 238, 238],
-				textColor: [17, 17, 17],
-				fontStyle: 'bold',
-				fontSize: 7.5,
-			},
-			columnStyles: {
-				0: { cellWidth: 14 },
-				1: { cellWidth: 42 },
-				2: { cellWidth: 22 },
-				3: { cellWidth: 14 },
-				4: { cellWidth: 18 },
-				5: { cellWidth: 10 },
-				6: { cellWidth: 40 },
-				7: { cellWidth: 32 },
-				8: { cellWidth: 28 },
-				9: { cellWidth: pageW - margenX * 2 - 14 - 42 - 22 - 14 - 18 - 10 - 40 - 32 - 28 },
-			},
-			head: [
-				[
-					'Cama',
-					'Paciente',
-					'DNI',
-					'Edad',
-					'Ingreso',
-					'Días',
-					'Diagnóstico',
-					'Cobertura',
-					'Médico',
-					'Notas',
-				],
-			],
-			body: g.filas.map((f) => [
-				f.cama || '—',
-				`${f.paciente || '—'}\nVisita ${f.numeroVisita}`,
-				f.documento || '—',
-				edadSexo(f),
-				fechaCorta(f.fechaIngreso),
-				f.diasInternacion ?? '—',
-				f.diagnostico || '—',
-				f.cobertura || '—',
-				f.medico || '—',
-				'',
-			]),
-			didParseCell: (data) => {
-				if (data.section === 'body' && data.column.index === 1) {
-					data.cell.styles.fontStyle = 'bold';
-				}
-			},
-		});
-
-		const last = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable;
-		cursorY = (last?.finalY ?? cursorY) + 8;
+/** PDF landscape de admisiones vigentes (blob para previsualizar / descargar). */
+export async function buildAdmisionesVigentesPdf(
+	opts: PdfAdmisionesVigentesOpts,
+): Promise<{ blob: Blob; fileName: string }> {
+	let empresaInfo = null;
+	try {
+		empresaInfo = await obtenerInfoEmpresa();
+	} catch {
+		empresaInfo = null;
 	}
 
-	const stamp = ahora.replace(/[/,: ]/g, '-');
-	doc.save(`admisiones-vigentes_${stamp}.pdf`);
+	const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+	const pageW = doc.internal.pageSize.getWidth();
+	const pageH = doc.internal.pageSize.getHeight();
+	const x0 = PDF_MARGIN_X;
+	const x1 = pageW - PDF_MARGIN_X;
+	const usable = x1 - x0;
+	const colScale = usable / COLS.reduce((s, c) => s + c.w, 0);
+	const cols = COLS.map((c) => ({ ...c, w: c.w * colScale }));
+	const limite = () => pageH - PDF_FOOTER_SPACE - 2;
+
+	const headerOpts: PDFHeaderOptions = {
+		title: TITLE,
+		empresaInfo,
+		emittedAt: new Date(),
+	};
+
+	const fileName =
+		opts.fileName ||
+		`admisiones_vigentes_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+	let y = await drawDocumentHeader(doc, headerOpts);
+
+	doc.setFont('helvetica', 'normal');
+	doc.setFontSize(8);
+	doc.setTextColor(...PDF_COLORS.muted);
+	const capParts = [
+		`${opts.rows.length} paciente${opts.rows.length === 1 ? '' : 's'}`,
+		opts.filtroDescripcion?.trim() || '',
+	].filter(Boolean);
+	doc.text(capParts.join('  ·  '), x0, y);
+	y += 5;
+
+	const drawTableHead = () => {
+		doc.setFillColor(224, 247, 250);
+		doc.rect(x0, y - 3.2, usable, 6.2, 'F');
+		doc.setFont('helvetica', 'bold');
+		doc.setFontSize(7);
+		doc.setTextColor(...PDF_COLORS.brand);
+		let x = x0;
+		for (const c of cols) {
+			doc.text(c.label, x + 1, y);
+			x += c.w;
+		}
+		y += 5;
+		doc.setDrawColor(...PDF_COLORS.line);
+		doc.setLineWidth(0.2);
+		doc.line(x0, y - 1.5, x1, y - 1.5);
+	};
+
+	const rowHeight = (row: AdmisionVigente): number => {
+		doc.setFont('helvetica', 'normal');
+		doc.setFontSize(7.2);
+		let h = 4;
+		for (const c of cols) {
+			const lines = doc.splitTextToSize(cell(row, c.key), c.w - 2) as string[];
+			h = Math.max(h, lines.length * 3.2);
+		}
+		return Math.min(h + 1.5, 14);
+	};
+
+	const drawRow = (row: AdmisionVigente, zebra: boolean) => {
+		const h = rowHeight(row);
+		if (zebra) {
+			doc.setFillColor(248, 250, 252);
+			doc.rect(x0, y - 3, usable, h, 'F');
+		}
+		doc.setFont('helvetica', 'normal');
+		doc.setFontSize(7.2);
+		doc.setTextColor(...PDF_COLORS.ink);
+		let x = x0;
+		for (const c of cols) {
+			const lines = (doc.splitTextToSize(cell(row, c.key), c.w - 2) as string[]).slice(0, 3);
+			doc.text(lines, x + 1, y);
+			x += c.w;
+		}
+		y += h;
+	};
+
+	const bandaSector = (titulo: string, n: number) => {
+		const alto = 6.5;
+		if (y + alto + 8 > limite()) {
+			doc.addPage();
+			y = PDF_CONTENT_TOP;
+		}
+		y += 2;
+		doc.setFillColor(...PDF_COLORS.brandSoft);
+		doc.rect(x0, y, usable, alto, 'F');
+		doc.setFillColor(...PDF_COLORS.brand);
+		doc.rect(x0, y, 1, alto, 'F');
+		doc.setFont('helvetica', 'bold');
+		doc.setFontSize(8.4);
+		doc.setTextColor(...PDF_COLORS.ink);
+		doc.text(titulo, x0 + 3.5, y + 4.3);
+		doc.setFont('helvetica', 'normal');
+		doc.setFontSize(7.2);
+		doc.setTextColor(...PDF_COLORS.muted);
+		doc.text(`${n}`, x1 - 2.5, y + 4.3, { align: 'right' });
+		y += alto + 3.5;
+		drawTableHead();
+	};
+
+	const nuevaPaginaConHead = () => {
+		doc.addPage();
+		y = PDF_CONTENT_TOP;
+		drawTableHead();
+	};
+
+	const grupos = agrupar(opts.rows);
+
+	if (!grupos.length) {
+		doc.setFont('helvetica', 'normal');
+		doc.setFontSize(9);
+		doc.setTextColor(...PDF_COLORS.muted);
+		doc.text('Sin admisiones vigentes para exportar.', x0, y + 4);
+	} else {
+		let zebra = 0;
+		for (const g of grupos) {
+			bandaSector(g.titulo, g.filas.length);
+			for (const row of g.filas) {
+				const h = rowHeight(row);
+				if (y + h > limite()) nuevaPaginaConHead();
+				drawRow(row, zebra % 2 === 1);
+				zebra += 1;
+			}
+		}
+	}
+
+	drawRunningHeaders(doc, headerOpts);
+	drawDocumentFooters(doc, headerOpts);
+
+	return { blob: doc.output('blob'), fileName };
 }

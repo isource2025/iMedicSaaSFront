@@ -6,13 +6,21 @@ import Modal from '@/app/components/UI/Modal';
 import { useToast } from '@/app/components/UI/ToastProvider';
 import { conveniosService, detallesDeError } from '@/app/services/conveniosService';
 import { mensajeDeError } from '@/app/utils/apiError';
-import type { CatalogosConvenio, ConvenioDetalle } from '@/app/types/convenios';
+import type { CatalogosConvenio, ConteosPestanas } from '@/app/types/convenios';
 import { fmtNumero, hoyIso } from '@/app/components/Facturacion/formato';
 import c from '@/app/components/Facturacion/Facturacion.module.css';
 
+/** Lo mínimo para armar la copia: sirve el detalle completo o una fila del listado. */
+export type ConvenioParaDuplicar = {
+	codigo: number;
+	descripcion: string;
+	obraSocial: { valor: number };
+	conteos: ConteosPestanas;
+};
+
 interface Props {
 	open: boolean;
-	convenio: ConvenioDetalle;
+	convenio: ConvenioParaDuplicar;
 	catalogos: CatalogosConvenio;
 	onClose: () => void;
 	onDuplicado: (codigo: number) => void;
