@@ -321,7 +321,7 @@ export default function CargarProtocoloModal({
 		updPractica(key, (p) => ({ ...p, loading: true }));
 		timers.current[tk] = window.setTimeout(() => {
 			void protocolosService
-				.buscarPracticas(t, 25)
+				.buscarPracticas(t, 25, numeroVisita)
 				.then((rows) =>
 					updPractica(key, (p) =>
 						p.query.trim() === t ? { ...p, results: rows, loading: false } : { ...p, loading: false },
