@@ -1,5 +1,6 @@
 import type { EmpresaInfo } from '../services/empresaService';
 import type { BalanceHidrico } from '../types/balanceHidrico';
+import { etiquetaTransfusion, lineasDrenaje, volumenDrenajes } from '../types/balanceHidrico';
 import { formatMatricula, type ProfesionalFirmaInfo } from './pdfExport';
 import { cleanPdfValue, type PDFHeaderPatient } from './pdfHeader';
 import { columnaHora, generarPDFTablaDiaria, PDF_TABLA_FONT, type ColumnaTabla } from './pdfTablaDiaria';
@@ -22,8 +23,10 @@ type CampoMl =
 	| 'Ing_Tranf_paso'
 	| 'Egr_Diuresis'
 	| 'Egr_Catarsis'
-	| 'Egr_SNG_Vomito'
-	| 'Egr_Drenajes';
+	| 'Egr_Colostomia'
+	| 'Egr_Ileostomia'
+	| 'Egr_SNG'
+	| 'Egr_Vomito';
 
 const n0 = (v: unknown) => {
 	const n = Number(v);
@@ -35,11 +38,19 @@ const ml = (n: number) => (n === 0 ? '' : Number.isInteger(n) ? String(n) : n.to
 const conSigno = (n: number) => (n > 0 ? `+${ml(n)}` : n < 0 ? ml(n) : '0');
 
 const sumar = (rows: BalanceHidrico[], k: CampoMl) => rows.reduce((s, r) => s + n0(r[k]), 0);
+const sumarDrenajes = (rows: BalanceHidrico[]) => rows.reduce((s, r) => s + volumenDrenajes(r), 0);
 
 /** Totales clínicos: cuentan los "Paso" (volumen efectivo) menos los egresos. */
 function totalesDe(rows: BalanceHidrico[]) {
 	const ingresos = sumar(rows, 'Ing_Par_Paso') + sumar(rows, 'Ing_Aent_Paso') + sumar(rows, 'Ing_Apar_paso') + sumar(rows, 'Ing_Tranf_paso');
-	const egresos = sumar(rows, 'Egr_Diuresis') + sumar(rows, 'Egr_Catarsis') + sumar(rows, 'Egr_SNG_Vomito') + sumar(rows, 'Egr_Drenajes');
+	const egresos =
+		sumar(rows, 'Egr_Diuresis') +
+		sumar(rows, 'Egr_Catarsis') +
+		sumar(rows, 'Egr_Colostomia') +
+		sumar(rows, 'Egr_Ileostomia') +
+		sumar(rows, 'Egr_SNG') +
+		sumar(rows, 'Egr_Vomito') +
+		sumarDrenajes(rows);
 	return { ingresos, egresos, balance: ingresos - egresos };
 }
 
@@ -86,11 +97,42 @@ const COLUMNAS: ColumnaTabla<BalanceHidrico>[] = [
 	numero('Ing_Apar_Ingreso', 'ING.', 11, APAR),
 	numero('Ing_Apar_paso', 'PASO', 11, APAR),
 	numero('Ing_Tranf_Ingreso', 'ING.', 11, TRANSF),
-	numero('Ing_Tranf_paso', 'PASO', 11, TRANSF),
-	numero('Egr_Diuresis', 'DIURESIS', 17, EGR),
-	numero('Egr_Catarsis', 'CATARSIS', 17, EGR),
-	numero('Egr_SNG_Vomito', 'SNG/VÓM.', 17, EGR),
-	numero('Egr_Drenajes', 'DRENAJES', 17, EGR),
+	{
+		key: 'Ing_Tranf_paso',
+		label: 'PASO',
+		w: 16,
+		align: 'center',
+		...TRANSF,
+		celda: (r) => {
+			const tipo = etiquetaTransfusion(r.Ing_Tranf_Tipo);
+			const v = ml(n0(r.Ing_Tranf_paso));
+			if (!tipo) return v;
+			return [
+				...(v ? [{ texto: v }] : []),
+				{ texto: tipo, tono: 'muted' as const, tamano: PDF_TABLA_FONT - 0.8 },
+			];
+		},
+	},
+	numero('Egr_Diuresis', 'DIURESIS', 13, EGR),
+	numero('Egr_Catarsis', 'CATARSIS', 13, EGR),
+	numero('Egr_Colostomia', 'COLOST.', 12, { ...EGR, opcional: true }),
+	numero('Egr_Ileostomia', 'ILEOST.', 12, { ...EGR, opcional: true }),
+	numero('Egr_SNG', 'SONDA N/G', 13, EGR),
+	numero('Egr_Vomito', 'VÓMITO', 12, { ...EGR, opcional: true }),
+	{
+		key: 'Egr_Drenajes',
+		label: 'DRENAJES',
+		w: 18,
+		align: 'center',
+		...EGR,
+		celda: (r) => {
+			const lineas = lineasDrenaje(r);
+			if (!lineas.length) return '';
+			return lineas.map((d) => ({
+				texto: d.tipo ? `${ml(d.qty) || '0'} ${d.tipo}` : ml(d.qty) || '0',
+			}));
+		},
+	},
 	{ key: 'ingresos', label: 'ING.', w: 13, align: 'center', ...TOT, celda: (r) => ml(totalesDe([r]).ingresos) },
 	{ key: 'egresos', label: 'EGR.', w: 13, align: 'center', ...TOT, celda: (r) => ml(totalesDe([r]).egresos) },
 	{
@@ -118,13 +160,16 @@ function totalesFila(rows: BalanceHidrico[]): Record<string, string> {
 		'Ing_Tranf_paso',
 		'Egr_Diuresis',
 		'Egr_Catarsis',
-		'Egr_SNG_Vomito',
-		'Egr_Drenajes',
+		'Egr_Colostomia',
+		'Egr_Ileostomia',
+		'Egr_SNG',
+		'Egr_Vomito',
 	];
 	const salida: Record<string, string> = {
 		ingresos: ml(t.ingresos) || '0',
 		egresos: ml(t.egresos) || '0',
 		balance: conSigno(t.balance),
+		Egr_Drenajes: ml(sumarDrenajes(rows)),
 	};
 	campos.forEach((k) => {
 		salida[k] = ml(sumar(rows, k));

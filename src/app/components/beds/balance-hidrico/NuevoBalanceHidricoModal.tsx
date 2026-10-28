@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '@/app/contexts/AppContext';
 import { actualizarBalance, crearBalance } from '../../../services/balanceHidricoService';
 import type { BalanceHidrico, BalanceHidricoPayload } from '../../../types/balanceHidrico';
+import { N_DRENAJES, TIPOS_DRENAJE, TIPOS_TRANSFUSION, volumenDrenajes } from '../../../types/balanceHidrico';
 import {
 	getSectorId,
 	getSessionUser,
@@ -37,8 +38,31 @@ type NumKey =
 	| 'Ing_Tranf_paso'
 	| 'Egr_Diuresis'
 	| 'Egr_Catarsis'
-	| 'Egr_SNG_Vomito'
-	| 'Egr_Drenajes';
+	| 'Egr_Colostomia'
+	| 'Egr_Ileostomia'
+	| 'Egr_SNG'
+	| 'Egr_Vomito'
+	| 'Egr_Drenaje1'
+	| 'Egr_Drenaje2'
+	| 'Egr_Drenaje3'
+	| 'Egr_Drenaje4'
+	| 'Egr_Drenaje5';
+
+type DrainTipoKey =
+	| 'Egr_Drenaje1Tipo'
+	| 'Egr_Drenaje2Tipo'
+	| 'Egr_Drenaje3Tipo'
+	| 'Egr_Drenaje4Tipo'
+	| 'Egr_Drenaje5Tipo';
+
+const DRAIN_QTY: NumKey[] = ['Egr_Drenaje1', 'Egr_Drenaje2', 'Egr_Drenaje3', 'Egr_Drenaje4', 'Egr_Drenaje5'];
+const DRAIN_TIPO: DrainTipoKey[] = [
+	'Egr_Drenaje1Tipo',
+	'Egr_Drenaje2Tipo',
+	'Egr_Drenaje3Tipo',
+	'Egr_Drenaje4Tipo',
+	'Egr_Drenaje5Tipo',
+];
 
 /** Vacío → 0 para que JSON no omita el campo y el UPDATE pueda limpiar. */
 function n0(v: number | undefined | null): number {
@@ -64,10 +88,23 @@ function emptyForm(numeroVisita: number, fecha: string, sector: string): Balance
 		Ing_Apar_paso: undefined,
 		Ing_Tranf_Ingreso: undefined,
 		Ing_Tranf_paso: undefined,
+		Ing_Tranf_Tipo: '',
 		Egr_Diuresis: undefined,
 		Egr_Catarsis: undefined,
-		Egr_SNG_Vomito: undefined,
-		Egr_Drenajes: undefined,
+		Egr_Colostomia: undefined,
+		Egr_Ileostomia: undefined,
+		Egr_SNG: undefined,
+		Egr_Vomito: undefined,
+		Egr_Drenaje1: undefined,
+		Egr_Drenaje1Tipo: '',
+		Egr_Drenaje2: undefined,
+		Egr_Drenaje2Tipo: '',
+		Egr_Drenaje3: undefined,
+		Egr_Drenaje3Tipo: '',
+		Egr_Drenaje4: undefined,
+		Egr_Drenaje4Tipo: '',
+		Egr_Drenaje5: undefined,
+		Egr_Drenaje5Tipo: '',
 		Sector: sector,
 	};
 }
@@ -75,7 +112,7 @@ function emptyForm(numeroVisita: number, fecha: string, sector: string): Balance
 function fromRow(row: BalanceHidrico, sector: string): BalanceHidricoPayload {
 	const nz = (v: number | null | undefined) =>
 		v == null || Number(v) === 0 ? undefined : Number(v);
-	return {
+	const form: BalanceHidricoPayload = {
 		NumeroVisita: row.NumeroVisita,
 		Fecha: String(row.Fecha || '').slice(0, 10),
 		Hora: String(row.Hora || '').slice(0, 5) || getLocalTime(new Date()),
@@ -91,12 +128,29 @@ function fromRow(row: BalanceHidrico, sector: string): BalanceHidricoPayload {
 		Ing_Apar_paso: nz(row.Ing_Apar_paso),
 		Ing_Tranf_Ingreso: nz(row.Ing_Tranf_Ingreso),
 		Ing_Tranf_paso: nz(row.Ing_Tranf_paso),
+		Ing_Tranf_Tipo: row.Ing_Tranf_Tipo || '',
 		Egr_Diuresis: nz(row.Egr_Diuresis),
 		Egr_Catarsis: nz(row.Egr_Catarsis),
-		Egr_SNG_Vomito: nz(row.Egr_SNG_Vomito),
-		Egr_Drenajes: nz(row.Egr_Drenajes),
+		Egr_Colostomia: nz(row.Egr_Colostomia),
+		Egr_Ileostomia: nz(row.Egr_Ileostomia),
+		Egr_SNG: nz(row.Egr_SNG),
+		Egr_Vomito: nz(row.Egr_Vomito),
+		Egr_Drenaje1: nz(row.Egr_Drenaje1),
+		Egr_Drenaje1Tipo: row.Egr_Drenaje1Tipo || '',
+		Egr_Drenaje2: nz(row.Egr_Drenaje2),
+		Egr_Drenaje2Tipo: row.Egr_Drenaje2Tipo || '',
+		Egr_Drenaje3: nz(row.Egr_Drenaje3),
+		Egr_Drenaje3Tipo: row.Egr_Drenaje3Tipo || '',
+		Egr_Drenaje4: nz(row.Egr_Drenaje4),
+		Egr_Drenaje4Tipo: row.Egr_Drenaje4Tipo || '',
+		Egr_Drenaje5: nz(row.Egr_Drenaje5),
+		Egr_Drenaje5Tipo: row.Egr_Drenaje5Tipo || '',
 		Sector: row.Sector || sector,
 	};
+	if (!form.Egr_Drenaje1 && !form.Egr_Drenaje2 && !form.Egr_Drenaje3 && !form.Egr_Drenaje4 && !form.Egr_Drenaje5) {
+		form.Egr_Drenaje1 = nz(row.Egr_Drenajes);
+	}
+	return form;
 }
 
 function payloadParaApi(
@@ -120,10 +174,25 @@ function payloadParaApi(
 		Ing_Apar_paso: n0(form.Ing_Apar_paso),
 		Ing_Tranf_Ingreso: n0(form.Ing_Tranf_Ingreso),
 		Ing_Tranf_paso: n0(form.Ing_Tranf_paso),
+		Ing_Tranf_Tipo: (form.Ing_Tranf_Tipo || '').trim(),
 		Egr_Diuresis: n0(form.Egr_Diuresis),
 		Egr_Catarsis: n0(form.Egr_Catarsis),
-		Egr_SNG_Vomito: n0(form.Egr_SNG_Vomito),
-		Egr_Drenajes: n0(form.Egr_Drenajes),
+		Egr_Colostomia: n0(form.Egr_Colostomia),
+		Egr_Ileostomia: n0(form.Egr_Ileostomia),
+		Egr_SNG: n0(form.Egr_SNG),
+		Egr_Vomito: n0(form.Egr_Vomito),
+		Egr_Drenaje1: n0(form.Egr_Drenaje1),
+		Egr_Drenaje1Tipo: (form.Egr_Drenaje1Tipo || '').trim(),
+		Egr_Drenaje2: n0(form.Egr_Drenaje2),
+		Egr_Drenaje2Tipo: (form.Egr_Drenaje2Tipo || '').trim(),
+		Egr_Drenaje3: n0(form.Egr_Drenaje3),
+		Egr_Drenaje3Tipo: (form.Egr_Drenaje3Tipo || '').trim(),
+		Egr_Drenaje4: n0(form.Egr_Drenaje4),
+		Egr_Drenaje4Tipo: (form.Egr_Drenaje4Tipo || '').trim(),
+		Egr_Drenaje5: n0(form.Egr_Drenaje5),
+		Egr_Drenaje5Tipo: (form.Egr_Drenaje5Tipo || '').trim(),
+		Egr_SNG_Vomito: n0(form.Egr_SNG) + n0(form.Egr_Vomito),
+		Egr_Drenajes: volumenDrenajes(form),
 		// Alta: sector de la cama. Edición: se conserva el sector con el que se registró.
 		Sector: (form.Sector || sector || '').trim().toUpperCase().slice(0, 4),
 	};
@@ -174,13 +243,19 @@ export default function NuevoBalanceHidricoModal({
 		const ing =
 			n0(form.Ing_Par_Paso) + n0(form.Ing_Aent_Paso) + n0(form.Ing_Apar_paso) + n0(form.Ing_Tranf_paso);
 		const egr =
-			n0(form.Egr_Diuresis) + n0(form.Egr_Catarsis) + n0(form.Egr_SNG_Vomito) + n0(form.Egr_Drenajes);
+			n0(form.Egr_Diuresis) +
+			n0(form.Egr_Catarsis) +
+			n0(form.Egr_Colostomia) +
+			n0(form.Egr_Ileostomia) +
+			n0(form.Egr_SNG) +
+			n0(form.Egr_Vomito) +
+			volumenDrenajes(form);
 		return { ing, egr, bal: ing - egr };
 	}, [form]);
 
 	const tieneDatos = totales.ing > 0 || totales.egr > 0 ||
 		n0(form.Ing_Par_Ingreso) + n0(form.Ing_Aent_Ingreso) + n0(form.Ing_Apar_Ingreso) + n0(form.Ing_Tranf_Ingreso) > 0 ||
-		!!(form.Medicacion || form.Ing_Aent_Alimento || form.Ing_Apar_Solucion);
+		!!(form.Medicacion || form.Ing_Aent_Alimento || form.Ing_Apar_Solucion || form.Ing_Tranf_Tipo);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -190,6 +265,9 @@ export default function NuevoBalanceHidricoModal({
 		if (!operadorId) return setError('Sesión sin operador — no se puede guardar');
 		if (!form.Fecha || !form.Hora) return setError('Fecha y hora son obligatorias');
 		if (!tieneDatos) return setError('Cargá al menos un ingreso o un egreso');
+		if ((n0(form.Ing_Tranf_Ingreso) > 0 || n0(form.Ing_Tranf_paso) > 0) && !form.Ing_Tranf_Tipo) {
+			return setError('Indicá si la transfusión es glóbulo rojo, plaqueta o plasma');
+		}
 
 		setSaving(true);
 		setError(null);
@@ -387,7 +465,23 @@ export default function NuevoBalanceHidricoModal({
 
 				<section className={`${styles.block} ${styles.blockIng}`}>
 					<h4 className={styles.blockTitle}>Transfusión</h4>
-					<p className={styles.blockHint}>Glóbulos rojos, plasma, plaquetas.</p>
+					<div className={styles.tipos} role="radiogroup" aria-label="Tipo de transfusión">
+						{TIPOS_TRANSFUSION.map((t) => (
+							<label
+								key={t.id}
+								className={`${styles.tipoBtn} ${form.Ing_Tranf_Tipo === t.id ? styles.tipoOn : ''}`}
+							>
+								<input
+									type="radio"
+									name="bh-tranf-tipo"
+									value={t.id}
+									checked={form.Ing_Tranf_Tipo === t.id}
+									onChange={() => set('Ing_Tranf_Tipo', t.id)}
+								/>
+								{t.label}
+							</label>
+						))}
+					</div>
 					{renderPar('Ing_Tranf_Ingreso', 'Ing_Tranf_paso')}
 				</section>
 			</div>
@@ -401,8 +495,43 @@ export default function NuevoBalanceHidricoModal({
 				<div className={styles.grid4}>
 					{renderNum('Egr_Diuresis', 'Diuresis')}
 					{renderNum('Egr_Catarsis', 'Catarsis')}
-					{renderNum('Egr_SNG_Vomito', 'SNG / Vómito')}
-					{renderNum('Egr_Drenajes', 'Drenajes')}
+					{renderNum('Egr_Colostomia', 'Colostomía')}
+					{renderNum('Egr_Ileostomia', 'Ileostomía')}
+					{renderNum('Egr_SNG', 'Sonda N/G')}
+					{renderNum('Egr_Vomito', 'Vómito')}
+				</div>
+				<div className={styles.drenajes}>
+					<h4 className={styles.blockTitle}>Drenajes</h4>
+					{Array.from({ length: N_DRENAJES }, (_, i) => {
+						const qtyKey = DRAIN_QTY[i];
+						const tipoKey = DRAIN_TIPO[i];
+						const tipoVal = form[tipoKey] || '';
+						return (
+							<div className={styles.drenajeRow} key={qtyKey}>
+								<span className={styles.drenajeN}>{i + 1}</span>
+								{renderNum(qtyKey, 'Cantidad')}
+								<div className={styles.field}>
+									<label className={styles.label} htmlFor={`bh-${tipoKey}`}>
+										Tipo
+									</label>
+									<input
+										id={`bh-${tipoKey}`}
+										className={styles.input}
+										value={tipoVal}
+										onChange={(e) => set(tipoKey, e.target.value)}
+										placeholder="Tipo de drenaje"
+										maxLength={40}
+										list="bh-tipos-drenaje"
+									/>
+								</div>
+							</div>
+						);
+					})}
+					<datalist id="bh-tipos-drenaje">
+						{TIPOS_DRENAJE.map((t) => (
+							<option key={t} value={t} />
+						))}
+					</datalist>
 				</div>
 			</section>
 
@@ -416,7 +545,7 @@ export default function NuevoBalanceHidricoModal({
 				<div className={styles.totalItem}>
 					<span>Egresos</span>
 					<strong>{totales.egr} ml</strong>
-					<small>diuresis + catarsis + SNG + drenajes</small>
+					<small>diuresis, catarsis, ostomías, SNG, vómito y drenajes</small>
 				</div>
 				<div
 					className={`${styles.totalItem} ${styles.totalBal} ${

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import type { BalanceHidrico } from '../../../types/balanceHidrico';
+import { etiquetaTransfusion, lineasDrenaje, textoDrenajes, volumenDrenajes } from '../../../types/balanceHidrico';
 import {
 	eliminarBalance,
 	formatearFechaCorta,
@@ -126,6 +127,9 @@ const BalanceHidricoSection: React.FC<Props> = ({
 					r.Via,
 					r.Ing_Aent_Alimento,
 					r.Ing_Apar_Solucion,
+					r.Ing_Tranf_Tipo,
+					etiquetaTransfusion(r.Ing_Tranf_Tipo),
+					textoDrenajes(r),
 					r.Sector,
 					r.ProfesionalApellido,
 					r.ProfesionalNombres,
@@ -285,7 +289,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 							description={
 								registros.length
 									? 'Limpiá la búsqueda para ver todos los registros.'
-									: 'Cargá ingresos (parenteral, enteral, transfusión) y egresos (diuresis, catarsis, SNG, drenajes) con el botón Agregar.'
+									: 'Cargá ingresos (parenteral, enteral, transfusión) y egresos (diuresis, catarsis, ostomías, sonda N/G, vómito, drenajes) con el botón Agregar.'
 							}
 							actionLabel={puedeCrear && !registros.length ? 'Agregar registro' : undefined}
 							onAction={puedeCrear && !registros.length ? abrirNuevo : undefined}
@@ -316,10 +320,10 @@ const BalanceHidricoSection: React.FC<Props> = ({
 											<th colSpan={3} className={bh.grpIng}>
 												Alimentación parenteral
 											</th>
-											<th colSpan={2} className={bh.grpIng}>
+											<th colSpan={3} className={bh.grpIng}>
 												Transfusión
 											</th>
-											<th colSpan={4} className={bh.grpEgr}>
+											<th colSpan={7} className={bh.grpEgr}>
 												Egresos
 											</th>
 											<th rowSpan={2} className={`${bh.num} ${bh.colTot}`}>
@@ -348,11 +352,15 @@ const BalanceHidricoSection: React.FC<Props> = ({
 											<th className={bh.colTexto}>Solución</th>
 											<th className={bh.num}>Ingreso</th>
 											<th className={`${bh.num} ${bh.sepDer}`}>Paso</th>
+											<th className={bh.colTexto}>Tipo</th>
 											<th className={bh.num}>Ingreso</th>
 											<th className={`${bh.num} ${bh.sepDer}`}>Paso</th>
 											<th className={bh.num}>Diuresis</th>
 											<th className={bh.num}>Catarsis</th>
-											<th className={bh.num}>SNG / Vómito</th>
+											<th className={bh.num}>Colostomía</th>
+											<th className={bh.num}>Ileostomía</th>
+											<th className={bh.num}>Sonda N/G</th>
+											<th className={bh.num}>Vómito</th>
 											<th className={`${bh.num} ${bh.sepDer}`}>Drenajes</th>
 										</tr>
 									</thead>
@@ -386,12 +394,20 @@ const BalanceHidricoSection: React.FC<Props> = ({
 													</td>
 													{celdaNum(r.Ing_Apar_Ingreso)}
 													{celdaNum(r.Ing_Apar_paso, `${bh.paso} ${bh.sepDer}`)}
+													<td className={bh.colTexto} title={etiquetaTransfusion(r.Ing_Tranf_Tipo)}>
+														<span className={bh.texto}>{etiquetaTransfusion(r.Ing_Tranf_Tipo)}</span>
+													</td>
 													{celdaNum(r.Ing_Tranf_Ingreso)}
 													{celdaNum(r.Ing_Tranf_paso, `${bh.paso} ${bh.sepDer}`)}
 													{celdaNum(r.Egr_Diuresis, bh.egr)}
 													{celdaNum(r.Egr_Catarsis, bh.egr)}
-													{celdaNum(r.Egr_SNG_Vomito, bh.egr)}
-													{celdaNum(r.Egr_Drenajes, `${bh.egr} ${bh.sepDer}`)}
+													{celdaNum(r.Egr_Colostomia, bh.egr)}
+													{celdaNum(r.Egr_Ileostomia, bh.egr)}
+													{celdaNum(r.Egr_SNG, bh.egr)}
+													{celdaNum(r.Egr_Vomito, bh.egr)}
+													<td className={`${bh.num} ${bh.egr} ${bh.sepDer}`} title={textoDrenajes(r) || undefined}>
+														{formatearNum(volumenDrenajes(r))}
+													</td>
 													<td className={`${bh.num} ${bh.tot} ${bh.colTot}`}>{formatearNum(r.TotalIngresos)}</td>
 													<td className={`${bh.num} ${bh.tot} ${bh.colTot}`}>{formatearNum(r.TotalEgresos)}</td>
 													<td
@@ -453,11 +469,15 @@ const BalanceHidricoSection: React.FC<Props> = ({
 											<td />
 											<td className={bh.num}>{formatearNum(totales.porColumna.Ing_Apar_Ingreso)}</td>
 											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Ing_Apar_paso)}</td>
+											<td />
 											<td className={bh.num}>{formatearNum(totales.porColumna.Ing_Tranf_Ingreso)}</td>
 											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Ing_Tranf_paso)}</td>
 											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_Diuresis)}</td>
 											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_Catarsis)}</td>
-											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_SNG_Vomito)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_Colostomia)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_Ileostomia)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_SNG)}</td>
+											<td className={bh.num}>{formatearNum(totales.porColumna.Egr_Vomito)}</td>
 											<td className={`${bh.num} ${bh.sepDer}`}>{formatearNum(totales.porColumna.Egr_Drenajes)}</td>
 											<td className={bh.num}>{totales.ingresos}</td>
 											<td className={bh.num}>{totales.egresos}</td>
@@ -518,16 +538,25 @@ const BalanceHidricoSection: React.FC<Props> = ({
 														</dd>
 													</>
 												)}
-												{Number(r.Ing_Tranf_paso) > 0 && (
+												{(Number(r.Ing_Tranf_paso) > 0 || r.Ing_Tranf_Tipo) && (
 													<>
 														<dt>Transfusión</dt>
-														<dd>{formatearMl(r.Ing_Tranf_paso)}</dd>
+														<dd>
+															{etiquetaTransfusion(r.Ing_Tranf_Tipo)
+																? `${etiquetaTransfusion(r.Ing_Tranf_Tipo)} · `
+																: ''}
+															{formatearMl(r.Ing_Tranf_paso)}
+														</dd>
 													</>
 												)}
 												<dt>Egresos</dt>
 												<dd>
-													Diur {formatearNum(r.Egr_Diuresis) || 0} · Cat {formatearNum(r.Egr_Catarsis) || 0} · SNG{' '}
-													{formatearNum(r.Egr_SNG_Vomito) || 0} · Dren {formatearNum(r.Egr_Drenajes) || 0}
+													Diur {formatearNum(r.Egr_Diuresis) || 0} · Cat {formatearNum(r.Egr_Catarsis) || 0}
+													{Number(r.Egr_Colostomia) ? ` · Colost ${formatearNum(r.Egr_Colostomia)}` : ''}
+													{Number(r.Egr_Ileostomia) ? ` · Ileo ${formatearNum(r.Egr_Ileostomia)}` : ''}
+													{' · SNG '}
+													{formatearNum(r.Egr_SNG) || 0} · Vóm {formatearNum(r.Egr_Vomito) || 0}
+													{textoDrenajes(r) ? ` · Dren ${textoDrenajes(r)}` : ` · Dren ${formatearNum(r.Egr_Drenajes) || 0}`}
 												</dd>
 											</dl>
 											<footer className={bh.cardFoot}>
@@ -603,6 +632,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 										[
 											'Transfusión',
 											[
+												['Tipo', etiquetaTransfusion(selected.Ing_Tranf_Tipo) || '—'],
 												['Ingreso', formatearMl(selected.Ing_Tranf_Ingreso)],
 												['Paso', formatearMl(selected.Ing_Tranf_paso)],
 											],
@@ -612,8 +642,19 @@ const BalanceHidricoSection: React.FC<Props> = ({
 											[
 												['Diuresis', formatearMl(selected.Egr_Diuresis)],
 												['Catarsis', formatearMl(selected.Egr_Catarsis)],
-												['SNG / Vómito', formatearMl(selected.Egr_SNG_Vomito)],
-												['Drenajes', formatearMl(selected.Egr_Drenajes)],
+												['Colostomía', formatearMl(selected.Egr_Colostomia)],
+												['Ileostomía', formatearMl(selected.Egr_Ileostomia)],
+												['Sonda N/G', formatearMl(selected.Egr_SNG)],
+												['Vómito', formatearMl(selected.Egr_Vomito)],
+												...(lineasDrenaje(selected).length
+													? lineasDrenaje(selected).map(
+															(d) =>
+																[
+																	d.tipo ? `Drenaje ${d.n} (${d.tipo})` : `Drenaje ${d.n}`,
+																	formatearMl(d.qty),
+																] as [string, string],
+														)
+													: [['Drenajes', '—'] as [string, string]]),
 											],
 										],
 										[

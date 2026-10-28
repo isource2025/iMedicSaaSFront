@@ -135,15 +135,29 @@ export function sumarTotales(rows: BalanceHidrico[]): TotalesBalance {
 		Ing_Tranf_paso: 0,
 		Egr_Diuresis: 0,
 		Egr_Catarsis: 0,
-		Egr_SNG_Vomito: 0,
+		Egr_Colostomia: 0,
+		Egr_Ileostomia: 0,
+		Egr_SNG: 0,
+		Egr_Vomito: 0,
 		Egr_Drenajes: 0,
 	};
 	for (const r of rows) {
 		(Object.keys(c) as (keyof typeof c)[]).forEach((k) => {
+			if (k === 'Egr_Drenajes') {
+				c[k] += n0(r.Egr_Drenaje1) + n0(r.Egr_Drenaje2) + n0(r.Egr_Drenaje3) + n0(r.Egr_Drenaje4) + n0(r.Egr_Drenaje5) || n0(r.Egr_Drenajes);
+				return;
+			}
 			c[k] += n0(r[k]);
 		});
 	}
 	const ingresos = c.Ing_Par_Paso + c.Ing_Aent_Paso + c.Ing_Apar_paso + c.Ing_Tranf_paso;
-	const egresos = c.Egr_Diuresis + c.Egr_Catarsis + c.Egr_SNG_Vomito + c.Egr_Drenajes;
+	const egresos =
+		c.Egr_Diuresis +
+		c.Egr_Catarsis +
+		c.Egr_Colostomia +
+		c.Egr_Ileostomia +
+		c.Egr_SNG +
+		c.Egr_Vomito +
+		c.Egr_Drenajes;
 	return { ingresos, egresos, balance: ingresos - egresos, porColumna: c };
 }
