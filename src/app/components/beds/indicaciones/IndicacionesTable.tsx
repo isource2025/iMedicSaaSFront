@@ -132,29 +132,27 @@ export default function IndicacionesTable({
 
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const usuarioActual = useUsuarioActual();
-    const { puede, rol } = usePermiso();
+    const { puede } = usePermiso();
 
     // Reglas de negocio de indicaciones:
-    //   MEDICO    → puede editar/eliminar solo sus propias indicaciones. NO puede aplicar.
+    //   MEDICO / rol con EDITAR → editar/eliminar (médico: solo propias) + dejar sin efecto.
     //   ENFERMERO → SOLO puede aplicar. No puede editar ni eliminar.
     //   ADMIN     → puede todo (aplica + edita + elimina sin restricción de propiedad).
+    // Dejar sin efecto: permiso EDITAR (vale rol estándar o privado/custom).
     const puedeAplicar   = puede('INTERNACION.INDICACIONES.APLICAR');
     const puedeCrear     = puede('INTERNACION.INDICACIONES.CREAR');
     const puedeEditar    = puede('INTERNACION.INDICACIONES.EDITAR');
     const puedeEliminar  = puede('INTERNACION.INDICACIONES.ELIMINAR');
-    const rolNombre      = (rol?.nombre || '').toUpperCase();
-    const puedeDejarSinEfecto =
-        (rolNombre === 'MEDICO' || rolNombre === 'ADMIN' || rolNombre === 'SUPER_ADMIN') &&
-        puedeEditar;
+    const puedeEditarAjenos = puede('INTERNACION.REGISTROS.EDITAR_AJENOS');
+    const puedeDejarSinEfecto = puedeEditar;
 
     /**
      * ¿Puede este usuario editar/eliminar esta indicación específica?
-     * ADMIN: sí siempre. MEDICO: solo la suya. ENFERMERO: nunca.
+     * Con EDITAR_AJENOS: sí siempre. Con EDITAR/ELIMINAR: solo la propia.
      */
     const puedeModificarFila = (r: IndicacionRow): boolean => {
-        if (rolNombre === 'ADMIN') return true;
+        if (puedeEditarAjenos) return true;
         if (!puedeEditar && !puedeEliminar) return false;
-        // MEDICO y otros con permiso de editar: solo la propia
         return esRegistroPropio(r as Record<string, unknown>, usuarioActual) === true;
     };
 

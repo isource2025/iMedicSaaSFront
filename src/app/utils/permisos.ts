@@ -30,6 +30,11 @@ export const ACCIONES = {
 	APLICAR: 'APLICAR',
 	EXPORTAR: 'EXPORTAR',
 	IMPRIMIR: 'IMPRIMIR',
+	EDITAR_AJENOS: 'EDITAR_AJENOS',
+	CERRAR: 'CERRAR',
+	MARCAR_VISTO: 'MARCAR_VISTO',
+	VER_TODOS: 'VER_TODOS',
+	SOLO_PROPIA: 'SOLO_PROPIA',
 } as const;
 
 export type Accion = (typeof ACCIONES)[keyof typeof ACCIONES];
@@ -70,11 +75,17 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		id: 'TURNOS',
 		label: 'Turnos',
 		submodulos: [
-			{ id: 'AGENDA',        label: 'Agenda',            path: '/dashboard/turnos/agenda',        acciones: [...CRUD] },
+			{
+				id: 'AGENDA',
+				label: 'Agenda',
+				path: '/dashboard/turnos/agenda',
+				acciones: [...CRUD, ACCIONES.CERRAR, ACCIONES.SOLO_PROPIA, ACCIONES.GESTIONAR],
+			},
 			{ id: 'ADMIN',         label: 'Gestión de turnos', path: '/dashboard/turnos/admin',         acciones: [...CRUD, ACCIONES.GESTIONAR] },
 			{ id: 'EXCEPCIONES',   label: 'Excepciones',       path: '/dashboard/turnos/excepciones',   acciones: [...CRUD] },
 			{ id: 'CONFIGURACION', label: 'Configuración',     path: '/dashboard/turnos/configuracion', acciones: [ACCIONES.VER, ACCIONES.EDITAR, ACCIONES.GESTIONAR] },
 			{ id: 'TABLA',         label: 'Tabla de Turnos',   path: '/dashboard/turnos/tabla',         acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
+			{ id: 'CONVERSACIONES', label: 'Conversaciones WhatsApp', path: '/dashboard/turnos/chats', acciones: [ACCIONES.VER] },
 		],
 	},
 	{
@@ -96,16 +107,16 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 
 			// Funcionalidades clínicas (sidebar de la cama)
 			{ id: 'HISTORIA_CLINICA',     label: 'Historia clínica',           acciones: [...CRUD] },
-			{ id: 'INDICACIONES',         label: 'Indicaciones médicas',       acciones: [...CRUD, ACCIONES.APLICAR] },
+			{ id: 'INDICACIONES',         label: 'Indicaciones médicas',       acciones: [...CRUD, ACCIONES.APLICAR, ACCIONES.MARCAR_VISTO] },
 			{ id: 'EVOLUCIONES',          label: 'Evoluciones médicas',        acciones: [...CRUD] },
-			{ id: 'INTERCONSULTAS',       label: 'Interconsultas',             acciones: [...CRUD] },
+			{ id: 'INTERCONSULTAS',       label: 'Interconsultas',             acciones: [...CRUD, ACCIONES.VER_TODOS] },
 			{ id: 'EVOLUCION_ENFERMERIA', label: 'Evolución de enfermería',    acciones: [...CRUD] },
 			{ id: 'SIGNOS_VITALES',       label: 'Controles / signos vitales', acciones: [...CRUD] },
 			{ id: 'MEDICACION',           label: 'Medicación suministrada',    acciones: [...CRUD] },
 			{ id: 'DIETA',                label: 'Dietas',                     acciones: [...CRUD] },
 			{ id: 'BALANCE_HIDRICO',      label: 'Balance hídrico',            acciones: [...CRUD] },
 			{ id: 'INSUMOS',              label: 'Insumos',                    acciones: [...CRUD] },
-			{ id: 'ESTUDIOS',             label: 'Pedidos de estudios (complementarios)', acciones: [...CRUD] },
+			{ id: 'ESTUDIOS',             label: 'Pedidos de estudios (complementarios)', acciones: [...CRUD, ACCIONES.VER_TODOS] },
 			{ id: 'PROTOCOLOS',           label: 'Protocolos',                 acciones: [...CRUD] },
 			{ id: 'PROCEDIMIENTOS',       label: 'Procedimientos',             acciones: [...CRUD] },
 			// TRASLADAR = cambio/intercambio/asignación de cama.
@@ -116,6 +127,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			// Historial de cambios de la HC (quién modificó o borró qué). Solo lectura
 			// y reservado a ADMIN: se excluye a mano de la plantilla ADMINISTRATIVO.
 			{ id: 'AUDITORIA_HC',         label: 'Auditoría de historia clínica', acciones: [ACCIONES.VER] },
+			{ id: 'REGISTROS',            label: 'Registros clínicos ajenos', acciones: [ACCIONES.EDITAR_AJENOS] },
 		],
 	},
 	{
@@ -155,6 +167,14 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			{ id: 'ROLES', label: 'Matriz de permisos', path: '/dashboard/configuracion/permisos', acciones: [...CRUD] },
 			{ id: 'CONSUMO_IA', label: 'Consumo IA', path: '/dashboard/configuracion/consumo-ia', acciones: [ACCIONES.VER] },
 			{ id: 'INSTITUCION', label: 'Institución', path: '/dashboard/configuracion/institucion', acciones: [ACCIONES.VER, ACCIONES.EDITAR] },
+			{ id: 'OPCGRD', label: 'Opciones de grilla', acciones: [...CRUD] },
+		],
+	},
+	{
+		id: 'ASISTENTE',
+		label: 'Asistente',
+		submodulos: [
+			{ id: 'SQL', label: 'Consultas SQL de solo lectura', acciones: [ACCIONES.VER] },
 		],
 	},
 	{
@@ -216,6 +236,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'TURNOS.AGENDA.CREAR',
 		'TURNOS.AGENDA.EDITAR',
 		'TURNOS.AGENDA.ELIMINAR',
+		'TURNOS.AGENDA.CERRAR',
+		'TURNOS.AGENDA.SOLO_PROPIA',
 		'TURNOS.EXCEPCIONES.VER',
 		'TURNOS.EXCEPCIONES.CREAR',
 		'TURNOS.EXCEPCIONES.EDITAR',
@@ -239,8 +261,14 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.INDICACIONES.EDITAR',
 		'INTERNACION.INDICACIONES.ELIMINAR',
 		..._todas('INTERNACION', 'EVOLUCIONES'),
-		..._todas('INTERNACION', 'INTERCONSULTAS'),
-		..._todas('INTERNACION', 'ESTUDIOS'),
+		'INTERNACION.INTERCONSULTAS.VER',
+		'INTERNACION.INTERCONSULTAS.CREAR',
+		'INTERNACION.INTERCONSULTAS.EDITAR',
+		'INTERNACION.INTERCONSULTAS.ELIMINAR',
+		'INTERNACION.ESTUDIOS.VER',
+		'INTERNACION.ESTUDIOS.CREAR',
+		'INTERNACION.ESTUDIOS.EDITAR',
+		'INTERNACION.ESTUDIOS.ELIMINAR',
 		..._todas('INTERNACION', 'PROTOCOLOS'),
 		..._todas('INTERNACION', 'PROCEDIMIENTOS'),
 		..._todas('INTERNACION', 'EPICRISIS'),
@@ -267,6 +295,8 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'USUARIO.PERFIL.VER',
 		'USUARIO.PRODUCCION.VER',
 		'USUARIO.PRODUCCION.EXPORTAR',
+
+		'ASISTENTE.SQL.VER',
 	],
 
 	ENFERMERO: [
@@ -278,6 +308,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'INTERNACION.HISTORIA_CLINICA.VER',
 		'INTERNACION.INDICACIONES.VER',
 		'INTERNACION.INDICACIONES.APLICAR',
+		'INTERNACION.INDICACIONES.MARCAR_VISTO',
 		'INTERNACION.EVOLUCIONES.VER',
 		'INTERNACION.INTERCONSULTAS.VER',
 		'INTERNACION.ESTUDIOS.VER',
@@ -337,6 +368,9 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'TURNOS.AGENDA.CREAR',
 		'TURNOS.AGENDA.EDITAR',
 		'TURNOS.AGENDA.ELIMINAR',
+		'TURNOS.AGENDA.CERRAR',
+		'TURNOS.AGENDA.GESTIONAR',
+		'TURNOS.CONVERSACIONES.VER',
 		'TURNOS.TABLA.EXPORTAR',
 
 		// Importar el Excel de liquidación de la obra social: es tarea
@@ -486,11 +520,17 @@ export function tieneAccesoASubmodulo(
 }
 
 /**
- * Inbox WhatsApp (Conversaciones): comparte permiso TURNOS.AGENDA,
- * pero no se muestra a MEDICO (solo ve su agenda).
+ * Inbox WhatsApp (Conversaciones): permiso dedicado TURNOS.CONVERSACIONES.VER.
+ * @deprecated Preferí `puede('TURNOS.CONVERSACIONES.VER')` / usePermiso.
  */
-export function rolTieneAccesoConversaciones(nombreRol?: string | null): boolean {
-	return Boolean(nombreRol) && nombreRol !== 'MEDICO';
+export function rolTieneAccesoConversaciones(
+	_nombreRol?: string | null,
+	permisosUsuario?: ReadonlyArray<string> | null,
+): boolean {
+	if (Array.isArray(permisosUsuario)) {
+		return permisosUsuario.includes('TURNOS.CONVERSACIONES.VER');
+	}
+	return false;
 }
 
 /** Árbol MODULOS filtrado a lo que el rol/permisos pueden ver. */

@@ -617,17 +617,17 @@ function AdmissionSearchPageContent() {
                 </button>
               </div>
             </div>
-          </div>
 
-          <div className={styles.coberturaField}>
-            <CustomSelect
-              label="Cobertura"
-              name="cliente"
-              value={filters.cliente}
-              isLoading={loadingCoberturas}
-              onChange={onCoberturaChange}
-              options={opcionesCobertura}
-            />
+            <div className={styles.coberturaField}>
+              <CustomSelect
+                label="Cobertura"
+                name="cliente"
+                value={filters.cliente}
+                isLoading={loadingCoberturas}
+                onChange={onCoberturaChange}
+                options={opcionesCobertura}
+              />
+            </div>
           </div>
 
           <div className={styles.toolbarActions}>

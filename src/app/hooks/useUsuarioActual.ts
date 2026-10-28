@@ -8,6 +8,7 @@ import {
 	getUserValorPersonal,
 } from '../utils/sessionUser';
 import type { UserData } from '../types/AuthInterface';
+import { tienePermiso } from '../utils/permisos';
 
 export interface UsuarioActual {
 	/** CodOperador en imPassword (id interno de sesión). */
@@ -43,73 +44,20 @@ export function useUsuarioActual(): UsuarioActual | null {
 	}, []);
 }
 
-/**
- * Dado un registro de internación, devuelve true si el usuario actual
- * fue quien lo creó.
- *
- * Acepta cualquiera de los campos de autoría que usan las tablas legacy:
- *   - `OperadorCarga` / `operadorCarga`  (imInterIndMedicas, imInterCtrlEvolucion)
- *   - `IdOperador`   / `idOperador`      (imPedidosEstudiosAdjuntos)
- *   - `CodOperador`  / `codOperador`     (varios)
- *   - `profesional`                      (imHCEvolucion → Profecional)
- *
- * Si el campo no existe en el registro devuelve `null` (no se puede
- * determinar propiedad → la capa de UI debe decidir si bloquear o no).
- */
-function nombreEsAdminClinico(nombre: unknown): boolean {
-	const n = String(nombre || '')
-		.trim()
-		.toUpperCase()
-		.replace(/\s+/g, '_');
-	return n === 'ADMIN' || n === 'SUPER_ADMIN';
-}
-
-/** ADMIN / SUPER_ADMIN en sesión (rol principal o alguno de los asignados). */
+/** ¿Puede editar registros clínicos ajenos? (permiso, no nombre de rol). */
 export function esAdminClinico(): boolean {
 	if (typeof window === 'undefined') return false;
 	const rol = authService.getCurrentRol();
-	if (rol && (nombreEsAdminClinico(rol.nombre) || Number(rol.id) === 1 || Number(rol.id) === 5)) {
-		return true;
-	}
-	try {
-		const raw = localStorage.getItem('roles');
-		const arr = raw ? JSON.parse(raw) : [];
-		if (!Array.isArray(arr)) return false;
-		return arr.some((r) => {
-			if (typeof r === 'string') return nombreEsAdminClinico(r);
-			return (
-				nombreEsAdminClinico(r?.nombre) ||
-				Number(r?.id) === 1 ||
-				Number(r?.id) === 5 ||
-				Number(r?.IdRol) === 1 ||
-				Number(r?.IdRol) === 5
-			);
-		});
-	} catch {
-		return false;
-	}
+	const lista = authService.getCurrentPermisos();
+	return tienePermiso(rol ?? undefined, 'INTERNACION.REGISTROS.EDITAR_AJENOS', lista);
 }
 
-function nombreEsEnfermero(nombre: unknown): boolean {
-	const n = String(nombre || '')
-		.trim()
-		.toUpperCase()
-		.replace(/\s+/g, '_');
-	return n === 'ENFERMERO' || n === 'ENFERMERIA' || n === 'ENFERMERA';
-}
-
-/** Rol de enfermería en sesión (principal o alguno de los asignados). */
+/** ¿Puede marcar indicaciones como vistas? (antes: rol enfermero). */
 export function esEnfermeroSesion(): boolean {
 	if (typeof window === 'undefined') return false;
-	if (nombreEsEnfermero(authService.getCurrentRol()?.nombre)) return true;
-	try {
-		const raw = localStorage.getItem('roles');
-		const arr = raw ? JSON.parse(raw) : [];
-		if (!Array.isArray(arr)) return false;
-		return arr.some((r) => nombreEsEnfermero(typeof r === 'string' ? r : r?.nombre));
-	} catch {
-		return false;
-	}
+	const rol = authService.getCurrentRol();
+	const lista = authService.getCurrentPermisos();
+	return tienePermiso(rol ?? undefined, 'INTERNACION.INDICACIONES.MARCAR_VISTO', lista);
 }
 
 export function esRegistroPropio(
@@ -134,18 +82,13 @@ export function esRegistroPropio(
 		registro.Profecional ??
 		null;
 
-	if (autorRaw == null) return null; // no se puede determinar
+	if (autorRaw == null) return null;
 
 	const autorNum = Number(autorRaw);
 	if (!Number.isFinite(autorNum)) return null;
 
-	// Comparamos contra CodOperador (campo habitual en esas tablas)
 	if (usuario.codOperador != null && autorNum === usuario.codOperador) return true;
-
-	// Algunos registros guardan ValorPersonal en cambio
 	if (usuario.valorPersonal != null && autorNum === usuario.valorPersonal) return true;
-
-	// imHCEvolucion: Profecional puede ser la matrícula
 	if (usuario.matricula != null && autorNum === usuario.matricula) return true;
 
 	return false;

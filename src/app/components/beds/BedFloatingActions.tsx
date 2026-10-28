@@ -27,10 +27,14 @@ export default function BedFloatingActions({
   onOpenLaboratorios,
 }: BedFloatingActionsProps) {
   useRegistrarRailLocal();
-  const { puede, rol, loaded } = usePermiso();
+  const { puede, loaded } = usePermiso();
   const { navigateToSection, activeSection } = useBedDetail();
   const asistente = <AsistenteFab stack />;
-  const esEnfermero = loaded && String(rol?.nombre || '').toUpperCase() === 'ENFERMERO';
+  const modoEnfermeria =
+    loaded &&
+    (puede('INTERNACION.INDICACIONES.APLICAR') ||
+      puede('INTERNACION.INDICACIONES.MARCAR_VISTO')) &&
+    !puede('INTERNACION.EVOLUCIONES.CREAR');
   const showAdjuntos = puede('INTERNACION.ADJUNTOS.VER') || puede('INTERNACION.ADJUNTOS.CREAR');
   const showLabs = puede('INTERNACION.ESTUDIOS.VER') || puede('INTERNACION.ESTUDIOS.CREAR');
   const showNursing =
@@ -38,8 +42,8 @@ export default function BedFloatingActions({
     puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') ||
     puede('INTERNACION.SIGNOS_VITALES.VER') ||
     puede('INTERNACION.SIGNOS_VITALES.CREAR');
-  const showEvoluciones = esEnfermero && puede('INTERNACION.EVOLUCIONES.VER');
-  const showInterconsulta = esEnfermero && puede('INTERNACION.INTERCONSULTAS.VER');
+  const showEvoluciones = modoEnfermeria && puede('INTERNACION.EVOLUCIONES.VER');
+  const showInterconsulta = modoEnfermeria && puede('INTERNACION.INTERCONSULTAS.VER');
 
   if (!showAdjuntos && !showLabs && !showNursing && !showEvoluciones && !showInterconsulta) {
     return (

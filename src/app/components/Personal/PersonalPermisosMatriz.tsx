@@ -14,6 +14,11 @@ const ROTULO_ACCION: Record<string, string> = {
 	APLICAR: 'Aplicar',
 	EXPORTAR: 'Exportar',
 	IMPRIMIR: 'Imprimir',
+	EDITAR_AJENOS: 'Editar ajenos',
+	CERRAR: 'Cerrar',
+	MARCAR_VISTO: 'Marcar visto',
+	VER_TODOS: 'Ver todos',
+	SOLO_PROPIA: 'Solo propia',
 };
 
 type Props = {
@@ -106,17 +111,18 @@ export default function PersonalPermisosMatriz({
 	return (
 		<div className={styles.wrap}>
 			<div className={styles.head}>
-				<h3 className={styles.title}>Permisos individuales</h3>
+				<h3 className={styles.title}>Matriz de permisos (esta persona)</h3>
 				<span className={styles.meta}>
-					{marcados.size} efectivos
+					{marcados.size} permisos otorgados
 					{grants ? ` · +${grants} extra` : ''}
 					{denies ? ` · −${denies} quitados` : ''}
 				</span>
 			</div>
 			<p className={styles.hint}>
-				Parten de los roles asignados. Marcá para otorgar de más o desmarcá para quitar,
-				sin inventar un rol nuevo. Los cambios aplican en el próximo ingreso (o al
-				refrescar permisos).
+				Misma matriz que Configuración → Matriz de permisos, aplicada a esta cuenta. Parten
+				de los roles marcados arriba: sumá extras o quitá lo que no corresponda. Se guarda
+				junto con el acceso. Los cambios aplican en el próximo ingreso (o al refrescar
+				permisos).
 			</p>
 
 			<div className={styles.toolbar}>
@@ -163,18 +169,18 @@ export default function PersonalPermisosMatriz({
 									({totalMarcados}/{totalAcciones})
 								</span>
 							</span>
-							{!disabled ? (
-								<button
-									type='button'
-									className={styles.link}
-									onClick={(e) => {
-										e.stopPropagation();
-										alternarGrupo(m.submodulos);
-									}}
-								>
-									Marcar / desmarcar
-								</button>
-							) : null}
+									{!disabled ? (
+										<button
+											type='button'
+											className={styles.link}
+											onClick={(e) => {
+												e.stopPropagation();
+												alternarGrupo(m.submodulos);
+											}}
+										>
+											Marcar / desmarcar todo
+										</button>
+									) : null}
 						</div>
 						{cerrado ? null : (
 							<div className={styles.moduloBody}>

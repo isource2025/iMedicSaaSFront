@@ -226,20 +226,13 @@ function descEspecialidadCatalogo(
 }
 
 function AgendaPageContent() {
-	const { rol, puedeSubmodulo, puede } = usePermiso();
-	const esMedico = String(rol?.nombre ?? '')
-		.trim()
-		.toUpperCase() === 'MEDICO';
-	const esAdmin = String(rol?.nombre ?? '')
-		.trim()
-		.toUpperCase() === 'ADMIN';
-	const esEnfermero = String(rol?.nombre ?? '')
-		.trim()
-		.toUpperCase() === 'ENFERMERO';
+	const { puedeSubmodulo, puede } = usePermiso();
+	const esMedico =
+		puede('TURNOS.AGENDA.SOLO_PROPIA') && !puede('TURNOS.AGENDA.GESTIONAR');
 	const puedeVer = puedeSubmodulo('TURNOS', 'AGENDA');
-	const puedeRacEnfermeria = esAdmin || esEnfermero || esMedico;
-	const puedeAtender =
-		(esMedico || puede('TURNOS.AGENDA.EDITAR')) && !esEnfermero;
+	const puedeRacEnfermeria =
+		puede('TURNOS.AGENDA.VER') || puede('INTERNACION.INDICACIONES.APLICAR');
+	const puedeAtender = puede('TURNOS.AGENDA.CERRAR') || (puede('TURNOS.AGENDA.EDITAR') && esMedico);
 	const puedeBorrarTurno = !esMedico && puede('TURNOS.AGENDA.ELIMINAR');
 	const puedeCancelarTurno = puede('TURNOS.AGENDA.EDITAR');
 
@@ -920,8 +913,8 @@ function AgendaPageContent() {
 									<p className={styles.cardSubtitle}>
 										{esMedico
 											? `${user?.nombre || ''} ${user?.apellido || ''}`.trim() || 'Mi agenda'
-											: esAdmin
-												? 'Administrador — gestión completa de agendas (igual que administrativo)'
+											: puede('TURNOS.AGENDA.GESTIONAR')
+												? 'Gestión completa de agendas'
 												: 'Vista administrativa'}
 									</p>
 								</div>

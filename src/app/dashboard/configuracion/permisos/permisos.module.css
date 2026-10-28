@@ -16,6 +16,31 @@
 	font-size: 0.92rem;
 }
 
+.modeSwitch {
+	display: flex;
+	gap: 0.35rem;
+	margin-bottom: 0.85rem;
+}
+
+.modeBtn {
+	flex: 1;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	padding: 0.45rem 0.6rem;
+	font: inherit;
+	font-size: 0.85rem;
+	font-weight: 600;
+	background: #fff;
+	color: #475569;
+	cursor: pointer;
+}
+
+.modeBtnActive {
+	background: #0083a9;
+	border-color: #0083a9;
+	color: #fff;
+}
+
 .layout {
 	display: grid;
 	grid-template-columns: 300px minmax(0, 1fr);

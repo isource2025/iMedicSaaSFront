@@ -1,7 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import PersonalPermisosMatriz from '@/app/components/Personal/PersonalPermisosMatriz';
 import { usePermiso } from '@/app/hooks/usePermiso';
+import { getPersonalList } from '@/app/services/personalService';
+import {
+	permisosPersonalService,
+	type PermisosDePersonal,
+} from '@/app/services/permisosPersonalService';
 import {
 	rolesService,
 	type EventoAuditoriaRol,
@@ -12,9 +18,11 @@ import {
 	type SubmoduloCatalogo,
 	type UsuarioDeRol,
 } from '@/app/services/rolesService';
+import type { Personal } from '@/app/types/personal';
 import { mensajeDeError } from '@/app/utils/apiError';
 import styles from './permisos.module.css';
 
+type Modo = 'roles' | 'personal';
 type Pestania = 'permisos' | 'usuarios' | 'historial';
 
 interface Borrador {
@@ -23,14 +31,6 @@ interface Borrador {
 	rolBase: RolBase;
 	permisos: Set<string>;
 }
-
-const OPCIONES_ROL_BASE: { valor: RolBase; rotulo: string }[] = [
-	{ valor: 'NINGUNO', rotulo: 'Ninguno (sólo los permisos marcados)' },
-	{ valor: 'MEDICO', rotulo: 'Médico' },
-	{ valor: 'ENFERMERO', rotulo: 'Enfermero' },
-	{ valor: 'ADMINISTRATIVO', rotulo: 'Administrativo' },
-	{ valor: 'CARGA_HC', rotulo: 'Carga de adjuntos' },
-];
 
 const ROTULO_ACCION: Record<string, string> = {
 	VER: 'Ver',
@@ -42,6 +42,11 @@ const ROTULO_ACCION: Record<string, string> = {
 	APLICAR: 'Aplicar',
 	EXPORTAR: 'Exportar',
 	IMPRIMIR: 'Imprimir',
+	EDITAR_AJENOS: 'Editar ajenos',
+	CERRAR: 'Cerrar',
+	MARCAR_VISTO: 'Marcar visto',
+	VER_TODOS: 'Ver todos',
+	SOLO_PROPIA: 'Solo propia',
 };
 
 const ROTULO_EVENTO: Record<string, string> = {
@@ -85,10 +90,13 @@ function resumenEvento(e: EventoAuditoriaRol): string {
 export default function MatrizPermisosPage() {
 	const { puede, loaded } = usePermiso();
 	const puedeVer = puede('CONFIGURACION.ROLES.VER');
-	const puedeCrear = puede('CONFIGURACION.ROLES.CREAR');
 	const puedeEditar = puede('CONFIGURACION.ROLES.EDITAR');
-	const puedeEliminar = puede('CONFIGURACION.ROLES.ELIMINAR');
+	const puedePersonal =
+		puede('CONFIGURACION.PERSONAL.CREAR') ||
+		puede('CONFIGURACION.PERSONAL.EDITAR') ||
+		puede('CONFIGURACION.PERSONAL.GESTIONAR');
 
+	const [modo, setModo] = useState<Modo>('roles');
 	const [data, setData] = useState<MatrizRoles | null>(null);
 	const [cargando, setCargando] = useState(true);
 	const [error, setError] = useState('');
@@ -104,13 +112,12 @@ export default function MatrizPermisosPage() {
 	const [usuarios, setUsuarios] = useState<UsuarioDeRol[] | null>(null);
 	const [historial, setHistorial] = useState<EventoAuditoriaRol[] | null>(null);
 
-	const [modalNuevo, setModalNuevo] = useState(false);
-	const [nuevo, setNuevo] = useState<{ nombre: string; descripcion: string; origen: string; rolBase: RolBase }>({
-		nombre: '',
-		descripcion: '',
-		origen: '',
-		rolBase: 'NINGUNO',
-	});
+	const [listaPersonal, setListaPersonal] = useState<Personal[]>([]);
+	const [busquedaPersonal, setBusquedaPersonal] = useState('');
+	const [personalId, setPersonalId] = useState<number | null>(null);
+	const [packPersonal, setPackPersonal] = useState<PermisosDePersonal | null>(null);
+	const [marcadosPersonal, setMarcadosPersonal] = useState<Set<string>>(new Set());
+	const [cargandoPersonal, setCargandoPersonal] = useState(false);
 
 	const roles = useMemo(
 		() => (data ? [...data.sistema, ...data.personalizados] : []),
@@ -126,6 +133,9 @@ export default function MatrizPermisosPage() {
 
 	const sucio = useMemo(() => {
 		if (!seleccionado || !seleccionado.editable) return false;
+		if (seleccionado.esSistema) {
+			return !mismosPermisos(borrador.permisos, seleccionado.permisos);
+		}
 		return (
 			borrador.nombre.trim() !== seleccionado.nombre ||
 			borrador.descripcion.trim() !== (seleccionado.descripcion || '') ||
@@ -134,7 +144,11 @@ export default function MatrizPermisosPage() {
 		);
 	}, [borrador, seleccionado]);
 
-	// ─── Carga ────────────────────────────────────────────────────────────
+	const sucioPersonal = useMemo(() => {
+		if (!packPersonal) return false;
+		return !mismosPermisos(marcadosPersonal, packPersonal.efectivos);
+	}, [marcadosPersonal, packPersonal]);
+
 	const cargar = useCallback(async (idParaSeleccionar?: number | null) => {
 		setCargando(true);
 		setError('');
@@ -154,12 +168,26 @@ export default function MatrizPermisosPage() {
 		}
 	}, []);
 
+	const cargarListaPersonal = useCallback(async (q = '') => {
+		try {
+			const res = await getPersonalList(1, 80, q);
+			setListaPersonal(res.data || []);
+		} catch {
+			setListaPersonal([]);
+		}
+	}, []);
+
 	useEffect(() => {
 		if (loaded && puedeVer) void cargar();
 		else if (loaded) setCargando(false);
 	}, [loaded, puedeVer, cargar]);
 
-	// Al cambiar de rol (o recargar datos) se rehace el borrador
+	useEffect(() => {
+		if (!loaded || !puedePersonal || modo !== 'personal') return;
+		const t = window.setTimeout(() => void cargarListaPersonal(busquedaPersonal), 250);
+		return () => window.clearTimeout(t);
+	}, [loaded, puedePersonal, modo, busquedaPersonal, cargarListaPersonal]);
+
 	useEffect(() => {
 		setBorrador(borradorDe(seleccionado));
 		setUsuarios(null);
@@ -168,7 +196,7 @@ export default function MatrizPermisosPage() {
 	}, [seleccionId, data]);
 
 	useEffect(() => {
-		if (!seleccionado) return;
+		if (!seleccionado || modo !== 'roles') return;
 		let vivo = true;
 		if (pestania === 'usuarios' && usuarios === null) {
 			rolesService
@@ -176,7 +204,7 @@ export default function MatrizPermisosPage() {
 				.then((u) => vivo && setUsuarios(u))
 				.catch(() => vivo && setUsuarios([]));
 		}
-		if (pestania === 'historial' && historial === null && !seleccionado.esSistema) {
+		if (pestania === 'historial' && historial === null) {
 			rolesService
 				.auditoriaDeRol(seleccionado.idRol)
 				.then((h) => vivo && setHistorial(h))
@@ -185,25 +213,71 @@ export default function MatrizPermisosPage() {
 		return () => {
 			vivo = false;
 		};
-	}, [pestania, seleccionado, usuarios, historial]);
+	}, [pestania, seleccionado, usuarios, historial, modo]);
 
-	// Aviso del navegador si se sale con cambios sin guardar
 	useEffect(() => {
-		if (!sucio) return;
+		if (modo !== 'personal' || personalId == null || !puedePersonal) {
+			setPackPersonal(null);
+			setMarcadosPersonal(new Set());
+			return;
+		}
+		let vivo = true;
+		setCargandoPersonal(true);
+		setError('');
+		permisosPersonalService
+			.obtener(personalId)
+			.then((pack) => {
+				if (!vivo) return;
+				setPackPersonal(pack);
+				setMarcadosPersonal(new Set(pack.efectivos));
+			})
+			.catch((e) => {
+				if (!vivo) return;
+				setPackPersonal(null);
+				setMarcadosPersonal(new Set());
+				setError(mensajeDeError(e, 'No se pudieron cargar los permisos de la persona'));
+			})
+			.finally(() => {
+				if (vivo) setCargandoPersonal(false);
+			});
+		return () => {
+			vivo = false;
+		};
+	}, [modo, personalId, puedePersonal]);
+
+	useEffect(() => {
+		const hay = modo === 'roles' ? sucio : sucioPersonal;
+		if (!hay) return;
 		const f = (e: BeforeUnloadEvent) => {
 			e.preventDefault();
 			e.returnValue = '';
 		};
 		window.addEventListener('beforeunload', f);
 		return () => window.removeEventListener('beforeunload', f);
-	}, [sucio]);
+	}, [modo, sucio, sucioPersonal]);
 
-	// ─── Acciones ─────────────────────────────────────────────────────────
+	const cambiarModo = (siguiente: Modo) => {
+		if (siguiente === modo) return;
+		const hay = modo === 'roles' ? sucio : sucioPersonal;
+		if (hay && !window.confirm('Hay cambios sin guardar. ¿Descartarlos?')) return;
+		setAviso('');
+		setError('');
+		setModo(siguiente);
+	};
+
 	const seleccionar = (id: number) => {
 		if (id === seleccionId) return;
 		if (sucio && !window.confirm('Hay cambios sin guardar. ¿Descartarlos?')) return;
 		setAviso('');
 		setSeleccionId(id);
+	};
+
+	const seleccionarPersonal = (valor: number) => {
+		if (valor === personalId) return;
+		if (sucioPersonal && !window.confirm('Hay cambios sin guardar. ¿Descartarlos?')) return;
+		setAviso('');
+		setError('');
+		setPersonalId(valor);
 	};
 
 	const alternar = (codigo: string, sub: SubmoduloCatalogo) => {
@@ -215,11 +289,10 @@ export default function MatrizPermisosPage() {
 			if (!info) return b;
 			if (permisos.has(codigo)) {
 				permisos.delete(codigo);
-				// Sin "Ver" no tiene sentido el resto del submódulo
 				if (info.accion === 'VER') sub.acciones.forEach((a) => permisos.delete(a.codigo));
 			} else {
 				permisos.add(codigo);
-				if (info.accion !== 'VER' && tieneVer && tieneVer.asignable && permisosActor.has(tieneVer.codigo)) {
+				if (info.accion !== 'VER' && tieneVer && permisosActor.has(tieneVer.codigo)) {
 					permisos.add(tieneVer.codigo);
 				}
 			}
@@ -228,7 +301,9 @@ export default function MatrizPermisosPage() {
 	};
 
 	const otorgables = (sub: SubmoduloCatalogo) =>
-		sub.acciones.filter((a) => a.asignable && permisosActor.has(a.codigo));
+		sub.acciones.filter(
+			(a) => permisosActor.has(a.codigo) && (a.asignable || !!seleccionado?.esSistema),
+		);
 
 	const alternarGrupo = (subs: SubmoduloCatalogo[]) => {
 		if (!editable) return;
@@ -247,17 +322,20 @@ export default function MatrizPermisosPage() {
 		setError('');
 		setAviso('');
 		try {
-			const r = await rolesService.actualizarRol(seleccionado.idRol, {
-				nombre: borrador.nombre,
-				descripcion: borrador.descripcion,
-				rolBase: borrador.rolBase,
-				permisos: Array.from(borrador.permisos),
-			});
+			const payload = seleccionado.esSistema
+				? { permisos: Array.from(borrador.permisos) }
+				: {
+						nombre: borrador.nombre,
+						descripcion: borrador.descripcion,
+						rolBase: borrador.rolBase,
+						permisos: Array.from(borrador.permisos),
+					};
+			const r = await rolesService.actualizarRol(seleccionado.idRol, payload);
 			await cargar(seleccionado.idRol);
 			setAviso(
 				r.sinCambios
 					? 'No había cambios para guardar.'
-					: 'Rol guardado. Los usuarios con este rol verán los cambios en su próxima carga (máx. unos minutos).',
+					: 'Plantilla guardada. Los usuarios con este rol verán los cambios en su próxima carga (máx. unos minutos).',
 			);
 		} catch (e) {
 			setError(mensajeDeError(e, 'No se pudo guardar el rol'));
@@ -268,65 +346,27 @@ export default function MatrizPermisosPage() {
 
 	const descartar = () => setBorrador(borradorDe(seleccionado));
 
-	const eliminar = async () => {
-		if (!seleccionado || !seleccionado.editable) return;
-		if (!window.confirm(`¿Eliminar el rol "${seleccionado.nombre}"? Esta acción no se puede deshacer.`)) return;
+	const guardarPersonal = async () => {
+		if (personalId == null) return;
 		setOcupado(true);
 		setError('');
+		setAviso('');
 		try {
-			await rolesService.eliminarRol(seleccionado.idRol);
-			setSeleccionId(null);
-			await cargar(null);
-			setAviso('Rol eliminado.');
-		} catch (e) {
-			setError(mensajeDeError(e, 'No se pudo eliminar el rol'));
-		} finally {
-			setOcupado(false);
-		}
-	};
-
-	const abrirNuevo = (origen = '') => {
-		if (sucio && !window.confirm('Hay cambios sin guardar. ¿Descartarlos?')) return;
-		const base = roles.find((r) => String(r.idRol) === origen);
-		setNuevo({
-			nombre: base ? `${base.nombre} (copia)` : '',
-			descripcion: base?.descripcion ?? '',
-			origen,
-			rolBase: base?.rolBase ?? 'NINGUNO',
-		});
-		setModalNuevo(true);
-	};
-
-	const crear = async () => {
-		setOcupado(true);
-		setError('');
-		try {
-			const creado = nuevo.origen
-				? await rolesService.duplicarRol(Number(nuevo.origen), {
-						nombre: nuevo.nombre,
-						descripcion: nuevo.descripcion,
-						rolBase: nuevo.rolBase,
-					})
-				: await rolesService.crearRol({
-						nombre: nuevo.nombre,
-						descripcion: nuevo.descripcion,
-						rolBase: nuevo.rolBase,
-						permisos: [],
-					});
-			setModalNuevo(false);
-			setPestania('permisos');
-			await cargar(creado.idRol);
-			setAviso(
-				`Rol "${creado.nombre}" creado. Agregá o quitá permisos y guardá: queda disponible para asignar en Personal.`,
+			const r = await permisosPersonalService.guardar(personalId, Array.from(marcadosPersonal));
+			setPackPersonal((prev) =>
+				prev
+					? { ...prev, base: r.base, grants: r.grants, denies: r.denies, efectivos: r.efectivos }
+					: prev,
 			);
+			setMarcadosPersonal(new Set(r.efectivos));
+			setAviso('Permisos de la persona guardados.');
 		} catch (e) {
-			setError(mensajeDeError(e, 'No se pudo crear el rol'));
+			setError(mensajeDeError(e, 'No se pudieron guardar los permisos'));
 		} finally {
 			setOcupado(false);
 		}
 	};
 
-	// ─── Catálogo filtrado ────────────────────────────────────────────────
 	const catalogo: ModuloCatalogo[] = useMemo(() => {
 		const t = busqueda.trim().toLowerCase();
 		const base = data?.catalogo ?? [];
@@ -345,10 +385,9 @@ export default function MatrizPermisosPage() {
 			.filter((m) => m.submodulos.length > 0);
 	}, [data, busqueda]);
 
-	const marcadoDe = (r: RolMatriz | null) => (editable && r?.editable ? borrador.permisos : new Set(r?.permisos ?? []));
-	const marcados = marcadoDe(seleccionado);
+	const marcados =
+		editable && seleccionado?.editable ? borrador.permisos : new Set(seleccionado?.permisos ?? []);
 
-	// ─── Render ───────────────────────────────────────────────────────────
 	if (!loaded || cargando) {
 		return (
 			<div className={styles.page}>
@@ -367,51 +406,45 @@ export default function MatrizPermisosPage() {
 		);
 	}
 
-	const puedeCrearRoles =
-		puedeCrear && !!data?.soportaPersonalizados && !data?.plantillasCongeladas;
+	const personaSel = listaPersonal.find((p) => p.Valor === personalId) || null;
 
 	return (
 		<div className={styles.page}>
 			<header className={styles.header}>
 				<h1>Matriz de permisos</h1>
 				<p>
-					Roles de la clínica y los permisos que otorga cada uno. El ajuste fino por persona se hace en
-					Personal (acceso y permisos individuales).
+					Editá las plantillas de roles del sistema o elegí una persona para asignarle puertas (permisos
+					efectivos).
 				</p>
 			</header>
 
 			{error ? <div className={`${styles.banner} ${styles.bannerError}`}>{error}</div> : null}
 			{aviso ? <div className={`${styles.banner} ${styles.bannerOk}`}>{aviso}</div> : null}
-			{data?.plantillasCongeladas ? (
-				<div className={`${styles.banner} ${styles.bannerInfo}`}>
-					Plantillas congeladas: podés consultar roles del sistema y los personalizados ya creados, pero no
-					crear ni editar plantillas. Para dar o quitar permisos a alguien, usá Personal → permisos
-					individuales.
-				</div>
-			) : data && !data.soportaPersonalizados ? (
-				<div className={`${styles.banner} ${styles.bannerInfo}`}>
-					La creación de roles personalizados todavía no está habilitada para esta clínica. Podés consultar los
-					roles del sistema; para activarla, contactá a soporte.
-				</div>
-			) : null}
 
-			<div className={styles.layout}>
-				{/* ── Lista de roles ─────────────────────────────── */}
-				<aside className={styles.panel}>
-					<button
-						type="button"
-						className={`${styles.btn} ${styles.btnPrimary}`}
-						style={{ width: '100%' }}
-						disabled={!puedeCrearRoles || ocupado}
-						title={puedeCrearRoles ? '' : 'No disponible'}
-						onClick={() => abrirNuevo('')}
-					>
-						+ Nuevo rol
-					</button>
+			<div className={styles.modeSwitch}>
+				<button
+					type="button"
+					className={`${styles.modeBtn} ${modo === 'roles' ? styles.modeBtnActive : ''}`}
+					onClick={() => cambiarModo('roles')}
+				>
+					Roles
+				</button>
+				<button
+					type="button"
+					className={`${styles.modeBtn} ${modo === 'personal' ? styles.modeBtnActive : ''}`}
+					disabled={!puedePersonal}
+					title={puedePersonal ? '' : 'Necesitás permiso de Personal'}
+					onClick={() => puedePersonal && cambiarModo('personal')}
+				>
+					Personal
+				</button>
+			</div>
 
-					<div className={styles.sideTitle}>Roles personalizados</div>
-					{data?.personalizados.length ? (
-						data.personalizados.map((r) => (
+			{modo === 'roles' ? (
+				<div className={styles.layout}>
+					<aside className={styles.panel}>
+						<div className={styles.sideTitle}>Roles del sistema</div>
+						{data?.sistema.map((r) => (
 							<button
 								key={r.idRol}
 								type="button"
@@ -421,281 +454,336 @@ export default function MatrizPermisosPage() {
 								<span className={styles.roleName}>{r.nombre}</span>
 								<span className={styles.roleMeta}>{r.usuarios} usr.</span>
 							</button>
-						))
-					) : (
-						<p className={styles.muted}>Todavía no creaste roles propios.</p>
-					)}
+						))}
 
-					<div className={styles.sideTitle}>Roles del sistema</div>
-					{data?.sistema.map((r) => (
-						<button
-							key={r.idRol}
-							type="button"
-							className={`${styles.roleItem} ${r.idRol === seleccionId ? styles.roleItemActive : ''}`}
-							onClick={() => seleccionar(r.idRol)}
-						>
-							<span className={styles.roleName}>{r.nombre}</span>
-							<span className={styles.roleMeta}>{r.usuarios} usr.</span>
-						</button>
-					))}
-				</aside>
-
-				{/* ── Detalle ────────────────────────────────────── */}
-				<section className={styles.panel}>
-					{!seleccionado ? (
-						<p className={styles.muted}>Seleccioná un rol.</p>
-					) : (
-						<>
-							<div className={styles.roleHead}>
-								<div className={styles.fields}>
-									<label className={styles.field}>
-										Nombre
-										<input
-											className={styles.input}
-											value={borrador.nombre}
-											disabled={!editable}
-											maxLength={50}
-											onChange={(e) => setBorrador((b) => ({ ...b, nombre: e.target.value }))}
-										/>
-									</label>
-									<label className={styles.field}>
-										Descripción
-										<input
-											className={styles.input}
-											value={borrador.descripcion}
-											disabled={!editable}
-											maxLength={200}
-											onChange={(e) => setBorrador((b) => ({ ...b, descripcion: e.target.value }))}
-										/>
-									</label>
-									{seleccionado.esSistema ? null : (
-										<label className={styles.field} title="Comportamiento del rol estándar que hereda (p. ej. pedir matrícula, agenda propia)">
-											Se comporta como
-											<select
-												className={styles.select}
-												value={borrador.rolBase}
-												disabled={!editable}
-												onChange={(e) => setBorrador((b) => ({ ...b, rolBase: e.target.value as RolBase }))}
-											>
-												{OPCIONES_ROL_BASE.map((o) => (
-													<option key={o.valor} value={o.valor}>
-														{o.rotulo}
-													</option>
-												))}
-											</select>
-										</label>
-									)}
-								</div>
-								<div className={styles.actions}>
+						{data?.personalizados?.length ? (
+							<>
+								<div className={styles.sideTitle}>Roles personalizados</div>
+								{data.personalizados.map((r) => (
 									<button
+										key={r.idRol}
 										type="button"
-										className={styles.btn}
-										disabled={!puedeCrearRoles || ocupado || seleccionado.nombre.toUpperCase() === 'SUPER_ADMIN'}
-										onClick={() => abrirNuevo(String(seleccionado.idRol))}
+										className={`${styles.roleItem} ${r.idRol === seleccionId ? styles.roleItemActive : ''}`}
+										onClick={() => seleccionar(r.idRol)}
 									>
-										Duplicar
-									</button>
-									{seleccionado.editable ? (
-										<button
-											type="button"
-											className={`${styles.btn} ${styles.btnDanger}`}
-											disabled={!puedeEliminar || ocupado}
-											onClick={() => void eliminar()}
-										>
-											Eliminar
-										</button>
-									) : null}
-								</div>
-							</div>
-
-							{seleccionado.esSistema ? (
-								<div className={`${styles.banner} ${styles.bannerInfo}`}>
-									{data?.plantillasCongeladas
-										? 'Rol del sistema: sólo lectura. Para ajustar permisos de una persona, usá Personal.'
-										: 'Rol del sistema: sólo lectura. Usá «Duplicar» para crear una versión editable.'}
-								</div>
-							) : data?.plantillasCongeladas ? (
-								<div className={`${styles.banner} ${styles.bannerInfo}`}>
-									Plantilla congelada (sólo consulta). Los permisos individuales se editan en Personal.
-								</div>
-							) : !puedeEditar ? (
-								<div className={`${styles.banner} ${styles.bannerInfo}`}>
-									No tenés permiso para editar roles: podés consultarlos pero no modificarlos.
-								</div>
-							) : null}
-
-							<div className={styles.tabs}>
-								{(['permisos', 'usuarios', 'historial'] as Pestania[]).map((p) => (
-									<button
-										key={p}
-										type="button"
-										className={`${styles.tab} ${pestania === p ? styles.tabActive : ''}`}
-										onClick={() => setPestania(p)}
-									>
-										{p === 'permisos' ? 'Permisos' : p === 'usuarios' ? `Usuarios (${seleccionado.usuarios})` : 'Historial'}
+										<span className={styles.roleName}>{r.nombre}</span>
+										<span className={styles.roleMeta}>{r.usuarios} usr.</span>
 									</button>
 								))}
-							</div>
+							</>
+						) : null}
+					</aside>
 
-							{pestania === 'permisos' ? (
-								<>
-									<div className={styles.toolbar}>
-										<input
-											className={styles.input}
-											style={{ minWidth: 260 }}
-											placeholder="Buscar permiso o módulo…"
-											value={busqueda}
-											onChange={(e) => setBusqueda(e.target.value)}
-										/>
-										<span className={styles.counter}>{marcados.size} permisos otorgados</span>
-									</div>
-
-									{catalogo.map((m) => {
-										const cerrado = cerrados.has(m.id);
-										const totalMarcados = m.submodulos.reduce(
-											(n, s) => n + s.acciones.filter((a) => marcados.has(a.codigo)).length,
-											0,
-										);
-										const totalAcciones = m.submodulos.reduce((n, s) => n + s.acciones.length, 0);
-										return (
-											<div key={m.id} className={styles.modulo}>
-												<div
-													className={styles.moduloHead}
-													onClick={() =>
-														setCerrados((prev) => {
-															const s = new Set(prev);
-															if (s.has(m.id)) s.delete(m.id);
-															else s.add(m.id);
-															return s;
-														})
+					<section className={styles.panel}>
+						{!seleccionado ? (
+							<p className={styles.muted}>Seleccioná un rol.</p>
+						) : (
+							<>
+								<div className={styles.roleHead}>
+									<div className={styles.fields}>
+										<label className={styles.field}>
+											Nombre
+											<input
+												className={styles.input}
+												value={borrador.nombre}
+												disabled={seleccionado.esSistema || !editable}
+												maxLength={50}
+												onChange={(e) => setBorrador((b) => ({ ...b, nombre: e.target.value }))}
+											/>
+										</label>
+										<label className={styles.field}>
+											Descripción
+											<input
+												className={styles.input}
+												value={borrador.descripcion}
+												disabled={seleccionado.esSistema || !editable}
+												maxLength={200}
+												onChange={(e) => setBorrador((b) => ({ ...b, descripcion: e.target.value }))}
+											/>
+										</label>
+										{seleccionado.esSistema ? null : (
+											<label className={styles.field}>
+												Se comporta como
+												<select
+													className={styles.select}
+													value={borrador.rolBase}
+													disabled={!editable}
+													onChange={(e) =>
+														setBorrador((b) => ({ ...b, rolBase: e.target.value as RolBase }))
 													}
 												>
-													<span>
-														{cerrado ? '▸' : '▾'} {m.label}{' '}
-														<span className={styles.muted}>
-															({totalMarcados}/{totalAcciones})
+													<option value="NINGUNO">Ninguno (sólo los permisos marcados)</option>
+													<option value="MEDICO">Médico</option>
+													<option value="ENFERMERO">Enfermero</option>
+													<option value="ADMINISTRATIVO">Administrativo</option>
+													<option value="CARGA_HC">Carga de adjuntos</option>
+												</select>
+											</label>
+										)}
+									</div>
+								</div>
+
+								{seleccionado.esSistema ? (
+									<div className={`${styles.banner} ${styles.bannerInfo}`}>
+										Plantilla del sistema: podés marcar o desmarcar puertas y guardar. Afecta a todas las
+										personas con este rol (salvo overrides individuales).
+									</div>
+								) : !puedeEditar ? (
+									<div className={`${styles.banner} ${styles.bannerInfo}`}>
+										No tenés permiso para editar roles: podés consultarlos pero no modificarlos.
+									</div>
+								) : data?.plantillasCongeladas ? (
+									<div className={`${styles.banner} ${styles.bannerInfo}`}>
+										Plantilla personalizada en sólo lectura. Usá la pestaña Personal para ajustar puertas
+										por persona.
+									</div>
+								) : null}
+
+								<div className={styles.tabs}>
+									{(['permisos', 'usuarios', 'historial'] as Pestania[]).map((p) => (
+										<button
+											key={p}
+											type="button"
+											className={`${styles.tab} ${pestania === p ? styles.tabActive : ''}`}
+											onClick={() => setPestania(p)}
+										>
+											{p === 'permisos'
+												? 'Permisos'
+												: p === 'usuarios'
+													? `Usuarios (${seleccionado.usuarios})`
+													: 'Historial'}
+										</button>
+									))}
+								</div>
+
+								{pestania === 'permisos' ? (
+									<>
+										<div className={styles.toolbar}>
+											<input
+												className={styles.input}
+												style={{ minWidth: 260 }}
+												placeholder="Buscar permiso o módulo…"
+												value={busqueda}
+												onChange={(e) => setBusqueda(e.target.value)}
+											/>
+											<span className={styles.counter}>{marcados.size} permisos otorgados</span>
+										</div>
+
+										{catalogo.map((m) => {
+											const cerrado = cerrados.has(m.id);
+											const totalMarcados = m.submodulos.reduce(
+												(n, s) => n + s.acciones.filter((a) => marcados.has(a.codigo)).length,
+												0,
+											);
+											const totalAcciones = m.submodulos.reduce((n, s) => n + s.acciones.length, 0);
+											return (
+												<div key={m.id} className={styles.modulo}>
+													<div
+														className={styles.moduloHead}
+														onClick={() =>
+															setCerrados((prev) => {
+																const s = new Set(prev);
+																if (s.has(m.id)) s.delete(m.id);
+																else s.add(m.id);
+																return s;
+															})
+														}
+													>
+														<span>
+															{cerrado ? '▸' : '▾'} {m.label}{' '}
+															<span className={styles.muted}>
+																({totalMarcados}/{totalAcciones})
+															</span>
 														</span>
-													</span>
-													{editable ? (
-														<button
-															type="button"
-															className={styles.btnLink}
-															onClick={(e) => {
-																e.stopPropagation();
-																alternarGrupo(m.submodulos);
-															}}
-														>
-															Marcar / desmarcar todo
-														</button>
-													) : null}
-												</div>
-												{cerrado ? null : (
-													<div className={styles.moduloBody}>
-														{m.submodulos.map((s) => (
-															<div key={s.id} className={styles.sub}>
-																<div className={styles.subHead}>
-																	<span className={styles.subTitle}>{s.label}</span>
-																	{editable ? (
-																		<button
-																			type="button"
-																			className={styles.btnLink}
-																			disabled={otorgables(s).length === 0}
-																			onClick={() => alternarGrupo([s])}
-																		>
-																			Todo
-																		</button>
-																	) : null}
-																</div>
-																<p className={styles.subDesc}>{s.descripcion}</p>
-																<div className={styles.acciones}>
-																	{s.acciones.map((a) => {
-																		const activo = marcados.has(a.codigo);
-																		const sinPermisoPropio = !permisosActor.has(a.codigo);
-																		const bloqueado =
-																			!editable || (!activo && (!a.asignable || sinPermisoPropio));
-																		const motivo = !a.asignable
-																			? 'Este permiso no se puede asignar a roles personalizados'
-																			: sinPermisoPropio
-																				? 'No podés otorgar un permiso que no tenés'
-																				: '';
-																		return (
-																			<label
-																				key={a.codigo}
-																				className={`${styles.accion} ${bloqueado && !activo ? styles.accionOff : ''}`}
-																				title={editable && bloqueado ? motivo : a.codigo}
-																			>
-																				<input
-																					type="checkbox"
-																					checked={activo}
-																					disabled={bloqueado}
-																					onChange={() => alternar(a.codigo, s)}
-																				/>
-																				<span>
-																					<span className={styles.accionLabel}>
-																						{ROTULO_ACCION[a.accion] ?? a.accion}
-																					</span>
-																					<span className={styles.accionDesc}>{a.descripcion}</span>
-																				</span>
-																			</label>
-																		);
-																	})}
-																</div>
-															</div>
-														))}
+														{editable ? (
+															<button
+																type="button"
+																className={styles.btnLink}
+																onClick={(e) => {
+																	e.stopPropagation();
+																	alternarGrupo(m.submodulos);
+																}}
+															>
+																Marcar / desmarcar todo
+															</button>
+														) : null}
 													</div>
-												)}
-											</div>
-										);
-									})}
-									{catalogo.length === 0 ? <p className={styles.muted}>Ningún permiso coincide con la búsqueda.</p> : null}
-								</>
-							) : null}
+													{cerrado ? null : (
+														<div className={styles.moduloBody}>
+															{m.submodulos.map((s) => (
+																<div key={s.id} className={styles.sub}>
+																	<div className={styles.subHead}>
+																		<span className={styles.subTitle}>{s.label}</span>
+																		{editable ? (
+																			<button
+																				type="button"
+																				className={styles.btnLink}
+																				disabled={otorgables(s).length === 0}
+																				onClick={() => alternarGrupo([s])}
+																			>
+																				Todo
+																			</button>
+																		) : null}
+																	</div>
+																	<p className={styles.subDesc}>{s.descripcion}</p>
+																	<div className={styles.acciones}>
+																		{s.acciones.map((a) => {
+																			const activo = marcados.has(a.codigo);
+																			const sinPermisoPropio = !permisosActor.has(a.codigo);
+																			const puedeAsignar = a.asignable || !!seleccionado.esSistema;
+																			const bloqueado =
+																				!editable || (!activo && (!puedeAsignar || sinPermisoPropio));
+																			const motivo = !puedeAsignar
+																				? 'Este permiso no se puede asignar'
+																				: sinPermisoPropio
+																					? 'No podés otorgar un permiso que no tenés'
+																					: '';
+																			return (
+																				<label
+																					key={a.codigo}
+																					className={`${styles.accion} ${bloqueado && !activo ? styles.accionOff : ''}`}
+																					title={editable && bloqueado ? motivo : a.codigo}
+																				>
+																					<input
+																						type="checkbox"
+																						checked={activo}
+																						disabled={bloqueado}
+																						onChange={() => alternar(a.codigo, s)}
+																					/>
+																					<span>
+																						<span className={styles.accionLabel}>
+																							{ROTULO_ACCION[a.accion] ?? a.accion}
+																						</span>
+																						<span className={styles.accionDesc}>{a.descripcion}</span>
+																					</span>
+																				</label>
+																			);
+																		})}
+																	</div>
+																</div>
+															))}
+														</div>
+													)}
+												</div>
+											);
+										})}
+										{catalogo.length === 0 ? (
+											<p className={styles.muted}>Ningún permiso coincide con la búsqueda.</p>
+										) : null}
+									</>
+								) : null}
 
-							{pestania === 'usuarios' ? (
-								usuarios === null ? (
-									<p className={styles.muted}>Cargando…</p>
-								) : usuarios.length === 0 ? (
-									<p className={styles.muted}>Ningún usuario tiene este rol asignado.</p>
-								) : (
-									<ul className={styles.list}>
-										{usuarios.map((u) => (
-											<li key={u.valor}>
-												{u.nombre || `Personal #${u.valor}`}
-												{u.esPrincipal ? <span className={styles.badge}>Principal</span> : null}
-											</li>
-										))}
-									</ul>
-								)
-							) : null}
+								{pestania === 'usuarios' ? (
+									usuarios === null ? (
+										<p className={styles.muted}>Cargando…</p>
+									) : usuarios.length === 0 ? (
+										<p className={styles.muted}>Ningún usuario tiene este rol asignado.</p>
+									) : (
+										<ul className={styles.list}>
+											{usuarios.map((u) => (
+												<li key={u.valor}>
+													{u.nombre || `Personal #${u.valor}`}
+													{u.esPrincipal ? <span className={styles.badge}>Principal</span> : null}
+												</li>
+											))}
+										</ul>
+									)
+								) : null}
 
-							{pestania === 'historial' ? (
-								seleccionado.esSistema ? (
-									<p className={styles.muted}>Los roles del sistema no tienen historial de cambios.</p>
-								) : historial === null ? (
-									<p className={styles.muted}>Cargando…</p>
-								) : historial.length === 0 ? (
-									<p className={styles.muted}>Sin movimientos registrados.</p>
-								) : (
-									<ul className={styles.list}>
-										{historial.map((h) => (
-											<li key={h.id}>
-												<strong>{ROTULO_EVENTO[h.accion] ?? h.accion}</strong>{' '}
-												<span className={styles.muted}>
-													· {h.actorNombre || (h.actor != null ? `Personal #${h.actor}` : 'Sistema')} ·{' '}
-													{new Date(h.fecha).toLocaleString('es-AR')}
-												</span>
-												{resumenEvento(h) ? <div className={styles.muted}>{resumenEvento(h)}</div> : null}
-											</li>
-										))}
-									</ul>
-								)
-							) : null}
-						</>
-					)}
-				</section>
-			</div>
+								{pestania === 'historial' ? (
+									historial === null ? (
+										<p className={styles.muted}>Cargando…</p>
+									) : historial.length === 0 ? (
+										<p className={styles.muted}>Sin movimientos registrados.</p>
+									) : (
+										<ul className={styles.list}>
+											{historial.map((h) => (
+												<li key={h.id}>
+													<strong>{ROTULO_EVENTO[h.accion] ?? h.accion}</strong>{' '}
+													<span className={styles.muted}>
+														· {h.actorNombre || (h.actor != null ? `Personal #${h.actor}` : 'Sistema')} ·{' '}
+														{new Date(h.fecha).toLocaleString('es-AR')}
+													</span>
+													{resumenEvento(h) ? (
+														<div className={styles.muted}>{resumenEvento(h)}</div>
+													) : null}
+												</li>
+											))}
+										</ul>
+									)
+								) : null}
+							</>
+						)}
+					</section>
+				</div>
+			) : (
+				<div className={styles.layout}>
+					<aside className={styles.panel}>
+						<input
+							className={styles.input}
+							style={{ width: '100%', marginBottom: '0.55rem' }}
+							placeholder="Buscar personal…"
+							value={busquedaPersonal}
+							onChange={(e) => setBusquedaPersonal(e.target.value)}
+						/>
+						<div className={styles.sideTitle}>Personas</div>
+						{listaPersonal.length ? (
+							listaPersonal.map((p) => (
+								<button
+									key={p.Valor}
+									type="button"
+									className={`${styles.roleItem} ${p.Valor === personalId ? styles.roleItemActive : ''}`}
+									onClick={() => seleccionarPersonal(p.Valor)}
+								>
+									<span className={styles.roleName}>{p.ApellidoNombre || `Personal #${p.Valor}`}</span>
+									<span className={styles.roleMeta}>#{p.Valor}</span>
+								</button>
+							))
+						) : (
+							<p className={styles.muted}>No hay resultados.</p>
+						)}
+					</aside>
 
-			{sucio ? (
+					<section className={styles.panel}>
+						{personalId == null ? (
+							<p className={styles.muted}>Elegí una persona para asignarle puertas.</p>
+						) : cargandoPersonal ? (
+							<p className={styles.muted}>Cargando permisos…</p>
+						) : !packPersonal ? (
+							<p className={styles.muted}>No se pudieron cargar los permisos.</p>
+						) : (
+							<>
+								<div className={styles.roleHead}>
+									<div>
+										<strong>{personaSel?.ApellidoNombre || `Personal #${personalId}`}</strong>
+										<div className={styles.muted}>
+											{packPersonal.roles?.length
+												? `Roles: ${packPersonal.roles.map((r) => r.nombre).join(', ')}`
+												: packPersonal.rol
+													? `Rol: ${packPersonal.rol.nombre}`
+													: 'Sin rol asignado'}
+										</div>
+									</div>
+								</div>
+								<div className={`${styles.banner} ${styles.bannerInfo}`}>
+									Marcá o desmarcá puertas. Lo que supera al rol queda como extra; lo que quitás del rol queda
+									como denegado.
+								</div>
+								<PersonalPermisosMatriz
+									catalogo={packPersonal.catalogo?.length ? packPersonal.catalogo : data?.catalogo || []}
+									base={packPersonal.base}
+									marcados={marcadosPersonal}
+									permisosActor={packPersonal.permisosActor}
+									disabled={!puedePersonal || ocupado}
+									onChange={setMarcadosPersonal}
+								/>
+							</>
+						)}
+					</section>
+				</div>
+			)}
+
+			{modo === 'roles' && sucio ? (
 				<div className={styles.saveBar}>
 					<span>Tenés cambios sin guardar</span>
 					<button type="button" className={styles.btn} disabled={ocupado} onClick={descartar}>
@@ -704,7 +792,7 @@ export default function MatrizPermisosPage() {
 					<button
 						type="button"
 						className={`${styles.btn} ${styles.btnPrimary}`}
-						disabled={ocupado || borrador.nombre.trim().length < 3}
+						disabled={ocupado}
 						onClick={() => void guardar()}
 					>
 						{ocupado ? 'Guardando…' : 'Guardar cambios'}
@@ -712,78 +800,25 @@ export default function MatrizPermisosPage() {
 				</div>
 			) : null}
 
-			{modalNuevo ? (
-				<div className={styles.overlay} onClick={() => !ocupado && setModalNuevo(false)}>
-					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-						<h2>{nuevo.origen ? 'Duplicar rol' : 'Nuevo rol'}</h2>
-						<label className={styles.field}>
-							Nombre
-							<input
-								className={styles.input}
-								autoFocus
-								maxLength={50}
-								value={nuevo.nombre}
-								onChange={(e) => setNuevo((n) => ({ ...n, nombre: e.target.value }))}
-							/>
-						</label>
-						<label className={styles.field}>
-							Descripción (opcional)
-							<input
-								className={styles.input}
-								maxLength={200}
-								value={nuevo.descripcion}
-								onChange={(e) => setNuevo((n) => ({ ...n, descripcion: e.target.value }))}
-							/>
-						</label>
-						<label className={styles.field}>
-							Partir de
-							<select
-								className={styles.select}
-								value={nuevo.origen}
-								onChange={(e) => {
-									const origen = e.target.value;
-									const base = roles.find((r) => String(r.idRol) === origen);
-									setNuevo((n) => ({ ...n, origen, rolBase: base?.rolBase ?? 'NINGUNO' }));
-								}}
-							>
-								<option value="">Rol vacío (sin permisos)</option>
-								{roles
-									.filter((r) => r.nombre.toUpperCase() !== 'SUPER_ADMIN')
-									.map((r) => (
-										<option key={r.idRol} value={r.idRol}>
-											Copia de {r.nombre}
-										</option>
-									))}
-							</select>
-						</label>
-						<label className={styles.field}>
-							Se comporta como
-							<select
-								className={styles.select}
-								value={nuevo.rolBase}
-								onChange={(e) => setNuevo((n) => ({ ...n, rolBase: e.target.value as RolBase }))}
-							>
-								{OPCIONES_ROL_BASE.map((o) => (
-									<option key={o.valor} value={o.valor}>
-										{o.rotulo}
-									</option>
-								))}
-							</select>
-						</label>
-						<div className={styles.modalActions}>
-							<button type="button" className={styles.btn} disabled={ocupado} onClick={() => setModalNuevo(false)}>
-								Cancelar
-							</button>
-							<button
-								type="button"
-								className={`${styles.btn} ${styles.btnPrimary}`}
-								disabled={ocupado || nuevo.nombre.trim().length < 3}
-								onClick={() => void crear()}
-							>
-								{ocupado ? 'Creando…' : 'Crear rol'}
-							</button>
-						</div>
-					</div>
+			{modo === 'personal' && sucioPersonal ? (
+				<div className={styles.saveBar}>
+					<span>Tenés cambios sin guardar</span>
+					<button
+						type="button"
+						className={styles.btn}
+						disabled={ocupado}
+						onClick={() => packPersonal && setMarcadosPersonal(new Set(packPersonal.efectivos))}
+					>
+						Descartar
+					</button>
+					<button
+						type="button"
+						className={`${styles.btn} ${styles.btnPrimary}`}
+						disabled={ocupado}
+						onClick={() => void guardarPersonal()}
+					>
+						{ocupado ? 'Guardando…' : 'Guardar puertas'}
+					</button>
 				</div>
 			) : null}
 		</div>

@@ -136,7 +136,28 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 				ids[0] ??
 				null;
 			setRolPrincipal(principal != null ? String(principal) : '');
-			if (packPerm) aplicarPackPermisos(packPerm);
+			if (packPerm) {
+				aplicarPackPermisos(packPerm);
+			} else {
+				// Alta / sin overrides aún: mostrar matriz con catálogo de la matriz de roles
+				try {
+					const m = await rolesService.matriz();
+					setCatalogo(m.catalogo || []);
+					setPermisosActor(m.permisosActor || []);
+					const idsRoles = (packRoles.roles || []).map((r) => r.IdRol);
+					if (idsRoles.length) {
+						const base = await permisosPersonalService.previewBase(idsRoles).catch(() => [] as string[]);
+						setBasePermisos(base);
+						setMarcados(new Set(base));
+					} else {
+						setBasePermisos([]);
+						setMarcados(new Set());
+					}
+					setPermisosListos(true);
+				} catch {
+					setPermisosListos(false);
+				}
+			}
 		} catch (e) {
 			setError(extractError(e, 'Error al cargar acceso'));
 		} finally {
@@ -293,10 +314,14 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 					base={basePermisos}
 					marcados={marcados}
 					permisosActor={permisosActor}
-					disabled={saving || loading}
+					disabled={saving || loading || rolesAsignados.length === 0}
 					onChange={setMarcados}
 				/>
-			) : null}
+			) : loading ? null : (
+				<p className={formStyles.usuarioHint}>
+					Marcá al menos un rol para ver y ajustar la matriz de permisos de esta persona.
+				</p>
+			)}
 
 			{showActions ? (
 				<div

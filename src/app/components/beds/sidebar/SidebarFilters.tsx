@@ -147,7 +147,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 		adjuntosRecientesCount,
 	} = useBedDetail();
 	const router = useRouter();
-	const { puedeSubmodulo, puede, rol, loaded } = usePermiso();
+	const { puedeSubmodulo, puede, loaded } = usePermiso();
 
 	const clickItem = (section: typeof activeSection) => {
 		navigateToSection(section);
@@ -165,10 +165,9 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 			if (!loaded) return true;
 			const sub = SECTION_TO_PERM[section];
 			if (!sub) return true;
-			if (!rol) return false;
 			return puedeSubmodulo('INTERNACION', sub);
 		},
-		[puedeSubmodulo, rol, loaded],
+		[puedeSubmodulo, loaded],
 	);
 
 	/**
@@ -184,13 +183,12 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	 * de enfermería en la matriz; antes el grupo exigía CREAR y quedaba oculto.
 	 * Las acciones de escritura siguen gated dentro de cada sección.
 	 */
-	const esEnfermero = loaded && String(rol?.nombre || '').toUpperCase() === 'ENFERMERO';
+	// Menú médico: quien puede crear HC / evoluciones / indicaciones (no solo lectura de enfermería).
 	const puedeGestionMedica = !loaded
 		? true
-		: !esEnfermero &&
-		  (puedeSubmodulo('INTERNACION', 'HISTORIA_CLINICA') ||
-			puedeSubmodulo('INTERNACION', 'EVOLUCIONES') ||
-			puedeSubmodulo('INTERNACION', 'INDICACIONES'));
+		: puede('INTERNACION.HISTORIA_CLINICA.CREAR') ||
+		  puede('INTERNACION.EVOLUCIONES.CREAR') ||
+		  puede('INTERNACION.INDICACIONES.CREAR');
 
 	const puedeGestionEnfermeria = !loaded
 		? true
@@ -210,8 +208,13 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 		!puedeGestionMedica &&
 		!puedeGestionEnfermeria;
 
-	const esCargaHc = loaded && String(rol?.nombre || '').toUpperCase() === 'CARGA_HC';
-	/** CARGA_HC: solo panel Otras Funciones (adjuntos + cerrar). */
+	const esCargaHc =
+		loaded &&
+		puede('INTERNACION.ADJUNTOS.CREAR') &&
+		!puede('INTERNACION.EVOLUCIONES.CREAR') &&
+		!puede('INTERNACION.INDICACIONES.CREAR') &&
+		!puede('INTERNACION.INDICACIONES.APLICAR');
+	/** Perfil solo documental: panel Otras Funciones (adjuntos + cerrar). */
 	const mostrarSoloOtrasFunciones = esCargaHc;
 
 	return (

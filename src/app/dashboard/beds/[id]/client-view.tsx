@@ -107,9 +107,14 @@ export default function ClientBedView({ id }: Props) {
 		);
 	}
 
-	const rol = authService.getCurrentRol()?.nombre?.toUpperCase();
+	const perms = authService.getCurrentPermisos() || [];
+	const perfilDocumental =
+		perms.includes('INTERNACION.ADJUNTOS.CREAR') &&
+		!perms.includes('INTERNACION.EVOLUCIONES.CREAR') &&
+		!perms.includes('INTERNACION.INDICACIONES.CREAR') &&
+		!perms.includes('INTERNACION.INDICACIONES.APLICAR');
 	const initialSection: SidebarSection =
-		rol === 'CARGA_HC' ? 'adjuntos' : seccionDesdeUrl() ?? 'indicaciones';
+		perfilDocumental ? 'adjuntos' : seccionDesdeUrl() ?? 'indicaciones';
 
 	return (
 		<BedDetailProvider

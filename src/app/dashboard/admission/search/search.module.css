@@ -138,6 +138,7 @@
 .inlineFieldWide {
   flex: 0 1 320px;
   width: 320px;
+  min-width: 200px;
   max-width: 100%;
 }
 
@@ -150,6 +151,7 @@
   color: #64748b;
   line-height: 1.1;
   margin: 0;
+  white-space: nowrap;
 }
 
 .inlineField input,
@@ -289,6 +291,7 @@
   flex: 0 1 220px;
   min-width: 180px;
   max-width: 260px;
+  width: 220px;
   align-self: flex-end;
   display: flex;
   flex-direction: column;
@@ -840,6 +843,49 @@
   padding: 4px 0;
 }
 
+/* Laptop / 1366: una sola fila no entra; reordenar en 2 líneas sin aplastar filtros */
+@media (max-width: 1500px) {
+  .toolbar {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    align-items: flex-end;
+    row-gap: 12px;
+  }
+
+  .modeToggle {
+    order: 1;
+  }
+
+  .inlineFieldWide {
+    order: 2;
+    flex: 1 1 240px;
+    width: auto;
+    min-width: 200px;
+  }
+
+  .toolbarActions {
+    order: 3;
+    margin-left: auto;
+  }
+
+  .filterGroups {
+    order: 4;
+    flex: 1 1 100%;
+    min-width: 0;
+    padding-top: 2px;
+  }
+
+  .coberturaField {
+    flex: 0 0 220px;
+    width: 220px;
+    max-width: 220px;
+  }
+
+  .filterGroup {
+    padding-right: 8px;
+  }
+}
+
 @media (max-width: 720px) {
   .container {
     gap: 10px;
@@ -878,6 +924,7 @@
 
   .modeToggle {
     width: 100%;
+    order: 0;
   }
 
   .modeBtn {
@@ -888,12 +935,16 @@
   .inlineField,
   .inlineFieldWide {
     flex: 1 1 100%;
+    order: 0;
+    min-width: 0;
   }
 
   .filterGroups {
     width: 100%;
     gap: 10px;
     align-items: flex-start;
+    order: 0;
+    min-width: 0;
   }
 
   /* Fechas en fila propia; Movimiento + Tipo de paciente a la misma altura */
@@ -926,6 +977,7 @@
   }
 
   .coberturaField {
+    order: 0;
     width: 100%;
     max-width: none;
     min-width: 0;
@@ -933,6 +985,7 @@
   }
 
   .toolbarActions {
+    order: 0;
     margin-left: 0;
     width: 100%;
     justify-content: flex-end;

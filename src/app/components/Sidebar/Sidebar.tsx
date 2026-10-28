@@ -22,7 +22,6 @@ import {
 import styles from './Sidebar.module.css'
 import { useAppContext } from '../../contexts/AppContext'
 import { usePermiso } from '@/app/hooks/usePermiso'
-import { rolTieneAccesoConversaciones } from '@/app/utils/permisos'
 import { useWhatsAppInboxUnread } from '@/app/hooks/useWhatsAppInboxUnread'
 import { authService } from '@/app/services/authService'
 import type { UserData } from '@/app/types/AuthInterface'
@@ -64,7 +63,7 @@ const menuItems: MenuItem[] = [
     id: 'turnos', moduloId: 'TURNOS', label: 'Turnos', icon: Calendar,
     subItems: [
       { submoduloId: 'AGENDA', label: 'Agenda',              path: '/dashboard/turnos/agenda' },
-      { submoduloId: 'AGENDA', label: 'Conversaciones',      path: '/dashboard/turnos/chats' },
+      { submoduloId: 'CONVERSACIONES', label: 'Conversaciones', path: '/dashboard/turnos/chats' },
       { submoduloId: 'ADMIN',  label: 'Gestión de turnos',   path: '/dashboard/turnos/admin' },
       { submoduloId: 'ADMIN',  label: 'Configuración',       path: '/dashboard/turnos/configuracion' },
     ]
@@ -167,11 +166,8 @@ export default function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { empresaInfo, sectorSeleccionado, logout: clearAppSession } = useAppContext()
-  const { rol, loaded, puedeModulo, puedeSubmodulo } = usePermiso()
-  const puedeVerChats =
-    loaded &&
-    rolTieneAccesoConversaciones(rol?.nombre) &&
-    puedeSubmodulo('TURNOS', 'AGENDA')
+  const { rol, loaded, puede, puedeModulo, puedeSubmodulo } = usePermiso()
+  const puedeVerChats = loaded && puede('TURNOS.CONVERSACIONES.VER')
   const { count: chatsUnread } = useWhatsAppInboxUnread(puedeVerChats)
 
   useEffect(() => {

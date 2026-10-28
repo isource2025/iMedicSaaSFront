@@ -48,14 +48,6 @@ function formatFecha(row: InterconsultaRow) {
 	return [row.FechaSolicitud, row.HoraSolicitud].filter(Boolean).join(' ');
 }
 
-function esPendiente(row: InterconsultaRow) {
-	if (esCumplida(row)) return false;
-	if (row.Tomado) return false;
-	const w = String(row.EstadoWorkflow || '').toUpperCase();
-	if (w === 'TOMADO' || w === 'CUMPLIDO' || w === 'RESPONDIDO') return false;
-	return true;
-}
-
 function previewText(value?: string | null, max = 100) {
 	const t = String(value || '').trim();
 	if (!t) return '—';

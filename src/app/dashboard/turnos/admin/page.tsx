@@ -53,7 +53,7 @@ const EMPTY_FILTROS: TurnosAdminFiltros = {
 };
 
 export default function TurnosAdminPage() {
-	const { loaded, puede, puedeSubmodulo, rol } = usePermiso();
+	const { loaded, puede, puedeSubmodulo } = usePermiso();
 	const puedeVer =
 		puede('TURNOS.ADMIN.VER') ||
 		puedeSubmodulo('TURNOS', 'ADMIN') ||
@@ -62,14 +62,11 @@ export default function TurnosAdminPage() {
 		puede('TURNOS.ADMIN.EDITAR') || puede('TURNOS.AGENDA.EDITAR');
 	const puedeEliminar =
 		puede('TURNOS.ADMIN.ELIMINAR') || puede('TURNOS.AGENDA.ELIMINAR');
-	const rolNombre = String(rol?.nombre ?? '')
-		.trim()
-		.toUpperCase();
 	const puedeRac =
-		rolNombre === 'ADMIN' ||
-		rolNombre === 'ENFERMERO' ||
 		puede('TURNOS.AGENDA.EDITAR') ||
-		puede('TURNOS.ADMIN.EDITAR');
+		puede('TURNOS.ADMIN.EDITAR') ||
+		puede('TURNOS.AGENDA.CERRAR') ||
+		puede('INTERNACION.INDICACIONES.APLICAR');
 
 	const [draft, setDraft] = useState<TurnosAdminFiltros>(() => defaultFiltros());
 	const [applied, setApplied] = useState<TurnosAdminFiltros>(() => defaultFiltros());
