@@ -9,7 +9,7 @@ import styles from './AtencionTurnoModal.module.css';
 
 const EMPTY_EXCLUIR: number[] = [];
 const DEBOUNCE_MS = 2000;
-const MIN_CHARS = 2;
+const MIN_CHARS = 1;
 
 interface Props {
 	id: string;

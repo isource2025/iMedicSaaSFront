@@ -317,7 +317,7 @@ export default function CargarProtocoloModal({
 		const t = query.trim();
 		const tk = `prac:${key}`;
 		if (timers.current[tk]) window.clearTimeout(timers.current[tk]);
-		if (t.length < 2) return;
+		if (!t) return;
 		updPractica(key, (p) => ({ ...p, loading: true }));
 		timers.current[tk] = window.setTimeout(() => {
 			void protocolosService
@@ -897,7 +897,7 @@ export default function CargarProtocoloModal({
 													))}
 												</ul>
 											) : null}
-											{!p.loading && p.query.trim().length >= 2 && p.results.length === 0 ? (
+											{!p.loading && p.query.trim().length >= 1 && p.results.length === 0 ? (
 												<p className={styles.hint}>Sin resultados para “{p.query.trim()}”.</p>
 											) : null}
 										</div>
