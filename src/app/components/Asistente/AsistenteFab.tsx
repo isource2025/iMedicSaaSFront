@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./Asistente.module.css";
@@ -10,10 +10,13 @@ import ResultadoAccion from "./ResultadoAccion";
 import { escribirEnCampo, iniciarSeguimiento, leerPantalla, resaltarOpcion } from "./pantalla";
 import {
   aplicarInsercion,
+  AsistenteError,
   cancelarPendiente,
   confirmarPendiente,
   enviarMensaje,
   enviarMensajeStream,
+  obtenerCapacidades,
+  type AsistenteCuota,
   type AsistenteFoco,
   type AsistenteInsercion,
   type AsistenteMensajeUi,
@@ -238,10 +241,12 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
   const [progresos, setProgresos] = useState<Record<string, ProgresoIa>>({});
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [verSql, setVerSql] = useState<Record<string, boolean>>({});
+  const [cuota, setCuota] = useState<AsistenteCuota | null>(null);
   const tabsRef = useRef(tabs);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const tabsBarRef = useRef<HTMLDivElement>(null);
+  const sinCuota = Boolean(cuota?.limitada);
 
   tabsRef.current = tabs;
   const tab = tabs.find((t) => t.id === activa) || tabs[0];
@@ -291,6 +296,35 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
     const t = window.setTimeout(() => inputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
   }, [open, activa]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancel = false;
+    obtenerCapacidades()
+      .then((d) => {
+        if (!cancel && d.cuota) setCuota(d.cuota);
+      })
+      .catch(() => {
+        /* el envío igual consulta la cuota en el servidor */
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [open]);
+
+  const ajustarAltoInput = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.overflowY = "hidden";
+    el.style.height = "0px";
+    const needed = el.scrollHeight;
+    el.style.height = `${Math.min(Math.max(needed, 40), 120)}px`;
+    el.style.overflowY = needed > 120 ? "auto" : "hidden";
+  }, []);
+
+  useLayoutEffect(() => {
+    ajustarAltoInput();
+  }, [tab?.borrador, open, activa, ajustarAltoInput]);
 
   useEffect(() => {
     if (listRef.current)
@@ -415,7 +449,7 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
     async (mensajeRaw: string) => {
       const tabId = tab?.id;
       const mensaje = mensajeRaw.trim();
-      if (!tabId || !mensaje || ocupadas[tabId]) return;
+      if (!tabId || !mensaje || ocupadas[tabId] || cuota?.limitada) return;
       const historial = historialDe(tab.mensajes);
       setError(tabId, "");
       setOcupada(tabId, "Pensando…");
@@ -449,11 +483,14 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
           data = await enviarMensajeStream(payload, {
             onEstado: (evt) => avanzarProgreso(tabId, evt),
           });
-        } catch {
+        } catch (e) {
+          if (e instanceof AsistenteError && e.cuota) setCuota(e.cuota);
+          if (e instanceof AsistenteError && e.cuota?.limitada) throw e;
           data = null;
         }
         if (!data) data = await enviarMensaje(payload);
         const r = data;
+        if (r.cuota) setCuota(r.cuota);
         actualizarTab(tabId, (t) => ({
           ...t,
           idConversacion: r.idConversacion || t.idConversacion,
@@ -475,6 +512,15 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
           ],
         }));
       } catch (e) {
+        if (e instanceof AsistenteError && e.cuota) setCuota(e.cuota);
+        if (e instanceof AsistenteError && e.cuota?.limitada) {
+          actualizarTab(tabId, (t) => {
+            const msgs = [...t.mensajes];
+            const last = msgs[msgs.length - 1];
+            if (last?.role === "user" && last.content === mensaje) msgs.pop();
+            return { ...t, mensajes: msgs, borrador: t.borrador || mensaje };
+          });
+        }
         setError(
           tabId,
           e instanceof Error ? e.message : "Error al consultar el asistente",
@@ -484,7 +530,7 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
         setProgreso(tabId, null);
       }
     },
-    [tab?.id, ocupadas, pathname, actualizarTab, setProgreso, avanzarProgreso],
+    [tab?.id, ocupadas, pathname, actualizarTab, setProgreso, avanzarProgreso, cuota?.limitada],
   );
 
   const quitarDeMensajes = (
@@ -748,7 +794,7 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
                           key={ej}
                           type="button"
                           className={styles.chip}
-                          disabled={busy}
+                          disabled={busy || sinCuota}
                           onClick={() => void sendTexto(ej)}
                         >
                           {ej}
@@ -933,9 +979,13 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
                   ref={inputRef}
                   className={styles.input}
                   rows={1}
-                  placeholder="Preguntá cómo hacer algo, dónde está o por qué no te deja…"
+                  placeholder={
+                    sinCuota
+                      ? "Llegaste al límite de la versión de prueba"
+                      : "Preguntá cómo hacer algo…"
+                  }
                   value={tab.borrador}
-                  disabled={busy}
+                  disabled={busy || sinCuota}
                   onChange={(e) => {
                     const v = e.target.value;
                     actualizarTab(tab.id, (t) => ({ ...t, borrador: v }));
@@ -950,7 +1000,7 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
                 <button
                   type="submit"
                   className={styles.send}
-                  disabled={busy || !tab.borrador.trim()}
+                  disabled={busy || sinCuota || !tab.borrador.trim()}
                   aria-label="Enviar"
                 >
                   <svg
@@ -966,6 +1016,15 @@ export default function AsistenteFab({ stack = false }: { stack?: boolean }) {
                   </svg>
                 </button>
               </form>
+              {cuota?.prueba ? (
+                <div
+                  className={`${styles.cuota} ${cuota.limitada ? styles.cuotaAgotada : ""}`}
+                >
+                  {cuota.limitada
+                    ? `Llegaste al límite de ${cuota.limite} mensajes de la versión de prueba.`
+                    : `Versión de prueba · te quedan ${cuota.restantes} de ${cuota.limite} mensajes`}
+                </div>
+              ) : null}
             </div>,
             document.body,
           )

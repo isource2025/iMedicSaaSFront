@@ -36,9 +36,18 @@ export type AsistenteConsulta = {
   total?: number;
 };
 
+export type AsistenteCuota = {
+  limite: number;
+  usados: number;
+  restantes: number | null;
+  limitada: boolean;
+  prueba: boolean;
+};
+
 export type AsistenteRespuesta = {
   success: boolean;
   texto: string;
+  cuota?: AsistenteCuota | null;
   /** Aviso corto cuando la respuesta se basó en datos resumidos o recortados. */
   disclaimer?: string;
   herramientas?: string[];
@@ -113,6 +122,24 @@ export async function aplicarInsercion(
   };
 }
 
+export class AsistenteError extends Error {
+  cuota?: AsistenteCuota | null;
+  constructor(mensaje: string, cuota?: AsistenteCuota | null) {
+    super(mensaje);
+    this.name = "AsistenteError";
+    this.cuota = cuota;
+  }
+}
+
+export async function obtenerCapacidades() {
+  const res = await apiFetch("/asistente/capacidades");
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new AsistenteError(data.mensaje || "No se pudieron leer las capacidades");
+  }
+  return data as { success: boolean; cuota?: AsistenteCuota | null };
+}
+
 export async function enviarMensaje(
   payload: AsistentePayload,
 ): Promise<AsistenteRespuesta> {
@@ -122,7 +149,10 @@ export async function enviarMensaje(
   });
   const data = (await res.json().catch(() => ({}))) as AsistenteRespuesta;
   if (!res.ok) {
-    throw new Error(data.mensaje || "No se pudo hablar con el asistente");
+    throw new AsistenteError(
+      data.mensaje || "No se pudo hablar con el asistente",
+      data.cuota,
+    );
   }
   return data;
 }
@@ -201,7 +231,10 @@ export async function enviarMensajeStream(
   });
   if (!res.ok || !res.body) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.mensaje || "No se pudo abrir el stream del asistente");
+    throw new AsistenteError(
+      data.mensaje || "No se pudo abrir el stream del asistente",
+      data.cuota,
+    );
   }
 
   const reader = res.body.getReader();
