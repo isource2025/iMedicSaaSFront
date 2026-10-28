@@ -40,11 +40,10 @@ const getLocalTimeString = (date: Date): string => {
 	return `${hh}:${mm}`;
 };
 
+/** imHCEpicrisis.Profecional guarda la ficha (Valor), no la matrícula. */
 const resolverProfecional = (idPersonalFallback: string): number | undefined => {
 	const u = authService.getCurrentUser() as Record<string, unknown> | null;
-	const mat = u?.matricula ?? u?.Matricula;
-	if (mat != null && Number(mat) > 0) return Number(mat);
-	const vp = u?.idValorpersonal ?? u?.valorPersonal;
+	const vp = u?.idValorpersonal ?? u?.valorPersonal ?? u?.id;
 	if (vp != null && Number(vp) > 0) return Number(vp);
 	if (idPersonalFallback) return parseInt(idPersonalFallback, 10);
 	return undefined;

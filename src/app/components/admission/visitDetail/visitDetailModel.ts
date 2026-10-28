@@ -90,7 +90,9 @@ export const responsable = {
   hci: (r: Row) => prof(r.ProfesionalNombre, r.Matricula),
   indicacion: (r: Row) => prof(r.fullName, r.matricula),
   evolucion: (r: Row) => prof(r.ProfesionalNombreCompleto, r.Matricula),
-  epicrisis: (r: Row) => prof(r.ProfesionalNombreCompleto ?? r.profesionalNombreCompleto, r.Profecional),
+  // Profecional en BD es la ficha (Valor); la matrícula real viene en Matricula.
+  epicrisis: (r: Row) =>
+    prof(r.ProfesionalNombreCompleto ?? r.profesionalNombreCompleto, r.Matricula ?? r.matricula),
   estudioSolicitante: (r: Row) =>
     prof(r.MedicoSolicitanteNombre ?? r.medicoSolicitanteNombre, r.MatriculaSolicitante ?? r.matriculaSolicitante, 'Solicitó'),
   estudioRealizador: (r: Row) =>
