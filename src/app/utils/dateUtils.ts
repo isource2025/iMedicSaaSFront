@@ -232,6 +232,35 @@ export function codigoCamaDesdeId(bedId: string, sector?: string, fallback = '')
 }
 
 /**
+ * Datetime del HIS (`YYYY-MM-DD HH:mm:ss` o ISO sin zona) como Date local.
+ * No pasar por `new Date('2026-10-28 16:00:00')`: en algunos motores eso es UTC
+ * y resta 3 h al mostrar en Argentina.
+ */
+export const parseSqlDateTimeLocal = (sqlDate: string | null | undefined): Date | null => {
+  if (!sqlDate) return null;
+  const s = String(sqlDate).trim();
+  if (!s) return null;
+
+  const wall = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/,
+  );
+  if (wall && !s.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(s)) {
+    const date = new Date(
+      Number(wall[1]),
+      Number(wall[2]) - 1,
+      Number(wall[3]),
+      Number(wall[4] || 0),
+      Number(wall[5] || 0),
+      Number(wall[6] || 0),
+    );
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const date = new Date(s);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+/**
  * Formatea una fecha en formato SQL (como '2025-04-29 18:21:44.410') a un formato legible
  * @param sqlDate Fecha en formato SQL como string
  * @param options Opciones de formato
@@ -261,17 +290,17 @@ export const formatSqlDate = (
 
   try {
     // Crear objeto Date a partir de la fecha SQL
-    let date: Date;
+    let date: Date | null;
     
     // Si es formato YYYY-MM-DD (sin hora), parsear como fecha local
     if (/^\d{4}-\d{2}-\d{2}$/.test(sqlDate)) {
       const [year, month, day] = sqlDate.split('-').map(Number);
       date = new Date(year, month - 1, day);
     } else {
-      date = new Date(sqlDate);
+      date = parseSqlDateTimeLocal(sqlDate);
     }
     
-    if (isNaN(date.getTime())) {
+    if (!date || isNaN(date.getTime())) {
       return '-';
     }
 
@@ -457,6 +486,7 @@ export const useDateFormatter = () => {
     clarionDateToDate,
     formatTime,
     formatSqlDate,
+    parseSqlDateTimeLocal,
     fn_ClarionDATE2FULLSQL,
     calculateAge
   };

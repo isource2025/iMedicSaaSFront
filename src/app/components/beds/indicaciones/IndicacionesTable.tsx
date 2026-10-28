@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import ConfirmationModal from "../shared/ConfirmationModal";
 import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
-import { formatSqlDate, formatHoraSimple } from "../../../utils/dateUtils";
+import { formatSqlDate, formatHoraSimple, parseSqlDateTimeLocal } from "../../../utils/dateUtils";
 import { useUsuarioActual, esRegistroPropio } from "../../../hooks/useUsuarioActual";
 import { usePermiso } from "../../../hooks/usePermiso";
 
@@ -298,9 +298,9 @@ export default function IndicacionesTable({
         
         try {
             const ahora = new Date();
-            const proxima = new Date(row.proximaAplicacion);
+            const proxima = parseSqlDateTimeLocal(row.proximaAplicacion);
             
-            if (isNaN(proxima.getTime())) {
+            if (!proxima) {
                 console.error('Fecha de próxima aplicación inválida:', row.proximaAplicacion, 'para indicación:', row.id);
                 return { color: 'rojo', label: '' };
             }

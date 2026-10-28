@@ -208,9 +208,10 @@ export default function AplicarIndicacion(props: Props) {
     const convertirIntervaloClarionAHoras = (intervalo?: number | null): number => {
         if (!intervalo) return 0;
 
-        // El intervalo en Clarion representa un tiempo en centésimas de segundo desde medianoche
-        // Para convertirlo a horas: dividir por 360000 (100 centésimas * 60 segundos * 60 minutos)
-        return  intervalo / 360000 ;
+        // imFrecuenciasAdmin.Intervalo es Clarion TIME (centésimas de segundo + 1).
+        // 6 hs → 2.160.001 → 6. No usar el entero crudo: se interpretaría como minutos
+        // y el próximo saltaría ~1500 días.
+        return (intervalo - 1) / 360000;
     };
 
     // ✅ Calcular fecha y hora próxima basándose en fechaCumplido + horaCumplido + frecuenciaHoras
