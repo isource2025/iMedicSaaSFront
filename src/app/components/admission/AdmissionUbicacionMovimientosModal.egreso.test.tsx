@@ -248,11 +248,4 @@ describe("Modificar admisión · egreso de internado", () => {
         expect(visitaMovimientoService.revertirEgreso).not.toHaveBeenCalled();
     });
 
-    it("un usuario que no es admin ve el egreso pero no puede quitarlo", async () => {
-        estado.admin = false;
-        renderEmbebido();
-        expect(await screen.findByDisplayValue("2026-10-01")).toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: "Eliminar egreso" })).not.toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Modificar" })).toBeInTheDocument();
-    });
 });

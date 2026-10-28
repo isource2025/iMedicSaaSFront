@@ -30,6 +30,10 @@ import {
 
 const PARAMS_INDICACIONES = { incluirSuspendidas: 1 };
 
+function esIndicacionSuspendida(x: { suspendida?: boolean; estado?: string }): boolean {
+	return Boolean(x.suspendida) || String(x.estado ?? '').trim().toUpperCase() === 'S';
+}
+
 function toLocalYmd(date: Date): string {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");

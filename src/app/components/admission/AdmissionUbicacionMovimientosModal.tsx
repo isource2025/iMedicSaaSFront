@@ -301,16 +301,14 @@ export default function AdmissionUbicacionMovimientosModal({
             Esta visita figura egresada y sin cama. Eliminá el egreso para poder
             asignarle una ubicación.
           </p>
-          {puedeRevertirEgreso ? (
-            <button
-              type="button"
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              disabled={loading || revertBusy}
-              onClick={() => void onRevertirEgreso()}
-            >
-              {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnPrimary}`}
+            disabled={loading || revertBusy}
+            onClick={() => void onRevertirEgreso()}
+          >
+            {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
+          </button>
         </>
       ) : (
         <button
@@ -636,17 +634,15 @@ export default function AdmissionUbicacionMovimientosModal({
                     >
                       Modificar
                     </button>
-                    {puedeRevertirEgreso ? (
-                      <button
-                        type="button"
-                        className={`${styles.btn} ${styles.btnDanger}`}
-                        disabled={loading || revertBusy}
-                        onClick={() => void onRevertirEgreso()}
-                        title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda internado sin cama"
-                      >
-                        {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
-                      </button>
-                    ) : null}
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      disabled={loading || revertBusy}
+                      onClick={() => void onRevertirEgreso()}
+                      title="Quita el egreso: vuelve a la misma cama si sigue libre; si no, queda internado sin cama"
+                    >
+                      {revertBusy ? 'Revisando…' : 'Eliminar egreso'}
+                    </button>
                   </>
                 )}
               </div>

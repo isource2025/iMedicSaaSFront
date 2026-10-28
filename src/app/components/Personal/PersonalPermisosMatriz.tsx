@@ -65,7 +65,7 @@ export default function PersonalPermisosMatriz({
 	}, [catalogo, busqueda]);
 
 	const grants = useMemo(
-		() => [...marcados].filter((c) => !baseSet.has(c)).length,
+		() => Array.from(marcados).filter((c) => !baseSet.has(c)).length,
 		[marcados, baseSet],
 	);
 	const denies = useMemo(

@@ -122,7 +122,6 @@ export default function MovimientosSection({
 					fechaIngreso,
 					horaIngreso,
 				},
-				fileName: `movimientos_${numeroVisita}.pdf`,
 			});
 		}
 	};

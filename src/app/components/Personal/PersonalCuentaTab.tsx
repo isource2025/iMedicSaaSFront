@@ -53,8 +53,8 @@ function codOperadorDisplay(
 function diffOverrides(base: string[], efectivos: Set<string>) {
 	const b = new Set(base);
 	return {
-		grants: [...efectivos].filter((c) => !b.has(c)),
-		denies: [...b].filter((c) => !efectivos.has(c)),
+		grants: Array.from(efectivos).filter((c) => !b.has(c)),
+		denies: Array.from(b).filter((c) => !efectivos.has(c)),
 	};
 }
 
