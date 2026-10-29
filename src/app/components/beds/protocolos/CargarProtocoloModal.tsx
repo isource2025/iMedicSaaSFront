@@ -229,7 +229,9 @@ export default function CargarProtocoloModal({
 			.catch(() => setTiposAdjunto([]));
 		void protocolosService
 			.listarTipos()
-			.then((rows) => setTipos(rows.filter((t) => t.tipoProtocolo || t.descripcion)))
+			// El catálogo Clarion puede traer una fila con código vacío ("kit uti").
+			// Ese vacío es el mismo value que "Sin tipo"; no la listamos para no colisionar.
+			.then((rows) => setTipos(rows.filter((t) => String(t.tipoProtocolo || '').trim())))
 			.catch(() => setTipos([]));
 	}, [open, protocoloToEdit]);
 
@@ -723,9 +725,9 @@ export default function CargarProtocoloModal({
 								>
 									<option value="">Sin tipo</option>
 									{tipos.map((t) => (
-										<option key={t.tipoProtocolo || '__kit'} value={t.tipoProtocolo}>
+										<option key={t.tipoProtocolo} value={t.tipoProtocolo}>
 											{t.descripcion || t.tipoProtocolo}
-											{t.tipoProtocolo ? ` (${t.tipoProtocolo})` : ''}
+											{` (${t.tipoProtocolo})`}
 										</option>
 									))}
 								</select>
