@@ -40,7 +40,14 @@ export type ReporteConsumoIa = {
     costoArs: number | null;
     base: string;
   };
-  porUsuario?: Array<AgregadoIa & { actor: number | null; nombre: string }>;
+  porUsuario?: Array<
+    AgregadoIa & {
+      actor: number | null;
+      nombre: string;
+      idEmpresa?: number | null;
+      empresaNombre?: string | null;
+    }
+  >;
   porDia?: Array<AgregadoIa & { dia: string }>;
   porModelo?: Array<AgregadoIa & { modelo: string }>;
   porHerramienta?: Array<{
@@ -70,6 +77,7 @@ export type MensajeConsumoIa = {
   tipo: string;
   error: string | null;
   pregunta: string | null;
+  respuesta?: string | null;
   ruta: string | null;
   herramientas: string[];
   modelo: string | null;
@@ -77,6 +85,24 @@ export type MensajeConsumoIa = {
   tokens: TokensIa | null;
   costoUsd: number | null;
   incluidoEnChat: boolean;
+  idEmpresa?: number | null;
+  empresaNombre?: string | null;
+  agente?: string | null;
+  modo?: string | null;
+  idConversacion?: string | null;
+  ip?: string | null;
+  ms?: number | null;
+  consumo?: unknown;
+};
+
+export type AgregadoEmpresaIa = AgregadoIa & {
+  idEmpresa: number | null;
+  nombre: string;
+};
+
+export type ReporteConsumoIaPlataforma = ReporteConsumoIa & {
+  porEmpresa?: AgregadoEmpresaIa[];
+  totales?: ReporteConsumoIa['totales'] & { empresas?: number };
 };
 
 export type PaginaMensajesIa = {

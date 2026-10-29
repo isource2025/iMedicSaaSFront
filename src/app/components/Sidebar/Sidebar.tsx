@@ -120,6 +120,7 @@ const menuItems: MenuItem[] = [
       { submoduloId: 'CONFIG',     label: 'Configuración',      path: '/dashboard/super-admin/configuracion' },
       { submoduloId: 'SEGURIDAD',  label: 'Seguridad',          path: '/dashboard/super-admin/seguridad' },
       { submoduloId: 'ANALITICA',  label: 'Analítica',          path: '/dashboard/super-admin/analitica' },
+      { submoduloId: 'CHATS_IA',   label: 'Chats IA',           path: '/dashboard/super-admin/chats-ia' },
     ]
   },
   {

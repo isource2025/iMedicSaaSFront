@@ -1,5 +1,10 @@
 import { apiService } from './axios';
 import type {
+  MensajeConsumoIa,
+  PaginaMensajesIa,
+  ReporteConsumoIaPlataforma,
+} from './consumoIaService';
+import type {
   ActualizarUsuarioEmpresaBody,
   CatalogoSector,
   CatalogoServicio,
@@ -372,6 +377,63 @@ export const superAdminService = {
       success: boolean;
       data: { CodigoISO: string; Nombre: string; Activo: boolean | number }[];
     }>(`/auth/seguridad/paises/${encodeURIComponent(codigoISO)}`, { activo });
+    return res.data.data;
+  },
+
+  async reporteChatsIa(params: {
+    desde?: string;
+    hasta?: string;
+    idEmpresa?: number | null;
+    actor?: number | null;
+    q?: string;
+  }): Promise<ReporteConsumoIaPlataforma> {
+    const res = await apiService.get<{ success: boolean; data: ReporteConsumoIaPlataforma }>(
+      `${BASE}/chats-ia`,
+      {
+        params: {
+          desde: params.desde,
+          hasta: params.hasta,
+          idEmpresa: params.idEmpresa ?? undefined,
+          actor: params.actor ?? undefined,
+          q: params.q || undefined,
+        },
+      },
+    );
+    return res.data.data;
+  },
+
+  async mensajesChatsIa(
+    params: {
+      desde?: string;
+      hasta?: string;
+      idEmpresa?: number | null;
+      actor?: number | null;
+      q?: string;
+    },
+    pagina = 1,
+    limite = 50,
+  ): Promise<PaginaMensajesIa> {
+    const res = await apiService.get<{ success: boolean; data: PaginaMensajesIa }>(
+      `${BASE}/chats-ia/mensajes`,
+      {
+        params: {
+          desde: params.desde,
+          hasta: params.hasta,
+          idEmpresa: params.idEmpresa ?? undefined,
+          actor: params.actor ?? undefined,
+          q: params.q || undefined,
+          pagina,
+          limite,
+        },
+      },
+    );
+    return res.data.data;
+  },
+
+  async detalleChatIa(id: number): Promise<MensajeConsumoIa> {
+    const res = await apiService.get<{ success: boolean; data: MensajeConsumoIa }>(
+      `${BASE}/chats-ia/mensajes/${id}`,
+    );
     return res.data.data;
   },
 };
