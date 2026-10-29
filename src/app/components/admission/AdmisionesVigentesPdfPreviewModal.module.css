@@ -1,70 +1,90 @@
-.overlay {
-	position: fixed;
-	inset: 0;
-	z-index: 10050;
-	background: #1e293b;
-	display: flex;
-	align-items: stretch;
-	justify-content: stretch;
-}
-
-.dialog {
-	position: relative;
-	width: 100%;
-	height: 100%;
+.barra {
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
-	background: #1e293b;
+	gap: 8px;
 }
 
-/* A la izquierda del cluster descarga/imprimir del visor PDF del navegador. */
-.closeBtn {
-	position: absolute;
-	top: 10px;
-	right: 132px;
-	z-index: 2;
-	border: none;
-	background: transparent;
-	color: #e8eaed;
-	font-size: 1.25rem;
-	font-weight: 400;
-	line-height: 1;
-	cursor: pointer;
-	width: 34px;
-	height: 34px;
-	border-radius: 4px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	opacity: 0.9;
-}
-
-.closeBtn:hover {
-	background: rgba(255, 255, 255, 0.12);
-	color: #fff;
-	opacity: 1;
-}
-
-.previewFrame {
-	flex: 1;
-	width: 100%;
-	min-height: 0;
-	border: 0;
-	background: #fff;
-}
-
-.centerMsg {
-	flex: 1;
+.barraTop {
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	color: #cbd5e1;
-	font-size: 0.9rem;
-	text-align: center;
-	padding: 24px;
+	gap: 10px;
+	flex-wrap: wrap;
 }
 
-.error {
-	color: #fecaca;
+.leyenda {
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.atajos {
+	display: flex;
+	gap: 10px;
+}
+
+.linkBtn {
+	appearance: none;
+	border: none;
+	background: none;
+	padding: 0;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: #0083a9;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	font-family: inherit;
+}
+
+.linkBtn:hover {
+	color: #006987;
+}
+
+.meta {
+	margin-left: auto;
+	font-size: 0.78rem;
+	color: #64748b;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px 5px 8px;
+	border: 1px solid #cbd5e1;
+	border-radius: 999px;
+	background: #fff;
+	font-size: 0.78rem;
+	color: #334155;
+	cursor: pointer;
+	user-select: none;
+}
+
+.chip input {
+	accent-color: #0083a9;
+	margin: 0;
+}
+
+.chip small {
+	color: #94a3b8;
+	font-weight: 600;
+}
+
+.chipOn {
+	border-color: #00b5e2;
+	background: #e0f7fa;
+	color: #0e7490;
+	font-weight: 600;
+}
+
+.chipOn small {
+	color: #0891b2;
 }

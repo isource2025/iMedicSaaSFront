@@ -84,13 +84,6 @@ export default function AdmisionesVigentesPage() {
 
 	const grupos = useMemo(() => agrupar(filtradas), [filtradas]);
 
-	const descripcionFiltro = [
-		sector ? sectores.find((s) => s.clave === sector)?.titulo || sector : '',
-		busqueda.trim() ? `"${busqueda.trim()}"` : '',
-	]
-		.filter(Boolean)
-		.join(' · ');
-
 	return (
 		<div className={styles.contenedor}>
 			<div className={styles.encabezado}>
@@ -113,11 +106,11 @@ export default function AdmisionesVigentesPage() {
 						type="button"
 						className={styles.botonExport}
 						onClick={() => setPdfPreviewOpen(true)}
-						disabled={cargando || filtradas.length === 0}
+						disabled={cargando || filas.length === 0}
 						title={
-							filtradas.length === 0
+							filas.length === 0
 								? 'No hay pacientes para exportar'
-								: 'Exportar listado en PDF'
+								: 'Elegir sectores y exportar listado en PDF'
 						}
 					>
 						Exportar PDF
@@ -249,8 +242,10 @@ export default function AdmisionesVigentesPage() {
 			<AdmisionesVigentesPdfPreviewModal
 				isOpen={pdfPreviewOpen}
 				onClose={() => setPdfPreviewOpen(false)}
-				rows={filtradas}
-				filtroDescripcion={descripcionFiltro}
+				rows={filas}
+				sectores={sectores}
+				sectorInicial={sector}
+				busqueda={busqueda}
 			/>
 		</div>
 	);
