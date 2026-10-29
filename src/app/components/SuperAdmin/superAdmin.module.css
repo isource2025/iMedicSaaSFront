@@ -66,10 +66,21 @@
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.navBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .navBtnActive {
   background: #0083a9;
+  color: #fff;
+}
+
+.navBtnActive:hover {
+  background: #0369a1;
   color: #fff;
 }
 

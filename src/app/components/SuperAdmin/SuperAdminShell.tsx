@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import SuperAdminNav from './SuperAdminNav';
 import styles from './superAdmin.module.css';
 
 export type SuperAdminCrumb = { label: string; href?: string };
@@ -26,6 +27,8 @@ export default function SuperAdminShell({
 }: Props) {
   return (
     <div className={styles.superAdmin}>
+      <SuperAdminNav />
+
       {crumbs && crumbs.length > 0 && (
         <nav className={styles.crumbs} aria-label="Migas de pan">
           {crumbs.map((c, i) => (

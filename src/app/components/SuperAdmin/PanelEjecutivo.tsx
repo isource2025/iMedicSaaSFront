@@ -54,6 +54,9 @@ export default function PanelEjecutivo() {
           <Link href="/dashboard/super-admin/alta" className={styles.btn}>
             Nueva empresa
           </Link>
+          <Link href="/dashboard/super-admin/chats-ia" className={`${styles.btn} ${styles.btnSecondary}`}>
+            Chats IA
+          </Link>
           <Link href="/dashboard/super-admin/analitica" className={`${styles.btn} ${styles.btnSecondary}`}>
             Analítica
           </Link>

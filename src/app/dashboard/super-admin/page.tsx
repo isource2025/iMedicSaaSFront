@@ -13,6 +13,8 @@ const TAB_REDIRECT: Record<string, string> = {
   configuracion: '/dashboard/super-admin/configuracion',
   seguridad: '/dashboard/super-admin/seguridad',
   analitica: '/dashboard/super-admin/analitica',
+  'chats-ia': '/dashboard/super-admin/chats-ia',
+  chatsia: '/dashboard/super-admin/chats-ia',
 };
 
 function LegacyTabRedirect() {
