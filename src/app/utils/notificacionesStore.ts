@@ -33,6 +33,8 @@ export type NotificacionesState = {
 	firstLoadTimedOut: boolean;
 	entranceShown: boolean;
 	live: boolean;
+	/** Timestamp hasta el cual no se alerta por internados sin cama (silencio 24 h). */
+	sinCamaSnoozeUntil: number | null;
 };
 
 type Persisted = Pick<
@@ -48,6 +50,8 @@ type Persisted = Pick<
 >;
 
 const STORAGE_KEY = 'imedic:notificaciones:v1';
+const SNOOZE_KEY_PREFIX = 'imedic:notif:sinCamaSnooze:';
+const SIN_CAMA_SNOOZE_MS = 24 * 60 * 60 * 1000;
 const LIST_LIMIT = 40;
 /** Si el backend no responde, el botón aparece igual para no dejar al usuario sin acceso. */
 const FIRST_LOAD_TIMEOUT_MS = 8000;
@@ -82,6 +86,7 @@ const initialState: NotificacionesState = {
 	firstLoadTimedOut: false,
 	entranceShown: false,
 	live: false,
+	sinCamaSnoozeUntil: null,
 };
 
 let state: NotificacionesState = initialState;
@@ -140,6 +145,65 @@ function readPersisted(userKey: string): Persisted | null {
 	} catch {
 		return null;
 	}
+}
+
+function snoozeStorageKey(userKey: string) {
+	return `${SNOOZE_KEY_PREFIX}${userKey}`;
+}
+
+function readSnoozeUntil(userKey: string): number | null {
+	try {
+		const raw = localStorage.getItem(snoozeStorageKey(userKey));
+		const n = parseInt(raw || '', 10);
+		if (!Number.isFinite(n) || n <= Date.now()) {
+			if (Number.isFinite(n)) localStorage.removeItem(snoozeStorageKey(userKey));
+			return null;
+		}
+		return n;
+	} catch {
+		return null;
+	}
+}
+
+function writeSnoozeUntil(userKey: string, until: number | null) {
+	try {
+		const key = snoozeStorageKey(userKey);
+		if (until == null) localStorage.removeItem(key);
+		else localStorage.setItem(key, String(until));
+	} catch {
+		/* quota / private mode */
+	}
+}
+
+let snoozeTimer: number | null = null;
+
+function clearSnoozeTimer() {
+	if (snoozeTimer != null) {
+		window.clearTimeout(snoozeTimer);
+		snoozeTimer = null;
+	}
+}
+
+function armSnoozeExpiry(until: number | null) {
+	clearSnoozeTimer();
+	if (typeof window === 'undefined' || until == null) return;
+	const wait = until - Date.now();
+	if (wait <= 0) {
+		if (state.userKey) writeSnoozeUntil(state.userKey, null);
+		if (state.sinCamaSnoozeUntil) setState({ sinCamaSnoozeUntil: null });
+		return;
+	}
+	snoozeTimer = window.setTimeout(() => {
+		snoozeTimer = null;
+		if (state.userKey) writeSnoozeUntil(state.userKey, null);
+		setState({ sinCamaSnoozeUntil: null });
+	}, wait);
+}
+
+/** Internados sin cama que deben prender la campanita (0 si el aviso está silenciado). */
+export function alertaSinCamaDe(s: NotificacionesState): number {
+	const snoozed = (s.sinCamaSnoozeUntil ?? 0) > Date.now();
+	return snoozed ? 0 : s.sinCama || 0;
 }
 
 export function valorPersonalFromUser(user: Record<string, unknown> | null): number | null {
@@ -491,6 +555,7 @@ function stopTimers() {
 
 function stop() {
 	stopTimers();
+	clearSnoozeTimer();
 	disconnectStream();
 	streamBlocked = false;
 	connectedOnce = false;
@@ -515,7 +580,9 @@ function start(userId: number, userKey: string) {
 		items: saved?.items ?? [],
 		itemsLoaded: saved?.itemsLoaded ?? false,
 		entranceShown: saved?.entranceShown ?? false,
+		sinCamaSnoozeUntil: readSnoozeUntil(userKey),
 	};
+	armSnoozeExpiry(state.sinCamaSnoozeUntil);
 	persist();
 	emit();
 
@@ -604,6 +671,23 @@ export async function marcarTodasNotificacionesLeidas() {
 		items: state.items.filter((n) => !esNotifPedido(n)).map((x) => ({ ...x, Leida: 1 })),
 		count: 0,
 	});
+}
+
+export function silenciarAvisoSinCama(ms = SIN_CAMA_SNOOZE_MS) {
+	const { userKey } = state;
+	if (!userKey) return;
+	const until = Date.now() + ms;
+	writeSnoozeUntil(userKey, until);
+	setState({ sinCamaSnoozeUntil: until });
+	armSnoozeExpiry(until);
+}
+
+export function restaurarAvisoSinCama() {
+	const { userKey } = state;
+	if (!userKey) return;
+	writeSnoozeUntil(userKey, null);
+	setState({ sinCamaSnoozeUntil: null });
+	armSnoozeExpiry(null);
 }
 
 /** Al cerrar la campanita los avisos de pedido dejan de listarse (la bandeja sigue contando libres). */

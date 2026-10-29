@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useNotificacionesStore } from '@/app/utils/notificacionesStore';
+import { alertaSinCamaDe, useNotificacionesStore } from '@/app/utils/notificacionesStore';
 import styles from './FloatingActionsRail.module.css';
 
 const STORAGE_KEY = 'imedic:fab-rail-open';
@@ -83,7 +83,7 @@ export default function FloatingActionsRail({
 		animateBellRef.current = !notif.entranceShown;
 	}
 	const pedidos = notif.estudios + notif.interconsultas;
-	const sinCama = notif.sinCama || 0;
+	const sinCama = alertaSinCamaDe(notif);
 	const hasUnread = notif.count > 0;
 	const hasPedidos = pedidos > 0;
 	const hasSinCama = sinCama > 0;

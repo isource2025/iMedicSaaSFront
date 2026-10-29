@@ -314,7 +314,6 @@
   border-radius: 12px;
   background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
   text-align: left;
-  cursor: pointer;
   font: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -322,6 +321,19 @@
 .sinCamaCard:hover {
   border-color: #fbbf24;
   box-shadow: 0 4px 16px rgba(217, 119, 6, 0.12);
+}
+
+.sinCamaMain {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
 }
 
 .sinCamaCardActive {
@@ -352,6 +364,48 @@
   margin: 0.2rem 0 0;
   font-size: 0.75rem;
   color: #b45309;
+  line-height: 1.35;
+}
+
+.sinCamaActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.snoozeBtn {
+  border: 1px solid #d97706;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.snoozeBtn:hover {
+  background: #fde68a;
+}
+
+.snoozedBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: calc(100% - 24px);
+  margin: 12px 12px 4px;
+  padding: 0.55rem 0.75rem;
+  border: 1px dashed #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.snoozedText {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
   line-height: 1.35;
 }
 
@@ -578,9 +632,15 @@
     padding: 12px 14px;
   }
 
-  .bandejaCard {
+  .bandejaCard,
+  .sinCamaCard,
+  .snoozedBar {
     width: calc(100% - 20px);
     margin: 10px 10px 4px;
+  }
+
+  .bandejaCard,
+  .sinCamaCard {
     padding: 0.75rem 0.85rem;
   }
 

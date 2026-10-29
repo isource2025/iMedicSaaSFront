@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation';
 import type { NotificacionItem } from '@/app/services/notificacionesService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import {
+	alertaSinCamaDe,
 	descartarAvisosPedido,
 	markEntranceShown,
 	marcarNotificacionLeida,
 	marcarTodasNotificacionesLeidas,
 	refreshList,
 	refreshSinCama,
+	restaurarAvisoSinCama,
+	silenciarAvisoSinCama,
 	useNotificacionesStore,
 } from '@/app/utils/notificacionesStore';
 import railStyles from './FloatingActionsRail.module.css';
@@ -173,8 +176,17 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 
 	const hasUnread = count > 0;
 	const hasPedidos = bandejaLibres > 0;
-	const hasSinCama = puedeVerSinCama && sinCama > 0;
-	const extrasAlert = bandejaLibres + (puedeVerSinCama ? sinCama : 0);
+	const sinCamaAlerta = puedeVerSinCama ? alertaSinCamaDe(notif) : 0;
+	const hasSinCama = sinCamaAlerta > 0;
+	const sinCamaSilenciada = puedeVerSinCama && sinCama > 0 && !hasSinCama;
+	const extrasAlert = bandejaLibres + sinCamaAlerta;
+	const snoozeHasta =
+		notif.sinCamaSnoozeUntil != null
+			? new Date(notif.sinCamaSnoozeUntil).toLocaleString('es-AR', {
+					dateStyle: 'short',
+					timeStyle: 'short',
+				})
+			: '';
 	const fabHighlight = hasUnread || hasPedidos || hasSinCama;
 	const badgeTotal = hasUnread ? count : extrasAlert;
 	const fabClass = stack
@@ -231,47 +243,55 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 						) : null}
 					</div>
 
-					{puedeVerSinCama ? (
-						<button
-							type="button"
-							className={`${styles.sinCamaCard} ${hasSinCama ? styles.sinCamaCardActive : ''}`}
-							onClick={irCamas}
-						>
-							<div className={styles.bandejaCardTop}>
-								<span className={styles.sinCamaTag}>Internación</span>
-								{hasSinCama ? (
+					{hasSinCama ? (
+						<div className={`${styles.sinCamaCard} ${styles.sinCamaCardActive}`}>
+							<button type="button" className={styles.sinCamaMain} onClick={irCamas}>
+								<div className={styles.bandejaCardTop}>
+									<span className={styles.sinCamaTag}>Internación</span>
 									<span className={styles.bandejaCount}>{sinCama > 99 ? '99+' : sinCama}</span>
-								) : (
-									<span className={styles.bandejaCountMuted}>0</span>
-								)}
+								</div>
+								<p className={styles.sinCamaTitle}>Pacientes sin cama</p>
+								<p className={styles.sinCamaHint}>
+									{`${sinCama} internado${sinCama === 1 ? '' : 's'} pendiente${sinCama === 1 ? '' : 's'} de ubicar`}
+								</p>
+							</button>
+							<div className={styles.sinCamaActions}>
+								<button
+									type="button"
+									className={styles.snoozeBtn}
+									onClick={() => silenciarAvisoSinCama()}
+									title="Ocultar este aviso durante 24 horas"
+								>
+									Ocultar 24 h
+								</button>
 							</div>
-							<p className={styles.sinCamaTitle}>Pacientes sin cama</p>
-							<p className={styles.sinCamaHint}>
-								{hasSinCama
-									? `${sinCama} internado${sinCama === 1 ? '' : 's'} pendiente${sinCama === 1 ? '' : 's'} de ubicar`
-									: 'No hay internados pendientes de ubicar'}
-							</p>
-						</button>
+						</div>
 					) : null}
 
-					<button
-						type="button"
-						className={`${styles.bandejaCard} ${hasPedidos ? styles.bandejaCardActive : ''}`}
-						onClick={() => irBandeja()}
-					>
+					{sinCamaSilenciada ? (
+						<div className={styles.snoozedBar}>
+							<p className={styles.snoozedText}>
+								Aviso de internación oculto hasta {snoozeHasta}
+							</p>
+							<button type="button" className={styles.linkBtn} onClick={() => restaurarAvisoSinCama()}>
+								Mostrar
+							</button>
+						</div>
+					) : null}
+
+					{hasPedidos ? (
+						<button
+							type="button"
+							className={`${styles.bandejaCard} ${styles.bandejaCardActive}`}
+							onClick={() => irBandeja()}
+						>
 						<div className={styles.bandejaCardTop}>
 							<span className={styles.bandejaTag}>Pedidos</span>
-							{hasPedidos ? (
-								<span className={styles.bandejaCount}>{bandejaLibres > 99 ? '99+' : bandejaLibres}</span>
-							) : (
-								<span className={styles.bandejaCountMuted}>0</span>
-							)}
+							<span className={styles.bandejaCount}>{bandejaLibres > 99 ? '99+' : bandejaLibres}</span>
 						</div>
 						<p className={styles.bandejaTitle}>Bandeja de pedidos</p>
 						<p className={styles.bandejaHint}>
-							{hasPedidos
-								? `${bandejaLibres} libre${bandejaLibres === 1 ? '' : 's'} para aceptar`
-								: 'Sin pedidos libres en tu servicio'}
+							{`${bandejaLibres} libre${bandejaLibres === 1 ? '' : 's'} para aceptar`}
 						</p>
 						<div className={styles.bandejaSplit}>
 							<span>
@@ -317,7 +337,8 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 								Interconsultas
 							</span>
 						</div>
-					</button>
+						</button>
+					) : null}
 
 					<div className={styles.panelBody}>
 						{loadingList && !itemsLoaded ? (
