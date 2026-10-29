@@ -11,6 +11,10 @@
 	pointer-events: none; /* el wizard sigue siendo operable mientras el panel está abierto */
 }
 
+.rootAmplio {
+	--hw: min(760px, calc(100% - 40px));
+}
+
 .backdrop {
 	display: none;
 }
@@ -30,6 +34,7 @@
 	pointer-events: auto;
 	transition:
 		right 0.26s ease,
+		width 0.26s ease,
 		visibility 0s linear 0.26s;
 }
 
@@ -38,6 +43,7 @@
 	visibility: visible;
 	transition:
 		right 0.26s ease,
+		width 0.26s ease,
 		visibility 0s linear 0s;
 }
 
@@ -72,6 +78,37 @@
 	text-overflow: ellipsis;
 }
 
+.headerActions {
+	display: flex;
+	align-items: center;
+	gap: 0.15rem;
+	flex-shrink: 0;
+}
+
+.expandBtn {
+	border: none;
+	background: transparent;
+	color: #64748b;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border-radius: 8px;
+	padding: 0;
+}
+
+.expandBtn:hover {
+	color: #1e293b;
+	background: #e2e8f0;
+}
+
+.expandBtn:focus-visible {
+	outline: 2px solid #0083a9;
+	outline-offset: 1px;
+}
+
 .closeBtn {
 	border: none;
 	background: transparent;
@@ -80,10 +117,17 @@
 	cursor: pointer;
 	color: #64748b;
 	padding: 0 0.25rem;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 8px;
 }
 
 .closeBtn:hover {
 	color: #1e293b;
+	background: #e2e8f0;
 }
 
 .backBtn {
@@ -217,7 +261,8 @@
 
 /* Mobile: hoja a todo el ancho con fondo; el cierre vive en la cabecera del panel */
 @media (max-width: 768px) {
-	.root {
+	.root,
+	.rootAmplio {
 		--hw: 100%;
 	}
 
@@ -247,6 +292,7 @@
 		order: 2;
 	}
 
+	.expandBtn,
 	.closeBtn {
 		display: none;
 	}

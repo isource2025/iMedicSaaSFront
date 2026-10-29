@@ -35,6 +35,7 @@ export default function HistorialPacienteDrawer({
 	// El contenido se monta la primera vez que se abre y después se conserva
 	// (así no se pierden visitas expandidas al plegar y volver a abrir).
 	const [everOpened, setEverOpened] = useState(false);
+	const [amplio, setAmplio] = useState(false);
 
 	useEffect(() => {
 		if (open) setEverOpened(true);
@@ -45,18 +46,22 @@ export default function HistorialPacienteDrawer({
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
 				e.stopPropagation();
+				if (amplio) {
+					setAmplio(false);
+					return;
+				}
 				onOpenChange(false);
 			}
 		};
 		document.addEventListener('keydown', onKey);
 		return () => document.removeEventListener('keydown', onKey);
-	}, [open, onOpenChange]);
+	}, [open, amplio, onOpenChange]);
 
 	const count = visits.length;
 	const tabLabel = open ? 'Ocultar historial del paciente' : 'Ver historial del paciente';
 
 	return (
-		<div className={styles.root}>
+		<div className={`${styles.root} ${amplio ? styles.rootAmplio : ''}`}>
 			{open ? (
 				<div
 					className={styles.backdrop}
@@ -86,14 +91,40 @@ export default function HistorialPacienteDrawer({
 						<h3 className={styles.panelTitle}>Historial del paciente</h3>
 						<p className={styles.panelSub}>{patient.ApellidoYNombre || 'Paciente'}</p>
 					</div>
-					<button
-						type='button'
-						className={styles.closeBtn}
-						onClick={() => onOpenChange(false)}
-						aria-label='Cerrar historial'
-					>
-						×
-					</button>
+					<div className={styles.headerActions}>
+						<button
+							type='button'
+							className={styles.expandBtn}
+							onClick={() => setAmplio((v) => !v)}
+							title={amplio ? 'Achicar' : 'Agrandar'}
+							aria-label={amplio ? 'Achicar' : 'Agrandar'}
+							aria-pressed={amplio}
+						>
+							<svg
+								width='14'
+								height='14'
+								viewBox='0 0 24 24'
+								fill='none'
+								stroke='currentColor'
+								strokeWidth='2.2'
+								aria-hidden
+							>
+								{amplio ? (
+									<path d='M4 14h6v6M20 10h-6V4' />
+								) : (
+									<path d='M15 3h6v6M9 21H3v-6' />
+								)}
+							</svg>
+						</button>
+						<button
+							type='button'
+							className={styles.closeBtn}
+							onClick={() => onOpenChange(false)}
+							aria-label='Cerrar historial'
+						>
+							×
+						</button>
+					</div>
 				</header>
 
 				<div className={styles.panelBody}>
