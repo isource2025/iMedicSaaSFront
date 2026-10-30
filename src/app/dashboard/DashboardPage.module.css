@@ -586,6 +586,13 @@
   margin: 0;
 }
 
+.activitySubtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
 .activityLink {
   font-size: 0.875rem;
   font-weight: 600;

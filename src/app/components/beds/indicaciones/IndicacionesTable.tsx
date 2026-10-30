@@ -243,18 +243,18 @@ export default function IndicacionesTable({
         handleCloseAplicar();
     };
 
-    const getTipoDescripcion = (tipoCode?: string) => {
-        switch (tipoCode) {
-            case 'C':
-                return 'Control';
-            case 'M':
-                return 'Medicamento';
-            case 'A':
-                return 'Asistencial';
-            case 'D':
-                return 'Dieta';
+    const getTipoBadgeClass = (tipoCode?: string) => {
+        switch (String(tipoCode || "").trim().toUpperCase()) {
+            case "M":
+                return styles.tipoM;
+            case "D":
+                return styles.tipoD;
+            case "C":
+                return styles.tipoC;
+            case "A":
+                return styles.tipoA;
             default:
-                return tipoCode || "-";
+                return styles.tipoDefault;
         }
     };
 
@@ -423,8 +423,8 @@ export default function IndicacionesTable({
 
                                         <td>
                                             <div className={styles.desc}>
-                                                <div className={styles.primary}>
-                                                    {r.promptCodigo?.toUpperCase() || "-"}
+                                                <div className={`${styles.tipoBadge} ${getTipoBadgeClass(r.tipo)}`}>
+                                                    {r.tipoDescripcion?.toUpperCase() || "-"}
                                                 </div>
                                                 <div className={styles.primary}>
                                                     {r.descripcion ?? "-"}
@@ -580,12 +580,16 @@ export default function IndicacionesTable({
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             )}
-                            <span>
-                                <strong>Indicado:</strong> {r.descripcion ?? "-"}
+                            <span className={`${styles.tipoBadge} ${getTipoBadgeClass(r.tipo)}`}>
+                                {r.tipoDescripcion?.toUpperCase() || "-"}
                             </span>
                             {r.suspendida && (
                                 <span className={styles.badgeSinEfecto}>Sin efecto</span>
                             )}
+                        </div>
+                        <div className={styles.cardRow}>
+                            <span className={styles.label}>Indicado:</span>{" "}
+                            {r.descripcion ?? "-"}
                         </div>
                         {r.indicacionesHijas && r.indicacionesHijas.length > 0 && (
                             <div className={styles.cardAdicionales} data-testid={`adicionales-${r.id}`}>

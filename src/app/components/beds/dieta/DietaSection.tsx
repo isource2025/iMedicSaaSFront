@@ -101,15 +101,15 @@ const DietaSection: React.FC<Props> = ({
 		cacheTimeMs: 15000,
 	});
 
-	const registros: DietaControl[] = useMemo(
-		() =>
-			Array.isArray(data)
-				? (data as DietaControl[])
-				: data && Array.isArray(data.data)
-					? data.data
-					: [],
-		[data],
-	);
+	const registros: DietaControl[] = useMemo(() => {
+		const raw = Array.isArray(data)
+			? (data as DietaControl[])
+			: data && Array.isArray(data.data)
+				? data.data
+				: [];
+		// Solo suministradas: las indicadas sin FechaDieta no son válidas en esta sección
+		return raw.filter(estaSuministrada);
+	}, [data]);
 
 	const filtrados = useMemo(() => {
 		const q = query.trim().toLowerCase();

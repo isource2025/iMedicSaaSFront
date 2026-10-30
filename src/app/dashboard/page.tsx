@@ -88,7 +88,7 @@ function chipLabelForMovimiento(
 ): string {
   if (tipo === 'ingreso') return 'Ingreso';
   if (tipo === 'egreso') return 'Alta';
-  if (tipo === 'movimiento') return 'Movimiento';
+  if (tipo === 'movimiento') return 'Traslado';
   return action;
 }
 
@@ -425,7 +425,10 @@ export default function Dashboard() {
       {/* Activity Overview */}
       <div className={styles.activitySection}>
         <div className={styles.activityHeader}>
-          <h3 className={styles.activityTitle}>Actividad Reciente</h3>
+          <div>
+            <h3 className={styles.activityTitle}>Actividad Reciente</h3>
+            <p className={styles.activitySubtitle}>Último estado por paciente</p>
+          </div>
           <a className={styles.activityLink} href="/dashboard/beds">
             Ver ocupación
           </a>
@@ -455,7 +458,13 @@ export default function Dashboard() {
               };
               return (
                 <div
-                  key={`${item.bedId || item.details}-${item.time}-${index}`}
+                  key={
+                    item.idPaciente != null
+                      ? `pac-${item.idPaciente}`
+                      : item.numeroVisita != null
+                        ? `vis-${item.numeroVisita}`
+                        : `${item.bedId || item.details}-${item.time}-${index}`
+                  }
                   className={styles.activityItem}
                   onClick={goToBed}
                   onKeyDown={(e) => {

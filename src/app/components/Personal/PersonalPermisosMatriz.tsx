@@ -118,12 +118,6 @@ export default function PersonalPermisosMatriz({
 					{denies ? ` · −${denies} quitados` : ''}
 				</span>
 			</div>
-			<p className={styles.hint}>
-				Misma matriz que Configuración → Matriz de permisos, aplicada a esta cuenta. Parten
-				de los roles marcados arriba: sumá extras o quitá lo que no corresponda. Se guarda
-				junto con el acceso. Los cambios aplican en el próximo ingreso (o al refrescar
-				permisos).
-			</p>
 
 			<div className={styles.toolbar}>
 				<input
@@ -227,6 +221,9 @@ export default function PersonalPermisosMatriz({
 															</span>
 															<span className={styles.accionDesc}>
 																{a.descripcion}
+															</span>
+															<span className={styles.accionCodigo}>
+																codigo: {a.codigo.toLowerCase()}
 															</span>
 														</span>
 													</label>

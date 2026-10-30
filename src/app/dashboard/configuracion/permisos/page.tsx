@@ -9,6 +9,7 @@ import {
 	type PermisosDePersonal,
 } from '@/app/services/permisosPersonalService';
 import {
+	etiquetaRolCatalogo,
 	rolesService,
 	type EventoAuditoriaRol,
 	type MatrizRoles,
@@ -20,7 +21,17 @@ import {
 } from '@/app/services/rolesService';
 import type { Personal } from '@/app/types/personal';
 import { mensajeDeError } from '@/app/utils/apiError';
+import { etiquetaRol } from '@/app/utils/permisos';
 import styles from './permisos.module.css';
+
+function etiquetaRolMatriz(r: Pick<RolMatriz, 'idRol' | 'esSistema' | 'nombre' | 'descripcion'>): string {
+	return etiquetaRolCatalogo({
+		IdRol: r.idRol,
+		EsSistema: r.esSistema,
+		Nombre: r.nombre,
+		Descripcion: r.descripcion,
+	});
+}
 
 type Modo = 'roles' | 'personal';
 type Pestania = 'permisos' | 'usuarios' | 'historial';
@@ -451,7 +462,7 @@ export default function MatrizPermisosPage() {
 								className={`${styles.roleItem} ${r.idRol === seleccionId ? styles.roleItemActive : ''}`}
 								onClick={() => seleccionar(r.idRol)}
 							>
-								<span className={styles.roleName}>{r.nombre}</span>
+								<span className={styles.roleName}>{etiquetaRolMatriz(r)}</span>
 								<span className={styles.roleMeta}>{r.usuarios} usr.</span>
 							</button>
 						))}
@@ -466,7 +477,7 @@ export default function MatrizPermisosPage() {
 										className={`${styles.roleItem} ${r.idRol === seleccionId ? styles.roleItemActive : ''}`}
 										onClick={() => seleccionar(r.idRol)}
 									>
-										<span className={styles.roleName}>{r.nombre}</span>
+										<span className={styles.roleName}>{etiquetaRolMatriz(r)}</span>
 										<span className={styles.roleMeta}>{r.usuarios} usr.</span>
 									</button>
 								))}
@@ -514,9 +525,9 @@ export default function MatrizPermisosPage() {
 												>
 													<option value="NINGUNO">Ninguno (sólo los permisos marcados)</option>
 													<option value="MEDICO">Médico</option>
-													<option value="ENFERMERO">Enfermero</option>
+													<option value="ENFERMERO">Enfermería</option>
 													<option value="ADMINISTRATIVO">Administrativo</option>
-													<option value="CARGA_HC">Carga de adjuntos</option>
+													<option value="CARGA_HC">Carga de adjunto</option>
 												</select>
 											</label>
 										)}
@@ -655,6 +666,9 @@ export default function MatrizPermisosPage() {
 																							{ROTULO_ACCION[a.accion] ?? a.accion}
 																						</span>
 																						<span className={styles.accionDesc}>{a.descripcion}</span>
+																						<span className={styles.accionCodigo}>
+																							codigo: {a.codigo.toLowerCase()}
+																						</span>
 																					</span>
 																				</label>
 																			);
@@ -758,16 +772,12 @@ export default function MatrizPermisosPage() {
 										<strong>{personaSel?.ApellidoNombre || `Personal #${personalId}`}</strong>
 										<div className={styles.muted}>
 											{packPersonal.roles?.length
-												? `Roles: ${packPersonal.roles.map((r) => r.nombre).join(', ')}`
+												? `Roles: ${packPersonal.roles.map((r) => etiquetaRol(r.nombre)).join(', ')}`
 												: packPersonal.rol
-													? `Rol: ${packPersonal.rol.nombre}`
+													? `Rol: ${etiquetaRol(packPersonal.rol.nombre)}`
 													: 'Sin rol asignado'}
 										</div>
 									</div>
-								</div>
-								<div className={`${styles.banner} ${styles.bannerInfo}`}>
-									Marcá o desmarcá puertas. Lo que supera al rol queda como extra; lo que quitás del rol queda
-									como denegado.
 								</div>
 								<PersonalPermisosMatriz
 									catalogo={packPersonal.catalogo?.length ? packPersonal.catalogo : data?.catalogo || []}

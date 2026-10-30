@@ -394,11 +394,11 @@ export default function InterconsultaSection({
 								<tr>
 									<th>Urg.</th>
 									<th>Fecha / hora</th>
-									<th>Servicio destino</th>
+									<th>Solicitado por</th>
 									<th>Pedido</th>
 									<th>Respuesta</th>
-									<th>Solicitado por</th>
-									<th>Estado</th>
+									<th>Respondido por</th>
+									<th>Tomado por</th>
 									<th className={tableStyles.colAccion}>Acciones</th>
 								</tr>
 							</thead>
@@ -407,11 +407,15 @@ export default function InterconsultaSection({
 									const id = r.IdPedido || r.IdInterconsulta;
 									const tomado = !!r.Tomado;
 									const cumplido = esCumplida(r);
-									const responsable = cumplido
-										? autorRespuesta(r)
-										: tomado
-											? r.NombreToma || null
-											: null;
+									const respondidoPor = cumplido ? autorRespuesta(r) : null;
+									// Solo si está tomado y aún no respondido
+									const tomadoPor =
+										tomado && !cumplido ? r.NombreToma || null : null;
+									const destino =
+										r.ServicioDescripcion ||
+										r.SectorReceptorNombre ||
+										r.Especialidad ||
+										null;
 									return (
 										<tr key={`${r.Origen || 'LEGACY'}-${id}`} className={tableStyles.row}>
 											<td>
@@ -421,18 +425,19 @@ export default function InterconsultaSection({
 												/>
 											</td>
 											<td className={tableStyles.meta}>{formatFecha(r)}</td>
+											<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
 											<td>
-												<div className={tableStyles.destino}>
-													{r.ServicioDescripcion ||
-														r.SectorReceptorNombre ||
-														r.Especialidad ||
-														'—'}
-												</div>
+												<div className={tableStyles.motivo}>{previewText(r.Motivo)}</div>
+												{destino && (
+													<span className={tableStyles.paraDestino} title={`Pedido para ${destino}`}>
+														<span className={tableStyles.paraDestinoLabel}>Para</span>
+														{destino}
+													</span>
+												)}
 												{r.Origen === 'WEB' && (
 													<div className={tableStyles.meta}>Registro web (legado)</div>
 												)}
 											</td>
-											<td className={tableStyles.motivo}>{previewText(r.Motivo)}</td>
 											<td className={tableStyles.motivo}>
 												{r.Respuesta
 													? previewText(r.Respuesta)
@@ -440,12 +445,8 @@ export default function InterconsultaSection({
 														? '(sin texto)'
 														: '—'}
 											</td>
-											<td className={tableStyles.meta}>{r.MedicoSolicitanteNombre || '—'}</td>
-											<td className={tableStyles.meta}>
-												{r.EstadoWorkflow ||
-													(cumplido ? 'Cumplido' : tomado ? 'Tomado' : 'Pendiente')}
-												{responsable ? ` · ${responsable}` : ''}
-											</td>
+											<td className={tableStyles.meta}>{respondidoPor || '—'}</td>
+											<td className={tableStyles.meta}>{tomadoPor || '—'}</td>
 											<td className={tableStyles.cellAccion}>
 												<div className={tableStyles.actionBtns}>
 												<button

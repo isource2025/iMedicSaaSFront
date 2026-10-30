@@ -218,6 +218,59 @@
     border-right: none;
 }
 
+/* Badge de tipo de indicación (M / D / C / A) */
+.tipoBadge {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    margin-bottom: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.tipoM {
+    background: #e0f7fa;
+    border-color: #80deea;
+    color: #006064;
+}
+
+.tipoD {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #1b5e20;
+}
+
+.tipoC {
+    background: #e3f2fd;
+    border-color: #90caf9;
+    color: #0d47a1;
+}
+
+.tipoA {
+    background: #fff3e0;
+    border-color: #ffcc80;
+    color: #e65100;
+}
+
+.tipoDefault {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.tbody .rowSuspendida .tipoBadge {
+    opacity: 0.65;
+    text-decoration: none;
+}
+
 /* Texto principal / secundario dentro de celdas compuestas */
 .primary {
     font-size: 0.85rem;

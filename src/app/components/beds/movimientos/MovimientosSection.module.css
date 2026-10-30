@@ -1,3 +1,8 @@
+/* Filtros Hoy/Semana/Mes/Todas pegados a la derecha */
+.toolbarFilters {
+	justify-content: flex-end;
+}
+
 /* Mismo formato que ControlesFrecuentesSection / MedicacionSuministradaSection */
 .tableWrap {
 	position: relative;

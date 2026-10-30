@@ -189,7 +189,7 @@ export class InternacionActivityService extends ActivityService {
       let movimientoTipo: 'ingreso' | 'egreso' | 'movimiento';
       
       if (movimiento.TipoMovimiento === 'Movimiento de cama') {
-        action = 'Movimiento de cama';
+        action = 'Traslado de cama';
         iconType = 'traslado';
         movimientoTipo = 'movimiento';
       } else if (isIngreso) {
@@ -206,6 +206,8 @@ export class InternacionActivityService extends ActivityService {
       const camaValor = String(movimiento.ValorHabitacionCama || '').trim();
       const sectorDesc = String(movimiento.SectorDescripcion || sectorValor || '').trim();
       const paciente = String(movimiento.ApellidoyNombre || '').trim();
+      const idPaciente = Number(movimiento.IDPaciente);
+      const numeroVisita = Number(movimiento.NumeroVisita);
       
       return {
         time: fechaHoraCompleta,
@@ -216,6 +218,8 @@ export class InternacionActivityService extends ActivityService {
         prioridad: 'alta' as const,
         sector: sectorDesc,
         paciente,
+        idPaciente: Number.isFinite(idPaciente) && idPaciente > 0 ? idPaciente : undefined,
+        numeroVisita: Number.isFinite(numeroVisita) && numeroVisita > 0 ? numeroVisita : undefined,
         cama: camaValor,
         bedId: sectorValor && camaValor ? `${sectorValor}-${camaValor}` : undefined,
         movimientoTipo,
@@ -224,15 +228,37 @@ export class InternacionActivityService extends ActivityService {
   }
 
   /**
+   * Un paciente = un ítem (el más reciente). Evita repetir el mismo nombre
+   * si el backend o un fallback traen varios eventos.
+   */
+  private deduplicarPorPaciente(actividades: ActividadReciente[]): ActividadReciente[] {
+    const vistos = new Set<string>();
+    const unicos: ActividadReciente[] = [];
+    for (const item of actividades) {
+      const clave =
+        item.idPaciente != null
+          ? `id:${item.idPaciente}`
+          : item.numeroVisita != null
+            ? `visita:${item.numeroVisita}`
+            : `nombre:${(item.paciente || item.details || '').trim().toUpperCase()}`;
+      if (!clave || clave.endsWith(':') || vistos.has(clave)) continue;
+      vistos.add(clave);
+      unicos.push(item);
+    }
+    return unicos;
+  }
+
+  /**
    * Convierte y ordena (más reciente primero) movimientos ya descargados.
    * Lo usa el agregado del dashboard, que trae los movimientos en la misma request.
    */
   actividadesDesdeMovimientos(movimientos: MovimientoInternacion[]): ActividadReciente[] {
-    return this.convertirAActividades(movimientos).sort((a, b) => {
+    const ordenadas = this.convertirAActividades(movimientos).sort((a, b) => {
       const fechaA = this.extraerFechaParaOrdenamiento(a.time);
       const fechaB = this.extraerFechaParaOrdenamiento(b.time);
       return fechaB.getTime() - fechaA.getTime();
     });
+    return this.deduplicarPorPaciente(ordenadas);
   }
 
   /**

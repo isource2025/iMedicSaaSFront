@@ -37,6 +37,10 @@ export interface ActividadReciente {
   sector?: string;
   /** Nombre del paciente (línea propia en el feed) */
   paciente?: string;
+  /** Id de paciente para no repetir en el feed */
+  idPaciente?: number;
+  /** Número de visita asociado al evento */
+  numeroVisita?: number;
   /** Número de cama */
   cama?: string;
   /** Id de cama para navegación: `{sector}-{cama}` */

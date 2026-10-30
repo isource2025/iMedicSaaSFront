@@ -632,6 +632,8 @@ export type CuentaSoloNube = {
 	apellidoNombre: string;
 	numeroDocumento: number | null;
 	ocultoPorIdReservado?: boolean;
+	sugerencia?: 'recrear' | 'vincular' | 'conflicto_dni';
+	valorDestino?: number | null;
 };
 
 export const getCuentasSoloNube = async (): Promise<CuentaSoloNube[]> => {
@@ -644,7 +646,13 @@ export const getCuentasSoloNube = async (): Promise<CuentaSoloNube[]> => {
 
 export type RepararCuentasSoloNubeResult = {
 	total: number;
-	reparados: Array<{ valor: number; nombreRed: string | null; apellidoNombre: string }>;
+	reparados: Array<{
+		valor: number;
+		valorOrigen?: number | null;
+		accion?: string;
+		nombreRed: string | null;
+		apellidoNombre: string;
+	}>;
 	errores: Array<{
 		valor: number;
 		nombreRed: string | null;

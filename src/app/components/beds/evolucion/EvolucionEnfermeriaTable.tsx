@@ -84,8 +84,8 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                             <tr>
                                 <th className={styles.colFecha}>Fecha</th>
                                 <th className={styles.colHora}>Hora</th>
-                                <th className={styles.colProfesional}>Profesional</th>
                                 <th className={styles.colEvolucion}>Observaciones</th>
+                                <th className={styles.colProfesional}>Profesional</th>
                                 <th className={styles.colAccion}>Acciones</th>
                             </tr>
                         </thead>
@@ -111,10 +111,6 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
 
                                               <td className={styles.cellHora}>{r.HoraControl || "—"}</td>
 
-                                              <td className={styles.cellProfesional}>
-                                                  {nombreProfesional(r)}
-                                              </td>
-
                                               <td className={styles.cellEvolucion}>
                                                   <div className={styles.evolucionPreview}>
                                                       {r.Observaciones
@@ -122,6 +118,10 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                                                             (r.Observaciones.length > 100 ? "..." : "")
                                                           : "—"}
                                                   </div>
+                                              </td>
+
+                                              <td className={styles.cellProfesional}>
+                                                  {nombreProfesional(r)}
                                               </td>
 
                                               <td className={styles.cellAccion}>

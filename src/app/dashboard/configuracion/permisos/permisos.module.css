@@ -364,6 +364,14 @@
 	font-weight: 400;
 }
 
+.accionCodigo {
+	display: block;
+	font-size: 0.7rem;
+	color: #94a3b8;
+	font-weight: 400;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .list {
 	list-style: none;
 	margin: 0;

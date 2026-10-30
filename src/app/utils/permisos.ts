@@ -381,7 +381,7 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 		'USUARIO.PERFIL.VER',
 	],
 
-	/** Código interno: CARGA_HC — "Carga de adjuntos". Bandeja de estudios para adjuntar resultados. */
+	/** Código interno: CARGA_HC — "Carga de adjunto". Bandeja de estudios para adjuntar resultados. */
 	CARGA_HC: [
 		'ADMISION.PACIENTES.VER',
 		'ADMISION.BUSQUEDA.VER',
@@ -428,7 +428,16 @@ function nombreRol(rol: { nombre?: string } | string | null | undefined): RolNom
 	return null;
 }
 
-/** Etiqueta de catálogo (Personal / Super Admin). */
+/** Rótulos visibles de roles de sistema (código interno → etiqueta). */
+const ETIQUETA_ROL_SISTEMA: Record<string, string> = {
+	MEDICO: 'Médico',
+	ENFERMERO: 'Enfermería',
+	ADMINISTRATIVO: 'Administrativo',
+	CARGA_HC: 'Carga de adjunto',
+	PANEL_DATOS: 'Panel de datos',
+};
+
+/** Etiqueta de catálogo (Personal / Super Admin / Matriz de permisos). */
 export function etiquetaRol(
 	rol: { nombre?: string; descripcion?: string } | string | null | undefined,
 ): string {
@@ -440,6 +449,9 @@ export function etiquetaRol(
 			.trim()
 			.toUpperCase()
 			.replace(/\s+/g, '_');
+	const clave = normalizar(nombre);
+	if (clave && ETIQUETA_ROL_SISTEMA[clave]) return ETIQUETA_ROL_SISTEMA[clave];
+
 	const esCargaHc = (s: string) => {
 		const n = normalizar(s);
 		return n === 'CARGA_HC' || n === 'CARGAHC';
@@ -449,7 +461,7 @@ export function etiquetaRol(
 		return n === 'PANEL_DATOS' || n === 'PANELDATOS';
 	};
 	if (esCargaHc(nombre) || esCargaHc(descripcion) || /^carga\s*hc$/i.test(nombre) || /^carga\s*hc$/i.test(descripcion)) {
-		return 'Carga de adjuntos';
+		return ETIQUETA_ROL_SISTEMA.CARGA_HC;
 	}
 	if (
 		esPanelDatos(nombre) ||
@@ -457,7 +469,13 @@ export function etiquetaRol(
 		/^panel\s*de\s*datos$/i.test(nombre) ||
 		/^panel\s*de\s*datos$/i.test(descripcion)
 	) {
-		return 'Panel de datos';
+		return ETIQUETA_ROL_SISTEMA.PANEL_DATOS;
+	}
+	if (/^enfermer[ií]a$/i.test(descripcion) || /^enfermero$/i.test(descripcion)) {
+		return ETIQUETA_ROL_SISTEMA.ENFERMERO;
+	}
+	if (/^m[eé]dico$/i.test(descripcion)) {
+		return ETIQUETA_ROL_SISTEMA.MEDICO;
 	}
 	return descripcion || nombre.trim();
 }

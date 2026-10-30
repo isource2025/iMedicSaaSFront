@@ -8,6 +8,7 @@ import ModalIntercambiarCama from "../../modals/ModalIntercambiarCama";
 import type { PatientHeaderSnapshot } from "../../../utils/bedHeader";
 import { useBedSectionFetch } from "../contexts/useBedSectionQuery";
 import styles from "../indicaciones/IndicacionesSection.module.css";
+import movStyles from "./MovimientosSection.module.css";
 import BedSectionLoading from "../shared/BedSectionLoading";
 import EmptyState from "../shared/EmptyState";
 import ExportButton, { ExportOption } from "../shared/ExportButton";
@@ -163,7 +164,7 @@ export default function MovimientosSection({
 				</div>
 			)}
 
-			<div className={styles.toolbar}>
+			<div className={`${styles.toolbar} ${movStyles.toolbarFilters}`}>
 				<PeriodFilter value={periodo} onChange={setPeriodo} />
 			</div>
 

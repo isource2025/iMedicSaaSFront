@@ -402,6 +402,7 @@ export default function EstudiosSection({
 						)}
 					</td>
 					<td className={tableStyles.meta}>{formatFecha(s)}</td>
+					<td className={tableStyles.meta}>{s.MedicoSolicitanteNombre || '—'}</td>
 					<td className={tableStyles.codigo}>{varias ? '—' : primero.CodigoPractica ?? '—'}</td>
 					<td>
 						{varias ? (
@@ -419,27 +420,27 @@ export default function EstudiosSection({
 						) : (
 							<div className={tableStyles.practica}>{primero.PracticaSolicitada}</div>
 						)}
-						<div className={tableStyles.meta}>
-							{varias ? `${s.TotalItems} estudios` : ''}
-							{varias && servicio ? ' · ' : ''}
-							{servicio ? `Servicio: ${servicio}` : ''}
-							{varias ? (
-								<>
-									{' · '}
-									<button
-										type="button"
-										className={solStyles.linkBtn}
-										onClick={() => alternarAbierta(s.Clave)}
-									>
-										{abierta ? 'Ver menos' : 'Ver más'}
-									</button>
-								</>
-							) : null}
-						</div>
+						{servicio ? (
+							<span className={tableStyles.paraDestino} title={`Pedido para ${servicio}`}>
+								<span className={tableStyles.paraDestinoLabel}>Para</span>
+								{servicio}
+							</span>
+						) : null}
+						{varias ? (
+							<div className={tableStyles.meta}>
+								{s.TotalItems} estudios ·{' '}
+								<button
+									type="button"
+									className={solStyles.linkBtn}
+									onClick={() => alternarAbierta(s.Clave)}
+								>
+									{abierta ? 'Ver menos' : 'Ver más'}
+								</button>
+							</div>
+						) : null}
 					</td>
 					<td className={tableStyles.notas}>{previewText(s.NotasObservacion)}</td>
 					<td className={tableStyles.notas}>{respuestaSolicitud(s)}</td>
-					<td className={tableStyles.meta}>{s.MedicoSolicitanteNombre || '—'}</td>
 					<td className={tableStyles.cellAccion}>
 						<div className={tableStyles.actionBtns}>
 							{varias ? (
@@ -487,6 +488,7 @@ export default function EstudiosSection({
 									</span>
 								</td>
 								<td className={tableStyles.meta}>{r.FechaResultado || ''}</td>
+								<td />
 								<td className={tableStyles.codigo}>{r.CodigoPractica ?? '—'}</td>
 								<td>
 									<div className={`${tableStyles.practica} ${solStyles.subPractica}`}>
@@ -497,7 +499,6 @@ export default function EstudiosSection({
 								<td className={tableStyles.notas}>
 									{yaMostrado ? `Mismo informe que ${yaMostrado}` : respuestaItem(r)}
 								</td>
-								<td className={tableStyles.meta}>{r.RealizadorNombre || ''}</td>
 								<td className={tableStyles.cellAccion}>{accionesItem(r, true)}</td>
 							</tr>
 						);
@@ -554,11 +555,11 @@ export default function EstudiosSection({
 									<th>Urg.</th>
 									<th>Estado</th>
 									<th>Fecha / hora</th>
+									<th>Solicitado por</th>
 									<th>Cód.</th>
 									<th>Práctica solicitada</th>
 									<th>Pedido</th>
 									<th>Respuesta</th>
-									<th>Solicitado por</th>
 									<th className={tableStyles.colAccion}>Acciones</th>
 								</tr>
 							</thead>
