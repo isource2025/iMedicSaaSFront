@@ -48,6 +48,7 @@ export interface HorariosResponse {
 }
 
 export interface HorariosPayload {
+	/** Minutos entre slots; 0 = a demanda (horarios sin grilla). */
 	intervaloMin: number;
 	consultorio?: string | null;
 	servicio?: string | null;

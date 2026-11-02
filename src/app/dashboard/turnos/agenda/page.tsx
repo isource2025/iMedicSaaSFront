@@ -1032,7 +1032,8 @@ function AgendaPageContent() {
 												{slotsFiltrados.length > 0 && (
 													<span className={styles.badge}>{slotsFiltrados.length}</span>
 												)}
-												{!fechaPasada && diaMotivo === 'sin_horario' ? (
+												{!fechaPasada &&
+												(diaMotivo === 'sin_horario' || diaMotivo === 'a_demanda') ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
@@ -1080,22 +1081,28 @@ function AgendaPageContent() {
 													? diaMotivoLabel
 														? `Feriado: ${diaMotivoLabel}`
 														: 'Feriado nacional'
-													: diaMotivo === 'sin_horario'
-														? 'Sin horario configurado'
-														: 'Sin turnos en la agenda')
+													: diaMotivo === 'a_demanda'
+														? 'Agenda a demanda'
+														: diaMotivo === 'sin_horario'
+															? 'Sin horario configurado'
+															: 'Sin turnos en la agenda')
 											}
 											description={
 												emptyFiltroCopy(filtroSlots)?.description ||
 												(diaMotivo === 'feriado'
 													? 'Este día no está disponible para turnos.'
-													: diaMotivo === 'sin_horario'
-														? 'Este día no tiene grilla de turnos. Podés agregar un sobreturno igualmente.'
-														: 'No hay cupos para esta fecha con el filtro actual.')
+													: diaMotivo === 'a_demanda'
+														? 'Este profesional atiende a demanda (sin slots). Agregá sobreturnos con la hora que necesites.'
+														: diaMotivo === 'sin_horario'
+															? 'Este día no tiene grilla de turnos. Podés agregar un sobreturno igualmente.'
+															: 'No hay cupos para esta fecha con el filtro actual.')
 											}
 											action={
 												!fechaPasada &&
 												diaMotivo !== 'feriado' &&
-												(diaMotivo === 'sin_horario' || filtroSlots === 'TODOS')
+												(diaMotivo === 'sin_horario' ||
+													diaMotivo === 'a_demanda' ||
+													filtroSlots === 'TODOS')
 													? {
 															label: '+ Agregar sobreturno',
 															onClick: abrirSobreturnoDia,
@@ -1261,7 +1268,7 @@ function AgendaPageContent() {
 												)}
 												{!fechaPasada &&
 												matriculaSel &&
-												diaMotivo === 'sin_horario' ? (
+												(diaMotivo === 'sin_horario' || diaMotivo === 'a_demanda') ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
@@ -1311,23 +1318,29 @@ function AgendaPageContent() {
 													? diaMotivoLabel
 														? `Feriado: ${diaMotivoLabel}`
 														: 'Feriado nacional'
-													: diaMotivo === 'sin_horario'
-														? 'Sin horario configurado'
-														: 'Sin turnos en la agenda')
+													: diaMotivo === 'a_demanda'
+														? 'Agenda a demanda'
+														: diaMotivo === 'sin_horario'
+															? 'Sin horario configurado'
+															: 'Sin turnos en la agenda')
 											}
 											description={
 												emptyFiltroCopy(filtroSlots)?.description ||
 												(diaMotivo === 'feriado'
 													? 'Este día no está disponible para turnos.'
-													: diaMotivo === 'sin_horario'
-														? 'Este profesional no tiene grilla ese día. Podés agregar un sobreturno.'
-														: 'Este profesional no tiene turnos generados para la fecha seleccionada.')
+													: diaMotivo === 'a_demanda'
+														? 'Este profesional atiende a demanda (sin slots). Agregá sobreturnos con la hora que necesites.'
+														: diaMotivo === 'sin_horario'
+															? 'Este profesional no tiene grilla ese día. Podés agregar un sobreturno.'
+															: 'Este profesional no tiene turnos generados para la fecha seleccionada.')
 											}
 											action={
 												!fechaPasada &&
 												matriculaSel &&
 												diaMotivo !== 'feriado' &&
-												(diaMotivo === 'sin_horario' || filtroSlots === 'TODOS')
+												(diaMotivo === 'sin_horario' ||
+													diaMotivo === 'a_demanda' ||
+													filtroSlots === 'TODOS')
 													? {
 															label: '+ Agregar sobreturno',
 															onClick: abrirSobreturnoDia,

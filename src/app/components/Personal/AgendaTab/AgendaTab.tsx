@@ -31,7 +31,9 @@ const EMPTY_DIA: DiaState = {
 	rango2: { inicio: '15:00', fin: '19:00' },
 };
 
-const INTERVALOS = [5, 10, 15, 20, 30, 45, 60];
+/** 0 = a demanda (horarios sin grilla de slots) */
+const INTERVALOS = [0, 5, 10, 15, 20, 30, 45, 60];
+const aDemanda = (intervalo: number) => intervalo === 0;
 
 function diffMin(inicio: string, fin: string): number {
 	const [hi, mi] = inicio.split(':').map(Number);
@@ -100,7 +102,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 				agendaConfigService.getHorarios(mat),
 				agendaConfigService.getNoHorarios(mat),
 			]);
-			if (h.intervaloMin) setIntervaloMin(h.intervaloMin);
+			if (h.intervaloMin != null) setIntervaloMin(h.intervaloMin);
 			setConsultorio(h.consultorio || '');
 			setServicio(h.servicio || '');
 			setEstado(buildEstadoDesdeHorarios(h));
@@ -123,6 +125,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 	}, [matricula]);
 
 	const total = useMemo(() => {
+		if (aDemanda(intervaloMin)) return 0;
 		let t = 0;
 		for (const d of DIAS_SEMANA) {
 			const s = estado[d];
@@ -160,7 +163,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 			for (const r of rangos) {
 				const min = diffMin(r.inicio, r.fin);
 				if (min <= 0) return `${d}: el rango ${r.inicio}-${r.fin} es inválido`;
-				if (min % intervaloMin !== 0)
+				if (!aDemanda(intervaloMin) && min % intervaloMin !== 0)
 					return `${d}: el rango ${r.inicio}-${r.fin} no es múltiplo de ${intervaloMin} min`;
 			}
 			if (s.mode === 'doble' && s.rango2.inicio < s.rango1.fin)
@@ -282,7 +285,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 					>
 						{INTERVALOS.map((n) => (
 							<option key={n} value={n}>
-								{n} min
+								{n === 0 ? 'A demanda (sin slots)' : `${n} min`}
 							</option>
 						))}
 					</select>
@@ -310,7 +313,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 				<div className={styles.field}>
 					<label>Total semanal</label>
 					<div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0083A9' }}>
-						{total} turnos
+						{aDemanda(intervaloMin) ? 'A demanda' : `${total} turnos`}
 					</div>
 				</div>
 			</div>
@@ -318,11 +321,13 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 			<div className={styles.daysList}>
 				{DIAS_SEMANA.map((d) => {
 					const s = estado[d];
-					const cnt1 = s.enabled
-						? Math.max(0, Math.floor(diffMin(s.rango1.inicio, s.rango1.fin) / intervaloMin))
-						: 0;
+					const esAd = aDemanda(intervaloMin);
+					const cnt1 =
+						s.enabled && !esAd
+							? Math.max(0, Math.floor(diffMin(s.rango1.inicio, s.rango1.fin) / intervaloMin))
+							: 0;
 					const cnt2 =
-						s.enabled && s.mode === 'doble'
+						s.enabled && !esAd && s.mode === 'doble'
 							? Math.max(0, Math.floor(diffMin(s.rango2.inicio, s.rango2.fin) / intervaloMin))
 							: 0;
 					return (
@@ -362,7 +367,13 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 								)}
 								{s.enabled && (
 									<div className={styles.dayCount}>
-										<strong>{cnt1 + cnt2}</strong> turnos / día
+										{esAd ? (
+											<strong>A demanda</strong>
+										) : (
+											<>
+												<strong>{cnt1 + cnt2}</strong> turnos / día
+											</>
+										)}
 									</div>
 								)}
 							</div>
@@ -386,7 +397,9 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 											onChange={(e) => updateRango(d, 1, 'fin', e.target.value)}
 											disabled={readOnly}
 										/>
-										<span className={styles.rangoCount}>→ {cnt1} turnos</span>
+										<span className={styles.rangoCount}>
+											{esAd ? '→ sin slots' : `→ ${cnt1} turnos`}
+										</span>
 									</div>
 									{s.mode === 'doble' && (
 										<div className={styles.rango}>
@@ -406,7 +419,9 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 												onChange={(e) => updateRango(d, 2, 'fin', e.target.value)}
 												disabled={readOnly}
 											/>
-											<span className={styles.rangoCount}>→ {cnt2} turnos</span>
+											<span className={styles.rangoCount}>
+												{esAd ? '→ sin slots' : `→ ${cnt2} turnos`}
+											</span>
 										</div>
 									)}
 								</div>

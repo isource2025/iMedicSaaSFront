@@ -21,7 +21,8 @@ const EMPTY_DIA: DiaState = {
 	rango2: { inicio: '15:00', fin: '19:00' },
 };
 
-const INTERVALOS = [5, 10, 15, 20, 30, 45, 60];
+/** 0 = a demanda (horarios sin grilla de slots) */
+const INTERVALOS = [0, 5, 10, 15, 20, 30, 45, 60];
 
 type Props = {
 	tipo: 'SECTOR' | 'SERVICIO' | '';
@@ -53,7 +54,11 @@ export default function AgendaRecursoTab({ tipo, valor, readOnly = false }: Prop
 			.getHorariosRecurso(tipo, valor.trim())
 			.then((h: any) => {
 				if (cancel) return;
-				setIntervaloMin(Number(h?.intervaloMin) || 30);
+				setIntervaloMin(
+					h?.intervaloMin != null && Number.isFinite(Number(h.intervaloMin))
+						? Number(h.intervaloMin)
+						: 30,
+				);
 				setConsultorio(String(h?.consultorio || ''));
 				setServicio(String(h?.servicio || ''));
 				const out = {} as Record<DiaSemana, DiaState>;
@@ -141,7 +146,7 @@ export default function AgendaRecursoTab({ tipo, valor, readOnly = false }: Prop
 					>
 						{INTERVALOS.map((n) => (
 							<option key={n} value={n}>
-								{n}
+								{n === 0 ? 'A demanda' : n}
 							</option>
 						))}
 					</select>
