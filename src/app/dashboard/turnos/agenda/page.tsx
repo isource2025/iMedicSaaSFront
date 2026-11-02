@@ -398,9 +398,17 @@ function AgendaPageContent() {
 
 		const enLista = medicos.map((m) => {
 			const s = statsDia.get(m.matricula);
-			const label = s
-				? `${m.nombre} · ${s.libres} libres / ${s.total} totales`
-				: m.nombre;
+			let label = m.nombre;
+			if (s) {
+				if (s.aDemanda) {
+					label =
+						s.ocupados > 0
+							? `${m.nombre} · A demanda · ${s.ocupados} turno${s.ocupados === 1 ? '' : 's'}`
+							: `${m.nombre} · A demanda`;
+				} else {
+					label = `${m.nombre} · ${s.libres} libres / ${s.total} totales`;
+				}
+			}
 			return { value: m.matricula, label };
 		});
 

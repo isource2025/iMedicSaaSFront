@@ -193,6 +193,8 @@ export interface MedicoDisponible {
 	total: number;
 	ocupados: number;
 	libres: number;
+	/** Agenda sin grilla de slots (intervalo 0). */
+	aDemanda?: boolean;
 }
 
 export interface ControlFrecuenteTurno {
