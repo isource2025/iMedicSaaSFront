@@ -122,8 +122,6 @@ export default function RendicionesPage() {
 		{ value: '', label: 'Todos los clientes' },
 		...(catalogos?.clientes || []).map((o) => ({ value: o.valor, label: o.razonSocial })),
 	];
-	const imp = listado?.resumen.importes;
-
 	return (
 		<div className={c.page}>
 			<div className={c.mainCard}>
@@ -172,14 +170,6 @@ export default function RendicionesPage() {
 								<div className={c.kpiValue}>{listado ? fmtNumero(listado.resumen[k.clave]) : '—'}</div>
 								<div className={c.kpiLabel}>{k.label}</div>
 							</button>
-						))}
-						{(['honorarios', 'gastos', 'medicamentos', 'total'] as const).map((k) => (
-							<div key={k} className={c.kpi} style={{ cursor: 'default' }}>
-								<div className={c.kpiValue} style={{ fontSize: '1.05rem', color: '#9a3412' }}>
-									{imp ? fmtMoneda(imp[k]) : '—'}
-								</div>
-								<div className={c.kpiLabel}>{COLUMNAS_IMPORTE.find((x) => x.clave === k)?.label}</div>
-							</div>
 						))}
 					</div>
 

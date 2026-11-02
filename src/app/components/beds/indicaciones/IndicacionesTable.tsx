@@ -52,6 +52,9 @@ export type IndicacionRow = {
     ultimaAplicacion?: string;
     proximaAplicacion?: string;
     estado?: string;
+    /** Clarion: cuándo se dejó sin efecto (ISO fecha / HH:MM:SS). */
+    fechaExpiro?: string | null;
+    horaExpiro?: string | null;
     indicacionesHijas?: IndicacionHijaRow[];
     /** CodOperador del profesional que cargó la indicación (para control de propiedad). */
     OperadorCarga?: number | null;

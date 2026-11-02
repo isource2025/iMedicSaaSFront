@@ -30,8 +30,16 @@ import {
 
 const PARAMS_INDICACIONES = { incluirSuspendidas: 1 };
 
-function esIndicacionSuspendida(x: { suspendida?: boolean; estado?: string }): boolean {
-	return Boolean(x.suspendida) || String(x.estado ?? '').trim().toUpperCase() === 'S';
+function esIndicacionSuspendida(x: {
+	suspendida?: boolean;
+	estado?: string;
+	fechaExpiro?: string | number | null;
+}): boolean {
+	if (Boolean(x.suspendida)) return true;
+	if (String(x.estado ?? '').trim().toUpperCase() === 'S') return true;
+	const fe = x.fechaExpiro;
+	if (fe == null || fe === '' || fe === 0 || fe === '0') return false;
+	return true;
 }
 
 function toLocalYmd(date: Date): string {
@@ -155,6 +163,8 @@ type IndicacionDTO = {
     proximaAplicacion?: string;
     estado?: string;
     suspendida?: boolean;
+    fechaExpiro?: string | null;
+    horaExpiro?: string | null;
     unicaVez?: boolean;
     nuevaEnfermeria?: boolean;
 };
@@ -280,7 +290,12 @@ export default function IndicacionesSection({
             ultimaAplicacion: x.ultimaAplicacion,
             proximaAplicacion: x.proximaAplicacion,
             estado: x.estado,
-            suspendida: esIndicacionSuspendida(x),
+            fechaExpiro: (x as any).fechaExpiro ?? null,
+            horaExpiro: (x as any).horaExpiro ?? null,
+            suspendida: esIndicacionSuspendida({
+                ...x,
+                fechaExpiro: (x as any).fechaExpiro ?? null,
+            }),
             unicaVez: x.unicaVez,
             OperadorCarga: (x as any).OperadorCarga ?? (x as any).operadorCarga ?? null,
             matricula: (x as any).matricula ?? (x as any).Matricula ?? null,

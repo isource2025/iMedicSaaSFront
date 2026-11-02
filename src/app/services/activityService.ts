@@ -249,8 +249,28 @@ export class InternacionActivityService extends ActivityService {
   }
 
   /**
+   * Deja 1 ítem por tipo (ingreso / egreso / traslado), en ese orden fijo.
+   */
+  unoPorTipoMovimiento(actividades: ActividadReciente[]): ActividadReciente[] {
+    const orden = ['ingreso', 'egreso', 'movimiento'] as const;
+    const porTipo = new Map<(typeof orden)[number], ActividadReciente>();
+    for (const item of actividades) {
+      const t = item.movimientoTipo;
+      if (!t || porTipo.has(t)) continue;
+      porTipo.set(t, item);
+    }
+    const out: ActividadReciente[] = [];
+    for (const t of orden) {
+      const item = porTipo.get(t);
+      if (item) out.push(item);
+    }
+    return out;
+  }
+
+  /**
    * Convierte y ordena (más reciente primero) movimientos ya descargados.
    * Lo usa el agregado del dashboard, que trae los movimientos en la misma request.
+   * El panel muestra sólo el último de cada tipo.
    */
   actividadesDesdeMovimientos(movimientos: MovimientoInternacion[]): ActividadReciente[] {
     const ordenadas = this.convertirAActividades(movimientos).sort((a, b) => {
@@ -258,7 +278,7 @@ export class InternacionActivityService extends ActivityService {
       const fechaB = this.extraerFechaParaOrdenamiento(b.time);
       return fechaB.getTime() - fechaA.getTime();
     });
-    return this.deduplicarPorPaciente(ordenadas);
+    return this.unoPorTipoMovimiento(this.deduplicarPorPaciente(ordenadas));
   }
 
   /**

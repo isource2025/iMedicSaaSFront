@@ -52,7 +52,7 @@ export interface UseDashboardResumenOpts {
 export function useDashboardResumen({
   fechaInicio,
   fechaFin,
-  limiteActividad = 10,
+  limiteActividad = 3,
   incluir = SECCIONES_PANEL,
 }: UseDashboardResumenOpts) {
   const { empresaInfo } = useAppContext();
@@ -125,7 +125,8 @@ export function useDashboardResumen({
 
       const movimientos = datoSeccion(s.actividad);
       if (movimientos) {
-        setActividadReciente(internacionService.actividadesDesdeMovimientos(movimientos).slice(0, limiteActividad));
+        // 1 ingreso + 1 egreso + 1 traslado (actividadesDesdeMovimientos ya recorta por tipo).
+        setActividadReciente(internacionService.actividadesDesdeMovimientos(movimientos));
       }
 
       const amb = s.ambulatorioHoy;

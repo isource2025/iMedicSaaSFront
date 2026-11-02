@@ -171,7 +171,7 @@ export default function Dashboard() {
     loadingPacientes: loadingPacientesAnalytics,
     loadingActividad,
     loadingAmbulatorio,
-  } = useDashboardResumen({ fechaInicio, fechaFin, limiteActividad: 10 });
+  } = useDashboardResumen({ fechaInicio, fechaFin, limiteActividad: 3 });
 
   return (
     <div className={styles.container}>
@@ -427,7 +427,7 @@ export default function Dashboard() {
         <div className={styles.activityHeader}>
           <div>
             <h3 className={styles.activityTitle}>Actividad Reciente</h3>
-            <p className={styles.activitySubtitle}>Último estado por paciente</p>
+            <p className={styles.activitySubtitle}>Último ingreso, egreso y traslado</p>
           </div>
           <a className={styles.activityLink} href="/dashboard/beds">
             Ver ocupación
