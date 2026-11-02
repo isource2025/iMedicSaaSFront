@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { usePersonal } from '@/app/hooks/usePersonal';
 import { Personal } from '@/app/types/personal';
 import PersonalList from '@/app/components/Personal/PersonalList';
 import PersonalExportModal, {
 	type ExportFieldOption,
 } from '@/app/components/Personal/PersonalExportModal';
-import PersonalForm from '@/app/components/Personal/PersonalForm';
+import PersonalForm, { type PersonalFormHandle } from '@/app/components/Personal/PersonalForm';
 import PersonalDetails from '@/app/components/Personal/PersonalDetails';
 import DeletePersonalConfirmation from '@/app/components/Personal/DeletePersonalConfirmation';
 import PersonalRowMenu, {
@@ -81,6 +81,8 @@ export default function PersonalPage() {
 	const [exportFields, setExportFields] = useState<ExportFieldOption[]>([]);
 	const [exporting, setExporting] = useState(false);
 	const [firmaRevision, setFirmaRevision] = useState(0);
+	const addFormRef = useRef<PersonalFormHandle>(null);
+	const editFormRef = useRef<PersonalFormHandle>(null);
 
 	useEffect(() => {
 		if (!initialized) initialize();
@@ -354,11 +356,15 @@ export default function PersonalPage() {
 
 				<Modal
 					isOpen={isAddModalOpen}
-					onClose={closeAddModal}
+					onClose={() => {
+						if (addFormRef.current) addFormRef.current.attemptClose();
+						else closeAddModal();
+					}}
 					title='Nuevo Personal'
-					size='xlarge'
+					size='full'
 				>
 					<PersonalForm
+						ref={addFormRef}
 						onSubmit={createPersonal}
 						onCancel={closeAddModal}
 						isSubmitting={loading}
@@ -368,11 +374,15 @@ export default function PersonalPage() {
 				{selected && (
 					<Modal
 						isOpen={isEditModalOpen}
-						onClose={closeEditModal}
+						onClose={() => {
+							if (editFormRef.current) editFormRef.current.attemptClose();
+							else closeEditModal();
+						}}
 						title='Editar Personal'
-						size='xlarge'
+						size='full'
 					>
 						<PersonalForm
+								ref={editFormRef}
 								personal={fullPersonalEditing || selected}
 								isEditing
 								onSubmit={async (data) =>

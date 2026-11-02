@@ -20,6 +20,7 @@ type Props = {
 	matriculaProvincial?: number | string | null;
 	variant?: 'form' | 'modal';
 	hideActions?: boolean;
+	onDirtyChange?: (dirty: boolean) => void;
 	onSaved?: () => void | Promise<void>;
 	onClose?: () => void;
 	onBusyChange?: (busy: boolean) => void;
@@ -27,6 +28,7 @@ type Props = {
 
 export type PersonalCuentaTabHandle = {
 	guardar: () => Promise<boolean>;
+	isDirty: () => boolean;
 };
 
 function extractError(err: unknown, fallback: string): string {
@@ -72,6 +74,7 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 		matriculaProvincial,
 		variant = 'form',
 		hideActions = false,
+		onDirtyChange,
 		onSaved,
 		onClose,
 		onBusyChange,
@@ -83,6 +86,7 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
 	const [estado, setEstado] = useState<PersonalCuentaEstado | null>(null);
+	const baselineRef = useRef('');
 
 	const [nombreRed, setNombreRed] = useState('');
 	const [password, setPassword] = useState('');
@@ -136,8 +140,10 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 				ids[0] ??
 				null;
 			setRolPrincipal(principal != null ? String(principal) : '');
+			let efectivos: string[] = [];
 			if (packPerm) {
 				aplicarPackPermisos(packPerm);
+				efectivos = packPerm.efectivos || [];
 			} else {
 				// Alta / sin overrides aún: mostrar matriz con catálogo de la matriz de roles
 				try {
@@ -149,6 +155,7 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 						const base = await permisosPersonalService.previewBase(idsRoles).catch(() => [] as string[]);
 						setBasePermisos(base);
 						setMarcados(new Set(base));
+						efectivos = base;
 					} else {
 						setBasePermisos([]);
 						setMarcados(new Set());
@@ -158,11 +165,24 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 					setPermisosListos(false);
 				}
 			}
+			const nombre =
+				data.tieneCuenta && data.cuenta ? data.cuenta.NombreRed || '' : '';
+			baselineRef.current = JSON.stringify({
+				nombreRed: nombre,
+				rolesAsignados: [...ids].sort((a, b) => a - b),
+				rolPrincipal: principal != null ? String(principal) : '',
+				marcados: [...efectivos].sort(),
+				password: '',
+				confirmPassword: '',
+				newPassword: '',
+			});
+			onDirtyChange?.(false);
 		} catch (e) {
 			setError(extractError(e, 'Error al cargar acceso'));
 		} finally {
 			setLoading(false);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [personalId]);
 
 	useEffect(() => {
@@ -258,6 +278,16 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 				setMarcados(new Set(guardado.efectivos));
 			}
 
+			baselineRef.current = JSON.stringify({
+				nombreRed: nombreRed.trim(),
+				rolesAsignados: [...rolesAsignados].sort((a, b) => a - b),
+				rolPrincipal,
+				marcados: Array.from(marcados).sort(),
+				password: '',
+				confirmPassword: '',
+				newPassword: '',
+			});
+			onDirtyChange?.(false);
 			setSuccess('Acceso, roles y permisos guardados.');
 			await onSaved?.();
 			return true;
@@ -269,8 +299,39 @@ const PersonalCuentaTab = forwardRef<PersonalCuentaTabHandle, Props>(function Pe
 		}
 	};
 
+	const isDirty = () => {
+		if (!baselineRef.current || loading) return false;
+		return (
+			JSON.stringify({
+				nombreRed,
+				rolesAsignados: [...rolesAsignados].sort((a, b) => a - b),
+				rolPrincipal,
+				marcados: Array.from(marcados).sort(),
+				password,
+				confirmPassword,
+				newPassword,
+			}) !== baselineRef.current
+		);
+	};
+
+	useEffect(() => {
+		if (loading) return;
+		onDirtyChange?.(isDirty());
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		nombreRed,
+		rolesAsignados,
+		rolPrincipal,
+		marcados,
+		password,
+		confirmPassword,
+		newPassword,
+		loading,
+	]);
+
 	useImperativeHandle(ref, () => ({
 		guardar: handleGuardar,
+		isDirty,
 	}));
 
 	const primaryBtnClass = variant === 'form' ? formStyles.submitButton : styles.btnPrimary;

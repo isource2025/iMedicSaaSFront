@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import {
+	forwardRef,
+	useEffect,
+	useImperativeHandle,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { personalService } from '@/app/services/personalService';
 import type { CatalogoItemTexto, PersonalServicioAsignado } from '@/app/types/personal';
 import { etiquetaCatalogo } from '@/app/utils/etiquetaCatalogo';
@@ -12,8 +19,19 @@ type Props = {
 	draft?: boolean;
 	draftServicios?: string[];
 	onDraftChange?: (next: { servicios: string[] }) => void;
+	hideActions?: boolean;
+	onDirtyChange?: (dirty: boolean) => void;
 	onSaved?: () => void | Promise<void>;
 };
+
+export type PersonalServiciosTabHandle = {
+	guardar: () => Promise<boolean>;
+	isDirty: () => boolean;
+};
+
+function sortedKey(ids: Iterable<string>) {
+	return Array.from(ids).map(String).sort().join('|');
+}
 
 function idValido(id: string | undefined | null) {
 	const v = String(id ?? '').trim();
@@ -27,17 +45,24 @@ function toggle(set: Set<string>, id: string) {
 	return next;
 }
 
-export default function PersonalServiciosTab({
-	personalId,
-	draft = false,
-	draftServicios = [],
-	onDraftChange,
-	onSaved,
-}: Props) {
+const PersonalServiciosTab = forwardRef<PersonalServiciosTabHandle, Props>(
+	function PersonalServiciosTab(
+		{
+			personalId,
+			draft = false,
+			draftServicios = [],
+			onDraftChange,
+			hideActions = false,
+			onDirtyChange,
+			onSaved,
+		},
+		ref,
+	) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
-	const [editing, setEditing] = useState(draft);
+	const [editing, setEditing] = useState(draft || hideActions);
 	const [error, setError] = useState('');
+	const baselineRef = useRef('');
 
 	const [asignados, setAsignados] = useState<PersonalServicioAsignado[]>([]);
 	const [catalogo, setCatalogo] = useState<CatalogoItemTexto[]>([]);
@@ -61,8 +86,11 @@ export default function PersonalServiciosTab({
 
 				if (draft) {
 					setAsignados([]);
-					setSel(new Set(draftServicios.filter(idValido)));
+					const ids = draftServicios.filter(idValido);
+					setSel(new Set(ids));
+					baselineRef.current = sortedKey(ids);
 					setEditing(true);
+					onDirtyChange?.(false);
 					return;
 				}
 				if (!personalId) {
@@ -74,7 +102,11 @@ export default function PersonalServiciosTab({
 				);
 				if (cancelled) return;
 				setAsignados(list);
-				setSel(new Set(list.map((s) => s.idServicio)));
+				const ids = list.map((s) => s.idServicio);
+				setSel(new Set(ids));
+				baselineRef.current = sortedKey(ids);
+				if (hideActions) setEditing(true);
+				onDirtyChange?.(false);
 			} catch (e) {
 				if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar servicios');
 			} finally {
@@ -85,7 +117,7 @@ export default function PersonalServiciosTab({
 			cancelled = true;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [personalId, draft]);
+	}, [personalId, draft, hideActions]);
 
 	const filtrados = useMemo(() => {
 		const t = q.trim().toLowerCase();
@@ -138,10 +170,19 @@ export default function PersonalServiciosTab({
 		setEditing(true);
 	};
 
+	const isDirty = () => Boolean(baselineRef.current) && sortedKey(sel) !== baselineRef.current;
+
+	useEffect(() => {
+		if (loading) return;
+		onDirtyChange?.(isDirty());
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [sel, loading]);
+
 	const cancelarEdicion = () => {
 		setSel(new Set(asignados.map((s) => s.idServicio)));
-		setEditing(false);
+		if (!hideActions) setEditing(false);
 		setError('');
+		onDirtyChange?.(false);
 	};
 
 	const setDraft = (next: Set<string>) => {
@@ -149,30 +190,42 @@ export default function PersonalServiciosTab({
 		if (draft) onDraftChange?.({ servicios: Array.from(next) });
 	};
 
-	const guardar = async () => {
-		if (!personalId) return;
+	const guardar = async (): Promise<boolean> => {
+		if (!personalId) return false;
 		setSaving(true);
 		setError('');
 		try {
 			const data = await personalService.replacePersonalAsignaciones(personalId as number, {
 				servicios: Array.from(sel),
 			});
-			setAsignados((data.servicios || []).filter((s) => idValido(s.idServicio)));
-			setEditing(false);
+			const list = (data.servicios || []).filter((s) => idValido(s.idServicio));
+			setAsignados(list);
+			const ids = list.map((s) => s.idServicio);
+			setSel(new Set(ids));
+			baselineRef.current = sortedKey(ids);
+			if (!hideActions) setEditing(false);
+			onDirtyChange?.(false);
 			await onSaved?.();
+			return true;
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'Error al guardar');
+			return false;
 		} finally {
 			setSaving(false);
 		}
 	};
+
+	useImperativeHandle(ref, () => ({
+		guardar,
+		isDirty,
+	}));
 
 	return (
 		<div>
 			{loading ? <p className={formStyles.usuarioHint}>Cargando servicios…</p> : null}
 			{error ? <div className={formStyles.alertError}>{error}</div> : null}
 
-			{!editing && !draft ? (
+			{!editing && !draft && !hideActions ? (
 				<div className={formStyles.asignColHead} style={{ marginBottom: '0.75rem' }}>
 					<p className={formStyles.usuarioHint} style={{ margin: 0 }}>
 						Servicios destino de la bandeja de pedidos (estudios e interconsultas).
@@ -251,7 +304,13 @@ export default function PersonalServiciosTab({
 				)}
 			</section>
 
-			{editing && !draft ? (
+			{hideActions && !draft ? (
+				<p className={formStyles.usuarioHint}>
+					Servicios destino de la bandeja de pedidos (estudios e interconsultas).
+				</p>
+			) : null}
+
+			{editing && !draft && !hideActions ? (
 				<div className={styles.actions}>
 					<button type="button" className={styles.btn} disabled={saving} onClick={cancelarEdicion}>
 						Cancelar
@@ -268,4 +327,8 @@ export default function PersonalServiciosTab({
 			) : null}
 		</div>
 	);
-}
+});
+
+PersonalServiciosTab.displayName = 'PersonalServiciosTab';
+
+export default PersonalServiciosTab;

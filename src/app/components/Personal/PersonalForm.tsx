@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, {
+	forwardRef,
+	useEffect,
+	useImperativeHandle,
+	useState,
+	useRef,
+	useCallback,
+} from 'react';
 import {
 	Personal,
 	PersonalFormData,
@@ -19,13 +26,20 @@ import type {
 	LocalidadData,
 } from '../Patients/typesForRenaper';
 import styles from './PersonalForm.module.css';
+import tabStyles from '../Patients/AddPatient/Personal.module.css';
 import { nacionalidadDescripcionACodigo } from '../../utils/nacionalidadCodigo';
-import AgendaTab from './AgendaTab/AgendaTab';
+import HeaderAddPersonal from './HeaderAddPersonal';
+import LoadingSelect from '../Patients/AddPatient/LoadingSelect';
+import AgendaTab, { type AgendaTabHandle } from './AgendaTab/AgendaTab';
 import PersonalCuentaTab, { type PersonalCuentaTabHandle } from './PersonalCuentaTab';
 import PersonalAccesoYRolesFields from './PersonalAccesoYRolesFields';
-import PersonalAsignacionesTab from './PersonalAsignacionesTab';
-import PersonalServiciosTab from './PersonalServiciosTab';
-import PersonalFirmaTab from './PersonalFirmaTab';
+import PersonalAsignacionesTab, {
+	type PersonalAsignacionesTabHandle,
+} from './PersonalAsignacionesTab';
+import PersonalServiciosTab, {
+	type PersonalServiciosTabHandle,
+} from './PersonalServiciosTab';
+import PersonalFirmaTab, { type PersonalFirmaTabHandle } from './PersonalFirmaTab';
 import PersonalFirmaPad, { type PersonalFirmaPadRef } from './PersonalFirmaPad';
 import { usePermiso } from '../../hooks/usePermiso';
 import { rolesService, type Rol } from '../../services/rolesService';
@@ -93,14 +107,56 @@ const buildInitial = (d?: Partial<Personal> | null): PersonalFormData => ({
 const normalizeCity = (raw: string) =>
 	String(raw || '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 
-export default function PersonalForm({
-	personal,
-	isEditing = false,
-	isSubmitting = false,
-	onSubmit,
-	onCancel,
-	onDelete,
-}: PersonalFormProps) {
+const formSnapshot = (d: PersonalFormData) =>
+	JSON.stringify({
+		TipoDocumento: d.TipoDocumento,
+		NumeroDocumento: d.NumeroDocumento,
+		ApellidoNombre: d.ApellidoNombre,
+		Domicilio: d.Domicilio,
+		ValorLocalidad: d.ValorLocalidad,
+		Provincia: d.Provincia,
+		Nacionalidad: d.Nacionalidad,
+		FechaNacimiento: d.FechaNacimiento,
+		Sexo: d.Sexo,
+		EstadoCivil: d.EstadoCivil,
+		Telefono: d.Telefono,
+		MatriculaProvincial: d.MatriculaProvincial,
+		MatriculaNacional: d.MatriculaNacional,
+		ValorEspecialidad: d.ValorEspecialidad,
+		ValorFunciones: d.ValorFunciones,
+		ValorCategoria: d.ValorCategoria,
+		ValorClase: d.ValorClase,
+		LugarTrabajo: d.LugarTrabajo,
+		LugarCobro: d.LugarCobro,
+		NumeroSocio: d.NumeroSocio,
+		ConvenioFacturacion: d.ConvenioFacturacion,
+		IdEspecialidadME: d.IdEspecialidadME,
+		CrearUsuario: d.CrearUsuario,
+		NombreRed: d.NombreRed,
+		Password: d.Password,
+		ConfirmPassword: d.ConfirmPassword,
+		IdRol: d.IdRol,
+		IdRoles: d.IdRoles,
+		Sectores: d.Sectores,
+		Servicios: d.Servicios,
+	});
+
+export type PersonalFormHandle = {
+	attemptClose: () => void;
+	isDirty: () => boolean;
+};
+
+const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function PersonalForm(
+	{
+		personal,
+		isEditing = false,
+		isSubmitting = false,
+		onSubmit,
+		onCancel,
+		onDelete: _onDelete,
+	},
+	ref,
+) {
 	const [formData, setFormData] = useState<PersonalFormData>(() => buildInitial(personal));
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [activeTab, setActiveTab] = useState<Tab>('personal');
@@ -121,14 +177,81 @@ export default function PersonalForm({
 	const [nextId, setNextId] = useState<number | null>(null);
 	const [rolesCatalogo, setRolesCatalogo] = useState<Rol[]>([]);
 	const [cuentaBusy, setCuentaBusy] = useState(false);
+	const [loadingLocalidad, setLoadingLocalidad] = useState(true);
+	const [loadingSexo, setLoadingSexo] = useState(true);
+	const [loadingEstadoCivil, setLoadingEstadoCivil] = useState(true);
+	const [loadingCatalogos, setLoadingCatalogos] = useState(true);
+	const [edad, setEdad] = useState(0);
 	const [firmaDraftUrl, setFirmaDraftUrl] = useState<string | null>(null);
+	const [fotoFile, setFotoFile] = useState<File | null>(null);
+	const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+	const [fotoRemoved, setFotoRemoved] = useState(false);
+	const [photoUploading, setPhotoUploading] = useState(false);
+	const [childDirty, setChildDirty] = useState({
+		agenda: false,
+		cuenta: false,
+		asignaciones: false,
+		servicios: false,
+		firma: false,
+	});
 	const firmaPadRef = useRef<PersonalFirmaPadRef>(null);
 	const cuentaTabRef = useRef<PersonalCuentaTabHandle>(null);
+	const agendaTabRef = useRef<AgendaTabHandle>(null);
+	const asignacionesTabRef = useRef<PersonalAsignacionesTabHandle>(null);
+	const serviciosTabRef = useRef<PersonalServiciosTabHandle>(null);
+	const firmaTabRef = useRef<PersonalFirmaTabHandle>(null);
 	const pendingFirmaRef = useRef<File | null>(null);
+	const fotoObjectUrlRef = useRef<string | null>(null);
+	const formBaselineRef = useRef(formSnapshot(buildInitial(personal)));
 
 	useEffect(() => {
-		setFormData(buildInitial(personal));
+		const initial = buildInitial(personal);
+		setFormData(initial);
+		formBaselineRef.current = formSnapshot(initial);
+		setFotoFile(null);
+		setFotoRemoved(false);
+		setChildDirty({
+			agenda: false,
+			cuenta: false,
+			asignaciones: false,
+			servicios: false,
+			firma: false,
+		});
 	}, [personal?.Valor, personal?.NumeroDocumento, personal?.MatriculaNacional]);
+
+	useEffect(() => {
+		let cancelled = false;
+		(async () => {
+			if (fotoObjectUrlRef.current) {
+				URL.revokeObjectURL(fotoObjectUrlRef.current);
+				fotoObjectUrlRef.current = null;
+			}
+			if (fotoFile) return;
+			if (!isEditing || !personal?.Valor || !personal.hasFoto || fotoRemoved) {
+				setFotoPreview(null);
+				return;
+			}
+			const url = await personalService.getPersonalFotoObjectUrl(personal.Valor);
+			if (cancelled) {
+				if (url) URL.revokeObjectURL(url);
+				return;
+			}
+			fotoObjectUrlRef.current = url;
+			setFotoPreview(url);
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [isEditing, personal?.Valor, personal?.hasFoto, fotoFile, fotoRemoved]);
+
+	useEffect(() => {
+		return () => {
+			if (fotoObjectUrlRef.current) {
+				URL.revokeObjectURL(fotoObjectUrlRef.current);
+				fotoObjectUrlRef.current = null;
+			}
+		};
+	}, []);
 
 	const tabsRef = useRef<HTMLDivElement[]>([]);
 	const autoProvinciaAppliedRef = useRef(false);
@@ -139,6 +262,8 @@ export default function PersonalForm({
 				setSexoOptions(await sexoService.getSexos());
 			} catch (e) {
 				console.error('sexos', e);
+			} finally {
+				setLoadingSexo(false);
 			}
 		})();
 		(async () => {
@@ -147,6 +272,8 @@ export default function PersonalForm({
 				setLocalidadOptions(r.data);
 			} catch (e) {
 				console.error('localidades', e);
+			} finally {
+				setLoadingLocalidad(false);
 			}
 		})();
 		(async () => {
@@ -155,6 +282,8 @@ export default function PersonalForm({
 				setEstadosCiviles(data || []);
 			} catch (e) {
 				console.error('estados civiles', e);
+			} finally {
+				setLoadingEstadoCivil(false);
 			}
 		})();
 		(async () => {
@@ -171,9 +300,25 @@ export default function PersonalForm({
 				setClases(cl);
 			} catch (e) {
 				console.error('catalogos personal', e);
+			} finally {
+				setLoadingCatalogos(false);
 			}
 		})();
 	}, []);
+
+	useEffect(() => {
+		if (!formData.FechaNacimiento || !/^\d{4}-\d{2}-\d{2}$/.test(formData.FechaNacimiento)) {
+			setEdad(0);
+			return;
+		}
+		const [año, mes, dia] = formData.FechaNacimiento.split('-').map(Number);
+		const hoy = new Date();
+		let next = hoy.getFullYear() - año;
+		if (hoy.getMonth() + 1 < mes || (hoy.getMonth() + 1 === mes && hoy.getDate() < dia)) {
+			next--;
+		}
+		setEdad(next >= 0 ? next : 0);
+	}, [formData.FechaNacimiento]);
 
 	useEffect(() => {
 		if (!isEditing) {
@@ -237,14 +382,16 @@ export default function PersonalForm({
 	const showFirmaTab = true;
 	const matriculaProfesional = Number(formData.MatriculaProvincial) || null;
 
-	const tabIds: Tab[] = ['personal', 'profesional', 'cuenta', 'asignaciones', 'servicios', 'firma'];
+	const tabIds: Tab[] = ['personal', 'profesional', 'cuenta', 'asignaciones'];
+	if (isEditing) tabIds.push('servicios');
+	tabIds.push('firma');
 	if (showAgendaTab) tabIds.push('agenda');
 
 	useEffect(() => {
 		const idx = tabIds.indexOf(activeTab);
 		const node = tabsRef.current[idx];
 		if (node) setIndicatorStyle({ left: node.offsetLeft, width: node.offsetWidth });
-	}, [activeTab, showAgendaTab, showCuentaTab, showAsignacionesTab, showFirmaTab]);
+	}, [activeTab, isEditing, showAgendaTab, showCuentaTab, showAsignacionesTab, showFirmaTab]);
 
 	const fetchProvincia = async (valorProvincia: string) => {
 		try {
@@ -311,6 +458,12 @@ export default function PersonalForm({
 				return n;
 			});
 		}
+	};
+
+	const setSelectValue = (name: string, value: string | number) => {
+		void handleChange({
+			target: { name, value: String(value) },
+		} as React.ChangeEvent<HTMLSelectElement>);
 	};
 
 	const toggleRolAlta = (idRol: number) => {
@@ -486,19 +639,63 @@ export default function PersonalForm({
 		setActiveTab(tab);
 	};
 
+	const formIsDirty = () =>
+		formSnapshot(formData) !== formBaselineRef.current || !!fotoFile || fotoRemoved;
+
+	const anyDirty = () =>
+		formIsDirty() ||
+		childDirty.agenda ||
+		childDirty.cuenta ||
+		childDirty.asignaciones ||
+		childDirty.servicios ||
+		childDirty.firma ||
+		!!firmaDraftUrl ||
+		!!pendingFirmaRef.current;
+
+	const attemptClose = useCallback(() => {
+		if (
+			anyDirty() &&
+			!window.confirm('Hay cambios sin guardar. ¿Desea cerrar de todos modos?')
+		) {
+			return;
+		}
+		onCancel();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [formData, fotoFile, fotoRemoved, childDirty, firmaDraftUrl, onCancel]);
+
+	useImperativeHandle(
+		ref,
+		() => ({
+			attemptClose,
+			isDirty: anyDirty,
+		}),
+		[attemptClose],
+	);
+
+	const setChildDirtyFlag = (key: keyof typeof childDirty, dirty: boolean) => {
+		setChildDirty((prev) => (prev[key] === dirty ? prev : { ...prev, [key]: dirty }));
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (isEditing && activeTab === 'cuenta') {
 			await cuentaTabRef.current?.guardar();
 			return;
 		}
-		if (
-			isEditing &&
-			(activeTab === 'firma' ||
-				activeTab === 'agenda' ||
-				activeTab === 'asignaciones' ||
-				activeTab === 'servicios')
-		) {
+		if (isEditing && activeTab === 'agenda') {
+			await agendaTabRef.current?.guardar();
+			return;
+		}
+		if (isEditing && activeTab === 'asignaciones') {
+			await asignacionesTabRef.current?.guardar();
+			return;
+		}
+		if (isEditing && activeTab === 'servicios') {
+			await serviciosTabRef.current?.guardar();
+			return;
+		}
+		if (isEditing && activeTab === 'firma') {
+			await firmaTabRef.current?.guardar();
 			return;
 		}
 		if (internalSubmitting) return;
@@ -529,22 +726,45 @@ export default function PersonalForm({
 			}
 			const result = await onSubmit(payload);
 			if (!result) return;
-			if (!isEditing) {
-				const created =
-					typeof result === 'object' && result && 'Valor' in result
-						? result
+			const personalId =
+				isEditing && personal?.Valor
+					? personal.Valor
+					: typeof result === 'object' && result && 'Valor' in result
+						? Number((result as Personal).Valor)
 						: null;
+
+			if (!isEditing && personalId) {
 				const file =
 					pendingFirmaRef.current || (await firmaPadRef.current?.toPngFile()) || null;
-				if (created?.Valor && file) {
+				if (file) {
 					try {
-						await personalService.uploadPersonalFirma(created.Valor, file);
+						await personalService.uploadPersonalFirma(personalId, file);
 					} catch (err) {
 						console.error('firma alta', err);
 						alert(
 							'El personal se creó, pero no se pudo guardar la firma. Podés cargarla al editar.',
 						);
 					}
+				}
+			}
+
+			if (personalId && fotoFile) {
+				try {
+					await personalService.uploadPersonalFoto(personalId, fotoFile);
+				} catch (err) {
+					console.error('foto personal', err);
+					alert(
+						isEditing
+							? 'Los datos se guardaron, pero no se pudo subir la foto. Reintentá desde editar.'
+							: 'El personal se creó, pero no se pudo guardar la foto. Podés cargarla al editar.',
+					);
+				}
+			} else if (personalId && isEditing && fotoRemoved && personal?.hasFoto) {
+				try {
+					await personalService.deletePersonalFoto(personalId);
+				} catch (err) {
+					console.error('eliminar foto personal', err);
+					alert('Los datos se guardaron, pero no se pudo eliminar la foto.');
 				}
 			}
 			onCancel();
@@ -559,623 +779,592 @@ export default function PersonalForm({
 		? nextId
 		: '';
 
+	const localidadSelectOptions = (localidadOptions || []).map((l) => ({
+		value: String(l.Valor),
+		label: l.NombreLocalidad,
+	}));
+	const sexoSelectOptions =
+		sexoOptions.length > 0
+			? sexoOptions.map((s) => ({ value: s.valor, label: s.descripcion }))
+			: [
+					{ value: 'M', label: 'Masculino' },
+					{ value: 'F', label: 'Femenino' },
+				];
+	const estadoCivilSelectOptions = (estadosCiviles || []).map((ec) => ({
+		value: ec.valor,
+		label: ec.descripcion,
+	}));
+	const especialidadSelectOptions = (especialidades || []).map((o) => ({
+		value: String(o.valor),
+		label: o.descripcion,
+	}));
+	const funcionSelectOptions = (funciones || []).map((o) => ({
+		value: String(o.valor),
+		label: o.descripcion,
+	}));
+	const categoriaSelectOptions = (categorias || []).map((o) => ({
+		value: String(o.valor),
+		label: o.descripcion,
+	}));
+	const claseSelectOptions = (clases || []).map((o) => ({
+		value: String(o.valor),
+		label: o.descripcion,
+	}));
+
+	const savingBusy =
+		internalSubmitting ||
+		isSubmitting ||
+		photoUploading ||
+		(isEditing && activeTab === 'cuenta' && cuentaBusy);
+
 	return (
 		<form onSubmit={handleSubmit} className={styles.form} noValidate>
-			<div className={styles.tabsContainer}>
-				<div
-					ref={(el) => {
-						if (el) tabsRef.current[0] = el;
+			<div className={`modalFullCenterWrapper ${styles.modalContainer}`}>
+				<HeaderAddPersonal
+					displayId={displayId}
+					formData={formData}
+					handleChange={handleChange}
+					errors={errors}
+					tiposDocumento={TIPOS_DOCUMENTO}
+					getRenaperInfo={getRenaperInfo}
+					buscandoRenaper={buscandoRenaper}
+					photoPreview={fotoPreview}
+					onPhotoChange={(file) => {
+						setFotoFile(file);
+						setFotoRemoved(!file);
+						if (fotoObjectUrlRef.current) {
+							URL.revokeObjectURL(fotoObjectUrlRef.current);
+							fotoObjectUrlRef.current = null;
+						}
+						if (file) {
+							const url = URL.createObjectURL(file);
+							fotoObjectUrlRef.current = url;
+							setFotoPreview(url);
+						} else {
+							setFotoPreview(null);
+						}
 					}}
-					className={`${styles.tab} ${activeTab === 'personal' ? styles.tabActive : ''}`}
-					onClick={() => goTab('personal')}
-				>
-					Datos Personales
-				</div>
-				<div
-					ref={(el) => {
-						if (el) tabsRef.current[1] = el;
-					}}
-					className={`${styles.tab} ${activeTab === 'profesional' ? styles.tabActive : ''}`}
-					onClick={() => goTab('profesional')}
-				>
-					Datos Profesionales
-				</div>
-				{showCuentaTab && (
-					<div
-						ref={(el) => {
-							if (el) tabsRef.current[tabIds.indexOf('cuenta')] = el;
-						}}
-						className={`${styles.tab} ${activeTab === 'cuenta' ? styles.tabActive : ''}`}
-						onClick={() => goTab('cuenta')}
-					>
-						Acceso y roles
-					</div>
-				)}
-				{showAsignacionesTab && (
-					<div
-						ref={(el) => {
-							if (el) tabsRef.current[tabIds.indexOf('asignaciones')] = el;
-						}}
-						className={`${styles.tab} ${activeTab === 'asignaciones' ? styles.tabActive : ''}`}
-						onClick={() => goTab('asignaciones')}
-					>
-						Sectores
-					</div>
-				)}
-				{showAsignacionesTab && (
-					<div
-						ref={(el) => {
-							if (el) tabsRef.current[tabIds.indexOf('servicios')] = el;
-						}}
-						className={`${styles.tab} ${activeTab === 'servicios' ? styles.tabActive : ''}`}
-						onClick={() => goTab('servicios')}
-					>
-						Servicios
-					</div>
-				)}
-				{showFirmaTab && (
-					<div
-						ref={(el) => {
-							if (el) tabsRef.current[tabIds.indexOf('firma')] = el;
-						}}
-						className={`${styles.tab} ${activeTab === 'firma' ? styles.tabActive : ''}`}
-						onClick={() => goTab('firma')}
-					>
-						Firma
-					</div>
-				)}
-				{showAgendaTab && (
-					<div
-						ref={(el) => {
-							if (el) tabsRef.current[tabIds.indexOf('agenda')] = el;
-						}}
-						className={`${styles.tab} ${activeTab === 'agenda' ? styles.tabActive : ''}`}
-						onClick={() => goTab('agenda')}
-					>
-						Agenda
-					</div>
-				)}
-				<div className={styles.indicator} style={indicatorStyle} />
-			</div>
+					setPhotoUploading={setPhotoUploading}
+				/>
 
-			<div className={styles.tabPanel}>
-			<div className={activeTab !== 'personal' ? styles.tabHidden : undefined}>
-				<div className={styles.grid}>
-					<div className={`${styles.field} ${styles.fieldId}`}>
-						<label className={styles.label}>ID</label>
-						<input
-							type='text'
-							value={displayId}
-							readOnly
-							disabled
-							className={`${styles.input} ${styles.readOnly}`}
-							tabIndex={-1}
-						/>
+				<div className={styles.tabsContainer}>
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[0] = el;
+						}}
+						className={`${styles.tab} ${activeTab === 'personal' ? styles.tabActive : ''}`}
+						onClick={() => goTab('personal')}
+					>
+						Datos Personales y Contacto
 					</div>
-
-					<div className={`${styles.field} ${styles.fieldTipoDoc}`}>
-						<label className={styles.label}>Tipo Doc.</label>
-						<select
-							name='TipoDocumento'
-							value={formData.TipoDocumento}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={1}
+					<div
+						ref={(el) => {
+							if (el) tabsRef.current[1] = el;
+						}}
+						className={`${styles.tab} ${activeTab === 'profesional' ? styles.tabActive : ''}`}
+						onClick={() => goTab('profesional')}
+					>
+						Datos Profesionales
+					</div>
+					{showCuentaTab && (
+						<div
+							ref={(el) => {
+								if (el) tabsRef.current[tabIds.indexOf('cuenta')] = el;
+							}}
+							className={`${styles.tab} ${activeTab === 'cuenta' ? styles.tabActive : ''}`}
+							onClick={() => goTab('cuenta')}
 						>
-							{TIPOS_DOCUMENTO.map((t) => (
-								<option key={t.value} value={t.value}>
-									{t.label}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldDni}`}>
-						<label className={styles.label}>DNI *</label>
-						<div className={styles.inputWithButton}>
-							<input
-								type='text'
-								name='NumeroDocumento'
-								value={formData.NumeroDocumento}
-								onChange={handleChange}
-								className={styles.input}
-								tabIndex={2}
-								inputMode='numeric'
-							/>
-							<button
-								type='button'
-								onClick={getRenaperInfo}
-								className={styles.renaperButton}
-								disabled={buscandoRenaper}
-								title='Buscar en RENAPER'
-								tabIndex={3}
-							>
-								{buscandoRenaper ? '...' : 'RENAPER'}
-							</button>
+							Acceso y roles
 						</div>
-						{errors.NumeroDocumento && (
-							<span className={styles.error}>{errors.NumeroDocumento}</span>
-						)}
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldNombre}`}>
-						<label className={styles.label}>Apellido y Nombre *</label>
-						<input
-							type='text'
-							name='ApellidoNombre'
-							value={formData.ApellidoNombre}
-							onChange={handleChange}
-							className={`${styles.input} ${errors.ApellidoNombre ? styles.inputError : ''}`}
-							tabIndex={4}
-						/>
-						{errors.ApellidoNombre && (
-							<span className={styles.error}>{errors.ApellidoNombre}</span>
-						)}
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldDomicilio}`}>
-						<label className={styles.label}>Domicilio</label>
-						<input
-							type='text'
-							name='Domicilio'
-							value={formData.Domicilio}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={5}
-						/>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldLocalidad}`}>
-						<label className={styles.label}>Localidad</label>
-						<select
-							name='ValorLocalidad'
-							value={formData.ValorLocalidad}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={6}
+					)}
+					{showAsignacionesTab && (
+						<div
+							ref={(el) => {
+								if (el) tabsRef.current[tabIds.indexOf('asignaciones')] = el;
+							}}
+							className={`${styles.tab} ${activeTab === 'asignaciones' ? styles.tabActive : ''}`}
+							onClick={() => goTab('asignaciones')}
 						>
-							<option value=''>- Seleccionar -</option>
-							{localidadOptions.map((l) => (
-								<option key={l.Valor} value={l.Valor}>
-									{l.NombreLocalidad}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldProvincia}`}>
-						<label className={styles.label}>Provincia</label>
-						<input
-							type='text'
-							value={provinciaDesc || formData.Provincia}
-							readOnly
-							disabled
-							className={`${styles.input} ${styles.readOnly}`}
-							tabIndex={-1}
-						/>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldNacionalidad}`}>
-						<label className={styles.label}>Nacionalidad</label>
-						<input
-							type='text'
-							name='Nacionalidad'
-							value={formData.Nacionalidad}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={7}
-						/>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldFechaNac}`}>
-						<label className={styles.label}>Fecha Nacimiento</label>
-						<input
-							type='date'
-							name='FechaNacimiento'
-							value={formData.FechaNacimiento}
-							onChange={handleChange}
-							className={`${styles.input} ${errors.FechaNacimiento ? styles.inputError : ''}`}
-							tabIndex={8}
-						/>
-						{errors.FechaNacimiento && (
-							<span className={styles.error}>{errors.FechaNacimiento}</span>
-						)}
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldSexo}`}>
-						<label className={styles.label}>Sexo</label>
-						<select
-							name='Sexo'
-							value={formData.Sexo}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={9}
+							Sectores
+						</div>
+					)}
+					{isEditing && showAsignacionesTab && (
+						<div
+							ref={(el) => {
+								if (el) tabsRef.current[tabIds.indexOf('servicios')] = el;
+							}}
+							className={`${styles.tab} ${activeTab === 'servicios' ? styles.tabActive : ''}`}
+							onClick={() => goTab('servicios')}
 						>
-							{sexoOptions.length === 0 && (
-								<>
-									<option value='M'>Masculino</option>
-									<option value='F'>Femenino</option>
-								</>
-							)}
-							{sexoOptions.map((s) => (
-								<option key={s.valor} value={s.valor}>
-									{s.descripcion}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldEstadoCivil}`}>
-						<label className={styles.label}>Estado Civil</label>
-						<select
-							name='EstadoCivil'
-							value={formData.EstadoCivil}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={10}
+							Servicios
+						</div>
+					)}
+					{showFirmaTab && (
+						<div
+							ref={(el) => {
+								if (el) tabsRef.current[tabIds.indexOf('firma')] = el;
+							}}
+							className={`${styles.tab} ${activeTab === 'firma' ? styles.tabActive : ''}`}
+							onClick={() => goTab('firma')}
 						>
-							<option value=''>- Seleccionar -</option>
-							{estadosCiviles.map((ec) => (
-								<option key={ec.valor} value={ec.valor}>
-									{ec.descripcion}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldTelefono}`}>
-						<label className={styles.label}>Teléfono</label>
-						<input
-							type='text'
-							name='Telefono'
-							value={formData.Telefono}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={11}
-						/>
-					</div>
-				</div>
-			</div>
-
-			<div className={activeTab !== 'profesional' ? styles.tabHidden : undefined}>
-				<div className={styles.grid}>
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Matrícula Provincial</label>
-						<input
-							type='text'
-							name='MatriculaProvincial'
-							value={formData.MatriculaProvincial}
-							onChange={handleChange}
-							className={`${styles.input} ${errors.MatriculaProvincial ? styles.inputError : ''}`}
-							inputMode='numeric'
-							tabIndex={30}
-						/>
-						{errors.MatriculaProvincial && (
-							<span className={styles.error}>{errors.MatriculaProvincial}</span>
-						)}
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Matrícula Nacional</label>
-						<input
-							type='text'
-							name='MatriculaNacional'
-							value={formData.MatriculaNacional}
-							onChange={handleChange}
-							className={`${styles.input} ${errors.MatriculaNacional ? styles.inputError : ''}`}
-							inputMode='numeric'
-							tabIndex={31}
-						/>
-						{errors.MatriculaNacional && (
-							<span className={styles.error}>{errors.MatriculaNacional}</span>
-						)}
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Especialidad</label>
-						<select
-							name='ValorEspecialidad'
-							value={formData.ValorEspecialidad}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={32}
+							Firma
+						</div>
+					)}
+					{showAgendaTab && (
+						<div
+							ref={(el) => {
+								if (el) tabsRef.current[tabIds.indexOf('agenda')] = el;
+							}}
+							className={`${styles.tab} ${activeTab === 'agenda' ? styles.tabActive : ''}`}
+							onClick={() => goTab('agenda')}
 						>
-							<option value=''>- Seleccionar -</option>
-							{especialidades.map((o) => (
-								<option key={o.valor} value={String(o.valor)}>
-									{o.descripcion}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Función</label>
-						<select
-							name='ValorFunciones'
-							value={formData.ValorFunciones}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={33}
-						>
-							<option value=''>- Seleccionar -</option>
-							{funciones.map((o) => (
-								<option key={o.valor} value={o.valor}>
-									{o.descripcion}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Categoría</label>
-						<select
-							name='ValorCategoria'
-							value={formData.ValorCategoria}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={35}
-						>
-							<option value=''>- Seleccionar -</option>
-							{categorias.map((o) => (
-								<option key={o.valor} value={o.valor}>
-									{o.descripcion}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Clase</label>
-						<select
-							name='ValorClase'
-							value={formData.ValorClase}
-							onChange={handleChange}
-							className={styles.input}
-							tabIndex={36}
-						>
-							<option value=''>- Seleccionar -</option>
-							{clases.map((o) => (
-								<option key={o.valor} value={o.valor}>
-									{o.descripcion}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Lugar de Trabajo</label>
-						<input
-							type='text'
-							name='LugarTrabajo'
-							value={formData.LugarTrabajo}
-							onChange={handleChange}
-							className={styles.input}
-							maxLength={20}
-							tabIndex={37}
-						/>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Lugar de Cobro</label>
-						<input
-							type='text'
-							name='LugarCobro'
-							value={formData.LugarCobro}
-							onChange={handleChange}
-							className={styles.input}
-							maxLength={20}
-							tabIndex={38}
-						/>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Número de Socio</label>
-						<input
-							type='text'
-							name='NumeroSocio'
-							value={formData.NumeroSocio}
-							onChange={handleChange}
-							className={styles.input}
-							inputMode='numeric'
-							tabIndex={39}
-						/>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Convenio Facturación</label>
-						<input
-							type='text'
-							name='ConvenioFacturacion'
-							value={formData.ConvenioFacturacion}
-							onChange={handleChange}
-							className={styles.input}
-							maxLength={10}
-							tabIndex={40}
-						/>
-					</div>
-
-					<div className={`${styles.field} ${styles.fieldHalf}`}>
-						<label className={styles.label}>Id Especialidad ME</label>
-						<input
-							type='text'
-							name='IdEspecialidadME'
-							value={formData.IdEspecialidadME}
-							onChange={handleChange}
-							className={styles.input}
-							inputMode='numeric'
-							tabIndex={41}
-						/>
-					</div>
+							Agenda
+						</div>
+					)}
+					<div className={styles.indicator} style={indicatorStyle} />
 				</div>
-			</div>
 
-			{isEditing && formData.Valor ? (
-				<div className={activeTab !== 'firma' ? styles.tabHidden : undefined}>
-					<PersonalFirmaTab
-						personalId={formData.Valor}
-						active={activeTab === 'firma'}
-						variant='form'
-					/>
-				</div>
-			) : (
-				<div className={activeTab !== 'firma' ? styles.tabHidden : undefined}>
-					<div className={styles.usuarioSection}>
-						<h3 className={styles.subsectionTitle}>Firma digital</h3>
-						<p className={styles.usuarioHint}>
-							Opcional. Si dibuja una firma, se guarda al crear el personal.
-						</p>
-						<PersonalFirmaPad
-							ref={firmaPadRef}
-							active={activeTab === 'firma'}
-							initialDataUrl={firmaDraftUrl}
-						/>
+				<div className={styles.tabContentContainer}>
+					<div className={activeTab !== 'personal' ? styles.tabHidden : undefined}>
+						<div className={tabStyles.formContent}>
+							<div className={tabStyles.formRow}>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Domicilio</label>
+									<input
+										type='text'
+										name='Domicilio'
+										value={formData.Domicilio}
+										onChange={handleChange}
+										className={tabStyles.input}
+										tabIndex={5}
+									/>
+								</div>
+							</div>
+
+							<div className={`${tabStyles.formRow} ${tabStyles.three}`}>
+								<LoadingSelect
+									label='Localidad'
+									name='ValorLocalidad'
+									value={formData.ValorLocalidad || ''}
+									onChange={(val) => setSelectValue('ValorLocalidad', val)}
+									isLoading={loadingLocalidad}
+									options={localidadSelectOptions}
+									tabIndex={6}
+								/>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Provincia</label>
+									<input
+										type='text'
+										value={provinciaDesc || formData.Provincia}
+										readOnly
+										disabled
+										className={tabStyles.input}
+										tabIndex={-1}
+									/>
+								</div>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Nacionalidad</label>
+									<input
+										type='text'
+										name='Nacionalidad'
+										value={formData.Nacionalidad}
+										onChange={handleChange}
+										className={tabStyles.input}
+										tabIndex={7}
+									/>
+								</div>
+							</div>
+
+							<div className={`${tabStyles.formRow} ${tabStyles.three}`}>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Fecha de Nacimiento</label>
+									<input
+										type='date'
+										name='FechaNacimiento'
+										value={formData.FechaNacimiento}
+										onChange={handleChange}
+										className={`${tabStyles.input} ${
+											errors.FechaNacimiento ? tabStyles.error : ''
+										}`}
+										tabIndex={8}
+									/>
+									{errors.FechaNacimiento && (
+										<div className={tabStyles.errorMessage}>{errors.FechaNacimiento}</div>
+									)}
+								</div>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Edad</label>
+									<input
+										type='number'
+										value={edad || ''}
+										readOnly
+										disabled
+										className={tabStyles.input}
+										tabIndex={-1}
+									/>
+								</div>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Teléfono</label>
+									<input
+										type='text'
+										name='Telefono'
+										value={formData.Telefono}
+										onChange={handleChange}
+										className={tabStyles.input}
+										tabIndex={11}
+									/>
+								</div>
+							</div>
+
+							<div className={`${tabStyles.formRow} ${tabStyles.double}`}>
+								<LoadingSelect
+									label='Sexo'
+									name='Sexo'
+									value={formData.Sexo || ''}
+									onChange={(val) => setSelectValue('Sexo', val)}
+									isLoading={loadingSexo}
+									options={sexoSelectOptions}
+									tabIndex={9}
+								/>
+								<LoadingSelect
+									label='Estado Civil'
+									name='EstadoCivil'
+									value={formData.EstadoCivil || ''}
+									onChange={(val) => setSelectValue('EstadoCivil', val)}
+									isLoading={loadingEstadoCivil}
+									options={estadoCivilSelectOptions}
+									tabIndex={10}
+								/>
+							</div>
+						</div>
 					</div>
-				</div>
-			)}
 
-			{isEditing && formData.Valor ? (
-				<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
-					<PersonalAsignacionesTab personalId={formData.Valor} />
-				</div>
-			) : (
-				<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
-					<PersonalAsignacionesTab
-						draft
-						draftSectores={formData.Sectores || []}
-						draftServicios={formData.Servicios || []}
-						onDraftChange={({ sectores, servicios }) =>
-							setFormData((prev) => ({ ...prev, Sectores: sectores, Servicios: servicios }))
-						}
-					/>
-				</div>
-			)}
+					<div className={activeTab !== 'profesional' ? styles.tabHidden : undefined}>
+						<div className={tabStyles.formContent}>
+							<div className={`${tabStyles.formRow} ${tabStyles.double}`}>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Matrícula Provincial</label>
+									<input
+										type='text'
+										name='MatriculaProvincial'
+										value={formData.MatriculaProvincial}
+										onChange={handleChange}
+										className={`${tabStyles.input} ${
+											errors.MatriculaProvincial ? tabStyles.error : ''
+										}`}
+										inputMode='numeric'
+										tabIndex={30}
+									/>
+									{errors.MatriculaProvincial && (
+										<div className={tabStyles.errorMessage}>
+											{errors.MatriculaProvincial}
+										</div>
+									)}
+								</div>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Matrícula Nacional</label>
+									<input
+										type='text'
+										name='MatriculaNacional'
+										value={formData.MatriculaNacional}
+										onChange={handleChange}
+										className={`${tabStyles.input} ${
+											errors.MatriculaNacional ? tabStyles.error : ''
+										}`}
+										inputMode='numeric'
+										tabIndex={31}
+									/>
+									{errors.MatriculaNacional && (
+										<div className={tabStyles.errorMessage}>{errors.MatriculaNacional}</div>
+									)}
+								</div>
+							</div>
 
-			{isEditing && formData.Valor ? (
-				<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
-					<PersonalCuentaTab
-						ref={cuentaTabRef}
-						personalId={formData.Valor}
-						apellidoNombre={formData.ApellidoNombre}
-						matriculaProvincial={formData.MatriculaProvincial || null}
-						variant='form'
-						hideActions
-						onBusyChange={setCuentaBusy}
-					/>
-				</div>
-			) : (
-				<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
-					<PersonalAccesoYRolesFields
-						mode='alta'
-						crearUsuario={!!formData.CrearUsuario}
-						onCrearUsuario={setCrearUsuario}
-						nombreRed={formData.NombreRed || ''}
-						onNombreRed={(value) => {
-							setFormData((prev) => ({ ...prev, NombreRed: value }));
-							if (errors.NombreRed) {
-								setErrors((prev) => {
-									const n = { ...prev };
-									delete n.NombreRed;
-									return n;
-								});
-							}
-						}}
-						codOperador={
-							formData.MatriculaProvincial
-								? String(formData.MatriculaProvincial)
-								: displayId
-									? String(displayId)
-									: '—'
-						}
-						password={formData.Password || ''}
-						onPassword={(value) => {
-							setFormData((prev) => ({ ...prev, Password: value }));
-							if (errors.Password) {
-								setErrors((prev) => {
-									const n = { ...prev };
-									delete n.Password;
-									return n;
-								});
-							}
-						}}
-						confirmPassword={formData.ConfirmPassword || ''}
-						onConfirmPassword={(value) => {
-							setFormData((prev) => ({ ...prev, ConfirmPassword: value }));
-							if (errors.ConfirmPassword) {
-								setErrors((prev) => {
-									const n = { ...prev };
-									delete n.ConfirmPassword;
-									return n;
-								});
-							}
-						}}
-						roles={rolesCatalogo}
-						rolesAsignados={formData.IdRoles || []}
-						onToggleRol={toggleRolAlta}
-						rolPrincipal={formData.IdRol || ''}
-						onRolPrincipal={(value) => setFormData((prev) => ({ ...prev, IdRol: value }))}
-						errors={errors}
-					/>
-				</div>
-			)}
+							<div className={`${tabStyles.formRow} ${tabStyles.double}`}>
+								<LoadingSelect
+									label='Especialidad'
+									name='ValorEspecialidad'
+									value={formData.ValorEspecialidad || ''}
+									onChange={(val) => setSelectValue('ValorEspecialidad', val)}
+									isLoading={loadingCatalogos}
+									options={especialidadSelectOptions}
+									tabIndex={32}
+								/>
+								<LoadingSelect
+									label='Función'
+									name='ValorFunciones'
+									value={formData.ValorFunciones || ''}
+									onChange={(val) => setSelectValue('ValorFunciones', val)}
+									isLoading={loadingCatalogos}
+									options={funcionSelectOptions}
+									tabIndex={33}
+								/>
+							</div>
 
-			{showAgendaTab ? (
-				<div className={activeTab !== 'agenda' ? styles.tabHidden : undefined}>
-					<AgendaTab matricula={matriculaProfesional} />
-				</div>
-			) : null}
-			</div>
+							<div className={`${tabStyles.formRow} ${tabStyles.double}`}>
+								<LoadingSelect
+									label='Categoría'
+									name='ValorCategoria'
+									value={formData.ValorCategoria || ''}
+									onChange={(val) => setSelectValue('ValorCategoria', val)}
+									isLoading={loadingCatalogos}
+									options={categoriaSelectOptions}
+									tabIndex={35}
+								/>
+								<LoadingSelect
+									label='Clase'
+									name='ValorClase'
+									value={formData.ValorClase || ''}
+									onChange={(val) => setSelectValue('ValorClase', val)}
+									isLoading={loadingCatalogos}
+									options={claseSelectOptions}
+									tabIndex={36}
+								/>
+							</div>
 
-			{(!isEditing ||
-				activeTab === 'cuenta' ||
-				(activeTab !== 'agenda' &&
-					activeTab !== 'asignaciones' &&
-					activeTab !== 'servicios' &&
-					activeTab !== 'firma')) ? (
-			<div className={styles.actions}>
-				<div className={styles.actionsButtons}>
-				{isEditing && onDelete ? (
+							<div className={`${tabStyles.formRow} ${tabStyles.double}`}>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Lugar de Trabajo</label>
+									<input
+										type='text'
+										name='LugarTrabajo'
+										value={formData.LugarTrabajo}
+										onChange={handleChange}
+										className={tabStyles.input}
+										maxLength={20}
+										tabIndex={37}
+									/>
+								</div>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Lugar de Cobro</label>
+									<input
+										type='text'
+										name='LugarCobro'
+										value={formData.LugarCobro}
+										onChange={handleChange}
+										className={tabStyles.input}
+										maxLength={20}
+										tabIndex={38}
+									/>
+								</div>
+							</div>
+
+							<div className={`${tabStyles.formRow} ${tabStyles.three}`}>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Número de Socio</label>
+									<input
+										type='text'
+										name='NumeroSocio'
+										value={formData.NumeroSocio}
+										onChange={handleChange}
+										className={tabStyles.input}
+										inputMode='numeric'
+										tabIndex={39}
+									/>
+								</div>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Convenio Facturación</label>
+									<input
+										type='text'
+										name='ConvenioFacturacion'
+										value={formData.ConvenioFacturacion}
+										onChange={handleChange}
+										className={tabStyles.input}
+										maxLength={10}
+										tabIndex={40}
+									/>
+								</div>
+								<div className={tabStyles.formGroup}>
+									<label className={tabStyles.label}>Id Especialidad ME</label>
+									<input
+										type='text'
+										name='IdEspecialidadME'
+										value={formData.IdEspecialidadME}
+										onChange={handleChange}
+										className={tabStyles.input}
+										inputMode='numeric'
+										tabIndex={41}
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{isEditing && formData.Valor ? (
+						<div className={activeTab !== 'firma' ? styles.tabHidden : undefined}>
+							<PersonalFirmaTab
+								ref={firmaTabRef}
+								personalId={formData.Valor}
+								active={activeTab === 'firma'}
+								variant='form'
+								hideActions
+								onDirtyChange={(dirty) => setChildDirtyFlag('firma', dirty)}
+							/>
+						</div>
+					) : (
+						<div className={activeTab !== 'firma' ? styles.tabHidden : undefined}>
+							<div className={styles.usuarioSection}>
+								<h3 className={styles.subsectionTitle}>Firma digital</h3>
+								<p className={styles.usuarioHint}>
+									Opcional. Si dibuja una firma, se guarda al crear el personal.
+								</p>
+								<PersonalFirmaPad
+									ref={firmaPadRef}
+									active={activeTab === 'firma'}
+									initialDataUrl={firmaDraftUrl}
+									onStroke={() => {
+										void captureFirmaDraft();
+									}}
+								/>
+							</div>
+						</div>
+					)}
+
+					{isEditing && formData.Valor ? (
+						<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
+							<PersonalAsignacionesTab
+								ref={asignacionesTabRef}
+								personalId={formData.Valor}
+								hideActions
+								onDirtyChange={(dirty) => setChildDirtyFlag('asignaciones', dirty)}
+							/>
+						</div>
+					) : (
+						<div className={activeTab !== 'asignaciones' ? styles.tabHidden : undefined}>
+							<PersonalAsignacionesTab
+								draft
+								draftSectores={formData.Sectores || []}
+								draftServicios={formData.Servicios || []}
+								onDraftChange={({ sectores, servicios }) =>
+									setFormData((prev) => ({
+										...prev,
+										Sectores: sectores,
+										Servicios: servicios,
+									}))
+								}
+							/>
+						</div>
+					)}
+
+					{isEditing && formData.Valor ? (
+						<div className={activeTab !== 'servicios' ? styles.tabHidden : undefined}>
+							<PersonalServiciosTab
+								ref={serviciosTabRef}
+								personalId={formData.Valor}
+								hideActions
+								onDirtyChange={(dirty) => setChildDirtyFlag('servicios', dirty)}
+							/>
+						</div>
+					) : null}
+
+					{isEditing && formData.Valor ? (
+						<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
+							<PersonalCuentaTab
+								ref={cuentaTabRef}
+								personalId={formData.Valor}
+								apellidoNombre={formData.ApellidoNombre}
+								matriculaProvincial={formData.MatriculaProvincial || null}
+								variant='form'
+								hideActions
+								onBusyChange={setCuentaBusy}
+								onDirtyChange={(dirty) => setChildDirtyFlag('cuenta', dirty)}
+							/>
+						</div>
+					) : (
+						<div className={activeTab !== 'cuenta' ? styles.tabHidden : undefined}>
+							<PersonalAccesoYRolesFields
+								mode='alta'
+								crearUsuario={!!formData.CrearUsuario}
+								onCrearUsuario={setCrearUsuario}
+								nombreRed={formData.NombreRed || ''}
+								onNombreRed={(value) => {
+									setFormData((prev) => ({ ...prev, NombreRed: value }));
+									if (errors.NombreRed) {
+										setErrors((prev) => {
+											const n = { ...prev };
+											delete n.NombreRed;
+											return n;
+										});
+									}
+								}}
+								codOperador={
+									formData.MatriculaProvincial
+										? String(formData.MatriculaProvincial)
+										: displayId
+											? String(displayId)
+											: '—'
+								}
+								password={formData.Password || ''}
+								onPassword={(value) => {
+									setFormData((prev) => ({ ...prev, Password: value }));
+									if (errors.Password) {
+										setErrors((prev) => {
+											const n = { ...prev };
+											delete n.Password;
+											return n;
+										});
+									}
+								}}
+								confirmPassword={formData.ConfirmPassword || ''}
+								onConfirmPassword={(value) => {
+									setFormData((prev) => ({ ...prev, ConfirmPassword: value }));
+									if (errors.ConfirmPassword) {
+										setErrors((prev) => {
+											const n = { ...prev };
+											delete n.ConfirmPassword;
+											return n;
+										});
+									}
+								}}
+								roles={rolesCatalogo}
+								rolesAsignados={formData.IdRoles || []}
+								onToggleRol={toggleRolAlta}
+								rolPrincipal={formData.IdRol || ''}
+								onRolPrincipal={(value) =>
+									setFormData((prev) => ({ ...prev, IdRol: value }))
+								}
+								errors={errors}
+							/>
+						</div>
+					)}
+
+					{showAgendaTab ? (
+						<div className={activeTab !== 'agenda' ? styles.tabHidden : undefined}>
+							<AgendaTab
+								ref={agendaTabRef}
+								matricula={matriculaProfesional}
+								hideActions
+								onDirtyChange={(dirty) => setChildDirtyFlag('agenda', dirty)}
+							/>
+						</div>
+					) : null}
+				</div>
+
+				<div className={styles.buttonContainer}>
 					<button
 						type='button'
-						onClick={onDelete}
+						onClick={attemptClose}
 						className={styles.cancelButton}
-						disabled={internalSubmitting || (activeTab === 'cuenta' && cuentaBusy)}
-						style={{ color: '#b91c1c', borderColor: '#fecaca' }}
+						disabled={savingBusy}
+						tabIndex={50}
 					>
-						Eliminar
+						Cerrar
 					</button>
-				) : null}
-				<button
-					type='button'
-					onClick={onCancel}
-					className={styles.cancelButton}
-					disabled={internalSubmitting || (activeTab === 'cuenta' && cuentaBusy)}
-					tabIndex={50}
-				>
-					Cancelar
-				</button>
-				<button
-					type='submit'
-					className={`${styles.submitButton} ${
-						internalSubmitting || (activeTab === 'cuenta' && cuentaBusy) ? styles.loading : ''
-					}`}
-					disabled={internalSubmitting || isSubmitting || (activeTab === 'cuenta' && cuentaBusy)}
-					tabIndex={51}
-				>
-					{(internalSubmitting || (isEditing && activeTab === 'cuenta' && cuentaBusy)) && (
-						<span className={styles.inlineSpinner} aria-hidden='true' />
-					)}
-					{internalSubmitting || (isEditing && activeTab === 'cuenta' && cuentaBusy)
-						? 'Guardando...'
-						: isEditing && activeTab === 'cuenta'
-							? 'Guardar acceso y roles'
-							: isEditing
-								? 'Actualizar'
-								: 'Guardar'}
-				</button>
+					<button
+						type='submit'
+						className={`${styles.submitButton} ${savingBusy ? styles.loading : ''}`}
+						disabled={savingBusy}
+						tabIndex={51}
+					>
+						{savingBusy && <span className={styles.inlineSpinner} aria-hidden='true' />}
+						{savingBusy ? 'Guardando...' : 'Guardar'}
+					</button>
 				</div>
 			</div>
-			) : null}
 		</form>
 	);
-}
+});
+
+PersonalForm.displayName = 'PersonalForm';
+
+export default PersonalForm;

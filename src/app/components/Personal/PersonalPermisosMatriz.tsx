@@ -39,7 +39,8 @@ export default function PersonalPermisosMatriz({
 	onChange,
 }: Props) {
 	const [busqueda, setBusqueda] = useState('');
-	const [cerrados, setCerrados] = useState<Set<string>>(new Set());
+	/** Vacío = todos los módulos colapsados al abrir la matriz. */
+	const [abiertos, setAbiertos] = useState<Set<string>>(new Set());
 	const baseSet = useMemo(() => new Set(base), [base]);
 	const actorSet = useMemo(() => new Set(permisosActor), [permisosActor]);
 
@@ -138,7 +139,7 @@ export default function PersonalPermisosMatriz({
 			</div>
 
 			{filtrado.map((m) => {
-				const cerrado = cerrados.has(m.id);
+				const abierto = abiertos.has(m.id);
 				const totalMarcados = m.submodulos.reduce(
 					(n, s) => n + s.acciones.filter((a) => marcados.has(a.codigo)).length,
 					0,
@@ -149,7 +150,7 @@ export default function PersonalPermisosMatriz({
 						<div
 							className={styles.moduloHead}
 							onClick={() =>
-								setCerrados((prev) => {
+								setAbiertos((prev) => {
 									const s = new Set(prev);
 									if (s.has(m.id)) s.delete(m.id);
 									else s.add(m.id);
@@ -158,7 +159,7 @@ export default function PersonalPermisosMatriz({
 							}
 						>
 							<span>
-								{cerrado ? '▸' : '▾'} {m.label}{' '}
+								{abierto ? '▾' : '▸'} {m.label}{' '}
 								<span className={styles.muted}>
 									({totalMarcados}/{totalAcciones})
 								</span>
@@ -176,7 +177,7 @@ export default function PersonalPermisosMatriz({
 										</button>
 									) : null}
 						</div>
-						{cerrado ? null : (
+						{abierto ? (
 							<div className={styles.moduloBody}>
 								{m.submodulos.map((s) => (
 									<div key={s.id} className={styles.sub}>
@@ -233,7 +234,7 @@ export default function PersonalPermisosMatriz({
 									</div>
 								))}
 							</div>
-						)}
+						) : null}
 					</div>
 				);
 			})}

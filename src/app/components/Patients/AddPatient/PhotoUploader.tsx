@@ -7,12 +7,14 @@ interface FotoUploaderProps {
 	onPhotoChange: (file: File | null) => void;
 	initialPreview?: string | null;
 	setPhotoUploading: (isUploading: boolean) => void;
+	title?: string;
 }
 
 export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 	onPhotoChange,
 	initialPreview = null,
 	setPhotoUploading,
+	title = 'Foto del paciente',
 }) => {
 	const [preview, setPreview] = useState<string | null>(initialPreview);
 	const [loading, setLoading] = useState<boolean>(false);
@@ -63,7 +65,7 @@ export const PhotoUploader: React.FC<FotoUploaderProps> = ({
 			{...getRootProps()}
 			className={styles.uploaderStyle}
 			style={{ borderColor: isDragActive ? '#007bff' : '#bbb' }}
-			title='Foto del paciente'
+			title={title}
 		>
 			<input {...getInputProps()} />
 			{loading ? (

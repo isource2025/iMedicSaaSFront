@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import {
+	forwardRef,
+	useEffect,
+	useImperativeHandle,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { personalService } from '@/app/services/personalService';
 import type {
 	CatalogoItemTexto,
@@ -24,8 +31,19 @@ type Props = {
 	draftSectores?: string[];
 	draftServicios?: string[];
 	onDraftChange?: (next: { sectores: string[]; servicios: string[] }) => void;
+	hideActions?: boolean;
+	onDirtyChange?: (dirty: boolean) => void;
 	onSaved?: () => void | Promise<void>;
 };
+
+export type PersonalAsignacionesTabHandle = {
+	guardar: () => Promise<boolean>;
+	isDirty: () => boolean;
+};
+
+function sortedKey(ids: Iterable<string>) {
+	return Array.from(ids).map(String).sort().join('|');
+}
 
 function idValido(id: string | undefined | null) {
 	const v = String(id ?? '').trim();
@@ -39,18 +57,25 @@ function toggle(set: Set<string>, id: string) {
 	return next;
 }
 
-export default function PersonalAsignacionesTab({
-	personalId,
-	draft = false,
-	draftSectores = [],
-	draftServicios = [],
-	onDraftChange,
-	onSaved,
-}: Props) {
+const PersonalAsignacionesTab = forwardRef<PersonalAsignacionesTabHandle, Props>(
+	function PersonalAsignacionesTab(
+		{
+			personalId,
+			draft = false,
+			draftSectores = [],
+			draftServicios = [],
+			onDraftChange,
+			hideActions = false,
+			onDirtyChange,
+			onSaved,
+		},
+		ref,
+	) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
-	const [editing, setEditing] = useState(draft);
+	const [editing, setEditing] = useState(draft || hideActions);
 	const [error, setError] = useState('');
+	const baselineRef = useRef('');
 
 	const [secAsignados, setSecAsignados] = useState<PersonalSectorAsignado[]>([]);
 	const [secCatalogo, setSecCatalogo] = useState<SectorCatalogo[]>([]);
@@ -92,9 +117,13 @@ export default function PersonalAsignacionesTab({
 				if (draft) {
 					setSecAsignados([]);
 					setSrvAsignados([]);
-					setSecSel(new Set(draftSectores.filter(idValido)));
-					setSrvSel(new Set(draftServicios.filter(idValido)));
+					const secIds = draftSectores.filter(idValido);
+					const srvIds = draftServicios.filter(idValido);
+					setSecSel(new Set(secIds));
+					setSrvSel(new Set(srvIds));
+					baselineRef.current = `${sortedKey(secIds)}::${sortedKey(srvIds)}`;
 					setEditing(true);
+					onDirtyChange?.(false);
 					return;
 				}
 				if (!personalId) {
@@ -110,8 +139,13 @@ export default function PersonalAsignacionesTab({
 				const srvsOk = srvs.filter((s) => idValido(s.idServicio));
 				setSecAsignados(secsOk);
 				setSrvAsignados(srvsOk);
-				setSecSel(new Set(secsOk.map((s) => s.idSector)));
-				setSrvSel(new Set(srvsOk.map((s) => s.idServicio)));
+				const secIds = secsOk.map((s) => s.idSector);
+				const srvIds = srvsOk.map((s) => s.idServicio);
+				setSecSel(new Set(secIds));
+				setSrvSel(new Set(srvIds));
+				baselineRef.current = `${sortedKey(secIds)}::${sortedKey(srvIds)}`;
+				if (hideActions) setEditing(true);
+				onDirtyChange?.(false);
 			} catch (e) {
 				if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar asignaciones');
 			} finally {
@@ -122,7 +156,7 @@ export default function PersonalAsignacionesTab({
 			cancelled = true;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [personalId, draft]);
+	}, [personalId, draft, hideActions]);
 
 	const secsFiltrados = useMemo(() => {
 		const t = qSec.trim().toLowerCase();
@@ -209,11 +243,22 @@ export default function PersonalAsignacionesTab({
 		setEditing(true);
 	};
 
+	const isDirty = () =>
+		Boolean(baselineRef.current) &&
+		`${sortedKey(secSel)}::${sortedKey(srvSel)}` !== baselineRef.current;
+
+	useEffect(() => {
+		if (loading) return;
+		onDirtyChange?.(isDirty());
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [secSel, srvSel, loading]);
+
 	const cancelarEdicion = () => {
 		setSecSel(new Set(secAsignados.map((s) => s.idSector)));
 		setSrvSel(new Set(srvAsignados.map((s) => s.idServicio)));
-		setEditing(false);
+		if (!hideActions) setEditing(false);
 		setError('');
+		onDirtyChange?.(false);
 	};
 
 	const setSecDraft = (next: Set<string>) => {
@@ -226,8 +271,8 @@ export default function PersonalAsignacionesTab({
 		if (draft) onDraftChange?.({ sectores: Array.from(secSel), servicios: Array.from(next) });
 	};
 
-	const guardar = async () => {
-		if (!personalId) return;
+	const guardar = async (): Promise<boolean> => {
+		if (!personalId) return false;
 		setSaving(true);
 		setError('');
 		try {
@@ -235,16 +280,31 @@ export default function PersonalAsignacionesTab({
 				sectores: Array.from(secSel),
 				servicios: Array.from(srvSel),
 			});
-			setSecAsignados(data.sectores || []);
-			setSrvAsignados(data.servicios || []);
-			setEditing(false);
+			const secs = data.sectores || [];
+			const srvs = data.servicios || [];
+			setSecAsignados(secs);
+			setSrvAsignados(srvs);
+			const secIds = secs.map((s) => s.idSector);
+			const srvIds = srvs.map((s) => s.idServicio);
+			setSecSel(new Set(secIds));
+			setSrvSel(new Set(srvIds));
+			baselineRef.current = `${sortedKey(secIds)}::${sortedKey(srvIds)}`;
+			if (!hideActions) setEditing(false);
+			onDirtyChange?.(false);
 			await onSaved?.();
+			return true;
 		} catch (e) {
 			setError(e instanceof Error ? e.message : 'Error al guardar');
+			return false;
 		} finally {
 			setSaving(false);
 		}
 	};
+
+	useImperativeHandle(ref, () => ({
+		guardar,
+		isDirty,
+	}));
 
 	const buscadorConAcciones = (
 		value: string,
@@ -274,7 +334,7 @@ export default function PersonalAsignacionesTab({
 			{loading ? <p className={formStyles.usuarioHint}>Cargando sectores y servicios…</p> : null}
 			{error ? <div className={formStyles.alertError}>{error}</div> : null}
 
-			{!editing && !draft ? (
+			{!editing && !draft && !hideActions ? (
 				<div className={formStyles.asignColHead} style={{ marginBottom: '0.75rem' }}>
 					<p className={formStyles.usuarioHint} style={{ margin: 0 }}>
 						Sectores de internación, login y camas. Servicios destino de la bandeja de pedidos.
@@ -283,6 +343,11 @@ export default function PersonalAsignacionesTab({
 						Editar / asignar
 					</button>
 				</div>
+			) : null}
+			{hideActions && !draft ? (
+				<p className={formStyles.usuarioHint}>
+					Sectores de internación, login y camas. Servicios destino de la bandeja de pedidos.
+				</p>
 			) : null}
 			{draft ? (
 				<p className={formStyles.usuarioHint}>
@@ -392,7 +457,7 @@ export default function PersonalAsignacionesTab({
 				</section>
 			</div>
 
-			{editing && !draft ? (
+			{editing && !draft && !hideActions ? (
 				<div className={styles.actions}>
 					<button type="button" className={styles.btn} disabled={saving} onClick={cancelarEdicion}>
 						Cancelar
@@ -409,4 +474,8 @@ export default function PersonalAsignacionesTab({
 			) : null}
 		</div>
 	);
-}
+});
+
+PersonalAsignacionesTab.displayName = 'PersonalAsignacionesTab';
+
+export default PersonalAsignacionesTab;

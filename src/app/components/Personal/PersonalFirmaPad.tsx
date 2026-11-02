@@ -13,6 +13,7 @@ export type PersonalFirmaPadRef = {
 type Props = {
 	active: boolean;
 	initialDataUrl?: string | null;
+	onStroke?: () => void;
 };
 
 const BASE_H = 200;
@@ -33,9 +34,11 @@ function fitCanvas(canvas: HTMLCanvasElement) {
 }
 
 const PersonalFirmaPad = forwardRef<PersonalFirmaPadRef, Props>(function PersonalFirmaPad(
-	{ active, initialDataUrl },
+	{ active, initialDataUrl, onStroke },
 	ref,
 ) {
+	const onStrokeRef = useRef(onStroke);
+	onStrokeRef.current = onStroke;
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const padRef = useRef<SignaturePad | null>(null);
 	/** Firma cargada desde BD (fromDataURL) puede seguir marcada “vacía” para el pad; igual debe poder exportarse */
@@ -69,6 +72,8 @@ const PersonalFirmaPad = forwardRef<PersonalFirmaPadRef, Props>(function Persona
 				maxWidth: 2.6,
 				throttle: 16,
 			});
+			const onEnd = () => onStrokeRef.current?.();
+			padRef.current.addEventListener('endStroke', onEnd);
 			const u = initialDataUrl?.trim();
 			if (u) {
 				padRef.current

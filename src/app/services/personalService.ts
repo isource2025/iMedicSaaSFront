@@ -317,6 +317,45 @@ export const deletePersonalFirma = async (id: number): Promise<void> => {
 	if (!res.data.success) throw new Error(res.data.mensaje || 'Error al eliminar firma');
 };
 
+/** Sube la foto al file server de la clínica (carpeta Personal/{id}/). */
+export const uploadPersonalFoto = async (id: number, file: File): Promise<void> => {
+	const fd = new FormData();
+	fd.append('archivo', file);
+	const res = await apiService.put<ApiResponse<unknown>>(`/personal/${id}/foto`, fd, {
+		timeout: PERSONAL_SAVE_TIMEOUT_MS,
+		transformRequest: [
+			(data: unknown, headers: Record<string, string>) => {
+				if (data instanceof FormData) {
+					delete headers['Content-Type'];
+				}
+				return data;
+			},
+		],
+	});
+	if (!res.data.success) throw new Error(res.data.mensaje || 'Error al subir foto');
+};
+
+export const deletePersonalFoto = async (id: number): Promise<void> => {
+	const res = await apiService.delete<ApiResponse<unknown>>(`/personal/${id}/foto`);
+	if (!res.data.success) throw new Error(res.data.mensaje || 'Error al eliminar foto');
+};
+
+/** Descarga la foto autenticada como object URL (revocar al desmontar). */
+export const getPersonalFotoObjectUrl = async (id: number): Promise<string | null> => {
+	try {
+		const res = await apiService.get<Blob>(`/personal/${id}/foto`, {
+			responseType: 'blob',
+			timeout: 60000,
+		});
+		const blob = res.data;
+		if (!blob || !(blob instanceof Blob) || blob.size === 0) return null;
+		if (blob.type && blob.type.includes('json')) return null;
+		return URL.createObjectURL(blob);
+	} catch {
+		return null;
+	}
+};
+
 function mapServicioAsignado(s: Record<string, unknown> | null | undefined): PersonalServicioAsignado {
 	const row = s || {};
 	return {
@@ -840,6 +879,9 @@ export const personalService = {
 	getFirmaParaPdf,
 	uploadPersonalFirma,
 	deletePersonalFirma,
+	uploadPersonalFoto,
+	deletePersonalFoto,
+	getPersonalFotoObjectUrl,
 	getPersonalSectores,
 	addPersonalSector,
 	removePersonalSector,

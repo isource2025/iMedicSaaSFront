@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+	forwardRef,
+	useEffect,
+	useImperativeHandle,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import styles from './AgendaTab.module.css';
 import { agendaConfigService } from '../../../services/agendaConfigService';
 import {
@@ -13,7 +20,15 @@ import {
 interface AgendaTabProps {
 	matricula: number | null | undefined;
 	readOnly?: boolean;
+	/** Oculta el botón local; el modal padre llama guardar() por ref. */
+	hideActions?: boolean;
+	onDirtyChange?: (dirty: boolean) => void;
 }
+
+export type AgendaTabHandle = {
+	guardar: () => Promise<boolean>;
+	isDirty: () => boolean;
+};
 
 type Mode = 'simple' | 'doble';
 
@@ -65,7 +80,10 @@ function buildEstadoDesdeHorarios(h: HorariosResponse): Record<DiaSemana, DiaSta
 	return out;
 }
 
-export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProps) {
+const AgendaTab = forwardRef<AgendaTabHandle, AgendaTabProps>(function AgendaTab(
+	{ matricula, readOnly = false, hideActions = false, onDirtyChange },
+	ref,
+) {
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -81,6 +99,7 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 		>,
 	);
 	const [permanentesCount, setPermanentesCount] = useState(0);
+	const baselineRef = useRef('');
 
 	// No-horarios
 	const [noHorarios, setNoHorarios] = useState<NoHorario[]>([]);
@@ -102,18 +121,38 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 				agendaConfigService.getHorarios(mat),
 				agendaConfigService.getNoHorarios(mat),
 			]);
-			if (h.intervaloMin != null) setIntervaloMin(h.intervaloMin);
-			setConsultorio(h.consultorio || '');
-			setServicio(h.servicio || '');
-			setEstado(buildEstadoDesdeHorarios(h));
+			const nextIntervalo = h.intervaloMin != null ? h.intervaloMin : 30;
+			const nextConsultorio = h.consultorio || '';
+			const nextServicio = h.servicio || '';
+			const nextEstado = buildEstadoDesdeHorarios(h);
+			if (h.intervaloMin != null) setIntervaloMin(nextIntervalo);
+			setConsultorio(nextConsultorio);
+			setServicio(nextServicio);
+			setEstado(nextEstado);
 			setPermanentesCount(h.permanentes?.length || 0);
 			setNoHorarios(nh);
+			baselineRef.current = JSON.stringify({
+				intervaloMin: nextIntervalo,
+				consultorio: nextConsultorio,
+				servicio: nextServicio,
+				estado: nextEstado,
+			});
 		} catch (e: any) {
 			setError(e?.response?.data?.mensaje || e?.message || 'Error cargando agenda');
 		} finally {
 			setLoading(false);
 		}
 	};
+
+	const snapshot = () =>
+		JSON.stringify({ intervaloMin, consultorio, servicio, estado });
+
+	const isDirty = () => Boolean(baselineRef.current) && snapshot() !== baselineRef.current;
+
+	useEffect(() => {
+		onDirtyChange?.(isDirty());
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [intervaloMin, consultorio, servicio, estado]);
 
 	useEffect(() => {
 		if (!matricula || matricula <= 0) {
@@ -172,12 +211,12 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 		return null;
 	};
 
-	const guardar = async () => {
-		if (!matricula || matricula <= 0) return;
+	const guardar = async (): Promise<boolean> => {
+		if (!matricula || matricula <= 0) return false;
 		const err = validar();
 		if (err) {
 			setError(err);
-			return;
+			return false;
 		}
 		setError(null);
 		setInfo(null);
@@ -197,14 +236,29 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 				servicio: servicio || null,
 				dias,
 			});
-			setEstado(buildEstadoDesdeHorarios(r));
+			const nextEstado = buildEstadoDesdeHorarios(r);
+			setEstado(nextEstado);
+			baselineRef.current = JSON.stringify({
+				intervaloMin,
+				consultorio,
+				servicio,
+				estado: nextEstado,
+			});
+			onDirtyChange?.(false);
 			setInfo('Configuración guardada');
+			return true;
 		} catch (e: any) {
 			setError(e?.response?.data?.mensaje || e?.message || 'Error guardando');
+			return false;
 		} finally {
 			setSaving(false);
 		}
 	};
+
+	useImperativeHandle(ref, () => ({
+		guardar,
+		isDirty,
+	}));
 
 	const crearAusencia = async () => {
 		if (!matricula) return;
@@ -431,12 +485,12 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 				})}
 			</div>
 
-			{!readOnly && (
+			{!readOnly && !hideActions && (
 				<div className={styles.actions}>
 					<button
 						type='button'
 						className={`${styles.btn} ${styles.btnPrimary}`}
-						onClick={guardar}
+						onClick={() => void guardar()}
 						disabled={saving}
 					>
 						{saving ? 'Guardando…' : 'Guardar configuración'}
@@ -602,4 +656,8 @@ export default function AgendaTab({ matricula, readOnly = false }: AgendaTabProp
 			</div>
 		</div>
 	);
-}
+});
+
+AgendaTab.displayName = 'AgendaTab';
+
+export default AgendaTab;

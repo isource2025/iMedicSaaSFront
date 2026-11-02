@@ -36,6 +36,10 @@ export interface Personal {
 	Rol: number | null;
 	/** True si hay firma digital (PNG) cargada en imPersonal.Firma. */
 	hasFirma?: boolean;
+	/** True si hay foto en el file server (columna image). */
+	hasFoto?: boolean;
+	/** Proxy autenticado: /api/personal/{id}/foto */
+	FotoURL?: string | null;
 }
 
 export interface PersonalFormData {
