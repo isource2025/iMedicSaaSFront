@@ -99,6 +99,8 @@ const menuItems: MenuItem[] = [
     subItems: [
       { submoduloId: 'PRODUCTOS', label: 'Productos', path: '/dashboard/almacen/productos' },
       { submoduloId: 'REMITOS', label: 'Remitos', path: '/dashboard/almacen/remitos' },
+      { submoduloId: 'STOCK', label: 'Stock', path: '/dashboard/almacen/stock' },
+      { submoduloId: 'PROVEEDORES', label: 'Proveedores', path: '/dashboard/almacen/proveedores' },
     ],
   },
   {

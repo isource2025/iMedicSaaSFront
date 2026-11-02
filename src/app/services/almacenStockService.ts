@@ -1,10 +1,13 @@
 import { apiService } from './axios';
 import type {
+	ExistenciasCatalogos,
+	ExistenciasPage,
 	PlanCuentaOpt,
 	ProductoStock,
 	ProductosCatalogos,
 	ProductosPage,
 	ProductoSearchCampo,
+	ProveedoresClarionPage,
 	RemitoCabecera,
 	RemitoCliente,
 	RemitoPaciente,
@@ -140,6 +143,39 @@ export const almacenStockService = {
 
 	eliminarRemito: (id: number) =>
 		unwrap(apiService.delete<ApiResp<{ ok: boolean; IdTransaccion: number }>>(`${base}/remitos/${id}`)),
+
+	listarExistencias: (params?: {
+		search?: string;
+		idDeposito?: number;
+		soloBajoMinimo?: boolean;
+		page?: number;
+		pageSize?: number;
+	}) =>
+		unwrap(
+			apiService.get<ApiResp<ExistenciasPage>>(`${base}/existencias`, {
+				params: {
+					search: params?.search || undefined,
+					idDeposito: params?.idDeposito || undefined,
+					soloBajoMinimo: params?.soloBajoMinimo ? 1 : undefined,
+					page: params?.page || 1,
+					pageSize: params?.pageSize || 40,
+				},
+			}),
+		),
+
+	catalogosExistencias: () =>
+		unwrap(apiService.get<ApiResp<ExistenciasCatalogos>>(`${base}/existencias/catalogos`)),
+
+	listarProveedoresClarion: (params?: { search?: string; page?: number; pageSize?: number }) =>
+		unwrap(
+			apiService.get<ApiResp<ProveedoresClarionPage>>(`${base}/proveedores-clarion`, {
+				params: {
+					search: params?.search || undefined,
+					page: params?.page || 1,
+					pageSize: params?.pageSize || 40,
+				},
+			}),
+		),
 };
 
 type RemitoSaveBody = {

@@ -162,6 +162,29 @@
 	max-width: 280px;
 }
 
+.checkInline {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--sk-ink);
+	white-space: nowrap;
+	user-select: none;
+}
+
+.checkInline input {
+	accent-color: var(--sk-brand);
+}
+
+.rowAlert {
+	background: #fff7ed;
+}
+
+.rowAlert:hover {
+	background: #ffedd5 !important;
+}
+
 .chips {
 	display: flex;
 	flex-wrap: wrap;

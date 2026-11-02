@@ -174,3 +174,56 @@ export interface RemitosCatalogos {
 	depositos: RemitoDeposito[];
 	proveedores: RemitoProveedor[];
 }
+
+/** dbo.Stock + Productos + Depositos */
+export interface ExistenciaStock {
+	IdProducto: number;
+	IdDeposito: number;
+	DepositoNombre?: string | null;
+	Fecha?: string | null;
+	Ubicacion?: string | null;
+	StockMinimo?: number | null;
+	StockMaximo?: number | null;
+	PuntoPedido?: number | null;
+	CantFisico: number;
+	CantDisp: number;
+	CodAlternativo?: string | null;
+	Descripcion?: string | null;
+	DescripcionC?: string | null;
+	IdUnidad?: string | null;
+	UnidadNombre?: string | null;
+	IdRubro?: number | null;
+	RubroNombre?: string | null;
+	bajoMinimo?: boolean;
+	bajoPunto?: boolean;
+}
+
+export interface ExistenciasPage {
+	items: ExistenciaStock[];
+	total: number;
+	page: number;
+	pageSize: number;
+	totalPages: number;
+}
+
+export interface ExistenciasCatalogos {
+	depositos: RemitoDeposito[];
+}
+
+export interface ProveedorClarion {
+	IdProveedor: number;
+	Descripcion: string;
+	NombreFantasia?: string | null;
+	Cuit?: string | null;
+	IdStatus?: number | null;
+	Email?: string | null;
+	Domicilio?: string | null;
+}
+
+export interface ProveedoresClarionPage {
+	items: ProveedorClarion[];
+	total: number;
+	page: number;
+	pageSize: number;
+	totalPages: number;
+}
