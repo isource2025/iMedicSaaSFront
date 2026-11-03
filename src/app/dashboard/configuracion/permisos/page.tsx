@@ -53,7 +53,7 @@ const ROTULO_ACCION: Record<string, string> = {
 	APLICAR: 'Aplicar',
 	EXPORTAR: 'Exportar',
 	IMPRIMIR: 'Imprimir',
-	EDITAR_AJENOS: 'Editar ajenos',
+	EDITAR_AJENOS: 'Modificar ajenos',
 	CERRAR: 'Cerrar',
 	MARCAR_VISTO: 'Marcar visto',
 	VER_TODOS: 'Ver todos',

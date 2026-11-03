@@ -7,6 +7,9 @@ import type {
 	NoHorarioPayload,
 } from '../types/agenda';
 
+/** Misma holgura que agendaService: túnel SQL (Sarmiento) suele superar 15s. */
+const AGENDA_TIMEOUT_MS = 60_000;
+
 interface ApiResp<T> {
 	success: boolean;
 	data: T;
@@ -15,13 +18,16 @@ interface ApiResp<T> {
 
 export const agendaConfigService = {
 	async getCatalogos(): Promise<AgendaCatalogos> {
-		const r = await apiService.get<ApiResp<AgendaCatalogos>>('/agenda/catalogos');
+		const r = await apiService.get<ApiResp<AgendaCatalogos>>('/agenda/catalogos', {
+			timeout: AGENDA_TIMEOUT_MS,
+		});
 		return r.data.data;
 	},
 
 	async getHorarios(matricula: number): Promise<HorariosResponse> {
 		const r = await apiService.get<ApiResp<HorariosResponse>>(
 			`/agenda/horarios/${matricula}`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -33,6 +39,7 @@ export const agendaConfigService = {
 		const r = await apiService.put<ApiResp<HorariosResponse>>(
 			`/agenda/horarios/${matricula}`,
 			payload,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -47,6 +54,7 @@ export const agendaConfigService = {
 		const suffix = qs.toString() ? `?${qs.toString()}` : '';
 		const r = await apiService.get<ApiResp<NoHorario[]>>(
 			`/agenda/no-horarios/${matricula}${suffix}`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -58,6 +66,7 @@ export const agendaConfigService = {
 		const r = await apiService.post<ApiResp<unknown>>(
 			`/agenda/no-horarios/${matricula}`,
 			payload,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -71,6 +80,7 @@ export const agendaConfigService = {
 		const r = await apiService.put<ApiResp<unknown>>(
 			`/agenda/no-horarios/${matricula}`,
 			body,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -81,7 +91,7 @@ export const agendaConfigService = {
 	): Promise<unknown> {
 		const r = await apiService.delete<ApiResp<unknown>>(
 			`/agenda/no-horarios/${matricula}`,
-			{ data: body },
+			{ data: body, timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},

@@ -1,6 +1,10 @@
 import { apiService } from './axios';
 import { apiFetch } from '@/app/utils/authFetch';
 
+/** Clínicas con SQL por túnel (p. ej. Sarmiento) suelen superar el timeout global de 15s. */
+const AGENDA_TIMEOUT_MS = 60_000;
+const AGENDA_SLOTS_TIMEOUT_MS = 90_000;
+
 interface ApiResp<T> {
 	success: boolean;
 	data: T;
@@ -392,6 +396,7 @@ export const agendaService = {
 		if (opts?.ligero) qs.set('ligero', '1');
 		const r = await apiService.get<ApiResp<SlotsResponse>>(
 			`/agenda/${matricula}/slots?${qs.toString()}`,
+			{ timeout: AGENDA_SLOTS_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -401,6 +406,7 @@ export const agendaService = {
 		const qs = new URLSearchParams({ desde, hasta });
 		const r = await apiService.get<ApiResp<AgendaFeriado[]>>(
 			`/agenda/feriados?${qs.toString()}`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data || [];
 	},
@@ -414,7 +420,7 @@ export const agendaService = {
 		const qs = new URLSearchParams({ desde, hasta });
 		const r = await apiService.get<ApiResp<DiasAgendaResponse>>(
 			`/agenda/${matricula}/dias-agenda?${qs.toString()}`,
-			{ timeout: 60_000 },
+			{ timeout: AGENDA_SLOTS_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -422,6 +428,7 @@ export const agendaService = {
 	async getResumen(matricula: number, fecha: string): Promise<ResumenDia> {
 		const r = await apiService.get<ApiResp<ResumenDia>>(
 			`/agenda/${matricula}/resumen?fecha=${encodeURIComponent(fecha)}`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -436,6 +443,7 @@ export const agendaService = {
 		}
 		const r = await apiService.get<ApiResp<MedicoDisponible[]>>(
 			`/agenda/profesionales?${qs.toString()}`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -452,7 +460,7 @@ export const agendaService = {
 		if (opts?.todos) qs.set('todos', '1');
 		const r = await apiService.get<
 			ApiResp<{ tipo: string; valor: string; nombre: string; esRecurso: true }[]>
-		>(`/agenda/recursos?${qs.toString()}`);
+		>(`/agenda/recursos?${qs.toString()}`, { timeout: AGENDA_TIMEOUT_MS });
 		return r.data.data || [];
 	},
 
@@ -491,6 +499,7 @@ export const agendaService = {
 			}>
 		>(
 			`/agenda/recurso/${encodeURIComponent(tipo)}/${encodeURIComponent(valor)}/slots?${qs.toString()}`,
+			{ timeout: AGENDA_SLOTS_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -498,6 +507,7 @@ export const agendaService = {
 	async getHorariosRecurso(tipo: string, valor: string) {
 		const r = await apiService.get(
 			`/agenda/recurso/${encodeURIComponent(tipo)}/${encodeURIComponent(valor)}/horarios`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return (r.data as { data: unknown }).data;
 	},
@@ -506,6 +516,7 @@ export const agendaService = {
 		const r = await apiService.put(
 			`/agenda/recurso/${encodeURIComponent(tipo)}/${encodeURIComponent(valor)}/horarios`,
 			payload,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return (r.data as { data: unknown }).data;
 	},
@@ -521,6 +532,7 @@ export const agendaService = {
 		}
 		const r = await apiService.get<ApiResp<MedicoDisponible[]>>(
 			`/agenda/disponibilidad?${qs.toString()}`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -540,6 +552,7 @@ export const agendaService = {
 		const r = await apiService.post<ApiResp<{ idTurno: number | null; accion: 'created' | 'updated' }>>(
 			`/agenda/${matricula}/turnos`,
 			payload,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -552,6 +565,7 @@ export const agendaService = {
 		const r = await apiService.patch<ApiResp<{ idTurno: number; status: number }>>(
 			`/agenda/${matricula}/turnos/${idTurno}`,
 			payload,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -562,6 +576,8 @@ export const agendaService = {
 	): Promise<{ idTurno: number; status: number }> {
 		const r = await apiService.patch<ApiResp<{ idTurno: number; status: number }>>(
 			`/agenda/${matricula}/turnos/${idTurno}/cancelar`,
+			undefined,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -572,6 +588,7 @@ export const agendaService = {
 	): Promise<{ idTurno: number; accion: 'deleted' | 'cleared' }> {
 		const r = await apiService.delete<ApiResp<{ idTurno: number; accion: 'deleted' | 'cleared' }>>(
 			`/agenda/${matricula}/turnos/${idTurno}`,
+			{ timeout: AGENDA_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},
@@ -584,6 +601,7 @@ export const agendaService = {
 		const r = await apiService.patch<ApiResp<CierreTurnoResult>>(
 			`/agenda/${matricula}/turnos/${idTurno}/cerrar`,
 			payload || {},
+			{ timeout: AGENDA_SLOTS_TIMEOUT_MS },
 		);
 		return r.data.data;
 	},

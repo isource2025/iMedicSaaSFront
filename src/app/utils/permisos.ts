@@ -127,7 +127,7 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 			// Historial de cambios de la HC (quién modificó o borró qué). Solo lectura
 			// y reservado a ADMIN: se excluye a mano de la plantilla ADMINISTRATIVO.
 			{ id: 'AUDITORIA_HC',         label: 'Auditoría de historia clínica', acciones: [ACCIONES.VER] },
-			{ id: 'REGISTROS',            label: 'Registros clínicos ajenos', acciones: [ACCIONES.EDITAR_AJENOS] },
+			{ id: 'REGISTROS',            label: 'Modificar registros de otro profesional', acciones: [ACCIONES.EDITAR_AJENOS] },
 		],
 	},
 	{
