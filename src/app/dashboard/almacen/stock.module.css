@@ -871,6 +871,25 @@
 	overflow: auto;
 }
 
+.rowWarn {
+	background: #fff8eb;
+}
+
+.cantWarn {
+	color: #b45309;
+	font-weight: 700;
+}
+
+.cantWarnHint {
+	display: inline-block;
+	margin-left: 0.15rem;
+	color: #c2410c;
+	font-size: 1.35rem;
+	font-weight: 800;
+	line-height: 1;
+	vertical-align: -0.1em;
+}
+
 .pacienteCell {
 	min-width: 11rem;
 	max-width: 16rem;

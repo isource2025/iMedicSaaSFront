@@ -16,7 +16,7 @@ interface CustomSelectProps {
     name: string;
     value: string | number;
     onChange: (value: string | number) => void;
-    isLoading: boolean;
+    isLoading?: boolean;
     options: Option[];
     tabIndex?: number; // NEW: permitir orden de tabulación
     autoFocus?: boolean; // NEW: permitir autoFocus
@@ -36,7 +36,7 @@ export default function CustomSelect({
     name,
     value,
     onChange,
-    isLoading,
+    isLoading = false,
     options,
     tabIndex, // NEW
     autoFocus, // NEW

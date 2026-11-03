@@ -112,6 +112,32 @@ function metaPacienteCorta(it: {
 	return parts.join(' · ');
 }
 
+/**
+ * Aviso (no bloquea): cantidades anómalas en remito — p. ej. indicación
+ * «continuo» cargada mal (tasa por segundo → total absurdo). El usuario corrige.
+ */
+function motivoCantidadSospechosa(cant: number, idUnidad?: string | null): string | null {
+	const n = Number(cant);
+	if (!Number.isFinite(n) || n === 0) return null;
+	const abs = Math.abs(n);
+	if (abs > 500) {
+		return 'cantidad muy alta — revisá si la indicación es continuo u otro error de carga';
+	}
+	const u = (idUnidad || '').trim().toUpperCase();
+	const esUn = !u || u === 'UN' || u === 'U' || u.startsWith('UN ');
+	if (esUn && Math.abs(n - Math.round(n)) > 0.001) {
+		return 'cantidad con decimales en unidad UN — revisá la carga';
+	}
+	return null;
+}
+
+function fmtCantidad(n?: number | null) {
+	if (n == null || !Number.isFinite(Number(n))) return '—';
+	const v = Number(n);
+	if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+	return v.toLocaleString('es-AR', { maximumFractionDigits: 4 });
+}
+
 function ordenTiposPorSentido(a: RemitoTipo, b: RemitoTipo) {
 	const ra = tagSentido(a.Sentido) === 'Entrada' ? 0 : tagSentido(a.Sentido) === 'Salida' ? 1 : 2;
 	const rb = tagSentido(b.Sentido) === 'Entrada' ? 0 : tagSentido(b.Sentido) === 'Salida' ? 1 : 2;
@@ -762,6 +788,16 @@ export default function RemitosClient() {
 				sinProd ? ` (${sinProd} sin producto omitidos)` : ''
 			}`,
 		);
+		const sospechosas = nuevos.filter((it) => motivoCantidadSospechosa(it.Cantidad, it.IdUnidad));
+		if (sospechosas.length) {
+			const ej = sospechosas[0];
+			const motivo = motivoCantidadSospechosa(ej.Cantidad, ej.IdUnidad);
+			toast.warning(
+				sospechosas.length === 1
+					? `Revisá la cantidad de «${ej.DescripcionProducto || ej.IdProducto}» (${fmtCantidad(ej.Cantidad)}): ${motivo}`
+					: `${sospechosas.length} ítems tienen cantidad sospechosa (ej. ${fmtCantidad(ej.Cantidad)}). Revisá antes de aceptar.`,
+			);
+		}
 	};
 
 	const excluirCandidato = async (nro: number) => {
@@ -801,6 +837,14 @@ export default function RemitosClient() {
 		if (!draftItems.length) {
 			toast.error('Agregá al menos un ítem');
 			return;
+		}
+		const cantSospechosas = draftItems.filter((it) =>
+			motivoCantidadSospechosa(it.Cantidad, it.IdUnidad),
+		);
+		if (cantSospechosas.length) {
+			toast.warning(
+				`${cantSospechosas.length} ítem${cantSospechosas.length === 1 ? '' : 's'} con cantidad sospechosa — se guarda igual; revisá si hace falta corregir.`,
+			);
 		}
 		const isEdit = editingId != null;
 		setSaving(true);
@@ -1384,11 +1428,24 @@ export default function RemitosClient() {
 												</td>
 											</tr>
 										) : (
-											draftItems.map((it) => (
-												<tr key={it._key}>
+											draftItems.map((it) => {
+												const avisoCant = motivoCantidadSospechosa(it.Cantidad, it.IdUnidad);
+												return (
+												<tr key={it._key} className={avisoCant ? styles.rowWarn : undefined}>
 													<td className={styles.mono}>{it.IdProducto}</td>
 													<td>{it.DescripcionProducto || '—'}</td>
-													<td className={styles.mono}>{it.Cantidad}</td>
+													<td
+														className={`${styles.mono}${avisoCant ? ` ${styles.cantWarn}` : ''}`}
+														title={avisoCant || undefined}
+													>
+														{fmtCantidad(it.Cantidad)}
+														{avisoCant ? (
+															<span className={styles.cantWarnHint} aria-label={avisoCant}>
+																{' '}
+																!
+															</span>
+														) : null}
+													</td>
 													<td>{it.IdUnidad || '—'}</td>
 													<td className={styles.mono}>{fmtMoney(it.ImporteUnitario)}</td>
 													<td className={styles.mono}>{fmtMoney(it.ImporteTotal)}</td>
@@ -1431,7 +1488,8 @@ export default function RemitosClient() {
 														</div>
 													</td>
 												</tr>
-											))
+												);
+											})
 										)}
 									</tbody>
 								</table>
