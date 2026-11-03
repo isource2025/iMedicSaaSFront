@@ -83,16 +83,21 @@ const FUNCIONES_FALLBACK: FuncionRequerida[] = [
 
 /** Roles de equipo clínico: excluye gastos (0 / 10) del catálogo imFunciones. */
 function mapFuncionesCatalogo(
-	rows: { valor: number; descripcion: string }[],
+	rows: Array<{ valor?: number | string; Valor?: number | string; descripcion?: string; Descripcion?: string }>,
 ): FuncionRequerida[] {
-	return rows
-		.filter((r) => Number.isFinite(r.valor) && r.valor > 0 && r.valor !== 10)
-		.map((r) => ({
-			codigo: Number(r.valor),
-			nombre: String(r.descripcion || '').trim() || `Función ${r.valor}`,
-			unidad: 0,
-		}))
-		.sort((a, b) => a.codigo - b.codigo);
+	const byCodigo = new Map<number, FuncionRequerida>();
+	for (const r of rows || []) {
+		const codigo = Number(r.valor ?? r.Valor);
+		if (!Number.isFinite(codigo) || codigo <= 0 || codigo === 10) continue;
+		const nombre =
+			String(r.descripcion ?? r.Descripcion ?? '').trim() || `Función ${codigo}`;
+		byCodigo.set(codigo, { codigo, nombre, unidad: 0 });
+	}
+	// Asegura roles clínicos base (p. ej. Patólogo) aunque el tenant no los tenga aún en imFunciones.
+	for (const f of FUNCIONES_FALLBACK) {
+		if (!byCodigo.has(f.codigo)) byCodigo.set(f.codigo, { ...f });
+	}
+	return [...byCodigo.values()].sort((a, b) => a.codigo - b.codigo);
 }
 
 let keySeq = 0;
@@ -183,8 +188,7 @@ export default function CargarProtocoloModal({
 		getFunciones()
 			.then((rows) => {
 				if (cancelled) return;
-				const mapped = mapFuncionesCatalogo(rows || []);
-				if (mapped.length) setFuncionesCatalogo(mapped);
+				setFuncionesCatalogo(mapFuncionesCatalogo(rows || []));
 			})
 			.catch(() => {
 				if (!cancelled) setFuncionesCatalogo(FUNCIONES_FALLBACK);

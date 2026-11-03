@@ -142,7 +142,16 @@ export const getFunciones = async (): Promise<CatalogoItemNumerico[]> => {
 	const res = await apiService.get<ApiResponse<CatalogoItemNumerico[]>>(
 		'/personal/catalogos/funciones',
 	);
-	return res.data.success && res.data.data ? res.data.data : [];
+	const rows = res.data.success && res.data.data ? res.data.data : [];
+	return rows
+		.map((r) => {
+			const row = r as CatalogoItemNumerico & { Valor?: number; Descripcion?: string };
+			return {
+				valor: Number(row.valor ?? row.Valor),
+				descripcion: String(row.descripcion ?? row.Descripcion ?? '').trim(),
+			};
+		})
+		.filter((r) => Number.isFinite(r.valor));
 };
 
 /** Catálogo imServicios unificado (nube reconciliada con escritorio / tablas maestras). */
