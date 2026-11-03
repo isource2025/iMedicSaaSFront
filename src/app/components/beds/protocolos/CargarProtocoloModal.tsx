@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import protocolosService from '@/app/services/protocolosService';
+import { getFunciones } from '@/app/services/personalService';
 import type {
 	FuncionRequerida,
 	MedicamentoBusqueda,
@@ -68,7 +69,8 @@ const FALLBACK_ESP: FuncionRequerida = {
 	unidad: 1,
 };
 
-const FUNCIONES_CATALOGO: FuncionRequerida[] = [
+/** Fallback si no responde el catálogo imFunciones del tenant. */
+const FUNCIONES_FALLBACK: FuncionRequerida[] = [
 	{ codigo: 1, nombre: 'Especialista', unidad: 0 },
 	{ codigo: 2, nombre: 'Ayudante 1', unidad: 0 },
 	{ codigo: 3, nombre: 'Ayudante 2', unidad: 0 },
@@ -76,7 +78,22 @@ const FUNCIONES_CATALOGO: FuncionRequerida[] = [
 	{ codigo: 4, nombre: 'Anestesista', unidad: 0 },
 	{ codigo: 5, nombre: 'Instrumentista', unidad: 0 },
 	{ codigo: 6, nombre: 'Monitoreo', unidad: 0 },
+	{ codigo: 12, nombre: 'Patólogo', unidad: 0 },
 ];
+
+/** Roles de equipo clínico: excluye gastos (0 / 10) del catálogo imFunciones. */
+function mapFuncionesCatalogo(
+	rows: { valor: number; descripcion: string }[],
+): FuncionRequerida[] {
+	return rows
+		.filter((r) => Number.isFinite(r.valor) && r.valor > 0 && r.valor !== 10)
+		.map((r) => ({
+			codigo: Number(r.valor),
+			nombre: String(r.descripcion || '').trim() || `Función ${r.valor}`,
+			unidad: 0,
+		}))
+		.sort((a, b) => a.codigo - b.codigo);
+}
 
 let keySeq = 0;
 const nextKey = (p: string) => `${p}-${Date.now().toString(36)}-${(keySeq += 1)}`;
@@ -151,12 +168,31 @@ export default function CargarProtocoloModal({
 	);
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [funcionesCatalogo, setFuncionesCatalogo] =
+		useState<FuncionRequerida[]>(FUNCIONES_FALLBACK);
 	const timers = useRef<Record<string, number>>({});
 	const bodyRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (error) bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
 	}, [error]);
+
+	useEffect(() => {
+		if (!open) return;
+		let cancelled = false;
+		getFunciones()
+			.then((rows) => {
+				if (cancelled) return;
+				const mapped = mapFuncionesCatalogo(rows || []);
+				if (mapped.length) setFuncionesCatalogo(mapped);
+			})
+			.catch(() => {
+				if (!cancelled) setFuncionesCatalogo(FUNCIONES_FALLBACK);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [open]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -401,7 +437,7 @@ export default function CargarProtocoloModal({
 	const agregarFuncion = (key: string) => {
 		updPractica(key, (p) => {
 			const codigo = Number(p.addFuncionCodigo);
-			const f = FUNCIONES_CATALOGO.find((x) => x.codigo === codigo);
+			const f = funcionesCatalogo.find((x) => x.codigo === codigo);
 			if (!f) return p;
 			return {
 				...p,
@@ -661,7 +697,7 @@ export default function CargarProtocoloModal({
 						aria-label="Agregar función a demanda"
 					>
 						<option value="">Agregar rol…</option>
-						{FUNCIONES_CATALOGO.map((f) => (
+						{funcionesCatalogo.map((f) => (
 							<option key={f.codigo} value={f.codigo}>
 								{f.nombre}
 							</option>
