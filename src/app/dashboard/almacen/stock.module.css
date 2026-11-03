@@ -682,42 +682,47 @@
 	margin-bottom: 0.85rem;
 }
 
-/* Modal remito — llena el alto; la grilla de ítems crece */
+/* Modal remito — cabecera/pie compactos; la grilla de ítems domina el alto */
 .remitoModal {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;
 	min-height: 0;
 	height: 100%;
-	gap: 0;
+	gap: 0.4rem;
+	overflow: hidden;
 }
 
 .remitoSection {
-	padding: 0.55rem 0 0.7rem;
+	padding: 0.35rem 0 0.4rem;
 	border-bottom: 1px solid var(--sk-line);
 	flex-shrink: 0;
 }
 
-/* Cabecera remito: título de bloque ≠ label de campo */
+/* Cabecera remito compacta (un solo bloque) */
 .remitoCabCard {
 	padding: 0;
-	margin: 0 0 0.75rem;
+	margin: 0;
 	border: 1px solid var(--sk-line);
-	border-radius: 10px;
-	border-bottom: 1px solid var(--sk-line);
+	border-radius: 8px;
 	overflow: hidden;
 	background: #fff;
+	flex-shrink: 0;
+}
+
+.remitoCabCompact {
+	margin: 0;
 }
 
 .remitoCabCardHead {
-	padding: 0.5rem 0.85rem;
+	padding: 0.3rem 0.6rem;
 	background: #f1f5f9;
 	border-bottom: 1px solid var(--sk-line);
 }
 
 .remitoCabCardTitle {
 	margin: 0;
-	font-size: 0.78rem;
+	font-size: 0.7rem;
 	font-weight: 700;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
@@ -725,21 +730,28 @@
 }
 
 .remitoCabCardBody {
-	padding: 0.85rem 0.85rem 0.95rem;
+	padding: 0.4rem 0.55rem 0.45rem;
 }
 
 .remitoCabCard .field label {
-	font-size: 0.8rem;
+	font-size: 0.68rem;
 	font-weight: 600;
 	color: #64748b;
 	text-transform: none;
 	letter-spacing: 0;
-	margin-bottom: 0.35rem;
+	margin-bottom: 0.12rem;
+}
+
+.remitoCabCard .field input,
+.remitoCabCard .field select,
+.remitoCabCard .field textarea {
+	padding: 0.28rem 0.4rem;
+	font-size: 0.8rem;
 }
 
 .remitoCabCard .remitoCabRow {
-	gap: 0.85rem 1rem;
-	align-items: flex-start;
+	gap: 0.4rem 0.55rem;
+	align-items: flex-end;
 }
 
 .remitoSectionItems {
@@ -748,18 +760,59 @@
 	display: flex;
 	flex-direction: column;
 	border-bottom: none;
-	padding-bottom: 0.45rem;
+	padding: 0;
 }
 
 .remitoSectionObs {
 	flex-shrink: 0;
 	border-bottom: none;
-	padding: 0.85rem 0 0.35rem;
+	padding: 0.35rem 0 0;
 }
 
 .remitoSectionObs .field textarea {
-	min-height: 5.5rem;
+	min-height: 2.4rem;
 	resize: vertical;
+}
+
+.remitoFooter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	flex-shrink: 0;
+	padding: 0.65rem 0 0.45rem;
+	border-top: 1px solid var(--sk-line);
+	margin-top: 0.15rem;
+}
+
+.remitoObsField {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.remitoObsField textarea {
+	min-height: 2.35rem;
+	max-height: 4.5rem;
+	resize: vertical;
+	padding: 0.3rem 0.45rem;
+	font-size: 0.8rem;
+}
+
+.remitoFooterActions {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	flex-shrink: 0;
+}
+
+.remitoFooterActions .btnGhost,
+.remitoFooterActions .btnPrimary {
+	min-width: 8.25rem;
+	padding: 0.58rem 1.2rem;
+	font-size: 0.95rem;
+	font-weight: 700;
+	border-radius: 8px;
 }
 
 .remitoSectionLast {
@@ -803,6 +856,125 @@
 	min-width: 180px;
 }
 
+/* Depósito + destino siempre juntos */
+.remitoDepPair {
+	display: flex;
+	flex: 1 1 340px;
+	gap: 0.4rem;
+	min-width: min(100%, 320px);
+	align-items: flex-end;
+}
+
+.remitoDepField {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.remitoPanelTabs {
+	display: inline-flex;
+	align-items: flex-end;
+	gap: 0.2rem;
+	margin-bottom: -1px;
+	position: relative;
+	z-index: 1;
+}
+
+.remitoPanelTab {
+	appearance: none;
+	position: relative;
+	border: 1px solid transparent;
+	border-bottom: none;
+	background: #e8eef3;
+	padding: 0.5rem 1.15rem 0.55rem;
+	border-radius: 8px 8px 0 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: #64748b;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	line-height: 1.2;
+	transition: color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.remitoPanelTab:hover {
+	color: #334155;
+	background: #f1f5f9;
+}
+
+.remitoPanelTabActive {
+	color: #0a5f78;
+	background: #fff;
+	border-color: var(--sk-line);
+	border-bottom-color: #fff;
+	box-shadow: 0 -1px 0 #fff;
+}
+
+.remitoPanelTabActive::after {
+	content: '';
+	position: absolute;
+	left: 0.85rem;
+	right: 0.85rem;
+	bottom: 0;
+	height: 2px;
+	border-radius: 2px 2px 0 0;
+	background: #0083a9;
+}
+
+.remitoObsDot {
+	width: 0.55rem;
+	height: 0.55rem;
+	border-radius: 50%;
+	background: #0083a9;
+	box-shadow: 0 0 0 2px rgba(0, 131, 169, 0.2);
+	flex-shrink: 0;
+}
+
+.remitoObsPanel {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	padding: 0.65rem 0.75rem 0.75rem;
+}
+
+.remitoObsLabel {
+	font-size: 0.72rem;
+	font-weight: 600;
+	color: var(--sk-muted);
+}
+
+.remitoObsTextarea {
+	flex: 1 1 auto;
+	min-height: 10rem;
+	width: 100%;
+	resize: none;
+	padding: 0.55rem 0.65rem;
+	border: 1px solid var(--sk-line);
+	border-radius: 8px;
+	font-size: 0.95rem;
+	line-height: 1.45;
+	box-sizing: border-box;
+	color: #0f172a;
+	caret-color: #0083a9;
+	background: #fff;
+	outline: none;
+}
+
+.remitoObsTextarea::placeholder {
+	color: #94a3b8;
+	opacity: 1;
+}
+
+.remitoObsTextarea:focus {
+	border-color: #0083a9;
+	box-shadow: 0 0 0 3px rgba(0, 131, 169, 0.2);
+	outline: none;
+}
+
 .nroRemitoInputs {
 	display: flex;
 	align-items: center;
@@ -838,13 +1010,14 @@
 
 .remitoTableHead {
 	display: flex;
-	align-items: center;
+	align-items: flex-end;
 	justify-content: space-between;
-	gap: 0.75rem;
-	padding: 0.45rem 0.65rem;
-	background: #f8fafc;
+	gap: 0.65rem;
+	padding: 0.35rem 0.55rem 0;
+	background: linear-gradient(180deg, #eef3f7 0%, #e4ebf1 100%);
 	border-bottom: 1px solid var(--sk-line);
 	flex-shrink: 0;
+	min-height: 2.55rem;
 }
 
 .remitoTableHead .remitoSectionTitle {
@@ -856,6 +1029,13 @@
 	align-items: center;
 	gap: 0.4rem;
 	flex-wrap: wrap;
+	padding-bottom: 0.35rem;
+}
+
+/* Reserva espacio en Observaciones para que el header no salte */
+.remitoTableHeadActionsHidden {
+	visibility: hidden;
+	pointer-events: none;
 }
 
 .remitoTablePanel .tableWrap {
@@ -866,7 +1046,7 @@
 
 .remitoTableScroll {
 	flex: 1 1 auto;
-	min-height: 12rem;
+	min-height: 0;
 	max-height: none !important;
 	overflow: auto;
 }
@@ -888,6 +1068,27 @@
 	font-weight: 800;
 	line-height: 1;
 	vertical-align: -0.1em;
+}
+
+.cantCell {
+	cursor: text;
+	user-select: none;
+	min-width: 4.5rem;
+}
+
+.cantInlineInput {
+	width: 6.5rem;
+	max-width: 100%;
+	padding: 0.2rem 0.35rem;
+	border: 1.5px solid var(--sk-brand, #0083a9);
+	border-radius: 6px;
+	font: inherit;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-weight: 700;
+	color: #0f172a;
+	background: #fff;
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(0, 131, 169, 0.18);
 }
 
 .pacienteCell {
@@ -916,25 +1117,70 @@
 .remitoTablePanel .totals {
 	margin: 0;
 	padding: 0.45rem 0.75rem;
-	border-top: 1px solid var(--sk-line);
-	background: #f8fafc;
-	font-size: 0.82rem;
+	border-top: 2px solid #cbd5e1;
+	background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
 	flex-shrink: 0;
+	align-items: flex-end;
+	gap: 1.25rem;
+}
+
+.totalItem {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.totalLabel {
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--sk-muted);
+}
+
+.totalValue {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 1.05rem;
+	font-weight: 700;
+	line-height: 1.15;
+	color: #0f172a;
+	font-variant-numeric: tabular-nums;
+}
+
+.totalItemPrimary .totalValue {
+	font-size: 1.28rem;
+	font-weight: 800;
+	color: #0b4f63;
+	letter-spacing: -0.02em;
+}
+
+.totalItemPrimary .totalLabel {
+	color: #0b6b85;
+}
+
+.colTotal {
+	font-weight: 700;
+	font-size: 0.95rem;
+	color: #0f172a;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
 }
 
 .remitoModalActions {
-	justify-content: center;
-	gap: 0.85rem;
-	margin-top: 0.65rem;
+	justify-content: flex-end;
+	gap: 0.45rem;
+	margin-top: 0.35rem;
 	margin-bottom: 0;
-	padding: 1rem 0 1.15rem;
+	padding: 0.4rem 0 0.5rem;
 }
 
 .remitoModalActions .btnGhost,
 .remitoModalActions .btnPrimary {
-	min-width: 8.5rem;
-	padding: 0.65rem 1.35rem;
-	font-size: 0.95rem;
+	min-width: 6.5rem;
+	padding: 0.45rem 0.95rem;
+	font-size: 0.88rem;
 }
 
 .btnAddInTable {
@@ -1009,6 +1255,21 @@
 	.formGrid4,
 	.remitoHead {
 		grid-template-columns: 1fr;
+	}
+
+	.remitoFooter {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.remitoFooterActions {
+		justify-content: center;
+		width: 100%;
+	}
+
+	.remitoFooterActions .btnGhost,
+	.remitoFooterActions .btnPrimary {
+		flex: 1 1 0;
 	}
 
 	.prodCode,

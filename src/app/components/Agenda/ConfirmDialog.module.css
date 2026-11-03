@@ -13,7 +13,7 @@
 	background: #fff;
 	border-radius: 12px;
 	padding: 1.4rem;
-	max-width: 420px;
+	max-width: 480px;
 	width: 100%;
 	box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
 	animation: confirmIn 0.16s ease-out both;
@@ -42,6 +42,7 @@
 	font-size: 0.9rem;
 	color: #475569;
 	line-height: 1.5;
+	white-space: pre-line;
 }
 
 .actions {

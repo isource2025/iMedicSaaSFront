@@ -2,6 +2,7 @@
  * Lee lo que el usuario tiene a la vista (formularios, pestañas, selección)
  * para darle contexto al asistente y poder escribir en los campos.
  */
+import { resaltarElemento } from "@/app/components/UI/resaltar";
 import { erroresRecientes, type ErrorApiReciente } from "./erroresRecientes";
 
 export type CampoPantalla = {
@@ -433,18 +434,10 @@ export async function resaltarOpcion(
     el = buscar();
   }
   if (!el) return false;
-  el.scrollIntoView({ block: "center", behavior: "smooth" });
-  el.animate(
-    [
-      { boxShadow: "0 0 0 0 rgba(139, 92, 246, 0.9)" },
-      { boxShadow: "0 0 0 8px rgba(139, 92, 246, 0)" },
-    ],
-    { duration: 900, iterations: 4 },
-  );
-  const previo = el.style.outline;
-  el.style.outline = "2px solid #8b5cf6";
-  setTimeout(() => {
-    el.style.outline = previo;
-  }, 4000);
+  // Mismo efecto que UI/resaltar; violeta = identidad Asistente
+  resaltarElemento(el, {
+    color: "#8b5cf6",
+    glow: "rgba(139, 92, 246, 0.9)",
+  });
   return true;
 }

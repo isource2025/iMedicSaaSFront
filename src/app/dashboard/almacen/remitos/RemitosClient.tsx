@@ -16,7 +16,9 @@ import {
 import { almacenStockService } from '@/app/services/almacenStockService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { useToast } from '@/app/components/UI/ToastProvider';
+import { resaltarCampoLuego, resaltarElemento } from '@/app/components/UI/resaltar';
 import Modal from '@/app/components/UI/Modal';
+import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { mensajeDeError } from '@/app/utils/apiError';
 import type {
@@ -190,6 +192,9 @@ export default function RemitosClient() {
 	const [letra, setLetra] = useState('X');
 	const [nro, setNro] = useState(0);
 	const [observaciones, setObservaciones] = useState('');
+	const [remitoMainTab, setRemitoMainTab] = useState<'items' | 'obs'>('items');
+	/** Punto en solapa Observaciones: se limpia al entrar a la solapa. */
+	const [obsDotVisible, setObsDotVisible] = useState(false);
 	const [draftItems, setDraftItems] = useState<DraftItem[]>([]);
 	const [editingItemKey, setEditingItemKey] = useState<string | null>(null);
 	const [itemModal, setItemModal] = useState(false);
@@ -207,6 +212,11 @@ export default function RemitosClient() {
 	const [pacOpts, setPacOpts] = useState<{ value: number; label: string }[]>([]);
 	const [pacLoading, setPacLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [confirmCantOpen, setConfirmCantOpen] = useState(false);
+	const [confirmCantMsg, setConfirmCantMsg] = useState('');
+	const [editingCantKey, setEditingCantKey] = useState<string | null>(null);
+	const [editingCantValue, setEditingCantValue] = useState('');
+	const cantInputRef = useRef<HTMLInputElement | null>(null);
 	const [cargandoCandidatos, setCargandoCandidatos] = useState(false);
 	const [candidatosOpen, setCandidatosOpen] = useState(false);
 	const [candidatos, setCandidatos] = useState<CandidatoSalidaServicio[]>([]);
@@ -351,6 +361,8 @@ export default function RemitosClient() {
 		setGrupo(new Date().getFullYear());
 		setLetra('X');
 		setObservaciones('');
+		setRemitoMainTab('items');
+		setObsDotVisible(false);
 		setDraftItems([]);
 		setEditingItemKey(null);
 		try {
@@ -401,12 +413,13 @@ export default function RemitosClient() {
 		setGrupo(full.GrupoCbte ?? new Date().getFullYear());
 		setLetra(full.LetraCbte || 'X');
 		setNro(full.NroCbte ?? 0);
-		setObservaciones(
-			(full.observaciones || [])
-				.map((o) => o.Comentarios || '')
-				.filter(Boolean)
-				.join('\n'),
-		);
+		const obs = (full.observaciones || [])
+			.map((o) => o.Comentarios || '')
+			.filter(Boolean)
+			.join('\n');
+		setObservaciones(obs);
+		setRemitoMainTab('items');
+		setObsDotVisible(!!obs.trim());
 		setDraftItems(
 			(full.items || []).map((it) => ({
 				...it,
@@ -649,21 +662,26 @@ export default function RemitosClient() {
 		setItemModal(true);
 	};
 
+	const avisarCampo = (campo: string, mensaje: string) => {
+		toast.error(mensaje);
+		resaltarCampoLuego(campo);
+	};
+
 	const commitItem = () => {
 		const idProd = Number(itemForm.IdProducto);
 		const cant = Number(itemForm.Cantidad);
 		const unit = Number(itemForm.ImporteUnitario);
 		if (!Number.isFinite(idProd) || idProd <= 0 || !itemForm.DescripcionProducto.trim()) {
-			toast.error('Seleccioná un producto válido de la tabla Productos');
+			avisarCampo('item-producto', 'Seleccioná un producto válido de la tabla Productos');
 			return;
 		}
 		if (!Number.isFinite(cant) || cant === 0) {
-			toast.error('Cantidad inválida');
+			avisarCampo('item-cantidad', 'Cantidad inválida');
 			return;
 		}
 		// Id paciente: solo si viene de imPacientes (lookup), no texto libre
 		if ((itemForm.PacienteLabel || '').trim() && !itemForm.IdPaciente) {
-			toast.error('Seleccioná el paciente desde la tabla imPacientes');
+			avisarCampo('item-paciente', 'Seleccioná el paciente desde la tabla imPacientes');
 			return;
 		}
 		const prev = editingItemKey
@@ -709,11 +727,11 @@ export default function RemitosClient() {
 
 	const cargarCandidatosServicio = async () => {
 		if (!esSalidaServicio) {
-			toast.error('Esta acción es solo para remito salida a servicio (RSM)');
+			avisarCampo('remito-tipo', 'Esta acción es solo para remito salida a servicio (RSM)');
 			return;
 		}
 		if (idDepositoDest === '') {
-			toast.error('Seleccioná primero el depósito destino (sector/servicio)');
+			avisarCampo('remito-dep-dest', 'Seleccioná primero el depósito destino (sector/servicio)');
 			return;
 		}
 		setCargandoCandidatos(true);
@@ -813,39 +831,45 @@ export default function RemitosClient() {
 		}
 	};
 
-	const saveRemito = async () => {
-		if (!tipoCbte) {
-			toast.error('Seleccioná el tipo de remito (Tipos_Remitos)');
+	useEffect(() => {
+		if (!editingCantKey) return;
+		cantInputRef.current?.focus();
+		cantInputRef.current?.select();
+	}, [editingCantKey]);
+
+	const startEditCantidad = (key: string, cant: number) => {
+		setEditingCantKey(key);
+		setEditingCantValue(String(cant));
+	};
+
+	const cancelEditCantidad = () => {
+		setEditingCantKey(null);
+		setEditingCantValue('');
+	};
+
+	const commitEditCantidad = (key: string) => {
+		const raw = editingCantValue.trim().replace(',', '.');
+		const cant = Number(raw);
+		if (!Number.isFinite(cant) || cant === 0) {
+			toast.error('Cantidad inválida');
+			if (cantInputRef.current) resaltarElemento(cantInputRef.current);
 			return;
 		}
-		if (idDeposito === '') {
-			toast.error('Seleccioná el depósito (Depositos)');
-			return;
-		}
-		if (campos.usaDepDestino && idDepositoDest === '') {
-			toast.error('Seleccioná el depósito destino (Depositos)');
-			return;
-		}
-		if (campos.usaProveedor && idProveedor === '') {
-			toast.error('Seleccioná el proveedor (PROVEEDORES)');
-			return;
-		}
-		if (campos.usaCliente && (idCliente === '' || !Number.isFinite(Number(idCliente)))) {
-			toast.error('Seleccioná un cliente de la tabla Clientes');
-			return;
-		}
-		if (!draftItems.length) {
-			toast.error('Agregá al menos un ítem');
-			return;
-		}
-		const cantSospechosas = draftItems.filter((it) =>
-			motivoCantidadSospechosa(it.Cantidad, it.IdUnidad),
+		setDraftItems((prev) =>
+			prev.map((it) => {
+				if (it._key !== key) return it;
+				const unit = Number(it.ImporteUnitario) || 0;
+				return {
+					...it,
+					Cantidad: cant,
+					ImporteTotal: cant * unit,
+				};
+			}),
 		);
-		if (cantSospechosas.length) {
-			toast.warning(
-				`${cantSospechosas.length} ítem${cantSospechosas.length === 1 ? '' : 's'} con cantidad sospechosa — se guarda igual; revisá si hace falta corregir.`,
-			);
-		}
+		cancelEditCantidad();
+	};
+
+	const ejecutarGuardadoRemito = async () => {
 		const isEdit = editingId != null;
 		setSaving(true);
 		const payload = {
@@ -878,6 +902,7 @@ export default function RemitosClient() {
 					? `Remito ${saved.NroRemitoFmt || saved.IdTransaccion} actualizado`
 					: `Remito ${saved.NroRemitoFmt || saved.IdTransaccion} guardado`,
 			);
+			setConfirmCantOpen(false);
 			setModalOpen(false);
 			setEditingId(null);
 			if (!isEdit) setPage(1);
@@ -887,6 +912,73 @@ export default function RemitosClient() {
 		} finally {
 			setSaving(false);
 		}
+	};
+
+	const saveRemito = async () => {
+		if (!tipoCbte) {
+			avisarCampo('remito-tipo', 'Seleccioná el tipo de remito (Tipos_Remitos)');
+			return;
+		}
+		if (idDeposito === '') {
+			avisarCampo('remito-deposito', 'Seleccioná el depósito (Depositos)');
+			return;
+		}
+		if (campos.usaDepDestino && idDepositoDest === '') {
+			avisarCampo('remito-dep-dest', 'Seleccioná el depósito destino (Depositos)');
+			return;
+		}
+		if (campos.usaProveedor && idProveedor === '') {
+			avisarCampo('remito-proveedor', 'Seleccioná el proveedor (PROVEEDORES)');
+			return;
+		}
+		if (campos.usaCliente && (idCliente === '' || !Number.isFinite(Number(idCliente)))) {
+			avisarCampo('remito-cliente', 'Seleccioná un cliente de la tabla Clientes');
+			return;
+		}
+		if (!draftItems.length) {
+			toast.error('Agregá al menos un ítem');
+			setRemitoMainTab('items');
+			resaltarCampoLuego('remito-agregar-item');
+			return;
+		}
+		let itemsActuales = draftItems;
+		if (editingCantKey) {
+			const raw = editingCantValue.trim().replace(',', '.');
+			const cant = Number(raw);
+			if (!Number.isFinite(cant) || cant === 0) {
+				toast.error('Cantidad inválida');
+				if (cantInputRef.current) resaltarElemento(cantInputRef.current);
+				return;
+			}
+			itemsActuales = draftItems.map((it) => {
+				if (it._key !== editingCantKey) return it;
+				const unit = Number(it.ImporteUnitario) || 0;
+				return { ...it, Cantidad: cant, ImporteTotal: cant * unit };
+			});
+			setDraftItems(itemsActuales);
+			cancelEditCantidad();
+		}
+		const cantSospechosas = itemsActuales.filter((it) =>
+			motivoCantidadSospechosa(it.Cantidad, it.IdUnidad),
+		);
+		if (cantSospechosas.length) {
+			const maxList = 8;
+			const lineas = cantSospechosas.slice(0, maxList).map((it) => {
+				const motivo = motivoCantidadSospechosa(it.Cantidad, it.IdUnidad) || '';
+				const nombre = (it.DescripcionProducto || String(it.IdProducto)).trim();
+				return `• ${nombre}: ${fmtCantidad(it.Cantidad)} — ${motivo}`;
+			});
+			const extra =
+				cantSospechosas.length > maxList
+					? `\n…y ${cantSospechosas.length - maxList} más.`
+					: '';
+			setConfirmCantMsg(
+				`Hay ${cantSospechosas.length} ítem${cantSospechosas.length === 1 ? '' : 's'} con cantidad anómala:\n\n${lineas.join('\n')}${extra}\n\nDoble clic en la cantidad para corregir, o guardá igual.`,
+			);
+			setConfirmCantOpen(true);
+			return;
+		}
+		await ejecutarGuardadoRemito();
 	};
 
 	return (
@@ -1188,7 +1280,9 @@ export default function RemitosClient() {
 											<td className={styles.mono}>{it.Cantidad}</td>
 											<td>{it.IdUnidad || '—'}</td>
 											<td className={styles.mono}>{fmtMoney(it.ImporteUnitario)}</td>
-											<td className={styles.mono}>{fmtMoney(it.ImporteTotal)}</td>
+											<td className={`${styles.mono} ${styles.colTotal}`}>
+												{fmtMoney(it.ImporteTotal)}
+											</td>
 											<td className={styles.pacienteCell}>
 												{it.PacienteNombre || it.IdPaciente != null ? (
 													<>
@@ -1211,8 +1305,16 @@ export default function RemitosClient() {
 							</table>
 						</div>
 						<div className={styles.totals}>
-							<span>Total bultos: {detail.Bultos ?? 0}</span>
-							<span>Total remito: {fmtMoney(detail.TotalRemito ?? detail.ImportePPP)}</span>
+							<div className={styles.totalItem}>
+								<span className={styles.totalLabel}>Total bultos</span>
+								<span className={styles.totalValue}>{fmtCantidad(detail.Bultos ?? 0)}</span>
+							</div>
+							<div className={`${styles.totalItem} ${styles.totalItemPrimary}`}>
+								<span className={styles.totalLabel}>Total remito</span>
+								<span className={styles.totalValue}>
+									{fmtMoney(detail.TotalRemito ?? detail.ImportePPP)}
+								</span>
+							</div>
 						</div>
 						{(canEdit || canDelete) && (
 							<div className={styles.modalActions}>
@@ -1254,17 +1356,14 @@ export default function RemitosClient() {
 				size="full"
 			>
 				<div className={styles.remitoModal}>
-					<section className={`${styles.remitoSection} ${styles.remitoCabCard}`}>
-						<header className={styles.remitoCabCardHead}>
-							<h3 className={styles.remitoCabCardTitle}>Comprobante</h3>
-						</header>
+					<section className={`${styles.remitoCabCard} ${styles.remitoCabCompact}`}>
 						<div className={styles.remitoCabCardBody}>
 							<div className={styles.remitoCabRow}>
 								<div className={`${styles.field} ${styles.remitoFecha}`}>
 									<label>Fecha</label>
 									<input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
 								</div>
-								<div className={`${styles.field} ${styles.remitoTipo}`}>
+								<div className={`${styles.field} ${styles.remitoTipo}`} data-resaltar="remito-tipo">
 									<label>Tipo de remito</label>
 									<CustomSelect
 										label=""
@@ -1299,44 +1398,36 @@ export default function RemitosClient() {
 										/>
 									</div>
 								</div>
-							</div>
-						</div>
-					</section>
-
-					<section className={`${styles.remitoSection} ${styles.remitoCabCard}`}>
-						<header className={styles.remitoCabCardHead}>
-							<h3 className={styles.remitoCabCardTitle}>Depósito y contraparte</h3>
-						</header>
-						<div className={styles.remitoCabCardBody}>
-							<div className={styles.remitoCabRow}>
-								<div className={`${styles.field} ${styles.remitoGrow}`}>
-									<label>Depósito</label>
-									<CustomSelect
-										label=""
-										name="remito-deposito"
-										value={idDeposito}
-										isLoading={false}
-										compact
-										options={depositoOptions}
-										onChange={(v) => setIdDeposito(v === '' ? '' : Number(v))}
-									/>
-								</div>
-								{campos.usaDepDestino && (
-									<div className={`${styles.field} ${styles.remitoGrow}`}>
-										<label>Depósito destino</label>
+								<div className={styles.remitoDepPair}>
+									<div className={`${styles.field} ${styles.remitoDepField}`} data-resaltar="remito-deposito">
+										<label>Depósito</label>
 										<CustomSelect
 											label=""
-											name="remito-dep-dest"
-											value={idDepositoDest}
+											name="remito-deposito"
+											value={idDeposito}
 											isLoading={false}
 											compact
 											options={depositoOptions}
-											onChange={(v) => setIdDepositoDest(v === '' ? '' : Number(v))}
+											onChange={(v) => setIdDeposito(v === '' ? '' : Number(v))}
 										/>
 									</div>
-								)}
+									{campos.usaDepDestino && (
+										<div className={`${styles.field} ${styles.remitoDepField}`} data-resaltar="remito-dep-dest">
+											<label>Depósito destino</label>
+											<CustomSelect
+												label=""
+												name="remito-dep-dest"
+												value={idDepositoDest}
+												isLoading={false}
+												compact
+												options={depositoOptions}
+												onChange={(v) => setIdDepositoDest(v === '' ? '' : Number(v))}
+											/>
+										</div>
+									)}
+								</div>
 								{campos.usaProveedor && (
-									<div className={`${styles.field} ${styles.remitoGrow}`}>
+									<div className={`${styles.field} ${styles.remitoGrow}`} data-resaltar="remito-proveedor">
 										<label>Proveedor</label>
 										<CustomSelect
 											label=""
@@ -1359,7 +1450,7 @@ export default function RemitosClient() {
 									</div>
 								)}
 								{campos.usaCliente && (
-									<div className={`${styles.field} ${styles.remitoGrow}`}>
+									<div className={`${styles.field} ${styles.remitoGrow}`} data-resaltar="remito-cliente">
 										<label>Cliente</label>
 										<CustomSelect
 											label=""
@@ -1386,13 +1477,51 @@ export default function RemitosClient() {
 					<section className={`${styles.remitoSection} ${styles.remitoSectionItems}`}>
 						<div className={styles.remitoTablePanel}>
 							<div className={styles.remitoTableHead}>
-								<h3 className={styles.remitoSectionTitle}>Ítems</h3>
-								<div className={styles.remitoTableHeadActions}>
+								<div className={styles.remitoPanelTabs} role="tablist" aria-label="Sección del remito">
+									<button
+										type="button"
+										role="tab"
+										aria-selected={remitoMainTab === 'items'}
+										className={`${styles.remitoPanelTab}${
+											remitoMainTab === 'items' ? ` ${styles.remitoPanelTabActive}` : ''
+										}`}
+										onClick={() => {
+											setRemitoMainTab('items');
+											if (observaciones.trim()) setObsDotVisible(true);
+										}}
+									>
+										Ítems
+									</button>
+									<button
+										type="button"
+										role="tab"
+										aria-selected={remitoMainTab === 'obs'}
+										className={`${styles.remitoPanelTab}${
+											remitoMainTab === 'obs' ? ` ${styles.remitoPanelTabActive}` : ''
+										}`}
+										onClick={() => {
+											setRemitoMainTab('obs');
+											setObsDotVisible(false);
+										}}
+									>
+										Observaciones
+										{obsDotVisible ? (
+											<span className={styles.remitoObsDot} aria-label="Hay observaciones" />
+										) : null}
+									</button>
+								</div>
+								<div
+									className={`${styles.remitoTableHeadActions}${
+										remitoMainTab !== 'items' ? ` ${styles.remitoTableHeadActionsHidden}` : ''
+									}`}
+									aria-hidden={remitoMainTab !== 'items'}
+								>
 									{esSalidaServicio && (
 										<button
 											type="button"
 											className={styles.btnGhost}
-											disabled={cargandoCandidatos}
+											disabled={cargandoCandidatos || remitoMainTab !== 'items'}
+											tabIndex={remitoMainTab === 'items' ? undefined : -1}
 											onClick={() => void cargarCandidatosServicio()}
 											title="Medicación y descartables (Tipo M) de internaciones activas del depósito destino"
 										>
@@ -1400,141 +1529,215 @@ export default function RemitosClient() {
 											{cargandoCandidatos ? 'Cargando…' : 'Desde internaciones'}
 										</button>
 									)}
-									<button type="button" className={styles.btnAddInTable} onClick={openAddItem}>
+									<button
+										type="button"
+										className={styles.btnAddInTable}
+										data-resaltar="remito-agregar-item"
+										disabled={remitoMainTab !== 'items'}
+										tabIndex={remitoMainTab === 'items' ? undefined : -1}
+										onClick={openAddItem}
+									>
 										<Plus size={14} />
 										Agregar ítem
 									</button>
 								</div>
 							</div>
-							<div className={`${styles.tableWrap} ${styles.remitoTableScroll}`}>
-								<table className={styles.table}>
-									<thead>
-										<tr>
-											<th>Cód.</th>
-											<th>Descripción</th>
-											<th>Cant.</th>
-											<th>U.Med</th>
-											<th>Imp. unit.</th>
-											<th>Total</th>
-											<th>Paciente</th>
-											<th className={styles.colActions}>Acciones</th>
-										</tr>
-									</thead>
-									<tbody>
-										{draftItems.length === 0 ? (
-											<tr>
-												<td colSpan={8} className={styles.muted} style={{ textAlign: 'center' }}>
-													Sin ítems — usá «Agregar ítem»
-												</td>
-											</tr>
-										) : (
-											draftItems.map((it) => {
-												const avisoCant = motivoCantidadSospechosa(it.Cantidad, it.IdUnidad);
-												return (
-												<tr key={it._key} className={avisoCant ? styles.rowWarn : undefined}>
-													<td className={styles.mono}>{it.IdProducto}</td>
-													<td>{it.DescripcionProducto || '—'}</td>
-													<td
-														className={`${styles.mono}${avisoCant ? ` ${styles.cantWarn}` : ''}`}
-														title={avisoCant || undefined}
-													>
-														{fmtCantidad(it.Cantidad)}
-														{avisoCant ? (
-															<span className={styles.cantWarnHint} aria-label={avisoCant}>
-																{' '}
-																!
-															</span>
-														) : null}
-													</td>
-													<td>{it.IdUnidad || '—'}</td>
-													<td className={styles.mono}>{fmtMoney(it.ImporteUnitario)}</td>
-													<td className={styles.mono}>{fmtMoney(it.ImporteTotal)}</td>
-													<td className={styles.pacienteCell}>
-														{it.PacienteNombre || it.IdPaciente != null ? (
-															<>
-																<div className={styles.pacienteNombre}>
-																	{it.PacienteNombre || `Pac. ${it.IdPaciente}`}
-																</div>
-																{metaPacienteCorta(it) ? (
-																	<div className={styles.pacienteMeta}>{metaPacienteCorta(it)}</div>
-																) : it.IdPaciente != null && it.PacienteNombre ? (
-																	<div className={styles.pacienteMeta}>#{it.IdPaciente}</div>
-																) : null}
-															</>
-														) : (
-															<span className={styles.muted}>—</span>
-														)}
-													</td>
-													<td className={styles.colActions}>
-														<div className={styles.rowActions}>
-															<button
-																type="button"
-																className={styles.actionEdit}
-																title="Editar"
-																aria-label={`Editar ítem ${it.IdProducto}`}
-																onClick={() => openEditItem(it._key)}
-															>
-																<Pencil size={16} />
-															</button>
-															<button
-																type="button"
-																className={styles.actionDelete}
-																title="Eliminar"
-																aria-label={`Eliminar ítem ${it.IdProducto}`}
-																onClick={() => deleteItem(it._key)}
-															>
-																<Trash2 size={16} />
-															</button>
-														</div>
-													</td>
+							{remitoMainTab === 'items' ? (
+								<>
+									<div className={`${styles.tableWrap} ${styles.remitoTableScroll}`}>
+										<table className={styles.table}>
+											<thead>
+												<tr>
+													<th>Cód.</th>
+													<th>Descripción</th>
+													<th>Cant.</th>
+													<th>U.Med</th>
+													<th>Imp. unit.</th>
+													<th>Total</th>
+													<th>Paciente</th>
+													<th className={styles.colActions}>Acciones</th>
 												</tr>
-												);
-											})
-										)}
-									</tbody>
-								</table>
-							</div>
-							<div className={styles.totals}>
-								<span>Total bultos: {totalBultos}</span>
-								<span>Total remito: {fmtMoney(totalRemito)}</span>
-							</div>
+											</thead>
+											<tbody>
+												{draftItems.length === 0 ? (
+													<tr>
+														<td colSpan={8} className={styles.muted} style={{ textAlign: 'center' }}>
+															Sin ítems — usá «Agregar ítem»
+														</td>
+													</tr>
+												) : (
+													draftItems.map((it) => {
+														const avisoCant = motivoCantidadSospechosa(it.Cantidad, it.IdUnidad);
+														return (
+														<tr key={it._key} className={avisoCant ? styles.rowWarn : undefined}>
+															<td className={styles.mono}>{it.IdProducto}</td>
+															<td>{it.DescripcionProducto || '—'}</td>
+															<td
+																className={`${styles.mono} ${styles.cantCell}${avisoCant ? ` ${styles.cantWarn}` : ''}`}
+																title={
+																	editingCantKey === it._key
+																		? undefined
+																		: avisoCant
+																			? `${avisoCant} · Doble clic para editar`
+																			: 'Doble clic para editar cantidad'
+																}
+																onDoubleClick={() => {
+																	if (editingCantKey !== it._key) {
+																		startEditCantidad(it._key, it.Cantidad);
+																	}
+																}}
+															>
+																{editingCantKey === it._key ? (
+																	<input
+																		ref={cantInputRef}
+																		className={styles.cantInlineInput}
+																		type="text"
+																		inputMode="decimal"
+																		value={editingCantValue}
+																		aria-label={`Cantidad de ${it.DescripcionProducto || it.IdProducto}`}
+																		onChange={(e) => setEditingCantValue(e.target.value)}
+																		onBlur={() => commitEditCantidad(it._key)}
+																		onKeyDown={(e) => {
+																			if (e.key === 'Enter') {
+																				e.preventDefault();
+																				commitEditCantidad(it._key);
+																			} else if (e.key === 'Escape') {
+																				e.preventDefault();
+																				cancelEditCantidad();
+																			}
+																		}}
+																	/>
+																) : (
+																	<>
+																		{fmtCantidad(it.Cantidad)}
+																		{avisoCant ? (
+																			<span className={styles.cantWarnHint} aria-label={avisoCant}>
+																				{' '}
+																				!
+																			</span>
+																		) : null}
+																	</>
+																)}
+															</td>
+															<td>{it.IdUnidad || '—'}</td>
+															<td className={styles.mono}>{fmtMoney(it.ImporteUnitario)}</td>
+															<td className={`${styles.mono} ${styles.colTotal}`}>
+																{fmtMoney(it.ImporteTotal)}
+															</td>
+															<td className={styles.pacienteCell}>
+																{it.PacienteNombre || it.IdPaciente != null ? (
+																	<>
+																		<div className={styles.pacienteNombre}>
+																			{it.PacienteNombre || `Pac. ${it.IdPaciente}`}
+																		</div>
+																		{metaPacienteCorta(it) ? (
+																			<div className={styles.pacienteMeta}>{metaPacienteCorta(it)}</div>
+																		) : it.IdPaciente != null && it.PacienteNombre ? (
+																			<div className={styles.pacienteMeta}>#{it.IdPaciente}</div>
+																		) : null}
+																	</>
+																) : (
+																	<span className={styles.muted}>—</span>
+																)}
+															</td>
+															<td className={styles.colActions}>
+																<div className={styles.rowActions}>
+																	<button
+																		type="button"
+																		className={styles.actionEdit}
+																		title="Editar"
+																		aria-label={`Editar ítem ${it.IdProducto}`}
+																		onClick={() => openEditItem(it._key)}
+																	>
+																		<Pencil size={16} />
+																	</button>
+																	<button
+																		type="button"
+																		className={styles.actionDelete}
+																		title="Eliminar"
+																		aria-label={`Eliminar ítem ${it.IdProducto}`}
+																		onClick={() => deleteItem(it._key)}
+																	>
+																		<Trash2 size={16} />
+																	</button>
+																</div>
+															</td>
+														</tr>
+														);
+													})
+												)}
+											</tbody>
+										</table>
+									</div>
+									<div className={styles.totals}>
+										<div className={styles.totalItem}>
+											<span className={styles.totalLabel}>Total bultos</span>
+											<span className={styles.totalValue}>{fmtCantidad(totalBultos)}</span>
+										</div>
+										<div className={`${styles.totalItem} ${styles.totalItemPrimary}`}>
+											<span className={styles.totalLabel}>Total remito</span>
+											<span className={styles.totalValue}>{fmtMoney(totalRemito)}</span>
+										</div>
+									</div>
+								</>
+							) : (
+								<div className={styles.remitoObsPanel}>
+									<label className={styles.remitoObsLabel} htmlFor="remito-observaciones">
+										Notas del remito
+									</label>
+									<textarea
+										id="remito-observaciones"
+										className={styles.remitoObsTextarea}
+										rows={10}
+										value={observaciones}
+										onChange={(e) => {
+											const v = e.target.value;
+											setObservaciones(v);
+											if (v.trim()) setObsDotVisible(false);
+										}}
+										placeholder="Observaciones…"
+										autoFocus
+									/>
+								</div>
+							)}
 						</div>
 					</section>
 
-					<section className={`${styles.remitoSection} ${styles.remitoSectionObs}`}>
-						<div className={styles.field}>
-							<label>Observaciones</label>
-							<textarea
-								rows={4}
-								value={observaciones}
-								onChange={(e) => setObservaciones(e.target.value)}
-								placeholder="Notas del remito…"
-							/>
+					<footer className={styles.remitoFooter}>
+						<div className={styles.remitoFooterActions}>
+							<button
+								type="button"
+								className={styles.btnGhost}
+								onClick={() => {
+									setModalOpen(false);
+									setEditingId(null);
+								}}
+							>
+								Cancelar
+							</button>
+							<button
+								type="button"
+								className={styles.btnPrimary}
+								disabled={saving}
+								onClick={() => void saveRemito()}
+							>
+								{saving ? 'Guardando…' : 'Aceptar'}
+							</button>
 						</div>
-					</section>
-
-					<div className={`${styles.modalActions} ${styles.remitoModalActions}`}>
-						<button
-							type="button"
-							className={styles.btnGhost}
-							onClick={() => {
-								setModalOpen(false);
-								setEditingId(null);
-							}}
-						>
-							Cancelar
-						</button>
-						<button
-							type="button"
-							className={styles.btnPrimary}
-							disabled={saving}
-							onClick={() => void saveRemito()}
-						>
-							{saving ? 'Guardando…' : 'Aceptar'}
-						</button>
-					</div>
+					</footer>
 				</div>
 			</Modal>
+
+			<ConfirmDialog
+				open={confirmCantOpen}
+				title="Cantidades anómalas"
+				message={confirmCantMsg}
+				confirmLabel="Guardar igual"
+				cancelLabel="Revisar"
+				busy={saving}
+				onCancel={() => setConfirmCantOpen(false)}
+				onConfirm={() => void ejecutarGuardadoRemito()}
+			/>
 
 			{/* Candidatos medicación/descartables de internaciones (RSM) */}
 			<Modal
@@ -1639,7 +1842,7 @@ export default function RemitosClient() {
 				priority="high"
 			>
 				<div className={styles.formGrid}>
-					<div className={styles.full}>
+					<div className={styles.full} data-resaltar="item-producto">
 						<CustomSelect
 							label="Producto"
 							name="item-producto"
@@ -1655,7 +1858,7 @@ export default function RemitosClient() {
 							onChange={(v) => void onSelectProducto(v)}
 						/>
 					</div>
-					<div className={styles.field}>
+					<div className={styles.field} data-resaltar="item-cantidad">
 						<label>Cantidad</label>
 						<input
 							type="number"
@@ -1677,7 +1880,7 @@ export default function RemitosClient() {
 							onChange={(e) => setItemForm((f) => ({ ...f, ImporteUnitario: e.target.value }))}
 						/>
 					</div>
-					<div className={styles.full}>
+					<div className={styles.full} data-resaltar="item-paciente">
 						<CustomSelect
 							label="Paciente"
 							name="item-paciente"

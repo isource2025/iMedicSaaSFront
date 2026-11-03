@@ -11,9 +11,17 @@ import {
 	type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { AlertTriangle, Check, Info, X, XCircle } from 'lucide-react';
 import styles from './ToastProvider.module.css';
 
 export type ToastVariant = 'info' | 'success' | 'warning' | 'error';
+
+const VARIANT_ICON: Record<ToastVariant, typeof Check> = {
+	success: Check,
+	warning: AlertTriangle,
+	error: XCircle,
+	info: Info,
+};
 
 export type ToastInput = {
 	message: string;
@@ -120,39 +128,44 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 		mounted && typeof document !== 'undefined'
 			? createPortal(
 					<div className={styles.host} aria-live="polite" aria-relevant="additions">
-						{items.map((item) => (
-							<div
-								key={item.id}
-								className={`${styles.toast} ${styles[item.variant]}`}
-								role="status"
-							>
-								<span className={styles.dot} aria-hidden />
-								<div className={styles.body}>
-									{item.title ? <strong className={styles.title}>{item.title}</strong> : null}
-									<span className={styles.message}>{item.message}</span>
-								</div>
-								{item.actionLabel && item.onAction ? (
+						{items.map((item) => {
+							const Icon = VARIANT_ICON[item.variant];
+							return (
+								<div
+									key={item.id}
+									className={`${styles.toast} ${styles[item.variant]}`}
+									role="status"
+								>
+									<span className={styles.icon} aria-hidden>
+										<Icon size={16} strokeWidth={2.75} />
+									</span>
+									<div className={styles.body}>
+										{item.title ? <strong className={styles.title}>{item.title}</strong> : null}
+										<span className={styles.message}>{item.message}</span>
+									</div>
+									{item.actionLabel && item.onAction ? (
+										<button
+											type="button"
+											className={styles.action}
+											onClick={() => {
+												item.onAction?.();
+												dismiss(item.id);
+											}}
+										>
+											{item.actionLabel}
+										</button>
+									) : null}
 									<button
 										type="button"
-										className={styles.action}
-										onClick={() => {
-											item.onAction?.();
-											dismiss(item.id);
-										}}
+										className={styles.close}
+										aria-label="Cerrar"
+										onClick={() => dismiss(item.id)}
 									>
-										{item.actionLabel}
+										<X size={18} strokeWidth={2.25} />
 									</button>
-								) : null}
-								<button
-									type="button"
-									className={styles.close}
-									aria-label="Cerrar"
-									onClick={() => dismiss(item.id)}
-								>
-									×
-								</button>
-							</div>
-						))}
+								</div>
+							);
+						})}
 					</div>,
 					document.body,
 				)

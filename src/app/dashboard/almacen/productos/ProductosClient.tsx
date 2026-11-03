@@ -14,6 +14,7 @@ import {
 import { almacenStockService } from '@/app/services/almacenStockService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { useToast } from '@/app/components/UI/ToastProvider';
+import { resaltarCampoLuego } from '@/app/components/UI/resaltar';
 import Modal from '@/app/components/UI/Modal';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { mensajeDeError } from '@/app/utils/apiError';
@@ -270,6 +271,7 @@ export default function ProductosClient() {
 	const save = async () => {
 		if (!form.Descripcion.trim()) {
 			toast.error('La descripción es obligatoria');
+			resaltarCampoLuego('producto-descripcion');
 			return;
 		}
 		setSaving(true);
@@ -495,7 +497,10 @@ export default function ProductosClient() {
 										onChange={(e) => setForm((f) => ({ ...f, IdTipoMateria: e.target.value }))}
 									/>
 								</div>
-								<div className={`${styles.field} ${styles.prodGrow}`}>
+								<div
+									className={`${styles.field} ${styles.prodGrow}`}
+									data-resaltar="producto-descripcion"
+								>
 									<label>Descripción</label>
 									<input
 										value={form.Descripcion}

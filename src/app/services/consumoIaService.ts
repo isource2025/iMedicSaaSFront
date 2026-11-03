@@ -1,9 +1,4 @@
-import { apiService } from "./axios";
-
-interface ApiOk<T> {
-  success: boolean;
-  data: T;
-}
+/** Tipos del reporte de consumo IA (UI solo superadmin). */
 
 export type TokensIa = {
   entrada: number;
@@ -121,33 +116,3 @@ export type FiltrosConsumoIa = {
   actor?: number | null;
 };
 
-function params(f: FiltrosConsumoIa, extra?: Record<string, unknown>) {
-  const p: Record<string, unknown> = { ...extra };
-  if (f.desde) p.desde = f.desde;
-  if (f.hasta) p.hasta = f.hasta;
-  if (f.actor != null) p.actor = f.actor;
-  return p;
-}
-
-export const consumoIaService = {
-  async reporte(f: FiltrosConsumoIa): Promise<ReporteConsumoIa> {
-    const res = await apiService.get<ApiOk<ReporteConsumoIa>>(
-      "/asistente/consumo",
-      { params: params(f) },
-    );
-    return res.data.data;
-  },
-  async mensajes(
-    f: FiltrosConsumoIa,
-    pagina = 1,
-    limite = 50,
-  ): Promise<PaginaMensajesIa> {
-    const res = await apiService.get<ApiOk<PaginaMensajesIa>>(
-      "/asistente/consumo/mensajes",
-      {
-        params: params(f, { pagina, limite }),
-      },
-    );
-    return res.data.data;
-  },
-};

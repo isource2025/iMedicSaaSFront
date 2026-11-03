@@ -1,57 +1,85 @@
-/* Toasts globales — esquina superior derecha (no competir con FABs abajo) */
+/* Toasts globales — estilo Agenda / sistema iMedic (pantone 314c) */
 
 .host {
 	position: fixed;
-	top: 1.15rem;
-	right: 1.15rem;
+	top: 1.35rem;
+	right: 1.35rem;
 	z-index: 12000;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: 0.45rem;
+	gap: 0.65rem;
 	pointer-events: none;
-	max-width: min(340px, calc(100vw - 1.5rem));
+	max-width: min(420px, calc(100vw - 1.75rem));
 }
 
 .toast {
 	pointer-events: auto;
 	display: flex;
 	align-items: flex-start;
-	gap: 0.5rem;
-	padding: 0.55rem 0.65rem 0.55rem 0.7rem;
-	background: #0f172a;
-	color: #f8fafc;
-	border-radius: 10px;
+	gap: 0.75rem;
+	padding: 0.9rem 1rem 0.9rem 0.95rem;
+	background: #fff;
+	color: #0f172a;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
 	box-shadow:
-		0 10px 28px rgba(15, 23, 42, 0.28),
-		0 0 0 1px rgba(255, 255, 255, 0.06);
-	font-size: 0.82rem;
+		0 14px 36px rgba(15, 23, 42, 0.14),
+		0 2px 8px rgba(15, 23, 42, 0.06);
+	font-size: 0.95rem;
 	font-weight: 500;
-	line-height: 1.35;
-	animation: toastIn 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+	line-height: 1.45;
+	animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 	max-width: 100%;
+	width: min(420px, calc(100vw - 1.75rem));
 }
 
-.dot {
-	width: 0.45rem;
-	height: 0.45rem;
+.icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
 	border-radius: 50%;
-	margin-top: 0.4rem;
 	flex-shrink: 0;
-	background: #38bdf8;
+	margin-top: 0.05rem;
+	color: #fff;
 }
 
-.success .dot {
-	background: #22c55e;
+.success {
+	background: #f0fdf4;
+	border-color: #bbf7d0;
 }
-.warning .dot {
-	background: #f59e0b;
+
+.success .icon {
+	background: #16a34a;
 }
-.error .dot {
-	background: #f87171;
+
+.warning {
+	background: #fffbeb;
+	border-color: #fde68a;
 }
-.info .dot {
-	background: #38bdf8;
+
+.warning .icon {
+	background: #d97706;
+}
+
+.error {
+	background: #fef2f2;
+	border-color: #fecaca;
+}
+
+.error .icon {
+	background: #dc2626;
+}
+
+.info {
+	background: #f0f9ff;
+	border-color: #bae6fd;
+}
+
+.info .icon {
+	background: #0083a9;
 }
 
 .body {
@@ -59,57 +87,89 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 0.1rem;
+	gap: 0.2rem;
+	padding-top: 0.1rem;
 }
 
 .title {
-	font-size: 0.72rem;
-	font-weight: 700;
-	letter-spacing: 0.02em;
+	font-size: 0.78rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	opacity: 0.85;
+	color: #475569;
+}
+
+.success .title {
+	color: #166534;
+}
+.warning .title {
+	color: #92400e;
+}
+.error .title {
+	color: #991b1b;
+}
+.info .title {
+	color: #0b5f78;
 }
 
 .message {
 	word-break: break-word;
+	color: #1e293b;
+	font-size: 0.95rem;
+	line-height: 1.45;
+}
+
+.success .message {
+	color: #14532d;
+}
+.warning .message {
+	color: #78350f;
+}
+.error .message {
+	color: #7f1d1d;
+}
+.info .message {
+	color: #0f172a;
 }
 
 .action {
 	border: none;
-	background: rgba(255, 255, 255, 0.12);
+	background: #0083a9;
 	color: #fff;
-	font-size: 0.75rem;
-	font-weight: 600;
-	padding: 0.25rem 0.5rem;
-	border-radius: 6px;
+	font-size: 0.82rem;
+	font-weight: 700;
+	padding: 0.4rem 0.7rem;
+	border-radius: 8px;
 	cursor: pointer;
 	flex-shrink: 0;
 	align-self: center;
 }
 
 .action:hover {
-	background: rgba(255, 255, 255, 0.2);
+	background: #006d8c;
 }
 
 .close {
 	border: none;
 	background: transparent;
-	color: rgba(248, 250, 252, 0.65);
-	font-size: 1rem;
+	color: #94a3b8;
+	font-size: 1.25rem;
 	line-height: 1;
 	cursor: pointer;
-	padding: 0 0.15rem;
+	padding: 0.1rem 0.2rem;
 	flex-shrink: 0;
+	border-radius: 6px;
 }
 
 .close:hover {
-	color: #fff;
+	color: #475569;
+	background: rgba(15, 23, 42, 0.06);
 }
 
 @keyframes toastIn {
 	from {
 		opacity: 0;
-		transform: translateX(18px) translateY(-4px);
+		transform: translateX(22px) translateY(-6px);
 	}
 	to {
 		opacity: 1;
@@ -119,10 +179,14 @@
 
 @media (max-width: 640px) {
 	.host {
-		top: 0.75rem;
-		right: 0.75rem;
-		left: 0.75rem;
+		top: 0.85rem;
+		right: 0.85rem;
+		left: 0.85rem;
 		align-items: stretch;
 		max-width: none;
+	}
+
+	.toast {
+		width: 100%;
 	}
 }
