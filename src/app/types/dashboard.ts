@@ -10,6 +10,9 @@ export interface MovimientoInternacion {
   HoraAdmision: number;
   FechaEgreso?: number;
   HoraEgreso?: number;
+  /** Clarion del evento (ingreso/egreso/traslado); preferir para display */
+  FechaEvento?: number;
+  HoraEvento?: number;
   ValorHabitacionCama: string;
   ValorSector: string;
   EstadoCama: string;
@@ -20,8 +23,10 @@ export interface MovimientoInternacion {
   TipoMovimiento: 'Ingreso' | 'Egreso' | 'Movimiento de cama';
   FechaAdmisionFormateada?: string;
   FechaEgresoFormateada?: string;
+  FechaEventoFormateada?: string;
   HoraAdmisionFormateada?: string;
   HoraEgresoFormateada?: string;
+  HoraEventoFormateada?: string;
 }
 
 // Tipos para diferentes categorías de actividad

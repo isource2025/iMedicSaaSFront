@@ -13,7 +13,7 @@ import {
   DEFAULT_CONFIG 
 } from '../types/dashboard';
 import { FALLBACK_MOVIMIENTOS, FALLBACK_ACTIVIDADES } from '../utils/fallbackData';
-import { formatSqlDate, clarionDateToDate } from '../utils/dateUtils';
+import { clarionDateToDate } from '../utils/dateUtils';
 import { motivoDeRespuesta } from '../utils/apiError';
 
 /**
@@ -120,67 +120,47 @@ export class InternacionActivityService extends ActivityService {
   /**
    * Convierte movimientos a actividades recientes
    */
+  private formatearFechaHoraEvento(
+    fechaClarion: number | string | null | undefined,
+    horaFormateada?: string | null,
+  ): string {
+    const fechaDate = clarionDateToDate(fechaClarion);
+    const hora = horaFormateada || '--:--';
+    if (!fechaDate) return '--/--/---- --:--';
+    const fechaStr = fechaDate.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const horaSinSegundos = hora.includes(':') ? hora.substring(0, 5) : hora;
+    return `${fechaStr} ${horaSinSegundos}`;
+  }
+
   convertirAActividades(movimientos: MovimientoInternacion[]): ActividadReciente[] {
     return movimientos.map((movimiento) => {
       const isIngreso = movimiento.TipoMovimiento === 'Ingreso';
-      
-      // Crear fecha y hora completa combinando fecha Clarion y hora formateada
+      const isTraslado = movimiento.TipoMovimiento === 'Movimiento de cama';
+
+      // Preferir FechaEvento (Clarion); nunca new Date('YYYY-MM-DD') (UTC midnight).
       let fechaHoraCompleta = '--/--/---- --:--';
-      
-      if (movimiento.TipoMovimiento === 'Movimiento de cama') {
-        // Para movimientos de cama, siempre usar FechaAdmision y HoraAdmisionFormateada
-        const fechaDate = clarionDateToDate(movimiento.FechaAdmision);
-        const hora = movimiento.HoraAdmisionFormateada || '--:--';
-        
-        if (fechaDate) {
-          const fechaStr = fechaDate.toLocaleDateString('es-AR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          });
-          // Quitar segundos de la hora (formato HH:MM en lugar de HH:MM:SS)
-          const horaSinSegundos = hora && hora.includes(':') ? hora.substring(0, 5) : hora;
-          fechaHoraCompleta = `${fechaStr} ${horaSinSegundos}`;
-        }
-      } else if (isIngreso) {
-        // Para ingresos, usar FechaAdmision y HoraAdmisionFormateada
-        const fechaDate = clarionDateToDate(movimiento.FechaAdmision);
-        const hora = movimiento.HoraAdmisionFormateada || '--:--';
-        
-        if (fechaDate) {
-          const fechaStr = fechaDate.toLocaleDateString('es-AR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          });
-          // Quitar segundos de la hora (formato HH:MM en lugar de HH:MM:SS)
-          const horaSinSegundos = hora && hora.includes(':') ? hora.substring(0, 5) : hora;
-          fechaHoraCompleta = `${fechaStr} ${horaSinSegundos}`;
-        }
+      if (movimiento.FechaEvento != null && Number(movimiento.FechaEvento) > 0) {
+        fechaHoraCompleta = this.formatearFechaHoraEvento(
+          movimiento.FechaEvento,
+          movimiento.HoraEventoFormateada ||
+            (isIngreso || isTraslado
+              ? movimiento.HoraAdmisionFormateada
+              : movimiento.HoraEgresoFormateada),
+        );
+      } else if (isTraslado || isIngreso) {
+        fechaHoraCompleta = this.formatearFechaHoraEvento(
+          movimiento.FechaAdmision,
+          movimiento.HoraAdmisionFormateada,
+        );
       } else {
-        // Para egresos, usar FechaEgreso y HoraEgresoFormateada
-        const fechaDate = movimiento.FechaEgresoFormateada ? new Date(movimiento.FechaEgresoFormateada) : null;
-        const hora = movimiento.HoraEgresoFormateada || '--:--';
-        
-        if (fechaDate) {
-          const fechaStr = fechaDate.toLocaleDateString('es-AR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          });
-          // Quitar segundos de la hora (formato HH:MM en lugar de HH:MM:SS)
-          const horaSinSegundos = hora && hora.includes(':') ? hora.substring(0, 5) : hora;
-          fechaHoraCompleta = `${fechaStr} ${horaSinSegundos}`;
-        } else if (movimiento.FechaEgresoFormateada) {
-          // Fallback: usar fecha ISO formateada (sin segundos)
-          const fechaFormateada = formatSqlDate(movimiento.FechaEgresoFormateada, {
-            showDate: true,
-            showTime: true,
-            showSeconds: false,
-            adjustTimezone: false
-          });
-          fechaHoraCompleta = fechaFormateada;
-        }
+        fechaHoraCompleta = this.formatearFechaHoraEvento(
+          movimiento.FechaEgreso,
+          movimiento.HoraEgresoFormateada,
+        );
       }
       
       // Determinar acción e icono según el tipo de movimiento
@@ -278,7 +258,9 @@ export class InternacionActivityService extends ActivityService {
       const fechaB = this.extraerFechaParaOrdenamiento(b.time);
       return fechaB.getTime() - fechaA.getTime();
     });
-    return this.unoPorTipoMovimiento(this.deduplicarPorPaciente(ordenadas));
+    // No deduplicar por paciente antes: un mismo paciente puede ser el último
+    // ingreso y otro el último egreso; unoPorTipo ya deja 1 por tipo.
+    return this.unoPorTipoMovimiento(ordenadas);
   }
 
   /**

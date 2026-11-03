@@ -12,6 +12,10 @@ import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
 import { authService } from '../services/authService';
 import styles from './DashboardPage.module.css';
 
+function isoLocal(d: Date) {
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 const Icon = ({ path, className, style }: { path: string; className?: string; style?: React.CSSProperties }) => (
   <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style={style}>
     <path d={path}></path>
@@ -55,7 +59,8 @@ function formatRelativeTime(timeString: string): string {
   const date = parseActivityDate(timeString);
   if (!date) return timeString;
   const diffMs = Date.now() - date.getTime();
-  if (diffMs < 0) return timeString;
+  // Fecha “futura” (desfase UTC/Clarion): no mostrar el día de mañana en absoluto.
+  if (diffMs < 0) return 'Hace un momento';
   const mins = Math.floor(diffMs / 60_000);
   if (mins < 1) return 'Hace un momento';
   if (mins < 60) return `Hace ${mins} min`;
@@ -124,14 +129,14 @@ export default function Dashboard() {
     }
   }, [router]);
 
-  // Rango de 30 días (estable durante la sesión de la página para no recargar en cada render)
+  // Rango de 30 días en calendario local (evitar toISOString → UTC que corre el día).
   const { fechaInicio, fechaFin } = useMemo(() => {
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
     return {
-      fechaInicio: thirtyDaysAgo.toISOString().split('T')[0],
-      fechaFin: today.toISOString().split('T')[0],
+      fechaInicio: isoLocal(thirtyDaysAgo),
+      fechaFin: isoLocal(today),
     };
   }, []);
 
