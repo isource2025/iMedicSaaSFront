@@ -1,5 +1,6 @@
 import { apiService } from './axios';
 import type {
+	CandidatosSalidaServicioResp,
 	ExistenciasCatalogos,
 	ExistenciasPage,
 	PlanCuentaOpt,
@@ -144,6 +145,32 @@ export const almacenStockService = {
 	eliminarRemito: (id: number) =>
 		unwrap(apiService.delete<ApiResp<{ ok: boolean; IdTransaccion: number }>>(`${base}/remitos/${id}`)),
 
+	candidatosSalidaServicio: (params: {
+		idDepositoDest?: number;
+		valorSector?: string;
+		fecha?: string;
+	}) =>
+		unwrap(
+			apiService.get<ApiResp<CandidatosSalidaServicioResp>>(
+				`${base}/remitos/candidatos-salida-servicio`,
+				{
+					params: {
+						idDepositoDest: params.idDepositoDest || undefined,
+						valorSector: params.valorSector || undefined,
+						fecha: params.fecha || undefined,
+					},
+				},
+			),
+		),
+
+	excluirIndicacionEntrega: (nroIndicacion: number) =>
+		unwrap(
+			apiService.post<ApiResp<{ ok: boolean; NroIndicacion: number }>>(
+				`${base}/remitos/indicaciones/${nroIndicacion}/excluir-entrega`,
+				{},
+			),
+		),
+
 	listarExistencias: (params?: {
 		search?: string;
 		idDeposito?: number;
@@ -196,5 +223,6 @@ type RemitoSaveBody = {
 		ImporteUnitario?: number;
 		ImporteTotal?: number;
 		IdPaciente?: number | null;
+		NroIndicacion?: number | null;
 	}[];
 };

@@ -98,8 +98,43 @@ export interface RemitoTipo {
 }
 
 export interface RemitoDeposito {
+	/** Etiqueta UI: Descripcion — SectorNombre si hace falta. */
+	Label?: string | null;
+	SectorNombre?: string | null;
 	IdDeposito: number;
 	Descripcion?: string | null;
+	IdSector?: string | null;
+}
+
+/** Candidato RSM desde imInterIndMedicas (Tipo = M). */
+export interface CandidatoSalidaServicio {
+	NroIndicacion: number;
+	NumeroVisita: number;
+	IdPaciente?: number | null;
+	PacienteNombre?: string | null;
+	Cama?: string | null;
+	ValorSector?: string | null;
+	ObraSocial?: string | null;
+	Codigo?: number | null;
+	IdProducto?: number | null;
+	DescripcionProducto?: string | null;
+	Frecuencia?: string | null;
+	TipoIndicacionDescripcion?: string | null;
+	Cantidad: number;
+	CantidadEntregada: number;
+	CantidadPendiente: number;
+	CantidadSugerida: number;
+	ImporteUnitario?: number | null;
+	IdUnidad?: string | null;
+	sinProducto?: boolean;
+}
+
+export interface CandidatosSalidaServicioResp {
+	valorSector: string;
+	idDepositoDest?: number | null;
+	fecha: string;
+	visitas: number;
+	lineas: CandidatoSalidaServicio[];
 }
 
 export interface RemitoProveedor {
@@ -118,7 +153,7 @@ export interface RemitoPaciente {
 	Documento?: string | null;
 }
 
-/** RemitosItems */
+/** RemitosItems (+ datos de display de paciente / ubicación / OS) */
 export interface RemitoItem {
 	IdTransaccion?: number;
 	Renglon?: number;
@@ -129,9 +164,14 @@ export interface RemitoItem {
 	ImporteUnitario: number;
 	ImporteTotal: number;
 	IdPaciente?: number | null;
+	PacienteNombre?: string | null;
+	Cama?: string | null;
+	ValorSector?: string | null;
+	ObraSocial?: string | null;
 	IdTipo?: string | null;
 	Sentido?: string | null;
 	IdDeposito?: number | null;
+	NroIndicacion?: number | null;
 }
 
 /** Remitos (cabecera) */

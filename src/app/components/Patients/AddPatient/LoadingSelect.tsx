@@ -5,6 +5,11 @@ import styles from "./Personal.module.css";
 interface Option {
     value: string | number;
     label: string;
+    /** Chip opcional (p. ej. Entrada / Salida). */
+    badge?: string;
+    badgeTone?: "entrada" | "salida" | "neutral";
+    /** Agrupa opciones bajo un encabezado en el listado. */
+    group?: string;
 }
 interface CustomSelectProps {
     label: string;
@@ -64,11 +69,30 @@ export default function CustomSelect({
         String(a) === String(b);
     const selected = options.find((o) => mismoValor(o.value, value));
     const displayLabel = selected?.label || selectedLabel || null;
+    const term = searchTerm.toLowerCase();
     const filtered = onSearchChange
         ? options
-        : options.filter((o) =>
-              o.label.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+        : options.filter((o) => {
+              const hay = `${o.label} ${o.badge || ""} ${o.group || ""}`.toLowerCase();
+              return hay.includes(term);
+          });
+
+    const badgeClass = (tone?: Option["badgeTone"]) => {
+        if (tone === "entrada") return styles.optionBadgeEntrada;
+        if (tone === "salida") return styles.optionBadgeSalida;
+        return styles.optionBadgeNeutral;
+    };
+
+    const renderOptionLabel = (opt: Option) => (
+        <span className={styles.optionRow}>
+            {opt.badge ? (
+                <span className={`${styles.optionBadge} ${badgeClass(opt.badgeTone)}`}>
+                    {opt.badge}
+                </span>
+            ) : null}
+            <span className={styles.optionText}>{opt.label}</span>
+        </span>
+    );
 
     useEffect(() => {
         if (!isOpen || !onSearchRef.current) return;
@@ -223,6 +247,8 @@ export default function CustomSelect({
                 >
                     {isLoading
                         ? "Cargando…"
+                        : selected
+                        ? renderOptionLabel(selected)
                         : displayLabel
                         ? displayLabel
                         : "Seleccione…"}
@@ -308,46 +334,56 @@ export default function CustomSelect({
 
                         <ul className={styles.optionList}>
                             {filtered.length ? (
-                                filtered.map((opt, i) => (
-                                    <li
-                                        key={opt.value}
-                                        ref={(el) => {
-                                            optionRefs.current[i] = el;
-                                        }}
-                                        className={`${styles.dropdownItem} ${
-                                            mismoValor(opt.value, value)
-                                                ? styles.selected
-                                                : ""
-                                        } ${
-                                            i === activeIndex
-                                                ? styles.active
-                                                : ""
-                                        }`}
-                                        role="option"
-                                        id={
-                                            mismoValor(opt.value, value)
-                                                ? `${name}-active`
-                                                : undefined
-                                        }
-                                        aria-selected={mismoValor(opt.value, value)}
-                                        tabIndex={-1} // no entra el foco aquí; se selecciona con click/Enter desde el buscador
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onChange(opt.value);
-                                            close();
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter") {
-                                                e.preventDefault();
+                                filtered.map((opt, i) => {
+                                    const prevGroup = i > 0 ? filtered[i - 1]?.group : undefined;
+                                    const showGroup =
+                                        !!opt.group && opt.group !== prevGroup;
+                                    return (
+                                        <li
+                                            key={opt.value}
+                                            ref={(el) => {
+                                                optionRefs.current[i] = el;
+                                            }}
+                                            className={`${styles.dropdownItem} ${
+                                                mismoValor(opt.value, value)
+                                                    ? styles.selected
+                                                    : ""
+                                            } ${
+                                                i === activeIndex
+                                                    ? styles.active
+                                                    : ""
+                                            }`}
+                                            role="option"
+                                            id={
+                                                mismoValor(opt.value, value)
+                                                    ? `${name}-active`
+                                                    : undefined
+                                            }
+                                            aria-selected={mismoValor(opt.value, value)}
+                                            tabIndex={-1}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 onChange(opt.value);
                                                 close();
-                                            }
-                                        }}
-                                    >
-                                        {opt.label}
-                                    </li>
-                                ))
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
+                                                    onChange(opt.value);
+                                                    close();
+                                                }
+                                            }}
+                                        >
+                                            {showGroup ? (
+                                                <div className={styles.optionGroupHead} aria-hidden>
+                                                    {opt.group}
+                                                </div>
+                                            ) : null}
+                                            {renderOptionLabel(opt)}
+                                        </li>
+                                    );
+                                })
                             ) : (
                                 <li className={styles.dropdownItemDisabled}>
                                     No hay resultados

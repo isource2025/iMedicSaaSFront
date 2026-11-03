@@ -566,3 +566,66 @@
 .dropdownItem.selected {
     font-weight: bold;
 }
+
+.optionRow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.optionText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.optionBadge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+/* Misma paleta que activityChip ingreso / egreso del dashboard */
+.optionBadgeEntrada {
+    background: #ecfeff;
+    color: #0e7490;
+}
+
+.optionBadgeSalida {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.optionBadgeNeutral {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.optionGroupHead {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin: 0 0 0.35rem;
+    padding-top: 0.15rem;
+}
+
+.dropdownItem:hover .optionBadgeEntrada,
+.dropdownItem:hover .optionBadgeSalida,
+.dropdownItem:hover .optionBadgeNeutral {
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.dropdownItem:hover .optionGroupHead {
+    color: rgba(255, 255, 255, 0.85);
+}

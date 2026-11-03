@@ -222,12 +222,13 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 	useEffect(() => {
 		let cancelled = false;
 		(async () => {
-			if (fotoObjectUrlRef.current) {
-				URL.revokeObjectURL(fotoObjectUrlRef.current);
-				fotoObjectUrlRef.current = null;
-			}
+			// Archivo local pendiente de subir: el preview lo maneja onPhotoChange.
 			if (fotoFile) return;
 			if (!isEditing || !personal?.Valor || !personal.hasFoto || fotoRemoved) {
+				if (fotoObjectUrlRef.current) {
+					URL.revokeObjectURL(fotoObjectUrlRef.current);
+					fotoObjectUrlRef.current = null;
+				}
 				setFotoPreview(null);
 				return;
 			}
@@ -235,6 +236,9 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 			if (cancelled) {
 				if (url) URL.revokeObjectURL(url);
 				return;
+			}
+			if (fotoObjectUrlRef.current) {
+				URL.revokeObjectURL(fotoObjectUrlRef.current);
 			}
 			fotoObjectUrlRef.current = url;
 			setFotoPreview(url);
@@ -629,14 +633,21 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 	};
 
 	const goTab = (tab: Tab) => {
+		const scrollActiveTab = () => {
+			const idx = tabIds.indexOf(tab);
+			const el = idx >= 0 ? tabsRef.current[idx] : null;
+			el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+		};
 		if (!isEditing && activeTab === 'firma' && tab !== 'firma') {
 			void (async () => {
 				await captureFirmaDraft();
 				setActiveTab(tab);
+				requestAnimationFrame(scrollActiveTab);
 			})();
 			return;
 		}
 		setActiveTab(tab);
+		requestAnimationFrame(scrollActiveTab);
 	};
 
 	const formIsDirty = () =>
@@ -847,34 +858,43 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 					setPhotoUploading={setPhotoUploading}
 				/>
 
-				<div className={styles.tabsContainer}>
+				<div className={styles.tabsContainer} role='tablist'>
 					<div
 						ref={(el) => {
 							if (el) tabsRef.current[0] = el;
 						}}
+						role='tab'
+						aria-selected={activeTab === 'personal'}
 						className={`${styles.tab} ${activeTab === 'personal' ? styles.tabActive : ''}`}
 						onClick={() => goTab('personal')}
 					>
-						Datos Personales y Contacto
+						<span className={styles.tabLabelFull}>Datos Personales y Contacto</span>
+						<span className={styles.tabLabelShort}>Personales</span>
 					</div>
 					<div
 						ref={(el) => {
 							if (el) tabsRef.current[1] = el;
 						}}
+						role='tab'
+						aria-selected={activeTab === 'profesional'}
 						className={`${styles.tab} ${activeTab === 'profesional' ? styles.tabActive : ''}`}
 						onClick={() => goTab('profesional')}
 					>
-						Datos Profesionales
+						<span className={styles.tabLabelFull}>Datos Profesionales</span>
+						<span className={styles.tabLabelShort}>Profesionales</span>
 					</div>
 					{showCuentaTab && (
 						<div
 							ref={(el) => {
 								if (el) tabsRef.current[tabIds.indexOf('cuenta')] = el;
 							}}
+							role='tab'
+							aria-selected={activeTab === 'cuenta'}
 							className={`${styles.tab} ${activeTab === 'cuenta' ? styles.tabActive : ''}`}
 							onClick={() => goTab('cuenta')}
 						>
-							Acceso y roles
+							<span className={styles.tabLabelFull}>Acceso y roles</span>
+							<span className={styles.tabLabelShort}>Acceso</span>
 						</div>
 					)}
 					{showAsignacionesTab && (
@@ -882,6 +902,8 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 							ref={(el) => {
 								if (el) tabsRef.current[tabIds.indexOf('asignaciones')] = el;
 							}}
+							role='tab'
+							aria-selected={activeTab === 'asignaciones'}
 							className={`${styles.tab} ${activeTab === 'asignaciones' ? styles.tabActive : ''}`}
 							onClick={() => goTab('asignaciones')}
 						>
@@ -893,6 +915,8 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 							ref={(el) => {
 								if (el) tabsRef.current[tabIds.indexOf('servicios')] = el;
 							}}
+							role='tab'
+							aria-selected={activeTab === 'servicios'}
 							className={`${styles.tab} ${activeTab === 'servicios' ? styles.tabActive : ''}`}
 							onClick={() => goTab('servicios')}
 						>
@@ -904,6 +928,8 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 							ref={(el) => {
 								if (el) tabsRef.current[tabIds.indexOf('firma')] = el;
 							}}
+							role='tab'
+							aria-selected={activeTab === 'firma'}
 							className={`${styles.tab} ${activeTab === 'firma' ? styles.tabActive : ''}`}
 							onClick={() => goTab('firma')}
 						>
@@ -915,6 +941,8 @@ const PersonalForm = forwardRef<PersonalFormHandle, PersonalFormProps>(function 
 							ref={(el) => {
 								if (el) tabsRef.current[tabIds.indexOf('agenda')] = el;
 							}}
+							role='tab'
+							aria-selected={activeTab === 'agenda'}
 							className={`${styles.tab} ${activeTab === 'agenda' ? styles.tabActive : ''}`}
 							onClick={() => goTab('agenda')}
 						>

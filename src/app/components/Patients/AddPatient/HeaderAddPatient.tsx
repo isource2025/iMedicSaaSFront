@@ -38,6 +38,7 @@ export default function HeaderAddPatient({
 					onPhotoChange={onPhotoChange}
 					initialPreview={formData.FotoURL ?? null}
 					setPhotoUploading={setPhotoUploading}
+					compact
 				/>
 			</div>
 			<div>

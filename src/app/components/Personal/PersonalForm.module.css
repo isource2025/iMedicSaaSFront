@@ -27,6 +27,8 @@
 	overflow-y: hidden;
 	flex-wrap: nowrap;
 	scrollbar-width: none;
+	-webkit-overflow-scrolling: touch;
+	scroll-snap-type: x proximity;
 }
 
 .tabsContainer::-webkit-scrollbar {
@@ -51,6 +53,11 @@
 	letter-spacing: 0.01em;
 	flex-shrink: 0;
 	user-select: none;
+	scroll-snap-align: start;
+}
+
+.tabLabelShort {
+	display: none;
 }
 
 .tab:hover {
@@ -79,6 +86,7 @@
 	flex: 1;
 	min-height: 0;
 	padding: 0 0.25rem;
+	-webkit-overflow-scrolling: touch;
 }
 
 .tabPanel {
@@ -90,10 +98,17 @@
 	color: #1e293b;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 860px) {
 	.form {
-		flex: 1 0 auto;
-		min-height: auto;
+		flex: 1 1 auto;
+		min-height: 0;
+		height: 100%;
+	}
+
+	.modalContainer {
+		gap: 0.55rem;
+		min-height: 0;
+		height: 100%;
 	}
 
 	.tabsContainer {
@@ -102,11 +117,45 @@
 		top: 0;
 		z-index: 2;
 		background: #fff;
+		margin: 0 -0.15rem;
+		padding: 0 0.15rem;
 	}
 
 	.tab {
-		padding: 0.6rem 1rem;
-		font-size: 0.82rem;
+		padding: 0.55rem 0.85rem;
+		font-size: 0.78rem;
+	}
+
+	.tabLabelFull {
+		display: none;
+	}
+
+	.tabLabelShort {
+		display: inline;
+	}
+
+	.tabContentContainer {
+		padding: 0.15rem 0 0.75rem;
+	}
+
+	.buttonContainer {
+		position: sticky;
+		bottom: 0;
+		z-index: 3;
+		background: #fff;
+		padding: 0.65rem 0 calc(0.65rem + env(safe-area-inset-bottom, 0px));
+		margin: 0;
+		gap: 0.5rem;
+	}
+
+	.cancelButton,
+	.submitButton {
+		flex: 1;
+		justify-content: center;
+		padding: 0.7rem 1rem;
+		font-size: 0.85rem;
+		border-radius: 12px;
+		min-height: 44px;
 	}
 }
 

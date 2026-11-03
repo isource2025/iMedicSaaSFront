@@ -1,6 +1,6 @@
 .headerContainer {
 	display: grid;
-	grid-template-columns: 120px 1fr;
+	grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
 	gap: 1.25rem;
 	padding: 1rem;
 	background: #f8fafc;
@@ -8,20 +8,23 @@
 	border: 1.5px solid #e2e8f0;
 	box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
 	margin-bottom: 0.25rem;
+	min-width: 0;
 }
 
 .fieldsGrid {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 0.75rem 1rem;
 	align-content: start;
 	margin-bottom: 0.75rem;
+	min-width: 0;
 }
 
 .headerField {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
+	min-width: 0;
 }
 
 /* Campo que ocupa todo el ancho del grid */
@@ -65,6 +68,7 @@
 	position: relative;
 	display: flex;
 	align-items: center;
+	min-width: 0;
 }
 
 .documentInput {
@@ -130,36 +134,73 @@
 
 .headerPhoto {
 	width: 120px;
+	max-width: 100%;
+	min-width: 0;
 	flex-shrink: 0;
 	display: flex;
-	align-items: flex-start;
+	align-items: stretch;
+	align-self: start;
+}
+
+.headerPhoto > * {
+	flex: 1;
+	width: 100%;
 }
 
 @media (max-width: 860px) {
+	/* Foto compacta a la izquierda; campos a la derecha (no stack full-width). */
 	.headerContainer {
-		grid-template-columns: 1fr;
-		gap: 0.75rem;
-		padding: 0.75rem;
+		grid-template-columns: minmax(0, 88px) minmax(0, 1fr);
+		gap: 0.65rem;
+		padding: 0.65rem;
+		border-radius: 10px;
 	}
 
 	.headerPhoto {
-		width: 100%;
-		justify-content: center;
-		display: flex;
+		width: 88px;
 	}
 
 	.fieldsGrid {
-		grid-template-columns: 1fr;
-		gap: 0.75rem;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.55rem 0.65rem;
+		margin-bottom: 0.55rem;
 	}
 
 	.headerLabel {
-		font-size: 0.75rem;
+		font-size: 0.68rem;
 	}
 
 	.headerInput,
 	.headerSelect {
 		font-size: 0.88rem;
-		height: 2.6rem;
+		height: 2.5rem;
+		padding: 0.45rem 0.65rem;
+		border-radius: 8px;
+	}
+
+	.documentInput {
+		padding-right: 2.25rem;
+	}
+}
+
+@media (max-width: 420px) {
+	.headerContainer {
+		grid-template-columns: minmax(0, 76px) minmax(0, 1fr);
+		gap: 0.5rem;
+		padding: 0.55rem;
+	}
+
+	.headerPhoto {
+		width: 76px;
+	}
+
+	.fieldsGrid {
+		gap: 0.45rem 0.5rem;
+	}
+
+	.headerInput,
+	.headerSelect {
+		height: 2.4rem;
+		font-size: 0.86rem;
 	}
 }

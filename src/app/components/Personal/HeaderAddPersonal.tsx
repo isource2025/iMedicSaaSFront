@@ -38,6 +38,7 @@ export default function HeaderAddPersonal({
 					initialPreview={photoPreview}
 					setPhotoUploading={setPhotoUploading}
 					title='Foto del personal'
+					compact
 				/>
 			</div>
 			<div>
