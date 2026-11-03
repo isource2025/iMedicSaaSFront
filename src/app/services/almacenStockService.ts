@@ -3,6 +3,7 @@ import type {
 	CandidatosSalidaServicioResp,
 	ExistenciasCatalogos,
 	ExistenciasPage,
+	MedicacionPendienteServiciosResp,
 	PlanCuentaOpt,
 	ProductoStock,
 	ProductosCatalogos,
@@ -160,6 +161,14 @@ export const almacenStockService = {
 						fecha: params.fecha || undefined,
 					},
 				},
+			),
+		),
+
+	medicacionPendienteServicios: (fecha?: string) =>
+		unwrap(
+			apiService.get<ApiResp<MedicacionPendienteServiciosResp>>(
+				`${base}/remitos/medicacion-pendiente-servicios`,
+				{ params: { fecha: fecha || undefined } },
 			),
 		),
 

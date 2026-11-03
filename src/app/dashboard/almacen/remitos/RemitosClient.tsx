@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
 	Ban,
+	Bell,
 	ChevronLeft,
 	ChevronRight,
 	ClipboardList,
@@ -23,6 +27,8 @@ import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { mensajeDeError } from '@/app/utils/apiError';
 import type {
 	CandidatoSalidaServicio,
+	MedicacionPendienteServicio,
+	MedicacionPendienteServiciosResp,
 	ProductoStock,
 	RemitoCabecera,
 	RemitoDeposito,
@@ -33,6 +39,38 @@ import type {
 import styles from '../stock.module.css';
 
 type DraftItem = RemitoItem & { _key: string };
+
+type RemitoMainTab = 'items' | 'agrupados' | 'obs';
+type ItemsSortKey =
+	| 'IdProducto'
+	| 'DescripcionProducto'
+	| 'Cantidad'
+	| 'IdUnidad'
+	| 'ImporteUnitario'
+	| 'ImporteTotal'
+	| 'PacienteNombre';
+type SortDir = 'asc' | 'desc';
+
+type ItemAgrupado = {
+	IdProducto: number;
+	DescripcionProducto: string;
+	IdUnidad: string | null;
+	Cantidad: number;
+	ImporteUnitario: number | null;
+	ImporteTotal: number;
+	lineas: number;
+	pacientes: number;
+};
+
+type AgrupadosSortKey =
+	| 'IdProducto'
+	| 'DescripcionProducto'
+	| 'Cantidad'
+	| 'IdUnidad'
+	| 'ImporteUnitario'
+	| 'ImporteTotal'
+	| 'lineas'
+	| 'pacientes';
 
 function todayISO() {
 	const d = new Date();
@@ -147,6 +185,85 @@ function ordenTiposPorSentido(a: RemitoTipo, b: RemitoTipo) {
 	return nombreTipoRemito(a).localeCompare(nombreTipoRemito(b), 'es');
 }
 
+function cmpSortVal(a: string | number | null | undefined, b: string | number | null | undefined, dir: SortDir) {
+	const mul = dir === 'asc' ? 1 : -1;
+	const av = a == null || a === '' ? null : a;
+	const bv = b == null || b === '' ? null : b;
+	if (av == null && bv == null) return 0;
+	if (av == null) return 1;
+	if (bv == null) return -1;
+	if (typeof av === 'number' && typeof bv === 'number') {
+		if (av === bv) return 0;
+		return av < bv ? -mul : mul;
+	}
+	return String(av).localeCompare(String(bv), 'es', { numeric: true, sensitivity: 'base' }) * mul;
+}
+
+function toggleSort<K extends string>(
+	prev: { key: K; dir: SortDir } | null,
+	key: K,
+): { key: K; dir: SortDir } {
+	if (prev?.key === key) return { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' };
+	return { key, dir: 'asc' };
+}
+
+function agruparItemsPorCodigo(items: RemitoItem[]): ItemAgrupado[] {
+	const map = new Map<number, ItemAgrupado & { _unitarios: Set<string>; _pacientes: Set<string> }>();
+	for (const it of items) {
+		const id = Number(it.IdProducto);
+		if (!Number.isFinite(id)) continue;
+		const cant = Number(it.Cantidad) || 0;
+		const total = Number(it.ImporteTotal) || 0;
+		const unit = Number(it.ImporteUnitario);
+		const pacKey =
+			it.IdPaciente != null
+				? `id:${it.IdPaciente}`
+				: (it.PacienteNombre || '').trim()
+					? `n:${(it.PacienteNombre || '').trim().toUpperCase()}`
+					: '';
+		let g = map.get(id);
+		if (!g) {
+			g = {
+				IdProducto: id,
+				DescripcionProducto: (it.DescripcionProducto || '').trim() || `Código ${id}`,
+				IdUnidad: (it.IdUnidad || '').trim() || null,
+				Cantidad: 0,
+				ImporteUnitario: null,
+				ImporteTotal: 0,
+				lineas: 0,
+				pacientes: 0,
+				_unitarios: new Set(),
+				_pacientes: new Set(),
+			};
+			map.set(id, g);
+		}
+		g.Cantidad += cant;
+		g.ImporteTotal += total;
+		g.lineas += 1;
+		if (Number.isFinite(unit)) g._unitarios.add(String(unit));
+		if (pacKey) g._pacientes.add(pacKey);
+		const u = (it.IdUnidad || '').trim();
+		if (u && !g.IdUnidad) g.IdUnidad = u;
+		else if (u && g.IdUnidad && u.toUpperCase() !== g.IdUnidad.toUpperCase()) g.IdUnidad = 'varios';
+		const desc = (it.DescripcionProducto || '').trim();
+		if (desc && (!g.DescripcionProducto || g.DescripcionProducto.startsWith('Código '))) {
+			g.DescripcionProducto = desc;
+		}
+	}
+	return Array.from(map.values())
+		.map(({ _unitarios, _pacientes, ...rest }) => ({
+			...rest,
+			ImporteUnitario:
+				_unitarios.size === 1
+					? Number(Array.from(_unitarios)[0])
+					: rest.Cantidad !== 0
+						? rest.ImporteTotal / rest.Cantidad
+						: null,
+			pacientes: _pacientes.size,
+		}))
+		.sort((a, b) => a.IdProducto - b.IdProducto);
+}
+
 export default function RemitosClient() {
 	const { puede } = usePermiso();
 	const toast = useToast();
@@ -192,10 +309,17 @@ export default function RemitosClient() {
 	const [letra, setLetra] = useState('X');
 	const [nro, setNro] = useState(0);
 	const [observaciones, setObservaciones] = useState('');
-	const [remitoMainTab, setRemitoMainTab] = useState<'items' | 'obs'>('items');
+	const [remitoMainTab, setRemitoMainTab] = useState<RemitoMainTab>('items');
 	/** Punto en solapa Observaciones: se limpia al entrar a la solapa. */
 	const [obsDotVisible, setObsDotVisible] = useState(false);
 	const [draftItems, setDraftItems] = useState<DraftItem[]>([]);
+	const [itemsSort, setItemsSort] = useState<{ key: ItemsSortKey; dir: SortDir } | null>(null);
+	const [agrupadosSort, setAgrupadosSort] = useState<{
+		key: AgrupadosSortKey;
+		dir: SortDir;
+	} | null>({ key: 'IdProducto', dir: 'asc' });
+	const [detailSort, setDetailSort] = useState<{ key: ItemsSortKey; dir: SortDir } | null>(null);
+	const [detailTab, setDetailTab] = useState<'items' | 'agrupados'>('items');
 	const [editingItemKey, setEditingItemKey] = useState<string | null>(null);
 	const [itemModal, setItemModal] = useState(false);
 	const [itemForm, setItemForm] = useState({
@@ -224,6 +348,10 @@ export default function RemitosClient() {
 		null,
 	);
 	const [excluyendoId, setExcluyendoId] = useState<number | null>(null);
+	const [pendienteMed, setPendienteMed] = useState<MedicacionPendienteServiciosResp | null>(null);
+	const [pendienteMedLoading, setPendienteMedLoading] = useState(false);
+	const [pendienteMedError, setPendienteMedError] = useState<string | null>(null);
+	const [autoOpenCandidatos, setAutoOpenCandidatos] = useState(false);
 
 	const esSalidaServicio = String(tipoCbte || '').toUpperCase() === 'RSM';
 
@@ -288,6 +416,63 @@ export default function RemitosClient() {
 		[draftItems],
 	);
 
+	const draftItemsSorted = useMemo(() => {
+		if (!itemsSort) return draftItems;
+		const { key, dir } = itemsSort;
+		return [...draftItems].sort((a, b) => {
+			const av =
+				key === 'PacienteNombre'
+					? a.PacienteNombre || (a.IdPaciente != null ? String(a.IdPaciente) : '')
+					: a[key];
+			const bv =
+				key === 'PacienteNombre'
+					? b.PacienteNombre || (b.IdPaciente != null ? String(b.IdPaciente) : '')
+					: b[key];
+			return cmpSortVal(av as string | number | null | undefined, bv as string | number | null | undefined, dir);
+		});
+	}, [draftItems, itemsSort]);
+
+	const draftAgrupados = useMemo(() => agruparItemsPorCodigo(draftItems), [draftItems]);
+
+	const draftAgrupadosSorted = useMemo(() => {
+		if (!agrupadosSort) return draftAgrupados;
+		const { key, dir } = agrupadosSort;
+		return [...draftAgrupados].sort((a, b) => cmpSortVal(a[key], b[key], dir));
+	}, [draftAgrupados, agrupadosSort]);
+
+	const detailItemsSorted = useMemo(() => {
+		const list = detail?.items || [];
+		if (!detailSort) return list;
+		const { key, dir } = detailSort;
+		return [...list].sort((a, b) => {
+			const av =
+				key === 'PacienteNombre'
+					? a.PacienteNombre || (a.IdPaciente != null ? String(a.IdPaciente) : '')
+					: a[key];
+			const bv =
+				key === 'PacienteNombre'
+					? b.PacienteNombre || (b.IdPaciente != null ? String(b.IdPaciente) : '')
+					: b[key];
+			return cmpSortVal(av as string | number | null | undefined, bv as string | number | null | undefined, dir);
+		});
+	}, [detail?.items, detailSort]);
+
+	const detailAgrupadosSorted = useMemo(() => {
+		const agrupados = agruparItemsPorCodigo(detail?.items || []);
+		if (!agrupadosSort) return agrupados;
+		const { key, dir } = agrupadosSort;
+		return [...agrupados].sort((a, b) => cmpSortVal(a[key], b[key], dir));
+	}, [detail?.items, agrupadosSort]);
+
+	const renderSortIcon = (active: boolean, dir?: SortDir) => {
+		if (!active) return <ArrowUpDown size={12} className={styles.thSortIcon} aria-hidden />;
+		return dir === 'desc' ? (
+			<ArrowDown size={12} className={styles.thSortIconActive} aria-hidden />
+		) : (
+			<ArrowUp size={12} className={styles.thSortIconActive} aria-hidden />
+		);
+	};
+
 	useEffect(() => {
 		const t = setTimeout(() => setSearchDebounced(search), 280);
 		return () => clearTimeout(t);
@@ -314,9 +499,27 @@ export default function RemitosClient() {
 		}
 	}, [searchDebounced, tipoFiltro, depFiltro, page]);
 
+	const loadPendienteMed = useCallback(async (fechaIso?: string) => {
+		setPendienteMedLoading(true);
+		setPendienteMedError(null);
+		try {
+			const data = await almacenStockService.medicacionPendienteServicios(fechaIso || todayISO());
+			setPendienteMed(data);
+		} catch (e) {
+			setPendienteMed(null);
+			setPendienteMedError(mensajeDeError(e, 'No se pudo consultar medicación pendiente'));
+		} finally {
+			setPendienteMedLoading(false);
+		}
+	}, []);
+
 	useEffect(() => {
 		void load();
 	}, [load]);
+
+	useEffect(() => {
+		void loadPendienteMed();
+	}, [loadPendienteMed]);
 
 	useEffect(() => {
 		void almacenStockService
@@ -337,21 +540,37 @@ export default function RemitosClient() {
 		try {
 			const full = await almacenStockService.obtenerRemito(row.IdTransaccion);
 			setDetail(full);
+			setDetailTab('items');
+			setDetailSort(null);
 			setDetailOpen(true);
 		} catch (e) {
 			toast.error(mensajeDeError(e, 'No se pudo abrir el remito'));
 		}
 	};
 
-	const openCreate = async () => {
-		const defaultTipo = tipos[0]?.IdTipo || 'REM';
+	const openCreate = async (opts?: {
+		tipo?: string;
+		idDepositoDest?: number | null;
+		abrirCandidatos?: boolean;
+	}) => {
+		const quiereRsm = !!opts?.tipo || opts?.abrirCandidatos || opts?.idDepositoDest != null;
+		const defaultTipo = quiereRsm
+			? tipos.find((t) => String(t.IdTipo).toUpperCase() === 'RSM')?.IdTipo ||
+				opts?.tipo ||
+				tipos[0]?.IdTipo ||
+				'RSM'
+			: tipos[0]?.IdTipo || 'REM';
 		const defaultDep = depositos[0]?.IdDeposito ?? '';
+		const dest =
+			opts?.idDepositoDest != null && Number.isFinite(Number(opts.idDepositoDest))
+				? Number(opts.idDepositoDest)
+				: '';
 		setEditingId(null);
 		skipTipoReset.current = true;
 		setFecha(todayISO());
 		setTipoCbte(defaultTipo);
 		setIdDeposito(defaultDep);
-		setIdDepositoDest('');
+		setIdDepositoDest(dest);
 		setIdProveedor('');
 		setProveedorLabel('');
 		setProveedorOpts(proveedorCatalogOpts);
@@ -364,7 +583,10 @@ export default function RemitosClient() {
 		setRemitoMainTab('items');
 		setObsDotVisible(false);
 		setDraftItems([]);
+		setItemsSort(null);
+		setAgrupadosSort({ key: 'IdProducto', dir: 'asc' });
 		setEditingItemKey(null);
+		setAutoOpenCandidatos(!!(opts?.abrirCandidatos && dest !== ''));
 		try {
 			const prox = await almacenStockService.proximoNroRemito(defaultTipo, new Date().getFullYear());
 			setNro(prox.nro);
@@ -374,6 +596,25 @@ export default function RemitosClient() {
 			setNro(1);
 		}
 		setModalOpen(true);
+		void loadPendienteMed(todayISO());
+	};
+
+	const abrirRemitoPendienteServicio = (svc: MedicacionPendienteServicio) => {
+		if (!canCreate) {
+			toast.info('No tenés permiso para crear remitos');
+			return;
+		}
+		if (svc.IdDeposito == null) {
+			toast.error(
+				`El sector ${svc.SectorNombre || svc.ValorSector} no tiene depósito con IdSector vinculado`,
+			);
+			return;
+		}
+		void openCreate({
+			tipo: 'RSM',
+			idDepositoDest: svc.IdDeposito,
+			abrirCandidatos: true,
+		});
 	};
 
 	const fillFormFromRemito = (full: RemitoCabecera) => {
@@ -426,6 +667,8 @@ export default function RemitosClient() {
 				_key: newItemKey(),
 			})),
 		);
+		setItemsSort(null);
+		setAgrupadosSort({ key: 'IdProducto', dir: 'asc' });
 		setEditingItemKey(null);
 	};
 
@@ -824,12 +1067,24 @@ export default function RemitosClient() {
 			await almacenStockService.excluirIndicacionEntrega(nro);
 			setCandidatos((prev) => prev.filter((c) => c.NroIndicacion !== nro));
 			toast.success('Indicación excluida: no volverá a aparecer en remitos');
+			void loadPendienteMed(fecha);
 		} catch (e) {
 			toast.error(mensajeDeError(e, 'No se pudo excluir la indicación'));
 		} finally {
 			setExcluyendoId(null);
 		}
 	};
+
+	useEffect(() => {
+		if (!modalOpen || !autoOpenCandidatos) return;
+		if (!esSalidaServicio || idDepositoDest === '') {
+			setAutoOpenCandidatos(false);
+			return;
+		}
+		setAutoOpenCandidatos(false);
+		void cargarCandidatosServicio();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- abrir candidatos una sola vez al prefill RSM
+	}, [modalOpen, autoOpenCandidatos, esSalidaServicio, idDepositoDest]);
 
 	useEffect(() => {
 		if (!editingCantKey) return;
@@ -907,6 +1162,7 @@ export default function RemitosClient() {
 			setEditingId(null);
 			if (!isEdit) setPage(1);
 			await load();
+			void loadPendienteMed(fecha);
 		} catch (e) {
 			toast.error(mensajeDeError(e, 'No se pudo guardar el remito. Intentá de nuevo.'));
 		} finally {
@@ -996,7 +1252,15 @@ export default function RemitosClient() {
 					</div>
 				</div>
 				<div className={styles.headerActions}>
-					<button type="button" className={styles.btnGhost} onClick={() => void load()} disabled={loading}>
+					<button
+						type="button"
+						className={styles.btnGhost}
+						onClick={() => {
+							void load();
+							void loadPendienteMed();
+						}}
+						disabled={loading || pendienteMedLoading}
+					>
 						<RefreshCw size={16} />
 						Actualizar
 					</button>
@@ -1010,6 +1274,77 @@ export default function RemitosClient() {
 			</header>
 
 			{error && <div className={styles.error}>{error}</div>}
+
+			{(pendienteMedLoading || pendienteMedError || (pendienteMed && pendienteMed.totalServicios > 0)) && (
+				<section
+					className={styles.pendienteBudget}
+					aria-live="polite"
+					aria-label="Medicación pendiente de entregar"
+				>
+					<div className={styles.pendienteBudgetHead}>
+						<span className={styles.pendienteBudgetIcon}>
+							<Bell size={16} />
+						</span>
+						<div className={styles.pendienteBudgetText}>
+							<strong>
+								{pendienteMedLoading
+									? 'Consultando medicación sin entregar…'
+									: pendienteMedError
+										? 'No se pudo consultar medicación pendiente'
+										: `Medicación sin entregar · ${pendienteMed?.totalServicios} servicio${
+												pendienteMed?.totalServicios === 1 ? '' : 's'
+											}`}
+							</strong>
+							{!pendienteMedLoading && !pendienteMedError && pendienteMed ? (
+								<span>
+									{pendienteMed.totalLineas} indicación
+									{pendienteMed.totalLineas === 1 ? '' : 'es'} · {pendienteMed.totalVisitas} internación
+									{pendienteMed.totalVisitas === 1 ? '' : 'es'} · {fmtDate(pendienteMed.fecha)}
+								</span>
+							) : pendienteMedError ? (
+								<span>{pendienteMedError}</span>
+							) : null}
+						</div>
+						{!pendienteMedLoading && (
+							<button
+								type="button"
+								className={styles.pendienteBudgetRefresh}
+								onClick={() => void loadPendienteMed()}
+								title="Actualizar pendientes"
+							>
+								<RefreshCw size={14} />
+							</button>
+						)}
+					</div>
+					{!pendienteMedLoading && !pendienteMedError && pendienteMed && pendienteMed.servicios.length > 0 ? (
+						<div className={styles.pendienteBudgetChips}>
+							{pendienteMed.servicios.map((svc) => (
+								<button
+									key={svc.ValorSector}
+									type="button"
+									className={styles.pendienteBudgetChip}
+									disabled={!canCreate || svc.IdDeposito == null}
+									title={
+										svc.IdDeposito == null
+											? 'Sin depósito vinculado a este sector'
+											: canCreate
+												? `Abrir remito RSM para ${svc.SectorNombre || svc.ValorSector}`
+												: 'Sin permiso para crear remitos'
+									}
+									onClick={() => abrirRemitoPendienteServicio(svc)}
+								>
+									<span className={styles.pendienteBudgetChipName}>
+										{svc.SectorNombre || svc.ValorSector}
+									</span>
+									<span className={styles.pendienteBudgetChipMeta}>
+										{svc.Lineas} ind. · {svc.Pacientes} pac.
+									</span>
+								</button>
+							))}
+						</div>
+					) : null}
+				</section>
+			)}
 
 			<div className={styles.toolbar}>
 				<div className={styles.searchRow}>
@@ -1259,52 +1594,158 @@ export default function RemitosClient() {
 								</div>
 							) : null}
 						</div>
+						<div className={styles.remitoPanelTabs} role="tablist" aria-label="Vista de ítems">
+							<button
+								type="button"
+								role="tab"
+								aria-selected={detailTab === 'items'}
+								className={`${styles.remitoPanelTab}${
+									detailTab === 'items' ? ` ${styles.remitoPanelTabActive}` : ''
+								}`}
+								onClick={() => setDetailTab('items')}
+							>
+								Ítems
+							</button>
+							<button
+								type="button"
+								role="tab"
+								aria-selected={detailTab === 'agrupados'}
+								className={`${styles.remitoPanelTab}${
+									detailTab === 'agrupados' ? ` ${styles.remitoPanelTabActive}` : ''
+								}`}
+								onClick={() => setDetailTab('agrupados')}
+							>
+								Por código
+								{detailAgrupadosSorted.length > 0 ? (
+									<span className={styles.remitoTabCount}>{detailAgrupadosSorted.length}</span>
+								) : null}
+							</button>
+						</div>
 						<div className={styles.tableWrap}>
-							<table className={styles.table}>
-								<thead>
-									<tr>
-										<th>Cód Prod</th>
-										<th>Descripción</th>
-										<th>Cantidad</th>
-										<th>U Med</th>
-										<th>Imp. unitario</th>
-										<th>Importe total</th>
-										<th>Paciente</th>
-									</tr>
-								</thead>
-								<tbody>
-									{(detail.items || []).map((it) => (
-										<tr key={`${it.IdTransaccion}-${it.Renglon}`}>
-											<td className={styles.mono}>{it.IdProducto}</td>
-											<td>{it.DescripcionProducto || '—'}</td>
-											<td className={styles.mono}>{it.Cantidad}</td>
-											<td>{it.IdUnidad || '—'}</td>
-											<td className={styles.mono}>{fmtMoney(it.ImporteUnitario)}</td>
-											<td className={`${styles.mono} ${styles.colTotal}`}>
-												{fmtMoney(it.ImporteTotal)}
-											</td>
-											<td className={styles.pacienteCell}>
-												{it.PacienteNombre || it.IdPaciente != null ? (
-													<>
-														<div className={styles.pacienteNombre}>
-															{it.PacienteNombre || `Pac. ${it.IdPaciente}`}
-														</div>
-														{metaPacienteCorta(it) ? (
-															<div className={styles.pacienteMeta}>{metaPacienteCorta(it)}</div>
-														) : it.IdPaciente != null && it.PacienteNombre ? (
-															<div className={styles.pacienteMeta}>#{it.IdPaciente}</div>
-														) : null}
-													</>
-												) : (
-													<span className={styles.muted}>—</span>
-												)}
-											</td>
+							{detailTab === 'items' ? (
+								<table className={styles.table}>
+									<thead>
+										<tr>
+											{(
+												[
+													['IdProducto', 'Cód Prod'],
+													['DescripcionProducto', 'Descripción'],
+													['Cantidad', 'Cantidad'],
+													['IdUnidad', 'U Med'],
+													['ImporteUnitario', 'Imp. unitario'],
+													['ImporteTotal', 'Importe total'],
+													['PacienteNombre', 'Paciente'],
+												] as [ItemsSortKey, string][]
+											).map(([key, label]) => {
+												const active = detailSort?.key === key;
+												return (
+													<th key={key}>
+														<button
+															type="button"
+															className={`${styles.thSort}${active ? ` ${styles.thSortActive}` : ''}`}
+															onClick={() => setDetailSort((prev) => toggleSort(prev, key))}
+															aria-label={`Ordenar por ${label}`}
+														>
+															{label}
+															{renderSortIcon(!!active, detailSort?.dir)}
+														</button>
+													</th>
+												);
+											})}
 										</tr>
-									))}
-								</tbody>
-							</table>
+									</thead>
+									<tbody>
+										{detailItemsSorted.map((it, idx) => (
+											<tr key={`${it.IdTransaccion}-${it.Renglon ?? idx}`}>
+												<td className={styles.mono}>{it.IdProducto}</td>
+												<td>{it.DescripcionProducto || '—'}</td>
+												<td className={styles.mono}>{fmtCantidad(it.Cantidad)}</td>
+												<td>{it.IdUnidad || '—'}</td>
+												<td className={styles.mono}>{fmtMoney(it.ImporteUnitario)}</td>
+												<td className={`${styles.mono} ${styles.colTotal}`}>
+													{fmtMoney(it.ImporteTotal)}
+												</td>
+												<td className={styles.pacienteCell}>
+													{it.PacienteNombre || it.IdPaciente != null ? (
+														<>
+															<div className={styles.pacienteNombre}>
+																{it.PacienteNombre || `Pac. ${it.IdPaciente}`}
+															</div>
+															{metaPacienteCorta(it) ? (
+																<div className={styles.pacienteMeta}>{metaPacienteCorta(it)}</div>
+															) : it.IdPaciente != null && it.PacienteNombre ? (
+																<div className={styles.pacienteMeta}>#{it.IdPaciente}</div>
+															) : null}
+														</>
+													) : (
+														<span className={styles.muted}>—</span>
+													)}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							) : (
+								<table className={styles.table}>
+									<thead>
+										<tr>
+											{(
+												[
+													['IdProducto', 'Cód'],
+													['DescripcionProducto', 'Descripción'],
+													['Cantidad', 'Cant. total'],
+													['IdUnidad', 'U Med'],
+													['ImporteUnitario', 'Imp. unit.'],
+													['ImporteTotal', 'Total'],
+													['lineas', 'Líneas'],
+													['pacientes', 'Pacientes'],
+												] as [AgrupadosSortKey, string][]
+											).map(([key, label]) => {
+												const active = agrupadosSort?.key === key;
+												return (
+													<th key={key}>
+														<button
+															type="button"
+															className={`${styles.thSort}${active ? ` ${styles.thSortActive}` : ''}`}
+															onClick={() => setAgrupadosSort((prev) => toggleSort(prev, key))}
+															aria-label={`Ordenar por ${label}`}
+														>
+															{label}
+															{renderSortIcon(!!active, agrupadosSort?.dir)}
+														</button>
+													</th>
+												);
+											})}
+										</tr>
+									</thead>
+									<tbody>
+										{detailAgrupadosSorted.map((g) => (
+											<tr key={g.IdProducto}>
+												<td className={styles.mono}>{g.IdProducto}</td>
+												<td>{g.DescripcionProducto || '—'}</td>
+												<td className={styles.mono}>{fmtCantidad(g.Cantidad)}</td>
+												<td>{g.IdUnidad || '—'}</td>
+												<td className={styles.mono}>
+													{g.ImporteUnitario != null ? fmtMoney(g.ImporteUnitario) : '—'}
+												</td>
+												<td className={`${styles.mono} ${styles.colTotal}`}>
+													{fmtMoney(g.ImporteTotal)}
+												</td>
+												<td className={styles.mono}>{g.lineas}</td>
+												<td className={styles.mono}>{g.pacientes || '—'}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							)}
 						</div>
 						<div className={styles.totals}>
+							{detailTab === 'agrupados' ? (
+								<div className={styles.totalItem}>
+									<span className={styles.totalLabel}>Códigos</span>
+									<span className={styles.totalValue}>{detailAgrupadosSorted.length}</span>
+								</div>
+							) : null}
 							<div className={styles.totalItem}>
 								<span className={styles.totalLabel}>Total bultos</span>
 								<span className={styles.totalValue}>{fmtCantidad(detail.Bultos ?? 0)}</span>
@@ -1356,12 +1797,83 @@ export default function RemitosClient() {
 				size="full"
 			>
 				<div className={styles.remitoModal}>
+					{editingId == null &&
+					!pendienteMedLoading &&
+					pendienteMed &&
+					pendienteMed.totalServicios > 0 ? (
+						<section
+							className={`${styles.pendienteBudget} ${styles.pendienteBudgetModal}`}
+							aria-label="Medicación pendiente de entregar"
+						>
+							<div className={styles.pendienteBudgetHead}>
+								<span className={styles.pendienteBudgetIcon}>
+									<Bell size={16} />
+								</span>
+								<div className={styles.pendienteBudgetText}>
+									<strong>
+										Hay medicación sin entregar en {pendienteMed.totalServicios} servicio
+										{pendienteMed.totalServicios === 1 ? '' : 's'}
+									</strong>
+									<span>
+										{pendienteMed.totalLineas} indicación
+										{pendienteMed.totalLineas === 1 ? '' : 'es'} · elegí un servicio para armar RSM
+									</span>
+								</div>
+							</div>
+							<div className={styles.pendienteBudgetChips}>
+								{pendienteMed.servicios.map((svc) => (
+									<button
+										key={`modal-${svc.ValorSector}`}
+										type="button"
+										className={`${styles.pendienteBudgetChip}${
+											idDepositoDest !== '' && Number(idDepositoDest) === Number(svc.IdDeposito)
+												? ` ${styles.pendienteBudgetChipActive}`
+												: ''
+										}`}
+										disabled={svc.IdDeposito == null}
+										title={
+											svc.IdDeposito == null
+												? 'Sin depósito vinculado'
+												: `Usar ${svc.SectorNombre || svc.ValorSector} como destino RSM`
+										}
+										onClick={() => {
+											const rsm =
+												tipos.find((t) => String(t.IdTipo).toUpperCase() === 'RSM')?.IdTipo ||
+												'RSM';
+											skipTipoReset.current = true;
+											setTipoCbte(rsm);
+											if (svc.IdDeposito != null) {
+												setIdDepositoDest(svc.IdDeposito);
+												setRemitoMainTab('items');
+												setAutoOpenCandidatos(true);
+											}
+										}}
+									>
+										<span className={styles.pendienteBudgetChipName}>
+											{svc.SectorNombre || svc.ValorSector}
+										</span>
+										<span className={styles.pendienteBudgetChipMeta}>
+											{svc.Lineas} ind. · {svc.Pacientes} pac.
+										</span>
+									</button>
+								))}
+							</div>
+						</section>
+					) : null}
 					<section className={`${styles.remitoCabCard} ${styles.remitoCabCompact}`}>
 						<div className={styles.remitoCabCardBody}>
 							<div className={styles.remitoCabRow}>
 								<div className={`${styles.field} ${styles.remitoFecha}`}>
 									<label>Fecha</label>
-									<input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+									<input
+										type="date"
+										value={fecha}
+										onChange={(e) => {
+											const v = e.target.value;
+											setFecha(v);
+											void loadPendienteMed(v);
+										}}
+									/>
 								</div>
 								<div className={`${styles.field} ${styles.remitoTipo}`} data-resaltar="remito-tipo">
 									<label>Tipo de remito</label>
@@ -1490,6 +2002,23 @@ export default function RemitosClient() {
 									<button
 										type="button"
 										role="tab"
+										aria-selected={remitoMainTab === 'agrupados'}
+										className={`${styles.remitoPanelTab}${
+											remitoMainTab === 'agrupados' ? ` ${styles.remitoPanelTabActive}` : ''
+										}`}
+										onClick={() => {
+											setRemitoMainTab('agrupados');
+											if (observaciones.trim()) setObsDotVisible(true);
+										}}
+									>
+										Por código
+										{draftAgrupados.length > 0 ? (
+											<span className={styles.remitoTabCount}>{draftAgrupados.length}</span>
+										) : null}
+									</button>
+									<button
+										type="button"
+										role="tab"
 										aria-selected={remitoMainTab === 'obs'}
 										className={`${styles.remitoPanelTab}${
 											remitoMainTab === 'obs' ? ` ${styles.remitoPanelTabActive}` : ''
@@ -1507,16 +2036,16 @@ export default function RemitosClient() {
 								</div>
 								<div
 									className={`${styles.remitoTableHeadActions}${
-										remitoMainTab !== 'items' ? ` ${styles.remitoTableHeadActionsHidden}` : ''
+										remitoMainTab === 'obs' ? ` ${styles.remitoTableHeadActionsHidden}` : ''
 									}`}
-									aria-hidden={remitoMainTab !== 'items'}
+									aria-hidden={remitoMainTab === 'obs'}
 								>
 									{esSalidaServicio && (
 										<button
 											type="button"
 											className={styles.btnGhost}
-											disabled={cargandoCandidatos || remitoMainTab !== 'items'}
-											tabIndex={remitoMainTab === 'items' ? undefined : -1}
+											disabled={cargandoCandidatos || remitoMainTab === 'obs'}
+											tabIndex={remitoMainTab === 'obs' ? -1 : undefined}
 											onClick={() => void cargarCandidatosServicio()}
 											title="Medicación y descartables (Tipo M) de internaciones activas del depósito destino"
 										>
@@ -1528,8 +2057,8 @@ export default function RemitosClient() {
 										type="button"
 										className={styles.btnAddInTable}
 										data-resaltar="remito-agregar-item"
-										disabled={remitoMainTab !== 'items'}
-										tabIndex={remitoMainTab === 'items' ? undefined : -1}
+										disabled={remitoMainTab === 'obs'}
+										tabIndex={remitoMainTab === 'obs' ? -1 : undefined}
 										onClick={openAddItem}
 									>
 										<Plus size={14} />
@@ -1543,25 +2072,44 @@ export default function RemitosClient() {
 										<table className={styles.table}>
 											<thead>
 												<tr>
-													<th>Cód.</th>
-													<th>Descripción</th>
-													<th>Cant.</th>
-													<th>U.Med</th>
-													<th>Imp. unit.</th>
-													<th>Total</th>
-													<th>Paciente</th>
+													{(
+														[
+															['IdProducto', 'Cód.'],
+															['DescripcionProducto', 'Descripción'],
+															['Cantidad', 'Cant.'],
+															['IdUnidad', 'U.Med'],
+															['ImporteUnitario', 'Imp. unit.'],
+															['ImporteTotal', 'Total'],
+															['PacienteNombre', 'Paciente'],
+														] as [ItemsSortKey, string][]
+													).map(([key, label]) => {
+														const active = itemsSort?.key === key;
+														return (
+															<th key={key}>
+																<button
+																	type="button"
+																	className={`${styles.thSort}${active ? ` ${styles.thSortActive}` : ''}`}
+																	onClick={() => setItemsSort((prev) => toggleSort(prev, key))}
+																	aria-label={`Ordenar por ${label}`}
+																>
+																	{label}
+																	{renderSortIcon(!!active, itemsSort?.dir)}
+																</button>
+															</th>
+														);
+													})}
 													<th className={styles.colActions}>Acciones</th>
 												</tr>
 											</thead>
 											<tbody>
-												{draftItems.length === 0 ? (
+												{draftItemsSorted.length === 0 ? (
 													<tr>
 														<td colSpan={8} className={styles.muted} style={{ textAlign: 'center' }}>
 															Sin ítems — usá «Agregar ítem»
 														</td>
 													</tr>
 												) : (
-													draftItems.map((it) => {
+													draftItemsSorted.map((it) => {
 														const avisoCant = motivoCantidadSospechosa(it.Cantidad, it.IdUnidad);
 														return (
 														<tr key={it._key} className={avisoCant ? styles.rowWarn : undefined}>
@@ -1665,6 +2213,86 @@ export default function RemitosClient() {
 										</table>
 									</div>
 									<div className={styles.totals}>
+										<div className={styles.totalItem}>
+											<span className={styles.totalLabel}>Total bultos</span>
+											<span className={styles.totalValue}>{fmtCantidad(totalBultos)}</span>
+										</div>
+										<div className={`${styles.totalItem} ${styles.totalItemPrimary}`}>
+											<span className={styles.totalLabel}>Total remito</span>
+											<span className={styles.totalValue}>{fmtMoney(totalRemito)}</span>
+										</div>
+									</div>
+								</>
+							) : remitoMainTab === 'agrupados' ? (
+								<>
+									<div className={`${styles.tableWrap} ${styles.remitoTableScroll}`}>
+										<table className={styles.table}>
+											<thead>
+												<tr>
+													{(
+														[
+															['IdProducto', 'Cód.'],
+															['DescripcionProducto', 'Descripción'],
+															['Cantidad', 'Cant. total'],
+															['IdUnidad', 'U.Med'],
+															['ImporteUnitario', 'Imp. unit.'],
+															['ImporteTotal', 'Total'],
+															['lineas', 'Líneas'],
+															['pacientes', 'Pacientes'],
+														] as [AgrupadosSortKey, string][]
+													).map(([key, label]) => {
+														const active = agrupadosSort?.key === key;
+														return (
+															<th key={key}>
+																<button
+																	type="button"
+																	className={`${styles.thSort}${active ? ` ${styles.thSortActive}` : ''}`}
+																	onClick={() =>
+																		setAgrupadosSort((prev) => toggleSort(prev, key))
+																	}
+																	aria-label={`Ordenar por ${label}`}
+																>
+																	{label}
+																	{renderSortIcon(!!active, agrupadosSort?.dir)}
+																</button>
+															</th>
+														);
+													})}
+												</tr>
+											</thead>
+											<tbody>
+												{draftAgrupadosSorted.length === 0 ? (
+													<tr>
+														<td colSpan={8} className={styles.muted} style={{ textAlign: 'center' }}>
+															Sin artículos — cargá ítems en la solapa Ítems
+														</td>
+													</tr>
+												) : (
+													draftAgrupadosSorted.map((g) => (
+														<tr key={g.IdProducto}>
+															<td className={styles.mono}>{g.IdProducto}</td>
+															<td>{g.DescripcionProducto || '—'}</td>
+															<td className={styles.mono}>{fmtCantidad(g.Cantidad)}</td>
+															<td>{g.IdUnidad || '—'}</td>
+															<td className={styles.mono}>
+																{g.ImporteUnitario != null ? fmtMoney(g.ImporteUnitario) : '—'}
+															</td>
+															<td className={`${styles.mono} ${styles.colTotal}`}>
+																{fmtMoney(g.ImporteTotal)}
+															</td>
+															<td className={styles.mono}>{g.lineas}</td>
+															<td className={styles.mono}>{g.pacientes || '—'}</td>
+														</tr>
+													))
+												)}
+											</tbody>
+										</table>
+									</div>
+									<div className={styles.totals}>
+										<div className={styles.totalItem}>
+											<span className={styles.totalLabel}>Códigos</span>
+											<span className={styles.totalValue}>{draftAgrupados.length}</span>
+										</div>
 										<div className={styles.totalItem}>
 											<span className={styles.totalLabel}>Total bultos</span>
 											<span className={styles.totalValue}>{fmtCantidad(totalBultos)}</span>

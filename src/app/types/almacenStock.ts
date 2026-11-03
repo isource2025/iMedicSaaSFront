@@ -137,6 +137,25 @@ export interface CandidatosSalidaServicioResp {
 	lineas: CandidatoSalidaServicio[];
 }
 
+/** Resumen de medicación Tipo M pendiente de entregar, por servicio/sector. */
+export interface MedicacionPendienteServicio {
+	ValorSector: string;
+	SectorNombre?: string | null;
+	IdDeposito?: number | null;
+	DepositoNombre?: string | null;
+	Lineas: number;
+	Visitas: number;
+	Pacientes: number;
+}
+
+export interface MedicacionPendienteServiciosResp {
+	fecha: string;
+	totalServicios: number;
+	totalLineas: number;
+	totalVisitas: number;
+	servicios: MedicacionPendienteServicio[];
+}
+
 export interface RemitoProveedor {
 	IdProveedor: number;
 	Descripcion?: string | null;

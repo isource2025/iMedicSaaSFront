@@ -966,6 +966,184 @@
 	flex-shrink: 0;
 }
 
+.remitoTabCount {
+	min-width: 1.15rem;
+	height: 1.15rem;
+	padding: 0 0.3rem;
+	border-radius: 999px;
+	background: rgba(0, 131, 169, 0.12);
+	color: #0a5f78;
+	font-size: 0.68rem;
+	font-weight: 700;
+	line-height: 1.15rem;
+	text-align: center;
+}
+
+.pendienteBudget {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+	margin: 0 0 0.85rem;
+	padding: 0.75rem 0.9rem;
+	border-radius: 12px;
+	border: 1px solid #f0c987;
+	background: linear-gradient(135deg, #fff8eb 0%, #fffdf8 55%, #f7fbff 100%);
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+.pendienteBudgetModal {
+	margin: 0 0 0.75rem;
+	flex: 0 0 auto;
+}
+
+.pendienteBudgetHead {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.65rem;
+}
+
+.pendienteBudgetIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.85rem;
+	height: 1.85rem;
+	border-radius: 999px;
+	background: #fff;
+	border: 1px solid #f0c987;
+	color: #b45309;
+	flex-shrink: 0;
+}
+
+.pendienteBudgetText {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	min-width: 0;
+	flex: 1 1 auto;
+	font-size: 0.82rem;
+	color: #6b4f1d;
+	line-height: 1.35;
+}
+
+.pendienteBudgetText strong {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: #92400e;
+}
+
+.pendienteBudgetRefresh {
+	appearance: none;
+	border: 1px solid #f0c987;
+	background: #fff;
+	color: #92400e;
+	border-radius: 8px;
+	width: 1.85rem;
+	height: 1.85rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.pendienteBudgetRefresh:hover {
+	background: #fff7ed;
+}
+
+.pendienteBudgetChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.pendienteBudgetChip {
+	appearance: none;
+	border: 1px solid #f0c987;
+	background: #fff;
+	border-radius: 999px;
+	padding: 0.35rem 0.7rem;
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.45rem;
+	cursor: pointer;
+	max-width: 100%;
+	transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pendienteBudgetChip:hover:not(:disabled) {
+	border-color: #d97706;
+	background: #fffbeb;
+}
+
+.pendienteBudgetChip:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.pendienteBudgetChipActive {
+	border-color: #0083a9;
+	background: #eef8fc;
+	box-shadow: 0 0 0 1px rgba(0, 131, 169, 0.2);
+}
+
+.pendienteBudgetChipName {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #78350f;
+	white-space: nowrap;
+}
+
+.pendienteBudgetChipActive .pendienteBudgetChipName {
+	color: #0a5f78;
+}
+
+.pendienteBudgetChipMeta {
+	font-size: 0.72rem;
+	font-weight: 600;
+	color: #a16207;
+	white-space: nowrap;
+}
+
+.pendienteBudgetChipActive .pendienteBudgetChipMeta {
+	color: #0e7490;
+}
+
+.thSort {
+	appearance: none;
+	border: none;
+	background: transparent;
+	padding: 0;
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.28rem;
+	font: inherit;
+	font-weight: 700;
+	color: inherit;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.thSort:hover {
+	color: var(--sk-brand-dark, #0a5f78);
+}
+
+.thSortActive {
+	color: var(--sk-brand-dark, #0a5f78);
+}
+
+.thSortIcon {
+	opacity: 0.35;
+	flex-shrink: 0;
+}
+
+.thSortIconActive {
+	opacity: 1;
+	color: var(--sk-brand, #0083a9);
+	flex-shrink: 0;
+}
+
 .remitoObsPanel {
 	flex: 1 1 auto;
 	min-height: 0;
