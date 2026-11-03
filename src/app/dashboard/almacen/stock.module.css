@@ -745,13 +745,16 @@
 .remitoCabCard .field input,
 .remitoCabCard .field select,
 .remitoCabCard .field textarea {
-	padding: 0.28rem 0.4rem;
+	padding: 0.3rem 0.4rem;
 	font-size: 0.8rem;
+	height: 2rem;
+	min-height: 2rem;
+	box-sizing: border-box;
 }
 
 .remitoCabCard .remitoCabRow {
 	gap: 0.4rem 0.55rem;
-	align-items: flex-end;
+	align-items: flex-start;
 }
 
 .remitoSectionItems {
@@ -977,12 +980,17 @@
 
 .nroRemitoInputs {
 	display: flex;
-	align-items: center;
+	align-items: stretch;
 	gap: 0.35rem;
+	height: 2rem;
 }
 
 .nroRemitoInputs input {
 	width: 68px;
+	height: 2rem;
+	min-height: 2rem;
+	box-sizing: border-box;
+	line-height: 1.2;
 }
 
 .nroRemitoInputs .nroLetra {
@@ -995,6 +1003,12 @@
 	flex: 1;
 	width: auto;
 	min-width: 72px;
+}
+
+.remitoCabCard .nroRemitoInputs input {
+	height: 2rem;
+	min-height: 2rem;
+	padding: 0.3rem 0.4rem;
 }
 
 .remitoTablePanel {
