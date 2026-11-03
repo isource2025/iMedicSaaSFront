@@ -9,7 +9,7 @@ import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { useAppContext } from '@/app/contexts/AppContext';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
-import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
+import PedidoDetalleModal, { formatPedidoFechaHora } from '@/app/components/beds/shared/PedidoDetalleModal';
 import { buildAtencionField } from '@/app/components/beds/shared/pacientePedidoFields';
 import { autorRespuesta } from '@/app/components/beds/shared/pedidoResponsable';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
@@ -24,7 +24,7 @@ type Props = {
 };
 
 function formatFecha(row: InterconsultaRow) {
-	return [row.FechaSolicitud, row.HoraSolicitud].filter(Boolean).join(' ');
+	return formatPedidoFechaHora(row.FechaSolicitud, row.HoraSolicitud) || '—';
 }
 
 export default function AgendaInterconsultasBandeja({ open, onClose, sectorInicial }: Props) {

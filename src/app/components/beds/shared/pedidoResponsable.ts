@@ -31,6 +31,21 @@ export function autorRespuesta(row: PedidoResponsable): string | null {
 	return matricula ? 'Profesional sin identificar' : null;
 }
 
+/**
+ * Quién tomó el pedido. Si respondieron sin pasar por "tomar",
+ * NombreToma puede venir vacío: en ese caso usar quien respondió.
+ */
+export function nombreTomadoPor(
+	row: PedidoResponsable & { Tomado?: boolean | null },
+	opts?: { cumplido?: boolean },
+): string | null {
+	const toma = row.NombreToma && String(row.NombreToma).trim();
+	if (toma) return toma;
+	const cumplido = !!opts?.cumplido;
+	if (cumplido || row.Tomado) return autorRespuesta(row);
+	return null;
+}
+
 export function idsSesionUsuario(usuario: UsuarioSesionIds | null | undefined): number[] {
 	if (!usuario) return [];
 	const ids: number[] = [];

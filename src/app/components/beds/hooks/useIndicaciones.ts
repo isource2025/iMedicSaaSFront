@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { indicacionesService } from '../../../services/indicacionesService';
 import { Indicacion } from '../../../types/indicaciones';
 import { IndicacionRow } from '../indicaciones/IndicacionesTable';
+import { formatPedidoFechaHora } from '../shared/PedidoDetalleModal';
 
 export function useIndicaciones(numeroVisita: number | null | undefined) {
 	const [indicaciones, setIndicaciones] = useState<IndicacionRow[]>([]);
@@ -80,8 +81,5 @@ function mapIndicacionToRow(indicacion: Indicacion): IndicacionRow {
 }
 
 function formatDateTime(fecha: string | null, hora: string | null): string {
-	if (!fecha) return '-';
-	const dateStr = fecha;
-	const timeStr = hora ? ` ${hora}` : '';
-	return `${dateStr}${timeStr}`;
+	return formatPedidoFechaHora(fecha, hora) || '-';
 }

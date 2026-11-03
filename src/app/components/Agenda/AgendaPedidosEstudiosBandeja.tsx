@@ -8,7 +8,7 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { useSectoresReceptor } from '@/app/hooks/useSectoresReceptor';
 import { resolveSectorReceptor } from '@/app/utils/resolveSectorReceptor';
 import CumplirEstudioModal from '@/app/components/beds/estudios/CumplirEstudioModal';
-import PedidoDetalleModal from '@/app/components/beds/shared/PedidoDetalleModal';
+import PedidoDetalleModal, { formatPedidoFechaHora } from '@/app/components/beds/shared/PedidoDetalleModal';
 import formStyles from '@/app/components/beds/estudios/PedidoEstudioForms.module.css';
 import styles from '@/app/components/beds/estudios/EstudiosSection.module.css';
 import modalStyles from '@/app/components/beds/shared/PedidoDetalleModal.module.css';
@@ -20,9 +20,7 @@ type Props = {
 };
 
 function formatFecha(row: PedidoEstudio) {
-	const f = row.FechaPedidoISO || '';
-	const h = row.HoraPedido || '';
-	return [f, h].filter(Boolean).join(' ');
+	return formatPedidoFechaHora(row.FechaPedidoISO, row.HoraPedido) || '—';
 }
 
 export default function AgendaPedidosEstudiosBandeja({ open, onClose, sectorInicial }: Props) {

@@ -56,38 +56,28 @@ function hasValue(value?: string | number | null) {
 	return value !== null && value !== undefined && String(value).trim() !== '';
 }
 
-/** Normaliza fechas ISO / Clarion-friendly a dd/mm/yyyy o fecha+hora local. */
+/** Normaliza fechas ISO / yyyy-mm-dd a dd/mm/yyyy (+ hora). Orden día-mes-año para detalle de cama. */
 export function formatPedidoFechaHora(
 	fecha?: string | null,
 	hora?: string | null,
 ): string | null {
 	const fRaw = String(fecha || '').trim();
-	const hRaw = String(hora || '').trim();
+	let hRaw = String(hora || '').trim();
 	if (!fRaw && !hRaw) return null;
 
-	// ISO completo en fecha
-	if (/^\d{4}-\d{2}-\d{2}T/.test(fRaw)) {
-		const d = new Date(fRaw);
-		if (!Number.isNaN(d.getTime())) {
-			return d.toLocaleString('es-AR', {
-				day: '2-digit',
-				month: '2-digit',
-				year: 'numeric',
-				hour: '2-digit',
-				minute: '2-digit',
-			});
-		}
-	}
-
-	let fechaFmt = fRaw;
-	if (/^\d{4}-\d{2}-\d{2}/.test(fRaw)) {
-		const [y, m, d] = fRaw.slice(0, 10).split('-');
-		fechaFmt = `${d}/${m}/${y}`;
+	// ISO con T o espacio: 2026-10-27T11:49 / 2026-10-27 11:49[:ss]
+	const iso = fRaw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+	if (iso) {
+		const [, y, mo, d, hh, mm] = iso;
+		const fechaFmt = `${d}/${mo}/${y}`;
+		if (!hRaw && hh != null && mm != null) hRaw = `${hh}:${mm}`;
+		const horaFmt = hRaw.length >= 5 ? hRaw.slice(0, 5) : hRaw;
+		return horaFmt ? `${fechaFmt} ${horaFmt}` : fechaFmt;
 	}
 
 	const horaFmt = hRaw.length >= 5 ? hRaw.slice(0, 5) : hRaw;
-	if (fechaFmt && horaFmt) return `${fechaFmt} ${horaFmt}`;
-	return fechaFmt || horaFmt || null;
+	if (fRaw && horaFmt) return `${fRaw} ${horaFmt}`;
+	return fRaw || horaFmt || null;
 }
 
 function blockMeta(block: PedidoTextBlock): string | null {

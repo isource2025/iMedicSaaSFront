@@ -9,6 +9,7 @@ import NuevaIndicacionModal from '../indicaciones/NuevaIndicacionModal';
 import styles from './BedDetail.module.css';
 import Loader from '../Loader/Loader';
 import { useBedRelatedData } from '../../hooks/useBedRelatedData';
+import { formatPedidoFechaHora } from './shared/PedidoDetalleModal';
 
 interface BedDetailProps {
   selectedBed: Bed | null;
@@ -273,14 +274,16 @@ const BedDetail = ({
                     <p>No hay estudios programados.</p>
                   ) : (
                     <ul>
-                      {studies.map(s => (
+                      {studies.map(s => {
+                        const fh = formatPedidoFechaHora(s.FechaPedidoISO, s.HoraPedido);
+                        return (
                         <li key={s.IdPedido}>
                           <strong>{s.PracticaSolicitada}</strong>
                           {s.SectorReceptorNombre ? ` · ${s.SectorReceptorNombre}` : ''}
-                          {s.FechaPedidoISO ? ` · ${s.FechaPedidoISO}` : ''}
-                          {s.HoraPedido ? ` ${s.HoraPedido}` : ''}
+                          {fh ? ` · ${fh}` : ''}
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   )}
                 </div>

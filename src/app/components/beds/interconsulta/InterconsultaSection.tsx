@@ -10,12 +10,13 @@ import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/uti
 import BedSectionLoading from '../shared/BedSectionLoading';
 import PedidoDetalleModal from '../shared/PedidoDetalleModal';
 import { buildAtencionField } from '../shared/pacientePedidoFields';
-import { autorRespuesta, esAutorRespuesta, esSolicitante } from '../shared/pedidoResponsable';
+import { autorRespuesta, esAutorRespuesta, esSolicitante, nombreTomadoPor } from '../shared/pedidoResponsable';
 import SolicitarInterconsultaModal from './SolicitarInterconsultaModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
 import ExportButton, { ExportOption } from '../shared/ExportButton';
 import { Periodo, filtrarPorPeriodo } from '../shared/PeriodFilter';
+import { formatPedidoFechaHora } from '../shared/PedidoDetalleModal';
 import { generarPDFEstudios } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import styles from './InterconsultaSection.module.css';
@@ -45,7 +46,7 @@ function urgenciaClass(estado?: string) {
 }
 
 function formatFecha(row: InterconsultaRow) {
-	return [row.FechaSolicitud, row.HoraSolicitud].filter(Boolean).join(' ');
+	return formatPedidoFechaHora(row.FechaSolicitud, row.HoraSolicitud) || '—';
 }
 
 function previewText(value?: string | null, max = 100) {
@@ -85,7 +86,7 @@ function buildInterconsultaFields(row: InterconsultaRow) {
 			full: true,
 		},
 		{ label: 'Solicitado por', value: row.MedicoSolicitanteNombre },
-		{ label: 'Tomado por', value: row.NombreToma },
+		{ label: 'Tomado por', value: nombreTomadoPor(row, { cumplido }) },
 		{ label: 'Respondido por', value: cumplido ? autorRespuesta(row) : null },
 		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{ label: 'Cód. práctica', value: row.CodigoPractica },
@@ -405,12 +406,9 @@ export default function InterconsultaSection({
 							<tbody className={tableStyles.tbody}>
 								{filtered.map((r) => {
 									const id = r.IdPedido || r.IdInterconsulta;
-									const tomado = !!r.Tomado;
 									const cumplido = esCumplida(r);
 									const respondidoPor = cumplido ? autorRespuesta(r) : null;
-									// Solo si está tomado y aún no respondido
-									const tomadoPor =
-										tomado && !cumplido ? r.NombreToma || null : null;
+									const tomadoPor = nombreTomadoPor(r, { cumplido });
 									const destino =
 										r.ServicioDescripcion ||
 										r.SectorReceptorNombre ||

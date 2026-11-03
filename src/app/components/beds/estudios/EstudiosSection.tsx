@@ -8,7 +8,7 @@ import type { SolicitudEstudio } from '@/app/types/solicitudesEstudios';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { cargarVisita, peekVisita, tomarVisita, visitaCacheKey } from '@/app/utils/bedVisitaCache';
 import BedSectionLoading from '../shared/BedSectionLoading';
-import PedidoDetalleModal from '../shared/PedidoDetalleModal';
+import PedidoDetalleModal, { formatPedidoFechaHora } from '../shared/PedidoDetalleModal';
 import SolicitarEstudioModal from './SolicitarEstudioModal';
 import BedSectionLayout from '../shared/BedSectionLayout';
 import EmptyState from '../shared/EmptyState';
@@ -23,7 +23,7 @@ import { IoChevronDown, IoChevronForward, IoEyeOutline, IoPencilOutline, IoTrash
 import { useUsuarioActual } from '@/app/hooks/useUsuarioActual';
 import { getIdSectorFromToken } from '@/app/utils/jwtSession';
 import ConfirmationModal from '../shared/ConfirmationModal';
-import { esAutorRespuesta, esSolicitante } from '../shared/pedidoResponsable';
+import { esAutorRespuesta, esSolicitante, nombreTomadoPor } from '../shared/pedidoResponsable';
 import CumplirEstudioModal from './CumplirEstudioModal';
 
 type Props = {
@@ -45,9 +45,7 @@ function urgenciaClass(estado?: string | null) {
 }
 
 function formatFecha(row: { FechaPedidoISO?: string; HoraPedido?: string }) {
-	const f = row.FechaPedidoISO || '';
-	const h = row.HoraPedido || '';
-	return [f, h].filter(Boolean).join(' ');
+	return formatPedidoFechaHora(row.FechaPedidoISO, row.HoraPedido) || '—';
 }
 
 const itemCumplido = (row: PedidoEstudio) => !!(row.Cumplido || Number(row.IdProtocolo) > 0);
@@ -115,7 +113,7 @@ function buildEstudioFields(row: PedidoEstudio) {
 		{ label: 'Tipo', value: row.TipoPedidoDescripcion || row.PracticaSolicitada },
 		{ label: 'Nomenclador', value: row.NomencladorDescripcion, full: true },
 		{ label: 'Matrícula', value: row.MatriculaSolicitante },
-		{ label: 'Tomado por', value: row.NombreToma },
+		{ label: 'Tomado por', value: nombreTomadoPor(row, { cumplido: itemCumplido(row) }) },
 		{ label: 'Sector origen', value: row.SectorSolicitanteNombre || row.SectorSolicitante },
 		{
 			label: 'Servicio destino',

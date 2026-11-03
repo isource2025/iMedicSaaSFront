@@ -11,6 +11,7 @@ import solStyles from './SolicitudesEstudios.module.css';
 import PedidoAdjuntosField, { sugerirTipoImagen } from './PedidoAdjuntosField';
 import PacientePedidoHeader from './PacientePedidoHeader';
 import { getIdSectorFromToken } from '@/app/utils/jwtSession';
+import { formatPedidoFechaHora } from '../shared/PedidoDetalleModal';
 
 type Props = {
 	open: boolean;
@@ -25,11 +26,7 @@ type Props = {
 };
 
 function formatCuando(iso?: string | null, hora?: string | null) {
-	const raw = String(iso || '').trim();
-	const h = String(hora || '').trim();
-	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
-	const fecha = m ? `${m[3]}/${m[2]}/${m[1]}` : raw;
-	return [fecha, h].filter(Boolean).join(' · ');
+	return formatPedidoFechaHora(iso, hora) || '';
 }
 
 export default function CumplirEstudioModal({
