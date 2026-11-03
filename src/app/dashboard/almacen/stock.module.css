@@ -742,25 +742,45 @@
 	margin-bottom: 0.22rem;
 }
 
-/* Misma altura de control que CustomSelect estándar (2.4rem) */
+/*
+ * Controles de cabecera = mismo tamaño que Agenda / Personal.module.css
+ * (.input y .select → height 2.4rem, min-height 38px, border 1.5px, radius 10px)
+ */
 .remitoCabCard {
 	--remito-ctrl-h: 2.4rem;
+	--remito-ctrl-min: 38px;
 }
 
 .remitoCabCard .field input,
 .remitoCabCard .field select,
 .remitoCabCard .field textarea {
-	padding: 0.45rem 0.65rem;
-	font-size: 0.9rem;
 	height: var(--remito-ctrl-h);
-	min-height: var(--remito-ctrl-h);
+	min-height: var(--remito-ctrl-min);
+	padding: 0.55rem 0.75rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 10px;
+	font-size: 0.82rem;
+	color: #1e293b;
+	background: #fff;
 	box-sizing: border-box;
 	line-height: 1.2;
 }
 
 .remitoCabCard .field input[type='date'] {
-	display: flex;
-	align-items: center;
+	display: block;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+/* CustomSelect (CSS module ajeno): forzar misma caja que .select de Agenda */
+.remitoCabCard [role='combobox'] {
+	height: var(--remito-ctrl-h) !important;
+	min-height: var(--remito-ctrl-min) !important;
+	padding: 0.55rem 2.25rem 0.55rem 0.75rem !important;
+	border: 1.5px solid #e2e8f0 !important;
+	border-radius: 10px !important;
+	font-size: 0.82rem !important;
+	box-sizing: border-box !important;
 }
 
 .remitoCabCard .remitoCabRow {
@@ -994,15 +1014,15 @@
 	align-items: stretch;
 	gap: 0.35rem;
 	height: var(--remito-ctrl-h, 2.4rem);
+	min-height: var(--remito-ctrl-min, 38px);
 }
 
 .nroRemitoInputs input {
 	width: 72px;
 	height: var(--remito-ctrl-h, 2.4rem);
-	min-height: var(--remito-ctrl-h, 2.4rem);
+	min-height: var(--remito-ctrl-min, 38px);
 	box-sizing: border-box;
 	line-height: 1.2;
-	font-size: 0.9rem;
 }
 
 .nroRemitoInputs .nroLetra {
@@ -1019,9 +1039,11 @@
 
 .remitoCabCard .nroRemitoInputs input {
 	height: var(--remito-ctrl-h);
-	min-height: var(--remito-ctrl-h);
-	padding: 0.45rem 0.5rem;
-	font-size: 0.9rem;
+	min-height: var(--remito-ctrl-min);
+	padding: 0.55rem 0.65rem;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 10px;
+	font-size: 0.82rem;
 }
 
 .remitoTablePanel {
