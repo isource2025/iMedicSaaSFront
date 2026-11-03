@@ -742,18 +742,29 @@
 	margin-bottom: 0.22rem;
 }
 
+/* Misma altura de control que CustomSelect estándar (2.4rem) */
+.remitoCabCard {
+	--remito-ctrl-h: 2.4rem;
+}
+
 .remitoCabCard .field input,
 .remitoCabCard .field select,
 .remitoCabCard .field textarea {
-	padding: 0.3rem 0.4rem;
-	font-size: 0.8rem;
-	height: 2rem;
-	min-height: 2rem;
+	padding: 0.45rem 0.65rem;
+	font-size: 0.9rem;
+	height: var(--remito-ctrl-h);
+	min-height: var(--remito-ctrl-h);
 	box-sizing: border-box;
+	line-height: 1.2;
+}
+
+.remitoCabCard .field input[type='date'] {
+	display: flex;
+	align-items: center;
 }
 
 .remitoCabCard .remitoCabRow {
-	gap: 0.4rem 0.55rem;
+	gap: 0.45rem 0.65rem;
 	align-items: flex-start;
 }
 
@@ -982,19 +993,20 @@
 	display: flex;
 	align-items: stretch;
 	gap: 0.35rem;
-	height: 2rem;
+	height: var(--remito-ctrl-h, 2.4rem);
 }
 
 .nroRemitoInputs input {
-	width: 68px;
-	height: 2rem;
-	min-height: 2rem;
+	width: 72px;
+	height: var(--remito-ctrl-h, 2.4rem);
+	min-height: var(--remito-ctrl-h, 2.4rem);
 	box-sizing: border-box;
 	line-height: 1.2;
+	font-size: 0.9rem;
 }
 
 .nroRemitoInputs .nroLetra {
-	width: 36px;
+	width: 40px;
 	text-align: center;
 	font-weight: 700;
 }
@@ -1006,9 +1018,10 @@
 }
 
 .remitoCabCard .nroRemitoInputs input {
-	height: 2rem;
-	min-height: 2rem;
-	padding: 0.3rem 0.4rem;
+	height: var(--remito-ctrl-h);
+	min-height: var(--remito-ctrl-h);
+	padding: 0.45rem 0.5rem;
+	font-size: 0.9rem;
 }
 
 .remitoTablePanel {

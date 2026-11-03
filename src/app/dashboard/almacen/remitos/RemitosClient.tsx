@@ -1370,7 +1370,6 @@ export default function RemitosClient() {
 										name="remito-tipo"
 										value={tipoCbte}
 										isLoading={false}
-										compact
 										options={tipoOptions}
 										onChange={(v) => setTipoCbte(String(v))}
 									/>
@@ -1406,7 +1405,6 @@ export default function RemitosClient() {
 											name="remito-deposito"
 											value={idDeposito}
 											isLoading={false}
-											compact
 											options={depositoOptions}
 											onChange={(v) => setIdDeposito(v === '' ? '' : Number(v))}
 										/>
@@ -1419,7 +1417,6 @@ export default function RemitosClient() {
 												name="remito-dep-dest"
 												value={idDepositoDest}
 												isLoading={false}
-												compact
 												options={depositoOptions}
 												onChange={(v) => setIdDepositoDest(v === '' ? '' : Number(v))}
 											/>
@@ -1434,7 +1431,6 @@ export default function RemitosClient() {
 											name="remito-proveedor"
 											value={idProveedor}
 											isLoading={proveedorLoading}
-											compact
 											options={proveedorOpts.length ? proveedorOpts : proveedorCatalogOpts}
 											selectedLabel={proveedorLabel || undefined}
 											onSearchChange={(term) => void searchProveedores(term)}
@@ -1457,7 +1453,6 @@ export default function RemitosClient() {
 											name="remito-cliente"
 											value={idCliente}
 											isLoading={clienteLoading}
-											compact
 											options={clienteOpts}
 											selectedLabel={clienteLabel || undefined}
 											onSearchChange={(term) => void searchClientes(term)}
