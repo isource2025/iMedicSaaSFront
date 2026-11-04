@@ -7,6 +7,7 @@ import {
 	cleanPdfValue,
 	drawDocumentFooters,
 	drawDocumentHeader,
+	PDF_PAGE,
 	drawRunningHeaders,
 	entregarPDF,
 	type PDFHeaderOptions,
@@ -100,7 +101,7 @@ export const generarPDFHistoriaClinica = async (
 	empresaInfo?: EmpresaInfo,
 	ubicacion?: string,
 ) => {
-	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = {
 		title: 'Historia Clínica de Ingreso',
 		empresaInfo,

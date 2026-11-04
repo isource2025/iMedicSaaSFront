@@ -4,11 +4,25 @@ import type {
 	DatosCabeceraRendicion,
 	EstadoRendicion,
 	FacturaRendicion,
+	FiltrosReporteDetalle,
+	FiltrosReportePracticaDetalle,
+	FiltrosReportePracticaResumen,
+	FiltrosReporteProfesional,
+	FiltrosReporteProfesionalSumario,
+	FiltrosReporteResumen,
 	LineaRendida,
 	ListadoRendiciones,
+	OpcionesPracticaDetalle,
 	Pagina,
+	ProfesionalRendicion,
 	Rendicion,
 	RendicionDetalle,
+	ReporteDetalle,
+	ReportePracticaDetalle,
+	ReportePracticaResumen,
+	ReporteProfesional,
+	ReporteProfesionalSumario,
+	ReporteResumen,
 	TipoPrestacion,
 	VisitaRendida,
 } from '@/app/types/rendiciones';
@@ -61,6 +75,109 @@ export const rendicionesService = {
 		),
 
 	facturas: (id: number) => dato<FacturaRendicion[]>(apiService.get(`/rendiciones/${id}/facturas`, CARGA)),
+
+	reporteResumen: (id: number, filtros: FiltrosReporteResumen) => {
+		const tipos = (filtros.tipos?.length ? filtros.tipos : ['G', 'H', 'M']).join(',');
+		const letras =
+			!filtros.letras?.length || filtros.letras.includes('*') ? '' : filtros.letras.join(',');
+		const visitas =
+			filtros.todasLasAdmisiones || !filtros.visitas?.length ? '' : filtros.visitas.join(',');
+		return dato<ReporteResumen>(
+			apiService.get(`/rendiciones/${id}/reporte-resumen`, {
+				timeout: 120000,
+				params: limpio({
+					tipoAdmision: filtros.tipoAdmision || '',
+					tipos,
+					letras,
+					visitas,
+				}),
+			}),
+		);
+	},
+
+	reporteDetalle: (id: number, filtros: FiltrosReporteDetalle) => {
+		const tipos = (filtros.tipos?.length ? filtros.tipos : ['G', 'H', 'M']).join(',');
+		const letras =
+			!filtros.letras?.length || filtros.letras.includes('*') ? '' : filtros.letras.join(',');
+		const visitas =
+			filtros.todasLasAdmisiones || !filtros.visitas?.length ? '' : filtros.visitas.join(',');
+		return dato<ReporteDetalle>(
+			apiService.get(`/rendiciones/${id}/reporte-detalle`, {
+				timeout: 120000,
+				params: limpio({
+					tipoAdmision: filtros.tipoAdmision || '',
+					tipos,
+					letras,
+					visitas,
+				}),
+			}),
+		);
+	},
+
+	reporteProfesional: (id: number, filtros: FiltrosReporteProfesional) => {
+		const letras =
+			!filtros.letras?.length || filtros.letras.includes('*') ? '' : filtros.letras.join(',');
+		const visitas =
+			filtros.todasLasAdmisiones || !filtros.visitas?.length ? '' : filtros.visitas.join(',');
+		return dato<ReporteProfesional>(
+			apiService.get(`/rendiciones/${id}/reporte-profesional`, {
+				timeout: 120000,
+				params: limpio({
+					tipoAdmision: filtros.tipoAdmision || '',
+					letras,
+					visitas,
+				}),
+			}),
+		);
+	},
+
+	profesionales: (id: number) =>
+		dato<ProfesionalRendicion[]>(apiService.get(`/rendiciones/${id}/profesionales`, CARGA)),
+
+	reporteProfesionalSumario: (id: number, filtros: FiltrosReporteProfesionalSumario) => {
+		const matriculas =
+			filtros.todosLosMedicos || !filtros.matriculas?.length ? '' : filtros.matriculas.join(',');
+		return dato<ReporteProfesionalSumario>(
+			apiService.get(`/rendiciones/${id}/reporte-profesional-sumario`, {
+				timeout: 120000,
+				params: limpio({ matriculas }),
+			}),
+		);
+	},
+
+	opcionesPracticaDetalle: (id: number) =>
+		dato<OpcionesPracticaDetalle>(apiService.get(`/rendiciones/${id}/opciones-practica-detalle`, CARGA)),
+
+	reportePracticaDetalle: (id: number, filtros: FiltrosReportePracticaDetalle) => {
+		const tipos = (filtros.tipos?.length ? filtros.tipos : ['G', 'H', 'M']).join(',');
+		return dato<ReportePracticaDetalle>(
+			apiService.get(`/rendiciones/${id}/reporte-practica-detalle`, {
+				timeout: 120000,
+				params: limpio({
+					tipos,
+					practicas: filtros.practicas?.length ? filtros.practicas.join(',') : '',
+					funciones: filtros.funciones?.length ? filtros.funciones.join(',') : '',
+					matriculas: filtros.matriculas?.length ? filtros.matriculas.join(',') : '',
+					orden: filtros.orden || 'admision',
+					desglosarModulos: filtros.desglosarModulos === false ? '0' : '1',
+				}),
+			}),
+		);
+	},
+
+	reportePracticaResumen: (id: number, filtros: FiltrosReportePracticaResumen) => {
+		const tipos = (filtros.tipos?.length ? filtros.tipos : ['G', 'H', 'M']).join(',');
+		return dato<ReportePracticaResumen>(
+			apiService.get(`/rendiciones/${id}/reporte-practica-resumen`, {
+				timeout: 120000,
+				params: limpio({
+					tipos,
+					practicas: filtros.practicas?.length ? filtros.practicas.join(',') : '',
+					desglosarModulos: filtros.desglosarModulos === false ? '0' : '1',
+				}),
+			}),
+		);
+	},
 
 	crear: (datos: DatosCabeceraRendicion) => dato<RendicionDetalle>(apiService.post('/rendiciones', datos)),
 

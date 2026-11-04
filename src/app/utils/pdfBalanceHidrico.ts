@@ -181,7 +181,6 @@ function totalesFila(rows: BalanceHidrico[]): Record<string, string> {
 export function generarPDFBalanceHidrico({ items, empresaInfo, patient, fileName }: PDFBalanceHidricoOptions) {
 	return generarPDFTablaDiaria({
 		titulo: 'Balance hídrico',
-		orientacion: 'landscape',
 		items,
 		columnas: COLUMNAS,
 		fecha: (r) => r.Fecha,

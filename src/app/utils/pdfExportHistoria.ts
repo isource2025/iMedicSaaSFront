@@ -48,6 +48,7 @@ import {
 	PDF_CONTENT_TOP,
 	PDF_FOOTER_SPACE,
 	PDF_MARGIN_X,
+	PDF_PAGE,
 	type PdfCapturado,
 	type PDFHeaderOptions,
 	type PDFHeaderPatient,
@@ -323,7 +324,7 @@ function textoPeriodo(v: ExportVisitaData): string {
 
 /** Índice: por visita y grupo, cada bloque con su cantidad y la hoja donde empieza. */
 async function generarIndice(renglones: Renglon[], visitas: ExportVisitaData[], c: Contexto, carpeta: boolean) {
-	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = {
 		title: carpeta ? 'Carpeta del paciente' : 'Historia de la internación',
 		empresaInfo: c.empresaInfo,

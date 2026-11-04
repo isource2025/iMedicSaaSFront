@@ -7,6 +7,7 @@ import {
 	cleanPdfValue,
 	drawDocumentFooters,
 	drawDocumentHeader,
+	PDF_PAGE,
 	drawRunningHeaders,
 	entregarPDF,
 	PDF_COLORS,
@@ -101,7 +102,7 @@ function firmantesDe(p: ProtocoloClinico, equipo: Integrante[]): ProfesionalFirm
  * (uno por hoja), datos de la práctica, diagnósticos, equipo, descripción y firma del especialista.
  */
 export async function generarPDFProtocolos({ protocolos, empresaInfo, patient, fileName }: PDFProtocolosOptions) {
-	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = {
 		title: protocolos.length === 1 ? 'Protocolo quirúrgico' : 'Protocolos quirúrgicos',
 		empresaInfo,

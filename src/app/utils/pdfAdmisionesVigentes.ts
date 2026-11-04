@@ -9,6 +9,8 @@ import {
 	PDF_CONTENT_TOP,
 	PDF_FOOTER_SPACE,
 	PDF_MARGIN_X,
+	PDF_PAGE,
+	wrapFitText,
 	type PDFHeaderOptions,
 } from './pdfHeader';
 
@@ -21,15 +23,15 @@ export type PdfAdmisionesVigentesOpts = {
 type Col = { key: string; label: string; w: number };
 
 const COLS: Col[] = [
-	{ key: 'cama', label: 'Cama', w: 16 },
-	{ key: 'paciente', label: 'Paciente', w: 42 },
-	{ key: 'dni', label: 'DNI', w: 22 },
-	{ key: 'edad', label: 'Edad', w: 16 },
-	{ key: 'ingreso', label: 'Ingreso', w: 22 },
-	{ key: 'dias', label: 'Días', w: 12 },
-	{ key: 'diag', label: 'Diagnóstico', w: 40 },
-	{ key: 'cobertura', label: 'Cobertura', w: 32 },
-	{ key: 'medico', label: 'Médico', w: 32 },
+	{ key: 'cama', label: 'Cama', w: 14 },
+	{ key: 'paciente', label: 'Paciente', w: 32 },
+	{ key: 'dni', label: 'DNI', w: 18 },
+	{ key: 'edad', label: 'Edad', w: 12 },
+	{ key: 'ingreso', label: 'Ingreso', w: 18 },
+	{ key: 'dias', label: 'Días', w: 10 },
+	{ key: 'diag', label: 'Diagnóstico', w: 28 },
+	{ key: 'cobertura', label: 'Cobertura', w: 26 },
+	{ key: 'medico', label: 'Médico', w: 28 },
 ];
 
 const TITLE = 'Admisiones vigentes';
@@ -98,7 +100,7 @@ function agrupar(filas: AdmisionVigente[]): Grupo[] {
 	return Array.from(mapa.values());
 }
 
-/** PDF landscape de admisiones vigentes (blob para previsualizar / descargar). */
+/** PDF A4 vertical de admisiones vigentes (blob para previsualizar / descargar). */
 export async function buildAdmisionesVigentesPdf(
 	opts: PdfAdmisionesVigentesOpts,
 ): Promise<{ blob: Blob; fileName: string }> {
@@ -109,7 +111,7 @@ export async function buildAdmisionesVigentesPdf(
 		empresaInfo = null;
 	}
 
-	const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const pageW = doc.internal.pageSize.getWidth();
 	const pageH = doc.internal.pageSize.getHeight();
 	const x0 = PDF_MARGIN_X;
@@ -163,7 +165,7 @@ export async function buildAdmisionesVigentesPdf(
 		doc.setFontSize(7.2);
 		let h = 4;
 		for (const c of cols) {
-			const lines = doc.splitTextToSize(cell(row, c.key), c.w - 2) as string[];
+			const lines = wrapFitText(doc, cell(row, c.key), c.w - 2, 3);
 			h = Math.max(h, lines.length * 3.2);
 		}
 		return Math.min(h + 1.5, 14);
@@ -180,7 +182,7 @@ export async function buildAdmisionesVigentesPdf(
 		doc.setTextColor(...PDF_COLORS.ink);
 		let x = x0;
 		for (const c of cols) {
-			const lines = (doc.splitTextToSize(cell(row, c.key), c.w - 2) as string[]).slice(0, 3);
+			const lines = wrapFitText(doc, cell(row, c.key), c.w - 2, 3);
 			doc.text(lines, x + 1, y);
 			x += c.w;
 		}

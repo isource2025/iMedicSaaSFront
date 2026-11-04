@@ -9,6 +9,8 @@ import {
 	PDF_CONTENT_TOP,
 	PDF_FOOTER_SPACE,
 	PDF_MARGIN_X,
+	PDF_PAGE,
+	wrapFitText,
 	type PDFHeaderOptions,
 } from './pdfHeader';
 
@@ -21,15 +23,15 @@ export type PdfAdmisionesBusquedaOpts = {
 type Col = { key: string; label: string; w: number };
 
 const COLS: Col[] = [
-	{ key: 'ia', label: 'I/A', w: 10 },
-	{ key: 'visita', label: 'Nº Adm.', w: 18 },
-	{ key: 'paciente', label: 'Paciente', w: 42 },
-	{ key: 'dni', label: 'DNI', w: 22 },
-	{ key: 'cobertura', label: 'Cobertura', w: 36 },
-	{ key: 'ingreso', label: 'Ingreso', w: 24 },
-	{ key: 'egreso', label: 'Egreso', w: 24 },
-	{ key: 'ubicacion', label: 'Ubicación', w: 30 },
-	{ key: 'diag', label: 'Diagnóstico', w: 42 },
+	{ key: 'ia', label: 'I/A', w: 8 },
+	{ key: 'visita', label: 'Nº Adm.', w: 16 },
+	{ key: 'paciente', label: 'Paciente', w: 32 },
+	{ key: 'dni', label: 'DNI', w: 18 },
+	{ key: 'cobertura', label: 'Cobertura', w: 28 },
+	{ key: 'ingreso', label: 'Ingreso', w: 20 },
+	{ key: 'egreso', label: 'Egreso', w: 20 },
+	{ key: 'ubicacion', label: 'Ubicación', w: 22 },
+	{ key: 'diag', label: 'Diagnóstico', w: 22 },
 ];
 
 const TITLE = 'Consulta general de admisiones';
@@ -104,7 +106,7 @@ function cell(row: AdmissionSearchRow, key: string): string {
 	}
 }
 
-/** PDF landscape del listado de búsqueda de admisiones (blob para previsualizar / descargar). */
+/** PDF A4 vertical del listado de búsqueda de admisiones (blob para previsualizar / descargar). */
 export async function buildAdmisionesBusquedaPdf(
 	opts: PdfAdmisionesBusquedaOpts,
 ): Promise<{ blob: Blob; fileName: string }> {
@@ -115,7 +117,7 @@ export async function buildAdmisionesBusquedaPdf(
 		empresaInfo = null;
 	}
 
-	const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const pageW = doc.internal.pageSize.getWidth();
 	const pageH = doc.internal.pageSize.getHeight();
 	const x0 = PDF_MARGIN_X;
@@ -169,7 +171,7 @@ export async function buildAdmisionesBusquedaPdf(
 		doc.setFontSize(7.2);
 		let h = 4;
 		for (const c of cols) {
-			const lines = doc.splitTextToSize(cell(row, c.key), c.w - 2) as string[];
+			const lines = wrapFitText(doc, cell(row, c.key), c.w - 2, 3);
 			h = Math.max(h, lines.length * 3.2);
 		}
 		return Math.min(h + 1.5, 14);
@@ -186,7 +188,7 @@ export async function buildAdmisionesBusquedaPdf(
 		doc.setTextColor(...PDF_COLORS.ink);
 		let x = x0;
 		for (const c of cols) {
-			const lines = (doc.splitTextToSize(cell(row, c.key), c.w - 2) as string[]).slice(0, 3);
+			const lines = wrapFitText(doc, cell(row, c.key), c.w - 2, 3);
 			doc.text(lines, x + 1, y);
 			x += c.w;
 		}

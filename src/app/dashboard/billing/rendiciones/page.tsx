@@ -242,29 +242,29 @@ export default function RendicionesPage() {
 								<thead>
 									<tr>
 										<th colSpan={4} />
-										<th colSpan={2} className={`${c.grupoTitulo} ${c.thCobertura}`}>
+										<th colSpan={2} className={`${c.grupoTitulo} ${c.thCobertura} ${c.grupoInicio}`}>
 											Cobertura
 										</th>
 										<th />
-										<th colSpan={COLUMNAS_IMPORTE.length} className={`${c.grupoTitulo} ${c.thImporte}`}>
+										<th colSpan={COLUMNAS_IMPORTE.length} className={`${c.grupoTitulo} ${c.thImporte} ${c.grupoInicio}`}>
 											Importes
 										</th>
-										<th colSpan={2} />
+										<th colSpan={2} className={c.grupoInicio} />
 									</tr>
 									<tr>
 										<th className={c.num}>N°</th>
 										<th>Fecha</th>
 										<th>Tipo</th>
 										<th>Cliente</th>
-										<th className={c.thCobertura}>Convenio</th>
+										<th className={`${c.thCobertura} ${c.grupoInicio}`}>Convenio</th>
 										<th className={c.thCobertura}>Observaciones</th>
 										<th>Período</th>
-										{COLUMNAS_IMPORTE.map((col) => (
-											<th key={col.clave} className={`${c.num} ${c.thImporte}`}>
+										{COLUMNAS_IMPORTE.map((col, i) => (
+											<th key={col.clave} className={`${c.num} ${c.thImporte} ${i === 0 ? c.grupoInicio : ''}`}>
 												{col.corta}
 											</th>
 										))}
-										<th className={c.num}>Visitas</th>
+										<th className={`${c.num} ${c.grupoInicio}`}>Visitas</th>
 										<th>Estado</th>
 									</tr>
 								</thead>
@@ -284,28 +284,39 @@ export default function RendicionesPage() {
 													{f.id}
 												</button>
 											</td>
-											<td className={c.subtexto}>{f.fechaGraba ? fmtFecha(f.fechaGraba.slice(0, 10)) : '—'}</td>
+											<td>
+												<span className={c.subtexto}>{f.fechaGraba ? fmtFecha(f.fechaGraba.slice(0, 10)) : '—'}</span>
+											</td>
 											<td>
 												<span className={c.badge}>{f.tipoCliente.valor || '—'}</span>
 											</td>
 											<td>
-												<span className={c.descripcion}>{f.cliente.razonSocial || '—'}</span>
-												<span className={c.subtexto}>Código {f.cliente.valor}</span>
+												<span className={c.celdaStack}>
+													<span className={c.descripcion}>{f.cliente.razonSocial || '—'}</span>
+													<span className={c.subtexto}>Código {f.cliente.valor}</span>
+												</span>
 											</td>
-											<td className={c.tdCobertura}>
-												<span className={c.descripcion}>#{f.convenio.codigo}</span>
-												<span className={c.subtexto}>{f.convenio.descripcion || 'Convenio inexistente'}</span>
+											<td className={`${c.tdCobertura} ${c.grupoInicio}`}>
+												<span className={c.celdaStack}>
+													<span className={c.descripcion}>#{f.convenio.codigo}</span>
+													<span className={c.subtexto}>{f.convenio.descripcion || 'Convenio inexistente'}</span>
+												</span>
 											</td>
-											<td className={`${c.tdCobertura} ${c.subtexto}`} style={{ maxWidth: 220 }}>
-												{f.observaciones || '—'}
+											<td className={c.tdCobertura} style={{ maxWidth: 220 }}>
+												<span className={c.subtexto}>{f.observaciones || '—'}</span>
 											</td>
-											<td style={{ whiteSpace: 'nowrap' }}>{fmtPeriodo(f.periodo) || <span className={c.subtexto}>Sin período</span>}</td>
-											{COLUMNAS_IMPORTE.map((col) => (
-												<td key={col.clave} className={`${c.num} ${c.tdImporte} ${f.importes[col.clave] ? '' : c.numMuted}`}>
+											<td style={{ whiteSpace: 'nowrap' }}>
+												{fmtPeriodo(f.periodo) || <span className={c.subtexto}>Sin período</span>}
+											</td>
+											{COLUMNAS_IMPORTE.map((col, i) => (
+												<td
+													key={col.clave}
+													className={`${c.num} ${c.tdImporte} ${i === 0 ? c.grupoInicio : ''} ${f.importes[col.clave] ? '' : c.numMuted}`}
+												>
 													{col.clave === 'total' ? <strong>{fmtMoneda(f.importes.total)}</strong> : fmtMoneda(f.importes[col.clave])}
 												</td>
 											))}
-											<td className={`${c.num} ${f.visitas ? '' : c.numMuted}`}>{fmtNumero(f.visitas)}</td>
+											<td className={`${c.num} ${c.grupoInicio} ${f.visitas ? '' : c.numMuted}`}>{fmtNumero(f.visitas)}</td>
 											<td>
 												<span className={`${c.badge} ${c[`badge_${f.estado}`]}`}>{ESTADO_LABEL[f.estado]}</span>
 											</td>

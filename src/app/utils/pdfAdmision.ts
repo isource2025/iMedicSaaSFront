@@ -5,6 +5,7 @@ import {
 	cleanPdfValue,
 	drawDocumentFooters,
 	drawDocumentHeader,
+	PDF_PAGE,
 	drawRunningHeaders,
 	entregarPDF,
 	type PDFHeaderOptions,
@@ -36,7 +37,7 @@ const conValor = (campos: Campo[]) => campos.filter((c) => c.valor);
 
 /** Datos administrativos de la internación: ingreso, cobertura, médicos y egreso. */
 export async function generarPDFAdmision({ admision: a, empresaInfo, patient, fileName }: PDFAdmisionOptions) {
-	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = { title: 'Datos de la internación', empresaInfo, patient, emittedAt: new Date() };
 	const r = new PdfBloques(doc);
 	r.y = await drawDocumentHeader(doc, headerOpts);

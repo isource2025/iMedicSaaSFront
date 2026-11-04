@@ -11,6 +11,7 @@ import {
 	PDF_CONTENT_TOP,
 	PDF_FOOTER_SPACE,
 	PDF_MARGIN_X,
+	PDF_PAGE,
 	type PDFHeaderOptions,
 	type PDFHeaderPatient,
 } from './pdfHeader';
@@ -68,7 +69,6 @@ export type PDFTablaDiariaOptions<T> = {
 	notaHasta?: string;
 	/** Fila de totales al cierre de cada día y, si hay más de uno, del período: valor por key de columna. */
 	totales?: (items: T[]) => Record<string, string>;
-	orientacion?: 'portrait' | 'landscape';
 	/** Páginas extra al final (ej. imágenes adjuntas), antes de encabezados y pies. */
 	despues?: (doc: jsPDF) => Promise<void>;
 	empresaInfo?: EmpresaInfo | null;
@@ -134,7 +134,7 @@ export function columnaHora<T>(
 }
 
 export async function generarPDFTablaDiaria<T>(o: PDFTablaDiariaOptions<T>) {
-	const doc = new jsPDF({ orientation: o.orientacion ?? 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = { title: o.titulo, empresaInfo: o.empresaInfo, patient: o.patient, emittedAt: new Date() };
 	const x0 = PDF_MARGIN_X;
 	const x1 = doc.internal.pageSize.getWidth() - PDF_MARGIN_X;

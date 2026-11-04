@@ -66,7 +66,7 @@ async function contenidoEjemplo(doc: import("jspdf").jsPDF, y: number) {
 
 async function construir(empresa: EmpresaInfo, logo: string | null, diseno: PdfDiseno, conContenido: boolean) {
   const [{ jsPDF }, header] = await Promise.all([import("jspdf"), import("@/app/utils/pdfHeader")]);
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const doc = new jsPDF(header.PDF_PAGE);
   const opts = {
     title: "Historia Clínica de Ingreso",
     empresaInfo: { ...empresa, logo: logo ?? undefined },

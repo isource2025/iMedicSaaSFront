@@ -11,6 +11,7 @@ import {
 	PDF_CONTENT_TOP,
 	PDF_FOOTER_SPACE,
 	PDF_MARGIN_X,
+	PDF_PAGE,
 	type PDFHeaderOptions,
 	type PDFHeaderPatient,
 } from './pdfHeader';
@@ -66,7 +67,7 @@ export async function generarPDFEvoluciones({
 	title = 'Evoluciones',
 	fileName,
 }: PDFEvolucionesOptions) {
-	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = { title, empresaInfo, patient, emittedAt: new Date() };
 	const x0 = PDF_MARGIN_X;
 	const x1 = doc.internal.pageSize.getWidth() - PDF_MARGIN_X;

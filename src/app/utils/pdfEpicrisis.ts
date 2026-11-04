@@ -6,6 +6,7 @@ import {
 	cleanPdfValue,
 	drawDocumentFooters,
 	drawDocumentHeader,
+	PDF_PAGE,
 	drawRunningHeaders,
 	entregarPDF,
 	PDF_COLORS,
@@ -113,7 +114,7 @@ export async function generarPDFEpicrisis(
 		.map(({ e }) => e);
 	const primera = lista[0];
 
-	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = {
 		title: 'Epicrisis',
 		empresaInfo,

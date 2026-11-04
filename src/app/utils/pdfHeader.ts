@@ -44,6 +44,11 @@ export type PDFHeaderOptions = {
 	emittedAt?: Date;
 	/** Si no viene, se usa el diseño guardado de la empresa (queda resuelto acá tras el header). */
 	diseno?: PdfDiseno;
+	/**
+	 * Facturación / rendiciones: muestra todos los datos institucionales
+	 * (razón social, domicilio, CUIT, IVA, IIBB, tel, email, fax) aunque el diseño los oculte.
+	 */
+	institucionCompleta?: boolean;
 };
 
 export const PDF_COLORS = {
@@ -69,6 +74,9 @@ export const PDF_MARGIN_X = 12;
 export const PDF_CONTENT_TOP = 20;
 /** Espacio reservado al pie para el footer. */
 export const PDF_FOOTER_SPACE = 16;
+
+/** Todo PDF exportado: A4 vertical. No usar landscape ni otros tamaños. */
+export const PDF_PAGE = { orientation: 'portrait' as const, unit: 'mm' as const, format: 'a4' as const };
 
 const EMPTY_VALUES = new Set(['', '-', '—', '0', 'null', 'undefined', 'n/a', 'na', 's/d']);
 
@@ -139,11 +147,24 @@ function iniciales(nombre: string): string {
 }
 
 /** Recorta un texto con "…" para que entre en `maxWidth` (usa la fuente activa). */
-function fitText(doc: jsPDF, text: string, maxWidth: number): string {
+export function fitText(doc: jsPDF, text: string, maxWidth: number): string {
 	if (doc.getTextWidth(text) <= maxWidth) return text;
 	let s = text;
 	while (s.length > 1 && doc.getTextWidth(`${s}…`) > maxWidth) s = s.slice(0, -1);
 	return `${s.trimEnd()}…`;
+}
+
+/** Parte y recorta líneas para que ninguna exceda `maxWidth` (evita solapes entre columnas). */
+export function wrapFitText(doc: jsPDF, text: string, maxWidth: number, maxLines = 3): string[] {
+	const raw = String(text ?? '').trim() || ' ';
+	const parts = (doc.splitTextToSize(raw, Math.max(4, maxWidth)) as string[]).slice(0, maxLines);
+	return parts.map((line, i) => {
+		const fitted = fitText(doc, line, maxWidth);
+		if (i === maxLines - 1 && parts.length === maxLines && raw.length > line.length) {
+			return fitted.endsWith('…') ? fitted : fitText(doc, `${fitted.replace(/…$/, '')}…`, maxWidth);
+		}
+		return fitted;
+	});
 }
 
 function setFont(doc: jsPDF, size: number, style: 'normal' | 'bold' = 'normal', color: RGB = PDF_COLORS.ink) {
@@ -152,8 +173,18 @@ function setFont(doc: jsPDF, size: number, style: 'normal' | 'bold' = 'normal', 
 	doc.setTextColor(...color);
 }
 
-type LoadedLogo = { dataUrl: string; width: number; height: number };
+type LoadedLogo = { dataUrl: string; width: number; height: number; format: 'PNG' | 'JPEG' | 'WEBP' };
 const logoCache = new Map<string, Promise<LoadedLogo | null>>();
+
+function formatoDeDataUrl(src: string): 'PNG' | 'JPEG' | 'WEBP' {
+	const m = /^data:image\/(png|jpeg|jpg|webp)/i.exec(src);
+	const t = (m?.[1] || 'png').toLowerCase();
+	if (t === 'jpeg' || t === 'jpg') return 'JPEG';
+	if (t === 'webp') return 'WEBP';
+	return 'PNG';
+}
+
+const LOGO_MAX_PX = 512;
 
 function loadLogo(src?: string | null): Promise<LoadedLogo | null> {
 	const key = cleanPdfValue(src);
@@ -163,19 +194,25 @@ function loadLogo(src?: string | null): Promise<LoadedLogo | null> {
 
 	const promise = new Promise<LoadedLogo | null>((resolve) => {
 		const img = new Image();
-		img.crossOrigin = 'anonymous';
+		// crossOrigin en data: URLs rompe la carga en Chromium → monograma.
+		if (!key.startsWith('data:')) img.crossOrigin = 'anonymous';
 		img.onload = () => {
 			try {
 				const width = img.naturalWidth || img.width;
 				const height = img.naturalHeight || img.height;
 				if (!width || !height) return resolve(null);
+				// Siempre pasar por canvas: achica logos grandes (jsPDF falla con PNG enormes)
+				// y normaliza a PNG confiable.
+				const scale = Math.min(1, LOGO_MAX_PX / Math.max(width, height));
+				const w = Math.max(1, Math.round(width * scale));
+				const h = Math.max(1, Math.round(height * scale));
 				const canvas = document.createElement('canvas');
-				canvas.width = width;
-				canvas.height = height;
+				canvas.width = w;
+				canvas.height = h;
 				const ctx = canvas.getContext('2d');
 				if (!ctx) return resolve(null);
-				ctx.drawImage(img, 0, 0);
-				resolve({ dataUrl: canvas.toDataURL('image/png'), width, height });
+				ctx.drawImage(img, 0, 0, w, h);
+				resolve({ dataUrl: canvas.toDataURL('image/png'), width: w, height: h, format: 'PNG' });
 			} catch {
 				resolve(null);
 			}
@@ -192,11 +229,14 @@ function drawLogo(doc: jsPDF, logo: LoadedLogo | null, nombre: string, x: number
 		const ratio = logo.width / logo.height;
 		const w = ratio >= 1 ? size : size * ratio;
 		const h = ratio >= 1 ? size / ratio : size;
-		try {
-			doc.addImage(logo.dataUrl, 'PNG', x + (size - w) / 2, y + (size - h) / 2, w, h);
-			return;
-		} catch {
-			/* cae al monograma */
+		const formats: Array<'PNG' | 'JPEG' | 'WEBP'> = [logo.format, 'PNG', 'JPEG'];
+		for (const format of Array.from(new Set(formats))) {
+			try {
+				doc.addImage(logo.dataUrl, format, x + (size - w) / 2, y + (size - h) / 2, w, h);
+				return;
+			} catch {
+				/* prueba el siguiente formato */
+			}
 		}
 	}
 	doc.setFillColor(...PDF_COLORS.brand);
@@ -204,6 +244,15 @@ function drawLogo(doc: jsPDF, logo: LoadedLogo | null, nombre: string, x: number
 	const ini = iniciales(nombre);
 	setFont(doc, ini.length > 2 ? 11 : 13, 'bold', [255, 255, 255]);
 	doc.text(ini, x + size / 2, y + size / 2, { align: 'center', baseline: 'middle' });
+}
+
+/** Prioriza el data URL del endpoint `/empresa/logo`; evita URLs rotas en `empresaInfo.logo`. */
+async function resolverLogoSrc(empresaInfo?: EmpresaInfo | null): Promise<string | null> {
+	const desdeEmpresa = cleanPdfValue(empresaInfo?.logo);
+	if (desdeEmpresa.startsWith('data:image/')) return desdeEmpresa;
+	const desdeApi = cleanPdfValue(await obtenerLogoEmpresa());
+	if (desdeApi) return desdeApi;
+	return desdeEmpresa || null;
 }
 
 type DatoInstitucion = { label: string; value: string };
@@ -341,13 +390,30 @@ function drawPatientPanel(doc: jsPDF, p: PDFHeaderPatient, startY: number, disen
 	return startY + panelH;
 }
 
+/** Diseño con todos los campos de institución visibles (reportes de facturación). */
+export function conInstitucionCompleta(diseno: PdfDiseno): PdfDiseno {
+	return {
+		...diseno,
+		encabezado: {
+			...diseno.encabezado,
+			mostrarLogo: true,
+			datosInstitucion: 'todos',
+			campos: Object.fromEntries(CAMPOS_INSTITUCION.map((c) => [c.id, true])) as Record<
+				CampoInstitucion,
+				boolean
+			>,
+		},
+	};
+}
+
 /**
  * Dibuja el header completo de la primera página (institución + título + paciente).
  * Devuelve la Y donde puede empezar el contenido.
  */
 export async function drawDocumentHeader(doc: jsPDF, opts: PDFHeaderOptions): Promise<number> {
 	const { title, empresaInfo, patient } = opts;
-	const diseno = opts.diseno ?? normalizarDiseno(await obtenerPdfDiseno());
+	let diseno = opts.diseno ?? normalizarDiseno(await obtenerPdfDiseno());
+	if (opts.institucionCompleta) diseno = conInstitucionCompleta(diseno);
 	opts.diseno = diseno;
 	aplicarColores(diseno);
 	aplicarFuente(doc, diseno.fuente);
@@ -365,8 +431,7 @@ export async function drawDocumentHeader(doc: jsPDF, opts: PDFHeaderOptions): Pr
 	const institucion = nombreInstitucion(empresaInfo);
 	const conLogo = diseno.encabezado.mostrarLogo;
 	if (conLogo) {
-		const logoSrc = cleanPdfValue(empresaInfo?.logo) || (await obtenerLogoEmpresa());
-		drawLogo(doc, await loadLogo(logoSrc), institucion, x0, top, logoSize);
+		drawLogo(doc, await loadLogo(await resolverLogoSrc(empresaInfo)), institucion, x0, top, logoSize);
 	}
 
 	const tx = conLogo ? x0 + logoSize + 5 : x0;

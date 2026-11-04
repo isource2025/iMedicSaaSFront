@@ -95,7 +95,12 @@ export const obtenerLogoEmpresa = (): Promise<string | null> => {
     logoCacheEmpresa = empresa;
     logoCache = apiService
       .get<{ success: boolean; data?: EmpresaLogoResponse }>('/empresa/logo')
-      .then((r) => (r.data.success && r.data.data?.hasLogo ? r.data.data.dataUrl || null : null))
+      .then((r) => {
+        const url = r.data.success && r.data.data?.hasLogo ? r.data.data.dataUrl || null : null;
+        // No cachear "sin logo": en local el archivo puede aparecer después o con otro id.
+        if (!url) logoCache = null;
+        return url;
+      })
       .catch(() => {
         logoCache = null;
         return null;

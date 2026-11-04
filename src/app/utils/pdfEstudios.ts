@@ -7,6 +7,7 @@ import {
 	cleanPdfValue,
 	drawDocumentFooters,
 	drawDocumentHeader,
+	PDF_PAGE,
 	drawRunningHeaders,
 	entregarPDF,
 	PDF_COLORS,
@@ -158,7 +159,7 @@ export async function generarPDFEstudios({ items, tipo = 'estudio', empresaInfo,
 	const bloques = agrupar(exportados);
 	const ref = exportados[0];
 
-	const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+	const doc = new jsPDF(PDF_PAGE);
 	const headerOpts: PDFHeaderOptions = {
 		title: tx.titulo[bloques.length === 1 ? 0 : 1],
 		empresaInfo,

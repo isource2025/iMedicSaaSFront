@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileDown, FileText, Receipt, Save, Users, Trash2, type LucideIcon } from 'lucide-react';
+import { FileDown, FileText, Printer, Receipt, Save, Users, Trash2, type LucideIcon } from 'lucide-react';
 import ConfirmDialog from '@/app/components/Agenda/ConfirmDialog';
 import Modal from '@/app/components/UI/Modal';
 import { useToast } from '@/app/components/UI/ToastProvider';
@@ -11,6 +11,12 @@ import { descargarLibroExcel } from '@/app/utils/export/libroExcel';
 import type { CatalogosRendicion, DatosCabeceraRendicion, LineaRendida, RendicionDetalle, VisitaRendida } from '@/app/types/rendiciones';
 import { fmtFecha, fmtMoneda, fmtNumero, fmtPeriodo } from '@/app/components/Facturacion/formato';
 import RendicionCabeceraForm from './RendicionCabeceraForm';
+import RendicionReporteDetalleModal from './RendicionReporteDetalleModal';
+import RendicionReportePracticaDetalleModal from './RendicionReportePracticaDetalleModal';
+import RendicionReportePracticaResumenModal from './RendicionReportePracticaResumenModal';
+import RendicionReporteProfesionalModal from './RendicionReporteProfesionalModal';
+import RendicionReporteProfesionalSumarioModal from './RendicionReporteProfesionalSumarioModal';
+import RendicionReporteResumenModal from './RendicionReporteResumenModal';
 import { SeccionFacturas, SeccionPacientes, SeccionPrestaciones, TotalesRendicion } from './RendicionSecciones';
 import { libroDeRendicion } from './exportarRendiciones';
 import { ESTADO_LABEL } from './rendicionesFormato';
@@ -18,11 +24,27 @@ import s from '@/app/components/admission/visitDetail/VisitDetail.module.css';
 import c from '@/app/components/Facturacion/Facturacion.module.css';
 
 type SeccionId = 'pacientes' | 'prestaciones' | 'datos' | 'facturas';
+type ReporteId =
+	| 'resumen'
+	| 'detalle'
+	| 'profesional'
+	| 'profesionalSumario'
+	| 'practicaDetalle'
+	| 'practicaResumen';
 
 const GRUPOS: { id: string; label: string; icono: LucideIcon; secciones: SeccionId[] }[] = [
 	{ id: 'pacientes', label: 'Gestionar pacientes', icono: Users, secciones: ['pacientes', 'prestaciones'] },
 	{ id: 'rendicion', label: 'Rendición', icono: FileText, secciones: ['datos'] },
 	{ id: 'facturas', label: 'Facturas', icono: Receipt, secciones: ['facturas'] },
+];
+
+const REPORTES: { id: ReporteId; label: string }[] = [
+	{ id: 'resumen', label: 'Resumen' },
+	{ id: 'detalle', label: 'Detalle' },
+	{ id: 'profesional', label: 'Por profesional' },
+	{ id: 'profesionalSumario', label: 'Sumarizado por profesional' },
+	{ id: 'practicaDetalle', label: 'Por práctica detallado' },
+	{ id: 'practicaResumen', label: 'Por práctica resumido' },
 ];
 
 const ETIQUETAS: Record<SeccionId, string> = {
@@ -79,6 +101,12 @@ export default function RendicionDetalleModal({ id, catalogos, permisos, onClose
 	const [confirmarBorrado, setConfirmarBorrado] = useState(false);
 	const [borrando, setBorrando] = useState(false);
 	const [exportando, setExportando] = useState(false);
+	const [reporteResumen, setReporteResumen] = useState(false);
+	const [reporteDetalle, setReporteDetalle] = useState(false);
+	const [reporteProfesional, setReporteProfesional] = useState(false);
+	const [reporteProfesionalSumario, setReporteProfesionalSumario] = useState(false);
+	const [reportePracticaDetalle, setReportePracticaDetalle] = useState(false);
+	const [reportePracticaResumen, setReportePracticaResumen] = useState(false);
 
 	const cargar = useCallback(async () => {
 		if (!id) return;
@@ -240,10 +268,21 @@ export default function RendicionDetalleModal({ id, catalogos, permisos, onClose
 											← Volver al listado
 										</button>
 										{permisos.exportar ? (
-											<button type='button' className={s.primaryBtn} onClick={exportar} disabled={exportando || detalle.vacia}>
-												<FileDown size={16} aria-hidden />
-												{exportando ? 'Generando…' : 'Exportar Excel'}
-											</button>
+											<>
+												<button
+													type='button'
+													className={s.ghostBtn}
+													onClick={() => setReporteResumen(true)}
+													disabled={detalle.vacia}
+												>
+													<Printer size={16} aria-hidden />
+													Resumen PDF
+												</button>
+												<button type='button' className={s.primaryBtn} onClick={exportar} disabled={exportando || detalle.vacia}>
+													<FileDown size={16} aria-hidden />
+													{exportando ? 'Generando…' : 'Exportar Excel'}
+												</button>
+											</>
 										) : null}
 									</div>
 								</div>
@@ -300,6 +339,34 @@ export default function RendicionDetalleModal({ id, catalogos, permisos, onClose
 											</div>
 										);
 									})}
+									{permisos.exportar ? (
+										<div className={s.navGroup}>
+											<span className={s.navGroupTitle}>
+												<span className={s.navGroupLabel}>
+													<Printer size={15} aria-hidden />
+													Reportes
+												</span>
+											</span>
+											{REPORTES.map((r) => (
+												<button
+													key={r.id}
+													type='button'
+													className={s.navItem}
+													onClick={() => {
+														if (r.id === 'resumen') setReporteResumen(true);
+														else if (r.id === 'detalle') setReporteDetalle(true);
+														else if (r.id === 'profesional') setReporteProfesional(true);
+														else if (r.id === 'profesionalSumario') setReporteProfesionalSumario(true);
+														else if (r.id === 'practicaDetalle') setReportePracticaDetalle(true);
+														else setReportePracticaResumen(true);
+													}}
+													disabled={detalle.vacia}
+												>
+													<span>{r.label}</span>
+												</button>
+											))}
+										</div>
+									) : null}
 								</nav>
 
 								<div className={s.main}>
@@ -419,6 +486,40 @@ export default function RendicionDetalleModal({ id, catalogos, permisos, onClose
 				onCancel={() => setConfirmarBorrado(false)}
 				onConfirm={borrar}
 			/>
+			{reporteResumen && id ? (
+				<RendicionReporteResumenModal id={id} open={reporteResumen} onClose={() => setReporteResumen(false)} />
+			) : null}
+			{reporteDetalle && id ? (
+				<RendicionReporteDetalleModal id={id} open={reporteDetalle} onClose={() => setReporteDetalle(false)} />
+			) : null}
+			{reporteProfesional && id ? (
+				<RendicionReporteProfesionalModal
+					id={id}
+					open={reporteProfesional}
+					onClose={() => setReporteProfesional(false)}
+				/>
+			) : null}
+			{reporteProfesionalSumario && id ? (
+				<RendicionReporteProfesionalSumarioModal
+					id={id}
+					open={reporteProfesionalSumario}
+					onClose={() => setReporteProfesionalSumario(false)}
+				/>
+			) : null}
+			{reportePracticaDetalle && id ? (
+				<RendicionReportePracticaDetalleModal
+					id={id}
+					open={reportePracticaDetalle}
+					onClose={() => setReportePracticaDetalle(false)}
+				/>
+			) : null}
+			{reportePracticaResumen && id ? (
+				<RendicionReportePracticaResumenModal
+					id={id}
+					open={reportePracticaResumen}
+					onClose={() => setReportePracticaResumen(false)}
+				/>
+			) : null}
 		</>
 	);
 }
