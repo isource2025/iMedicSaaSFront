@@ -102,6 +102,7 @@ export default function AmbulatorioAnalytics() {
   const router = useRouter();
   const { loaded, puede, puedeSubmodulo } = usePermiso();
   const puedeVer =
+    puede('DASHBOARD.INICIO.VER') ||
     puede('TURNOS.TABLA.VER') ||
     puedeSubmodulo('TURNOS', 'TABLA') ||
     puede('TURNOS.AGENDA.VER');
