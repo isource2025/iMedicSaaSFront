@@ -63,7 +63,9 @@ export default function NotificationsFab({ stack = false }: { stack?: boolean })
 		sinCama,
 	} = notif;
 	const bandejaLibres = bandejaEstudios + bandejaIc;
-	const puedeVerSinCama = permisosLoaded && puede('INTERNACION.MOVIMIENTOS.VER');
+	const puedeVerSinCama =
+		permisosLoaded &&
+		(puede('INTERNACION.MOVIMIENTOS.VER') || puede('DASHBOARD.INICIO.VER'));
 	const [open, setOpen] = useState(false);
 	const panelRef = useRef<HTMLDivElement>(null);
 	/** Se decide una sola vez por montaje: solo anima la primera aparición de la sesión. */
