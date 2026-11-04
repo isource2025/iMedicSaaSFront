@@ -230,6 +230,7 @@ function AgendaPageContent() {
 	const esMedico =
 		puede('TURNOS.AGENDA.SOLO_PROPIA') && !puede('TURNOS.AGENDA.GESTIONAR');
 	const puedeVer = puedeSubmodulo('TURNOS', 'AGENDA');
+	const puedeCrearTurno = puede('TURNOS.AGENDA.CREAR');
 	const puedeRacEnfermeria =
 		puede('TURNOS.AGENDA.VER') || puede('INTERNACION.INDICACIONES.APLICAR');
 	const puedeAtender = puede('TURNOS.AGENDA.CERRAR') || (puede('TURNOS.AGENDA.EDITAR') && esMedico);
@@ -310,6 +311,9 @@ function AgendaPageContent() {
 	const [diaMotivo, setDiaMotivo] = useState<string | null>(null);
 	const [diaMotivoLabel, setDiaMotivoLabel] = useState<string | null>(null);
 	const [fechaMedicoLista, setFechaMedicoLista] = useState(false);
+	/** Botón de sobreturno: no sólo a demanda / sin horario (antes quedaba oculto con grilla). */
+	const puedeAgregarSobreturno =
+		puedeCrearTurno && !fechaPasada && diaMotivo !== 'feriado';
 
 	const [error, setError] = useState<string | null>(null);
 	const [successCall, setSuccessCall] = useState<{
@@ -1040,8 +1044,7 @@ function AgendaPageContent() {
 												{slotsFiltrados.length > 0 && (
 													<span className={styles.badge}>{slotsFiltrados.length}</span>
 												)}
-												{!fechaPasada &&
-												(diaMotivo === 'sin_horario' || diaMotivo === 'a_demanda') ? (
+												{puedeAgregarSobreturno ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
@@ -1106,11 +1109,7 @@ function AgendaPageContent() {
 															: 'No hay cupos para esta fecha con el filtro actual.')
 											}
 											action={
-												!fechaPasada &&
-												diaMotivo !== 'feriado' &&
-												(diaMotivo === 'sin_horario' ||
-													diaMotivo === 'a_demanda' ||
-													filtroSlots === 'TODOS')
+												puedeAgregarSobreturno
 													? {
 															label: '+ Agregar sobreturno',
 															onClick: abrirSobreturnoDia,
@@ -1274,9 +1273,7 @@ function AgendaPageContent() {
 												{matriculaSel && slotsFiltrados.length > 0 && (
 													<span className={styles.badge}>{slotsFiltrados.length}</span>
 												)}
-												{!fechaPasada &&
-												matriculaSel &&
-												(diaMotivo === 'sin_horario' || diaMotivo === 'a_demanda') ? (
+												{puedeAgregarSobreturno && matriculaSel ? (
 													<button
 														type='button'
 														className={styles.headerActionBtn}
@@ -1343,12 +1340,7 @@ function AgendaPageContent() {
 															: 'Este profesional no tiene turnos generados para la fecha seleccionada.')
 											}
 											action={
-												!fechaPasada &&
-												matriculaSel &&
-												diaMotivo !== 'feriado' &&
-												(diaMotivo === 'sin_horario' ||
-													diaMotivo === 'a_demanda' ||
-													filtroSlots === 'TODOS')
+												puedeAgregarSobreturno && matriculaSel
 													? {
 															label: '+ Agregar sobreturno',
 															onClick: abrirSobreturnoDia,

@@ -145,8 +145,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const refreshModulos = async () => {
+    const refreshModulosYPermisos = async () => {
       try {
+        // Permisos efectivos (roles + grants − denies): si no se refrescan,
+        // un cambio en Personal queda invisible hasta el próximo login.
+        await authService.refreshPermisos();
         if (authService.getCurrentRol()?.nombre === 'SUPER_ADMIN') return;
         const me = await authService.me();
         if (me.modulosEmpresa) {
@@ -158,7 +161,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         /* sesión sin /me o Super Admin */
       }
     };
-    void refreshModulos();
+    void refreshModulosYPermisos();
   }, [isAuthenticated]);
 
   useEffect(() => {

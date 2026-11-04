@@ -21,7 +21,7 @@ interface Props {
 }
 
 /**
- * Busca prácticas en nomenclador/moduladas (imNomenclador / imModuladas).
+ * Busca prácticas (nomenclador/moduladas, con descripción preferida de imPracticasXConvenios).
  * Usado en el paso Procedimientos del cierre de atención (no confundir con tipos de pedidos de estudios).
  */
 export default function PracticaFacturacionPicker({

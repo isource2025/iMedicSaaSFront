@@ -97,7 +97,7 @@ function mapFuncionesCatalogo(
 	for (const f of FUNCIONES_FALLBACK) {
 		if (!byCodigo.has(f.codigo)) byCodigo.set(f.codigo, { ...f });
 	}
-	return [...byCodigo.values()].sort((a, b) => a.codigo - b.codigo);
+	return Array.from(byCodigo.values()).sort((a, b) => a.codigo - b.codigo);
 }
 
 let keySeq = 0;
