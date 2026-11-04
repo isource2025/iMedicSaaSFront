@@ -103,6 +103,8 @@ export interface LineaRendida {
 	porcentaje: number;
 	importeUnitario: number;
 	importeFinal: number;
+	/** Misma regla que el filtro/contadores: IMPORTE_FINAL = 0. */
+	sinValor: boolean;
 	bonificacion: { importe: number; porcentaje: number };
 	convenio: number;
 	regla: { desde: number; hasta: number; tipoValor: string; valor: number } | null;

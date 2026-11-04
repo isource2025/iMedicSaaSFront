@@ -289,7 +289,7 @@ export function SeccionPacientes({ id }: { id: number }) {
 								</thead>
 								<tbody>
 									{lineas.datos.filas.map((l) => (
-										<tr key={l.id}>
+										<tr key={l.id} className={l.sinValor ? c.filaSinValor : undefined}>
 											<td title={l.tipo.descripcion}>{RUBRO[l.tipo.valor] || l.tipo.valor}</td>
 											<td>{l.practica.tipo || ''}</td>
 											<td className={c.num}>{l.practica.codigo}</td>
@@ -299,7 +299,7 @@ export function SeccionPacientes({ id }: { id: number }) {
 											<td className={c.num}>{fmtNumero(l.porcentaje)}</td>
 											<td className={c.num}>{fmtMoneda(l.importeUnitario)}</td>
 											<td className={c.num}>{fmtNumero(l.cantidad)}</td>
-											<td className={`${c.num} ${l.importeFinal ? '' : c.alertaDiferencia}`}>
+											<td className={`${c.num} ${l.sinValor ? c.alertaDiferencia : ''}`}>
 												<strong>{fmtMoneda(l.importeFinal)}</strong>
 											</td>
 										</tr>
@@ -410,7 +410,7 @@ export function SeccionPrestaciones({ id, catalogos }: PropsPrestaciones) {
 							{datos.filas.map((l) => {
 								const v = VALORIZACION[l.valorizacion.estado];
 								return (
-									<tr key={l.id}>
+									<tr key={l.id} className={l.sinValor ? c.filaSinValor : undefined}>
 										<td className={c.subtexto}>{fmtFecha(l.fecha) || '—'}</td>
 										<td>
 											<span className={c.descripcion}>{l.numeroVisita}</span>
@@ -456,7 +456,7 @@ export function SeccionPrestaciones({ id, catalogos }: PropsPrestaciones) {
 										<td className={`${c.num} ${c.tdImporte}`}>{fmtNumero(l.cantidad)}</td>
 										<td className={`${c.num} ${c.tdImporte}`}>{fmtNumero(l.porcentaje)}</td>
 										<td className={`${c.num} ${c.tdImporte}`}>{fmtMoneda(l.importeUnitario)}</td>
-										<td className={`${c.num} ${c.tdImporte} ${l.importeFinal ? '' : c.alertaDiferencia}`}>
+										<td className={`${c.num} ${c.tdImporte} ${l.sinValor ? c.alertaDiferencia : ''}`}>
 											<strong>{fmtMoneda(l.importeFinal)}</strong>
 										</td>
 									</tr>

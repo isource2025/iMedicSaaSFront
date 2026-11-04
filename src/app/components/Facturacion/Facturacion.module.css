@@ -370,6 +370,23 @@
 	font-weight: 700;
 }
 
+/** Fila de práctica sin valorizar: marca suave en toda la fila. */
+.filaSinValor {
+	background: #fff7ed;
+}
+
+.filaSinValor:hover {
+	background: #ffedd5;
+}
+
+.filaSinValor td {
+	border-color: #fed7aa;
+}
+
+.grilla tbody tr.filaSinValor td:first-child {
+	box-shadow: inset 3px 0 0 #f59e0b;
+}
+
 .headerActionBtn {
 	display: inline-flex;
 	align-items: center;
