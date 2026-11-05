@@ -58,15 +58,14 @@ export default function CalendarPanel({
 	const stayClosed = Boolean(egresada || discharge);
 	/** Banda visual de internación: ingreso → egreso (o mañana si sigue internado). */
 	const stayEnd = discharge || (stayClosed ? today : tomorrow);
-	/** Selección: egresada permite hasta max(egreso, hoy) para borrar cargas posteriores erróneas. */
-	const rangeEnd = stayClosed
-		? discharge && discharge.getTime() > today.getTime()
-			? discharge
-			: today
-		: tomorrow;
+	/**
+	 * Internado: no se elige más allá de mañana.
+	 * Egresada: calendario libre (consulta / corrección en cualquier día).
+	 */
+	const rangeEnd = stayClosed ? null : tomorrow;
 
 	useEffect(() => {
-		if (!stayClosed) return;
+		if (stayClosed || !rangeEnd) return;
 		const sel = selectedDate ? startOfDay(selectedDate) : today;
 		if (sel > rangeEnd) setSelectedDate(new Date(rangeEnd));
 	}, [stayClosed, rangeEnd, selectedDate, setSelectedDate, today]);
@@ -141,7 +140,7 @@ export default function CalendarPanel({
 
 	const handleSelect = (d: Date) => {
 		const day = startOfDay(d);
-		if (day > rangeEnd) return;
+		if (rangeEnd && day > rangeEnd) return;
 		if (onSelect) onSelect(d);
 		else setSelectedDate(d);
 	};
@@ -205,7 +204,9 @@ export default function CalendarPanel({
 									const outside = isOutsideMonth(d);
 									const stay = internacionInfo(d);
 									const day = startOfDay(d);
-									const beyondRange = day > rangeEnd;
+									const beyondRange = rangeEnd != null && day > rangeEnd;
+									const afterDischarge =
+										Boolean(discharge) && day > (discharge as Date);
 									const active = isSame(d, selectedDate) && !beyondRange;
 									return (
 										<button
@@ -229,13 +230,11 @@ export default function CalendarPanel({
 											aria-pressed={active}
 											title={
 												beyondRange
-													? stayClosed
-														? 'Solo hasta hoy (para consultar o borrar cargas posteriores al egreso)'
-														: 'No se puede indicar más allá de mañana'
+													? 'No se puede indicar más allá de mañana'
 													: stay?.isDischarge
 													? 'Día de egreso'
-													: stayClosed && day > (discharge || today)
-													? 'Posterior al egreso — solo consulta / corrección'
+													: afterDischarge
+													? 'Posterior al egreso — consulta / corrección'
 													: stay && isSame(day, tomorrow) && !stayClosed
 														? 'Mañana — se puede indicar'
 													: stay
