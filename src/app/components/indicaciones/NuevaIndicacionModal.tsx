@@ -588,15 +588,7 @@ export default function IndicacionForm({
                                     type="date"
                                     className={styles.inputSm}
                                     value={form.FechaCarga ?? ""}
-                                    onChange={(e) => {
-                                        const fecha = s(e.target.value);
-                                        setForm((prev) => ({
-                                            ...prev,
-                                            FechaCarga: fecha,
-                                            // Si cambia el día de carga, la indicación se agrega a ese día.
-                                            ParaFechaEntrega: fecha || prev.ParaFechaEntrega,
-                                        }));
-                                    }}
+                                    onChange={(e) => set("FechaCarga", s(e.target.value))}
                                     required
                                 />
                                 <input
