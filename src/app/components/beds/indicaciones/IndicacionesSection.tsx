@@ -28,6 +28,7 @@ import {
     subscribeNuevasEnfermeriaSesion,
 } from "../../../utils/indicacionesNuevasSesion";
 import { puedeCargarEnFechaSeleccionada } from "../../../utils/visitaEgreso";
+import MessageModal, { type MessageModalTone } from "../../UI/MessageModal";
 
 const PARAMS_INDICACIONES = { incluirSuspendidas: 1 };
 
@@ -198,6 +199,7 @@ export default function IndicacionesSection({
         puedeCargarEnFechaSeleccionada(selectedDate, {
             egresada: bed?.egresada,
             fechaEgresoSQL: bed?.fechaEgresoSQL,
+            fechaIngresoSQL: bed?.fechaIngresoSQL ?? fechaIngreso,
         });
     const fechaHoy = toLocalYmd(new Date());
     const fechaManana = addDaysYmd(fechaHoy, 1);
@@ -334,6 +336,11 @@ export default function IndicacionesSection({
     const [helpOpen, setHelpOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [aviso, setAviso] = useState<{
+        title: string;
+        message: string;
+        tone: MessageModalTone;
+    } | null>(null);
     
     // Estado para modo "volver a indicar"
     const [modoReindicar, setModoReindicar] = useState(false);
@@ -612,11 +619,14 @@ export default function IndicacionesSection({
 
             return resultado;
         } catch (err) {
-            if (err instanceof Error) {
-                alert(
-                    err.message ?? "Error inesperado al guardar la indicación"
-                );
-            }
+            setAviso({
+                title: "No se pudo guardar",
+                message:
+                    err instanceof Error
+                        ? err.message ?? "Error inesperado al guardar la indicación"
+                        : "Error inesperado al guardar la indicación",
+                tone: "error",
+            });
             throw err;
         } finally {
             setSaving(false);
@@ -898,6 +908,9 @@ export default function IndicacionesSection({
                     defaultNumeroVisita={numeroVisita}
                     refetch={refetchListado}
                     fechaCarga={fechaIndicacionPermitida(selectedDate)}
+                    fechaIngresoSQL={bed?.fechaIngresoSQL ?? fechaIngreso}
+                    fechaEgresoSQL={bed?.fechaEgresoSQL}
+                    egresada={Boolean(bed?.egresada)}
                 />
             </ModalBasePaciente>
 
@@ -925,8 +938,19 @@ export default function IndicacionesSection({
                     defaultNumeroVisita={numeroVisita}
                     nroIndicacion={selectedId}
                     refetch={refetchListado}
+                    fechaIngresoSQL={bed?.fechaIngresoSQL ?? fechaIngreso}
+                    fechaEgresoSQL={bed?.fechaEgresoSQL}
+                    egresada={Boolean(bed?.egresada)}
                 />
             </ModalBasePaciente>
+
+            <MessageModal
+                open={Boolean(aviso)}
+                title={aviso?.title || ""}
+                message={aviso?.message || ""}
+                tone={aviso?.tone || "info"}
+                onClose={() => setAviso(null)}
+            />
 
             <ConfirmarFechaReindicarModal
                 isOpen={confirmarFechaOpen && !reindicando}

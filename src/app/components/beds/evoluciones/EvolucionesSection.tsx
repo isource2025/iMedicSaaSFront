@@ -56,12 +56,11 @@ export default function EvolucionesSection({
     horaIngreso?: string;
 }) {
     const { activeSection, selectedDate, bed } = useBedDetail();
-    const puedeAgregar =
-        !bed?.egresada ||
-        puedeCargarEnFechaSeleccionada(selectedDate, {
-            egresada: bed?.egresada,
-            fechaEgresoSQL: bed?.fechaEgresoSQL,
-        });
+    const puedeAgregar = puedeCargarEnFechaSeleccionada(selectedDate, {
+        egresada: bed?.egresada,
+        fechaEgresoSQL: bed?.fechaEgresoSQL,
+        fechaIngresoSQL: bed?.fechaIngresoSQL,
+    });
     const [periodFilter, setPeriodFilter] = useState<Periodo>('0');
     const [especialidadFilter, setEspecialidadFilter] = useState<string>('todas');
 

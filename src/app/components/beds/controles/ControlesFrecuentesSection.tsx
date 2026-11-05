@@ -67,6 +67,7 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 		puedeCargarEnFechaSeleccionada(selectedDate, {
 			egresada: bed?.egresada,
 			fechaEgresoSQL: bed?.fechaEgresoSQL,
+			fechaIngresoSQL: bed?.fechaIngresoSQL ?? fechaIngreso,
 		});
 	const puedeEditar = puede('INTERNACION.SIGNOS_VITALES.EDITAR');
 	const puedeEliminar = puede('INTERNACION.SIGNOS_VITALES.ELIMINAR');

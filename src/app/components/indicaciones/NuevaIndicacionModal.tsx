@@ -14,6 +14,11 @@ import { parseValorPersonalId } from "@/app/utils/valorPersonal";
 import { fechaCalendarioArgentina, horaWallArgentina, sectorDesdeCamaId } from "@/app/utils/dateUtils";
 import SlideDrawer from "../UI/SlideDrawer";
 import { guardarAdicionalesNuevos, type IndicacionHija } from "./adicionales";
+import MessageModal, { type MessageModalTone } from "../UI/MessageModal";
+import {
+    mensajeFueraDeVentanaCarga,
+    puedeCargarEnFechaSeleccionada,
+} from "@/app/utils/visitaEgreso";
 
 interface IndicacionFormProps {
     onClose: () => void;
@@ -25,6 +30,9 @@ interface IndicacionFormProps {
     idSector?: string | null;
     /** YYYY-MM-DD: hoy o mañana. Si no viene, el backend usa hoy. */
     fechaCarga?: string | null;
+    fechaIngresoSQL?: string | null;
+    fechaEgresoSQL?: string | null;
+    egresada?: boolean;
 }
 
 // ===== Clarion helpers =====
@@ -99,6 +107,9 @@ export default function IndicacionForm({
     refetch,
     idSector = null,
     fechaCarga = null,
+    fechaIngresoSQL = null,
+    fechaEgresoSQL = null,
+    egresada = false,
 }: IndicacionFormProps) {
     const initial = useMemo(
         () => ({
@@ -108,6 +119,11 @@ export default function IndicacionForm({
         [defaultNumeroVisita, idSector, fechaCarga]
     );
     const [form, setForm] = useState<NuevaIndicacionPayload>(initial);
+    const [aviso, setAviso] = useState<{
+        title: string;
+        message: string;
+        tone: MessageModalTone;
+    } | null>(null);
     const [dataLoading, setDataLoading] = useState(false);
     const [dataForm, setDataForm] = useState<FormularioDatosResponse | null>(
         null
@@ -185,6 +201,24 @@ export default function IndicacionForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const ventana = {
+                egresada,
+                fechaIngresoSQL,
+                fechaEgresoSQL,
+            };
+            if (form.FechaCarga) {
+                const [y, m, d] = form.FechaCarga.split("-").map(Number);
+                const diaCarga = new Date(y, m - 1, d);
+                if (!puedeCargarEnFechaSeleccionada(diaCarga, ventana)) {
+                    setAviso({
+                        title: "Fecha no permitida",
+                        message: mensajeFueraDeVentanaCarga(ventana),
+                        tone: "warning",
+                    });
+                    return;
+                }
+            }
+
             const resultado = await onSave(form);
             // Alta: el padre devuelve su NroIndicacion. Edición: es la indicación que se está editando
             // (el PUT no devuelve número). Sólo se envían los adicionales nuevos; los existentes no se duplican.
@@ -205,11 +239,14 @@ export default function IndicacionForm({
             onClose();
         } catch (err) {
             console.error('❌ Error al guardar indicaciones:', err);
-            if (err instanceof Error) {
-                alert(
-                    err.message || "Error inesperado al guardar la indicación"
-                );
-            }
+            setAviso({
+                title: "No se pudo guardar",
+                message:
+                    err instanceof Error
+                        ? err.message || "Error inesperado al guardar la indicación"
+                        : "Error inesperado al guardar la indicación",
+                tone: "error",
+            });
         }
     };
 
@@ -472,7 +509,11 @@ export default function IndicacionForm({
 
     const handleAgregarHija = () => {
         if (!adicionalForm.codigo || !adicionalForm.cantidadIndicada) {
-            alert('Complete los campos obligatorios (Medicamento y Cantidad) antes de agregar');
+            setAviso({
+                title: "Datos incompletos",
+                message: "Complete los campos obligatorios (Medicamento y Cantidad) antes de agregar",
+                tone: "warning",
+            });
             return;
         }
         
@@ -530,10 +571,18 @@ export default function IndicacionForm({
             try {
                 await indicacionesService.deleteIndicacionHija(hija.nroIndicacion);
                 setIndicacionesHijas(indicacionesHijas.filter(h => h.id !== id));
-                alert('Indicación adicional eliminada correctamente');
+                setAviso({
+                    title: "Adicional eliminado",
+                    message: "Indicación adicional eliminada correctamente",
+                    tone: "success",
+                });
             } catch (error: any) {
                 console.error('Error al eliminar indicación hija:', error);
-                alert(error.message || 'Error al eliminar la indicación adicional');
+                setAviso({
+                    title: "No se pudo eliminar",
+                    message: error.message || "Error al eliminar la indicación adicional",
+                    tone: "error",
+                });
             }
         } else {
             // Si no tiene nroIndicacion, es nueva (solo en memoria) y se elimina directamente del estado
@@ -1016,6 +1065,14 @@ export default function IndicacionForm({
                     />
                 </div>
             </SlideDrawer>
+
+            <MessageModal
+                open={Boolean(aviso)}
+                title={aviso?.title || ""}
+                message={aviso?.message || ""}
+                tone={aviso?.tone || "info"}
+                onClose={() => setAviso(null)}
+            />
         </div>
     );
 }

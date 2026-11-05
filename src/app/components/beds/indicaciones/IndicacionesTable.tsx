@@ -9,6 +9,7 @@ import AplicarIndicacion from "../../indicaciones/AplicarIndicacion";
 import { formatSqlDate, formatHoraSimple, parseSqlDateTimeLocal } from "../../../utils/dateUtils";
 import { useUsuarioActual, esRegistroPropio } from "../../../hooks/useUsuarioActual";
 import { usePermiso } from "../../../hooks/usePermiso";
+import MessageModal, { type MessageModalTone } from "../../UI/MessageModal";
 
 export type IndicacionHijaRow = {
     nroIndicacion: number;
@@ -171,6 +172,11 @@ export default function IndicacionesTable({
     });
     const [sinEfectoId, setSinEfectoId] = useState<string | null>(null);
     const [sinEfectoLoading, setSinEfectoLoading] = useState(false);
+    const [aviso, setAviso] = useState<{
+        title: string;
+        message: string;
+        tone: MessageModalTone;
+    } | null>(null);
 
     const handleConfirmDelete = () => {
         if (!deletingId) return;
@@ -185,11 +191,14 @@ export default function IndicacionesTable({
             } catch (error) {
                 console.error("Error deleting indicacion:", error);
                 restaurarFila(id);
-                alert(
-                    error instanceof Error
-                        ? error.message
-                        : "No se pudo eliminar la indicación",
-                );
+                setAviso({
+                    title: "No se pudo eliminar",
+                    message:
+                        error instanceof Error
+                            ? error.message
+                            : "No se pudo eliminar la indicación",
+                    tone: "error",
+                });
             }
         })();
     };
@@ -212,7 +221,14 @@ export default function IndicacionesTable({
             } catch (error) {
                 console.error('Error al dejar sin efecto:', error);
                 restaurarFila(id);
-                alert(error instanceof Error ? error.message : 'No se pudo dejar sin efecto');
+                setAviso({
+                    title: "No se pudo dejar sin efecto",
+                    message:
+                        error instanceof Error
+                            ? error.message
+                            : "No se pudo dejar sin efecto",
+                    tone: "error",
+                });
             }
         })();
     };
@@ -220,7 +236,11 @@ export default function IndicacionesTable({
     // ✅ Handler para abrir el modal de aplicar indicación
     const handleAplicarIndicacion = (row: IndicacionRow) => {
         if (!row.tipo || !row.nro) {
-            alert('No se puede aplicar esta indicación: faltan datos');
+            setAviso({
+                title: "No se puede aplicar",
+                message: "No se puede aplicar esta indicación: faltan datos",
+                tone: "warning",
+            });
             return;
         }
         
@@ -765,6 +785,14 @@ export default function IndicacionesTable({
                     onSuccess={handleSuccessAplicar}
                 />
             )}
+
+            <MessageModal
+                open={Boolean(aviso)}
+                title={aviso?.title || ""}
+                message={aviso?.message || ""}
+                tone={aviso?.tone || "info"}
+                onClose={() => setAviso(null)}
+            />
         </>
     );
 }

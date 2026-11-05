@@ -1,7 +1,6 @@
 /**
- * Reglas de carga clínica en visitas egresadas:
- * se permite todo con fecha (día) anterior o igual al egreso;
- * el backend valida además la hora en el día de egreso.
+ * Ventana de carga clínica: día >= admisión y, si egresada, día <= egreso.
+ * La hora exacta la valida el backend.
  */
 
 function parseDia(fecha?: string | null): Date | null {
@@ -30,13 +29,34 @@ function startOfDay(d: Date): Date {
 	return x;
 }
 
-/** ¿La fecha seleccionada admite nuevas cargas (día ≤ egreso)? */
+export type VentanaCargaVisita = {
+	egresada?: boolean;
+	fechaEgresoSQL?: string | null;
+	fechaIngresoSQL?: string | null;
+};
+
+/** ¿La fecha seleccionada admite nuevas cargas (admisión ≤ día ≤ egreso)? */
 export function puedeCargarEnFechaSeleccionada(
 	selected: Date | null | undefined,
-	opts: { egresada?: boolean; fechaEgresoSQL?: string | null },
+	opts: VentanaCargaVisita,
 ): boolean {
-	if (!opts.egresada) return true;
-	const egreso = parseDia(opts.fechaEgresoSQL);
-	if (!egreso || !selected) return true;
-	return startOfDay(selected).getTime() <= egreso.getTime();
+	if (!selected) return true;
+	const day = startOfDay(selected).getTime();
+
+	const admision = parseDia(opts.fechaIngresoSQL);
+	if (admision && day < admision.getTime()) return false;
+
+	if (opts.egresada) {
+		const egreso = parseDia(opts.fechaEgresoSQL);
+		if (egreso && day > egreso.getTime()) return false;
+	}
+
+	return true;
+}
+
+export function mensajeFueraDeVentanaCarga(opts: VentanaCargaVisita): string {
+	if (opts.egresada) {
+		return 'Solo se pueden agregar registros entre la admisión y la fecha/hora de egreso.';
+	}
+	return 'No se pueden agregar registros con fecha anterior a la admisión.';
 }

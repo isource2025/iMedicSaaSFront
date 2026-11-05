@@ -76,6 +76,7 @@ const DietaSection: React.FC<Props> = ({
 		puedeCargarEnFechaSeleccionada(selectedDate, {
 			egresada: bed?.egresada,
 			fechaEgresoSQL: bed?.fechaEgresoSQL,
+			fechaIngresoSQL: bed?.fechaIngresoSQL,
 		});
 	const puedeEditar = puede('INTERNACION.DIETA.EDITAR');
 	const puedeEliminar = puede('INTERNACION.DIETA.ELIMINAR');

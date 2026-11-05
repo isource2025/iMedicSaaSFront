@@ -79,6 +79,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 		puedeCargarEnFechaSeleccionada(selectedDate, {
 			egresada: bed?.egresada,
 			fechaEgresoSQL: bed?.fechaEgresoSQL,
+			fechaIngresoSQL: bed?.fechaIngresoSQL,
 		});
 	const puedeEditar = puede('INTERNACION.BALANCE_HIDRICO.EDITAR');
 	const puedeEliminar = puede('INTERNACION.BALANCE_HIDRICO.ELIMINAR');
