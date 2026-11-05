@@ -86,7 +86,7 @@ export const rendicionesService = {
 			apiService.get(`/rendiciones/${id}/reporte-resumen`, {
 				timeout: 120000,
 				params: limpio({
-					tipoAdmision: filtros.tipoAdmision || '',
+					clasePaciente: filtros.clasePaciente || '',
 					tipos,
 					letras,
 					visitas,
@@ -105,7 +105,7 @@ export const rendicionesService = {
 			apiService.get(`/rendiciones/${id}/reporte-detalle`, {
 				timeout: 120000,
 				params: limpio({
-					tipoAdmision: filtros.tipoAdmision || '',
+					clasePaciente: filtros.clasePaciente || '',
 					tipos,
 					letras,
 					visitas,
@@ -123,7 +123,7 @@ export const rendicionesService = {
 			apiService.get(`/rendiciones/${id}/reporte-profesional`, {
 				timeout: 120000,
 				params: limpio({
-					tipoAdmision: filtros.tipoAdmision || '',
+					clasePaciente: filtros.clasePaciente || '',
 					letras,
 					visitas,
 				}),

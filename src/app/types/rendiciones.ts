@@ -145,8 +145,8 @@ export interface DatosCabeceraRendicion {
 
 /** Filtros del reporte PDF «Resumen» (RENDICION RESUMIDA). */
 export interface FiltrosReporteResumen {
-	/** Valor de imTipoAdmision; vacío = todos. */
-	tipoAdmision?: string;
+	/** Valor de imClasePaciente (Admisiones › Clases de Paciente); vacío = todos. */
+	clasePaciente?: string;
 	/** Si true (o visitas vacío), incluye todas las admisiones de la rendición. */
 	todasLasAdmisiones?: boolean;
 	/** Números de visita cuando no es «todas». */
@@ -163,7 +163,7 @@ export interface FilaReporteResumen {
 	nroAfiliado: string | null;
 	nroAutorizacion: string | null;
 	ingreso: string | null;
-	tipoAdmision: string | null;
+	clasePaciente: string | null;
 	gastos: number;
 	honorarios: number;
 	medicamentos: number;
@@ -180,7 +180,7 @@ export interface ReporteResumen {
 		observaciones: string | null;
 	};
 	filtros: {
-		tipoAdmision: string | null;
+		clasePaciente: string | null;
 		todasLasAdmisiones: boolean;
 		visitas: number[];
 		tipos: Array<'G' | 'H' | 'M'>;
@@ -193,7 +193,8 @@ export interface ReporteResumen {
 
 /** Filtros del reporte PDF «Detalle» (RENDICION INDIVIDUAL). Sin agrupar por rubro. */
 export interface FiltrosReporteDetalle {
-	tipoAdmision?: string;
+	/** Valor de imClasePaciente; vacío = todos. */
+	clasePaciente?: string;
 	todasLasAdmisiones?: boolean;
 	visitas?: number[];
 	tipos: Array<'G' | 'H' | 'M'>;
@@ -251,7 +252,7 @@ export interface ReporteDetalle {
 		observaciones: string | null;
 	};
 	filtros: {
-		tipoAdmision: string | null;
+		clasePaciente: string | null;
 		todasLasAdmisiones: boolean;
 		visitas: number[];
 		tipos: Array<'G' | 'H' | 'M'>;
@@ -263,7 +264,8 @@ export interface ReporteDetalle {
 
 /** Filtros del reporte PDF «Por profesional» (honorarios agrupados por matrícula). */
 export interface FiltrosReporteProfesional {
-	tipoAdmision?: string;
+	/** Valor de imClasePaciente; vacío = todos. */
+	clasePaciente?: string;
 	todasLasAdmisiones?: boolean;
 	visitas?: number[];
 	letras?: string[];
@@ -300,7 +302,7 @@ export interface ReporteProfesional {
 		observaciones: string | null;
 	};
 	filtros: {
-		tipoAdmision: string | null;
+		clasePaciente: string | null;
 		todasLasAdmisiones: boolean;
 		visitas: number[];
 		letras: string[];

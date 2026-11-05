@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Modal from '@/app/components/UI/Modal';
 import { useToast } from '@/app/components/UI/ToastProvider';
-import { getTiposAdmision } from '@/app/services/tipoAdmision.service';
+import { getClasesPaciente } from '@/app/services/clasePacienteService';
 import { catalogoSqlService } from '@/app/services/catalogoSqlService';
 import { rendicionesService } from '@/app/services/rendicionesService';
 import { mensajeDeError } from '@/app/utils/apiError';
@@ -18,7 +18,7 @@ import type { VisitaRendida } from '@/app/types/rendiciones';
 import c from '@/app/components/Facturacion/Facturacion.module.css';
 
 type LetraPractica = { valor: string; descripcion: string };
-type TipoAdm = { valor: string; descripcion: string };
+type ClasePac = { valor: string; descripcion: string };
 
 function tituloPractica(texto: string) {
 	const t = texto.trim();
@@ -36,13 +36,13 @@ interface Props {
 
 export default function RendicionReporteProfesionalModal({ id, open, onClose }: Props) {
 	const toast = useToast();
-	const [tiposAdmision, setTiposAdmision] = useState<TipoAdm[]>([]);
+	const [clasesPaciente, setClasesPaciente] = useState<ClasePac[]>([]);
 	const [letras, setLetras] = useState<LetraPractica[]>([]);
 	const [visitas, setVisitas] = useState<VisitaRendida[]>([]);
 	const [cargandoCat, setCargandoCat] = useState(false);
 	const [generando, setGenerando] = useState<ModoPdfBlob | null>(null);
 
-	const [tipoAdmision, setTipoAdmision] = useState('');
+	const [clasePaciente, setClasePaciente] = useState('');
 	const [todasLasAdmisiones, setTodasLasAdmisiones] = useState(true);
 	const [visitasSel, setVisitasSel] = useState<number[]>([]);
 	const [letrasSel, setLetrasSel] = useState<Set<string>>(new Set());
@@ -52,15 +52,15 @@ export default function RendicionReporteProfesionalModal({ id, open, onClose }: 
 		if (!open) return;
 		let vivo = true;
 		setCargandoCat(true);
-		setTipoAdmision('');
+		setClasePaciente('');
 		setTodasLasAdmisiones(true);
 		setVisitasSel([]);
 		setSaltarHoja(false);
 
 		(async () => {
 			try {
-				const [ta, catLetras, pagVisitas] = await Promise.all([
-					getTiposAdmision(),
+				const [clases, catLetras, pagVisitas] = await Promise.all([
+					getClasesPaciente(),
 					catalogoSqlService.listar('letras-practicas'),
 					rendicionesService.visitas(id, { pagina: 1, tamPagina: 500 }),
 				]);
@@ -71,11 +71,11 @@ export default function RendicionReporteProfesionalModal({ id, open, onClose }: 
 						descripcion: String(r.Descripcion ?? '').trim(),
 					}))
 					.filter((l) => l.valor);
-				setTiposAdmision(
-					(ta || [])
+				setClasesPaciente(
+					(clases || [])
 						.map((t) => ({
-							valor: String(t.valor ?? '').trim(),
-							descripcion: String(t.descripcion ?? '').trim(),
+							valor: String(t.Valor ?? '').trim(),
+							descripcion: String(t.Descripcion ?? '').trim(),
 						}))
 						.filter((t) => t.valor),
 				);
@@ -96,14 +96,14 @@ export default function RendicionReporteProfesionalModal({ id, open, onClose }: 
 	}, [open, id]);
 
 	const visitasFiltradas = useMemo(() => {
-		if (!tipoAdmision) return visitas;
-		return visitas.filter((v) => (v.tipoAdmision?.valor || '') === tipoAdmision);
-	}, [visitas, tipoAdmision]);
+		if (!clasePaciente) return visitas;
+		return visitas.filter((v) => (v.clase?.valor || '') === clasePaciente);
+	}, [visitas, clasePaciente]);
 
 	useEffect(() => {
-		if (!tipoAdmision) return;
+		if (!clasePaciente) return;
 		setVisitasSel((prev) => prev.filter((n) => visitasFiltradas.some((v) => v.numeroVisita === n)));
-	}, [tipoAdmision, visitasFiltradas]);
+	}, [clasePaciente, visitasFiltradas]);
 
 	const letrasTodas = letras.length > 0 && letrasSel.size === letras.length;
 
@@ -134,7 +134,7 @@ export default function RendicionReporteProfesionalModal({ id, open, onClose }: 
 		setGenerando(modo);
 		try {
 			const data = await rendicionesService.reporteProfesional(id, {
-				tipoAdmision: tipoAdmision || undefined,
+				clasePaciente: clasePaciente || undefined,
 				todasLasAdmisiones,
 				visitas: todasLasAdmisiones ? [] : visitasSel,
 				letras: letrasTodas ? ['*'] : Array.from(letrasSel),
@@ -191,13 +191,13 @@ export default function RendicionReporteProfesionalModal({ id, open, onClose }: 
 							<select
 								id='rep-prof-tipo-adm'
 								className={c.select}
-								value={tipoAdmision}
-								onChange={(e) => setTipoAdmision(e.target.value)}
+								value={clasePaciente}
+								onChange={(e) => setClasePaciente(e.target.value)}
 								disabled={ocupado}
 								aria-label='Tipo de admisión'
 							>
 								<option value=''>Todas</option>
-								{tiposAdmision.map((t) => (
+								{clasesPaciente.map((t) => (
 									<option key={t.valor} value={t.valor}>
 										{t.descripcion || t.valor}
 									</option>
