@@ -15,6 +15,7 @@ import ExportButton, { ExportOption } from '../shared/ExportButton';
 import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { generarPDFEvoluciones } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
 
 type EvolucionDTO = {
     idHCEvolucion: number;
@@ -55,7 +56,12 @@ export default function EvolucionesSection({
     horaIngreso?: string;
 }) {
     const { activeSection, selectedDate, bed } = useBedDetail();
-    const visitaEgresada = Boolean(bed?.egresada);
+    const puedeAgregar =
+        !bed?.egresada ||
+        puedeCargarEnFechaSeleccionada(selectedDate, {
+            egresada: bed?.egresada,
+            fechaEgresoSQL: bed?.fechaEgresoSQL,
+        });
     const [periodFilter, setPeriodFilter] = useState<Periodo>('0');
     const [especialidadFilter, setEspecialidadFilter] = useState<string>('todas');
 
@@ -253,7 +259,7 @@ export default function EvolucionesSection({
                     <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
                     <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
                     <div className={styles.dateActions}>
-                        {!visitaEgresada && (
+                        {puedeAgregar && (
                             <button
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
                                 onClick={onAddEvolucion}
@@ -330,8 +336,8 @@ export default function EvolucionesSection({
                                     ? 'Cargá una evolución con el botón Agregar evolución.'
                                     : 'Probá con otro criterio de búsqueda o filtro.'
                             }
-                            actionLabel={!visitaEgresada && baseRows.length === 0 ? 'Agregar evolución' : undefined}
-                            onAction={!visitaEgresada && baseRows.length === 0 ? onAddEvolucion : undefined}
+                            actionLabel={puedeAgregar && baseRows.length === 0 ? 'Agregar evolución' : undefined}
+                            onAction={puedeAgregar && baseRows.length === 0 ? onAddEvolucion : undefined}
                         />
                     )}
                     {!isLoading && !error && rows.length > 0 && (

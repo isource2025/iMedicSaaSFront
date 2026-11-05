@@ -39,12 +39,13 @@ export interface Bed {
 	fechaIngresoSQL?: string; // Fecha de ingreso en formato SQL (DD/MM/YYYY)
 	horaIngresoSQL?: string; // Hora de ingreso en formato SQL (HH:MM:SS)
 	fechaEgresoSQL?: string;
+	/** Hora de egreso HH:MM:SS (Clarion → wall clock). */
+	horaEgresoSQL?: string;
 	/** Valor crudo de imHabitacionCamas.Tipo */
 	tipoRaw?: string;
 	/** Tipo de recurso normalizado para UI y permisos de acciones */
 	tipoRecurso: BedTipoRecurso;
-	/** Visita con FechaEgreso > 0 (sigue permitiendo altas clínicas) */
-	/** Visita con FechaEgreso > 0: ficha en solo lectura (sin altas clínicas). */
+	/** Visita con FechaEgreso > 0: altas permitidas solo antes de fecha/hora de egreso. */
 	egresada?: boolean;
 	/** Indicaciones médicas aún no revisadas por enfermería (compartido). */
 	indicacionesNuevasEnfermeria?: number;

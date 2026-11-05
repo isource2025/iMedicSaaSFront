@@ -36,6 +36,7 @@ import NuevoBalanceHidricoModal from './NuevoBalanceHidricoModal';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '../../../hooks/useUsuarioActual';
 import { usePermiso } from '../../../hooks/usePermiso';
+import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
 
 interface Props {
 	numeroVisita: number | null;
@@ -73,7 +74,12 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const soloDia = periodo === '0';
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
-	const puedeCrear = !bed?.egresada && puede('INTERNACION.BALANCE_HIDRICO.CREAR');
+	const puedeCrear =
+		puede('INTERNACION.BALANCE_HIDRICO.CREAR') &&
+		puedeCargarEnFechaSeleccionada(selectedDate, {
+			egresada: bed?.egresada,
+			fechaEgresoSQL: bed?.fechaEgresoSQL,
+		});
 	const puedeEditar = puede('INTERNACION.BALANCE_HIDRICO.EDITAR');
 	const puedeEliminar = puede('INTERNACION.BALANCE_HIDRICO.ELIMINAR');
 

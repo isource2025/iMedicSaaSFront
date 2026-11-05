@@ -55,6 +55,7 @@ function mapBedItem(item: Record<string, unknown>): Bed {
 		fechaIngresoSQL: String(item.fechaIngresoSQL || ''),
 		horaIngresoSQL: String(item.horaIngresoSQL || ''),
 		fechaEgresoSQL: String(item.fechaEgresoSQL || ''),
+		horaEgresoSQL: String(item.horaEgresoSQL || ''),
 		ubicacionPaciente: String(item.ubicacionPaciente || item.UbicacionPaciente || ''),
 		tipoRaw: String(tipoRaw),
 		tipoRecurso: normalizarTipoRecurso(tipoRaw || item.tipoRecurso),

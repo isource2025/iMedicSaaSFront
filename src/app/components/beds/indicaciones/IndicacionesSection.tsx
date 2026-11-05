@@ -27,6 +27,7 @@ import {
     rememberNuevasEnfermeriaSesion,
     subscribeNuevasEnfermeriaSesion,
 } from "../../../utils/indicacionesNuevasSesion";
+import { puedeCargarEnFechaSeleccionada } from "../../../utils/visitaEgreso";
 
 const PARAMS_INDICACIONES = { incluirSuspendidas: 1 };
 
@@ -192,8 +193,12 @@ export default function IndicacionesSection({
 }: IndicacionesSectionProps) {
     const { activeSection, selectedDate, setSelectedDate, marcarSeccionInicialLista, bed } = useBedDetail();
     const { puede } = usePermiso();
-    const visitaEgresada = Boolean(bed?.egresada);
-    const puedeCrear = puede('INTERNACION.INDICACIONES.CREAR') && !visitaEgresada;
+    const puedeCrear =
+        puede('INTERNACION.INDICACIONES.CREAR') &&
+        puedeCargarEnFechaSeleccionada(selectedDate, {
+            egresada: bed?.egresada,
+            fechaEgresoSQL: bed?.fechaEgresoSQL,
+        });
     const fechaHoy = toLocalYmd(new Date());
     const fechaManana = addDaysYmd(fechaHoy, 1);
 

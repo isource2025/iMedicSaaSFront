@@ -24,6 +24,7 @@ import NuevoControlModal from './NuevoControlModal';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '../../../hooks/useUsuarioActual';
 import { usePermiso } from '../../../hooks/usePermiso';
+import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
 
 interface Props {
 	numeroVisita: number | null;
@@ -61,8 +62,12 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 	const [query, setQuery] = useState('');
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
-	const visitaEgresada = Boolean(bed?.egresada);
-	const puedeCrear = !visitaEgresada && puede('INTERNACION.SIGNOS_VITALES.CREAR');
+	const puedeCrear =
+		puede('INTERNACION.SIGNOS_VITALES.CREAR') &&
+		puedeCargarEnFechaSeleccionada(selectedDate, {
+			egresada: bed?.egresada,
+			fechaEgresoSQL: bed?.fechaEgresoSQL,
+		});
 	const puedeEditar = puede('INTERNACION.SIGNOS_VITALES.EDITAR');
 	const puedeEliminar = puede('INTERNACION.SIGNOS_VITALES.ELIMINAR');
 
@@ -216,9 +221,9 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 							variant="controles"
 							text="No hay controles registrados"
 							description={
-								visitaEgresada
-									? 'Visita egresada: no se pueden agregar controles.'
-									: 'Aún no se han cargado controles frecuentes para esta fecha. Agregá uno haciendo clic en el botón de arriba.'
+								puedeCrear
+									? 'Aún no se han cargado controles frecuentes para esta fecha. Agregá uno haciendo clic en el botón de arriba.'
+									: 'No hay controles en esta fecha. En visita egresada solo se agregan hasta la fecha/hora de egreso.'
 							}
 							actionLabel={puedeCrear ? 'Agregar control' : undefined}
 							onAction={puedeCrear ? () => setModalOpen(true) : undefined}

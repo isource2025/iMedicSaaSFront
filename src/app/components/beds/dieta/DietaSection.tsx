@@ -27,6 +27,7 @@ import ModalBasePaciente from '../../modals/ModalBasePaciente';
 import NuevaDietaModal from './NuevaDietaModal';
 import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '../../../hooks/useUsuarioActual';
 import { usePermiso } from '../../../hooks/usePermiso';
+import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
 
 interface Props {
 	numeroVisita: number | null;
@@ -70,7 +71,12 @@ const DietaSection: React.FC<Props> = ({
 	const [periodo, setPeriodo] = useState<Periodo>('0');
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
-	const puedeCrear = !bed?.egresada && puede('INTERNACION.DIETA.CREAR');
+	const puedeCrear =
+		puede('INTERNACION.DIETA.CREAR') &&
+		puedeCargarEnFechaSeleccionada(selectedDate, {
+			egresada: bed?.egresada,
+			fechaEgresoSQL: bed?.fechaEgresoSQL,
+		});
 	const puedeEditar = puede('INTERNACION.DIETA.EDITAR');
 	const puedeEliminar = puede('INTERNACION.DIETA.ELIMINAR');
 
