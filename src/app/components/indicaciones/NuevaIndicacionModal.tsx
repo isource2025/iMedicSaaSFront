@@ -11,7 +11,7 @@ import CustomSelect from "../Patients/AddPatient/LoadingSelect";
 import { useParams } from "next/navigation";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { parseValorPersonalId } from "@/app/utils/valorPersonal";
-import { sectorDesdeCamaId } from "@/app/utils/dateUtils";
+import { fechaCalendarioArgentina, horaWallArgentina, sectorDesdeCamaId } from "@/app/utils/dateUtils";
 import SlideDrawer from "../UI/SlideDrawer";
 import { guardarAdicionalesNuevos, type IndicacionHija } from "./adicionales";
 
@@ -32,52 +32,64 @@ const CLARION_TICKS_PER_SEC = 100;
 const SECS_PER_HOUR = 3600;
 const DAY_TICKS = 24 * SECS_PER_HOUR * CLARION_TICKS_PER_SEC;
 
-const getLocalDateString = (date: Date): string => {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() es 0-11
-    const dd = String(date.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-};  
+/** Fecha/hora de carga al abrir el alta (calendario Argentina). */
+const fechaHoraCargaInicial = (fechaCarga: string | null = null) => {
+    const fecha = fechaCarga || fechaCalendarioArgentina();
+    return { fecha, hora: horaWallArgentina(true) };
+};
+
+const normalizarHoraCarga = (hora: string | null | undefined): string | null => {
+    if (!hora) return null;
+    const parts = String(hora).trim().split(":");
+    if (parts.length < 2) return null;
+    const hh = parts[0].padStart(2, "0");
+    const mm = (parts[1] || "00").padStart(2, "0");
+    const ss = (parts[2] || "00").padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+};
 
 // ===== Payload inicial =====
-const emptyPayload = (numeroVisita: number | null, fechaCarga: string | null = null): NuevaIndicacionPayload => ({
-    NumeroVisita: numeroVisita,
-    NroAdicional: null,
-    FechaCarga: fechaCarga,
-    HoraCarga: null, // el backend usa la hora actual
-    OperadorCarga: null,
-    ProfesionalAsiste: null,
-    FechaCumplido: null,
-    HoraCumplido: null,
-    FechaProximo: null,
-    HoraProximo: null,
-    FechaRevision: null,
-    HoraRevision: null,
-    TipoIndicacion: null,
-    Codigo: null,
+const emptyPayload = (numeroVisita: number | null, fechaCarga: string | null = null): NuevaIndicacionPayload => {
+    const { fecha, hora } = fechaHoraCargaInicial(fechaCarga);
+    return {
+        NumeroVisita: numeroVisita,
+        NroAdicional: null,
+        FechaCarga: fecha,
+        HoraCarga: hora,
+        OperadorCarga: null,
+        ProfesionalAsiste: null,
+        FechaCumplido: null,
+        HoraCumplido: null,
+        FechaProximo: null,
+        HoraProximo: null,
+        FechaRevision: null,
+        HoraRevision: null,
+        TipoIndicacion: null,
+        Codigo: null,
 
-    // Cantidades
-    CantidadIndicada: 1, // ✅ EDITABLE (por toma)
-    TipoUnidad: null,
-    Frecuencia: null, // puede ser ticks / "HH:MM" / "8" / "8h"
-    Cantidad: null, // ✅ CALCULADA = CantidadIndicada × dosisPorDia
+        // Cantidades
+        CantidadIndicada: 1, // ✅ EDITABLE (por toma)
+        TipoUnidad: null,
+        Frecuencia: null, // puede ser ticks / "HH:MM" / "8" / "8h"
+        Cantidad: null, // ✅ CALCULADA = CantidadIndicada × dosisPorDia
 
-    Observaciones: null,
-    FechaExpiro: 0,
-    HoraExpiro: null,
-    Orden: null,
-    Estado: null,
-    CantidadPorTurno: null,
-    CantidadEntregada: null,
-    ParaFechaEntrega: fechaCarga || getLocalDateString(new Date()),
-    FormaAdicional: null,
-    NroIndicacionAnterior: null,
-    IdSector: null,
+        Observaciones: null,
+        FechaExpiro: 0,
+        HoraExpiro: null,
+        Orden: null,
+        Estado: null,
+        CantidadPorTurno: null,
+        CantidadEntregada: null,
+        ParaFechaEntrega: fecha,
+        FormaAdicional: null,
+        NroIndicacionAnterior: null,
+        IdSector: null,
 
-    // Medicación — ÚNICO CAMPO
-    AliasMedicamento: null,
-    ExcluidoDeEntrega: null,
-});
+        // Medicación — ÚNICO CAMPO
+        AliasMedicamento: null,
+        ExcluidoDeEntrega: null,
+    };
+};
 
 export default function IndicacionForm({
     onClose,
@@ -240,8 +252,8 @@ export default function IndicacionForm({
                             IdSector: res.IdSector,
 
                             // fecha/hora carga
-                            FechaCarga: res.FechaCarga,
-                            HoraCarga: res.HoraCarga,
+                            FechaCarga: res.FechaCarga?.split?.("T")?.[0] || res.FechaCarga,
+                            HoraCarga: normalizarHoraCarga(res.HoraCarga),
                             OperadorCarga: res.OperadorCarga,
                             ProfesionalAsiste: res.ProfesionalAsiste,
 
@@ -569,6 +581,37 @@ export default function IndicacionForm({
                 {/* Fila 1 */}
                 <div className={styles.rowHeader}>
                     <div className={styles.row}>
+                        <div className={styles.inlineField}>
+                            <label>Fecha / Hora que indica</label>
+                            <div className={styles.inlineInputs}>
+                                <input
+                                    type="date"
+                                    className={styles.inputSm}
+                                    value={form.FechaCarga ?? ""}
+                                    onChange={(e) => {
+                                        const fecha = s(e.target.value);
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            FechaCarga: fecha,
+                                            // Si cambia el día de carga, la indicación se agrega a ese día.
+                                            ParaFechaEntrega: fecha || prev.ParaFechaEntrega,
+                                        }));
+                                    }}
+                                    required
+                                />
+                                <input
+                                    type="time"
+                                    step={1}
+                                    className={styles.inputSm}
+                                    value={form.HoraCarga?.slice(0, 8) ?? ""}
+                                    onChange={(e) =>
+                                        set("HoraCarga", normalizarHoraCarga(e.target.value))
+                                    }
+                                    required
+                                />
+                            </div>
+                        </div>
+
                         <div className={styles.inlineField}>
                             <label>Profesional que indica</label>
                             <div className={styles.inlineInputs}>
