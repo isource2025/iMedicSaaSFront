@@ -55,13 +55,15 @@ export default function CalendarPanel({
 		d.setDate(d.getDate() + 1);
 		return d;
 	}, []);
-	const rangeEnd = discharge || tomorrow;
 	const stayClosed = Boolean(egresada || discharge);
+	// Egresada: hasta el día de egreso (o hoy si falta fecha). Internado: hasta mañana.
+	const rangeEnd = discharge || (stayClosed ? today : tomorrow);
 
 	useEffect(() => {
-		if (!stayClosed || !discharge) return;
+		if (!stayClosed) return;
 		const sel = selectedDate ? startOfDay(selectedDate) : today;
-		if (sel > discharge) setSelectedDate(new Date(discharge));
+		const cap = discharge || today;
+		if (sel > cap) setSelectedDate(new Date(cap));
 	}, [stayClosed, discharge, selectedDate, setSelectedDate, today]);
 
 	const [dir, setDir] = useState<1 | -1>(1);
@@ -224,7 +226,9 @@ export default function CalendarPanel({
 											aria-pressed={active}
 											title={
 												beyondRange
-													? 'No se puede indicar más allá de mañana'
+													? stayClosed
+														? 'Después del egreso no se pueden seleccionar días'
+														: 'No se puede indicar más allá de mañana'
 													: stay?.isDischarge
 													? 'Día de egreso'
 													: stay && isSame(day, tomorrow) && !stayClosed

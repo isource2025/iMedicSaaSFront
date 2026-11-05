@@ -63,7 +63,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	horaIngreso,
 	bedSector,
 }) => {
-	const { activeSection, selectedDate } = useBedDetail();
+	const { activeSection, selectedDate, bed } = useBedDetail();
 	const [selected, setSelected] = useState<BalanceHidrico | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [editing, setEditing] = useState<BalanceHidrico | null>(null);
@@ -73,7 +73,7 @@ const BalanceHidricoSection: React.FC<Props> = ({
 	const soloDia = periodo === '0';
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
-	const puedeCrear = puede('INTERNACION.BALANCE_HIDRICO.CREAR');
+	const puedeCrear = !bed?.egresada && puede('INTERNACION.BALANCE_HIDRICO.CREAR');
 	const puedeEditar = puede('INTERNACION.BALANCE_HIDRICO.EDITAR');
 	const puedeEliminar = puede('INTERNACION.BALANCE_HIDRICO.ELIMINAR');
 

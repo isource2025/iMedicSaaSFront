@@ -61,7 +61,7 @@ const DietaSection: React.FC<Props> = ({
 	fechaIngreso,
 	horaIngreso,
 }) => {
-	const { activeSection, selectedDate } = useBedDetail();
+	const { activeSection, selectedDate, bed } = useBedDetail();
 	const [selected, setSelected] = useState<DietaControl | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [editing, setEditing] = useState<DietaControl | null>(null);
@@ -70,7 +70,7 @@ const DietaSection: React.FC<Props> = ({
 	const [periodo, setPeriodo] = useState<Periodo>('0');
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
-	const puedeCrear = puede('INTERNACION.DIETA.CREAR');
+	const puedeCrear = !bed?.egresada && puede('INTERNACION.DIETA.CREAR');
 	const puedeEditar = puede('INTERNACION.DIETA.EDITAR');
 	const puedeEliminar = puede('INTERNACION.DIETA.ELIMINAR');
 

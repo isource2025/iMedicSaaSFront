@@ -190,9 +190,10 @@ export default function IndicacionesSection({
     fechaIngreso,
     horaIngreso,
 }: IndicacionesSectionProps) {
-    const { activeSection, selectedDate, setSelectedDate, marcarSeccionInicialLista } = useBedDetail();
+    const { activeSection, selectedDate, setSelectedDate, marcarSeccionInicialLista, bed } = useBedDetail();
     const { puede } = usePermiso();
-    const puedeCrear = puede('INTERNACION.INDICACIONES.CREAR');
+    const visitaEgresada = Boolean(bed?.egresada);
+    const puedeCrear = puede('INTERNACION.INDICACIONES.CREAR') && !visitaEgresada;
     const fechaHoy = toLocalYmd(new Date());
     const fechaManana = addDaysYmd(fechaHoy, 1);
 

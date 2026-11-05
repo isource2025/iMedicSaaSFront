@@ -97,8 +97,10 @@ export default function VisitaClinicaClient() {
 						fontSize: '0.9rem',
 					}}
 				>
-					<strong>Visita egresada.</strong> Podés agregar registros clínicos. Solo el
-					profesional que creó cada registro puede modificarlo o eliminarlo.
+					<strong>Visita egresada.</strong> Solo lectura: no se pueden agregar
+					registros clínicos. Podés consultar el historial hasta la fecha de egreso.
+					Solo el profesional que creó cada registro (o quien tenga permiso de
+					registros ajenos) puede modificarlo o eliminarlo.
 				</div>
 			) : null}
 			<BedDetailProvider

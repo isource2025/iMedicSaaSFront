@@ -54,13 +54,15 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 	fechaIngreso,
 	horaIngreso,
 }) => {
-	const { activeSection, selectedDate } = useBedDetail();
+	const { activeSection, selectedDate, bed } = useBedDetail();
 	const [selectedControl, setSelectedControl] = useState<ControlFrecuente | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [editingControl, setEditingControl] = useState<ControlFrecuente | null>(null);
 	const [query, setQuery] = useState('');
 	const usuarioActual = useUsuarioActual();
 	const { puede } = usePermiso();
+	const visitaEgresada = Boolean(bed?.egresada);
+	const puedeCrear = !visitaEgresada && puede('INTERNACION.SIGNOS_VITALES.CREAR');
 	const puedeEditar = puede('INTERNACION.SIGNOS_VITALES.EDITAR');
 	const puedeEliminar = puede('INTERNACION.SIGNOS_VITALES.ELIMINAR');
 
@@ -168,16 +170,18 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 						{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
 					</span>
 					<div className={styles.dateActions}>
-						<button
-							className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
-							onClick={() => {
-								setEditingControl(null);
-								setModalOpen(true);
-							}}
-						>
-							<span className={styles.addIcon} aria-hidden>+</span>
-							Agregar control
-						</button>
+						{puedeCrear && (
+							<button
+								className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+								onClick={() => {
+									setEditingControl(null);
+									setModalOpen(true);
+								}}
+							>
+								<span className={styles.addIcon} aria-hidden>+</span>
+								Agregar control
+							</button>
+						)}
 						<ExportButton
 							data={controlsFiltrados}
 							fileName={`controles_${fechaISO}.pdf`}
@@ -211,9 +215,13 @@ const ControlesFrecuentesSection: React.FC<Props> = ({
 						<EmptyState
 							variant="controles"
 							text="No hay controles registrados"
-							description="Aún no se han cargado controles frecuentes para esta fecha. Agregá uno haciendo clic en el botón de arriba."
-							actionLabel="Agregar control"
-							onAction={() => setModalOpen(true)}
+							description={
+								visitaEgresada
+									? 'Visita egresada: no se pueden agregar controles.'
+									: 'Aún no se han cargado controles frecuentes para esta fecha. Agregá uno haciendo clic en el botón de arriba.'
+							}
+							actionLabel={puedeCrear ? 'Agregar control' : undefined}
+							onAction={puedeCrear ? () => setModalOpen(true) : undefined}
 						/>
 					) : !isLoading && !error ? (
 						<>

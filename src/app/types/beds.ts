@@ -44,6 +44,7 @@ export interface Bed {
 	/** Tipo de recurso normalizado para UI y permisos de acciones */
 	tipoRecurso: BedTipoRecurso;
 	/** Visita con FechaEgreso > 0 (sigue permitiendo altas clínicas) */
+	/** Visita con FechaEgreso > 0: ficha en solo lectura (sin altas clínicas). */
 	egresada?: boolean;
 	/** Indicaciones médicas aún no revisadas por enfermería (compartido). */
 	indicacionesNuevasEnfermeria?: number;
