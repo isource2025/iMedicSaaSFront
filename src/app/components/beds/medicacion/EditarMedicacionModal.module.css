@@ -1,0 +1,141 @@
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 20px 24px;
+	background: #fff;
+}
+
+.medName {
+	margin: 0;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: #f0f9ff;
+	border: 1px solid #bae6fd;
+	color: #0c4a6e;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.grid2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+}
+
+.grid3 {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: 16px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.label {
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+}
+
+.required {
+	color: #ef4444;
+}
+
+.input,
+.textarea {
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	padding: 10px 12px;
+	font-size: 14px;
+	color: #111827;
+	background: #fff;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	font-family: inherit;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.input:focus,
+.textarea:focus {
+	outline: none;
+	border-color: #00b5e2;
+	box-shadow: 0 0 0 3px rgba(0, 181, 226, 0.1);
+}
+
+.textarea {
+	resize: vertical;
+	min-height: 90px;
+	line-height: 1.5;
+}
+
+.errorMsg {
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #b91c1c;
+	padding: 8px 10px;
+	border-radius: 8px;
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding-top: 4px;
+}
+
+.btnSecondary,
+.btnPrimary {
+	appearance: none;
+	border-radius: 8px;
+	padding: 10px 16px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btnSecondary {
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #334155;
+}
+
+.btnSecondary:hover:not(:disabled) {
+	background: #f8fafc;
+}
+
+.btnPrimary {
+	border: 1px solid #00b5e2;
+	background: #00b5e2;
+	color: #fff;
+}
+
+.btnPrimary:hover:not(:disabled) {
+	background: #0099c3;
+	border-color: #0099c3;
+}
+
+.btnSecondary:disabled,
+.btnPrimary:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+	.grid2,
+	.grid3 {
+		grid-template-columns: 1fr;
+	}
+
+	.form {
+		padding: 16px;
+	}
+}

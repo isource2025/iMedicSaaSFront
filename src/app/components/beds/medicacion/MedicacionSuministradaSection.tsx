@@ -3,11 +3,9 @@
 import React, { useState, useMemo } from 'react';
 import { MedicacionControl } from '../../../types/medicacionControl';
 import {
-  obtenerMedicacionPorVisitaYFecha,
   formatearFecha,
   formatearHora,
   eliminarMedicacion,
-  actualizarMedicacion,
 } from '../../../services/medicacionControlService';
 import { useBedDetail } from '../contexts/BedDetailContext';
 import { useBedSectionFetch } from '../contexts/useBedSectionQuery';
@@ -23,7 +21,7 @@ import { IoEyeOutline, IoTrashOutline, IoPencilOutline } from 'react-icons/io5';
 import { useUsuarioActual, esRegistroPropio, esAdminClinico } from '../../../hooks/useUsuarioActual';
 import { usePermiso } from '../../../hooks/usePermiso';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
-import formStyles from '../evolucion/NuevaEvolucionEnfermeriaModal.module.css';
+import EditarMedicacionModal from './EditarMedicacionModal';
 
 interface MedicacionSuministradaSectionProps {
   numeroVisita: number | null;
@@ -54,9 +52,6 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
   const { activeSection, selectedDate } = useBedDetail();
   const [selectedMedicacion, setSelectedMedicacion] = useState<MedicacionControl | null>(null);
   const [editingMedicacion, setEditingMedicacion] = useState<MedicacionControl | null>(null);
-  const [editForm, setEditForm] = useState({ cantidad: '', cantidadIndicada: '', tipoUnidad: '', observaciones: '' });
-  const [editSaving, setEditSaving] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
   const usuarioActual = useUsuarioActual();
   const { puede } = usePermiso();
   const puedeEditar = puede('INTERNACION.MEDICACION.EDITAR');
@@ -152,34 +147,6 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
 
   const openEdit = (medicacion: MedicacionControl) => {
     setEditingMedicacion(medicacion);
-    setEditError(null);
-    setEditForm({
-      cantidad: medicacion.Cantidad != null ? String(medicacion.Cantidad) : '',
-      cantidadIndicada: medicacion.CantidadIndicada != null ? String(medicacion.CantidadIndicada) : '',
-      tipoUnidad: medicacion.TipoUnidad || '',
-      observaciones: medicacion.Observaciones || '',
-    });
-  };
-
-  const handleSaveEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingMedicacion) return;
-    setEditSaving(true);
-    setEditError(null);
-    try {
-      await actualizarMedicacion(editingMedicacion.IDCtrlMedica, {
-        cantidad: editForm.cantidad === '' ? undefined : Number(editForm.cantidad),
-        cantidadIndicada: editForm.cantidadIndicada === '' ? undefined : Number(editForm.cantidadIndicada),
-        tipoUnidad: editForm.tipoUnidad,
-        observaciones: editForm.observaciones,
-      });
-      setEditingMedicacion(null);
-      refetch();
-    } catch (err) {
-      setEditError(err instanceof Error ? err.message : 'Error al guardar');
-    } finally {
-      setEditSaving(false);
-    }
   };
 
   // formatear fecha para el header y el PDF
@@ -435,58 +402,13 @@ const MedicacionSuministradaSection: React.FC<MedicacionSuministradaSectionProps
         onClose={() => setEditingMedicacion(null)}
         titulo="Editar medicación suministrada"
       >
-        <form id="editar-medicacion-form" onSubmit={handleSaveEdit} className={formStyles.form}>
-          {editError && <div className={formStyles.errorMsg}>{editError}</div>}
-          <div className={formStyles.row}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>Cantidad aplicada</label>
-              <input
-                className={formStyles.input}
-                type="number"
-                step="any"
-                value={editForm.cantidad}
-                onChange={(e) => setEditForm((p) => ({ ...p, cantidad: e.target.value }))}
-              />
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>Cantidad indicada</label>
-              <input
-                className={formStyles.input}
-                type="number"
-                step="any"
-                value={editForm.cantidadIndicada}
-                onChange={(e) => setEditForm((p) => ({ ...p, cantidadIndicada: e.target.value }))}
-              />
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>Unidad</label>
-              <input
-                className={formStyles.input}
-                type="text"
-                maxLength={5}
-                value={editForm.tipoUnidad}
-                onChange={(e) => setEditForm((p) => ({ ...p, tipoUnidad: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Observaciones</label>
-            <textarea
-              className={formStyles.textarea}
-              rows={3}
-              value={editForm.observaciones}
-              onChange={(e) => setEditForm((p) => ({ ...p, observaciones: e.target.value }))}
-            />
-          </div>
-          <div className={formStyles.footer}>
-            <button type="button" className={formStyles.btnSecondary} onClick={() => setEditingMedicacion(null)} disabled={editSaving}>
-              Cancelar
-            </button>
-            <button type="submit" className={formStyles.btnPrimary} disabled={editSaving}>
-              {editSaving ? 'Guardando…' : 'Guardar cambios'}
-            </button>
-          </div>
-        </form>
+        {editingMedicacion && (
+          <EditarMedicacionModal
+            medicacion={editingMedicacion}
+            onClose={() => setEditingMedicacion(null)}
+            onSaved={refetch}
+          />
+        )}
       </ModalBasePaciente>
         </div>
       </div>

@@ -199,6 +199,8 @@ export const eliminarMedicacion = async (
 };
 
 export type ActualizarMedicacionData = {
+  fechaControl?: string;
+  horaControl?: string;
   cantidad?: number;
   cantidadIndicada?: number;
   tipoUnidad?: string;
