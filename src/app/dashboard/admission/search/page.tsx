@@ -180,7 +180,7 @@ function AdmissionSearchPageContent() {
   const [coberturas, setCoberturas] = useState<{ Valor: number; Descripcion: string }[]>([]);
   const [loadingCoberturas, setLoadingCoberturas] = useState(true);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
-  const [pacsPaciente, setPacsPaciente] = useState<{ documento: string; nombre: string } | null>(null);
+  const [pacsPaciente, setPacsPaciente] = useState<{ numeroVisita: number; nombre: string } | null>(null);
   const cerrarPacs = useCallback(() => setPacsPaciente(null), []);
   const [folderModal, setFolderModal] = useState<{
     patient: AdmissionSearchRow;
@@ -812,14 +812,14 @@ function AdmissionSearchPageContent() {
                                 >
                                   Modificar
                                 </button>
-                                {row.NumeroDocumento ? (
+                                {row.NumeroVisita ? (
                                   <button
                                     type="button"
                                     className={pacsStyles.imagesBtn}
                                     title="Ver imágenes del tomógrafo (PACS)"
                                     onClick={() =>
                                       setPacsPaciente({
-                                        documento: String(row.NumeroDocumento),
+                                        numeroVisita: Number(row.NumeroVisita),
                                         nombre: String(row.ApellidoYNombre || ''),
                                       })
                                     }
@@ -886,13 +886,13 @@ function AdmissionSearchPageContent() {
                         >
                           Modificar
                         </button>
-                        {row.NumeroDocumento ? (
+                        {row.NumeroVisita ? (
                           <button
                             type="button"
                             className={pacsStyles.imagesBtn}
                             onClick={() =>
                               setPacsPaciente({
-                                documento: String(row.NumeroDocumento),
+                                numeroVisita: Number(row.NumeroVisita),
                                 nombre: String(row.ApellidoYNombre || ''),
                               })
                             }
@@ -1019,7 +1019,7 @@ function AdmissionSearchPageContent() {
       <PacsEstudiosModal
         isOpen={pacsPaciente != null}
         onClose={cerrarPacs}
-        documento={pacsPaciente?.documento}
+        numeroVisita={pacsPaciente?.numeroVisita}
         pacienteNombre={pacsPaciente?.nombre}
       />
     </div>

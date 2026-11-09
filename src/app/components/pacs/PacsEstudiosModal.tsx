@@ -8,11 +8,18 @@ import styles from './Pacs.module.css';
 interface PacsEstudiosModalProps {
   isOpen: boolean;
   onClose: () => void;
-  documento: string | number | null | undefined;
+  numeroVisita?: number | null;
+  documento?: string | number | null;
   pacienteNombre?: string;
 }
 
-export default function PacsEstudiosModal({ isOpen, onClose, documento, pacienteNombre }: PacsEstudiosModalProps) {
+export default function PacsEstudiosModal({
+  isOpen,
+  onClose,
+  numeroVisita,
+  documento,
+  pacienteNombre,
+}: PacsEstudiosModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
@@ -42,7 +49,7 @@ export default function PacsEstudiosModal({ isOpen, onClose, documento, paciente
           </button>
         </div>
         <div className={styles.content}>
-          <PacsEstudiosPanel documento={documento} />
+          <PacsEstudiosPanel numeroVisita={numeroVisita} documento={documento} />
         </div>
       </div>
     </div>,

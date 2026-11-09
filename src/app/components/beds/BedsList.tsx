@@ -62,7 +62,6 @@ const BedsList = () => {
 		sector: string;
 		header: PatientHeaderSnapshot | null;
 		numeroCama?: string;
-		documentoPaciente?: string;
 	} | null>(null);
 	const [selectedSector, setSelectedSector] = useState<{
 		id: string;
@@ -99,7 +98,6 @@ const BedsList = () => {
 		sector: bed.sector,
 		header: bedToHeaderSnapshot(bed),
 		numeroCama: bed.numeroCama,
-		documentoPaciente: bed.documentoPaciente,
 	});
 
 	const handleNursingReport = (bed: Bed) => {
@@ -303,7 +301,6 @@ const BedsList = () => {
 			{adjuntosModalOpen && selectedBed?.numeroVisita ? (
 				<AdjuntosModal
 					numeroVisita={selectedBed.numeroVisita}
-					documentoPaciente={selectedBed.documentoPaciente}
 					isOpen={adjuntosModalOpen}
 					onClose={() => setAdjuntosModalOpen(false)}
 				/>

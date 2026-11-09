@@ -29,12 +29,22 @@ function nombreDicom(n: string): string {
   return String(n || '').replace(/\^+/g, ' ').trim();
 }
 
-interface PacsEstudiosPanelProps {
-  documento: string | number | null | undefined;
+function fechaIso(d: string | null | undefined): string {
+  const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '—';
 }
 
-export default function PacsEstudiosPanel({ documento }: PacsEstudiosPanelProps) {
-  const dni = normalizarDni(documento);
+interface PacsEstudiosPanelProps {
+  /** Solo estudios de esta visita (por AccessionNumber o fecha ingreso–egreso). */
+  numeroVisita?: number | null;
+  /** Todos los estudios del DNI (si no se pasa numeroVisita). */
+  documento?: string | number | null;
+}
+
+export default function PacsEstudiosPanel({ numeroVisita, documento }: PacsEstudiosPanelProps) {
+  const porVisita = Boolean(numeroVisita && numeroVisita > 0);
+  const [dni, setDni] = useState(normalizarDni(documento));
+  const [rango, setRango] = useState<{ desde: string | null; hasta: string | null; egresada: boolean } | null>(null);
   const [estudios, setEstudios] = useState<PacsEstudio[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,12 +59,23 @@ export default function PacsEstudiosPanel({ documento }: PacsEstudiosPanelProps)
   useEffect(() => {
     setEstudio(null);
     setEstudios([]);
+    setRango(null);
     setError('');
-    if (!dni) return;
+    const dniDirecto = normalizarDni(documento);
+    setDni(dniDirecto);
+    if (!porVisita && !dniDirecto) return;
     let cancelled = false;
     setLoading(true);
-    pacsService
-      .listarEstudios(dni)
+    const consulta = porVisita
+      ? pacsService.listarEstudiosVisita(numeroVisita as number).then((r) => {
+          if (!cancelled) {
+            setDni(r.documento);
+            setRango({ desde: r.desde, hasta: r.hasta, egresada: r.egresada });
+          }
+          return r.studies;
+        })
+      : pacsService.listarEstudios(dniDirecto);
+    consulta
       .then((data) => {
         if (!cancelled) setEstudios(data);
       })
@@ -72,7 +93,7 @@ export default function PacsEstudiosPanel({ documento }: PacsEstudiosPanelProps)
     return () => {
       cancelled = true;
     };
-  }, [dni]);
+  }, [porVisita, numeroVisita, documento]);
 
   const abrirEstudio = async (e: PacsEstudio) => {
     setEstudio(e);
@@ -105,9 +126,13 @@ export default function PacsEstudiosPanel({ documento }: PacsEstudiosPanelProps)
 
   const serieActual = series.find((s) => s.seriesInstanceUid === serieUid);
 
-  if (!dni) {
+  if (!dni && !loading && !error && (!porVisita || rango)) {
     return <div className={styles.empty}>El paciente no tiene DNI cargado: no se puede buscar en el PACS.</div>;
   }
+
+  const contexto = rango
+    ? `Tomógrafo · DNI ${dni} · del ${fechaIso(rango.desde)} al ${rango.egresada ? fechaIso(rango.hasta) : 'hoy (internación en curso)'}`
+    : '';
 
   if (estudio) {
     return (
@@ -160,10 +185,15 @@ export default function PacsEstudiosPanel({ documento }: PacsEstudiosPanelProps)
 
   return (
     <div className={styles.panel}>
+      {contexto ? <div className={styles.seriesSingle}>{contexto}</div> : null}
       {error ? <div className={styles.error}>{error}</div> : null}
-      {loading ? <div className={styles.empty}>Buscando estudios del DNI {dni}…</div> : null}
+      {loading ? (
+        <div className={styles.empty}>{porVisita ? 'Buscando estudios de esta visita…' : `Buscando estudios del DNI ${dni}…`}</div>
+      ) : null}
       {!loading && !error && estudios.length === 0 ? (
-        <div className={styles.empty}>No hay estudios en el PACS para el DNI {dni}.</div>
+        <div className={styles.empty}>
+          {porVisita ? 'No hay estudios del tomógrafo en esta visita.' : `No hay estudios en el PACS para el DNI ${dni}.`}
+        </div>
       ) : null}
       {estudios.length > 0 ? (
         <ul className={styles.studyList}>

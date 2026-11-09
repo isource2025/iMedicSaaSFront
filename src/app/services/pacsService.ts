@@ -12,6 +12,15 @@ export interface PacsEstudio {
   instanceCount: number;
 }
 
+export interface PacsEstudiosVisita {
+  numeroVisita: number;
+  documento: string;
+  desde: string | null;
+  hasta: string | null;
+  egresada: boolean;
+  studies: PacsEstudio[];
+}
+
 export interface PacsSerie {
   seriesInstanceUid: string;
   seriesNumber: string;
@@ -59,6 +68,14 @@ export const pacsService = {
       'No se pudieron obtener los estudios del PACS',
     );
     return data.studies ?? [];
+  },
+
+  async listarEstudiosVisita(numeroVisita: number): Promise<PacsEstudiosVisita> {
+    const data = await getJson<PacsEstudiosVisita>(
+      `/pacs/visitas/${encodeURIComponent(String(numeroVisita))}/estudios`,
+      'No se pudieron obtener los estudios de la visita',
+    );
+    return { ...data, studies: data.studies ?? [] };
   },
 
   async listarSeries(studyUid: string): Promise<PacsSerie[]> {

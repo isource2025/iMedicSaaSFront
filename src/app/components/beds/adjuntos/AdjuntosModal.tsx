@@ -32,10 +32,9 @@ interface AdjuntosModalProps {
   numeroVisita: number;
   isOpen: boolean;
   onClose: () => void;
-  documentoPaciente?: string | null;
 }
 
-export default function AdjuntosModal({ numeroVisita, isOpen, onClose, documentoPaciente }: AdjuntosModalProps) {
+export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: AdjuntosModalProps) {
   const [adjuntos, setAdjuntos] = useState<Adjunto[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -209,20 +208,18 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose, documento
             >
               Serie DICOM
             </button>
-            {documentoPaciente ? (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={modo === 'pacs'}
-                className={modo === 'pacs' ? styles.modeTabActive : styles.modeTab}
-                onClick={() => setModo('pacs')}
-              >
-                Estudios PACS
-              </button>
-            ) : null}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={modo === 'pacs'}
+              className={modo === 'pacs' ? styles.modeTabActive : styles.modeTab}
+              onClick={() => setModo('pacs')}
+            >
+              Estudios PACS
+            </button>
           </div>
 
-          {modo === 'pacs' && documentoPaciente ? <PacsEstudiosPanel documento={documentoPaciente} /> : null}
+          {modo === 'pacs' ? <PacsEstudiosPanel numeroVisita={numeroVisita} /> : null}
 
           {modo === 'archivos' && (
             <div className={styles.uploadBlock}>

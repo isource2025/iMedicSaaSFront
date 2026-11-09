@@ -267,7 +267,7 @@ export default function AdjuntosSection({
           >
             Serie DICOM
           </button>
-          {documentoPaciente ? (
+          {numeroVisita ? (
             <button
               type="button"
               role="tab"
@@ -281,7 +281,7 @@ export default function AdjuntosSection({
         </div>
       }
     >
-      {modo === 'pacs' && documentoPaciente ? <PacsEstudiosPanel documento={documentoPaciente} /> : null}
+      {modo === 'pacs' && numeroVisita ? <PacsEstudiosPanel numeroVisita={numeroVisita} /> : null}
 
       {modo !== 'pacs' ? <p className={styles.cargadoPor}>Cargás como {etiquetaUsuarioActual()}</p> : null}
 
