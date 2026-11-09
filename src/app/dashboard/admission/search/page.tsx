@@ -650,21 +650,6 @@ function AdmissionSearchPageContent() {
             >
               Exportar PDF
             </button>
-            {/^\d{7,8}$/.test(filters.termino.trim().replace(/[.\s-]/g, '')) ? (
-              <button
-                type="button"
-                className={pacsStyles.imagesBtn}
-                title="Ver estudios del tomógrafo (PACS) para este DNI, aunque no tenga admisiones"
-                onClick={() =>
-                  setPacsPaciente({
-                    documento: filters.termino.trim().replace(/[.\s-]/g, ''),
-                    nombre: `DNI ${filters.termino.trim().replace(/[.\s-]/g, '')}`,
-                  })
-                }
-              >
-                Imágenes del DNI {filters.termino.trim().replace(/[.\s-]/g, '')}
-              </button>
-            ) : null}
           </div>
         </div>
       </form>
