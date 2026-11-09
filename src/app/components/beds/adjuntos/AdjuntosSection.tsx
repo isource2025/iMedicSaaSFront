@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import { authService } from '@/app/services/authService';
 import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
@@ -17,6 +18,8 @@ import styles from './AdjuntosSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import { useBedDetail } from '../contexts/BedDetailContext';
+
+const PacsEstudiosPanel = dynamic(() => import('@/app/components/pacs/PacsEstudiosPanel'), { ssr: false });
 
 function etiquetaUsuarioActual(): string {
   const u = authService.getCurrentUser() as Record<string, unknown> | null;
@@ -68,7 +71,7 @@ export default function AdjuntosSection({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
-  const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita'>('visita');
+  const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita' | 'pacs'>('visita');
   const fileUploadRef = useRef<FileUploadRef>(null);
   const [periodo, setPeriodo] = useState<Periodo>('all');
   const adjuntosVisibles = useMemo(
@@ -264,10 +267,23 @@ export default function AdjuntosSection({
           >
             Serie DICOM
           </button>
+          {documentoPaciente ? (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={modo === 'pacs'}
+              className={modo === 'pacs' ? styles.modeTabActive : styles.modeTab}
+              onClick={() => setModo('pacs')}
+            >
+              Estudios PACS
+            </button>
+          ) : null}
         </div>
       }
     >
-      <p className={styles.cargadoPor}>Cargás como {etiquetaUsuarioActual()}</p>
+      {modo === 'pacs' && documentoPaciente ? <PacsEstudiosPanel documento={documentoPaciente} /> : null}
+
+      {modo !== 'pacs' ? <p className={styles.cargadoPor}>Cargás como {etiquetaUsuarioActual()}</p> : null}
 
       {error && (
         <div className={styles.error}>

@@ -343,6 +343,7 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 			{bed?.NumeroVisita && (
 				<AdjuntosModal
 					numeroVisita={bed.NumeroVisita}
+					documentoPaciente={bed.documentoPaciente}
 					isOpen={showAdjuntosModal}
 					onClose={() => setShowAdjuntosModal(false)}
 				/>

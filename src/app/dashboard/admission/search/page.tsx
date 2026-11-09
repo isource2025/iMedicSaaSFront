@@ -14,6 +14,8 @@ import { useAdmissionVisitDetail } from '@/app/hooks/useAdmissionVisitDetail';
 import Loader from '@/app/components/Loader/Loader';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import AdmissionSearchPdfPreviewModal from '@/app/components/admission/AdmissionSearchPdfPreviewModal';
+import PacsEstudiosModal from '@/app/components/pacs/PacsEstudiosModal';
+import pacsStyles from '@/app/components/pacs/Pacs.module.css';
 import styles from './search.module.css';
 import sharedStyles from '../tables/tables.module.css';
 import { formatDMY } from '@/app/utils/admissionDatePeriod';
@@ -178,6 +180,8 @@ function AdmissionSearchPageContent() {
   const [coberturas, setCoberturas] = useState<{ Valor: number; Descripcion: string }[]>([]);
   const [loadingCoberturas, setLoadingCoberturas] = useState(true);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pacsPaciente, setPacsPaciente] = useState<{ documento: string; nombre: string } | null>(null);
+  const cerrarPacs = useCallback(() => setPacsPaciente(null), []);
   const [folderModal, setFolderModal] = useState<{
     patient: AdmissionSearchRow;
     visits: AdmissionSearchRow[];
@@ -808,6 +812,21 @@ function AdmissionSearchPageContent() {
                                 >
                                   Modificar
                                 </button>
+                                {row.NumeroDocumento ? (
+                                  <button
+                                    type="button"
+                                    className={pacsStyles.imagesBtn}
+                                    title="Ver imágenes del tomógrafo (PACS)"
+                                    onClick={() =>
+                                      setPacsPaciente({
+                                        documento: String(row.NumeroDocumento),
+                                        nombre: String(row.ApellidoYNombre || ''),
+                                      })
+                                    }
+                                  >
+                                    Imágenes
+                                  </button>
+                                ) : null}
                                 <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
                               </div>
                             </td>
@@ -867,6 +886,20 @@ function AdmissionSearchPageContent() {
                         >
                           Modificar
                         </button>
+                        {row.NumeroDocumento ? (
+                          <button
+                            type="button"
+                            className={pacsStyles.imagesBtn}
+                            onClick={() =>
+                              setPacsPaciente({
+                                documento: String(row.NumeroDocumento),
+                                nombre: String(row.ApellidoYNombre || ''),
+                              })
+                            }
+                          >
+                            Imágenes
+                          </button>
+                        ) : null}
                         <VisitClinicalBadges row={row} onBadgeClick={handleBadgeClick} />
                       </div>
                     </article>
@@ -981,6 +1014,13 @@ function AdmissionSearchPageContent() {
         }}
         rowsActuales={rows}
         total={total}
+      />
+
+      <PacsEstudiosModal
+        isOpen={pacsPaciente != null}
+        onClose={cerrarPacs}
+        documento={pacsPaciente?.documento}
+        pacienteNombre={pacsPaciente?.nombre}
       />
     </div>
   );

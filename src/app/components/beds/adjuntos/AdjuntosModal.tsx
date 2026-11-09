@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import { authService } from '@/app/services/authService';
 import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
@@ -10,6 +11,8 @@ import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
 import styles from './AdjuntosModal.module.css';
+
+const PacsEstudiosPanel = dynamic(() => import('@/app/components/pacs/PacsEstudiosPanel'), { ssr: false });
 
 function etiquetaUsuarioActual(): string {
   const u = authService.getCurrentUser() as Record<string, unknown> | null;
@@ -29,9 +32,10 @@ interface AdjuntosModalProps {
   numeroVisita: number;
   isOpen: boolean;
   onClose: () => void;
+  documentoPaciente?: string | null;
 }
 
-export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: AdjuntosModalProps) {
+export default function AdjuntosModal({ numeroVisita, isOpen, onClose, documentoPaciente }: AdjuntosModalProps) {
   const [adjuntos, setAdjuntos] = useState<Adjunto[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -40,7 +44,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState('');
-  const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita'>('visita');
+  const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita' | 'pacs'>('visita');
   const fileUploadRef = useRef<FileUploadRef>(null);
 
   const showMessage = useCallback((title: string, message: string, tone: MessageModalTone = 'info') => {
@@ -205,7 +209,20 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
             >
               Serie DICOM
             </button>
+            {documentoPaciente ? (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={modo === 'pacs'}
+                className={modo === 'pacs' ? styles.modeTabActive : styles.modeTab}
+                onClick={() => setModo('pacs')}
+              >
+                Estudios PACS
+              </button>
+            ) : null}
           </div>
+
+          {modo === 'pacs' && documentoPaciente ? <PacsEstudiosPanel documento={documentoPaciente} /> : null}
 
           {modo === 'archivos' && (
             <div className={styles.uploadBlock}>
