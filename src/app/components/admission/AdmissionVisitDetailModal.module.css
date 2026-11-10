@@ -3,22 +3,22 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: 12px 0;
+  padding: 6px 0;
 }
 
 .exportToolbarBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0.5rem 0.95rem;
+  gap: 5px;
+  padding: 0.32rem 0.75rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #fff;
   background: linear-gradient(135deg, #00b5e2 0%, #0083a9 100%);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 131, 169, 0.2);
+  box-shadow: 0 1px 4px rgba(0, 131, 169, 0.18);
 }
 
 .exportToolbarBtn:disabled {

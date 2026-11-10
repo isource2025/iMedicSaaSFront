@@ -149,50 +149,54 @@ function VisitHeader({
             {str(a.ClasePacienteDescripcion) ? (
               <span className={s.statusPill}>{str(a.ClasePacienteDescripcion)}</span>
             ) : null}
+            <span className={s.identityMetaInline}>
+              <span>
+                Visita <strong>#{str(a.NumeroVisita) || str(numeroVisita)}</strong>
+              </span>
+              <span>
+                DNI <strong>{str(a.NumeroDocumento) || '—'}</strong>
+              </span>
+              {str(a.NumeroHC) ? (
+                <span>
+                  HC <strong>{str(a.NumeroHC)}</strong>
+                </span>
+              ) : null}
+              {str(a.SexoDescripcion) ? <span>{str(a.SexoDescripcion)}</span> : null}
+            </span>
           </div>
-          <p className={s.identityMeta}>
-            <span>Visita <strong>#{str(a.NumeroVisita) || str(numeroVisita)}</strong></span>
-            <span>DNI <strong>{str(a.NumeroDocumento) || '—'}</strong></span>
-            <span>HC <strong>{str(a.NumeroHC) || '—'}</strong></span>
-            {str(a.SexoDescripcion) ? <span>{str(a.SexoDescripcion)}</span> : null}
-          </p>
+          <dl className={s.facts}>
+            {facts.map(([k, v]) => (
+              <div key={k} className={s.fact}>
+                <dt>{k}</dt>
+                <dd title={v}>{v}</dd>
+              </div>
+            ))}
+          </dl>
+          {dxIngreso || dxEgreso ? (
+            <div className={s.dxRow}>
+              {dxIngreso ? (
+                <p className={s.dxInline} title={dxIngreso}>
+                  <span className={s.dxLabel}>Dx{dxEgreso ? ' ingreso' : ''}</span>
+                  {str(a.Diagnostico) && str(a.DiagnosticoDescripcion) ? (
+                    <span className={s.dxCode}>{str(a.Diagnostico)}</span>
+                  ) : null}
+                  <span className={s.dxText}>{dxIngreso}</span>
+                </p>
+              ) : null}
+              {dxEgreso ? (
+                <p className={`${s.dxInline} ${s.dxInlineEgreso}`} title={dxEgreso}>
+                  <span className={s.dxLabel}>Dx egreso</span>
+                  {str(a.DiagnosticoEgreso) && str(a.DiagnosticoEgresoDescripcion) ? (
+                    <span className={s.dxCode}>{str(a.DiagnosticoEgreso)}</span>
+                  ) : null}
+                  <span className={s.dxText}>{dxEgreso}</span>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <div className={s.headerActions}>{actions}</div>
       </div>
-      <dl className={s.facts}>
-        {facts.map(([k, v]) => (
-          <div key={k} className={s.fact}>
-            <dt>{k}</dt>
-            <dd title={v}>{v}</dd>
-          </div>
-        ))}
-      </dl>
-      {dxIngreso || dxEgreso ? (
-        <div className={s.dxRow}>
-          {dxIngreso ? (
-            <div className={s.dxBox}>
-              <span className={s.dxLabel}>Diagnóstico{dxEgreso ? ' de ingreso' : ''}</span>
-              <span className={s.dxText}>
-                {str(a.Diagnostico) && str(a.DiagnosticoDescripcion) ? (
-                  <span className={s.dxCode}>{str(a.Diagnostico)}</span>
-                ) : null}
-                {dxIngreso}
-              </span>
-            </div>
-          ) : null}
-          {dxEgreso ? (
-            <div className={`${s.dxBox} ${s.dxBoxEgreso}`}>
-              <span className={s.dxLabel}>Diagnóstico de egreso</span>
-              <span className={s.dxText}>
-                {str(a.DiagnosticoEgreso) && str(a.DiagnosticoEgresoDescripcion) ? (
-                  <span className={s.dxCode}>{str(a.DiagnosticoEgreso)}</span>
-                ) : null}
-                {dxEgreso}
-              </span>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
     </header>
   );
 }
