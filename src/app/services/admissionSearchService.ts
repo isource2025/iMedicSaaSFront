@@ -400,12 +400,20 @@ export const admissionSearchService = {
 };
 
 
-/** Lotes de secciones clínicas: primero lo liviano, al final labs/prácticas/estudios. */
-export const DETAIL_SECTION_BATCHES: string[][] = [
+/** Lotes clínicos: núcleo primero; pesados uno por uno para no bloquear el resumen. */
+export const DETAIL_CORE_BATCHES: string[][] = [
   ['movimientos', 'hcIngreso', 'epicrisis', 'interconsultas', 'protocolos', 'adjuntos'],
   ['indicaciones', 'medicamentos', 'evoluciones', 'evolucionEnfermeria'],
   ['controles', 'balanceHidrico', 'dietas', 'insumos'],
-  ['practicas', 'estudios', 'laboratorios'],
+];
+
+/** Secciones pesadas: se piden solas y en background (no mantienen el spinner global). */
+export const DETAIL_HEAVY_SECTIONS: string[] = ['practicas', 'estudios', 'laboratorios'];
+
+/** @deprecated usar DETAIL_CORE_BATCHES + DETAIL_HEAVY_SECTIONS */
+export const DETAIL_SECTION_BATCHES: string[][] = [
+  ...DETAIL_CORE_BATCHES,
+  ...DETAIL_HEAVY_SECTIONS.map((s) => [s]),
 ];
 
 type VisitDetailLike = {
@@ -434,7 +442,8 @@ export function mergeVisitDetailPartial<T extends VisitDetailLike>(base: T, part
 }
 
 /**
- * Carga shell + lotes clínicos. `onUpdate` se llama con el acumulado (abre UI ya con admisión).
+ * Carga shell + lotes clínicos.
+ * Tras el núcleo (indicaciones/controles/etc.) libera la UI; prácticas/estudios/labs siguen en background.
  */
 export async function loadVisitDetailProgressive(
   numeroVisita: number,
@@ -445,7 +454,8 @@ export async function loadVisitDetailProgressive(
   onUpdate(acc, { clinicoLoading: true });
 
   const errors: string[] = [];
-  for (const batch of DETAIL_SECTION_BATCHES) {
+
+  for (const batch of DETAIL_CORE_BATCHES) {
     try {
       const partial = await admissionSearchService.detalleSecciones(numeroVisita, batch);
       acc = mergeVisitDetailPartial(acc, partial);
@@ -454,6 +464,29 @@ export async function loadVisitDetailProgressive(
       errors.push(admissionApiErrorMessage(e, `Error al cargar ${batch.join(', ')}`));
       onUpdate(acc, {
         clinicoLoading: true,
+        batchError: errors[errors.length - 1],
+      });
+    }
+  }
+
+  // Resumen usable: no seguir bloqueando con el spinner global.
+  onUpdate(acc, {
+    clinicoLoading: false,
+    batchError: errors.length ? errors.join(' · ') : undefined,
+  });
+
+  for (const section of DETAIL_HEAVY_SECTIONS) {
+    try {
+      const partial = await admissionSearchService.detalleSecciones(numeroVisita, [section]);
+      acc = mergeVisitDetailPartial(acc, partial);
+      onUpdate(acc, {
+        clinicoLoading: false,
+        batchError: errors.length ? errors.join(' · ') : undefined,
+      });
+    } catch (e: unknown) {
+      errors.push(admissionApiErrorMessage(e, `Error al cargar ${section}`));
+      onUpdate(acc, {
+        clinicoLoading: false,
         batchError: errors[errors.length - 1],
       });
     }
