@@ -277,7 +277,6 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 				loadingClinico={loadingClinico}
 				data={detailData}
 				error={detailError}
-				backLabel="Cerrar"
 				onReloadData={() => void reloadVisitDetail()}
 			/>
 		</>

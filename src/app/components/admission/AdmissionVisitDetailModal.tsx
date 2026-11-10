@@ -155,7 +155,6 @@ interface AdmissionVisitDetailModalProps {
   data: VisitDetailPayload | null;
   error?: string;
   initialTab?: VisitDetailTabId;
-  backLabel?: string;
   onReloadData?: () => void;
 }
 
@@ -168,7 +167,6 @@ export default function AdmissionVisitDetailModal({
   data,
   error,
   initialTab,
-  backLabel = '← Atrás a resultados',
   onReloadData,
 }: AdmissionVisitDetailModalProps) {
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -190,8 +188,6 @@ export default function AdmissionVisitDetailModal({
             data={data}
             error={error}
             initialSection={initialTab}
-            onBack={onClose}
-            backLabel={backLabel}
             onReloadData={onReloadData}
             exportButton={
               <button
