@@ -38,6 +38,8 @@ export type VisitDetailSectionId = VisitDetailTabId;
 export interface AdmissionVisitDetailContentProps {
   numeroVisita: number | null;
   loading: boolean;
+  /** Admisión ya visible; faltan bloques clínicos (carga por lotes). */
+  loadingClinico?: boolean;
   data: VisitDetailPayload | null;
   error?: string;
   initialSection?: VisitDetailSectionId;
@@ -264,6 +266,7 @@ function SectionToolbar({
 export default function AdmissionVisitDetailContent({
   numeroVisita,
   loading,
+  loadingClinico = false,
   data,
   error,
   initialSection,
@@ -363,6 +366,13 @@ export default function AdmissionVisitDetailContent({
   return (
     <div className={s.root}>
       <VisitHeader data={data} numeroVisita={numeroVisita} actions={actions} />
+      {loadingClinico ? (
+        <div className={s.stateBox} role="status" aria-live="polite" style={{ marginBottom: 12 }}>
+          <span className={s.spinner} aria-hidden />
+          <span>Cargando historia clínica de la visita…</span>
+        </div>
+      ) : null}
+      {error && data ? <p className={s.empty}>{error}</p> : null}
 
       <div className={s.layout}>
         <nav className={s.nav} aria-label="Secciones de la visita">

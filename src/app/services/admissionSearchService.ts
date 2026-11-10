@@ -281,12 +281,27 @@ export const admissionSearchService = {
     return response.data?.data ?? [];
   },
 
+  /**
+   * Shell del detalle (admisión). La HC se completa con `detalleSecciones` en lotes
+   * para no timeout-ear en internaciones largas (ticket consulta general).
+   */
   async detalle(numeroVisita: number): Promise<any> {
     const response = await apiService.get<AdmissionDetailResponse>(
       `/admission-search/${numeroVisita}/detail`,
       { timeout: 60000 },
     );
     return response.data?.data;
+  },
+
+  /** Bloques clínicos parciales (misma forma que el detalle). */
+  async detalleSecciones(numeroVisita: number, sections: string[]): Promise<Record<string, unknown>> {
+    const params = new URLSearchParams();
+    params.set('sections', sections.filter(Boolean).join(','));
+    const response = await apiService.get<AdmissionDetailResponse>(
+      `/admission-search/${numeroVisita}/detail/sections?${params.toString()}`,
+      { timeout: 60000 },
+    );
+    return (response.data?.data ?? {}) as Record<string, unknown>;
   },
 
   async resumenIa(numeroVisita: number): Promise<VisitaResumenIa> {
@@ -383,3 +398,71 @@ export const admissionSearchService = {
     }
   },
 };
+
+
+/** Lotes de secciones clínicas: primero lo liviano, al final labs/prácticas/estudios. */
+export const DETAIL_SECTION_BATCHES: string[][] = [
+  ['movimientos', 'hcIngreso', 'epicrisis', 'interconsultas', 'protocolos', 'adjuntos'],
+  ['indicaciones', 'medicamentos', 'evoluciones', 'evolucionEnfermeria'],
+  ['controles', 'balanceHidrico', 'dietas', 'insumos'],
+  ['practicas', 'estudios', 'laboratorios'],
+];
+
+type VisitDetailLike = {
+  practicas?: { laboratorios?: unknown[]; adjuntos?: unknown[] };
+  clinicoCompleto?: boolean;
+  [key: string]: unknown;
+};
+
+/** Fusiona un lote clínico parcial sobre el shell / detalle actual. */
+export function mergeVisitDetailPartial<T extends VisitDetailLike>(base: T, partial: Record<string, unknown>): T {
+  const nextPracticas = {
+    laboratorios:
+      (partial.practicas as { laboratorios?: unknown[] } | undefined)?.laboratorios ??
+      base.practicas?.laboratorios ??
+      [],
+    adjuntos:
+      (partial.practicas as { adjuntos?: unknown[] } | undefined)?.adjuntos ??
+      base.practicas?.adjuntos ??
+      [],
+  };
+  return {
+    ...base,
+    ...partial,
+    practicas: nextPracticas,
+  };
+}
+
+/**
+ * Carga shell + lotes clínicos. `onUpdate` se llama con el acumulado (abre UI ya con admisión).
+ */
+export async function loadVisitDetailProgressive(
+  numeroVisita: number,
+  onUpdate: (data: VisitDetailLike, meta: { clinicoLoading: boolean; batchError?: string }) => void,
+): Promise<VisitDetailLike> {
+  const shell = (await admissionSearchService.detalle(numeroVisita)) as VisitDetailLike;
+  let acc: VisitDetailLike = { ...shell, clinicoCompleto: false };
+  onUpdate(acc, { clinicoLoading: true });
+
+  const errors: string[] = [];
+  for (const batch of DETAIL_SECTION_BATCHES) {
+    try {
+      const partial = await admissionSearchService.detalleSecciones(numeroVisita, batch);
+      acc = mergeVisitDetailPartial(acc, partial);
+      onUpdate(acc, { clinicoLoading: true });
+    } catch (e: unknown) {
+      errors.push(admissionApiErrorMessage(e, `Error al cargar ${batch.join(', ')}`));
+      onUpdate(acc, {
+        clinicoLoading: true,
+        batchError: errors[errors.length - 1],
+      });
+    }
+  }
+
+  acc = { ...acc, clinicoCompleto: errors.length === 0 };
+  onUpdate(acc, {
+    clinicoLoading: false,
+    batchError: errors.length ? errors.join(' · ') : undefined,
+  });
+  return acc;
+}

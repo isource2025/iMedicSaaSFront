@@ -30,6 +30,7 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 		selectedVisit,
 		detailData,
 		loadingDetail,
+		loadingClinico,
 		detailModalOpen,
 		detailError,
 		openVisitDetail,
@@ -273,6 +274,7 @@ export default function PatientFolderFab({ stack = false }: { stack?: boolean })
 				onClose={closeVisitDetail}
 				numeroVisita={selectedVisit}
 				loading={loadingDetail}
+				loadingClinico={loadingClinico}
 				data={detailData}
 				error={detailError}
 				backLabel="Cerrar"

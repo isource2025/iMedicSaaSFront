@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { admissionApiErrorMessage, admissionSearchService } from '@/app/services/admissionSearchService';
+import {
+	admissionApiErrorMessage,
+	admissionSearchService,
+	loadVisitDetailProgressive,
+} from '@/app/services/admissionSearchService';
 import type { AdmissionSearchRow } from '@/app/services/admissionSearchService';
 import AdmissionVisitDetailContent from './AdmissionVisitDetailContent';
 import AdmissionVisitExportModal from './AdmissionVisitExportModal';
@@ -114,9 +118,13 @@ export default function PatientFolderVisitsContent({
 		setLoadingDetail(numeroVisita);
 		setDetailError('');
 		try {
-			const data = (await admissionSearchService.detalle(
-				numeroVisita,
-			)) as VisitDetailPayload;
+			const data = (await loadVisitDetailProgressive(numeroVisita, (partial) => {
+				setDetailCache((prev) => ({
+					...prev,
+					[numeroVisita]: partial as VisitDetailPayload,
+				}));
+				setLoadingDetail(null);
+			})) as VisitDetailPayload;
 			setDetailCache((prev) => ({ ...prev, [numeroVisita]: data }));
 			return data;
 		} catch (e: unknown) {

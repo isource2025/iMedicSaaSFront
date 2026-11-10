@@ -199,6 +199,7 @@ function AdmissionSearchPageContent() {
     selectedVisit,
     detailData,
     loadingDetail,
+    loadingClinico,
     detailModalOpen,
     detailInitialTab,
     detailError,
@@ -994,6 +995,7 @@ function AdmissionSearchPageContent() {
         onClose={closeVisitDetail}
         numeroVisita={selectedVisit}
         loading={loadingDetail}
+        loadingClinico={loadingClinico}
         data={detailData}
         error={detailError}
         initialTab={detailInitialTab}

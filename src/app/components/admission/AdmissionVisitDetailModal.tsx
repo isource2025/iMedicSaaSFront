@@ -120,6 +120,8 @@ export type VisitDetailPayload = {
   dietas?: Record<string, unknown>[];
   insumos?: Record<string, unknown>[];
   movimientos?: Record<string, unknown>[];
+  /** false mientras faltan lotes clínicos; true al terminar (o ausente en payloads legacy). */
+  clinicoCompleto?: boolean;
 };
 
 export type VisitDetailTabId =
@@ -148,6 +150,8 @@ interface AdmissionVisitDetailModalProps {
   onClose: () => void;
   numeroVisita: number | null;
   loading: boolean;
+  /** Historia clínica aún cargando por lotes (el shell de admisión ya está visible). */
+  loadingClinico?: boolean;
   data: VisitDetailPayload | null;
   error?: string;
   initialTab?: VisitDetailTabId;
@@ -160,6 +164,7 @@ export default function AdmissionVisitDetailModal({
   onClose,
   numeroVisita,
   loading,
+  loadingClinico = false,
   data,
   error,
   initialTab,
@@ -181,6 +186,7 @@ export default function AdmissionVisitDetailModal({
           <AdmissionVisitDetailContent
             numeroVisita={numeroVisita}
             loading={loading}
+            loadingClinico={loadingClinico}
             data={data}
             error={error}
             initialSection={initialTab}
