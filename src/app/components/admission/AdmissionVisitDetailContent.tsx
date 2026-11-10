@@ -376,7 +376,11 @@ export default function AdmissionVisitDetailContent({
           <span>Cargando historia clínica de la visita…</span>
         </div>
       ) : null}
-      {error && data ? <p className={s.empty}>{error}</p> : null}
+      {error && data && !loadingClinico ? (
+        <p className={s.muted} role="status" style={{ margin: '0 0 8px' }}>
+          {error}
+        </p>
+      ) : null}
 
       <div className={s.layout}>
         <nav className={s.nav} aria-label="Secciones de la visita">

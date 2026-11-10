@@ -32,8 +32,8 @@ export function useAdmissionVisitDetail() {
 				setDetailData(data as VisitDetailPayload);
 				setLoadingDetail(false);
 				setLoadingClinico(meta.clinicoLoading);
-				if (meta.batchError) setDetailError(meta.batchError);
-				else if (!meta.clinicoLoading) setDetailError('');
+				// Solo errores del núcleo; timeouts de labs/prácticas no ensucian la UI.
+				setDetailError(meta.batchError || '');
 			});
 		} catch (e: unknown) {
 			if (gen !== loadGen.current) return;
@@ -64,8 +64,7 @@ export function useAdmissionVisitDetail() {
 				setDetailData(data as VisitDetailPayload);
 				setLoadingDetail(false);
 				setLoadingClinico(meta.clinicoLoading);
-				if (meta.batchError) setDetailError(meta.batchError);
-				else if (!meta.clinicoLoading) setDetailError('');
+				setDetailError(meta.batchError || '');
 			});
 		} catch (e: unknown) {
 			if (gen !== loadGen.current) return;

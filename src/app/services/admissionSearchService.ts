@@ -443,7 +443,8 @@ export function mergeVisitDetailPartial<T extends VisitDetailLike>(base: T, part
 
 /**
  * Carga shell + lotes clínicos.
- * Tras el núcleo (indicaciones/controles/etc.) libera la UI; prácticas/estudios/labs siguen en background.
+ * Tras el núcleo libera la UI; prácticas/estudios/labs siguen en background.
+ * Fallos del lote pesado no se exponen como error de pantalla (la visita ya es usable).
  */
 export async function loadVisitDetailProgressive(
   numeroVisita: number,
@@ -453,18 +454,22 @@ export async function loadVisitDetailProgressive(
   let acc: VisitDetailLike = { ...shell, clinicoCompleto: false };
   onUpdate(acc, { clinicoLoading: true });
 
-  const errors: string[] = [];
+  const coreErrors: string[] = [];
+  const heavyFailed: string[] = [];
 
   for (const batch of DETAIL_CORE_BATCHES) {
     try {
       const partial = await admissionSearchService.detalleSecciones(numeroVisita, batch);
       acc = mergeVisitDetailPartial(acc, partial);
-      onUpdate(acc, { clinicoLoading: true });
-    } catch (e: unknown) {
-      errors.push(admissionApiErrorMessage(e, `Error al cargar ${batch.join(', ')}`));
       onUpdate(acc, {
         clinicoLoading: true,
-        batchError: errors[errors.length - 1],
+        batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
+      });
+    } catch (e: unknown) {
+      coreErrors.push(admissionApiErrorMessage(e, `Error al cargar ${batch.join(', ')}`));
+      onUpdate(acc, {
+        clinicoLoading: true,
+        batchError: coreErrors.join(' · '),
       });
     }
   }
@@ -472,7 +477,7 @@ export async function loadVisitDetailProgressive(
   // Resumen usable: no seguir bloqueando con el spinner global.
   onUpdate(acc, {
     clinicoLoading: false,
-    batchError: errors.length ? errors.join(' · ') : undefined,
+    batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
   });
 
   for (const section of DETAIL_HEAVY_SECTIONS) {
@@ -481,21 +486,28 @@ export async function loadVisitDetailProgressive(
       acc = mergeVisitDetailPartial(acc, partial);
       onUpdate(acc, {
         clinicoLoading: false,
-        batchError: errors.length ? errors.join(' · ') : undefined,
+        batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
       });
     } catch (e: unknown) {
-      errors.push(admissionApiErrorMessage(e, `Error al cargar ${section}`));
+      heavyFailed.push(section);
+      console.warn(
+        `[admission-search] sección pesada omitida (${section}):`,
+        admissionApiErrorMessage(e, 'timeout/error'),
+      );
       onUpdate(acc, {
         clinicoLoading: false,
-        batchError: errors[errors.length - 1],
+        batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
       });
     }
   }
 
-  acc = { ...acc, clinicoCompleto: errors.length === 0 };
+  acc = {
+    ...acc,
+    clinicoCompleto: coreErrors.length === 0 && heavyFailed.length === 0,
+  };
   onUpdate(acc, {
     clinicoLoading: false,
-    batchError: errors.length ? errors.join(' · ') : undefined,
+    batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
   });
   return acc;
 }
