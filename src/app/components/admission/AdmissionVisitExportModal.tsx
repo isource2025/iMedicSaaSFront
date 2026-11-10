@@ -287,6 +287,13 @@ export default function AdmissionVisitExportModal({
         import('@/app/utils/pdfExportHistoria'),
       ]);
       if (!visitas.length) throw new Error('El paciente no tiene visitas para exportar');
+      const incompletas = visitas.filter((v) => v.seccionesConError?.length);
+      if (incompletas.length) {
+        const detalle = incompletas
+          .map((v) => `visita ${v.numeroVisita}: ${v.seccionesConError!.join(', ')}`)
+          .join(' · ');
+        throw new Error(`No se pudieron leer todos los datos (${detalle}). Reintentá en unos segundos.`);
+      }
       await exportarHistoriaPdf(visitas, {
         carpeta: modeGeneral,
         fileName: modeGeneral ? `paciente_${idp}_carpeta.pdf` : `visita_${nv}_historia.pdf`,

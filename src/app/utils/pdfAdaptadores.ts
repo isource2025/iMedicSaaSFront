@@ -38,8 +38,9 @@ export function indicacionParaPdf(r: Fila): IndicacionPdfItem {
 	const hijas = campo(r, 'indicacionesHijas');
 	const adicionales = Array.isArray(hijas) ? (hijas as Fila[]) : [];
 	return {
-		fecha: texto(r, 'vigenteDesde'),
-		hora: texto(r, 'horaCarga'),
+		// Día de la hoja (copia diaria del reindicar); vigenteDesde es el origen de la cadena.
+		fecha: texto(r, 'fechaCarga', 'vigenteDesde'),
+		hora: texto(r, 'horaHoja', 'horaCarga'),
 		tipo: texto(r, 'tipoDescripcion', 'tipo'),
 		descripcion: texto(r, 'descripcion'),
 		cantidad: valor(r, 'cantidad'),

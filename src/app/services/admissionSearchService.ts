@@ -240,6 +240,8 @@ export interface ExportVisitaData {
   insumos?: Fila[];
   movimientos?: Fila[];
   adjuntos?: Fila[];
+  /** Secciones pedidas que fallaron en el back (vinieron vacías). */
+  seccionesConError?: string[];
 }
 
 export function admissionApiErrorMessage(e: unknown, fallback: string): string {
@@ -441,10 +443,51 @@ export function mergeVisitDetailPartial<T extends VisitDetailLike>(base: T, part
   };
 }
 
+const SECTION_LABELS: Record<string, string> = {
+  movimientos: 'Movimientos',
+  hcIngreso: 'HC de ingreso',
+  epicrisis: 'Epicrisis',
+  interconsultas: 'Interconsultas',
+  protocolos: 'Protocolos',
+  adjuntos: 'Adjuntos',
+  indicaciones: 'Indicaciones',
+  medicamentos: 'Medicación',
+  evoluciones: 'Evoluciones',
+  evolucionEnfermeria: 'Evolución de enfermería',
+  controles: 'Controles',
+  balanceHidrico: 'Balance hídrico',
+  dietas: 'Dietas',
+  insumos: 'Insumos',
+  practicas: 'Procedimientos',
+  estudios: 'Estudios',
+  laboratorios: 'Laboratorio',
+};
+
+/** Pide un lote; reintenta una vez lo que falló (request entero o secciones que el back marcó con error). */
+async function cargarLote(
+  numeroVisita: number,
+  sections: string[],
+): Promise<{ partial: Record<string, unknown>; fallidas: string[] }> {
+  let partial: Record<string, unknown> = {};
+  let pendientes = sections;
+  for (let intento = 0; intento < 2 && pendientes.length; intento++) {
+    try {
+      const res = await admissionSearchService.detalleSecciones(numeroVisita, pendientes);
+      const conError = Array.isArray(res.seccionesConError) ? (res.seccionesConError as string[]) : [];
+      const { seccionesConError: _omit, ...datos } = res;
+      partial = { ...partial, ...datos };
+      pendientes = pendientes.filter((s) => conError.includes(s));
+    } catch {
+      // se reintenta el lote completo
+    }
+  }
+  return { partial, fallidas: pendientes };
+}
+
 /**
  * Carga shell + lotes clínicos.
  * Tras el núcleo libera la UI; prácticas/estudios/labs siguen en background.
- * Fallos del lote pesado no se exponen como error de pantalla (la visita ya es usable).
+ * Si una sección no carga tras reintentar, se informa por nombre: el resumen es lo que se exporta a PDF.
  */
 export async function loadVisitDetailProgressive(
   numeroVisita: number,
@@ -454,60 +497,30 @@ export async function loadVisitDetailProgressive(
   let acc: VisitDetailLike = { ...shell, clinicoCompleto: false };
   onUpdate(acc, { clinicoLoading: true });
 
-  const coreErrors: string[] = [];
-  const heavyFailed: string[] = [];
+  const fallidas: string[] = [];
+  const errorMsg = () =>
+    fallidas.length
+      ? `No se pudo cargar: ${fallidas.map((s) => SECTION_LABELS[s] ?? s).join(', ')}. Reabrí la visita antes de exportar.`
+      : undefined;
 
   for (const batch of DETAIL_CORE_BATCHES) {
-    try {
-      const partial = await admissionSearchService.detalleSecciones(numeroVisita, batch);
-      acc = mergeVisitDetailPartial(acc, partial);
-      onUpdate(acc, {
-        clinicoLoading: true,
-        batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
-      });
-    } catch (e: unknown) {
-      coreErrors.push(admissionApiErrorMessage(e, `Error al cargar ${batch.join(', ')}`));
-      onUpdate(acc, {
-        clinicoLoading: true,
-        batchError: coreErrors.join(' · '),
-      });
-    }
+    const r = await cargarLote(numeroVisita, batch);
+    acc = mergeVisitDetailPartial(acc, r.partial);
+    fallidas.push(...r.fallidas);
+    onUpdate(acc, { clinicoLoading: true, batchError: errorMsg() });
   }
 
   // Resumen usable: no seguir bloqueando con el spinner global.
-  onUpdate(acc, {
-    clinicoLoading: false,
-    batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
-  });
+  onUpdate(acc, { clinicoLoading: false, batchError: errorMsg() });
 
   for (const section of DETAIL_HEAVY_SECTIONS) {
-    try {
-      const partial = await admissionSearchService.detalleSecciones(numeroVisita, [section]);
-      acc = mergeVisitDetailPartial(acc, partial);
-      onUpdate(acc, {
-        clinicoLoading: false,
-        batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
-      });
-    } catch (e: unknown) {
-      heavyFailed.push(section);
-      console.warn(
-        `[admission-search] sección pesada omitida (${section}):`,
-        admissionApiErrorMessage(e, 'timeout/error'),
-      );
-      onUpdate(acc, {
-        clinicoLoading: false,
-        batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
-      });
-    }
+    const r = await cargarLote(numeroVisita, [section]);
+    acc = mergeVisitDetailPartial(acc, r.partial);
+    fallidas.push(...r.fallidas);
+    onUpdate(acc, { clinicoLoading: false, batchError: errorMsg() });
   }
 
-  acc = {
-    ...acc,
-    clinicoCompleto: coreErrors.length === 0 && heavyFailed.length === 0,
-  };
-  onUpdate(acc, {
-    clinicoLoading: false,
-    batchError: coreErrors.length ? coreErrors.join(' · ') : undefined,
-  });
+  acc = { ...acc, clinicoCompleto: fallidas.length === 0 };
+  onUpdate(acc, { clinicoLoading: false, batchError: errorMsg() });
   return acc;
 }
