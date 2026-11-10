@@ -192,7 +192,9 @@ export const SECTIONS: SectionDef[] = [
     label: 'Indicaciones',
     group: 'medica',
     rows: (d) => arr(d.indicaciones),
-    sortKey: (r) => `${sortKey(r.vigenteDesde, r.horaCarga)} ${str(r.nroIndicacion).padStart(8, '0')}`,
+    // fechaCarga = día de la hoja (reindicar); vigenteDesde = origen de la cadena.
+    sortKey: (r) =>
+      `${sortKey(r.fechaCarga || r.vigenteDesde, r.horaHoja || r.horaCarga)} ${str(r.nroIndicacion).padStart(8, '0')}`,
     chipFilter: { label: 'Estado', value: estadoIndicacion },
     searchable: true,
   },
@@ -397,8 +399,8 @@ export function buildTimeline(d: VisitDetailPayload): TimelineEvent[] {
     profesional: responsable.hci(r),
   }));
   add('indicaciones', arr(d.indicaciones), (r) => ({
-    ts: sortKey(r.vigenteDesde, r.horaCarga),
-    cuando: fmtFechaHora(r.vigenteDesde, r.horaCarga),
+    ts: sortKey(r.fechaCarga || r.vigenteDesde, r.horaHoja || r.horaCarga),
+    cuando: fmtFechaHora(r.fechaCarga || r.vigenteDesde, r.horaHoja || r.horaCarga),
     titulo: `Indicación: ${tituloIndicacion(r)}`,
     detalle: [tipoIndicacion(r), str(r.frecuencia), estadoIndicacion(r) === 'Suspendida' ? 'Suspendida' : '']
       .filter(Boolean)

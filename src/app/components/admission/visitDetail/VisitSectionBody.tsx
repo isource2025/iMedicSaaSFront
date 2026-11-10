@@ -199,10 +199,21 @@ function Indicaciones({ rows }: { rows: Row[] }) {
         const med = str(r.medicamento);
         const dosis = Number(r.cantidad) > 0 ? [str(r.cantidad), str(r.tipoUnidad)].filter(Boolean).join(' ') : '';
         const hijas = Array.isArray(r.indicacionesHijas) ? (r.indicacionesHijas as Row[]) : [];
+        // Día de la hoja (reindicar); vigenteDesde es el origen de la cadena.
+        const fechaHoja = fmtFechaHora(r.fechaCarga || r.vigenteDesde, r.horaHoja || r.horaCarga);
+        const origen =
+          str(r.fechaCarga) &&
+          str(r.vigenteDesde) &&
+          str(r.fechaCarga).slice(0, 10) !== str(r.vigenteDesde).slice(0, 10)
+            ? fmtFechaHora(r.vigenteDesde, r.horaCarga)
+            : '';
         return (
           <tr key={`${str(r.nroIndicacion)}-${i}`} className={estado === 'Suspendida' ? s.rowMuted : undefined}>
             <td className={s.colNum} data-label="Nº">{str(r.nroIndicacion)}</td>
-            <td className={s.nowrap} data-label="Indicada">{fmtFechaHora(r.vigenteDesde, r.horaCarga)}</td>
+            <td className={s.nowrap} data-label="Indicada">
+              {fechaHoja}
+              {origen ? <span className={s.cellLine}>Desde {origen}</span> : null}
+            </td>
             <td data-label="Tipo">{tipoIndicacion(r)}</td>
             <td className={s.colWide} data-label="Indicación">
               <span className={s.cellTitle}>{tituloIndicacion(r)}</span>
