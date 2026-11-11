@@ -192,32 +192,13 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	/**
 	 * Visibilidad del GRUPO entero.
 	 *
-	 * Gestión Médica: alcanza con .VER en alguna sección médica.
-	 * .CREAR solo habilita Agregar dentro de cada sección; no abre el menú.
-	 *
-	 * "Perfil enfermería solo": tiene escritura de enfermería (APLICAR /
-	 * evolución) y NO tiene CREAR médico. Así el enfermero no entra a Gestión
-	 * Médica (usa Enfermería). ADMIN/médico con plantilla completa sí la ven,
-	 * aunque también tengan APLICAR en la matriz.
+	 * Gestión Médica: se muestra con .VER en alguna sección médica.
+	 * Nada más la oculta (ni perfil enfermería ni APLICAR).
+	 * .CREAR solo habilita Agregar dentro de cada sección.
 	 */
-	const tieneCrearMedico =
-		puede('INTERNACION.HISTORIA_CLINICA.CREAR') ||
-		puede('INTERNACION.EVOLUCIONES.CREAR') ||
-		puede('INTERNACION.INDICACIONES.CREAR') ||
-		puede('INTERNACION.EPICRISIS.CREAR') ||
-		puede('INTERNACION.INTERCONSULTAS.CREAR') ||
-		puede('INTERNACION.ESTUDIOS.CREAR') ||
-		puede('INTERNACION.PROTOCOLOS.CREAR') ||
-		puede('INTERNACION.PROCEDIMIENTOS.CREAR');
-	const perfilEnfermeriaSolo =
-		loaded &&
-		(puede('INTERNACION.INDICACIONES.APLICAR') ||
-			puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR')) &&
-		!tieneCrearMedico;
 	const puedeGestionMedica = !loaded
 		? true
-		: !perfilEnfermeriaSolo &&
-		  Array.from(SECCIONES_GESTION_MEDICA).some((section) => {
+		: Array.from(SECCIONES_GESTION_MEDICA).some((section) => {
 				const sub = SECTION_TO_PERM[section];
 				return sub ? puede(`INTERNACION.${sub}.VER`) : false;
 			});
@@ -252,7 +233,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	return (
 		<div className={styles.wrapper}>
 			{/* ======= Gestión Médica ======= */}
-			{!mostrarSoloOtrasFunciones && puedeGestionMedica && (
+			{puedeGestionMedica && (
 			<div className={styles.section}>
 				<button
 					type='button'
