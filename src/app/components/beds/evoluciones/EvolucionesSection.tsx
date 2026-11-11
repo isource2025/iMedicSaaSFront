@@ -57,9 +57,9 @@ export default function EvolucionesSection({
     horaIngreso?: string;
 }) {
     const { activeSection, selectedDate, bed } = useBedDetail();
-    const { puede, loaded: permisosCargados } = usePermiso();
+    const { puede } = usePermiso();
     const puedeAgregar =
-        (!permisosCargados || puede('INTERNACION.EVOLUCIONES.CREAR')) &&
+        puede('INTERNACION.EVOLUCIONES.CREAR') &&
         puedeCargarEnFechaSeleccionada(selectedDate, {
             egresada: bed?.egresada,
             fechaEgresoSQL: bed?.fechaEgresoSQL,
