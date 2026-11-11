@@ -64,13 +64,7 @@ export default function CambiarPasswordForm({ usuario = '' }: Props) {
 	};
 
 	return (
-		<form className={styles.passwordCard} onSubmit={submit} noValidate>
-			<div className={styles.detailGroupHead}>
-				<h3>
-					<KeyRound size={16} aria-hidden /> Cambiar contraseña
-				</h3>
-			</div>
-
+		<form className={`${styles.detailGroup} ${styles.passwordCard}`} onSubmit={submit} noValidate>
 			<label className={styles.passwordField}>
 				<span>Usuario</span>
 				<input
@@ -82,6 +76,12 @@ export default function CambiarPasswordForm({ usuario = '' }: Props) {
 					aria-readonly="true"
 				/>
 			</label>
+
+			<div className={styles.detailGroupHead}>
+				<h3>
+					<KeyRound size={16} aria-hidden /> Cambiar contraseña
+				</h3>
+			</div>
 
 			<label className={styles.passwordField}>
 				<span>Contraseña actual</span>
