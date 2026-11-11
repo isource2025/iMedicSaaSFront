@@ -204,7 +204,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	const puedeGestionMedica = !loaded
 		? true
 		: !perfilEnfermeria &&
-		  [...SECCIONES_GESTION_MEDICA].some((section) => {
+		  Array.from(SECCIONES_GESTION_MEDICA).some((section) => {
 				const sub = SECTION_TO_PERM[section];
 				return sub ? puede(`INTERNACION.${sub}.VER`) : false;
 			});

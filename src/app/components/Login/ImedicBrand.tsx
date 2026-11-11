@@ -3,7 +3,7 @@ import styles from './ImedicBrand.module.css';
 
 export const loginNunito = Nunito({
   subsets: ['latin'],
-  weight: ['400', '500', '700', '800'],
+  display: 'swap',
 });
 
 type MarkProps = {
