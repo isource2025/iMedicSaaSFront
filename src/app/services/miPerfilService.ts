@@ -17,12 +17,21 @@ export interface MiPerfilResponse {
 		valorPersonal: number;
 		resumenOperador: MiPerfilResumenOperador | null;
 		personal: Record<string, unknown> | null;
-		fotoPerfil?: PersonalFotoResponse;
+		/** Firma digital (imPersonal.Firma) — se usa en la sección Firma. */
+		fotoPerfil?: PersonalFirmaResponse;
+		/** Foto de rostro (imPersonal.image) — se usa en el avatar. */
+		foto?: { hasFoto: boolean };
 	};
 }
 
-export interface PersonalFotoResponse {
+export interface PersonalFirmaResponse {
 	hasFirma: boolean;
+	mime?: string;
+	dataUrl?: string;
+}
+
+export interface PersonalFotoResponse {
+	hasFoto: boolean;
 	mime?: string;
 	dataUrl?: string;
 }
@@ -86,6 +95,12 @@ export const miPerfilService = {
 	async obtenerFotoPerfil(): Promise<{ success: boolean; data: PersonalFotoResponse }> {
 		const res = await apiService.get<{ success: boolean; data: PersonalFotoResponse }>('/mi-perfil/foto');
 		return res.data;
+	},
+
+	/** Alias tipado: foto de avatar del usuario autenticado. */
+	async obtenerFotoAvatar(): Promise<PersonalFotoResponse> {
+		const res = await miPerfilService.obtenerFotoPerfil();
+		return res.data || { hasFoto: false };
 	},
 
 	async cambiarPassword(passwordActual: string, passwordNueva: string): Promise<void> {

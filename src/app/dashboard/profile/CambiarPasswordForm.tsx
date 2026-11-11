@@ -16,7 +16,11 @@ function mensajeDeApi(e: unknown): string {
 	return 'No se pudo cambiar la contraseña';
 }
 
-export default function CambiarPasswordForm() {
+type Props = {
+	usuario?: string;
+};
+
+export default function CambiarPasswordForm({ usuario = '' }: Props) {
 	const [actual, setActual] = useState('');
 	const [nueva, setNueva] = useState('');
 	const [confirmacion, setConfirmacion] = useState('');
@@ -61,11 +65,22 @@ export default function CambiarPasswordForm() {
 
 	return (
 		<form className={`${styles.detailGroup} ${styles.passwordCard}`} onSubmit={submit} noValidate>
+			<label className={styles.passwordField}>
+				<span>Usuario</span>
+				<input
+					className={styles.passwordTextInput}
+					type="text"
+					value={usuario || '—'}
+					readOnly
+					autoComplete="username"
+					aria-readonly="true"
+				/>
+			</label>
+
 			<div className={styles.detailGroupHead}>
 				<h3>
 					<KeyRound size={16} aria-hidden /> Cambiar contraseña
 				</h3>
-				<p>Para confirmar que sos vos, ingresá primero tu contraseña actual.</p>
 			</div>
 
 			<label className={styles.passwordField}>

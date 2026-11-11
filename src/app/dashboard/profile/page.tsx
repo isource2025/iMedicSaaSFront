@@ -13,6 +13,7 @@ import {
 	IdCard,
 	ClipboardList,
 	KeyRound,
+	PenLine,
 	Receipt,
 	RefreshCw,
 	ShieldCheck,
@@ -35,9 +36,10 @@ import {
 } from 'recharts';
 import Loader from '@/app/components/Loader/Loader';
 import { authService } from '@/app/services/authService';
+import { obtenerLogoEmpresa } from '@/app/services/empresaService';
 
-/** Ícono fijo según el rol del usuario — no editable */
-function RolAvatar() {
+/** Avatar: foto de personal si existe; si no, ícono según el rol */
+function RolAvatar({ fotoSrc }: { fotoSrc?: string | null }) {
 	const rol = authService.getCurrentRol();
 	const nombre = (rol?.nombre || '').toUpperCase();
 
@@ -50,13 +52,25 @@ function RolAvatar() {
 		PANEL_DATOS:    { Icon: ClipboardList,  bg: '#f8fafc', color: '#475569', label: 'Panel de datos' },
 	};
 	const cfg = configs[nombre] ?? { Icon: User, bg: '#f1f5f9', color: '#64748b', label: rol?.nombre || 'Usuario' };
+
+	if (fotoSrc) {
+		return (
+			<img
+				src={fotoSrc}
+				alt="Foto de perfil"
+				title={cfg.label}
+				className={styles.avatarImg}
+			/>
+		);
+	}
+
 	return (
 		<div
 			className={styles.rolAvatar}
 			style={{ background: cfg.bg, border: `2px solid ${cfg.color}22` }}
 			title={cfg.label}
 		>
-			<cfg.Icon size={46} color={cfg.color} strokeWidth={1.6} />
+			<cfg.Icon size={44} color={cfg.color} strokeWidth={1.6} />
 		</div>
 	);
 }
@@ -69,6 +83,71 @@ import {
 import styles from './profile.module.css';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import CambiarPasswordForm from './CambiarPasswordForm';
+
+/** Quita el fondo blanco/gris claro de firmas BMP/JPEG y deja solo el trazo. */
+function FirmaImg({ src }: { src: string }) {
+	const [readySrc, setReadySrc] = useState<string | null>(null);
+	const [empty, setEmpty] = useState(false);
+
+	useEffect(() => {
+		let cancelled = false;
+		setReadySrc(null);
+		setEmpty(false);
+
+		const img = new Image();
+		img.onload = () => {
+			try {
+				const canvas = document.createElement('canvas');
+				const w = img.naturalWidth || img.width;
+				const h = img.naturalHeight || img.height;
+				if (!w || !h) {
+					if (!cancelled) setEmpty(true);
+					return;
+				}
+				canvas.width = w;
+				canvas.height = h;
+				const ctx = canvas.getContext('2d');
+				if (!ctx) {
+					if (!cancelled) setReadySrc(src);
+					return;
+				}
+				ctx.drawImage(img, 0, 0);
+				const imageData = ctx.getImageData(0, 0, w, h);
+				const { data } = imageData;
+				const threshold = 245;
+				let ink = 0;
+				for (let i = 0; i < data.length; i += 4) {
+					if (data[i] >= threshold && data[i + 1] >= threshold && data[i + 2] >= threshold) {
+						data[i + 3] = 0;
+					} else if (data[i + 3] > 8) {
+						ink += 1;
+					}
+				}
+				if (ink < 40) {
+					if (!cancelled) setEmpty(true);
+					return;
+				}
+				ctx.putImageData(imageData, 0, 0);
+				const out = canvas.toDataURL('image/png');
+				if (!cancelled) setReadySrc(out);
+			} catch {
+				if (!cancelled) setReadySrc(src);
+			}
+		};
+		img.onerror = () => {
+			if (!cancelled) setEmpty(true);
+		};
+		img.src = src;
+
+		return () => {
+			cancelled = true;
+		};
+	}, [src]);
+
+	if (empty) return <p className={styles.firmaEmpty}>Sin firma registrada</p>;
+	if (!readySrc) return null;
+	return <img src={readySrc} alt="Firma registrada" className={styles.firmaImg} />;
+}
 
 type TabId = 'resumen' | 'produccion' | 'seguridad';
 
@@ -169,38 +248,56 @@ const PROFILE_FIELDS = [
 	'NumeroDocumento',
 	'Telefono',
 	'Domicilio',
+	'Localidad',
+	'Provincia',
 	'Nacionalidad',
 	'FechaNacimiento',
 	'Sexo',
 	'EstadoCivil',
 	'MatriculaProvincial',
 	'MatriculaNacional',
-	'ValorEspecialidad',
+	'Especialidad',
+	'Sector',
+	'Servicio',
 	'ValorFunciones',
-	'ValorCategoria',
-	'ValorClase',
-	'LugarTrabajo',
-	'LugarCobro',
-	'NumeroSocio',
-	'ConvenioFacturacion',
 	'IdEspecialidadME',
 ] as const;
+
+const PROFILE_FIELD_LABELS: Partial<Record<(typeof PROFILE_FIELDS)[number], string>> = {
+	Localidad: 'Localidad',
+	Provincia: 'Provincia',
+	Especialidad: 'Especialidad',
+	Sector: 'Sector',
+	Servicio: 'Servicio',
+};
 
 const PROFILE_FIELD_GROUPS = [
 	{
 		title: 'Datos personales',
-		description: 'Identificación, contacto y datos civiles.',
-		keys: ['ApellidoNombre', 'NumeroDocumento', 'Telefono', 'Domicilio', 'Nacionalidad', 'FechaNacimiento', 'Sexo', 'EstadoCivil'],
+		keys: [
+			'ApellidoNombre',
+			'NumeroDocumento',
+			'Telefono',
+			'Domicilio',
+			'Localidad',
+			'Provincia',
+			'Nacionalidad',
+			'FechaNacimiento',
+			'Sexo',
+			'EstadoCivil',
+		],
 	},
 	{
-		title: 'Matrículas y práctica',
-		description: 'Credenciales y datos vinculados a la atención.',
-		keys: ['MatriculaProvincial', 'MatriculaNacional', 'ValorEspecialidad', 'IdEspecialidadME', 'ValorFunciones'],
-	},
-	{
-		title: 'Administración',
-		description: 'Categorías internas, cobro y facturación.',
-		keys: ['ValorCategoria', 'ValorClase', 'LugarTrabajo', 'LugarCobro', 'NumeroSocio', 'ConvenioFacturacion'],
+		title: 'Datos profesionales',
+		keys: [
+			'MatriculaProvincial',
+			'MatriculaNacional',
+			'Especialidad',
+			'Sector',
+			'Servicio',
+			'ValorFunciones',
+			'IdEspecialidadME',
+		],
 	},
 ] as const;
 
@@ -213,6 +310,9 @@ export default function MiPerfilPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [perfil, setPerfil] = useState<MiPerfilResponse['data'] | null>(null);
 	const [profileForm, setProfileForm] = useState<Record<string, string>>({});
+	const [introPlayed, setIntroPlayed] = useState(false);
+	const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+	const [logoInstitucion, setLogoInstitucion] = useState<string | null>(null);
 
 	const [fechaDesde, setFechaDesde] = useState(def.desde);
 	const [fechaHasta, setFechaHasta] = useState(def.hasta);
@@ -282,6 +382,46 @@ export default function MiPerfilPage() {
 	}, [fetchPerfil]);
 
 	useEffect(() => {
+		let cancelled = false;
+		void obtenerLogoEmpresa()
+			.then((url) => {
+				if (!cancelled) setLogoInstitucion(url);
+			})
+			.catch(() => {
+				if (!cancelled) setLogoInstitucion(null);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	useEffect(() => {
+		if (!perfil?.foto?.hasFoto) {
+			setAvatarSrc(null);
+			return;
+		}
+		let cancelled = false;
+		void miPerfilService
+			.obtenerFotoAvatar()
+			.then((foto) => {
+				if (cancelled) return;
+				setAvatarSrc(foto.hasFoto && foto.dataUrl ? foto.dataUrl : null);
+			})
+			.catch(() => {
+				if (!cancelled) setAvatarSrc(null);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [perfil?.foto?.hasFoto]);
+
+	useEffect(() => {
+		if (!perfil || introPlayed) return;
+		const t = window.setTimeout(() => setIntroPlayed(true), 2000);
+		return () => window.clearTimeout(t);
+	}, [perfil, introPlayed]);
+
+	useEffect(() => {
 		if (tab !== 'produccion') return;
 		void cargarProduccionConFiltros(fechaDesde, fechaHasta);
 		// Solo al entrar a la pestaña: no depende de fechas ni convenios para permitir editar y aplicar después.
@@ -290,13 +430,11 @@ export default function MiPerfilPage() {
 
 	const resumen = perfil?.resumenOperador;
 	const nombrePerfil = profileForm.ApellidoNombre || resumen?.ApellidoNombrePersonal || 'Sin nombre';
-	const documentoPerfil = profileForm.NumeroDocumento || '—';
-	const matriculaPerfil = profileForm.MatriculaProvincial || resumen?.Matricula || '—';
 	const profileRows = useMemo(
 		() =>
 			PROFILE_FIELDS.map((key) => ({
 				key,
-				label: formatLabel(key),
+				label: PROFILE_FIELD_LABELS[key] || formatLabel(key),
 				value: profileForm[key] ?? '',
 			})),
 		[profileForm],
@@ -519,103 +657,120 @@ export default function MiPerfilPage() {
 			)}
 			{error && <p className={styles.err}>{error}</p>}
 
-			{/* ── Header de perfil: siempre visible ── */}
+			{/* ── Banner + solapas + Mis Datos (mismo bannerprofile.jpg continuo) ── */}
 			{!loading && perfil && (
-				<section className={styles.profileShell}>
-					<div className={styles.profileCard}>
-						<div className={styles.profileCover} />
+				<section
+					className={`${styles.profileBannerShell} ${
+						tab === 'resumen' ? styles.profileBannerShellExpanded : ''
+					}`}
+				>
+					{logoInstitucion ? (
+						/* eslint-disable-next-line @next/next/no-img-element */
+						<img
+							src={logoInstitucion}
+							alt=""
+							aria-hidden
+							className={styles.profileBannerLogo}
+						/>
+					) : null}
+					<div className={styles.profileCover}>
 						<div className={styles.profileTop}>
-							<div className={styles.avatarBox}>
-								<RolAvatar />
+							<div className={`${styles.avatarBox} ${styles.introAvatar}`}>
+								<RolAvatar fotoSrc={avatarSrc} />
 							</div>
 							<div className={styles.profileHeadText}>
-								<h2>{nombrePerfil}</h2>
-								<p>Documento {documentoPerfil} · Usuario {resumen?.NombreRed || '—'}</p>
-								<div className={styles.profileChips}>
-									<span>
-										<IdCard size={14} /> Mat. prov. {profileForm.MatriculaProvincial || '—'}
-									</span>
-									<span>
-										<ShieldCheck size={14} /> Mat. nac. {profileForm.MatriculaNacional || '—'}
-									</span>
-									<span>
-										<Building2 size={14} /> {profileForm.LugarTrabajo || 'Sin lugar de trabajo'}
-									</span>
-								</div>
+								<h2 className={styles.nameLine}>{nombrePerfil}</h2>
 							</div>
 						</div>
 					</div>
-				</section>
-			)}
 
-			{/* ── Solapas ── */}
-			{!loading && perfil && (
-				<div className={styles.tabBar}>
-					<button
-						type="button"
-						className={`${styles.tabBtn} ${tab === 'resumen' ? styles.tabBtnActive : ''}`}
-						onClick={() => setTab('resumen')}
-					>
-						<User size={15} strokeWidth={2.2} />
-						Mis Datos
-					</button>
-					{puedeProduccion && (
-					<button
-						type="button"
-						className={`${styles.tabBtn} ${tab === 'produccion' ? styles.tabBtnActive : ''}`}
-						onClick={() => setTab('produccion')}
-					>
-						<Receipt size={15} strokeWidth={2.2} />
-						Mi Producción
-					</button>
+					<div className={`${styles.tabBar} ${styles.introTabBar}`}>
+						<button
+							type="button"
+							className={`${styles.tabBtn} ${styles.introTabBtn} ${
+								tab === 'resumen' ? styles.tabBtnActive : ''
+							}`}
+							onClick={() => setTab('resumen')}
+						>
+							<User size={15} strokeWidth={2.2} />
+							Mis Datos
+						</button>
+						{puedeProduccion && (
+							<button
+								type="button"
+								className={`${styles.tabBtn} ${styles.introTabBtn} ${
+									tab === 'produccion' ? styles.tabBtnActive : ''
+								}`}
+								onClick={() => setTab('produccion')}
+							>
+								<Receipt size={15} strokeWidth={2.2} />
+								Mi Producción
+							</button>
+						)}
+						<button
+							type="button"
+							className={`${styles.tabBtn} ${styles.introTabBtn} ${
+								tab === 'seguridad' ? styles.tabBtnActive : ''
+							}`}
+							onClick={() => setTab('seguridad')}
+						>
+							<KeyRound size={15} strokeWidth={2.2} />
+							Seguridad
+						</button>
+					</div>
+
+					{tab === 'resumen' && (
+						<section
+							key="tab-resumen"
+							className={`${styles.profileDetails} ${
+								introPlayed ? styles.detailsEnter : styles.introDetails
+							}`}
+						>
+							{PROFILE_FIELD_GROUPS.map((group) => (
+								<div className={styles.detailGroup} key={group.title}>
+									<div className={styles.detailGroupHead}>
+										<h3>{group.title}</h3>
+									</div>
+									<div className={styles.profileRows}>
+										{profileRows
+											.filter((row) => (group.keys as readonly string[]).includes(row.key))
+											.map((row) => (
+												<div className={styles.profileRow} key={row.key}>
+													<div className={styles.profileRowLabel}>{row.label}</div>
+													<div className={styles.profileRowValue}>{row.value || '—'}</div>
+												</div>
+											))}
+									</div>
+								</div>
+							))}
+
+							<div className={styles.firmaSection}>
+								<div className={styles.detailGroupHead}>
+									<h3>
+										<PenLine size={16} aria-hidden /> Firma
+									</h3>
+								</div>
+								{perfil.fotoPerfil?.hasFirma && perfil.fotoPerfil.dataUrl ? (
+									<FirmaImg src={perfil.fotoPerfil.dataUrl} />
+								) : (
+									<p className={styles.firmaEmpty}>Sin firma registrada</p>
+								)}
+							</div>
+						</section>
 					)}
-					<button
-						type="button"
-						className={`${styles.tabBtn} ${tab === 'seguridad' ? styles.tabBtnActive : ''}`}
-						onClick={() => setTab('seguridad')}
-					>
-						<KeyRound size={15} strokeWidth={2.2} />
-						Seguridad
-					</button>
-				</div>
+				</section>
 			)}
 
 			{/* ── Seguridad ── */}
 			{!loading && tab === 'seguridad' && perfil && (
-				<div className={styles.stack}>
-					<CambiarPasswordForm />
-				</div>
-			)}
-
-			{/* ── Mis Datos ── */}
-			{!loading && tab === 'resumen' && perfil && (
-				<div className={styles.stack}>
-					<section className={styles.profileDetails}>
-						{PROFILE_FIELD_GROUPS.map((group) => (
-							<div className={styles.detailGroup} key={group.title}>
-								<div className={styles.detailGroupHead}>
-									<h3>{group.title}</h3>
-									<p>{group.description}</p>
-								</div>
-								<div className={styles.profileRows}>
-									{profileRows
-										.filter((row) => (group.keys as readonly string[]).includes(row.key))
-										.map((row) => (
-											<div className={styles.profileRow} key={row.key}>
-												<div className={styles.profileRowLabel}>{row.label}</div>
-												<div className={styles.profileRowValue}>{row.value || '—'}</div>
-											</div>
-										))}
-								</div>
-							</div>
-						))}
-					</section>
+				<div className={`${styles.stack} ${styles.detailsEnter}`} key="tab-seguridad">
+					<CambiarPasswordForm usuario={resumen?.NombreRed || ''} />
 				</div>
 			)}
 
 			{/* ── Mi Producción ── */}
 			{tab === 'produccion' && (
-				<div className={styles.stack}>
+				<div className={`${styles.stack} ${styles.detailsEnter}`} key="tab-produccion">
 					<section className={styles.productionShell}>
 						{/* ── Barra de filtros horizontal ── */}
 						<div className={styles.filtersBar}>
