@@ -42,17 +42,14 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   const { activeSection, selectedDate, bed } = useBedDetail();
   const { puede, loaded: permisosCargados } = usePermiso();
   const puedeCrear =
-    permisosCargados &&
-    puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') &&
+    (!permisosCargados || puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR')) &&
     puedeCargarEnFechaSeleccionada(selectedDate, {
       egresada: bed?.egresada,
       fechaEgresoSQL: bed?.fechaEgresoSQL,
       fechaIngresoSQL: bed?.fechaIngresoSQL ?? fechaIngreso,
     });
-  const puedeEditar =
-    permisosCargados && puede('INTERNACION.EVOLUCION_ENFERMERIA.EDITAR');
-  const puedeEliminar =
-    permisosCargados && puede('INTERNACION.EVOLUCION_ENFERMERIA.ELIMINAR');
+  const puedeEditar = !permisosCargados || puede('INTERNACION.EVOLUCION_ENFERMERIA.EDITAR');
+  const puedeEliminar = !permisosCargados || puede('INTERNACION.EVOLUCION_ENFERMERIA.ELIMINAR');
   const [periodFilter, setPeriodFilter] = useState<Periodo>('0');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvolucion, setEditingEvolucion] = useState<EvolucionEnfermeria | null>(null);
