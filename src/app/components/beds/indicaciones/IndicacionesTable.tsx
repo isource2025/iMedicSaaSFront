@@ -139,10 +139,10 @@ export default function IndicacionesTable({
     const { puede } = usePermiso();
 
     // Reglas de negocio de indicaciones:
-    //   MEDICO / rol con EDITAR → editar/eliminar (médico: solo propias) + dejar sin efecto.
-    //   ENFERMERO → SOLO puede aplicar. No puede editar ni eliminar.
-    //   ADMIN     → puede todo (aplica + edita + elimina sin restricción de propiedad).
-    // Dejar sin efecto: permiso EDITAR (vale rol estándar o privado/custom).
+    //   EDITAR → editar (propias) + dejar sin efecto.
+    //   ELIMINAR → eliminar (propias).
+    //   EDITAR_AJENOS → editar/eliminar sin restricción de autoría.
+    //   ENFERMERO → SOLO puede aplicar (APLICAR).
     const puedeAplicar   = puede('INTERNACION.INDICACIONES.APLICAR');
     const puedeCrear     = puede('INTERNACION.INDICACIONES.CREAR');
     const puedeEditar    = puede('INTERNACION.INDICACIONES.EDITAR');
@@ -150,13 +150,17 @@ export default function IndicacionesTable({
     const puedeEditarAjenos = puede('INTERNACION.REGISTROS.EDITAR_AJENOS');
     const puedeDejarSinEfecto = puedeEditar;
 
-    /**
-     * ¿Puede este usuario editar/eliminar esta indicación específica?
-     * Con EDITAR_AJENOS: sí siempre. Con EDITAR/ELIMINAR: solo la propia.
-     */
-    const puedeModificarFila = (r: IndicacionRow): boolean => {
+    /** ¿Puede editar esta fila? Requiere EDITAR; sin EDITAR_AJENOS solo la propia. */
+    const puedeEditarFila = (r: IndicacionRow): boolean => {
+        if (!puedeEditar) return false;
         if (puedeEditarAjenos) return true;
-        if (!puedeEditar && !puedeEliminar) return false;
+        return esRegistroPropio(r as Record<string, unknown>, usuarioActual) === true;
+    };
+
+    /** ¿Puede eliminar esta fila? Requiere ELIMINAR; sin EDITAR_AJENOS solo la propia. */
+    const puedeEliminarFila = (r: IndicacionRow): boolean => {
+        if (!puedeEliminar) return false;
+        if (puedeEditarAjenos) return true;
         return esRegistroPropio(r as Record<string, unknown>, usuarioActual) === true;
     };
 
@@ -533,8 +537,8 @@ export default function IndicacionesTable({
                                                     <IoRepeatOutline color="#5BC0DE" size="18px" />
                                                 </button>)}
 
-                                                {/* Editar: médico dueño o admin */}
-                                                {puedeModificarFila(r) && (
+                                                {/* Editar: permiso EDITAR (+ propia / ajenos) */}
+                                                {puedeEditarFila(r) && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Editar indicación"
@@ -543,7 +547,7 @@ export default function IndicacionesTable({
                                                     <IoPencilOutline color="#5BC0DE" size="18px" />
                                                 </button>)}
 
-                                                {/* Dejar sin efecto: solo médicos */}
+                                                {/* Dejar sin efecto: permiso EDITAR */}
                                                 {puedeDejarSinEfecto && !r.suspendida && (
                                                 <button
                                                     className={`${styles.btnAction} ${styles.btnSinEfecto}`}
@@ -553,8 +557,8 @@ export default function IndicacionesTable({
                                                     <IoCloseCircleOutline color="#e11d48" size="18px" />
                                                 </button>)}
 
-                                                {/* Eliminar: médico dueño o admin */}
-                                                {puedeModificarFila(r) && (
+                                                {/* Eliminar: permiso ELIMINAR (+ propia / ajenos) */}
+                                                {puedeEliminarFila(r) && (
                                                 <button
                                                     className={`${styles.btnAction}`}
                                                     title="Eliminar indicación"
@@ -564,7 +568,7 @@ export default function IndicacionesTable({
                                                 </button>)}
 
                                                 {/* Sin acciones disponibles */}
-                                                {!puedeAplicar && !puedeModificarFila(r) && !puedeDejarSinEfecto && (
+                                                {!puedeAplicar && !puedeCrear && !puedeEditarFila(r) && !puedeEliminarFila(r) && !puedeDejarSinEfecto && (
                                                 <span className={styles.noActions}>—</span>
                                                 )}
                                                 </>)}
@@ -683,7 +687,7 @@ export default function IndicacionesTable({
                             >
                                 <IoRepeatOutline color="#5BC0DE" />
                             </button>)}
-                            {puedeModificarFila(r) && (
+                            {puedeEditarFila(r) && (
                             <button
                                 className={`${styles.btnAction} ${styles.btnEdit}`}
                                 title="Editar"
@@ -699,7 +703,7 @@ export default function IndicacionesTable({
                             >
                                 <IoCloseCircleOutline color="#e11d48" />
                             </button>)}
-                            {puedeModificarFila(r) && (
+                            {puedeEliminarFila(r) && (
                             <button
                                 className={`${styles.btnAction} ${styles.btnDelete}`}
                                 title="Eliminar"

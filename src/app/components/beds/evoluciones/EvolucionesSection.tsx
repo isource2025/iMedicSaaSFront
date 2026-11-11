@@ -16,6 +16,7 @@ import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { generarPDFEvoluciones } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
+import { usePermiso } from '@/app/hooks/usePermiso';
 
 type EvolucionDTO = {
     idHCEvolucion: number;
@@ -56,11 +57,14 @@ export default function EvolucionesSection({
     horaIngreso?: string;
 }) {
     const { activeSection, selectedDate, bed } = useBedDetail();
-    const puedeAgregar = puedeCargarEnFechaSeleccionada(selectedDate, {
-        egresada: bed?.egresada,
-        fechaEgresoSQL: bed?.fechaEgresoSQL,
-        fechaIngresoSQL: bed?.fechaIngresoSQL,
-    });
+    const { puede, loaded: permisosCargados } = usePermiso();
+    const puedeAgregar =
+        (!permisosCargados || puede('INTERNACION.EVOLUCIONES.CREAR')) &&
+        puedeCargarEnFechaSeleccionada(selectedDate, {
+            egresada: bed?.egresada,
+            fechaEgresoSQL: bed?.fechaEgresoSQL,
+            fechaIngresoSQL: bed?.fechaIngresoSQL,
+        });
     const [periodFilter, setPeriodFilter] = useState<Periodo>('0');
     const [especialidadFilter, setEspecialidadFilter] = useState<string>('todas');
 
@@ -332,7 +336,9 @@ export default function EvolucionesSection({
                             text={baseRows.length === 0 ? 'Sin evoluciones' : 'Sin resultados'}
                             description={
                                 baseRows.length === 0
-                                    ? 'Cargá una evolución con el botón Agregar evolución.'
+                                    ? puedeAgregar
+                                        ? 'Cargá una evolución con el botón Agregar evolución.'
+                                        : 'No hay evoluciones para esta fecha.'
                                     : 'Probá con otro criterio de búsqueda o filtro.'
                             }
                             actionLabel={puedeAgregar && baseRows.length === 0 ? 'Agregar evolución' : undefined}

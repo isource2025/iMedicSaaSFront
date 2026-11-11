@@ -217,6 +217,9 @@ export default function HCIngresoSection({
     const pdfPreview = usePdfPreviewOptional();
     // El historial dice quién tocó cada HC: solo lo ven ADMIN y SUPER_ADMIN.
     const puedeVerAuditoria = permisosCargados && puede('INTERNACION.AUDITORIA_HC.VER');
+    const puedeCrearHc = !permisosCargados || puede('INTERNACION.HISTORIA_CLINICA.CREAR');
+    const puedeEditarHc = !permisosCargados || puede('INTERNACION.HISTORIA_CLINICA.EDITAR');
+    const puedeEliminarHc = !permisosCargados || puede('INTERNACION.HISTORIA_CLINICA.ELIMINAR');
     
     // Estado del componente
     const [mode, setMode] = useState<ViewMode>("view");
@@ -564,9 +567,11 @@ export default function HCIngresoSection({
                             {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
                         </span>
                         <div className={styles.dateActions}>
+                            {puedeCrearHc && (
                             <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`} onClick={handleAdd}>
                                 <span className={styles.addIcon}>+</span> Agregar HC
                             </button>
+                            )}
                             <ExportButton
                                 data={selectedRecord ? [selectedRecord] : []}
                                 fileName={`hc_ingreso_${numeroVisita}.pdf`}
@@ -641,6 +646,7 @@ export default function HCIngresoSection({
                                         onClick={() => setAccionesMobileOpen(false)}
                                     />
                                     <div className={styles.accionesMobileMenu} role="menu">
+                                        {puedeEditarHc && (
                                         <button
                                             type="button"
                                             role="menuitem"
@@ -653,6 +659,7 @@ export default function HCIngresoSection({
                                         >
                                             <span className={styles.btnIcon}>✏️</span> Modificar
                                         </button>
+                                        )}
                                         <button
                                             type="button"
                                             role="menuitem"
@@ -681,6 +688,7 @@ export default function HCIngresoSection({
                                                 <span className={styles.btnIcon}>🕓</span> Historial
                                             </button>
                                         )}
+                                        {puedeEliminarHc && (
                                         <button
                                             type="button"
                                             role="menuitem"
@@ -693,6 +701,7 @@ export default function HCIngresoSection({
                                         >
                                             <span className={styles.btnIcon}>✕</span> Eliminar
                                         </button>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -701,12 +710,15 @@ export default function HCIngresoSection({
 
                         {/* Botones Agregar (solo mobile), Modificar, Eliminar e Historial */}
                         <div className={styles.actionButtonsRow}>
+                            {puedeCrearHc && (
                             <button 
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddMobile}`} 
                                 onClick={handleAdd}
                             >
                                 <span className={styles.addIcon}>+</span> Agregar HC
                             </button>
+                            )}
+                            {puedeEditarHc && (
                             <button 
                                 className={styles.btnSecondary} 
                                 onClick={handleEdit} 
@@ -714,6 +726,8 @@ export default function HCIngresoSection({
                             >
                                 <span className={styles.btnIcon}>✏️</span> Modificar
                             </button>
+                            )}
+                            {puedeEliminarHc && (
                             <button 
                                 className={styles.btnDanger} 
                                 onClick={handleDelete} 
@@ -721,6 +735,7 @@ export default function HCIngresoSection({
                             >
                                 <span className={styles.btnIcon}>✕</span> Eliminar
                             </button>
+                            )}
                             {puedeVerAuditoria && numeroVisita && (
                                 <button
                                     className={styles.btnSecondary}

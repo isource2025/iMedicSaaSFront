@@ -62,6 +62,9 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   padding: 12px;
   border: 1px solid #e2e8f0;
+  /* El wrap debe basarse en el ancho del panel (sidebar), no solo el viewport */
+  container-type: inline-size;
+  container-name: admission-search;
 }
 
 .searchPanelHead {
@@ -80,11 +83,39 @@
 
 .toolbar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 8px;
-  overflow-x: auto;
+  row-gap: 10px;
+  overflow: visible;
   padding-bottom: 2px;
+}
+
+/* Dos filas estables: modo + búsqueda + acciones / filtros.
+   Una sola fila no entra bien ni a ~1600px de panel. */
+.toolbar .modeToggle {
+  order: 1;
+}
+
+.toolbar .inlineFieldWide {
+  order: 2;
+  flex: 1 1 240px;
+  width: auto;
+  min-width: 200px;
+  max-width: none;
+}
+
+.toolbar .toolbarActions {
+  order: 3;
+  margin-left: auto;
+  align-self: flex-end;
+}
+
+.toolbar .filterGroups {
+  order: 4;
+  flex: 1 1 100%;
+  min-width: 0;
+  padding-top: 2px;
 }
 
 .modeToggle {
@@ -169,16 +200,12 @@
 }
 
 .inlineField input:focus,
-.inlineFieldWide input:focus {
-  outline: none;
-  border-color: #94a3b8;
-  box-shadow: none;
-}
-
+.inlineFieldWide input:focus,
 .inlineField input:focus-visible,
 .inlineFieldWide input:focus-visible {
-  outline: 2px solid #00b5e2;
-  outline-offset: 1px;
+  outline: none;
+  border-color: #00b5e2;
+  box-shadow: 0 0 0 2px rgba(0, 181, 226, 0.2);
 }
 
 .filterGroups {
@@ -186,7 +213,8 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 10px 14px;
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .filterGroup {
@@ -843,46 +871,16 @@
   padding: 4px 0;
 }
 
-/* Laptop / 1366: una sola fila no entra; reordenar en 2 líneas sin aplastar filtros */
-@media (max-width: 1500px) {
-  .toolbar {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    align-items: flex-end;
-    row-gap: 12px;
-  }
-
-  .modeToggle {
-    order: 1;
-  }
-
-  .inlineFieldWide {
-    order: 2;
-    flex: 1 1 240px;
-    width: auto;
-    min-width: 200px;
-  }
-
-  .toolbarActions {
-    order: 3;
-    margin-left: auto;
+/* Paneles muy anchos: compactar cobertura y separar grupos sin aplastar. */
+@container admission-search (min-width: 1480px) {
+  .coberturaField {
+    flex: 0 0 240px;
+    width: 240px;
+    max-width: 260px;
   }
 
   .filterGroups {
-    order: 4;
-    flex: 1 1 100%;
-    min-width: 0;
-    padding-top: 2px;
-  }
-
-  .coberturaField {
-    flex: 0 0 220px;
-    width: 220px;
-    max-width: 220px;
-  }
-
-  .filterGroup {
-    padding-right: 8px;
+    gap: 10px 18px;
   }
 }
 
@@ -922,7 +920,7 @@
     overflow: visible;
   }
 
-  .modeToggle {
+  .toolbar .modeToggle {
     width: 100%;
     order: 0;
   }
@@ -932,14 +930,14 @@
     text-align: center;
   }
 
-  .inlineField,
-  .inlineFieldWide {
+  .toolbar .inlineField,
+  .toolbar .inlineFieldWide {
     flex: 1 1 100%;
     order: 0;
     min-width: 0;
   }
 
-  .filterGroups {
+  .toolbar .filterGroups {
     width: 100%;
     gap: 10px;
     align-items: flex-start;
@@ -984,7 +982,7 @@
     flex: 1 1 100%;
   }
 
-  .toolbarActions {
+  .toolbar .toolbarActions {
     order: 0;
     margin-left: 0;
     width: 100%;

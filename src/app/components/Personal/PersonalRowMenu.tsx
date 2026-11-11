@@ -18,11 +18,6 @@ type OpcionMenu = {
 	danger?: boolean;
 };
 
-const OPCIONES_BASE: OpcionMenu[] = [
-	{ id: 'ver', label: 'Ver detalles' },
-	{ id: 'editar', label: 'Editar ficha' },
-];
-
 const OPCIONES_EXTRA: OpcionMenu[] = [
 	{ id: 'cuenta', label: 'Cuenta de acceso' },
 	{ id: 'servicio', label: 'Servicio / facturación' },
@@ -43,6 +38,10 @@ interface Props {
 	conExtras?: boolean;
 	onClose: () => void;
 	onAction: (action: PersonalMenuAction, personal: Personal) => void;
+	puedeVer?: boolean;
+	puedeEditar?: boolean;
+	puedeEliminar?: boolean;
+	puedeExtras?: boolean;
 }
 
 function MenuOptions({
@@ -82,15 +81,21 @@ export default function PersonalRowMenu({
 	conExtras = true,
 	onClose,
 	onAction,
+	puedeVer = true,
+	puedeEditar = true,
+	puedeEliminar = true,
+	puedeExtras = true,
 }: Props) {
 	const ref = useRef<HTMLDivElement>(null);
 
 	const opciones = useMemo(() => {
-		const list = [...OPCIONES_BASE];
-		if (conExtras) list.push(...OPCIONES_EXTRA);
-		list.push({ id: 'eliminar', label: 'Eliminar', danger: true });
+		const list: OpcionMenu[] = [];
+		if (puedeVer) list.push({ id: 'ver', label: 'Ver detalles' });
+		if (puedeEditar) list.push({ id: 'editar', label: 'Editar ficha' });
+		if (conExtras && puedeExtras) list.push(...OPCIONES_EXTRA);
+		if (puedeEliminar) list.push({ id: 'eliminar', label: 'Eliminar', danger: true });
 		return list;
-	}, [conExtras]);
+	}, [conExtras, puedeVer, puedeEditar, puedeEliminar, puedeExtras]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -120,7 +125,7 @@ export default function PersonalRowMenu({
 		};
 	}, [open, variant]);
 
-	if (!open || !personal) return null;
+	if (!open || !personal || opciones.length === 0) return null;
 
 	if (variant === 'sheet') {
 		return createPortal(

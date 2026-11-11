@@ -35,9 +35,11 @@ export default function EpicrisisSection({
 	horaIngreso?: string;
 }) {
 	const { activeSection } = useBedDetail();
-	const { puede } = usePermiso();
+	const { puede, loaded: permisosCargados } = usePermiso();
 	const canPrint =
 		puede('INTERNACION.EPICRISIS.IMPRIMIR') || puede('INTERNACION.EPICRISIS.VER');
+	const puedeCrear =
+		!permisosCargados || puede('INTERNACION.EPICRISIS.CREAR');
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [saving, setSaving] = useState(false);
@@ -183,11 +185,15 @@ export default function EpicrisisSection({
 			<BedSectionLayout
 				title="Epicrisis"
 				subtitle="Resumen del episodio de hospitalización"
-				addLabel="Agregar epicrisis"
-				onAdd={() => {
-					setSelectedId(null);
-					setModalOpen(true);
-				}}
+				addLabel={puedeCrear ? 'Agregar epicrisis' : undefined}
+				onAdd={
+					puedeCrear
+						? () => {
+								setSelectedId(null);
+								setModalOpen(true);
+							}
+						: undefined
+				}
 				exportSlot={
 					canPrint ? (
 						<ExportButton
@@ -215,12 +221,16 @@ export default function EpicrisisSection({
 						text={baseRows.length === 0 ? 'Sin epicrisis' : 'Sin resultados'}
 						description={
 							baseRows.length === 0
-								? 'Cargá una epicrisis con el botón Agregar epicrisis.'
+								? puedeCrear
+									? 'Cargá una epicrisis con el botón Agregar epicrisis.'
+									: 'No hay epicrisis cargadas para esta visita.'
 								: 'Probá con otro criterio de búsqueda.'
 						}
-						actionLabel={baseRows.length === 0 ? 'Agregar epicrisis' : undefined}
+						actionLabel={
+							puedeCrear && baseRows.length === 0 ? 'Agregar epicrisis' : undefined
+						}
 						onAction={
-							baseRows.length === 0
+							puedeCrear && baseRows.length === 0
 								? () => {
 										setSelectedId(null);
 										setModalOpen(true);

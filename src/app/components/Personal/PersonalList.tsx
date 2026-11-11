@@ -40,6 +40,11 @@ interface PersonalListProps {
 	onDelete: (p: Personal) => void;
 	onOpenMenu: (p: Personal, anchor?: { x: number; y: number }) => void;
 	onPageChange: (page: number) => void;
+	puedeVerDetalle?: boolean;
+	puedeEditar?: boolean;
+	puedeEliminar?: boolean;
+	puedeMasOpciones?: boolean;
+	puedeGestionarFirma?: boolean;
 }
 
 export default function PersonalList({
@@ -55,7 +60,14 @@ export default function PersonalList({
 	onView,
 	onDelete,
 	onOpenMenu,
+	puedeVerDetalle = true,
+	puedeEditar = true,
+	puedeEliminar = true,
+	puedeMasOpciones = true,
+	puedeGestionarFirma = true,
 }: PersonalListProps) {
+	const hayAcciones =
+		puedeVerDetalle || puedeEditar || puedeEliminar || puedeMasOpciones;
 	const [expandedId, setExpandedId] = useState<number | null>(null);
 	const [especialidades, setEspecialidades] = useState<CatalogoItemNumerico[]>([]);
 	const [servicios, setServicios] = useState<CatalogoItemTexto[]>([]);
@@ -172,9 +184,9 @@ export default function PersonalList({
 									<tr
 										key={p.Valor}
 										className={styles.tableRow}
-										onClick={() => onView(p)}
-										style={{ cursor: 'pointer' }}
-										title='Ver detalle'
+										onClick={puedeVerDetalle ? () => onView(p) : undefined}
+										style={{ cursor: puedeVerDetalle ? 'pointer' : undefined }}
+										title={puedeVerDetalle ? 'Ver detalle' : undefined}
 									>
 										<td className={styles.cellId}>
 											<div className={styles.idPrimary}>{p.Valor}</div>
@@ -252,11 +264,13 @@ export default function PersonalList({
 												id={p.Valor}
 												hasFirma={p.hasFirma}
 												revision={firmaRevision}
-												onEdit={() => onEditFirma(p)}
+												onEdit={puedeGestionarFirma ? () => onEditFirma(p) : undefined}
 											/>
 										</td>
 										<td className={styles.actionCell} onClick={(e) => e.stopPropagation()}>
+											{hayAcciones ? (
 											<div className={styles.actionToolbar}>
+												{puedeVerDetalle && (
 												<button
 													type='button'
 													className={styles.extraActionBtn}
@@ -266,6 +280,8 @@ export default function PersonalList({
 												>
 													<IoEyeOutline size={16} />
 												</button>
+												)}
+												{puedeEditar && (
 												<button
 													type='button'
 													className={styles.editButton}
@@ -275,6 +291,8 @@ export default function PersonalList({
 												>
 													<IoPencil size={16} />
 												</button>
+												)}
+												{puedeMasOpciones && (
 												<button
 													type='button'
 													className={styles.extraActionBtn}
@@ -286,7 +304,9 @@ export default function PersonalList({
 												>
 													<IoEllipsisVertical size={18} />
 												</button>
+												)}
 											</div>
+											) : null}
 										</td>
 									</tr>
 								);
@@ -339,7 +359,7 @@ export default function PersonalList({
 													hasFirma={p.hasFirma}
 													revision={firmaRevision}
 													compact
-													onEdit={() => onEditFirma(p)}
+													onEdit={puedeGestionarFirma ? () => onEditFirma(p) : undefined}
 												/>
 											</div>
 											<div className={styles.mobileItemTags}>
@@ -361,6 +381,7 @@ export default function PersonalList({
 											</div>
 										</div>
 									</button>
+									{puedeMasOpciones && (
 									<button
 										type='button'
 										className={styles.mobileMenuBtn}
@@ -369,6 +390,7 @@ export default function PersonalList({
 									>
 										<IoEllipsisVertical size={20} />
 									</button>
+									)}
 									<button
 										type='button'
 										className={styles.mobileExpandBtn}
@@ -421,7 +443,9 @@ export default function PersonalList({
 											{renderEstadoBadge(p.Estado)}
 										</div>
 									</div>
+									{hayAcciones && (
 									<div className={styles.mobileActionToolbar}>
+										{puedeVerDetalle && (
 										<button
 											type='button'
 											className={styles.historyButton}
@@ -430,6 +454,8 @@ export default function PersonalList({
 										>
 											<IoEyeOutline size={18} />
 										</button>
+										)}
+										{puedeEditar && (
 										<button
 											type='button'
 											className={styles.editButton}
@@ -438,6 +464,8 @@ export default function PersonalList({
 										>
 											<IoPencil size={16} />
 										</button>
+										)}
+										{puedeEliminar && (
 										<button
 											type='button'
 											className={styles.deleteButton}
@@ -446,6 +474,8 @@ export default function PersonalList({
 										>
 											<IoTrashOutline size={16} />
 										</button>
+										)}
+										{puedeMasOpciones && (
 										<button
 											type='button'
 											className={styles.mobileMoreBtn}
@@ -453,7 +483,9 @@ export default function PersonalList({
 										>
 											Más opciones
 										</button>
+										)}
 									</div>
+									)}
 								</div>
 							</div>
 						);

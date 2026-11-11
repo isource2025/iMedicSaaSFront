@@ -40,6 +40,21 @@ export const SECTION_TO_PERM: Record<string, string> = {
 	epicrisis: 'EPICRISIS',
 };
 
+/** Secciones de Gestión Médica: el menú exige .VER; .CREAR solo habilita “Agregar”. */
+const SECCIONES_GESTION_MEDICA = new Set([
+	'hcIngreso',
+	'indicaciones',
+	'solicitudEstudios',
+	'interconsulta',
+	'protocolos',
+	'procedimientos',
+	'evoluciones',
+	'epicrisis',
+]);
+
+/** Ítems de enfermería que también exigen .VER para listarse (no alcanza .CREAR). */
+const SECCIONES_ENFERMERIA_SOLO_VER = new Set(['evolucion-enfermeria']);
+
 // --- Componente de colapso con altura automática animada (enter/exit distintos) ---
 function Collapse({
 	in: inProp,
@@ -158,45 +173,45 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 
 	/**
 	 * Visibilidad de un item DENTRO de su grupo.
-	 * Un item se muestra si el usuario tiene CUALQUIER acción sobre el submódulo.
+	 * Gestión Médica + evolución de enfermería: solo .VER (.CREAR no lista la sección).
+	 * Resto: cualquier acción del submódulo (otros ítems de enfermería / adjuntos / etc.).
 	 */
 	const puedeVerSeccion = useMemo(
 		() => (section: string) => {
 			if (!loaded) return true;
 			const sub = SECTION_TO_PERM[section];
 			if (!sub) return true;
+			if (SECCIONES_GESTION_MEDICA.has(section) || SECCIONES_ENFERMERIA_SOLO_VER.has(section)) {
+				return puede(`INTERNACION.${sub}.VER`);
+			}
 			return puedeSubmodulo('INTERNACION', sub);
 		},
-		[puedeSubmodulo, loaded],
+		[puede, puedeSubmodulo, loaded],
 	);
 
 	/**
 	 * Visibilidad del GRUPO entero.
 	 *
-	 * Gestión Médica / Enfermería: alcanza con VER. El administrativo no tiene
-	 * CREAR clínico; con solo lectura ve ambos menús para consultar e imprimir
-	 * (facturación). El enfermero también tiene VER médico, pero no entra a
-	 * Gestión Médica (perfil de enfermería): Evoluciones/Interconsultas van
-	 * en Gestión Enfermería. La escritura sigue gated dentro de cada sección.
+	 * Gestión Médica: alcanza con .VER en alguna sección médica (admin/médico).
+	 * .CREAR solo habilita Agregar dentro de cada sección; no abre el menú.
+	 * El enfermero (APLICAR / evolución enfermería) no entra a Gestión Médica
+	 * aunque tenga VER clínico: Evoluciones/Interconsultas van en Enfermería.
 	 */
 	const perfilEnfermeria =
 		loaded &&
 		(puede('INTERNACION.INDICACIONES.APLICAR') ||
 			puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR'));
-	// Médico: CREAR. Administrativo: solo VER (sin perfil enfermería).
 	const puedeGestionMedica = !loaded
 		? true
-		: puede('INTERNACION.HISTORIA_CLINICA.CREAR') ||
-		  puede('INTERNACION.EVOLUCIONES.CREAR') ||
-		  puede('INTERNACION.INDICACIONES.CREAR') ||
-		  (!perfilEnfermeria &&
-				(puede('INTERNACION.HISTORIA_CLINICA.VER') ||
-					puede('INTERNACION.EVOLUCIONES.VER') ||
-					puede('INTERNACION.INDICACIONES.VER')));
+		: !perfilEnfermeria &&
+		  [...SECCIONES_GESTION_MEDICA].some((section) => {
+				const sub = SECTION_TO_PERM[section];
+				return sub ? puede(`INTERNACION.${sub}.VER`) : false;
+			});
 
 	const puedeGestionEnfermeria = !loaded
 		? true
-		: puedeSubmodulo('INTERNACION', 'EVOLUCION_ENFERMERIA') ||
+		: puede('INTERNACION.EVOLUCION_ENFERMERIA.VER') ||
 		  puedeSubmodulo('INTERNACION', 'SIGNOS_VITALES') ||
 		  puedeSubmodulo('INTERNACION', 'MEDICACION') ||
 		  puedeSubmodulo('INTERNACION', 'DIETA') ||

@@ -14,6 +14,8 @@ type Props = {
     rows: EvolucionEnfermeriaRow[];
     refetch: () => Promise<void>;
     onEdit?: (row: EvolucionEnfermeriaRow) => void;
+    /** Si false, no muestra eliminar aunque el registro sea propio. Default true (compat). */
+    puedeEliminar?: boolean;
 };
 
 function nombreProfesional(r: EvolucionEnfermeriaRow): string {
@@ -45,7 +47,12 @@ function puedeGestionar(
     return false;
 }
 
-export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Props) {
+export default function EvolucionEnfermeriaTable({
+    rows,
+    refetch,
+    onEdit,
+    puedeEliminar = true,
+}: Props) {
     const hasRows = rows && rows.length > 0;
     const [deletingEvolucion, setDeletingEvolucion] = useState<EvolucionEnfermeriaRow | null>(null);
     const [viewingEvolucion, setViewingEvolucion] = useState<EvolucionEnfermeriaRow | null>(null);
@@ -136,18 +143,19 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                                                       >
                                                           <IoEyeOutline color="#5BC0DE" size="18px" />
                                                       </button>
-                                                      {propio && (
-                                                          <>
+                                                      {propio && onEdit && (
                                                               <button
                                                                   className={styles.btnAction}
                                                                   title="Editar evolución"
                                                                   onClick={(e) => {
                                                                       e.stopPropagation();
-                                                                      onEdit?.(r);
+                                                                      onEdit(r);
                                                                   }}
                                                               >
                                                                   <IoPencilOutline color="#5BC0DE" size="18px" />
                                                               </button>
+                                                      )}
+                                                      {propio && puedeEliminar && (
                                                               <button
                                                                   className={styles.btnAction}
                                                                   title="Eliminar evolución"
@@ -159,7 +167,6 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                                                               >
                                                                   <IoTrashOutline color="#5BC0DE" size="18px" />
                                                               </button>
-                                                          </>
                                                       )}
                                                   </div>
                                               </td>
@@ -203,15 +210,16 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                                     >
                                         <IoEyeOutline color="#5BC0DE" size="18px" />
                                     </button>
-                                    {propio && (
-                                        <>
+                                    {propio && onEdit && (
                                             <button
                                                 className={styles.btnAction}
                                                 title="Editar evolución"
-                                                onClick={() => onEdit?.(r)}
+                                                onClick={() => onEdit(r)}
                                             >
                                                 <IoPencilOutline color="#5BC0DE" size="18px" />
                                             </button>
+                                    )}
+                                    {propio && puedeEliminar && (
                                             <button
                                                 className={styles.btnAction}
                                                 title="Eliminar evolución"
@@ -222,7 +230,6 @@ export default function EvolucionEnfermeriaTable({ rows, refetch, onEdit }: Prop
                                             >
                                                 <IoTrashOutline color="#5BC0DE" size="18px" />
                                             </button>
-                                        </>
                                     )}
                                 </div>
                             </article>

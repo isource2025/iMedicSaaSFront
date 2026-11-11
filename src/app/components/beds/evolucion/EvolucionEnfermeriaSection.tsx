@@ -19,6 +19,8 @@ import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import { generarPDFEvoluciones } from '../../../utils/pdfExportLazy';
 import { evolucionEnfermeriaParaPdf } from '../../../utils/pdfAdaptadores';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { usePermiso } from '@/app/hooks/usePermiso';
+import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
 
 interface EvolucionEnfermeriaSectionProps {
   numeroVisita: number | null;
@@ -37,7 +39,17 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
   fechaIngreso,
   horaIngreso
 }) => {
-  const { activeSection, selectedDate } = useBedDetail();
+  const { activeSection, selectedDate, bed } = useBedDetail();
+  const { puede, loaded: permisosCargados } = usePermiso();
+  const puedeCrear =
+    (!permisosCargados || puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR')) &&
+    puedeCargarEnFechaSeleccionada(selectedDate, {
+      egresada: bed?.egresada,
+      fechaEgresoSQL: bed?.fechaEgresoSQL,
+      fechaIngresoSQL: bed?.fechaIngresoSQL ?? fechaIngreso,
+    });
+  const puedeEditar = !permisosCargados || puede('INTERNACION.EVOLUCION_ENFERMERIA.EDITAR');
+  const puedeEliminar = !permisosCargados || puede('INTERNACION.EVOLUCION_ENFERMERIA.ELIMINAR');
   const [periodFilter, setPeriodFilter] = useState<Periodo>('0');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvolucion, setEditingEvolucion] = useState<EvolucionEnfermeria | null>(null);
@@ -192,6 +204,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
           <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
           <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
           <div className={styles.dateActions}>
+            {puedeCrear && (
             <button
               className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
               onClick={onAddEvolucion}
@@ -201,6 +214,7 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
               </span>
               Agregar evolución
             </button>
+            )}
             <ExportButton
               data={filteredEvoluciones}
               fileName={`evolucion_enfermeria_${selectedDate?.toISOString().split('T')[0]}.pdf`}
@@ -238,16 +252,21 @@ const EvolucionEnfermeriaSection: React.FC<EvolucionEnfermeriaSectionProps> = ({
             <EmptyState
               variant="evolucion"
               text="Sin evoluciones registradas"
-              description="No hay evoluciones de enfermería para esta fecha. Podés agregar una haciendo clic en el botón de arriba."
-              actionLabel="Agregar evolución"
-              onAction={onAddEvolucion}
+              description={
+                puedeCrear
+                  ? 'No hay evoluciones de enfermería para esta fecha. Podés agregar una haciendo clic en el botón de arriba.'
+                  : 'No hay evoluciones de enfermería para esta fecha.'
+              }
+              actionLabel={puedeCrear ? 'Agregar evolución' : undefined}
+              onAction={puedeCrear ? onAddEvolucion : undefined}
             />
           )}
           {!isLoading && !error && filteredEvoluciones.length > 0 && (
             <EvolucionEnfermeriaTable
               rows={filteredEvoluciones}
               refetch={refetch}
-              onEdit={onEditEvolucion}
+              onEdit={puedeEditar ? onEditEvolucion : undefined}
+              puedeEliminar={puedeEliminar}
             />
           )}
         </div>

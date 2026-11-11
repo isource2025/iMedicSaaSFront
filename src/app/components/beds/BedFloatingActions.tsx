@@ -36,12 +36,10 @@ export default function BedFloatingActions({
       puede('INTERNACION.INDICACIONES.MARCAR_VISTO')) &&
     !puede('INTERNACION.EVOLUCIONES.CREAR');
   const showAdjuntos = puede('INTERNACION.ADJUNTOS.VER') || puede('INTERNACION.ADJUNTOS.CREAR');
-  const showLabs = puede('INTERNACION.ESTUDIOS.VER') || puede('INTERNACION.ESTUDIOS.CREAR');
+  const showLabs = puede('INTERNACION.ESTUDIOS.VER');
   const showNursing =
     puede('INTERNACION.EVOLUCION_ENFERMERIA.VER') ||
-    puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR') ||
-    puede('INTERNACION.SIGNOS_VITALES.VER') ||
-    puede('INTERNACION.SIGNOS_VITALES.CREAR');
+    puede('INTERNACION.SIGNOS_VITALES.VER');
   const showEvoluciones = modoEnfermeria && puede('INTERNACION.EVOLUCIONES.VER');
   const showInterconsulta = modoEnfermeria && puede('INTERNACION.INTERCONSULTAS.VER');
 

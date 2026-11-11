@@ -22,6 +22,7 @@ import Modal from '@/app/components/UI/Modal';
 import { SearchInput } from '@/app/components/beds/SearchInput';
 import { personalService } from '@/app/services/personalService';
 import type { SyncFisicoInforme as SyncFisicoInformeData } from '@/app/services/personalService';
+import { usePermiso } from '@/app/hooks/usePermiso';
 import styles from './personal.module.css';
 
 type MenuState = {
@@ -83,6 +84,15 @@ export default function PersonalPage() {
 	const [firmaRevision, setFirmaRevision] = useState(0);
 	const addFormRef = useRef<PersonalFormHandle>(null);
 	const editFormRef = useRef<PersonalFormHandle>(null);
+	const { puede, loaded: permisosCargados } = usePermiso();
+	const puedeCrear = !permisosCargados || puede('CONFIGURACION.PERSONAL.CREAR');
+	const puedeEditar = !permisosCargados || puede('CONFIGURACION.PERSONAL.EDITAR');
+	const puedeEliminar = !permisosCargados || puede('CONFIGURACION.PERSONAL.ELIMINAR');
+	const puedeGestionar = !permisosCargados || puede('CONFIGURACION.PERSONAL.GESTIONAR');
+	/** Export / sync / extras: no con solo VER. */
+	const puedeExportar = puedeEditar || puedeGestionar;
+	const puedeVerDetalle = puedeEditar || puedeGestionar;
+	const puedeMasOpciones = puedeEditar || puedeEliminar || puedeGestionar;
 
 	useEffect(() => {
 		if (!initialized) initialize();
@@ -212,6 +222,7 @@ export default function PersonalPage() {
 		<div className={styles.container}>
 			<div className={styles.titleRow}>
 				<h1 className={styles.title}>Administrador de Personal</h1>
+				{puedeCrear && (
 				<button
 					className={`${styles.addButton} ${styles.addButtonMobile}`}
 					onClick={openAddModal}
@@ -219,6 +230,7 @@ export default function PersonalPage() {
 				>
 					<span className={styles.addIcon}>+</span>
 				</button>
+				)}
 			</div>
 
 			<div className={styles.content}>
@@ -245,7 +257,7 @@ export default function PersonalPage() {
 						/>
 					</div>
 					<div className={styles.toolbarActions}>
-						{syncDisponible && (
+						{syncDisponible && puedeGestionar && (
 							<button
 								type='button'
 								className={styles.secondaryButton}
@@ -255,6 +267,7 @@ export default function PersonalPage() {
 								{syncing ? 'Actualizando…' : 'Actualizar desde base física'}
 							</button>
 						)}
+						{puedeExportar && (
 						<button
 							type='button'
 							className={styles.secondaryButton}
@@ -262,6 +275,8 @@ export default function PersonalPage() {
 						>
 							Exportar a Excel
 						</button>
+						)}
+						{puedeCrear && (
 						<button
 							className={styles.addButton}
 							onClick={openAddModal}
@@ -269,6 +284,7 @@ export default function PersonalPage() {
 						>
 							<span className={styles.addIcon}>+</span> Agregar personal
 						</button>
+						)}
 					</div>
 				</div>
 
@@ -285,6 +301,11 @@ export default function PersonalPage() {
 					onView={openViewModal}
 					onDelete={openDeleteModal}
 					onOpenMenu={handleOpenMenu}
+					puedeVerDetalle={puedeVerDetalle}
+					puedeEditar={puedeEditar}
+					puedeEliminar={puedeEliminar}
+					puedeMasOpciones={puedeMasOpciones}
+					puedeGestionarFirma={puedeGestionar}
 				/>
 
 				<PersonalRowMenu
@@ -295,6 +316,10 @@ export default function PersonalPage() {
 					personal={menuState?.personal ?? null}
 					onClose={closeMenu}
 					onAction={handleMenuAction}
+					puedeVer={puedeVerDetalle}
+					puedeEditar={puedeEditar}
+					puedeEliminar={puedeEliminar}
+					puedeExtras={puedeGestionar}
 				/>
 
 				<PersonalActionModals
