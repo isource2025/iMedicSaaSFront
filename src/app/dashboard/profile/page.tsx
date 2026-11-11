@@ -664,7 +664,7 @@ export default function MiPerfilPage() {
 						tab === 'resumen' ? styles.profileBannerShellExpanded : ''
 					}`}
 				>
-					{logoInstitucion ? (
+					{tab === 'resumen' && logoInstitucion ? (
 						/* eslint-disable-next-line @next/next/no-img-element */
 						<img
 							src={logoInstitucion}
