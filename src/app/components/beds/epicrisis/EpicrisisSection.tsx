@@ -39,7 +39,7 @@ export default function EpicrisisSection({
 	const canPrint =
 		puede('INTERNACION.EPICRISIS.IMPRIMIR') || puede('INTERNACION.EPICRISIS.VER');
 	const puedeCrear =
-		!permisosCargados || puede('INTERNACION.EPICRISIS.CREAR');
+		permisosCargados && puede('INTERNACION.EPICRISIS.CREAR');
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [saving, setSaving] = useState(false);

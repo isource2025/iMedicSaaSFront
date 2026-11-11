@@ -217,9 +217,10 @@ export default function HCIngresoSection({
     const pdfPreview = usePdfPreviewOptional();
     // El historial dice quién tocó cada HC: solo lo ven ADMIN y SUPER_ADMIN.
     const puedeVerAuditoria = permisosCargados && puede('INTERNACION.AUDITORIA_HC.VER');
-    const puedeCrearHc = !permisosCargados || puede('INTERNACION.HISTORIA_CLINICA.CREAR');
-    const puedeEditarHc = !permisosCargados || puede('INTERNACION.HISTORIA_CLINICA.EDITAR');
-    const puedeEliminarHc = !permisosCargados || puede('INTERNACION.HISTORIA_CLINICA.ELIMINAR');
+    // Fail-closed: sin .CREAR/.EDITAR/.ELIMINAR no se muestran acciones (solo VER no alcanza).
+    const puedeCrearHc = permisosCargados && puede('INTERNACION.HISTORIA_CLINICA.CREAR');
+    const puedeEditarHc = permisosCargados && puede('INTERNACION.HISTORIA_CLINICA.EDITAR');
+    const puedeEliminarHc = permisosCargados && puede('INTERNACION.HISTORIA_CLINICA.ELIMINAR');
     
     // Estado del componente
     const [mode, setMode] = useState<ViewMode>("view");
