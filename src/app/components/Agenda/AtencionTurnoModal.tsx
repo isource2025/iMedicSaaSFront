@@ -54,6 +54,46 @@ function inicialesEstudio(desc: string): string {
 	return (palabras[0][0] + palabras[1][0]).toUpperCase();
 }
 
+/** Extrae código CIE-10 de texto libre o "J00 — descripción". */
+function codigoCieDesdeTexto(raw: string): string | null {
+	const t = String(raw || '').trim();
+	if (!t) return null;
+	const m = t.match(/^([A-Za-z]\d{2}(?:\.\d{1,4})?|[A-Za-z]\d{2}\d{0,4})\b/);
+	return m ? m[1].toUpperCase() : null;
+}
+
+function etiquetaDiagnostico(d: DiagnosticoCie10): string {
+	return `${d.codigo} — ${d.descripcion}`;
+}
+
+function mismoDiagnostico(a: DiagnosticoCie10 | null, term: string): boolean {
+	if (!a?.codigo) return false;
+	const t = term.trim();
+	return (
+		t === a.codigo ||
+		t === etiquetaDiagnostico(a) ||
+		t.toUpperCase().startsWith(`${a.codigo.toUpperCase()} —`) ||
+		t.toUpperCase().startsWith(`${a.codigo.toUpperCase()} -`)
+	);
+}
+
+/** Elige el match exacto por código, o el único resultado si hay uno. */
+function pickDiagnostico(
+	rows: DiagnosticoCie10[],
+	term: string,
+): DiagnosticoCie10 | null {
+	if (!rows.length) return null;
+	const codigo = codigoCieDesdeTexto(term);
+	if (codigo) {
+		const exact = rows.find(
+			(d) => String(d.codigo || '').trim().toUpperCase() === codigo,
+		);
+		if (exact) return exact;
+	}
+	if (rows.length === 1) return rows[0];
+	return null;
+}
+
 interface TurnoAtencion {
 	idTurno: number;
 	idPaciente?: number | null;
@@ -325,16 +365,36 @@ export default function AtencionTurnoModal({
 
 	useEffect(() => {
 		const t = diagTerm.trim();
+		if (diagSel && mismoDiagnostico(diagSel, t)) {
+			setDiagResults([]);
+			setDiagLoading(false);
+			return;
+		}
 		if (t.length < 2) {
 			setDiagResults([]);
 			return;
 		}
+		// Si el usuario pegó "J00 — …", buscar solo por el código CIE.
+		const q = codigoCieDesdeTexto(t) || t;
 		let cancel = false;
 		setDiagLoading(true);
 		const handle = setTimeout(async () => {
 			try {
-				const rows = await agendaService.buscarDiagnosticos(t, 25);
-				if (!cancel) setDiagResults(rows);
+				const rows = await agendaService.buscarDiagnosticos(q, 25);
+				if (cancel) return;
+				setDiagResults(rows);
+				const auto = pickDiagnostico(rows, t);
+				// Auto-selecciona solo match exacto de código (evita elegir de más).
+				if (auto && codigoCieDesdeTexto(t)) {
+					const codigoTerm = codigoCieDesdeTexto(t)!;
+					if (
+						String(auto.codigo || '').trim().toUpperCase() === codigoTerm
+					) {
+						setDiagSel(auto);
+						setDiagTerm(etiquetaDiagnostico(auto));
+						setDiagResults([]);
+					}
+				}
 			} catch {
 				if (!cancel) setDiagResults([]);
 			} finally {
@@ -345,7 +405,7 @@ export default function AtencionTurnoModal({
 			cancel = true;
 			clearTimeout(handle);
 		};
-	}, [diagTerm]);
+	}, [diagTerm, diagSel]);
 
 	// Auto-selecciona el servicio destino cuando la práctica tiene un único servicio posible
 	useEffect(() => {
@@ -433,12 +493,13 @@ export default function AtencionTurnoModal({
 		guardNav(() => goTo(idx));
 	};
 
-	const cerrarTurno = async () => {
-		if (!turno?.idTurno || !diagSel) return;
+	const cerrarTurno = async (diagOverride?: DiagnosticoCie10 | null) => {
+		const diag = diagOverride ?? diagSel;
+		if (!turno?.idTurno || !diag?.codigo?.trim()) return;
 		setSubmitting(true);
 		setError(null);
 		const payload = {
-			diagnostico: diagSel.codigo.trim(),
+			diagnostico: diag.codigo.trim(),
 			hci: {
 				motivoConsulta: motivo.trim(),
 				enfermedadActual: enfermedadActual.trim(),
@@ -483,12 +544,35 @@ export default function AtencionTurnoModal({
 		}
 	};
 
-	const validarCierre = (): { step: WizardStep; label: string }[] => {
+	const resolverDiagnostico = async (): Promise<DiagnosticoCie10 | null> => {
+		if (diagSel?.codigo?.trim()) return diagSel;
+		const term = diagTerm.trim();
+		if (term.length < 2) return null;
+		const q = codigoCieDesdeTexto(term) || term;
+		try {
+			const rows = await agendaService.buscarDiagnosticos(q, 25);
+			const pick = pickDiagnostico(rows, term);
+			if (pick) {
+				setDiagSel(pick);
+				setDiagTerm(etiquetaDiagnostico(pick));
+				setDiagResults([]);
+				return pick;
+			}
+		} catch {
+			/* validación reportará el faltante */
+		}
+		return null;
+	};
+
+	const validarCierre = (
+		diag: DiagnosticoCie10 | null = diagSel,
+	): { step: WizardStep; label: string }[] => {
 		const errs: { step: WizardStep; label: string }[] = [];
 		if (!motivo.trim()) errs.push({ step: 'hc', label: 'Motivo de consulta' });
 		if (!enfermedadActual.trim())
 			errs.push({ step: 'hc', label: 'Enfermedad actual' });
-		if (!diagSel) errs.push({ step: 'hc', label: 'Diagnóstico CIE-10' });
+		if (!diag?.codigo?.trim())
+			errs.push({ step: 'hc', label: 'Diagnóstico CIE-10' });
 		if (pedidosEstudiosIncompletos)
 			errs.push({
 				step: 'estudios',
@@ -503,12 +587,17 @@ export default function AtencionTurnoModal({
 	};
 
 	const handleCerrar = () => {
-		const errs = validarCierre();
-		if (errs.length > 0) {
-			setValidacionErrores(errs);
-			return;
-		}
-		guardNav(() => void cerrarTurno());
+		guardNav(() => {
+			void (async () => {
+				const diag = await resolverDiagnostico();
+				const errs = validarCierre(diag);
+				if (errs.length > 0) {
+					setValidacionErrores(errs);
+					return;
+				}
+				await cerrarTurno(diag);
+			})();
+		});
 	};
 
 	const irAPasoError = (target: WizardStep) => {
@@ -647,8 +736,27 @@ export default function AtencionTurnoModal({
 										id='diag-atencion'
 										type='text'
 										value={diagTerm}
-										onChange={(e) => setDiagTerm(e.target.value)}
+										onChange={(e) => {
+											const next = e.target.value;
+											setDiagTerm(next);
+											if (diagSel && !mismoDiagnostico(diagSel, next)) {
+												setDiagSel(null);
+											}
+										}}
+										onKeyDown={(e) => {
+											if (e.key !== 'Enter') return;
+											e.preventDefault();
+											const pick =
+												pickDiagnostico(diagResults, diagTerm) ||
+												diagResults[0] ||
+												null;
+											if (!pick) return;
+											setDiagSel(pick);
+											setDiagTerm(etiquetaDiagnostico(pick));
+											setDiagResults([]);
+										}}
 										placeholder='Buscar por código o descripción…'
+										autoComplete='off'
 									/>
 									{diagLoading ? (
 										<span
@@ -682,7 +790,7 @@ export default function AtencionTurnoModal({
 												className={styles.diagRow}
 												onClick={() => {
 													setDiagSel(d);
-													setDiagTerm(`${d.codigo} — ${d.descripcion}`);
+													setDiagTerm(etiquetaDiagnostico(d));
 													setDiagResults([]);
 												}}
 											>
@@ -696,7 +804,10 @@ export default function AtencionTurnoModal({
 								diagTerm.trim().length >= 2 &&
 								!diagLoading &&
 								diagResults.length === 0 ? (
-									<p className={styles.empty}>Sin resultados.</p>
+									<p className={styles.empty}>
+										Sin resultados. Probá solo el código (ej. J00) y elegí una
+										fila de la lista.
+									</p>
 								) : null}
 							</div>
 						</div>
@@ -1140,13 +1251,8 @@ export default function AtencionTurnoModal({
 								className={styles.btnFinalizar}
 								disabled={submitting}
 								onClick={() => {
-									const errs = validarCierre();
-									if (errs.length > 0) {
-										setValidacionErrores(errs);
-										return;
-									}
 									setValidacionErrores(null);
-									guardNav(() => void cerrarTurno());
+									handleCerrar();
 								}}
 							>
 								{submitting

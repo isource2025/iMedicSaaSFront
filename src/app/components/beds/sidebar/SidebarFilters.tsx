@@ -173,22 +173,26 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 	/**
 	 * Visibilidad del GRUPO entero.
 	 *
-	 * Gestión Médica: se muestra con VER o CREAR en HC / evoluciones / indicaciones.
-	 * Administrativo tiene lectura clínica y debe ver el grupo; las acciones de
-	 * escritura siguen gated dentro de cada sección. Enfermero conserva solo
-	 * lectura clínica pero no el menú médico (sigue usando Gestión Enfermería);
-	 * Evoluciones e Interconsultas se exponen ahí (mismas secciones que en médica).
-	 *
-	 * Gestión Enfermería: se muestra con VER o CREAR. El médico tiene lectura
-	 * de enfermería en la matriz; antes el grupo exigía CREAR y quedaba oculto.
-	 * Las acciones de escritura siguen gated dentro de cada sección.
+	 * Gestión Médica / Enfermería: alcanza con VER. El administrativo no tiene
+	 * CREAR clínico; con solo lectura ve ambos menús para consultar e imprimir
+	 * (facturación). El enfermero también tiene VER médico, pero no entra a
+	 * Gestión Médica (perfil de enfermería): Evoluciones/Interconsultas van
+	 * en Gestión Enfermería. La escritura sigue gated dentro de cada sección.
 	 */
-	// Menú médico: quien puede crear HC / evoluciones / indicaciones (no solo lectura de enfermería).
+	const perfilEnfermeria =
+		loaded &&
+		(puede('INTERNACION.INDICACIONES.APLICAR') ||
+			puede('INTERNACION.EVOLUCION_ENFERMERIA.CREAR'));
+	// Médico: CREAR. Administrativo: solo VER (sin perfil enfermería).
 	const puedeGestionMedica = !loaded
 		? true
 		: puede('INTERNACION.HISTORIA_CLINICA.CREAR') ||
 		  puede('INTERNACION.EVOLUCIONES.CREAR') ||
-		  puede('INTERNACION.INDICACIONES.CREAR');
+		  puede('INTERNACION.INDICACIONES.CREAR') ||
+		  (!perfilEnfermeria &&
+				(puede('INTERNACION.HISTORIA_CLINICA.VER') ||
+					puede('INTERNACION.EVOLUCIONES.VER') ||
+					puede('INTERNACION.INDICACIONES.VER')));
 
 	const puedeGestionEnfermeria = !loaded
 		? true
