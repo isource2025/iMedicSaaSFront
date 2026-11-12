@@ -8,7 +8,6 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	CircleSlash,
-	DollarSign,
 	History,
 	PackagePlus,
 	PackageX,
@@ -287,13 +286,6 @@ export default function StockClient() {
 						tono="violet"
 						activo={estado === 'exceso'}
 						onClick={() => toggleEstado('exceso')}
-					/>
-					<Kpi
-						label="Valorizado"
-						value={fmtMoney(r.valorizado)}
-						hint={`${fmtCompact(r.unidades)} unidades a costo`}
-						icon={<DollarSign size={22} />}
-						tono="ok"
 					/>
 				</KpiGrid>
 			) : (

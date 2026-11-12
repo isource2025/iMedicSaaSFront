@@ -427,7 +427,7 @@ export default function ProveedoresClient() {
 						{items.map((p) => {
 							const color = COLOR_ESTADO_PROV[p.IdStatus || 1] || '#64748b';
 							return (
-								<article key={p.IdProveedor} className={styles.provCard} style={{ borderTopColor: color }}>
+								<article key={p.IdProveedor} className={styles.provCard}>
 									<div className={styles.provCardHead}>
 										<Avatar nombre={p.Descripcion} size={44} />
 										<div className={styles.provCardTitulo}>

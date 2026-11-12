@@ -2455,10 +2455,10 @@ tr.rowAnulado:hover td {
 	flex-direction: column;
 	gap: 0.65rem;
 	padding: 0.85rem 0.9rem 0.7rem;
-	border: 1px solid var(--sk-line);
-	border-top: 3px solid var(--sk-brand);
+	border: none;
 	border-radius: 14px;
 	background: #fff;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 	transition: box-shadow 0.15s ease, transform 0.12s ease;
 	min-width: 0;
 }
