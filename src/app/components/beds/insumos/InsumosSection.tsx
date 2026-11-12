@@ -11,6 +11,14 @@ import PeriodFilter, { Periodo } from '../shared/PeriodFilter';
 import EmptyState from '../shared/EmptyState';
 import { generarPDFInsumos } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
+import { usePermiso } from '../../../hooks/usePermiso';
+import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
+import NuevaIndicacionModal from '../../indicaciones/NuevaIndicacionModal';
+import ModalBasePaciente from '../../modals/ModalBasePaciente';
+import { indicacionesService } from '../../../services/indicacionesService';
+import type { NuevaIndicacionPayload } from '../../../types/indicaciones';
+
+const TIPO_DESCARTABLES = 9;
 
 interface InsumosSectionProps {
     numeroVisita: number | null;
@@ -37,10 +45,29 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     fechaIngreso,
     horaIngreso
 }) => {
-    const { activeSection, selectedDate } = useBedDetail();
+    const { activeSection, selectedDate, setSelectedDate, bed } = useBedDetail();
+    const { puede } = usePermiso();
     const [selectedInsumoId, setSelectedInsumoId] = useState<string | null>(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const fechaISO = useMemo(() => toISODate(selectedDate), [selectedDate]);
+
+    const puedeCrear =
+        (puede('INTERNACION.INSUMOS.CREAR') || puede('INTERNACION.INDICACIONES.CREAR')) &&
+        puedeCargarEnFechaSeleccionada(selectedDate, {
+            egresada: bed?.egresada,
+            fechaEgresoSQL: bed?.fechaEgresoSQL,
+            fechaIngresoSQL: bed?.fechaIngresoSQL ?? fechaIngreso,
+        });
+
+    /** Igual que en Indicaciones: se carga para hoy o mañana. */
+    const fechaCargaPermitida = useMemo(() => {
+        const hoy = new Date();
+        const manana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+        const sel = toISODate(selectedDate);
+        return sel === toISODate(manana) ? sel : toISODate(hoy);
+    }, [selectedDate]);
 
     const insumosPath = useMemo(
         () => numeroVisita ? `/indicaciones/${numeroVisita}/insumos/byDate` : undefined,
@@ -106,6 +133,30 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
         }
     };
 
+    const handleSave = async (payload: NuevaIndicacionPayload) => {
+        setSaving(true);
+        try {
+            const fechaGuardada = payload.FechaCarga || fechaCargaPermitida;
+            const resultado = await indicacionesService.postNuevaIndicacion({
+                ...payload,
+                NumeroVisita: payload.NumeroVisita ?? numeroVisita,
+                TipoIndicacion: TIPO_DESCARTABLES,
+                FechaCarga: fechaGuardada,
+            });
+            if (fechaGuardada && fechaGuardada !== fechaISO) {
+                const [y, m, d] = fechaGuardada.split('-').map(Number);
+                setSelectedDate(new Date(y, m - 1, d));
+            }
+            return resultado;
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const refetchListado = async () => {
+        await refetch();
+    };
+
     const [query, setQuery] = useState("");
 
     // Filtrar insumos por búsqueda
@@ -153,6 +204,18 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
                     <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
                     <span className={styles.dateText}>{fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}</span>
                     <div className={styles.dateActions}>
+                        {puedeCrear && (
+                            <button
+                                type="button"
+                                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnAddDate}`}
+                                onClick={() => setModalOpen(true)}
+                            >
+                                <span className={styles.addIcon} aria-hidden>
+                                    +
+                                </span>
+                                Agregar insumo
+                            </button>
+                        )}
                         <ExportButton
                             data={insumosFiltered}
                             fileName={`insumos_${selectedDate?.toISOString().split('T')[0]}.pdf`}
@@ -199,6 +262,37 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
                     )}
                 </div>
             </div>
+
+            <ModalBasePaciente
+                numeroVisita={numeroVisita ? String(numeroVisita) : ""}
+                onClose={() => setModalOpen(false)}
+                isOpen={modalOpen}
+                titulo="Agregar insumo"
+                footerButtons={
+                    <button
+                        className={`${styles.btn} ${styles.btnPrimary}`}
+                        type="submit"
+                        form="nueva-indicacion-form"
+                        disabled={saving}
+                    >
+                        {saving ? "Guardando…" : "Guardar"}
+                    </button>
+                }
+            >
+                {modalOpen && (
+                    <NuevaIndicacionModal
+                        onClose={() => setModalOpen(false)}
+                        onSave={handleSave}
+                        defaultNumeroVisita={numeroVisita}
+                        refetch={refetchListado}
+                        fechaCarga={fechaCargaPermitida}
+                        fechaIngresoSQL={bed?.fechaIngresoSQL ?? fechaIngreso}
+                        fechaEgresoSQL={bed?.fechaEgresoSQL}
+                        egresada={Boolean(bed?.egresada)}
+                        tipoFijo={TIPO_DESCARTABLES}
+                    />
+                )}
+            </ModalBasePaciente>
         </div>
     );
 };
