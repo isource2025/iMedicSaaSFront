@@ -161,7 +161,7 @@ export const adjuntosService = {
       nombreArchivo?: string | null;
     }>
   > {
-    const unique = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))];
+    const unique = Array.from(new Set(ids.filter((id) => Number.isFinite(id) && id > 0)));
     if (!unique.length) return [];
 
     const results = await Promise.all(
