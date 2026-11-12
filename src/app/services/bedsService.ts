@@ -47,6 +47,11 @@ function mapBedItem(item: Record<string, unknown>): Bed {
 			item.DiagnosticoDescripcion || item.diagnosticoDescripcion || '',
 		),
 		razonSocialCliente: String(item.RazonSocialCliente || item.razonSocialCliente || ''),
+		fechaNacimientoPaciente: String(
+			item.FechaNacimientoPaciente || item.fechaNacimientoPaciente || '',
+		),
+		numeroAfiliado: String(item.NumeroAfiliado || item.numeroAfiliado || '').trim(),
+		numeroInternacion: String(item.NumeroInternacion || item.numeroInternacion || '').trim(),
 		SexoPaciente: String(item.SexoPaciente || ''),
 		descripcionSexo: String(item.DescripcionSexo || item.descripcionSexo || ''),
 		servicioMedicoDescripcion: String(

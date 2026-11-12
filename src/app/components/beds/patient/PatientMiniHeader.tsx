@@ -10,6 +10,7 @@ import { formatSqlDate } from '../../../utils/dateUtils';
 import { apiFetch } from '@/app/utils/authFetch';
 import {
 	type PatientHeaderSnapshot,
+	edadDesdeFecha,
 	hasUsableHeader,
 } from '../../../utils/bedHeader';
 
@@ -31,6 +32,9 @@ interface PacienteData {
 	fechaAdmisionS: string;
 	fechaIngresoSQL: string;
 	horaIngresoSQL: string;
+	fechaNacimiento: string;
+	numeroAfiliado: string;
+	numeroInternacion: string;
 }
 
 function snapshotToData(
@@ -48,6 +52,9 @@ function snapshotToData(
 		fechaAdmisionS: h.fechaAdmisionS || '',
 		fechaIngresoSQL: h.fechaIngresoSQL || '',
 		horaIngresoSQL: h.horaIngresoSQL || '',
+		fechaNacimiento: h.fechaNacimiento || '',
+		numeroAfiliado: h.numeroAfiliado || '',
+		numeroInternacion: h.numeroInternacion || '',
 	};
 }
 
@@ -139,6 +146,11 @@ export default function PatientMiniHeader({
 					'',
 				fechaIngresoSQL: String(cama?.fechaIngresoSQL || visitaData?.fechaIngresoSQL || ''),
 				horaIngresoSQL: String(cama?.horaIngresoSQL || visitaData?.horaIngresoSQL || ''),
+				fechaNacimiento: String(cama?.FechaNacimientoPaciente || ''),
+				numeroAfiliado: String(cama?.NumeroAfiliado || '').trim(),
+				numeroInternacion: String(
+					cama?.NumeroInternacion || visitaData?.numeroInternacion || '',
+				).trim(),
 			};
 
 			setPacienteData(pd);
@@ -155,6 +167,9 @@ export default function PatientMiniHeader({
 				fechaAdmisionS: '',
 				fechaIngresoSQL: '',
 				horaIngresoSQL: '',
+				fechaNacimiento: '',
+				numeroAfiliado: '',
+				numeroInternacion: '',
 			});
 		} finally {
 			setLoading(false);
@@ -206,6 +221,8 @@ export default function PatientMiniHeader({
 		return '';
 	})();
 
+	const edad = edadDesdeFecha(pacienteData?.fechaNacimiento);
+
 	if (loading) {
 		return (
 			<div style={{ position: 'relative', minHeight: '80px' }}>
@@ -244,6 +261,11 @@ export default function PatientMiniHeader({
 							</span>
 						)}
 					{renderGenderIcon()}
+					{edad != null ? (
+						<span className={s.edad} title={`Edad: ${edad} años`}>
+							{edad} {edad === 1 ? 'año' : 'años'}
+						</span>
+					) : null}
 				</div>
 
 				<h3 className={s.nombrePaciente}>
@@ -304,10 +326,22 @@ export default function PatientMiniHeader({
 					</div>
 				) : null}
 
+				{pacienteData?.numeroInternacion ? (
+					<div className={s.internacionBlock}>
+						<span className={s.internacionNumber}>{pacienteData.numeroInternacion}</span>
+						<span className={s.visitaLabel}>N° DE INTERNACIÓN</span>
+					</div>
+				) : null}
+
 				<div className={s.coberturaBlock}>
 					<span className={s.coberturaValue}>
 						{pacienteData?.coberturaSocial || 'N/A'}
 					</span>
+					{pacienteData?.numeroAfiliado ? (
+						<span className={s.afiliadoValue} title="Número de afiliado">
+							Afiliado {pacienteData.numeroAfiliado}
+						</span>
+					) : null}
 					<span className={s.coberturaLabel}>COBERTURA</span>
 				</div>
 			</div>

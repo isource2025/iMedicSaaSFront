@@ -69,6 +69,13 @@ function columnasBase(
       render: (f) => f.ausentes.toLocaleString(),
     },
     {
+      id: 'cancelados',
+      header: 'Cancelados',
+      align: 'right',
+      className: tableStyles.numeric,
+      render: (f) => (f.cancelados ?? 0).toLocaleString(),
+    },
+    {
       id: 'ausentismo',
       header: 'Ausentismo',
       align: 'right',

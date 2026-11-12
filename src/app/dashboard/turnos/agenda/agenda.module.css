@@ -6,18 +6,13 @@
 	align-items: flex-start;
 }
 
-@media (max-width: 900px) {
-	.layout {
-		grid-template-columns: 1fr;
-	}
-}
-
 .main {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     justify-content: flex-start;
     height: 100%;
+    min-width: 0;
 }
 
 .aside {
@@ -29,6 +24,20 @@
     align-self: start;
     justify-content: flex-start;
     height: 100%;
+    min-width: 0;
+}
+
+/* minmax(0, 1fr): con 1fr la columna crece al ancho de la tabla (1100px) y LayoutShell la recorta sin scroll. */
+@media (max-width: 900px) {
+	.layout {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.85rem;
+	}
+
+	.aside {
+		position: static;
+		height: auto;
+	}
 }
 
 .mainCard {
@@ -326,9 +335,10 @@
 
 .tableHeaderTop {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: space-between;
 	align-items: center;
-	gap: 0.75rem;
+	gap: 0.5rem 0.75rem;
 }
 
 .tableHeaderActions {
@@ -650,4 +660,115 @@
 .bandejaLink:hover {
 	color: #fff;
 	background: #0369a1;
+}
+
+/* Celular: cada turno pasa de fila a tarjeta con todos sus datos (etiqueta = data-label de la celda). */
+@media (max-width: 640px) {
+	.cardHeader {
+		padding: 0.55rem 0.75rem;
+	}
+
+	.cardBody {
+		padding: 0.75rem;
+		gap: 0.75rem;
+	}
+
+	.filtersBar {
+		padding: 0.6rem 0.75rem;
+		gap: 0.6rem;
+	}
+
+	.kpis {
+		grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+		gap: 0.5rem;
+	}
+
+	.kpi {
+		padding: 0.45rem 0.4rem;
+	}
+
+	.kpiValue {
+		font-size: 1.15rem;
+	}
+
+	.tableWrap header,
+	.tableHeader {
+		padding: 0.55rem 0.75rem;
+	}
+
+	.tableHeaderActions {
+		flex-shrink: 1;
+		flex-wrap: wrap;
+	}
+
+	.tableWrap:has(.tableWide) {
+		border: none;
+		overflow: visible;
+	}
+
+	.tableWide {
+		min-width: 0;
+		font-size: 0.82rem;
+	}
+
+	.tableWide thead {
+		display: none;
+	}
+
+	.tableWide tbody {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		padding-top: 0.6rem;
+	}
+
+	.tableWide tr {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		border: 1px solid #e2e8f0;
+		border-radius: 10px;
+		overflow: hidden;
+		background: #fff;
+	}
+
+	.tableWide td {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		min-width: 0;
+		padding: 0.4rem 0.65rem;
+		border-bottom: none;
+	}
+
+	.tableWide td::before {
+		content: attr(data-label);
+		font-size: 0.66rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: #64748b;
+	}
+
+	.tableWide td[data-celda='ancha'],
+	.tableWide td:not([data-label]) {
+		grid-column: 1 / -1;
+	}
+
+	.tableWide td:not([data-label])::before {
+		content: none;
+	}
+
+	.tableWide td[data-celda='menu'] {
+		align-items: flex-end;
+		border-top: 1px solid #f1f5f9;
+	}
+
+	.tableWide td > * {
+		max-width: 100%;
+	}
+
+	.jornadaTab {
+		padding: 0.4rem 0.5rem;
+		font-size: 0.74rem;
+	}
 }

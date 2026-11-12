@@ -16,9 +16,10 @@ import coberturaService, {
 	type CoberturaOption,
 } from '../../services/coberturaService';
 import SeleccionCoberturaModal from './AddPatient/SeleccionCoberturaModal';
+import SeleccionPersonaRenaperModal from './AddPatient/SeleccionPersonaRenaperModal';
 import { apiService } from '../../services/axios';
 import { patientService } from '../../services/patientService';
-import type { PersonaResponse } from './typesForRenaper';
+import type { Persona, PersonaResponse } from './typesForRenaper';
 
 type ResolvedLocalidad = {
 	Valor: number | string;
@@ -163,6 +164,8 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	const [localidadOptions, setLocalidadOptions] = useState<Localidad[]>([]);
 	const [coberturaOptions, setCoberturaOptions] = useState<CoberturaOption[]>([]);
 	const [matchesCobertura, setMatchesCobertura] = useState<AfiliadoMatch[]>([]);
+	const [personasRenaper, setPersonasRenaper] = useState<Persona[]>([]);
+	const resolverPersonaRef = useRef<((p: Persona | null) => void) | null>(null);
 	const [validandoAfiliado, setValidandoAfiliado] = useState(false);
 	const [buscandoCoberturas, setBuscandoCoberturas] = useState(false);
 	const [resultadoAfiliado, setResultadoAfiliado] = useState<{
@@ -305,6 +308,19 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 		);
 	};
 
+	const cerrarSeleccionPersona = (persona: Persona | null) => {
+		setPersonasRenaper([]);
+		const resolver = resolverPersonaRef.current;
+		resolverPersonaRef.current = null;
+		resolver?.(persona);
+	};
+
+	const elegirPersonaRenaper = (personas: Persona[]) =>
+		new Promise<Persona | null>((resolve) => {
+			resolverPersonaRef.current = resolve;
+			setPersonasRenaper(personas);
+		});
+
 	const getRenaperInfo = async (
 		e: React.MouseEvent | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
 		NumeroDocumento: number,
@@ -312,6 +328,7 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 	) => {
 		e.preventDefault();
 		if (!NumeroDocumento) return;
+		if (resolverPersonaRef.current) cerrarSeleccionPersona(null);
 		const busqueda = ++busquedaDocRef.current;
 		const vigente = () => busqueda === busquedaDocRef.current;
 		setBuscandoRenaper(true);
@@ -362,24 +379,44 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 			const prefijoOk = local
 				? 'Ficha registrada. Se completaron los datos faltantes desde RENAPER.'
 				: 'Datos cargados desde RENAPER.';
-			const sexoConsulta = sexoLocal || SexoVal;
-			if (!sexoConsulta) {
-				setAvisoDocumento(`${prefijo} Seleccione el sexo para consultar RENAPER.`);
-				return;
-			}
 			setAvisoDocumento(`${prefijo} Buscando en RENAPER…`);
-			let persona: Record<string, unknown> | null = null;
+			// RENAPER informa una persona por sexo: el mismo DNI puede ser de dos personas distintas.
+			let personas: Persona[] = [];
 			try {
 				const { data } = await apiService.get<PersonaResponse>(
-					`/renaper/buscar-persona/${NumeroDocumento}/${sexoConsulta === 'F' ? 1 : 2}`,
+					`/renaper/buscar-persona/${NumeroDocumento}`,
 				);
-				persona = (data?.persona as Record<string, unknown>) || null;
+				personas = data?.personas || [];
 			} catch (renaperErr) {
-				console.error('Error Renaper:', renaperErr);
-				if (vigente()) setAvisoDocumento(`${prefijo} No se pudo consultar RENAPER.`);
-				return;
+				const status = (renaperErr as { response?: { status?: number } })?.response?.status;
+				if (status !== 404) {
+					console.error('Error Renaper:', renaperErr);
+					if (vigente()) setAvisoDocumento(`${prefijo} No se pudo consultar RENAPER.`);
+					return;
+				}
 			}
 			if (!vigente()) return;
+
+			let elegida: Persona | null = personas.length === 1 ? personas[0] : null;
+			if (personas.length > 1) {
+				const delSexoLocal = sexoLocal
+					? personas.filter((p) => String(p.sexo || '').toUpperCase() === sexoLocal)
+					: [];
+				if (delSexoLocal.length === 1) {
+					elegida = delSexoLocal[0];
+				} else {
+					setAvisoDocumento(
+						`${prefijo} El DNI corresponde a ${personas.length} personas en RENAPER: seleccione la correcta.`,
+					);
+					elegida = await elegirPersonaRenaper(personas);
+					if (!vigente()) return;
+					if (!elegida) {
+						setAvisoDocumento(`${prefijo} No se cargaron datos de RENAPER.`);
+						return;
+					}
+				}
+			}
+			const persona = elegida as unknown as Record<string, unknown> | null;
 			if (!persona) {
 				setAvisoDocumento(
 					local
@@ -897,6 +934,12 @@ export const PatientFormBase: React.FC<PatientFormBaseProps> = ({
 					setMatchesCobertura([]);
 				}}
 				onCancelar={() => setMatchesCobertura([])}
+			/>
+			<SeleccionPersonaRenaperModal
+				documento={String(formData.NumeroDocumento || '')}
+				personas={personasRenaper}
+				onSeleccionar={(p) => cerrarSeleccionPersona(p)}
+				onCancelar={() => cerrarSeleccionPersona(null)}
 			/>
 		</form>
 	);

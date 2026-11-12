@@ -51,11 +51,11 @@ export function AgendaTurnoTablaRow({
 	const conPaciente = !libre || cancelado;
 	return (
 		<tr className={trClassName} onClick={onTrClick} style={trStyle}>
-			<td>
+			<td data-label='Triage'>
 				<CeldaTriage nivel={row.idClasificacionTriage} />
 			</td>
-			<td>{badgeEstado}</td>
-			<td>
+			<td data-label='Estado'>{badgeEstado}</td>
+			<td data-label='Horarios'>
 				<CeldaHoras
 					horaTurno={row.hora}
 					horaLlegada={row.horaLlegada}
@@ -65,7 +65,7 @@ export function AgendaTurnoTablaRow({
 					cancelado={cancelado}
 				/>
 			</td>
-			<td>
+			<td data-label='Paciente' data-celda='ancha'>
 				<CeldaPaciente
 					libre={libre}
 					cancelado={cancelado}
@@ -75,13 +75,13 @@ export function AgendaTurnoTablaRow({
 					numeroVisita={row.numeroVisita}
 				/>
 			</td>
-			<td>{conPaciente && row.edad != null ? `${row.edad} años` : '—'}</td>
-			<td>
+			<td data-label='Edad'>{conPaciente && row.edad != null ? `${row.edad} años` : '—'}</td>
+			<td data-label='Cobertura'>
 				<span className={cellStyles.coberturaCol}>
 					{conPaciente && row.cobertura ? row.cobertura : '—'}
 				</span>
 			</td>
-			<td>
+			<td data-label='Sexo / Nac.'>
 				{conPaciente ? (
 					<CeldaSexoNac
 						sexo={row.sexo}
@@ -92,15 +92,15 @@ export function AgendaTurnoTablaRow({
 					<span className={cellStyles.muted}>—</span>
 				)}
 			</td>
-			<td>
+			<td data-label='Observaciones' data-celda='ancha'>
 				<span className={cellStyles.obsCol}>
 					{conPaciente && row.observaciones?.trim()
 						? row.observaciones.trim()
 						: '—'}
 				</span>
 			</td>
-			<td>{row.sector || '—'}</td>
-			<td>
+			<td data-label='Sector'>{row.sector || '—'}</td>
+			<td data-label='RAC' data-celda='ancha'>
 				{conPaciente ? (
 					<CeldaRacPills
 						nivel={row.idClasificacionTriage}
@@ -111,7 +111,7 @@ export function AgendaTurnoTablaRow({
 					<span className={cellStyles.muted}>—</span>
 				)}
 			</td>
-			{menuCelda != null ? <td>{menuCelda}</td> : null}
+			{menuCelda != null ? <td data-celda='menu'>{menuCelda}</td> : null}
 		</tr>
 	);
 }

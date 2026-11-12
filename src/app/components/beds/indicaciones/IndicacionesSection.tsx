@@ -31,6 +31,7 @@ import { puedeCargarEnFechaSeleccionada } from "../../../utils/visitaEgreso";
 import MessageModal, { type MessageModalTone } from "../../UI/MessageModal";
 
 const PARAMS_INDICACIONES = { incluirSuspendidas: 1 };
+const TIPO_DESCARTABLES = 9;
 
 function esIndicacionSuspendida(x: {
 	suspendida?: boolean;
@@ -194,8 +195,11 @@ export default function IndicacionesSection({
 }: IndicacionesSectionProps) {
     const { activeSection, selectedDate, setSelectedDate, marcarSeccionInicialLista, bed } = useBedDetail();
     const { puede } = usePermiso();
+    const puedeIndicar = puede('INTERNACION.INDICACIONES.CREAR');
+    // Enfermería: INSUMOS.CREAR permite cargar solo descartables desde el mismo formulario.
+    const soloDescartables = !puedeIndicar && puede('INTERNACION.INSUMOS.CREAR');
     const puedeCrear =
-        puede('INTERNACION.INDICACIONES.CREAR') &&
+        (puedeIndicar || soloDescartables) &&
         puedeCargarEnFechaSeleccionada(selectedDate, {
             egresada: bed?.egresada,
             fechaEgresoSQL: bed?.fechaEgresoSQL,
@@ -911,6 +915,7 @@ export default function IndicacionesSection({
                     fechaIngresoSQL={bed?.fechaIngresoSQL ?? fechaIngreso}
                     fechaEgresoSQL={bed?.fechaEgresoSQL}
                     egresada={Boolean(bed?.egresada)}
+                    tipoFijo={soloDescartables ? TIPO_DESCARTABLES : null}
                 />
             </ModalBasePaciente>
 

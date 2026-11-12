@@ -33,6 +33,12 @@ export interface Bed {
 	diagnosticoDescripcion?: string;
 	servicioMedicoDescripcion?: string;
 	razonSocialCliente?: string;
+	/** YYYY-MM-DD (imPacientes.FechaNacimiento). */
+	fechaNacimientoPaciente?: string;
+	/** imPacientes.NumeroSSN */
+	numeroAfiliado?: string;
+	/** imVisita.NUMEROINTERNACION (SIES / Binaria en Güemes, Materno, Sarmiento). */
+	numeroInternacion?: string;
 	fechaAdmisionMovimiento?: number; // Fecha exacta del movimiento
 	horaAdmisionMovimiento?: number; // Hora exacta del movimiento
 	fechaIngresoFormateada?: string; // Fecha ya formateada desde el padre

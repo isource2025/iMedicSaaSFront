@@ -322,6 +322,12 @@ export default function Dashboard() {
                   </p>
                   <span className={styles.cardSecondaryLabel}>Ausentes</span>
                 </div>
+                <div className={styles.cardSecondaryMetric}>
+                  <p className={styles.cardSecondaryValue} style={{ color: '#757575' }}>
+                    {ambulatorioHoy.cancelados ?? 0}
+                  </p>
+                  <span className={styles.cardSecondaryLabel}>Cancelados</span>
+                </div>
               </div>
             </div>
           )}
