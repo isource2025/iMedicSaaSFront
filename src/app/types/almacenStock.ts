@@ -41,7 +41,84 @@ export interface ProductoStock {
 	RubSubLin?: string | null;
 	CBarra?: string | null;
 	Texto?: string | null;
+	Foto?: string | null;
+	TieneFoto?: boolean;
+	Activo?: boolean;
+	StockTotal?: number | null;
+	DepositosConStock?: number | null;
+	DepositosBajoMinimo?: number | null;
 }
+
+export type ProductosEstadoFiltro = '' | 'activos' | 'baja';
+export type ProductosStockFiltro = '' | 'con' | 'sin' | 'bajo';
+export type ProductosOrden = 'descripcion' | 'codigo' | 'precio' | 'stock';
+
+export interface ProductosResumen {
+	total: number;
+	activos: number;
+	bajas: number;
+	conFoto: number;
+	conPrecio: number;
+	conBarra: number;
+	conStock: number;
+	bajoMinimo: number;
+	conProveedor: number;
+	pctActivos: number;
+	pctConStock: number;
+	pctConPrecio: number;
+	pctConFoto: number;
+	porRubro: { IdRubro: number | null; Descripcion: string; cantidad: number; conStock: number }[];
+}
+
+export interface ActividadDia {
+	dia: string;
+	entradas: number;
+	salidas: number;
+}
+
+export interface MovimientoStock {
+	Origen: 'REM' | 'AJU';
+	IdTransaccion: number | null;
+	Comprobante: string;
+	Fecha: string | null;
+	Hora: string | null;
+	IdDeposito: number;
+	DepositoNombre: string;
+	IdProducto: number;
+	ProductoNombre: string;
+	Cantidad: number;
+	Concepto: string | null;
+}
+
+export interface MovimientosPage {
+	items: MovimientoStock[];
+	page: number;
+	pageSize: number;
+	hasMore: boolean;
+	dias: number | null;
+}
+
+export interface ProveedorDeProducto {
+	IdProveedor: number;
+	Descripcion: string;
+	CodProveedor?: string | null;
+	PrecioRef?: number | null;
+	FechaRef?: string | null;
+	PlazoEntrega?: number | null;
+	IdStatus?: number | null;
+}
+
+export interface ProductoFicha {
+	producto: ProductoStock;
+	stock: ExistenciaStock[];
+	proveedores: ProveedorDeProducto[];
+	movimientos: MovimientoStock[];
+	actividad: ActividadDia[];
+	remitos: number;
+	ultimoRemito: string | null;
+}
+
+export type CatalogoProductoNombre = 'rubros' | 'subrubros' | 'marcas' | 'unidades';
 
 export interface ProductosPage {
 	items: ProductoStock[];
@@ -240,9 +317,16 @@ export interface RemitosCatalogos {
 	proveedores: RemitoProveedor[];
 }
 
+/** Nivel de una fila de Stock según mínimo / punto de pedido / máximo. */
+export type EstadoStock = 'sin' | 'bajo' | 'reponer' | 'exceso' | 'ok';
+export type ExistenciasEstadoFiltro = '' | 'con' | 'sinParametros' | EstadoStock;
+export type ExistenciasOrden = 'producto' | 'deposito' | 'cantidad' | 'critico' | 'reciente';
+
 /** dbo.Stock + Productos + Depositos */
 export interface ExistenciaStock {
 	IdProducto: number;
+	IdEmpresa?: number;
+	IdSucursal?: number;
 	/** null cuando la lista viene agrupada por producto (todos los depósitos). */
 	IdDeposito: number | null;
 	DepositoNombre?: string | null;
@@ -262,6 +346,11 @@ export interface ExistenciaStock {
 	UnidadNombre?: string | null;
 	IdRubro?: number | null;
 	RubroNombre?: string | null;
+	TieneFoto?: boolean;
+	Precio?: number;
+	Valorizado?: number;
+	estado?: EstadoStock;
+	nivelPct?: number | null;
 	bajoMinimo?: boolean;
 	bajoPunto?: boolean;
 }
@@ -278,16 +367,185 @@ export interface ExistenciasPage {
 
 export interface ExistenciasCatalogos {
 	depositos: RemitoDeposito[];
+	rubros?: { IdRubro: number; Descripcion: string }[];
 }
+
+export interface ExistenciasResumen {
+	filas: number;
+	productos: number;
+	depositos: number;
+	conStock: number;
+	sinStock: number;
+	bajoMinimo: number;
+	aReponer: number;
+	exceso: number;
+	conParametros: number;
+	unidades: number;
+	valorizado: number;
+	pctConStock: number;
+	pctConParametros: number;
+	porDeposito: {
+		IdDeposito: number;
+		Descripcion: string;
+		filas: number;
+		conStock: number;
+		bajoMinimo: number;
+		unidades: number;
+		valorizado: number;
+	}[];
+	porRubro: { IdRubro: number | null; Descripcion: string; filas: number; unidades: number; valorizado: number }[];
+	actividad: ActividadDia[];
+}
+
+export interface ClaveStock {
+	IdEmpresa?: number;
+	IdSucursal?: number;
+	IdDeposito: number;
+	IdProducto: number;
+}
+
+export interface ParametrosStock {
+	Ubicacion?: string;
+	StockMinimo?: number;
+	StockMaximo?: number;
+	PuntoPedido?: number;
+}
+
+export interface AjusteResultado {
+	IdTransaccion: number;
+	Comprobante: string;
+	NroCbte: number;
+	delta?: number;
+}
+
+export type ExistenciaConAjuste = ExistenciaStock & { ajuste: AjusteResultado | null };
+
+/** Status_Prov: 1 activo, 2 suspendido, 3 baja. */
+export type EstadoProveedor = 1 | 2 | 3;
+export type ProveedoresOrden = 'nombre' | 'reciente' | 'actividad' | 'codigo';
 
 export interface ProveedorClarion {
 	IdProveedor: number;
 	Descripcion: string;
 	NombreFantasia?: string | null;
-	Cuit?: string | null;
+	FechaAlta?: string | null;
 	IdStatus?: number | null;
+	StatusNombre?: string | null;
+	IdTipoProv?: number | null;
+	TipoNombre?: string | null;
+	IdTipoProvCateg?: number | null;
+	CategNombre?: string | null;
+	Cuit?: string | null;
+	CuitFmt?: string | null;
+	IdTipoIva?: number | null;
+	TipoIvaNombre?: string | null;
 	Email?: string | null;
+	Calle?: string | null;
+	CalleNro?: number | null;
+	Piso?: string | null;
+	Depto?: string | null;
+	IdCodPostal?: string | null;
+	IdLocalidad?: number | null;
+	LocalidadNombre?: string | null;
+	IdProvincia?: number | null;
+	ProvinciaNombre?: string | null;
+	IdPais?: number | null;
+	EntreCalles?: string | null;
+	ChequesOrden?: string | null;
+	IdBanco?: number | null;
+	NroCuenta?: string | null;
+	Descuento?: number;
 	Domicilio?: string | null;
+	Remitos?: number;
+	UltimoRemito?: string | null;
+	ImporteRemitos?: number;
+	Productos?: number;
+	Telefono?: string | null;
+}
+
+export interface ProveedorTelefono {
+	Tipo?: string | null;
+	Numero: string;
+	Observaciones?: string | null;
+}
+
+export interface ProveedorContacto {
+	Contacto: string;
+	Cargo?: string | null;
+	Interno?: string | null;
+	Email?: string | null;
+	Comentarios?: string | null;
+}
+
+export interface ProveedorObservacion {
+	Fecha: string;
+	Nro: number;
+	Comentarios: string | null;
+}
+
+export interface ProveedorProducto {
+	IdRegistro?: number;
+	IdProducto: number;
+	ProductoNombre?: string;
+	IdUnidad?: string | null;
+	CodProveedor?: string | null;
+	DescProveedor?: string | null;
+	PrecioRef?: number | null;
+	FechaRef?: string | null;
+	PlazoEntrega?: number | null;
+}
+
+export interface ProveedorDetalle extends ProveedorClarion {
+	telefonos: ProveedorTelefono[];
+	contactos: ProveedorContacto[];
+	observaciones: ProveedorObservacion[];
+	productos: ProveedorProducto[];
+	ultimosRemitos: {
+		IdTransaccion: number;
+		Comprobante: string;
+		Fecha: string | null;
+		Importe: number;
+		IdStatus: number | null;
+		DepositoNombre: string | null;
+	}[];
+}
+
+export type ProveedorSaveBody = Partial<ProveedorClarion> & {
+	Descripcion: string;
+	telefonos?: ProveedorTelefono[];
+	contactos?: ProveedorContacto[];
+	productos?: ProveedorProducto[];
+	NuevaObservacion?: string;
+};
+
+export interface ProveedoresResumen {
+	total: number;
+	activos: number;
+	suspendidos: number;
+	bajas: number;
+	conCuit: number;
+	conEmail: number;
+	conDomicilio: number;
+	conRemitos: number;
+	nuevos90: number;
+	pctActivos: number;
+	pctConCuit: number;
+	pctConEmail: number;
+	pctConDomicilio: number;
+	porTipo: { IdTipoProv: number | null; Descripcion: string; cantidad: number }[];
+	top: { IdProveedor: number; Descripcion: string; remitos: number; importe: number; ultimo: string | null }[];
+}
+
+export interface ProveedoresCatalogos {
+	estados: { IdStatus: number; Descripcion: string }[];
+	tipos: { IdTipoProv: number; Descripcion: string }[];
+	categorias: { IdTipoProvCateg: number; Descripcion: string }[];
+	tiposIva: { IdTipoIva: number; Descripcion: string; TipoIva?: string }[];
+	paises: { IdPais: number; Descripcion: string }[];
+	provincias: { IdProvincia: number; Descripcion: string; IdPais?: number }[];
+	localidades: { IdLocalidad: number; Descripcion: string; IdProvincia?: number }[];
+	bancos: { IdBanco: number; Descripcion: string }[];
+	nextId: number;
 }
 
 export interface ProveedoresClarionPage {

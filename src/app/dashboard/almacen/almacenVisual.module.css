@@ -1,0 +1,525 @@
+.kpiGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 0.7rem;
+}
+
+.kpi {
+	appearance: none;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.8rem 0.95rem;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+	text-align: left;
+	font: inherit;
+	min-width: 0;
+}
+
+.kpiClick {
+	cursor: pointer;
+	transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.kpiClick:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+}
+
+.kpiActivo {
+	background: #fbfdfe;
+}
+
+.kpiIcon {
+	width: 46px;
+	height: 46px;
+	border-radius: 12px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.kpiBody {
+	display: flex;
+	flex-direction: column;
+	gap: 0.08rem;
+	min-width: 0;
+}
+
+.kpiLabel {
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.kpiValue {
+	font-size: 1.35rem;
+	font-weight: 800;
+	color: #0f172a;
+	letter-spacing: -0.02em;
+	font-variant-numeric: tabular-nums;
+	line-height: 1.15;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kpiHint {
+	font-size: 0.74rem;
+	color: #94a3b8;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.ring {
+	position: relative;
+	flex-shrink: 0;
+}
+
+.ringLabel {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.74rem;
+	font-weight: 800;
+	color: #0f172a;
+	font-variant-numeric: tabular-nums;
+}
+
+.chartsRow {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 0.7rem;
+}
+
+.card {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	overflow: hidden;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.cardHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.65rem 0.9rem 0.25rem;
+}
+
+.cardTitle {
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: #475569;
+}
+
+.cardBody {
+	padding: 0.45rem 0.9rem 0.85rem;
+	flex: 1;
+	min-height: 0;
+}
+
+.vacio {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 110px;
+	color: #94a3b8;
+	font-size: 0.84rem;
+}
+
+.donut {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+	min-width: 0;
+}
+
+.donutChart {
+	position: relative;
+	flex-shrink: 0;
+}
+
+.donutCentro {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+	text-align: center;
+}
+
+.donutCentro strong {
+	font-size: 1.2rem;
+	font-weight: 800;
+	color: #0f172a;
+	font-variant-numeric: tabular-nums;
+}
+
+.donutCentro span {
+	font-size: 0.66rem;
+	font-weight: 600;
+	color: #94a3b8;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.leyenda {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.32rem;
+	flex: 1;
+	min-width: 0;
+}
+
+.leyenda li {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	font-size: 0.78rem;
+	color: #334155;
+	min-width: 0;
+}
+
+.leyendaDot {
+	width: 9px;
+	height: 9px;
+	border-radius: 3px;
+	flex-shrink: 0;
+}
+
+.leyendaNombre {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.leyendaPct {
+	font-weight: 700;
+	color: #64748b;
+	font-variant-numeric: tabular-nums;
+}
+
+.barList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+}
+
+.barBtn {
+	appearance: none;
+	display: block;
+	width: 100%;
+	border: none;
+	background: transparent;
+	padding: 0.15rem 0.2rem;
+	margin: -0.15rem -0.2rem;
+	border-radius: 8px;
+	text-align: left;
+	font: inherit;
+	cursor: pointer;
+}
+
+.barBtn:hover {
+	background: #f4f9fb;
+}
+
+.barTop {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-size: 0.8rem;
+	margin-bottom: 0.22rem;
+}
+
+.barLabel {
+	color: #334155;
+	font-weight: 600;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.barValue {
+	color: #0f172a;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.barTrack {
+	height: 8px;
+	border-radius: 999px;
+	background: #eef2f6;
+	overflow: hidden;
+}
+
+.barFill {
+	height: 100%;
+	border-radius: 999px;
+	transition: width 0.5s ease;
+}
+
+.barSub {
+	margin-top: 0.15rem;
+	font-size: 0.7rem;
+	color: #94a3b8;
+}
+
+.nivel {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	min-width: 120px;
+}
+
+.nivelCompacto {
+	min-width: 60px;
+}
+
+.nivelTrack {
+	position: relative;
+	flex: 1;
+	height: 8px;
+	border-radius: 999px;
+	background: #eef2f6;
+	overflow: visible;
+}
+
+.nivelFill {
+	height: 100%;
+	border-radius: 999px;
+	transition: width 0.5s ease;
+}
+
+.nivelSinParam {
+	background: repeating-linear-gradient(45deg, #e2e8f0 0 6px, #f1f5f9 6px 12px);
+}
+
+.nivelMarca {
+	position: absolute;
+	top: -3px;
+	width: 2px;
+	height: 14px;
+	border-radius: 1px;
+	background: #f97316;
+	transform: translateX(-1px);
+}
+
+.nivelMarcaPunto {
+	background: #d97706;
+	opacity: 0.6;
+}
+
+.nivelPct {
+	width: 2.6rem;
+	text-align: right;
+	font-size: 0.74rem;
+	font-weight: 800;
+	font-variant-numeric: tabular-nums;
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.32rem;
+	padding: 0.14rem 0.5rem;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	font-size: 0.7rem;
+	font-weight: 700;
+	white-space: nowrap;
+	line-height: 1.3;
+}
+
+.badgeDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+}
+
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+
+.stackTrack {
+	display: flex;
+	height: 14px;
+	border-radius: 999px;
+	overflow: hidden;
+	background: #eef2f6;
+	gap: 2px;
+}
+
+.stackSeg {
+	height: 100%;
+	transition: width 0.5s ease;
+}
+
+.stackLeyenda {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 0.3rem 0.6rem;
+}
+
+.stackItem {
+	appearance: none;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	border: none;
+	background: transparent;
+	padding: 0.22rem 0.3rem;
+	border-radius: 7px;
+	font: inherit;
+	font-size: 0.78rem;
+	color: #334155;
+	text-align: left;
+	cursor: pointer;
+}
+
+.stackItem:disabled {
+	cursor: default;
+}
+
+.stackItem:not(:disabled):hover {
+	background: #f4f9fb;
+}
+
+.stackItem strong {
+	margin-left: auto;
+	font-variant-numeric: tabular-nums;
+}
+
+.avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	border: 1px solid transparent;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	flex-shrink: 0;
+}
+
+.foto {
+	object-fit: cover;
+	flex-shrink: 0;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	display: block;
+}
+
+.fotoVacia {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.segmented {
+	display: inline-flex;
+	padding: 3px;
+	gap: 2px;
+	background: #eef2f6;
+	border-radius: 10px;
+	flex-wrap: wrap;
+}
+
+.segBtn {
+	appearance: none;
+	border: none;
+	background: transparent;
+	padding: 0.38rem 0.75rem;
+	border-radius: 8px;
+	font: inherit;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: #64748b;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	white-space: nowrap;
+}
+
+.segBtn:hover {
+	color: #0f172a;
+}
+
+.segActivo {
+	background: #fff;
+	color: #006988;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+.segCount {
+	font-size: 0.68rem;
+	font-weight: 700;
+	padding: 0 0.35rem;
+	border-radius: 999px;
+	background: rgba(0, 131, 169, 0.1);
+	color: #0a5f78;
+}
+
+.skeleton {
+	border-radius: 14px;
+	background: linear-gradient(90deg, #f1f5f9 0%, #e8eef3 50%, #f1f5f9 100%);
+	background-size: 200% 100%;
+	animation: shimmer 1.3s infinite linear;
+}
+
+@keyframes shimmer {
+	from {
+		background-position: 200% 0;
+	}
+	to {
+		background-position: -200% 0;
+	}
+}
+
+@media (max-width: 640px) {
+	.donut {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.donutChart {
+		align-self: center;
+	}
+}

@@ -1,15 +1,35 @@
 import { apiService } from './axios';
 import type {
 	CandidatosSalidaServicioResp,
+	CatalogoProductoNombre,
+	ClaveStock,
+	EstadoProveedor,
+	ExistenciaConAjuste,
+	ExistenciaStock,
 	ExistenciasCatalogos,
+	ExistenciasEstadoFiltro,
+	ExistenciasOrden,
 	ExistenciasPage,
+	ExistenciasResumen,
 	MedicacionPendienteServiciosResp,
+	MovimientosPage,
+	ParametrosStock,
 	PlanCuentaOpt,
+	ProductoFicha,
 	ProductoStock,
 	ProductosCatalogos,
+	ProductosEstadoFiltro,
+	ProductosOrden,
 	ProductosPage,
+	ProductosResumen,
+	ProductosStockFiltro,
 	ProductoSearchCampo,
+	ProveedorDetalle,
+	ProveedoresCatalogos,
 	ProveedoresClarionPage,
+	ProveedoresOrden,
+	ProveedoresResumen,
+	ProveedorSaveBody,
 	RemitoCabecera,
 	RemitoCliente,
 	RemitoPaciente,
@@ -41,6 +61,10 @@ export const almacenStockService = {
 		campo?: ProductoSearchCampo;
 		idRubro?: number;
 		idSubRubro?: number;
+		estado?: ProductosEstadoFiltro;
+		stock?: ProductosStockFiltro;
+		conFoto?: boolean;
+		orden?: ProductosOrden;
 		page?: number;
 		pageSize?: number;
 	}) =>
@@ -49,8 +73,12 @@ export const almacenStockService = {
 				params: {
 					search: params?.search || undefined,
 					campo: params?.campo || undefined,
-					idRubro: params?.idRubro || undefined,
-					idSubRubro: params?.idSubRubro || undefined,
+					idRubro: params?.idRubro ?? undefined,
+					idSubRubro: params?.idSubRubro ?? undefined,
+					estado: params?.estado || undefined,
+					stock: params?.stock || undefined,
+					conFoto: params?.conFoto ? 1 : undefined,
+					orden: params?.orden || undefined,
 					page: params?.page || 1,
 					pageSize: params?.pageSize || 40,
 				},
@@ -180,9 +208,74 @@ export const almacenStockService = {
 			),
 		),
 
+	resumenProductos: () => unwrap(apiService.get<ApiResp<ProductosResumen>>(`${base}/productos/resumen`)),
+
+	fichaProducto: (id: number) => unwrap(apiService.get<ApiResp<ProductoFicha>>(`${base}/productos/${id}/ficha`)),
+
+	estadoProducto: (id: number, activo: boolean) =>
+		unwrap(apiService.post<ApiResp<ProductoStock>>(`${base}/productos/${id}/estado`, { Activo: activo })),
+
+	/** Baja lógica si el producto tiene historia; si no, se borra. */
+	eliminarProductoModo: async (id: number) => {
+		const res = await apiService.delete<ApiResp<{ modo: 'baja' | 'eliminado'; producto?: ProductoStock }>>(
+			`${base}/productos/${id}`,
+		);
+		if (!res.data?.success) throw new Error(res.data?.mensaje || 'No se pudo borrar');
+		return { ...(res.data.data as { modo: 'baja' | 'eliminado' }), mensaje: res.data.mensaje };
+	},
+
+	/** La foto viaja con el token, así que se pide como blob y se muestra con un object URL. */
+	fotoProducto: async (id: number, signal?: AbortSignal) => {
+		const res = await apiService.get<Blob>(`${base}/productos/${id}/foto`, { responseType: 'blob', signal });
+		return res.data;
+	},
+
+	subirFotoProducto: (id: number, file: File) => {
+		const fd = new FormData();
+		fd.append('foto', file);
+		return unwrap(
+			apiService.post<ApiResp<ProductoStock>>(`${base}/productos/${id}/foto`, fd, {
+				headers: { 'Content-Type': 'multipart/form-data' },
+				timeout: 60000,
+			}),
+		);
+	},
+
+	quitarFotoProducto: (id: number) =>
+		unwrap(apiService.delete<ApiResp<ProductoStock>>(`${base}/productos/${id}/foto`)),
+
+	guardarCatalogoProducto: (
+		catalogo: CatalogoProductoNombre,
+		body: { Descripcion: string; Id?: string | number; IdRubro?: number | null },
+		id?: string | number | null,
+	) =>
+		unwrap(
+			id != null && id !== ''
+				? apiService.put<ApiResp<{ id: string | number; Descripcion: string }>>(
+						`${base}/productos/catalogos/${catalogo}/${encodeURIComponent(String(id))}`,
+						body,
+					)
+				: apiService.post<ApiResp<{ id: string | number; Descripcion: string }>>(
+						`${base}/productos/catalogos/${catalogo}`,
+						body,
+					),
+		),
+
+	eliminarCatalogoProducto: (catalogo: CatalogoProductoNombre, id: string | number, idRubro?: number | null) =>
+		unwrap(
+			apiService.delete<ApiResp<{ ok: boolean }>>(
+				`${base}/productos/catalogos/${catalogo}/${encodeURIComponent(String(id))}`,
+				{ params: { IdRubro: idRubro ?? undefined } },
+			),
+		),
+
 	listarExistencias: (params?: {
 		search?: string;
 		idDeposito?: number;
+		idRubro?: number;
+		idProducto?: number;
+		estado?: ExistenciasEstadoFiltro;
+		orden?: ExistenciasOrden;
 		soloBajoMinimo?: boolean;
 		page?: number;
 		pageSize?: number;
@@ -191,7 +284,11 @@ export const almacenStockService = {
 			apiService.get<ApiResp<ExistenciasPage>>(`${base}/existencias`, {
 				params: {
 					search: params?.search || undefined,
-					idDeposito: params?.idDeposito || undefined,
+					idDeposito: params?.idDeposito ?? undefined,
+					idRubro: params?.idRubro ?? undefined,
+					idProducto: params?.idProducto ?? undefined,
+					estado: params?.estado || undefined,
+					orden: params?.orden || undefined,
 					soloBajoMinimo: params?.soloBajoMinimo ? 1 : undefined,
 					page: params?.page || 1,
 					pageSize: params?.pageSize || 40,
@@ -202,17 +299,98 @@ export const almacenStockService = {
 	catalogosExistencias: () =>
 		unwrap(apiService.get<ApiResp<ExistenciasCatalogos>>(`${base}/existencias/catalogos`)),
 
-	listarProveedoresClarion: (params?: { search?: string; page?: number; pageSize?: number }) =>
+	resumenExistencias: (idDeposito?: number) =>
+		unwrap(
+			apiService.get<ApiResp<ExistenciasResumen>>(`${base}/existencias/resumen`, {
+				params: { idDeposito: idDeposito ?? undefined },
+				timeout: 60000,
+			}),
+		),
+
+	movimientosStock: (params?: {
+		idProducto?: number;
+		idDeposito?: number;
+		dias?: number;
+		page?: number;
+		pageSize?: number;
+	}) =>
+		unwrap(
+			apiService.get<ApiResp<MovimientosPage>>(`${base}/existencias/movimientos`, {
+				params: {
+					idProducto: params?.idProducto ?? undefined,
+					idDeposito: params?.idDeposito ?? undefined,
+					dias: params?.dias ?? undefined,
+					page: params?.page || 1,
+					pageSize: params?.pageSize || 30,
+				},
+				timeout: 60000,
+			}),
+		),
+
+	crearExistencia: (body: ClaveStock & ParametrosStock & { CantidadInicial?: number; Motivo?: string }) =>
+		unwrap(apiService.post<ApiResp<ExistenciaConAjuste>>(`${base}/existencias`, body)),
+
+	actualizarExistencia: (k: ClaveStock, body: ParametrosStock) =>
+		unwrap(apiService.put<ApiResp<ExistenciaStock>>(rutaStock(k), body)),
+
+	ajustarExistencia: (body: ClaveStock & { Modo: 'delta' | 'conteo'; Cantidad: number; Motivo: string }) =>
+		unwrap(apiService.post<ApiResp<ExistenciaConAjuste>>(`${base}/existencias/ajustes`, body)),
+
+	eliminarExistencia: (k: ClaveStock) => unwrap(apiService.delete<ApiResp<{ ok: boolean }>>(rutaStock(k))),
+
+	listarProveedoresClarion: (params?: {
+		search?: string;
+		estado?: EstadoProveedor | null;
+		idTipo?: number | null;
+		orden?: ProveedoresOrden;
+		page?: number;
+		pageSize?: number;
+	}) =>
 		unwrap(
 			apiService.get<ApiResp<ProveedoresClarionPage>>(`${base}/proveedores-clarion`, {
 				params: {
 					search: params?.search || undefined,
+					estado: params?.estado ?? undefined,
+					idTipo: params?.idTipo ?? undefined,
+					orden: params?.orden || undefined,
 					page: params?.page || 1,
 					pageSize: params?.pageSize || 40,
 				},
 			}),
 		),
+
+	resumenProveedores: () =>
+		unwrap(apiService.get<ApiResp<ProveedoresResumen>>(`${base}/proveedores-clarion/resumen`)),
+
+	catalogosProveedores: () =>
+		unwrap(apiService.get<ApiResp<ProveedoresCatalogos>>(`${base}/proveedores-clarion/catalogos`)),
+
+	obtenerProveedor: (id: number) =>
+		unwrap(apiService.get<ApiResp<ProveedorDetalle>>(`${base}/proveedores-clarion/${id}`)),
+
+	crearProveedor: (body: ProveedorSaveBody) =>
+		unwrap(apiService.post<ApiResp<ProveedorDetalle>>(`${base}/proveedores-clarion`, body)),
+
+	actualizarProveedor: (id: number, body: ProveedorSaveBody) =>
+		unwrap(apiService.put<ApiResp<ProveedorDetalle>>(`${base}/proveedores-clarion/${id}`, body)),
+
+	estadoProveedor: (id: number, estado: EstadoProveedor) =>
+		unwrap(
+			apiService.post<ApiResp<ProveedorDetalle>>(`${base}/proveedores-clarion/${id}/estado`, { IdStatus: estado }),
+		),
+
+	eliminarProveedor: async (id: number) => {
+		const res = await apiService.delete<ApiResp<{ modo: 'baja' | 'eliminado' }>>(
+			`${base}/proveedores-clarion/${id}`,
+		);
+		if (!res.data?.success) throw new Error(res.data?.mensaje || 'No se pudo borrar');
+		return { ...(res.data.data as { modo: 'baja' | 'eliminado' }), mensaje: res.data.mensaje };
+	},
 };
+
+function rutaStock(k: ClaveStock) {
+	return `${base}/existencias/${k.IdEmpresa ?? 1}/${k.IdSucursal ?? 1}/${k.IdDeposito}/${k.IdProducto}`;
+}
 
 type RemitoSaveBody = {
 	Fecha?: string;
