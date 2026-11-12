@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	ArrowDown,
+	ArrowDownLeft,
+	ArrowLeftRight,
 	ArrowUp,
 	ArrowUpDown,
+	ArrowUpRight,
 	Ban,
 	Bell,
-	ChevronLeft,
-	ChevronRight,
 	ClipboardList,
 	Plus,
 	RefreshCw,
@@ -17,6 +18,8 @@ import {
 	Pencil,
 	Stethoscope,
 } from 'lucide-react';
+import Pagination from '@/app/components/UI/Pagination';
+import c from '@/app/components/Facturacion/Facturacion.module.css';
 import { IoCloseCircleOutline } from 'react-icons/io5';
 import { almacenStockService } from '@/app/services/almacenStockService';
 import { usePermiso } from '@/app/hooks/usePermiso';
@@ -35,6 +38,7 @@ import type {
 	RemitoDeposito,
 	RemitoItem,
 	RemitoProveedor,
+	RemitosPage,
 	RemitoTipo,
 } from '@/app/types/almacenStock';
 import styles from '../stock.module.css';
@@ -83,26 +87,46 @@ function todayISO() {
 	return `${y}-${m}-${day}`;
 }
 
+function nowHHMM() {
+	const d = new Date();
+	return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function isoMenosDias(dias: number) {
+	const d = new Date();
+	d.setDate(d.getDate() - dias);
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Fechas del HIS: el backend las manda como hora de pared en campos UTC. */
 function toDateInput(v?: string | null) {
 	if (!v) return todayISO();
-	const d = new Date(v);
-	if (Number.isNaN(d.getTime())) return String(v).slice(0, 10) || todayISO();
-	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, '0');
-	const day = String(d.getDate()).padStart(2, '0');
-	return `${y}-${m}-${day}`;
+	const s = String(v);
+	if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+	const d = new Date(s);
+	if (Number.isNaN(d.getTime())) return todayISO();
+	return d.toISOString().slice(0, 10);
 }
 
 function fmtDate(v?: string | null) {
 	if (!v) return '—';
-	const d = new Date(v);
-	if (Number.isNaN(d.getTime())) return String(v).slice(0, 10);
-	return d.toLocaleDateString('es-AR');
+	const [y, m, d] = toDateInput(v).split('-');
+	return `${d}/${m}/${y}`;
 }
 
 function fmtMoney(n?: number | null) {
 	if (n == null || Number.isNaN(Number(n))) return '$0.00';
 	return Number(n).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+}
+
+/** Status_Remitos */
+function estadoLabel(idStatus?: number | null, nombre?: string | null) {
+	const n = Number(idStatus);
+	if (n === 0) return 'Anulado';
+	if (n === 1) return 'Pendiente';
+	if (n === 2) return 'Confirmado';
+	const t = (nombre || '').trim();
+	return t ? t.charAt(0) + t.slice(1).toLowerCase() : '—';
 }
 
 function newItemKey() {
@@ -331,12 +355,17 @@ export default function RemitosClient() {
 	const [searchDebounced, setSearchDebounced] = useState('');
 	const [tipoFiltro, setTipoFiltro] = useState('');
 	const [depFiltro, setDepFiltro] = useState('');
+	const [desdeFiltro, setDesdeFiltro] = useState(() => isoMenosDias(90));
+	const [hastaFiltro, setHastaFiltro] = useState(todayISO);
+	const [sentidoFiltro, setSentidoFiltro] = useState<'' | 'E' | 'S'>('');
+	const [estadoFiltro, setEstadoFiltro] = useState('');
 	const [page, setPage] = useState(1);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [items, setItems] = useState<RemitoCabecera[]>([]);
 	const [total, setTotal] = useState(0);
 	const [totalPages, setTotalPages] = useState(1);
+	const [totales, setTotales] = useState<RemitosPage['totales'] | null>(null);
 
 	// Catálogos = tablas Tiporemitos / Depositos / Proveedores
 	const [tipos, setTipos] = useState<RemitoTipo[]>([]);
@@ -349,6 +378,7 @@ export default function RemitosClient() {
 	const [modalOpen, setModalOpen] = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [fecha, setFecha] = useState(todayISO());
+	const [hora, setHora] = useState(nowHHMM);
 	const [tipoCbte, setTipoCbte] = useState('');
 	const [idDeposito, setIdDeposito] = useState<number | ''>('');
 	const [idDepositoDest, setIdDepositoDest] = useState<number | ''>('');
@@ -501,6 +531,10 @@ export default function RemitosClient() {
 		return [...draftAgrupados].sort((a, b) => cmpSortVal(a[key], b[key], dir));
 	}, [draftAgrupados, agrupadosSort]);
 
+	/** Los anulados y los generados automáticamente (espejo de un RSM) no se editan. */
+	const detailOperable =
+		!!detail && Number(detail.IdStatus) !== 0 && !(Number(detail.IdTransaccionOrig) > 0);
+
 	const detailItemsSorted = useMemo(() => {
 		const list = detail?.items || [];
 		if (!detailSort) return list;
@@ -547,18 +581,23 @@ export default function RemitosClient() {
 				search: searchDebounced,
 				tipo: tipoFiltro || undefined,
 				idDeposito: depFiltro ? Number(depFiltro) : undefined,
+				desde: desdeFiltro || undefined,
+				hasta: hastaFiltro || undefined,
+				sentido: sentidoFiltro || undefined,
+				estado: estadoFiltro !== '' ? Number(estadoFiltro) : undefined,
 				page,
 				pageSize: 30,
 			});
 			setItems(data.items);
 			setTotal(data.total);
 			setTotalPages(data.totalPages);
+			setTotales(data.totales ?? null);
 		} catch (e) {
 			setError(mensajeDeError(e, 'No se pudo cargar remitos'));
 		} finally {
 			setLoading(false);
 		}
-	}, [searchDebounced, tipoFiltro, depFiltro, page]);
+	}, [searchDebounced, tipoFiltro, depFiltro, desdeFiltro, hastaFiltro, sentidoFiltro, estadoFiltro, page]);
 
 	const loadPendienteMed = useCallback(async (fechaIso?: string) => {
 		setPendienteMedLoading(true);
@@ -629,6 +668,7 @@ export default function RemitosClient() {
 		setEditingId(null);
 		skipTipoReset.current = true;
 		setFecha(todayISO());
+		setHora(nowHHMM());
 		setTipoCbte(defaultTipo);
 		setIdDeposito(defaultDep);
 		setIdDepositoDest(dest);
@@ -682,6 +722,7 @@ export default function RemitosClient() {
 		skipTipoReset.current = true;
 		setEditingId(full.IdTransaccion);
 		setFecha(toDateInput(full.Fecha));
+		setHora(full.Hora || nowHHMM());
 		setTipoCbte(full.TipoCbte || '');
 		setIdDeposito(full.IdDeposito ?? '');
 		setIdDepositoDest(full.IdDepositoDest ?? '');
@@ -758,7 +799,7 @@ export default function RemitosClient() {
 		if (!row || !canDelete) return;
 		setAnulando(true);
 		try {
-			await almacenStockService.eliminarRemito(row.IdTransaccion);
+			await almacenStockService.anularRemito(row.IdTransaccion);
 			toast.success('Remito anulado');
 			setAnularTarget(null);
 			if (detail?.IdTransaccion === row.IdTransaccion) {
@@ -1201,6 +1242,7 @@ export default function RemitosClient() {
 		setSaving(true);
 		const payload = {
 			Fecha: fecha,
+			Hora: hora,
 			TipoCbte: tipoCbte,
 			IdDeposito: Number(idDeposito),
 			IdDepositoDest: campos.usaDepDestino ? Number(idDepositoDest) : null,
@@ -1208,7 +1250,6 @@ export default function RemitosClient() {
 			IdCliente: campos.usaCliente ? Number(idCliente) : null,
 			GrupoCbte: grupo,
 			LetraCbte: letra,
-			NroCbte: nro,
 			Bultos: Math.round(totalBultos),
 			Observaciones: observaciones || undefined,
 			items: draftItems.map((it) => ({
@@ -1239,6 +1280,10 @@ export default function RemitosClient() {
 	};
 
 	const saveRemito = async () => {
+		if (!/^\d{2}:\d{2}/.test(hora)) {
+			avisarCampo('remito-hora', 'Ingresá la hora del remito');
+			return;
+		}
 		if (!tipoCbte) {
 			avisarCampo('remito-tipo', 'Seleccioná el tipo de remito (Tipos_Remitos)');
 			return;
@@ -1410,6 +1455,51 @@ export default function RemitosClient() {
 				</section>
 			)}
 
+			<section className={styles.flujoGrid} aria-label="Flujo de mercadería del período">
+				{(
+					[
+						{ key: 'E', label: 'Entradas', tot: totales?.entradas, Icon: ArrowDownLeft, tono: styles.flujoEntrada },
+						{ key: 'S', label: 'Salidas', tot: totales?.salidas, Icon: ArrowUpRight, tono: styles.flujoSalida },
+					] as const
+				).map(({ key, label, tot, Icon, tono }) => (
+					<button
+						key={key}
+						type="button"
+						className={`${c.kpi} ${styles.flujoCard} ${tono}${sentidoFiltro === key ? ` ${c.kpiActive}` : ''}`}
+						aria-pressed={sentidoFiltro === key}
+						title={sentidoFiltro === key ? 'Quitar el filtro' : `Ver solo ${label.toLowerCase()}`}
+						onClick={() => {
+							setSentidoFiltro((s) => (s === key ? '' : key));
+							setPage(1);
+						}}
+					>
+						<span className={styles.flujoIcon}>
+							<Icon size={16} aria-hidden />
+						</span>
+						<span className={styles.flujoBody}>
+							<span className={c.kpiLabel}>{label}</span>
+							<span className={styles.flujoImporte}>{fmtMoney(tot?.importe ?? 0)}</span>
+							<span className={c.subtexto}>
+								{(tot?.cantidad ?? 0).toLocaleString('es-AR')} remito{tot?.cantidad === 1 ? '' : 's'} ·{' '}
+								{fmtCantidad(tot?.bultos ?? 0)} bultos
+							</span>
+						</span>
+					</button>
+				))}
+				<div className={`${c.kpi} ${styles.flujoCard} ${styles.flujoNeto} ${styles.flujoEstatico}`}>
+					<span className={styles.flujoIcon}>
+						<ArrowLeftRight size={16} aria-hidden />
+					</span>
+					<span className={styles.flujoBody}>
+						<span className={c.kpiLabel}>Neto (entra − sale)</span>
+						<span className={styles.flujoImporte}>{fmtMoney(totales?.neto.importe ?? 0)}</span>
+						<span className={c.subtexto}>
+							{desdeFiltro ? fmtDate(desdeFiltro) : 'Inicio'} al {hastaFiltro ? fmtDate(hastaFiltro) : 'hoy'} · sin anulados
+						</span>
+					</span>
+				</div>
+			</section>
+
 			<div className={styles.toolbar}>
 				<div className={styles.searchRow}>
 					<Search size={16} color="#64748b" />
@@ -1454,66 +1544,128 @@ export default function RemitosClient() {
 							}}
 						/>
 					</div>
+					<select
+						className={styles.select}
+						value={estadoFiltro}
+						aria-label="Estado"
+						onChange={(e) => {
+							setEstadoFiltro(e.target.value);
+							setPage(1);
+						}}
+					>
+						<option value="">Todos los estados</option>
+						<option value="2">Confirmados</option>
+						<option value="1">Pendientes</option>
+						<option value="0">Anulados</option>
+					</select>
+					<input
+						type="date"
+						className={`${styles.input} ${styles.filtroFecha}`}
+						value={desdeFiltro}
+						max={hastaFiltro || undefined}
+						aria-label="Fecha desde"
+						title="Fecha desde"
+						onChange={(e) => {
+							setDesdeFiltro(e.target.value);
+							setPage(1);
+						}}
+					/>
+					<input
+						type="date"
+						className={`${styles.input} ${styles.filtroFecha}`}
+						value={hastaFiltro}
+						min={desdeFiltro || undefined}
+						aria-label="Fecha hasta"
+						title="Fecha hasta"
+						onChange={(e) => {
+							setHastaFiltro(e.target.value);
+							setPage(1);
+						}}
+					/>
 				</div>
 			</div>
 
 			<section className={styles.panel}>
-				<div className={styles.tableWrap}>
-					{loading && items.length === 0 ? (
-						<div className={styles.empty}>Cargando remitos…</div>
-					) : items.length === 0 ? (
-						<div className={styles.empty}>No hay remitos para mostrar</div>
-					) : (
-						<table className={styles.table}>
+				{loading && items.length === 0 ? (
+					<div className={styles.empty}>Cargando remitos…</div>
+				) : items.length === 0 ? (
+					<div className={styles.empty}>No hay remitos para mostrar</div>
+				) : (
+					<div className={`${c.tableWrap} ${styles.remitosTableWrap}`} style={{ opacity: loading ? 0.6 : 1 }}>
+						<table className={c.table}>
 							<thead>
 								<tr>
-									<th>Id</th>
+									<th colSpan={3} className={c.grupoTitulo}>
+										Comprobante
+									</th>
+									<th colSpan={2} className={`${c.grupoTitulo} ${c.grupoInicio}`}>
+										Movimiento
+									</th>
+									<th className={c.grupoInicio} />
+									<th colSpan={2} className={`${c.grupoTitulo} ${c.grupoInicio}`}>
+										Importe y estado
+									</th>
+									{(canEdit || canDelete) && <th className={c.grupoInicio} />}
+								</tr>
+								<tr>
+									<th>Nº remito</th>
 									<th>Fecha</th>
 									<th>Tipo</th>
-									<th>Nº remito</th>
-									<th>De → A</th>
-									<th>Cant.</th>
-									<th>Observaciones</th>
-									<th>Importe</th>
+									<th className={c.grupoInicio}>De → A</th>
+									<th className={c.num}>Cant.</th>
+									<th className={c.grupoInicio}>Observaciones</th>
+									<th className={`${c.num} ${c.grupoInicio}`}>Importe</th>
+									<th>Estado</th>
 									{(canEdit || canDelete) && <th className={styles.colActions}>Acciones</th>}
 								</tr>
 							</thead>
 							<tbody>
 								{items.map((row) => {
-									const anulado = esRemitoAnulado(row);
 									const sentidoTipo = tipos.find((t) => t.IdTipo === row.TipoCbte)?.Sentido;
-									const tag = tagSentido(row.Sentido || sentidoTipo);
+									const sentido = tagSentido(row.Sentido || sentidoTipo);
+									const anulado = esRemitoAnulado(row);
+									const generado = Number(row.IdTransaccionOrig) > 0;
 									const mov = trayectoRemito(row, sentidoTipo);
 									const obs = (row.Observaciones || '').trim();
 									return (
 										<tr
 											key={row.IdTransaccion}
-											className={anulado ? styles.rowAnulado : undefined}
+											className={`${c.filaClickable}${anulado ? ` ${styles.rowAnulado}` : ''}`}
 											onClick={() => void openDetail(row)}
 										>
-											<td className={styles.mono}>{row.IdTransaccion}</td>
-											<td>{fmtDate(row.Fecha)}</td>
 											<td>
-												<span className={styles.tipoCell}>
-													{tag ? (
-														<span
-															className={`${styles.sentidoTag} ${
-																tag === 'Entrada'
-																	? styles.sentidoEntrada
-																	: styles.sentidoSalida
-															}`}
-														>
-															{tag}
-														</span>
-													) : null}
-													<span>{row.TipoNombre || row.TipoCbte || '—'}</span>
-													{anulado ? (
-														<span className={styles.badgeAnulado}>Anulado</span>
-													) : null}
+												<span className={c.celdaStack}>
+													<button
+														type="button"
+														className={c.codigoLink}
+														title="Abrir el remito"
+														onClick={(e) => {
+															e.stopPropagation();
+															void openDetail(row);
+														}}
+													>
+														{row.NroRemitoFmt || row.IdTransaccion}
+													</button>
+													<span className={c.subtexto}>Id {row.IdTransaccion}</span>
 												</span>
 											</td>
-											<td className={styles.mono}>{row.NroRemitoFmt}</td>
+											<td style={{ whiteSpace: 'nowrap' }}>
+												<span className={c.celdaStack}>
+													<span>{fmtDate(row.Fecha)}</span>
+													<span className={c.subtexto}>{row.Hora ? `${row.Hora} h` : 'Sin hora'}</span>
+												</span>
+											</td>
 											<td>
+												<span className={c.celdaStack}>
+													<span className={c.descripcion}>{row.TipoNombre || row.TipoCbte || '—'}</span>
+													<span className={c.subtexto}>
+														{row.TipoCbte}
+														{sentido ? ` · ${sentido}` : ''}
+														{generado ? ' · generado automáticamente' : ''}
+													</span>
+												</span>
+											</td>
+											<td className={c.grupoInicio}>
 												<div className={styles.trayecto} title={`${mov.desde} → ${mov.hacia}`}>
 													<span className={styles.trayectoDesde}>{mov.desde}</span>
 													<span className={styles.trayectoFlecha} aria-hidden>
@@ -1522,20 +1674,47 @@ export default function RemitosClient() {
 													<span className={styles.trayectoHacia}>{mov.hacia}</span>
 												</div>
 											</td>
-											<td
-												className={styles.mono}
-												title={mov.entrada ? `Entrada · ${mov.cant}` : `Salida · ${mov.cant}`}
-											>
-												{mov.cant}
+											<td className={c.num} title={mov.entrada ? 'Entrada' : 'Salida'}>
+												{fmtCantidad(mov.cant)}
 											</td>
-											<td className={styles.obsCell} title={obs || undefined}>
+											<td className={`${styles.obsCell} ${c.grupoInicio}`} title={obs || undefined}>
 												{obs || '—'}
 											</td>
-											<td className={styles.mono}>{fmtMoney(row.ImportePPP)}</td>
+											<td className={`${c.num} ${c.grupoInicio}`}>
+												<span
+													className={
+														sentido === 'Entrada'
+															? styles.importeEntrada
+															: sentido === 'Salida'
+																? styles.importeSalida
+																: undefined
+													}
+												>
+													{sentido === 'Entrada' ? (
+														<ArrowDownLeft size={13} aria-label="Entra" />
+													) : sentido === 'Salida' ? (
+														<ArrowUpRight size={13} aria-label="Sale" />
+													) : null}
+													{fmtMoney(row.ImportePPP)}
+												</span>
+											</td>
+											<td>
+												<span
+													className={`${c.badge} ${
+														anulado
+															? styles.badgeAnulado
+															: Number(row.IdStatus) === 1
+																? styles.badgePendiente
+																: c.badge_vigente
+													}`}
+												>
+													{estadoLabel(row.IdStatus, row.StatusNombre)}
+												</span>
+											</td>
 											{(canEdit || canDelete) && (
 												<td className={styles.colActions}>
 													<div className={styles.rowActions}>
-														{canEdit && !anulado && (
+														{canEdit && !anulado && !generado && (
 															<button
 																type="button"
 																className={styles.actionEdit}
@@ -1571,30 +1750,13 @@ export default function RemitosClient() {
 								})}
 							</tbody>
 						</table>
-					)}
-				</div>
+					</div>
+				)}
 				<div className={styles.pager}>
 					<span className={styles.muted}>
-						Página {page} de {totalPages}
+						{total.toLocaleString('es-AR')} remito{total === 1 ? '' : 's'} · página {page} de {totalPages}
 					</span>
-					<div className={styles.pagerBtns}>
-						<button
-							type="button"
-							className={styles.btnGhost}
-							disabled={page <= 1}
-							onClick={() => setPage((p) => Math.max(1, p - 1))}
-						>
-							<ChevronLeft size={16} />
-						</button>
-						<button
-							type="button"
-							className={styles.btnGhost}
-							disabled={page >= totalPages}
-							onClick={() => setPage((p) => p + 1)}
-						>
-							<ChevronRight size={16} />
-						</button>
-					</div>
+					<Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
 				</div>
 			</section>
 
@@ -1609,8 +1771,15 @@ export default function RemitosClient() {
 					<>
 						<div className={styles.remitoHead}>
 							<div className={styles.field}>
-								<label>Fecha</label>
-								<input value={fmtDate(detail.Fecha)} readOnly />
+								<label>Fecha y hora</label>
+								<input
+									value={`${fmtDate(detail.Fecha)}${detail.Hora ? ` · ${detail.Hora} h` : ''}`}
+									readOnly
+								/>
+							</div>
+							<div className={styles.field}>
+								<label>Estado</label>
+								<input value={estadoLabel(detail.IdStatus, detail.StatusNombre)} readOnly />
 							</div>
 							<div className={styles.field}>
 								<label>Tipo (Tipos_Remitos)</label>
@@ -1684,6 +1853,35 @@ export default function RemitosClient() {
 								</div>
 							) : null}
 						</div>
+						{detail.RemitoOrigen || (detail.RemitosGenerados && detail.RemitosGenerados.length > 0) ? (
+							<div className={styles.vinculos}>
+								{detail.RemitoOrigen ? (
+									<>
+										<span>Generado automáticamente desde</span>
+										<button
+											type="button"
+											className={c.codigoLink}
+											onClick={() => void openDetail(detail.RemitoOrigen as RemitoCabecera)}
+										>
+											{detail.RemitoOrigen.TipoCbte} {detail.RemitoOrigen.NroRemitoFmt}
+										</button>
+									</>
+								) : null}
+								{(detail.RemitosGenerados || []).map((g) => (
+									<span key={g.IdTransaccion} className={styles.vinculos}>
+										<span>Generó la entrada en destino</span>
+										<button
+											type="button"
+											className={c.codigoLink}
+											onClick={() => void openDetail(g as RemitoCabecera)}
+										>
+											{g.TipoCbte} {g.NroRemitoFmt}
+										</button>
+										{Number(g.IdStatus) === 0 ? <span className={`${c.badge} ${styles.badgeAnulado}`}>Anulado</span> : null}
+									</span>
+								))}
+							</div>
+						) : null}
 						<div className={styles.remitoPanelTabs} role="tablist" aria-label="Vista de ítems">
 							<button
 								type="button"
@@ -1862,7 +2060,7 @@ export default function RemitosClient() {
 										Anular
 									</button>
 								)}
-								{canEdit && !esRemitoAnulado(detail) && (
+								{canEdit && detailOperable && (
 									<button
 										type="button"
 										className={styles.btnPrimary}
@@ -1958,9 +2156,14 @@ export default function RemitosClient() {
 										onChange={(e) => {
 											const v = e.target.value;
 											setFecha(v);
+											if (editingId == null && /^\d{4}/.test(v)) setGrupo(Number(v.slice(0, 4)));
 											void loadPendienteMed(v);
 										}}
 									/>
+								</div>
+								<div className={`${styles.field} ${styles.remitoHora}`} data-resaltar="remito-hora">
+									<label>Hora</label>
+									<input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
 								</div>
 								<div className={`${styles.field} ${styles.remitoTipo}`} data-resaltar="remito-tipo">
 									<label>Tipo de remito</label>
@@ -1969,6 +2172,7 @@ export default function RemitosClient() {
 										name="remito-tipo"
 										value={tipoCbte}
 										isLoading={false}
+										disabled={editingId != null}
 										options={tipoOptions}
 										onChange={(v) => setTipoCbte(String(v))}
 									/>
@@ -1976,25 +2180,13 @@ export default function RemitosClient() {
 								<div className={`${styles.field} ${styles.remitoNro}`}>
 									<label>Número</label>
 									<div className={styles.nroRemitoInputs}>
-										<input
-											value={grupo}
-											onChange={(e) => setGrupo(Number(e.target.value) || 0)}
-											aria-label="Grupo / año"
-										/>
-										<input
-											className={styles.nroLetra}
-											value={letra}
-											maxLength={1}
-											onChange={(e) => setLetra(e.target.value.toUpperCase())}
-											aria-label="Letra"
-										/>
-										<input
-											className={styles.nroCbte}
-											value={nro}
-											onChange={(e) => setNro(Number(e.target.value) || 0)}
-											aria-label="Número"
-										/>
+										<input value={grupo} readOnly aria-label="Grupo / año" />
+										<input className={styles.nroLetra} value={letra} readOnly aria-label="Letra" />
+										<input className={styles.nroCbte} value={nro} readOnly aria-label="Número" />
 									</div>
+									{editingId == null ? (
+										<span className={styles.nroHint}>Próximo libre · se asigna al guardar</span>
+									) : null}
 								</div>
 								<div className={styles.remitoDepPair}>
 									<div className={`${styles.field} ${styles.remitoDepField}`} data-resaltar="remito-deposito">
@@ -2469,7 +2661,7 @@ export default function RemitosClient() {
 								['Nº remito', r.NroRemitoFmt || '—'],
 								['Transacción', String(r.IdTransaccion)],
 								['Tipo', `${tag ? `${tag} · ` : ''}${r.TipoNombre || r.TipoCbte || '—'}`],
-								['Fecha', fmtDate(r.Fecha)],
+								['Fecha', `${fmtDate(r.Fecha)}${r.Hora ? ` · ${r.Hora} h` : ''}`],
 								['De → A', `${mov.desde} → ${mov.hacia}`],
 								['Renglones', String(renglones)],
 								['Cantidad total', fmtCantidad(r.Bultos ?? mov.cant)],

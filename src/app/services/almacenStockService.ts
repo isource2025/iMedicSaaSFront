@@ -113,6 +113,9 @@ export const almacenStockService = {
 		idDeposito?: number;
 		desde?: string;
 		hasta?: string;
+		sentido?: 'E' | 'S';
+		/** Status_Remitos: 0 anulado, 1 pendiente, 2 confirmado */
+		estado?: number;
 		page?: number;
 		pageSize?: number;
 	}) =>
@@ -124,6 +127,8 @@ export const almacenStockService = {
 					idDeposito: params?.idDeposito || undefined,
 					desde: params?.desde || undefined,
 					hasta: params?.hasta || undefined,
+					sentido: params?.sentido || undefined,
+					estado: params?.estado ?? undefined,
 					page: params?.page || 1,
 					pageSize: params?.pageSize || 30,
 				},
@@ -171,8 +176,8 @@ export const almacenStockService = {
 	actualizarRemito: (id: number, body: RemitoSaveBody) =>
 		unwrap(apiService.put<ApiResp<RemitoCabecera>>(`${base}/remitos/${id}`, body)),
 
-	eliminarRemito: (id: number) =>
-		unwrap(apiService.delete<ApiResp<{ ok: boolean; IdTransaccion: number }>>(`${base}/remitos/${id}`)),
+	anularRemito: (id: number) =>
+		unwrap(apiService.post<ApiResp<RemitoCabecera>>(`${base}/remitos/${id}/anular`, {})),
 
 	candidatosSalidaServicio: (params: {
 		idDepositoDest?: number;
@@ -394,6 +399,8 @@ function rutaStock(k: ClaveStock) {
 
 type RemitoSaveBody = {
 	Fecha?: string;
+	/** HH:mm */
+	Hora?: string;
 	TipoCbte: string;
 	IdDeposito: number;
 	IdDepositoDest?: number | null;

@@ -290,6 +290,8 @@ export interface RemitoCabecera {
 	IdCliente?: number | null;
 	ClienteNombre?: string | null;
 	Fecha?: string | null;
+	/** HH:mm (Transacciones.Hora_D o auditoría del mismo día); null en remitos viejos de Clarion. */
+	Hora?: string | null;
 	Bultos?: number | null;
 	IdStatus?: number | null;
 	StatusNombre?: string | null;
@@ -299,8 +301,24 @@ export interface RemitoCabecera {
 	Observaciones?: string | null;
 	ImportePPP?: number | null;
 	TotalRemito?: number;
+	RemitoOrigen?: RemitoVinculado | null;
+	RemitosGenerados?: RemitoVinculado[];
 	items?: RemitoItem[];
 	observaciones?: { Item: number; Fecha?: string | null; Comentarios?: string | null }[];
+}
+
+/** Remito enlazado por IdTransaccionOrig (RSM → REM espejo en depósito destino). */
+export interface RemitoVinculado {
+	IdTransaccion: number;
+	TipoCbte?: string | null;
+	NroRemitoFmt?: string | null;
+	IdStatus?: number | null;
+}
+
+export interface RemitosTotalSentido {
+	cantidad: number;
+	importe: number;
+	bultos: number;
 }
 
 export interface RemitosPage {
@@ -309,6 +327,11 @@ export interface RemitosPage {
 	page: number;
 	pageSize: number;
 	totalPages: number;
+	totales?: {
+		entradas: RemitosTotalSentido;
+		salidas: RemitosTotalSentido;
+		neto: { importe: number; cantidad: number };
+	};
 }
 
 export interface RemitosCatalogos {

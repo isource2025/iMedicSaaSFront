@@ -310,7 +310,8 @@
 	color: #9ca3af;
 }
 
-.table tbody tr.rowAnulado:hover td {
+.table tbody tr.rowAnulado:hover td,
+tr.rowAnulado:hover td {
 	background: #eceff3;
 }
 
@@ -1009,6 +1010,161 @@
 .remitoNro {
 	flex: 0 0 210px;
 	width: 210px;
+}
+
+.remitoHora {
+	flex: 0 0 104px;
+	width: 104px;
+}
+
+.nroHint {
+	display: block;
+	margin-top: 0.2rem;
+	font-size: 0.7rem;
+	color: var(--sk-muted);
+}
+
+.nroRemitoInputs input[readonly] {
+	background: #f1f5f9;
+	color: #475569;
+}
+
+/* Flujo de mercadería (listado de remitos) */
+.flujoGrid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+@media (max-width: 900px) {
+	.flujoGrid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.flujoGrid .flujoCard {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 0.95rem;
+	text-align: left;
+}
+
+.flujoGrid .flujoEstatico {
+	cursor: default;
+}
+
+.flujoGrid .flujoEstatico:hover {
+	border-color: #e2e8f0;
+	background: #f8fafc;
+}
+
+.remitosTableWrap {
+	border: 0;
+	border-radius: 0;
+}
+
+.flujoIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 999px;
+	flex-shrink: 0;
+}
+
+.flujoBody {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
+
+.flujoEntrada .flujoIcon {
+	background: #dcfce7;
+	color: #15803d;
+}
+
+.flujoEntrada .flujoImporte {
+	color: #15803d;
+}
+
+.flujoSalida .flujoIcon {
+	background: #fee2e2;
+	color: #b91c1c;
+}
+
+.flujoSalida .flujoImporte {
+	color: #b91c1c;
+}
+
+.flujoNeto .flujoIcon {
+	background: #e0f2fe;
+	color: #0369a1;
+}
+
+.flujoNeto .flujoImporte {
+	color: #0f172a;
+}
+
+.flujoImporte {
+	font-size: 1.2rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.importeEntrada,
+.importeSalida {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.25rem;
+	font-weight: 600;
+}
+
+.importeEntrada {
+	color: #15803d;
+}
+
+.importeSalida {
+	color: #b91c1c;
+}
+
+.filaAnulada td {
+	color: #94a3b8;
+}
+
+.filaAnulada .importeEntrada,
+.filaAnulada .importeSalida,
+.rowAnulado .importeEntrada,
+.rowAnulado .importeSalida {
+	color: #94a3b8;
+	text-decoration: line-through;
+}
+
+.badgeAnulado {
+	background: #fee2e2 !important;
+	color: #b91c1c !important;
+}
+
+.badgePendiente {
+	background: #fef3c7 !important;
+	color: #92400e !important;
+}
+
+.filtroFecha {
+	flex: 0 0 150px;
+}
+
+.vinculos {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	font-size: 0.82rem;
+	color: var(--sk-muted);
 }
 
 .remitoGrow {
