@@ -137,18 +137,33 @@ export default function PacsSerieViewer({ studyUid, files, modality }: PacsSerie
     return () => stage.removeEventListener('wheel', onWheel);
   }, [mover]);
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      mover(1);
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      mover(-1);
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      setPlaying((p) => !p);
-    }
-  };
+  // Flechas a nivel ventana: no dependen de que el canvas tenga foco.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) return;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setPlaying(false);
+        mover(1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setPlaying(false);
+        mover(-1);
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        setPlaying((p) => !p);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mover]);
+
+  useEffect(() => {
+    stageRef.current?.focus({ preventScroll: true });
+  }, [studyUid, files]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (!ventana) return;
@@ -199,7 +214,6 @@ export default function PacsSerieViewer({ studyUid, files, modality }: PacsSerie
         ref={stageRef}
         className={styles.stage}
         tabIndex={0}
-        onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -284,7 +298,7 @@ export default function PacsSerieViewer({ studyUid, files, modality }: PacsSerie
       </div>
 
       <p className={styles.hint}>
-        Rueda o flechas: cambiar imagen · Arrastrar: brillo/contraste · Doble clic: restablecer · Espacio: reproducir
+        ← → o rueda: cambiar imagen · Arrastrar: brillo/contraste · Doble clic: restablecer · Espacio: reproducir
       </p>
       {fallidos > 0 && fallidos < total ? (
         <p className={styles.warn}>
