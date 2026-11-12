@@ -372,6 +372,42 @@
 	color: #9ca3af;
 }
 
+.resumenGrabado {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.resumenFila {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1rem;
+	padding: 0.4rem 0;
+	border-bottom: 1px solid var(--sk-line, #e2e8f0);
+}
+
+.resumenFila:last-child {
+	border-bottom: none;
+}
+
+.resumenFila dt {
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: #64748b;
+	white-space: nowrap;
+}
+
+.resumenFila dd {
+	margin: 0;
+	font-size: 0.88rem;
+	font-weight: 700;
+	color: #0f172a;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+
 .colActions {
 	width: 1%;
 	white-space: nowrap;

@@ -395,6 +395,10 @@ export default function RemitosClient() {
 	const [confirmCantMsg, setConfirmCantMsg] = useState('');
 	const [anularTarget, setAnularTarget] = useState<RemitoCabecera | null>(null);
 	const [anulando, setAnulando] = useState(false);
+	const [resumenGrabado, setResumenGrabado] = useState<{
+		remito: RemitoCabecera;
+		editado: boolean;
+	} | null>(null);
 	const [editingCantKey, setEditingCantKey] = useState<string | null>(null);
 	const [editingCantValue, setEditingCantValue] = useState('');
 	const cantInputRef = useRef<HTMLInputElement | null>(null);
@@ -1220,11 +1224,7 @@ export default function RemitosClient() {
 			const saved = isEdit
 				? await almacenStockService.actualizarRemito(editingId!, payload)
 				: await almacenStockService.crearRemito(payload);
-			toast.success(
-				isEdit
-					? `Remito ${saved.NroRemitoFmt || saved.IdTransaccion} actualizado`
-					: `Remito ${saved.NroRemitoFmt || saved.IdTransaccion} guardado`,
-			);
+			setResumenGrabado({ remito: saved, editado: isEdit });
 			setConfirmCantOpen(false);
 			setModalOpen(false);
 			setEditingId(null);
@@ -2451,6 +2451,54 @@ export default function RemitosClient() {
 				onCancel={() => setConfirmCantOpen(false)}
 				onConfirm={() => void ejecutarGuardadoRemito()}
 			/>
+
+			<Modal
+				isOpen={resumenGrabado != null}
+				onClose={() => setResumenGrabado(null)}
+				title={resumenGrabado?.editado ? 'Remito actualizado' : 'Remito grabado'}
+				size="small"
+			>
+				{resumenGrabado
+					? (() => {
+							const r = resumenGrabado.remito;
+							const sentidoTipo = tipos.find((t) => t.IdTipo === r.TipoCbte)?.Sentido;
+							const tag = tagSentido(r.Sentido || sentidoTipo);
+							const mov = trayectoRemito(r, sentidoTipo);
+							const renglones = r.items?.length ?? 0;
+							const datos: [string, string][] = [
+								['Nº remito', r.NroRemitoFmt || '—'],
+								['Transacción', String(r.IdTransaccion)],
+								['Tipo', `${tag ? `${tag} · ` : ''}${r.TipoNombre || r.TipoCbte || '—'}`],
+								['Fecha', fmtDate(r.Fecha)],
+								['De → A', `${mov.desde} → ${mov.hacia}`],
+								['Renglones', String(renglones)],
+								['Cantidad total', fmtCantidad(r.Bultos ?? mov.cant)],
+								['Importe', fmtMoney(r.TotalRemito ?? r.ImportePPP)],
+							];
+							return (
+								<>
+									<dl className={styles.resumenGrabado}>
+										{datos.map(([k, v]) => (
+											<div key={k} className={styles.resumenFila}>
+												<dt>{k}</dt>
+												<dd>{v}</dd>
+											</div>
+										))}
+									</dl>
+									<div className={styles.modalActions}>
+										<button
+											type="button"
+											className={styles.btnPrimary}
+											onClick={() => setResumenGrabado(null)}
+										>
+											Aceptar
+										</button>
+									</div>
+								</>
+							);
+						})()
+					: null}
+			</Modal>
 
 			<ConfirmDialog
 				open={anularTarget != null}
