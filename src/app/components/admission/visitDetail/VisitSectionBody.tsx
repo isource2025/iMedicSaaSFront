@@ -725,9 +725,6 @@ function Insumos({ rows }: { rows: Row[] }) {
 function Egreso({ a }: { a: Row }) {
   const dias = str(a.DiasEstadia);
   const dxEgreso = [str(a.DiagnosticoEgreso), str(a.DiagnosticoEgresoDescripcion)].filter(Boolean).join(' — ');
-  const ubicacion = [str(a.SectorDescripcion) || str(a.Sector), str(a.Habitacion) && `Cama ${str(a.Habitacion)}`]
-    .filter(Boolean)
-    .join(' · ');
   return (
     <RecordCard
       title="Egreso de la internación"
@@ -741,8 +738,6 @@ function Egreso({ a }: { a: Row }) {
           ['Egreso', fmtFechaHora(a.FechaEgreso, a.HoraEgreso)],
           ['Días de estadía', dias === '0' ? 'Menos de 1 día' : dias],
           ['Disposición', a.DisposicionEgresoDescripcion],
-          ['Última ubicación', ubicacion],
-          ['Servicio', a.ServicioEgresoDescripcion || a.ServicioHospitalDescripcion],
         ]}
       />
       {dxEgreso ? (

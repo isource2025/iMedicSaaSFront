@@ -132,7 +132,8 @@ function VisitHeader({
     ['Ingreso', fmtFechaHora(a.FechaAdmision, a.HoraAdmision) || '—'],
     ['Egreso', egresada ? fmtFechaHora(a.FechaEgreso, a.HoraEgreso) : 'En curso'],
     ['Estadía', dias != null && Number.isFinite(dias) ? `${dias} ${dias === 1 ? 'día' : 'días'}` : '—'],
-    ['Ubicación', ubicacion || '—'],
+    // Ubicación solo si sigue internado: en egreso se muestra únicamente la fecha, como el ingreso.
+    ...(egresada ? [] : ([['Ubicación', ubicacion || '—']] as Array<[string, string]>)),
     ['Médico', str(a.DoctorAsistiendoNombre) || str(a.DoctorCabeceraNombre) || '—'],
     ['Cobertura', cobertura || '—'],
   ];

@@ -13,6 +13,7 @@ import {
 } from '@/app/hooks/useUsuarioActual';
 import { isImage, isVideo, isPdf, isOfficeDoc } from '@/app/utils/adjuntoFileTypes';
 import { formatFechaHoraWall } from '@/app/utils/fechaHoraWall';
+import { feedbackAdjuntoError } from '@/app/utils/adjuntoErrorMessage';
 import EmptyState from '../shared/EmptyState';
 import styles from './FileList.module.css';
 
@@ -21,9 +22,14 @@ type VistaAdjuntos = 'filas' | 'cuadros';
 interface FileListProps {
   adjuntos: Adjunto[];
   onDelete?: (idAdjunto: number) => void;
+  /** title + message para MessageModal (preferido). */
+  onErrorFeedback?: (feedback: { title: string; message: string }) => void;
+  /** @deprecated preferir onErrorFeedback */
   onError?: (message: string) => void;
   readOnly?: boolean;
   onSubirNuevo?: () => void;
+  /** Ids cuyo archivo no está en el servidor / no se pudo verificar. */
+  idsNoDisponibles?: ReadonlySet<number>;
 }
 
 function FileIcon({ tipoArchivo, nombreArchivo }: { tipoArchivo: string; nombreArchivo: string }) {
@@ -150,7 +156,15 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
   );
 }
 
-export default function FileList({ adjuntos, onDelete, onError, readOnly = false, onSubirNuevo }: FileListProps) {
+export default function FileList({
+  adjuntos,
+  onDelete,
+  onErrorFeedback,
+  onError,
+  readOnly = false,
+  onSubirNuevo,
+  idsNoDisponibles,
+}: FileListProps) {
   const [accionId, setAccionId] = useState<number | null>(null);
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
@@ -159,6 +173,12 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
   const [tipoFiltro, setTipoFiltro] = useState<string>('__todos__');
   const usuarioActual = useUsuarioActual();
   const { puede } = usePermiso();
+
+  const reportError = (err: unknown) => {
+    const fb = feedbackAdjuntoError(err);
+    if (onErrorFeedback) onErrorFeedback(fb);
+    else onError?.(fb.message);
+  };
 
   const puedeIntentarEliminar =
     !readOnly &&
@@ -192,7 +212,7 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
       });
     } catch (err) {
       console.error('Error al visualizar adjunto:', err);
-      onError?.(err instanceof Error ? err.message : 'No se pudo abrir el archivo');
+      reportError(err);
     } finally {
       setViewerLoading(false);
       setAccionId(null);
@@ -211,7 +231,7 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
       await adjuntosService.descargarArchivo(adjunto.IdAdjunto, adjunto.NombreArchivo);
     } catch (err) {
       console.error('Error al descargar adjunto:', err);
-      onError?.(err instanceof Error ? err.message : 'No se pudo descargar el archivo');
+      reportError(err);
     } finally {
       setAccionId(null);
     }
@@ -379,8 +399,13 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
               />
             ) : vista === 'filas' ? (
               <ul className={styles.fileList}>
-                {visibles.map((adjunto) => (
-                  <li key={adjunto.IdAdjunto} className={styles.fileItem}>
+                {visibles.map((adjunto) => {
+                  const noDisponible = idsNoDisponibles?.has(adjunto.IdAdjunto);
+                  return (
+                  <li
+                    key={adjunto.IdAdjunto}
+                    className={`${styles.fileItem} ${noDisponible ? styles.fileItemBroken : ''}`}
+                  >
                     <div className={styles.fileIcon}>
                       <FileIcon tipoArchivo={adjunto.TipoArchivo} nombreArchivo={adjunto.NombreArchivo} />
                     </div>
@@ -388,9 +413,12 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
                       <div
                         className={styles.fileName}
                         onClick={() => handleView(adjunto)}
-                        title="Click para visualizar"
+                        title={noDisponible ? 'Archivo no disponible en el servidor' : 'Click para visualizar'}
                       >
                         {adjunto.NombreArchivo}
+                        {noDisponible ? (
+                          <span className={styles.brokenBadge}>No disponible</span>
+                        ) : null}
                       </div>
                       <div className={styles.fileMetadata}>
                         <span>{adjunto.TipoImagenNombre || 'Sin categoría'}</span>
@@ -404,18 +432,27 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
                     </div>
                     {renderActions(adjunto)}
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             ) : (
               <div className={styles.thumbGrid}>
                 {visibles.map((adjunto) => {
                   const fecha = formatearFecha(adjunto.FechaCarga);
+                  const noDisponible = idsNoDisponibles?.has(adjunto.IdAdjunto);
                   return (
-                    <article key={adjunto.IdAdjunto} className={styles.thumbCard}>
+                    <article
+                      key={adjunto.IdAdjunto}
+                      className={`${styles.thumbCard} ${noDisponible ? styles.thumbCardBroken : ''}`}
+                    >
                       <div
                         className={styles.thumbHit}
                         onClick={() => handleView(adjunto)}
-                        title={adjunto.NombreArchivo}
+                        title={
+                          noDisponible
+                            ? 'Archivo no disponible en el servidor'
+                            : adjunto.NombreArchivo
+                        }
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
@@ -426,6 +463,9 @@ export default function FileList({ adjuntos, onDelete, onError, readOnly = false
                         }}
                       >
                         <AdjuntoThumb adjunto={adjunto} />
+                        {noDisponible ? (
+                          <span className={styles.brokenOverlay}>No disponible</span>
+                        ) : null}
                       </div>
                       <div className={styles.thumbName} title={adjunto.NombreArchivo}>
                         {adjunto.NombreArchivo}

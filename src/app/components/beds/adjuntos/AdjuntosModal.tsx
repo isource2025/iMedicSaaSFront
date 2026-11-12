@@ -10,6 +10,10 @@ import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
 import DicomVideoImporter from './DicomVideoImporter';
 import MessageModal, { type MessageModalTone } from '@/app/components/UI/MessageModal';
+import {
+  feedbackAdjuntoError,
+  feedbackDisponibilidadLista,
+} from '@/app/utils/adjuntoErrorMessage';
 import styles from './AdjuntosModal.module.css';
 
 const PacsEstudiosPanel = dynamic(() => import('@/app/components/pacs/PacsEstudiosPanel'), { ssr: false });
@@ -44,7 +48,9 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState('');
   const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita' | 'pacs'>('visita');
+  const [idsNoDisponibles, setIdsNoDisponibles] = useState<Set<number>>(new Set());
   const fileUploadRef = useRef<FileUploadRef>(null);
+  const verifyGenRef = useRef(0);
 
   const showMessage = useCallback((title: string, message: string, tone: MessageModalTone = 'info') => {
     setFeedback({ title, message, tone });
@@ -55,7 +61,10 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
       setModo('visita');
       setSelectedFiles([]);
       setTipoImagenCodigo('');
+      setIdsNoDisponibles(new Set());
       loadAdjuntos();
+    } else {
+      verifyGenRef.current += 1;
     }
   }, [isOpen, numeroVisita]);
 
@@ -84,16 +93,50 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
     };
   }, [isOpen]);
 
+  const verificarArchivos = useCallback(
+    async (lista: Adjunto[]) => {
+      const gen = ++verifyGenRef.current;
+      if (!lista.length) {
+        setIdsNoDisponibles(new Set());
+        return;
+      }
+      try {
+        const checks = await adjuntosService.verificarDisponibles(lista.map((a) => a.IdAdjunto));
+        if (gen !== verifyGenRef.current) return;
+        const withNames = checks.map((c) => ({
+          ...c,
+          nombreArchivo:
+            c.nombreArchivo ||
+            lista.find((a) => a.IdAdjunto === c.idAdjunto)?.NombreArchivo ||
+            null,
+        }));
+        setIdsNoDisponibles(
+          new Set(withNames.filter((c) => !c.disponible).map((c) => c.idAdjunto)),
+        );
+        const aviso = feedbackDisponibilidadLista(withNames);
+        if (aviso) showMessage(aviso.title, aviso.message, 'warning');
+      } catch (err) {
+        if (gen !== verifyGenRef.current) return;
+        const fb = feedbackAdjuntoError(err);
+        showMessage(fb.title, fb.message, 'error');
+      }
+    },
+    [showMessage],
+  );
+
   const loadAdjuntos = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await adjuntosService.getAdjuntosPorVisita(numeroVisita);
       setAdjuntos(response.data);
+      setLoading(false);
+      void verificarArchivos(response.data || []);
     } catch (err) {
       console.error('Error al cargar adjuntos:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar adjuntos');
-    } finally {
+      const fb = feedbackAdjuntoError(err);
+      setError(fb.message);
+      showMessage(fb.title, fb.message, 'error');
       setLoading(false);
     }
   };
@@ -290,7 +333,8 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
                 <FileList
                   adjuntos={adjuntos}
                   onDelete={handleDelete}
-                  onError={(msg) => showMessage('Error', msg, 'error')}
+                  onErrorFeedback={(fb) => showMessage(fb.title, fb.message, 'error')}
+                  idsNoDisponibles={idsNoDisponibles}
                   readOnly={false}
                   onSubirNuevo={() => setModo('archivos')}
                 />

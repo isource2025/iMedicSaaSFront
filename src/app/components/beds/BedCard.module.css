@@ -876,7 +876,17 @@
 }
 
 .documentNumber {
-  font-size: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+}
+
+.metaIdLine {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #475569;
+  line-height: 1.25;
 }
 
 /* Migración UI v1 - Cards compactas en mobile */
@@ -915,6 +925,10 @@
   }
   
   .documentNumber {
+    font-size: 0.82rem;
+  }
+
+  .metaIdLine {
     font-size: 0.7rem;
   }
   

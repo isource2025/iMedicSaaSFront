@@ -1075,7 +1075,7 @@ export default function NuevaAdmisionClient() {
         <div className={styles.bloque}>
           <div className={styles.bloqueHeader}>
             <h2>
-              <BedDouble size={18} /> Ubicación, movimientos y egreso
+              <BedDouble size={18} /> Ubicación y movimientos
             </h2>
           </div>
           <AdmissionUbicacionMovimientosModal

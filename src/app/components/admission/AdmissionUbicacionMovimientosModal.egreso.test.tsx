@@ -93,7 +93,7 @@ describe("Modificar admisión · egreso de internado", () => {
         expect(screen.getByRole("button", { name: "Eliminar egreso" })).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: "Actualizar egreso" })).not.toBeInTheDocument();
         expect(screen.queryByRole("button", { name: "Limpiar" })).not.toBeInTheDocument();
-        expect(screen.getByText("Última ubicación (egresado)")).toBeInTheDocument();
+        expect(screen.getByText("Última ubicación")).toBeInTheDocument();
     });
 
     it("Modificar habilita los campos y Guardar cambios actualiza el egreso", async () => {

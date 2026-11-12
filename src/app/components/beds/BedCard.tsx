@@ -454,6 +454,16 @@ function CamaOConsultorioCard({
 						<div className={styles.primaryData}>
 							<div className={styles.patientData}>
 								<span className={styles.documentNumber}>{bed.documentoPaciente}</span>
+								{bed.numeroAfiliado ? (
+									<span className={styles.metaIdLine} title="Número de afiliado">
+										Afil. {bed.numeroAfiliado}
+									</span>
+								) : null}
+								{bed.numeroInternacion ? (
+									<span className={styles.metaIdLine} title="Número de internación">
+										Int. {bed.numeroInternacion}
+									</span>
+								) : null}
 								<span className={styles.patientName}>
 									<strong>{bed.NombrePaciente}</strong>
 								</span>

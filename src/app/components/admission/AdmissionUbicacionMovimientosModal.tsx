@@ -457,7 +457,7 @@ export default function AdmissionUbicacionMovimientosModal({
             <section className={embedded ? styles.sectionFlat : styles.section}>
               {mostrarTitulos ? (
                 <h3 className={styles.sectionTitle}>
-                  {yaEgresado ? 'Última ubicación (egresado)' : 'Ubicación actual'}
+                  {yaEgresado ? 'Última ubicación' : 'Ubicación actual'}
                 </h3>
               ) : null}
               <div className={styles.ubicacionGrid}>
@@ -496,7 +496,6 @@ export default function AdmissionUbicacionMovimientosModal({
           {showEgreso ? (
             <section className={embedded ? styles.sectionFlat : styles.section}>
               {mostrarTitulos ? <h3 className={styles.sectionTitle}>Egreso</h3> : null}
-              {!showUbicacion ? bloqueAsignarCama : null}
               <div className={styles.egresoGrid}>
                 <label className={styles.field}>
                   <span>Fecha de egreso</span>

@@ -18,6 +18,10 @@ import styles from './AdjuntosSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import EmptyState from '../shared/EmptyState';
 import { useBedDetail } from '../contexts/BedDetailContext';
+import {
+  feedbackAdjuntoError,
+  feedbackDisponibilidadLista,
+} from '@/app/utils/adjuntoErrorMessage';
 
 const PacsEstudiosPanel = dynamic(() => import('@/app/components/pacs/PacsEstudiosPanel'), { ssr: false });
 
@@ -72,7 +76,9 @@ export default function AdjuntosSection({
   const [tiposImagen, setTiposImagen] = useState<TipoImagenHC[]>([]);
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
   const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita' | 'pacs'>('visita');
+  const [idsNoDisponibles, setIdsNoDisponibles] = useState<Set<number>>(new Set());
   const fileUploadRef = useRef<FileUploadRef>(null);
+  const verifyGenRef = useRef(0);
   const [periodo, setPeriodo] = useState<Periodo>('all');
   const adjuntosVisibles = useMemo(
     () => filtrarPorPeriodo(adjuntos, periodo, (a) => a.FechaCarga),
@@ -82,6 +88,37 @@ export default function AdjuntosSection({
   const showMessage = useCallback((title: string, message: string, tone: MessageModalTone = 'info') => {
     setFeedback({ title, message, tone });
   }, []);
+
+  const verificarArchivos = useCallback(
+    async (lista: Adjunto[]) => {
+      const gen = ++verifyGenRef.current;
+      if (!lista.length) {
+        setIdsNoDisponibles(new Set());
+        return;
+      }
+      try {
+        const checks = await adjuntosService.verificarDisponibles(lista.map((a) => a.IdAdjunto));
+        if (gen !== verifyGenRef.current) return;
+        const withNames = checks.map((c) => ({
+          ...c,
+          nombreArchivo:
+            c.nombreArchivo ||
+            lista.find((a) => a.IdAdjunto === c.idAdjunto)?.NombreArchivo ||
+            null,
+        }));
+        setIdsNoDisponibles(
+          new Set(withNames.filter((c) => !c.disponible).map((c) => c.idAdjunto)),
+        );
+        const aviso = feedbackDisponibilidadLista(withNames);
+        if (aviso) showMessage(aviso.title, aviso.message, 'warning');
+      } catch (err) {
+        if (gen !== verifyGenRef.current) return;
+        const fb = feedbackAdjuntoError(err);
+        showMessage(fb.title, fb.message, 'error');
+      }
+    },
+    [showMessage],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -113,6 +150,7 @@ export default function AdjuntosSection({
   const loadAdjuntos = async () => {
     if (!numeroVisita) {
       setLoading(false);
+      setIdsNoDisponibles(new Set());
       return;
     }
 
@@ -121,11 +159,14 @@ export default function AdjuntosSection({
       setError(null);
       const response = await adjuntosService.getAdjuntosPorVisita(numeroVisita);
       setAdjuntos(response.data);
+      setLoading(false);
+      void verificarArchivos(response.data || []);
     } catch (err) {
       // Solo mostrar error si es un error real, no cuando simplemente no hay adjuntos
       console.error('Error al cargar adjuntos:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar adjuntos');
-    } finally {
+      const fb = feedbackAdjuntoError(err);
+      setError(fb.message);
+      showMessage(fb.title, fb.message, 'error');
       setLoading(false);
     }
   };
@@ -363,7 +404,8 @@ export default function AdjuntosSection({
           <FileList
             adjuntos={adjuntosVisibles}
             onDelete={handleDelete}
-            onError={(msg) => showMessage('Error', msg, 'error')}
+            onErrorFeedback={(fb) => showMessage(fb.title, fb.message, 'error')}
+            idsNoDisponibles={idsNoDisponibles}
             readOnly={false}
             onSubirNuevo={() => setModo('archivos')}
           />

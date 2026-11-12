@@ -141,9 +141,63 @@ export const adjuntosService = {
   async cargarBlobAdjunto(idAdjunto: number): Promise<{ blob: Blob; blobUrl: string }> {
     const blob = await apiFetchBlob(`/adjuntos/${idAdjunto}/download`);
     if (!blob.size) {
-      throw new Error('El archivo está vacío o no se pudo obtener desde el servidor de archivos');
+      throw new Error('El servidor devolvió un archivo sin contenido.');
     }
     return { blob, blobUrl: URL.createObjectURL(blob) };
+  },
+
+  /**
+   * Verifica si el binario de cada adjunto está accesible (ruta / red),
+   * sin descargar el archivo completo.
+   */
+  async verificarDisponibles(
+    ids: number[],
+  ): Promise<
+    Array<{
+      idAdjunto: number;
+      disponible: boolean;
+      motivo?: string | null;
+      mensaje?: string | null;
+      nombreArchivo?: string | null;
+    }>
+  > {
+    const unique = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))];
+    if (!unique.length) return [];
+
+    const results = await Promise.all(
+      unique.map(async (idAdjunto) => {
+        try {
+          const response = await apiFetch(`/adjuntos/${idAdjunto}/disponible`);
+          const json = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const motivo = response.status === 503 || response.status >= 500 ? 'red' : 'faltante';
+            return {
+              idAdjunto,
+              disponible: false,
+              motivo,
+              mensaje: json?.mensaje || json?.error || null,
+              nombreArchivo: json?.nombreArchivo || null,
+            };
+          }
+          return {
+            idAdjunto,
+            disponible: Boolean(json?.disponible),
+            motivo: json?.motivo ?? null,
+            mensaje: json?.mensaje || json?.error || null,
+            nombreArchivo: json?.nombreArchivo || null,
+          };
+        } catch {
+          return {
+            idAdjunto,
+            disponible: false,
+            motivo: 'red',
+            mensaje: 'Problema de red o el servidor de la clínica no responde.',
+            nombreArchivo: null,
+          };
+        }
+      }),
+    );
+    return results;
   },
 
   revocarBlobUrl(blobUrl: string | null | undefined) {

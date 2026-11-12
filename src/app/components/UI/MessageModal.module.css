@@ -5,7 +5,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 1800;
+	/* Por encima de AdjuntosModal / PACS (~11050) y toasts (~12000). */
+	z-index: 12100;
 	padding: 1rem;
 }
 
