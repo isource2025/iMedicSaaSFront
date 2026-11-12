@@ -13,12 +13,8 @@ import { generarPDFInsumos } from '../../../utils/pdfExportLazy';
 import { obtenerInfoEmpresa } from '../../../services/empresaService';
 import { usePermiso } from '../../../hooks/usePermiso';
 import { puedeCargarEnFechaSeleccionada } from '../../../utils/visitaEgreso';
-import NuevaIndicacionModal from '../../indicaciones/NuevaIndicacionModal';
 import ModalBasePaciente from '../../modals/ModalBasePaciente';
-import { indicacionesService } from '../../../services/indicacionesService';
-import type { NuevaIndicacionPayload } from '../../../types/indicaciones';
-
-const TIPO_DESCARTABLES = 9;
+import NuevoInsumoForm, { NUEVO_INSUMO_FORM_ID } from './NuevoInsumoForm';
 
 interface InsumosSectionProps {
     numeroVisita: number | null;
@@ -54,7 +50,7 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
     const fechaISO = useMemo(() => toISODate(selectedDate), [selectedDate]);
 
     const puedeCrear =
-        (puede('INTERNACION.INSUMOS.CREAR') || puede('INTERNACION.INDICACIONES.CREAR')) &&
+        puede('INTERNACION.INSUMOS.CREAR') &&
         puedeCargarEnFechaSeleccionada(selectedDate, {
             egresada: bed?.egresada,
             fechaEgresoSQL: bed?.fechaEgresoSQL,
@@ -133,28 +129,14 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
         }
     };
 
-    const handleSave = async (payload: NuevaIndicacionPayload) => {
-        setSaving(true);
-        try {
-            const fechaGuardada = payload.FechaCarga || fechaCargaPermitida;
-            const resultado = await indicacionesService.postNuevaIndicacion({
-                ...payload,
-                NumeroVisita: payload.NumeroVisita ?? numeroVisita,
-                TipoIndicacion: TIPO_DESCARTABLES,
-                FechaCarga: fechaGuardada,
-            });
-            if (fechaGuardada && fechaGuardada !== fechaISO) {
-                const [y, m, d] = fechaGuardada.split('-').map(Number);
-                setSelectedDate(new Date(y, m - 1, d));
-            }
-            return resultado;
-        } finally {
-            setSaving(false);
+    const handleGuardado = async (fechaGuardada: string) => {
+        setModalOpen(false);
+        if (fechaGuardada !== fechaISO) {
+            const [y, m, d] = fechaGuardada.split('-').map(Number);
+            setSelectedDate(new Date(y, m - 1, d));
+        } else {
+            await refetch();
         }
-    };
-
-    const refetchListado = async () => {
-        await refetch();
     };
 
     const [query, setQuery] = useState("");
@@ -272,24 +254,19 @@ const InsumosSection: React.FC<InsumosSectionProps> = ({
                     <button
                         className={`${styles.btn} ${styles.btnPrimary}`}
                         type="submit"
-                        form="nueva-indicacion-form"
+                        form={NUEVO_INSUMO_FORM_ID}
                         disabled={saving}
                     >
                         {saving ? "Guardando…" : "Guardar"}
                     </button>
                 }
             >
-                {modalOpen && (
-                    <NuevaIndicacionModal
-                        onClose={() => setModalOpen(false)}
-                        onSave={handleSave}
-                        defaultNumeroVisita={numeroVisita}
-                        refetch={refetchListado}
+                {modalOpen && fechaCargaPermitida && (
+                    <NuevoInsumoForm
+                        numeroVisita={numeroVisita}
                         fechaCarga={fechaCargaPermitida}
-                        fechaIngresoSQL={bed?.fechaIngresoSQL ?? fechaIngreso}
-                        fechaEgresoSQL={bed?.fechaEgresoSQL}
-                        egresada={Boolean(bed?.egresada)}
-                        tipoFijo={TIPO_DESCARTABLES}
+                        onGuardado={handleGuardado}
+                        onSavingChange={setSaving}
                     />
                 )}
             </ModalBasePaciente>

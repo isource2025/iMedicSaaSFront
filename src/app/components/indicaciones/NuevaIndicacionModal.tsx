@@ -33,11 +33,7 @@ interface IndicacionFormProps {
     fechaIngresoSQL?: string | null;
     fechaEgresoSQL?: string | null;
     egresada?: boolean;
-    /** Fija el tipo de indicación (ej. 9 = descartables desde Insumos) y oculta los adicionales. */
-    tipoFijo?: number | null;
 }
-
-const TIPO_DESCARTABLES = 9;
 
 // ===== Clarion helpers =====
 const CLARION_TICKS_PER_SEC = 100;
@@ -114,15 +110,13 @@ export default function IndicacionForm({
     fechaIngresoSQL = null,
     fechaEgresoSQL = null,
     egresada = false,
-    tipoFijo = null,
 }: IndicacionFormProps) {
     const initial = useMemo(
         () => ({
             ...emptyPayload(defaultNumeroVisita, fechaCarga),
             IdSector: idSector, // ✅ Usar el idSector del prop si está disponible
-            TipoIndicacion: tipoFijo,
         }),
-        [defaultNumeroVisita, idSector, fechaCarga, tipoFijo]
+        [defaultNumeroVisita, idSector, fechaCarga]
     );
     const [form, setForm] = useState<NuevaIndicacionPayload>(initial);
     const [aviso, setAviso] = useState<{
@@ -166,14 +160,8 @@ export default function IndicacionForm({
         setAdicionalForm((prev) => ({ ...prev, [field]: value }));
 
     useEffect(() => {
-        setForm({ ...emptyPayload(defaultNumeroVisita, fechaCarga), TipoIndicacion: tipoFijo });
-    }, [defaultNumeroVisita, fechaCarga, tipoFijo]);
-
-    useEffect(() => {
-        if (tipoFijo == null || !dataForm) return;
-        const tipo = dataForm.tiposIndicacion.find((t) => Number(t.Valor) === Number(tipoFijo));
-        setForm((prev) => ({ ...prev, TipoIndicacion: tipoFijo, Orden: tipo?.OrdenMedicacion ?? prev.Orden }));
-    }, [tipoFijo, dataForm]);
+        setForm(emptyPayload(defaultNumeroVisita, fechaCarga));
+    }, [defaultNumeroVisita, fechaCarga]);
 
     useEffect(() => {
         console.log('🔍 Usuario desde contexto:', usuario);
@@ -382,18 +370,11 @@ export default function IndicacionForm({
     const medicaCionData = useMemo(() => {
         if (!dataForm || !tipoIndicacion) return [];
         switch (tipoIndicacion) {
-            case "M": {
-                const descartables =
-                    tipoFijo === TIPO_DESCARTABLES
-                        ? dataForm.vademecum.filter(
-                              (v) => String(v.TipoMedicamento || "").trim().toUpperCase() === "DESC"
-                          )
-                        : [];
-                return (descartables.length ? descartables : dataForm.vademecum).map((v) => ({
+            case "M":
+                return dataForm.vademecum.map((v) => ({
                     value: Number(v.Valor),
                     label: v.Nombre,
                 }));
-            }
             case "D":
                 return dataForm.tiposDieta.map((d) => ({
                     value: Number(d.Valor),
@@ -412,7 +393,7 @@ export default function IndicacionForm({
             default:
                 return [];
         }
-    }, [dataForm, tipoIndicacion, tipoFijo]);
+    }, [dataForm, tipoIndicacion]);
 
     // Al cambiar tipo, limpiamos selección (ID) para evitar incoherencias
     // PERO NO durante la carga inicial de datos de edición
@@ -722,12 +703,10 @@ export default function IndicacionForm({
                             value={form.TipoIndicacion || ""}
                             autoFocus={false}
                             options={
-                                dataForm?.tiposIndicacion
-                                    .filter((item) => tipoFijo == null || Number(item.Valor) === Number(tipoFijo))
-                                    .map((item) => ({
-                                        value: Number(item.Valor),
-                                        label: item.Descripcion,
-                                    })) || []
+                                dataForm?.tiposIndicacion.map((item) => ({
+                                    value: Number(item.Valor),
+                                    label: item.Descripcion,
+                                })) || []
                             }
                         />
                     </div>
@@ -825,7 +804,6 @@ export default function IndicacionForm({
                 </div>
 
                 {/* Botón Agregar Adicional + Chips de adicionales agregados */}
-                {tipoFijo == null && (
                 <div className={styles.adicionalSection}>
                     <div className={styles.adicionalHeader}>
                         <button
@@ -900,7 +878,6 @@ export default function IndicacionForm({
                         </div>
                     )}
                 </div>
-                )}
 
                 {/* Fila 5: Observaciones */}
                 <div className={styles.row}>
