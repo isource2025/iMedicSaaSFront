@@ -17,6 +17,7 @@ import {
 	Pencil,
 	Stethoscope,
 } from 'lucide-react';
+import { IoCloseCircleOutline } from 'react-icons/io5';
 import { almacenStockService } from '@/app/services/almacenStockService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { useToast } from '@/app/components/UI/ToastProvider';
@@ -37,6 +38,8 @@ import type {
 	RemitoTipo,
 } from '@/app/types/almacenStock';
 import styles from '../stock.module.css';
+
+const STATUS_ANULADO = 0;
 
 type DraftItem = RemitoItem & { _key: string };
 
@@ -124,6 +127,45 @@ function tagSentido(sentido?: string | null): 'Entrada' | 'Salida' | null {
 	return null;
 }
 
+function esRemitoAnulado(row: Pick<RemitoCabecera, 'IdStatus'>) {
+	return Number(row.IdStatus) === STATUS_ANULADO;
+}
+
+/** Origen → destino y signo de cantidad según el sentido del tipo. */
+function trayectoRemito(
+	row: RemitoCabecera,
+	sentidoTipo?: string | null,
+): { desde: string; hacia: string; entrada: boolean; cant: number } {
+	const tag = tagSentido(row.Sentido || sentidoTipo);
+	const entrada = tag === 'Entrada';
+	const dep =
+		(row.DepositoNombre || '').trim() ||
+		(row.IdDeposito != null ? `Dep. ${row.IdDeposito}` : '—');
+	const destDep = (row.DepositoDestNombre || '').trim();
+	const proveedor = (row.ProveedorNombre || '').trim();
+	const cliente = (row.ClienteNombre || '').trim();
+	const dest =
+		destDep ||
+		(entrada ? proveedor : '') ||
+		cliente ||
+		(String(row.TipoCbte || '').toUpperCase() === 'RSP' ? 'Paciente' : '') ||
+		'—';
+	if (entrada) {
+		return {
+			desde: dest !== '—' ? dest : proveedor || 'Externo',
+			hacia: dep,
+			entrada: true,
+			cant: Math.abs(Number(row.Bultos) || 0),
+		};
+	}
+	return {
+		desde: dep,
+		hacia: dest,
+		entrada: false,
+		cant: Math.abs(Number(row.Bultos) || 0),
+	};
+}
+
 function nombreTipoRemito(t: Pick<RemitoTipo, 'Descripcion' | 'IdTipo'>) {
 	return (t.Descripcion || t.IdTipo || '').trim();
 }
@@ -156,6 +198,26 @@ function metaPacienteCorta(it: {
  * Aviso (no bloquea): cantidades anómalas en remito — p. ej. indicación
  * «continuo» cargada mal (tasa por segundo → total absurdo). El usuario corrige.
  */
+/** Cantidad de remito: solo enteros (sin decimales). */
+function parseCantidadEntera(raw: string | number | null | undefined): number | null {
+	const s = String(raw ?? '')
+		.trim()
+		.replace(',', '.');
+	if (!s) return null;
+	const n = Number(s);
+	if (!Number.isFinite(n) || n === 0) return null;
+	if (!Number.isInteger(n)) return null;
+	return n;
+}
+
+function soloDigitosCantidad(raw: string) {
+	// Permite "-" al inicio (ajustes) y solo dígitos; bloquea punto/coma.
+	const neg = raw.trim().startsWith('-');
+	const digits = raw.replace(/[^\d]/g, '');
+	if (!digits) return neg ? '-' : '';
+	return neg ? `-${digits}` : digits;
+}
+
 function motivoCantidadSospechosa(cant: number, idUnidad?: string | null): string | null {
 	const n = Number(cant);
 	if (!Number.isFinite(n) || n === 0) return null;
@@ -163,19 +225,12 @@ function motivoCantidadSospechosa(cant: number, idUnidad?: string | null): strin
 	if (abs > 500) {
 		return 'cantidad muy alta — revisá si la indicación es continuo u otro error de carga';
 	}
-	const u = (idUnidad || '').trim().toUpperCase();
-	const esUn = !u || u === 'UN' || u === 'U' || u.startsWith('UN ');
-	if (esUn && Math.abs(n - Math.round(n)) > 0.001) {
-		return 'cantidad con decimales en unidad UN — revisá la carga';
-	}
 	return null;
 }
 
 function fmtCantidad(n?: number | null) {
 	if (n == null || !Number.isFinite(Number(n))) return '—';
-	const v = Number(n);
-	if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
-	return v.toLocaleString('es-AR', { maximumFractionDigits: 4 });
+	return String(Math.round(Number(n)));
 }
 
 function ordenTiposPorSentido(a: RemitoTipo, b: RemitoTipo) {
@@ -338,6 +393,8 @@ export default function RemitosClient() {
 	const [saving, setSaving] = useState(false);
 	const [confirmCantOpen, setConfirmCantOpen] = useState(false);
 	const [confirmCantMsg, setConfirmCantMsg] = useState('');
+	const [anularTarget, setAnularTarget] = useState<RemitoCabecera | null>(null);
+	const [anulando, setAnulando] = useState(false);
 	const [editingCantKey, setEditingCantKey] = useState<string | null>(null);
 	const [editingCantValue, setEditingCantValue] = useState('');
 	const cantInputRef = useRef<HTMLInputElement | null>(null);
@@ -683,20 +740,32 @@ export default function RemitosClient() {
 		}
 	};
 
-	const removeRemito = async (row: RemitoCabecera) => {
+	const pedirAnularRemito = (row: RemitoCabecera) => {
 		if (!canDelete) return;
-		const label = row.NroRemitoFmt || String(row.IdTransaccion);
-		if (!window.confirm(`¿Borrar el remito «${label}»? Esta acción no se puede deshacer.`)) return;
+		if (esRemitoAnulado(row)) {
+			toast.error('El remito ya está anulado');
+			return;
+		}
+		setAnularTarget(row);
+	};
+
+	const confirmarAnularRemito = async () => {
+		const row = anularTarget;
+		if (!row || !canDelete) return;
+		setAnulando(true);
 		try {
 			await almacenStockService.eliminarRemito(row.IdTransaccion);
-			toast.success('Remito eliminado');
+			toast.success('Remito anulado');
+			setAnularTarget(null);
 			if (detail?.IdTransaccion === row.IdTransaccion) {
 				setDetailOpen(false);
 				setDetail(null);
 			}
 			await load();
 		} catch (e) {
-			toast.error(mensajeDeError(e, 'No se pudo eliminar el remito'));
+			toast.error(mensajeDeError(e, 'No se pudo anular el remito'));
+		} finally {
+			setAnulando(false);
 		}
 	};
 
@@ -881,7 +950,7 @@ export default function RemitosClient() {
 		setItemForm({
 			IdProducto: String(it.IdProducto),
 			DescripcionProducto: it.DescripcionProducto || '',
-			Cantidad: String(it.Cantidad),
+			Cantidad: String(Math.round(Number(it.Cantidad) || 0) || 1),
 			ImporteUnitario: String(it.ImporteUnitario),
 			IdPaciente: it.IdPaciente != null ? String(it.IdPaciente) : '',
 			PacienteLabel: pacLabel,
@@ -912,14 +981,14 @@ export default function RemitosClient() {
 
 	const commitItem = () => {
 		const idProd = Number(itemForm.IdProducto);
-		const cant = Number(itemForm.Cantidad);
+		const cant = parseCantidadEntera(itemForm.Cantidad);
 		const unit = Number(itemForm.ImporteUnitario);
 		if (!Number.isFinite(idProd) || idProd <= 0 || !itemForm.DescripcionProducto.trim()) {
 			avisarCampo('item-producto', 'Seleccioná un producto válido de la tabla Productos');
 			return;
 		}
-		if (!Number.isFinite(cant) || cant === 0) {
-			avisarCampo('item-cantidad', 'Cantidad inválida');
+		if (cant == null) {
+			avisarCampo('item-cantidad', 'La cantidad debe ser un número entero (sin decimales)');
 			return;
 		}
 		// Id paciente: solo si viene de imPacientes (lookup), no texto libre
@@ -1019,7 +1088,7 @@ export default function RemitosClient() {
 		const nuevos: DraftItem[] = usable
 			.filter((l) => !ya.has(l.NroIndicacion))
 			.map((l) => {
-				const cant = Number(l.CantidadSugerida) || Number(l.CantidadPendiente) || 0;
+				const cant = Math.round(Number(l.CantidadSugerida) || Number(l.CantidadPendiente) || 0);
 				const unit = Number(l.ImporteUnitario) || 0;
 				return {
 					_key: newItemKey(),
@@ -1094,7 +1163,7 @@ export default function RemitosClient() {
 
 	const startEditCantidad = (key: string, cant: number) => {
 		setEditingCantKey(key);
-		setEditingCantValue(String(cant));
+		setEditingCantValue(String(Math.round(Number(cant) || 0)));
 	};
 
 	const cancelEditCantidad = () => {
@@ -1103,10 +1172,9 @@ export default function RemitosClient() {
 	};
 
 	const commitEditCantidad = (key: string) => {
-		const raw = editingCantValue.trim().replace(',', '.');
-		const cant = Number(raw);
-		if (!Number.isFinite(cant) || cant === 0) {
-			toast.error('Cantidad inválida');
+		const cant = parseCantidadEntera(editingCantValue);
+		if (cant == null) {
+			toast.error('La cantidad debe ser un número entero (sin decimales)');
 			if (cantInputRef.current) resaltarElemento(cantInputRef.current);
 			return;
 		}
@@ -1199,10 +1267,9 @@ export default function RemitosClient() {
 		}
 		let itemsActuales = draftItems;
 		if (editingCantKey) {
-			const raw = editingCantValue.trim().replace(',', '.');
-			const cant = Number(raw);
-			if (!Number.isFinite(cant) || cant === 0) {
-				toast.error('Cantidad inválida');
+			const cant = parseCantidadEntera(editingCantValue);
+			if (cant == null) {
+				toast.error('La cantidad debe ser un número entero (sin decimales)');
 				if (cantInputRef.current) resaltarElemento(cantInputRef.current);
 				return;
 			}
@@ -1282,27 +1349,24 @@ export default function RemitosClient() {
 					aria-label="Medicación pendiente de entregar"
 				>
 					<div className={styles.pendienteBudgetHead}>
-						<span className={styles.pendienteBudgetIcon}>
-							<Bell size={16} />
+						<span className={styles.pendienteBudgetIcon} aria-hidden>
+							<Bell size={12} />
 						</span>
 						<div className={styles.pendienteBudgetText}>
 							<strong>
 								{pendienteMedLoading
-									? 'Consultando medicación sin entregar…'
+									? 'Consultando pendientes…'
 									: pendienteMedError
-										? 'No se pudo consultar medicación pendiente'
-										: `Medicación sin entregar · ${pendienteMed?.totalServicios} servicio${
-												pendienteMed?.totalServicios === 1 ? '' : 's'
-											}`}
+										? 'Pendientes no disponibles'
+										: `Sin entregar · ${pendienteMed?.totalServicios}`}
 							</strong>
 							{!pendienteMedLoading && !pendienteMedError && pendienteMed ? (
 								<span>
-									{pendienteMed.totalLineas} indicación
-									{pendienteMed.totalLineas === 1 ? '' : 'es'} · {pendienteMed.totalVisitas} internación
-									{pendienteMed.totalVisitas === 1 ? '' : 'es'} · {fmtDate(pendienteMed.fecha)}
+									{pendienteMed.totalLineas} ind. · {pendienteMed.totalVisitas} pac. ·{' '}
+									{fmtDate(pendienteMed.fecha)}
 								</span>
 							) : pendienteMedError ? (
-								<span>{pendienteMedError}</span>
+								<span title={pendienteMedError}>{pendienteMedError}</span>
 							) : null}
 						</div>
 						{!pendienteMedLoading && (
@@ -1312,7 +1376,7 @@ export default function RemitosClient() {
 								onClick={() => void loadPendienteMed()}
 								title="Actualizar pendientes"
 							>
-								<RefreshCw size={14} />
+								<RefreshCw size={11} />
 							</button>
 						)}
 					</div>
@@ -1328,7 +1392,7 @@ export default function RemitosClient() {
 										svc.IdDeposito == null
 											? 'Sin depósito vinculado a este sector'
 											: canCreate
-												? `Abrir remito RSM para ${svc.SectorNombre || svc.ValorSector}`
+												? `Abrir remito RSM · ${svc.SectorNombre || svc.ValorSector} · ${svc.Lineas} ind. · ${svc.Pacientes} pac.`
 												: 'Sin permiso para crear remitos'
 									}
 									onClick={() => abrirRemitoPendienteServicio(svc)}
@@ -1337,7 +1401,7 @@ export default function RemitosClient() {
 										{svc.SectorNombre || svc.ValorSector}
 									</span>
 									<span className={styles.pendienteBudgetChipMeta}>
-										{svc.Lineas} ind. · {svc.Pacientes} pac.
+										{svc.Lineas}·{svc.Pacientes}
 									</span>
 								</button>
 							))}
@@ -1407,82 +1471,104 @@ export default function RemitosClient() {
 									<th>Fecha</th>
 									<th>Tipo</th>
 									<th>Nº remito</th>
-									<th>Depósito</th>
-									<th>Bultos</th>
+									<th>De → A</th>
+									<th>Cant.</th>
+									<th>Observaciones</th>
 									<th>Importe</th>
 									{(canEdit || canDelete) && <th className={styles.colActions}>Acciones</th>}
 								</tr>
 							</thead>
 							<tbody>
-								{items.map((row) => (
-									<tr key={row.IdTransaccion} onClick={() => void openDetail(row)}>
-										<td className={styles.mono}>{row.IdTransaccion}</td>
-										<td>{fmtDate(row.Fecha)}</td>
-										<td>
-											<span className={styles.tipoCell}>
-												{(() => {
-													const tag = tagSentido(
-														tipos.find((t) => t.IdTipo === row.TipoCbte)?.Sentido,
-													);
-													return (
-														<>
-															{tag ? (
-																<span
-																	className={`${styles.sentidoTag} ${
-																		tag === 'Entrada'
-																			? styles.sentidoEntrada
-																			: styles.sentidoSalida
-																	}`}
-																>
-																	{tag}
-																</span>
-															) : null}
-															<span>{row.TipoNombre || row.TipoCbte || '—'}</span>
-														</>
-													);
-												})()}
-											</span>
-										</td>
-										<td className={styles.mono}>{row.NroRemitoFmt}</td>
-										<td>{row.DepositoNombre || row.IdDeposito}</td>
-										<td className={styles.mono}>{row.Bultos ?? 0}</td>
-										<td className={styles.mono}>{fmtMoney(row.ImportePPP)}</td>
-										{(canEdit || canDelete) && (
-											<td className={styles.colActions}>
-												<div className={styles.rowActions}>
-													{canEdit && (
-														<button
-															type="button"
-															className={styles.actionEdit}
-															title="Editar"
-															aria-label={`Editar remito ${row.NroRemitoFmt || row.IdTransaccion}`}
-															onClick={(e) => {
-																e.stopPropagation();
-																void openEdit(row);
-															}}
+								{items.map((row) => {
+									const anulado = esRemitoAnulado(row);
+									const sentidoTipo = tipos.find((t) => t.IdTipo === row.TipoCbte)?.Sentido;
+									const tag = tagSentido(row.Sentido || sentidoTipo);
+									const mov = trayectoRemito(row, sentidoTipo);
+									const obs = (row.Observaciones || '').trim();
+									return (
+										<tr
+											key={row.IdTransaccion}
+											className={anulado ? styles.rowAnulado : undefined}
+											onClick={() => void openDetail(row)}
+										>
+											<td className={styles.mono}>{row.IdTransaccion}</td>
+											<td>{fmtDate(row.Fecha)}</td>
+											<td>
+												<span className={styles.tipoCell}>
+													{tag ? (
+														<span
+															className={`${styles.sentidoTag} ${
+																tag === 'Entrada'
+																	? styles.sentidoEntrada
+																	: styles.sentidoSalida
+															}`}
 														>
-															<Pencil size={16} />
-														</button>
-													)}
-													{canDelete && (
-														<button
-															type="button"
-															className={styles.actionDelete}
-															title="Eliminar"
-															aria-label={`Eliminar remito ${row.NroRemitoFmt || row.IdTransaccion}`}
-															onClick={(e) => {
-																e.stopPropagation();
-																void removeRemito(row);
-															}}
-														>
-															<Trash2 size={16} />
-														</button>
-													)}
+															{tag}
+														</span>
+													) : null}
+													<span>{row.TipoNombre || row.TipoCbte || '—'}</span>
+													{anulado ? (
+														<span className={styles.badgeAnulado}>Anulado</span>
+													) : null}
+												</span>
+											</td>
+											<td className={styles.mono}>{row.NroRemitoFmt}</td>
+											<td>
+												<div className={styles.trayecto} title={`${mov.desde} → ${mov.hacia}`}>
+													<span className={styles.trayectoDesde}>{mov.desde}</span>
+													<span className={styles.trayectoFlecha} aria-hidden>
+														→
+													</span>
+													<span className={styles.trayectoHacia}>{mov.hacia}</span>
 												</div>
 											</td>
-										)}
-									</tr>
-								))}
+											<td
+												className={styles.mono}
+												title={mov.entrada ? `Entrada · ${mov.cant}` : `Salida · ${mov.cant}`}
+											>
+												{mov.cant}
+											</td>
+											<td className={styles.obsCell} title={obs || undefined}>
+												{obs || '—'}
+											</td>
+											<td className={styles.mono}>{fmtMoney(row.ImportePPP)}</td>
+											{(canEdit || canDelete) && (
+												<td className={styles.colActions}>
+													<div className={styles.rowActions}>
+														{canEdit && !anulado && (
+															<button
+																type="button"
+																className={styles.actionEdit}
+																title="Editar"
+																aria-label={`Editar remito ${row.NroRemitoFmt || row.IdTransaccion}`}
+																onClick={(e) => {
+																	e.stopPropagation();
+																	void openEdit(row);
+																}}
+															>
+																<Pencil size={16} />
+															</button>
+														)}
+														{canDelete && !anulado && (
+															<button
+																type="button"
+																className={styles.actionDelete}
+																title="Anular"
+																aria-label={`Anular remito ${row.NroRemitoFmt || row.IdTransaccion}`}
+																onClick={(e) => {
+																	e.stopPropagation();
+																	pedirAnularRemito(row);
+																}}
+															>
+																<IoCloseCircleOutline color="#e11d48" size={18} />
+															</button>
+														)}
+													</div>
+												</td>
+											)}
+										</tr>
+									);
+								})}
 							</tbody>
 						</table>
 					)}
@@ -1531,7 +1617,8 @@ export default function RemitosClient() {
 								<div className={styles.tipoCell}>
 									{(() => {
 										const tag = tagSentido(
-											tipos.find((t) => t.IdTipo === detail.TipoCbte)?.Sentido,
+											detail.Sentido ||
+												tipos.find((t) => t.IdTipo === detail.TipoCbte)?.Sentido,
 										);
 										return (
 											<>
@@ -1549,6 +1636,9 @@ export default function RemitosClient() {
 												<span>
 													{detail.TipoNombre || detail.TipoCbte || '—'}
 												</span>
+												{esRemitoAnulado(detail) ? (
+													<span className={styles.badgeAnulado}>Anulado</span>
+												) : null}
 											</>
 										);
 									})()}
@@ -1762,16 +1852,17 @@ export default function RemitosClient() {
 								<button type="button" className={styles.btnGhost} onClick={() => setDetailOpen(false)}>
 									Cerrar
 								</button>
-								{canDelete && (
+								{canDelete && !esRemitoAnulado(detail) && (
 									<button
 										type="button"
 										className={styles.btnGhost}
-										onClick={() => void removeRemito(detail)}
+										onClick={() => pedirAnularRemito(detail)}
 									>
-										Eliminar
+										<IoCloseCircleOutline color="#e11d48" size={18} aria-hidden />
+										Anular
 									</button>
 								)}
-								{canEdit && (
+								{canEdit && !esRemitoAnulado(detail) && (
 									<button
 										type="button"
 										className={styles.btnPrimary}
@@ -1806,17 +1897,13 @@ export default function RemitosClient() {
 							aria-label="Medicación pendiente de entregar"
 						>
 							<div className={styles.pendienteBudgetHead}>
-								<span className={styles.pendienteBudgetIcon}>
-									<Bell size={16} />
+								<span className={styles.pendienteBudgetIcon} aria-hidden>
+									<Bell size={12} />
 								</span>
 								<div className={styles.pendienteBudgetText}>
-									<strong>
-										Hay medicación sin entregar en {pendienteMed.totalServicios} servicio
-										{pendienteMed.totalServicios === 1 ? '' : 's'}
-									</strong>
+									<strong>Pendientes</strong>
 									<span>
-										{pendienteMed.totalLineas} indicación
-										{pendienteMed.totalLineas === 1 ? '' : 'es'} · elegí un servicio para armar RSM
+										{pendienteMed.totalServicios} · {pendienteMed.totalLineas} ind.
 									</span>
 								</div>
 							</div>
@@ -1834,7 +1921,7 @@ export default function RemitosClient() {
 										title={
 											svc.IdDeposito == null
 												? 'Sin depósito vinculado'
-												: `Usar ${svc.SectorNombre || svc.ValorSector} como destino RSM`
+												: `Usar ${svc.SectorNombre || svc.ValorSector} como destino RSM · ${svc.Lineas} ind. · ${svc.Pacientes} pac.`
 										}
 										onClick={() => {
 											const rsm =
@@ -1853,7 +1940,7 @@ export default function RemitosClient() {
 											{svc.SectorNombre || svc.ValorSector}
 										</span>
 										<span className={styles.pendienteBudgetChipMeta}>
-											{svc.Lineas} ind. · {svc.Pacientes} pac.
+											{svc.Lineas}·{svc.Pacientes}
 										</span>
 									</button>
 								))}
@@ -2135,10 +2222,13 @@ export default function RemitosClient() {
 																		ref={cantInputRef}
 																		className={styles.cantInlineInput}
 																		type="text"
-																		inputMode="decimal"
+																		inputMode="numeric"
+																		pattern="[0-9-]*"
 																		value={editingCantValue}
 																		aria-label={`Cantidad de ${it.DescripcionProducto || it.IdProducto}`}
-																		onChange={(e) => setEditingCantValue(e.target.value)}
+																		onChange={(e) =>
+																			setEditingCantValue(soloDigitosCantidad(e.target.value))
+																		}
 																		onBlur={() => commitEditCantidad(it._key)}
 																		onKeyDown={(e) => {
 																			if (e.key === 'Enter') {
@@ -2362,6 +2452,26 @@ export default function RemitosClient() {
 				onConfirm={() => void ejecutarGuardadoRemito()}
 			/>
 
+			<ConfirmDialog
+				open={anularTarget != null}
+				title="Anular remito"
+				message={
+					anularTarget
+						? Number(anularTarget.IdTransaccionOrig) > 0
+							? `¿Anular el remito «${anularTarget.NroRemitoFmt || anularTarget.IdTransaccion}»? Es el comprobante generado automáticamente del remito ${anularTarget.IdTransaccionOrig}: se anulan ambos, se revierte el stock y no se puede deshacer.`
+							: `¿Anular el remito «${anularTarget.NroRemitoFmt || anularTarget.IdTransaccion}»? Esta acción no se puede deshacer: se revierte el stock, se anula también el remito vinculado si existe, y el número queda consumido.`
+						: ''
+				}
+				confirmLabel="Anular"
+				cancelLabel="Cancelar"
+				tone="danger"
+				busy={anulando}
+				onCancel={() => {
+					if (!anulando) setAnularTarget(null);
+				}}
+				onConfirm={() => void confirmarAnularRemito()}
+			/>
+
 			{/* Candidatos medicación/descartables de internaciones (RSM) */}
 			<Modal
 				isOpen={candidatosOpen}
@@ -2485,9 +2595,13 @@ export default function RemitosClient() {
 						<label>Cantidad</label>
 						<input
 							type="number"
-							step="0.01"
+							step={1}
+							min={1}
+							inputMode="numeric"
 							value={itemForm.Cantidad}
-							onChange={(e) => setItemForm((f) => ({ ...f, Cantidad: e.target.value }))}
+							onChange={(e) =>
+								setItemForm((f) => ({ ...f, Cantidad: soloDigitosCantidad(e.target.value) }))
+							}
 						/>
 					</div>
 					<div className={styles.field}>

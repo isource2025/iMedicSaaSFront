@@ -125,11 +125,20 @@ export default function CustomSelect({
         const available = openDown ? spaceBelow - 8 : spaceAbove - 8;
         const maxHeight = Math.min(320, Math.max(120, available));
 
+        // El menú no puede quedar más angosto que el trigger; si el trigger es chico
+        // (p. ej. tipo de remito en una fila apretada) se ensancha para leer labels largos.
+        const triggerW = Math.round(r.width);
+        const vw = window.innerWidth;
+        const maxW = Math.max(180, vw - 24);
+        const preferred = Math.min(maxW, Math.max(triggerW, Math.min(480, Math.round(vw * 0.42))));
+        let left = Math.round(r.left);
+        if (left + preferred > vw - 12) left = Math.max(12, vw - 12 - preferred);
+
         setPlacement(openDown ? "bottom" : "top");
         setCoords({
-            left: Math.round(r.left),
+            left,
             top: Math.round(openDown ? r.bottom + 4 : r.top - 4),
-            width: Math.round(r.width),
+            width: preferred,
             maxHeight,
         });
     };
@@ -169,11 +178,14 @@ export default function CustomSelect({
         return () => document.removeEventListener("mousedown", handleClick);
     }, [isOpen]);
 
+    // isLoading durante una búsqueda remota NO debe cerrar el menú ni tocar el input:
+    // si se desmonta el portal, se pierde el foco y el cursor salta.
+    const triggerBusy = Boolean(isLoading && !isOpen);
     const selectClasses = [
         styles.select,
         compact ? styles.selectCompact : "",
-        isLoading || disabled ? styles.selectDisabled : "",
-        isLoading ? styles.selectLoading : "",
+        triggerBusy || disabled ? styles.selectDisabled : "",
+        triggerBusy ? styles.selectLoading : "",
     ]
         .filter(Boolean)
         .join(" ");
@@ -182,7 +194,7 @@ export default function CustomSelect({
     const handleTriggerKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (
         e
     ) => {
-        if (isLoading || disabled) return;
+        if (triggerBusy || disabled) return;
         if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             setIsOpen((v) => !v);
@@ -233,26 +245,32 @@ export default function CustomSelect({
                     id={name}
                     ref={triggerRef}
                     className={selectClasses}
-                    onClick={() => !isLoading && !disabled && setIsOpen((v) => !v)}
+                    onClick={() => !triggerBusy && !disabled && setIsOpen((v) => !v)}
                     role="combobox" // NEW: ARIA adecuado
                     aria-haspopup="listbox"
                     aria-expanded={isOpen}
-                    aria-disabled={isLoading || disabled}
+                    aria-disabled={triggerBusy || disabled}
+                    aria-busy={isLoading || undefined}
                     aria-controls={`${name}-listbox`}
                     aria-activedescendant={
                         isOpen ? `${name}-active` : undefined
                     }
-                    tabIndex={isLoading || disabled ? -1 : tabIndex ?? 0} // NEW: enfocable y ordenable
+                    title={
+                        !triggerBusy && (selected?.label || displayLabel)
+                            ? String(selected?.label || displayLabel)
+                            : undefined
+                    }
+                    tabIndex={triggerBusy || disabled ? -1 : tabIndex ?? 0} // NEW: enfocable y ordenable
                     onKeyDown={handleTriggerKeyDown} // NEW
                 >
-                    {isLoading
+                    {triggerBusy
                         ? "Cargando…"
                         : selected
                         ? renderOptionLabel(selected)
                         : displayLabel
                         ? displayLabel
                         : "Seleccione…"}
-                    {isLoading && (
+                    {triggerBusy && (
                         <div
                             className={styles.spinnerIcon}
                             aria-hidden="true"
@@ -263,7 +281,6 @@ export default function CustomSelect({
 
             {mounted &&
                 isOpen &&
-                !isLoading &&
                 createPortal(
                     <div
                         ref={dropdownRef}
@@ -333,6 +350,11 @@ export default function CustomSelect({
                         </div>
 
                         <ul className={styles.optionList}>
+                            {isLoading ? (
+                                <li className={styles.dropdownItemDisabled} aria-live="polite">
+                                    Buscando…
+                                </li>
+                            ) : null}
                             {filtered.length ? (
                                 filtered.map((opt, i) => {
                                     const prevGroup = i > 0 ? filtered[i - 1]?.group : undefined;
@@ -384,11 +406,13 @@ export default function CustomSelect({
                                         </li>
                                     );
                                 })
-                            ) : (
+                            ) : !isLoading ? (
                                 <li className={styles.dropdownItemDisabled}>
-                                    No hay resultados
+                                    {onSearchChange && searchTerm.trim().length < 2
+                                        ? "Escribí al menos 2 caracteres…"
+                                        : "No hay resultados"}
                                 </li>
-                            )}
+                            ) : null}
                         </ul>
                     </div>,
                     document.body

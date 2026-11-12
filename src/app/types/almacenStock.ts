@@ -198,6 +198,8 @@ export interface RemitoCabecera {
 	IdTransaccion: number;
 	TipoCbte?: string | null;
 	TipoNombre?: string | null;
+	/** E = entrada, S = salida (Tipos_Remitos.Sentido). */
+	Sentido?: string | null;
 	GrupoCbte?: number | null;
 	LetraCbte?: string | null;
 	NroCbte?: number | null;
@@ -214,6 +216,10 @@ export interface RemitoCabecera {
 	Bultos?: number | null;
 	IdStatus?: number | null;
 	StatusNombre?: string | null;
+	/** Si > 0, este remito es el espejo generado automáticamente desde esa transacción. */
+	IdTransaccionOrig?: number | null;
+	/** Vista de lista: primer comentario de Remitos_Observa. */
+	Observaciones?: string | null;
 	ImportePPP?: number | null;
 	TotalRemito?: number;
 	items?: RemitoItem[];
@@ -237,8 +243,11 @@ export interface RemitosCatalogos {
 /** dbo.Stock + Productos + Depositos */
 export interface ExistenciaStock {
 	IdProducto: number;
-	IdDeposito: number;
+	/** null cuando la lista viene agrupada por producto (todos los depósitos). */
+	IdDeposito: number | null;
 	DepositoNombre?: string | null;
+	DepositosCount?: number | null;
+	agrupado?: boolean;
 	Fecha?: string | null;
 	Ubicacion?: string | null;
 	StockMinimo?: number | null;
@@ -259,6 +268,8 @@ export interface ExistenciaStock {
 
 export interface ExistenciasPage {
 	items: ExistenciaStock[];
+	/** true = un renglón por producto con totales; false = por depósito. */
+	agrupadoPorProducto?: boolean;
 	total: number;
 	page: number;
 	pageSize: number;

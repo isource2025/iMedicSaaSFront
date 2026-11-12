@@ -128,11 +128,14 @@
 .searchInput {
 	flex: 1;
 	min-width: 180px;
-	padding: 0.6rem 0.85rem;
-	border: 1px solid var(--sk-line);
+	height: 2.4rem;
+	padding: 0 0.85rem;
+	border: 1.5px solid #e2e8f0;
 	border-radius: 10px;
 	font-size: 0.9rem;
 	outline: none;
+	box-sizing: border-box;
+	background: #fff;
 }
 
 .searchInput:focus {
@@ -160,6 +163,26 @@
 	flex: 0 1 240px;
 	min-width: 180px;
 	max-width: 280px;
+}
+
+/* Misma altura que el buscador; sin label arriba (evita el desfase). */
+.toolbarSelect [role='combobox'] {
+	height: 2.4rem !important;
+	min-height: 2.4rem !important;
+	box-sizing: border-box !important;
+}
+
+.searchRow .statusToggle {
+	flex-shrink: 0;
+	height: 2.4rem;
+	padding: 0 0.7rem 0 0.45rem;
+	box-sizing: border-box;
+}
+
+.searchRow .statusLabel {
+	min-width: 0;
+	font-size: 0.78rem;
+	white-space: nowrap;
 }
 
 .checkInline {
@@ -280,6 +303,73 @@
 
 .table tbody tr:hover {
 	background: #f8fcfd;
+}
+
+.rowAnulado td {
+	background: #f3f4f6;
+	color: #9ca3af;
+}
+
+.table tbody tr.rowAnulado:hover td {
+	background: #eceff3;
+}
+
+.rowAnulado .trayectoDesde,
+.rowAnulado .trayectoHacia {
+	color: #9ca3af;
+}
+
+.badgeAnulado {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.08rem 0.4rem;
+	border-radius: 999px;
+	background: #6b7280;
+	color: #fff;
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.trayecto {
+	display: inline-flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.35rem;
+	max-width: 22rem;
+	line-height: 1.25;
+}
+
+.trayectoDesde,
+.trayectoHacia {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #0f172a;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 9.5rem;
+}
+
+.trayectoFlecha {
+	color: #94a3b8;
+	font-weight: 700;
+	flex-shrink: 0;
+}
+
+.obsCell {
+	max-width: 14rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.8rem;
+	color: #475569;
+}
+
+.rowAnulado .obsCell {
+	color: #9ca3af;
 }
 
 .colActions {
@@ -876,8 +966,8 @@
 }
 
 .remitoTipo {
-	flex: 1 1 220px;
-	min-width: 180px;
+	flex: 1.5 1 300px;
+	min-width: 260px;
 }
 
 .remitoNro {
@@ -979,35 +1069,41 @@
 	text-align: center;
 }
 
+/* Franja compacta: etiqueta + chips en una sola fila que envuelve. */
 .pendienteBudget {
 	display: flex;
-	flex-direction: column;
-	gap: 0.65rem;
-	margin: 0 0 0.85rem;
-	padding: 0.75rem 0.9rem;
-	border-radius: 12px;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem 0.5rem;
+	margin: 0 0 0.55rem;
+	padding: 0.35rem 0.5rem;
+	border-radius: 8px;
 	border: 1px solid #f0c987;
-	background: linear-gradient(135deg, #fff8eb 0%, #fffdf8 55%, #f7fbff 100%);
-	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+	background: #fffbeb;
 }
 
 .pendienteBudgetModal {
-	margin: 0 0 0.75rem;
+	margin: 0 0 0.5rem;
 	flex: 0 0 auto;
+	padding: 0.3rem 0.45rem;
+	background: #fff8eb;
 }
 
 .pendienteBudgetHead {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.65rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 100%;
 }
 
 .pendienteBudgetIcon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 1.85rem;
-	height: 1.85rem;
+	width: 1.25rem;
+	height: 1.25rem;
 	border-radius: 999px;
 	background: #fff;
 	border: 1px solid #f0c987;
@@ -1016,20 +1112,26 @@
 }
 
 .pendienteBudgetText {
-	display: flex;
-	flex-direction: column;
-	gap: 0.15rem;
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.2rem 0.4rem;
 	min-width: 0;
-	flex: 1 1 auto;
-	font-size: 0.82rem;
+	font-size: 0.72rem;
 	color: #6b4f1d;
-	line-height: 1.35;
+	line-height: 1.2;
 }
 
 .pendienteBudgetText strong {
-	font-size: 0.9rem;
+	font-size: 0.75rem;
 	font-weight: 700;
 	color: #92400e;
+	white-space: nowrap;
+}
+
+.pendienteBudgetText span {
+	color: #92703a;
+	white-space: nowrap;
 }
 
 .pendienteBudgetRefresh {
@@ -1037,14 +1139,15 @@
 	border: 1px solid #f0c987;
 	background: #fff;
 	color: #92400e;
-	border-radius: 8px;
-	width: 1.85rem;
-	height: 1.85rem;
+	border-radius: 6px;
+	width: 1.35rem;
+	height: 1.35rem;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
 	flex-shrink: 0;
+	padding: 0;
 }
 
 .pendienteBudgetRefresh:hover {
@@ -1054,7 +1157,17 @@
 .pendienteBudgetChips {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.4rem;
+	align-items: center;
+	gap: 0.25rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.pendienteBudgetModal .pendienteBudgetChips {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	padding-bottom: 1px;
+	scrollbar-width: thin;
 }
 
 .pendienteBudgetChip {
@@ -1062,18 +1175,19 @@
 	border: 1px solid #f0c987;
 	background: #fff;
 	border-radius: 999px;
-	padding: 0.35rem 0.7rem;
+	padding: 0.12rem 0.45rem;
 	display: inline-flex;
 	align-items: baseline;
-	gap: 0.45rem;
+	gap: 0.28rem;
 	cursor: pointer;
 	max-width: 100%;
+	line-height: 1.2;
 	transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
 }
 
 .pendienteBudgetChip:hover:not(:disabled) {
 	border-color: #d97706;
-	background: #fffbeb;
+	background: #fff7ed;
 }
 
 .pendienteBudgetChip:disabled {
@@ -1084,14 +1198,17 @@
 .pendienteBudgetChipActive {
 	border-color: #0083a9;
 	background: #eef8fc;
-	box-shadow: 0 0 0 1px rgba(0, 131, 169, 0.2);
+	box-shadow: 0 0 0 1px rgba(0, 131, 169, 0.18);
 }
 
 .pendienteBudgetChipName {
-	font-size: 0.8rem;
+	font-size: 0.72rem;
 	font-weight: 700;
 	color: #78350f;
 	white-space: nowrap;
+	max-width: 9.5rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .pendienteBudgetChipActive .pendienteBudgetChipName {
@@ -1099,10 +1216,11 @@
 }
 
 .pendienteBudgetChipMeta {
-	font-size: 0.72rem;
+	font-size: 0.66rem;
 	font-weight: 600;
 	color: #a16207;
 	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
 }
 
 .pendienteBudgetChipActive .pendienteBudgetChipMeta {

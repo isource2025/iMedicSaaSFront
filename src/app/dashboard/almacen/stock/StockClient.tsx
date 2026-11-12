@@ -26,6 +26,7 @@ export default function StockClient() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [items, setItems] = useState<ExistenciaStock[]>([]);
+	const [agrupadoPorProducto, setAgrupadoPorProducto] = useState(true);
 	const [total, setTotal] = useState(0);
 	const [totalPages, setTotalPages] = useState(1);
 	const [depositos, setDepositos] = useState<RemitoDeposito[]>([]);
@@ -59,11 +60,13 @@ export default function StockClient() {
 				pageSize: 40,
 			});
 			setItems(data.items || []);
+			setAgrupadoPorProducto(Boolean(data.agrupadoPorProducto ?? depFiltro === ''));
 			setTotal(data.total || 0);
 			setTotalPages(data.totalPages || 1);
 		} catch (e) {
 			setError(mensajeDeError(e, 'No se pudo cargar el stock'));
 			setItems([]);
+			setAgrupadoPorProducto(depFiltro === '');
 		} finally {
 			setLoading(false);
 		}
@@ -121,7 +124,7 @@ export default function StockClient() {
 					/>
 					<div className={styles.toolbarSelect}>
 						<CustomSelect
-							label="Depósito"
+							label=""
 							name="stock-dep"
 							value={depFiltro}
 							onChange={(v) => {
@@ -131,17 +134,22 @@ export default function StockClient() {
 							options={depositoOptions}
 						/>
 					</div>
-					<label className={styles.checkInline}>
-						<input
-							type="checkbox"
-							checked={soloBajo}
-							onChange={(e) => {
-								setSoloBajo(e.target.checked);
-								setPage(1);
-							}}
-						/>
-						Solo bajo mínimo
-					</label>
+					<button
+						type="button"
+						className={`${styles.statusToggle} ${soloBajo ? styles.statusOn : styles.statusOff}`}
+						role="switch"
+						aria-checked={soloBajo}
+						aria-label="Solo bajo mínimo"
+						onClick={() => {
+							setSoloBajo((v) => !v);
+							setPage(1);
+						}}
+					>
+						<span className={styles.statusTrack} aria-hidden>
+							<span className={styles.statusThumb} />
+						</span>
+						<span className={styles.statusLabel}>Solo bajo mínimo</span>
+					</button>
 				</div>
 			</div>
 
@@ -156,7 +164,7 @@ export default function StockClient() {
 							<thead>
 								<tr>
 									<th>Producto</th>
-									<th>Depósito</th>
+									<th>{agrupadoPorProducto ? 'Alcance' : 'Depósito'}</th>
 									<th>Físico</th>
 									<th>Disp.</th>
 									<th>Mín.</th>
@@ -167,7 +175,11 @@ export default function StockClient() {
 							<tbody>
 								{items.map((r) => (
 									<tr
-										key={`${r.IdProducto}-${r.IdDeposito}`}
+										key={
+											agrupadoPorProducto || r.IdDeposito == null
+												? `prod-${r.IdProducto}`
+												: `${r.IdProducto}-${r.IdDeposito}`
+										}
 										className={r.bajoMinimo ? styles.rowAlert : undefined}
 									>
 										<td>
@@ -179,7 +191,14 @@ export default function StockClient() {
 												{r.bajoMinimo ? ' · Bajo mínimo' : ''}
 											</div>
 										</td>
-										<td>{r.DepositoNombre}</td>
+										<td>
+											{agrupadoPorProducto
+												? r.DepositoNombre ||
+													(r.DepositosCount && r.DepositosCount > 1
+														? `Total · ${r.DepositosCount} dep.`
+														: 'Total')
+												: r.DepositoNombre || '—'}
+										</td>
 										<td className={styles.mono}>{fmtQty(r.CantFisico)}</td>
 										<td className={styles.mono}>{fmtQty(r.CantDisp)}</td>
 										<td className={styles.mono}>{fmtQty(r.StockMinimo)}</td>
@@ -193,7 +212,8 @@ export default function StockClient() {
 				</div>
 				<div className={styles.pager}>
 					<span className={styles.muted}>
-						{total.toLocaleString('es-AR')} registros · pág. {page}/{totalPages}
+						{total.toLocaleString('es-AR')}{' '}
+						{agrupadoPorProducto ? 'productos' : 'registros'} · pág. {page}/{totalPages}
 					</span>
 					<div className={styles.pagerBtns}>
 						<button
