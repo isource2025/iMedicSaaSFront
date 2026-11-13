@@ -170,7 +170,13 @@ export const adjuntosService = {
           const response = await apiFetch(`/adjuntos/${idAdjunto}/disponible`);
           const json = await response.json().catch(() => ({}));
           if (!response.ok) {
-            const motivo = response.status === 503 || response.status >= 500 ? 'red' : 'faltante';
+            // 404 = ruta/archivo ausente; 5xx u otros = red/servidor.
+            const motivo =
+              response.status === 404
+                ? 'faltante'
+                : response.status >= 500 || response.status === 0
+                  ? 'red'
+                  : (json?.motivo === 'faltante' ? 'faltante' : 'red');
             return {
               idAdjunto,
               disponible: false,

@@ -206,6 +206,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
   if (!isOpen || typeof document === 'undefined') return null;
 
   return createPortal(
+    <>
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
@@ -344,6 +345,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
 
         </div>
       </div>
+    </div>
 
       <MessageModal
         open={!!feedback}
@@ -352,7 +354,7 @@ export default function AdjuntosModal({ numeroVisita, isOpen, onClose }: Adjunto
         tone={feedback?.tone || 'info'}
         onClose={() => setFeedback(null)}
       />
-    </div>,
+    </>,
     document.body,
   );
 }

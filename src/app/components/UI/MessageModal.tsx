@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, type SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './MessageModal.module.css';
 
@@ -34,23 +34,44 @@ export default function MessageModal({
 
 	if (!open) return null;
 
+	// stopPropagation: con createPortal el evento sigue burbujeando en el árbol React
+	// y puede cerrar un modal padre (p. ej. AdjuntosModal).
+	const stop = (e: SyntheticEvent) => {
+		e.stopPropagation();
+	};
+
 	return createPortal(
 		<div
 			className={styles.overlay}
 			role="presentation"
-			onMouseDown={onClose}
+			onMouseDown={(e) => {
+				stop(e);
+				onClose();
+			}}
+			onClick={stop}
+			onPointerDown={stop}
 		>
 			<div
 				className={`${styles.box} ${styles[tone]}`}
 				role="alertdialog"
 				aria-modal="true"
 				aria-label={title}
-				onMouseDown={(e) => e.stopPropagation()}
+				onMouseDown={stop}
+				onClick={stop}
+				onPointerDown={stop}
 			>
 				<h3 className={`${styles.title} modal-title`}>{title}</h3>
 				<p className={styles.text}>{message}</p>
 				<div className={styles.actions}>
-					<button type="button" className={styles.btn} onClick={onClose}>
+					<button
+						type="button"
+						className={styles.btn}
+						onClick={(e) => {
+							stop(e);
+							onClose();
+						}}
+						onMouseDown={stop}
+					>
 						{confirmLabel}
 					</button>
 				</div>
