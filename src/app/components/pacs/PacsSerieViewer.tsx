@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { pacsService, type PacsArchivo } from '@/app/services/pacsService';
 import { parseDicomFrame, renderDicomFrame, type DicomFrame } from '@/app/utils/dicomFrame';
 import styles from './Pacs.module.css';
@@ -20,6 +20,10 @@ function ordenPorNombre(path: string): number {
   return m ? Number(m[1]) : 0;
 }
 
+function cacheKey(studyUid: string, path: string): string {
+  return `${studyUid}:${path}`;
+}
+
 interface PacsSerieViewerProps {
   studyUid: string;
   files: PacsArchivo[];
@@ -31,6 +35,9 @@ export default function PacsSerieViewer({ studyUid, files, modality }: PacsSerie
   const stageRef = useRef<HTMLDivElement>(null);
   const framesRef = useRef<(DicomFrame | null)[]>([]);
   const dragRef = useRef<{ x: number; y: number; wc: number; ww: number } | null>(null);
+  /** Frames ya descargados del estudio: al cambiar de serie (pill) no se vuelven a bajar. */
+  const cacheRef = useRef(new Map<string, DicomFrame>());
+  const cacheStudyRef = useRef(studyUid);
 
   const [orden, setOrden] = useState<number[]>([]);
   const [pos, setPos] = useState(0);
@@ -42,35 +49,52 @@ export default function PacsSerieViewer({ studyUid, files, modality }: PacsSerie
   const [ventana, setVentana] = useState<{ wc: number; ww: number } | null>(null);
 
   const total = files.length;
+  const filesKey = useMemo(() => files.map((f) => f.path).join('\n'), [files]);
 
   useEffect(() => {
+    if (cacheStudyRef.current !== studyUid) {
+      cacheStudyRef.current = studyUid;
+      cacheRef.current = new Map();
+    }
+
     const controller = new AbortController();
-    const inicial = files
+    const lista = files;
+    const inicial = lista
       .map((f, i) => ({ i, n: ordenPorNombre(f.path) }))
       .sort((a, b) => a.n - b.n)
       .map((x) => x.i);
 
-    framesRef.current = new Array(files.length).fill(null);
+    framesRef.current = lista.map(
+      (f) => cacheRef.current.get(cacheKey(studyUid, f.path)) ?? null,
+    );
+    const desdeCache = framesRef.current.filter(Boolean).length;
+
     setOrden(inicial);
     setPos(0);
-    setCargados(0);
+    setCargados(desdeCache);
     setFallidos(0);
     setErrorCarga('');
     setPlaying(false);
     setVentana(null);
 
+    const pendientes = inicial.filter((idx) => framesRef.current[idx] == null);
     let siguiente = 0;
-    let ok = 0;
+    let ok = desdeCache;
     let ko = 0;
 
     const worker = async () => {
-      while (!controller.signal.aborted && siguiente < inicial.length) {
-        const idx = inicial[siguiente];
+      while (!controller.signal.aborted) {
+        const j = siguiente;
         siguiente += 1;
+        if (j >= pendientes.length) return;
+        const idx = pendientes[j];
+        const path = lista[idx].path;
         try {
-          const buffer = await pacsService.descargarArchivo(studyUid, files[idx].path, controller.signal);
+          const buffer = await pacsService.descargarArchivo(studyUid, path, controller.signal);
+          const frame = parseDicomFrame(buffer);
+          cacheRef.current.set(cacheKey(studyUid, path), frame);
           if (controller.signal.aborted) return;
-          framesRef.current[idx] = parseDicomFrame(buffer);
+          framesRef.current[idx] = frame;
           ok += 1;
           setCargados(ok);
         } catch (e) {
@@ -82,22 +106,25 @@ export default function PacsSerieViewer({ studyUid, files, modality }: PacsSerie
       }
     };
 
-    void Promise.all(Array.from({ length: Math.min(CONCURRENCIA, inicial.length) }, worker)).then(() => {
+    void Promise.all(
+      Array.from({ length: Math.min(CONCURRENCIA, pendientes.length || 1) }, worker),
+    ).then(() => {
       if (controller.signal.aborted) return;
       const frames = framesRef.current;
       const conInstancia = inicial.every((i) => frames[i] == null || frames[i]!.instanceNumber != null);
       if (!conInstancia) return;
       setOrden((prev) => {
         const actual = prev.length ? prev : inicial;
-        const reordenado = [...actual].sort(
+        return [...actual].sort(
           (a, b) => (frames[a]?.instanceNumber ?? 0) - (frames[b]?.instanceNumber ?? 0),
         );
-        return reordenado;
       });
     });
 
     return () => controller.abort();
-  }, [studyUid, files]);
+    // filesKey estabiliza el array; files se usa de la render actual al cambiar key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studyUid, filesKey]);
 
   const frameActual = orden.length ? framesRef.current[orden[pos]] : null;
 
@@ -163,7 +190,7 @@ export default function PacsSerieViewer({ studyUid, files, modality }: PacsSerie
 
   useEffect(() => {
     stageRef.current?.focus({ preventScroll: true });
-  }, [studyUid, files]);
+  }, [studyUid, filesKey]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (!ventana) return;

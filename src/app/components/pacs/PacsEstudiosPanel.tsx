@@ -39,9 +39,15 @@ interface PacsEstudiosPanelProps {
   numeroVisita?: number | null;
   /** Todos los estudios del DNI (si no se pasa numeroVisita). */
   documento?: string | number | null;
+  /** Notifica la cantidad de estudios (para badges en pills). */
+  onEstudiosCountChange?: (count: number) => void;
 }
 
-export default function PacsEstudiosPanel({ numeroVisita, documento }: PacsEstudiosPanelProps) {
+export default function PacsEstudiosPanel({
+  numeroVisita,
+  documento,
+  onEstudiosCountChange,
+}: PacsEstudiosPanelProps) {
   const porVisita = Boolean(numeroVisita && numeroVisita > 0);
   const [dni, setDni] = useState(normalizarDni(documento));
   const [rango, setRango] = useState<{ desde: string | null; hasta: string | null; egresada: boolean } | null>(null);
@@ -77,10 +83,13 @@ export default function PacsEstudiosPanel({ numeroVisita, documento }: PacsEstud
       : pacsService.listarEstudios(dniDirecto);
     consulta
       .then((data) => {
-        if (!cancelled) setEstudios(data);
+        if (cancelled) return;
+        setEstudios(data);
+        onEstudiosCountChange?.(data.length);
       })
       .catch((e: Error & { code?: string }) => {
         if (cancelled) return;
+        onEstudiosCountChange?.(0);
         setError(
           e.code === 'PACS_URL_MISSING'
             ? 'Esta clínica no tiene un PACS (servidor de imágenes) configurado.'
@@ -93,7 +102,7 @@ export default function PacsEstudiosPanel({ numeroVisita, documento }: PacsEstud
     return () => {
       cancelled = true;
     };
-  }, [porVisita, numeroVisita, documento]);
+  }, [porVisita, numeroVisita, documento, onEstudiosCountChange]);
 
   const abrirEstudio = async (e: PacsEstudio) => {
     setEstudio(e);
@@ -173,7 +182,7 @@ export default function PacsEstudiosPanel({ numeroVisita, documento }: PacsEstud
 
         {!loadingEstudio && !errorEstudio ? (
           <PacsSerieViewer
-            key={`${estudio.studyInstanceUid}:${serieUid}`}
+            key={estudio.studyInstanceUid}
             studyUid={estudio.studyInstanceUid}
             files={archivosSerie}
             modality={serieActual?.modality}

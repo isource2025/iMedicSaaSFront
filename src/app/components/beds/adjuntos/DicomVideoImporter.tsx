@@ -17,6 +17,8 @@ interface DicomVideoImporterProps {
   /** Si se indica, el video generado se entrega acá en lugar de subirse a la visita. */
   onSave?: (video: File, tipoImagen: string) => Promise<void> | void;
   onUploaded: () => void;
+  /** Cantidad de archivos DICOM elegidos (badge de la pill). */
+  onFilesCountChange?: (count: number) => void;
   /** Si es true, se muestra en la pestaña (sin segundo modal). */
   embedded?: boolean;
   open?: boolean;
@@ -29,6 +31,7 @@ export default function DicomVideoImporter({
   tiposImagen,
   onSave,
   onUploaded,
+  onFilesCountChange,
   embedded = false,
   open = true,
   onClose,
@@ -49,6 +52,10 @@ export default function DicomVideoImporter({
 
   const sortedFiles = useMemo(() => sortDicomFilesByNumericOrder(files), [files]);
   const hasFiles = sortedFiles.length > 0;
+
+  useEffect(() => {
+    onFilesCountChange?.(files.length);
+  }, [files.length, onFilesCountChange]);
 
   const reset = () => {
     setFiles([]);

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { adjuntosService } from '@/app/services/adjuntosService';
 import { authService } from '@/app/services/authService';
+import { pacsService } from '@/app/services/pacsService';
 import { Adjunto, TipoImagenHC } from '@/app/types/adjuntos';
 import FileUpload, { FileUploadRef } from './FileUpload';
 import FileList from './FileList';
@@ -43,6 +44,12 @@ function countAdjuntosRecientes(list: Adjunto[]): number {
   }).length;
 }
 
+/** Badge de cantidad solo cuando hay contenido (> 0). */
+function conCantidad(label: string, cantidad: number | null | undefined): string {
+  if (cantidad == null || cantidad <= 0) return label;
+  return `${label} (${cantidad})`;
+}
+
 type Feedback = {
   title: string;
   message: string;
@@ -77,8 +84,12 @@ export default function AdjuntosSection({
   const [tipoImagenCodigo, setTipoImagenCodigo] = useState<string>('');
   const [modo, setModo] = useState<'archivos' | 'dicom' | 'visita' | 'pacs'>('visita');
   const [idsNoDisponibles, setIdsNoDisponibles] = useState<Set<number>>(new Set());
+  const [pacsCount, setPacsCount] = useState<number | null>(null);
+  const [dicomCount, setDicomCount] = useState(0);
   const fileUploadRef = useRef<FileUploadRef>(null);
   const verifyGenRef = useRef(0);
+  const onPacsCountChange = useCallback((n: number) => setPacsCount(n), []);
+  const onDicomCountChange = useCallback((n: number) => setDicomCount(n), []);
   const [periodo, setPeriodo] = useState<Periodo>('all');
   const adjuntosVisibles = useMemo(
     () => filtrarPorPeriodo(adjuntos, periodo, (a) => a.FechaCarga),
@@ -148,8 +159,29 @@ export default function AdjuntosSection({
     if (numeroVisita) {
       setAdjuntos([]);
       setAdjuntosSidebarInfo(0, 0);
+      setPacsCount(null);
+      setDicomCount(0);
       loadAdjuntos();
     }
+  }, [numeroVisita]);
+
+  useEffect(() => {
+    if (!numeroVisita) {
+      setPacsCount(null);
+      return;
+    }
+    let cancelled = false;
+    pacsService
+      .listarEstudiosVisita(numeroVisita)
+      .then((r) => {
+        if (!cancelled) setPacsCount(r.studies.length);
+      })
+      .catch(() => {
+        if (!cancelled) setPacsCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [numeroVisita]);
 
   useEffect(() => {
@@ -306,7 +338,7 @@ export default function AdjuntosSection({
             className={modo === 'archivos' ? styles.modeTabActive : styles.modeTab}
             onClick={() => setModo('archivos')}
           >
-            Subir adjunto
+            {conCantidad('Subir adjunto', selectedFiles.length)}
           </button>
           <button
             type="button"
@@ -315,7 +347,7 @@ export default function AdjuntosSection({
             className={modo === 'dicom' ? styles.modeTabActive : styles.modeTab}
             onClick={() => setModo('dicom')}
           >
-            Serie DICOM
+            {conCantidad('Serie DICOM', dicomCount)}
           </button>
           {numeroVisita ? (
             <button
@@ -325,13 +357,18 @@ export default function AdjuntosSection({
               className={modo === 'pacs' ? styles.modeTabActive : styles.modeTab}
               onClick={() => setModo('pacs')}
             >
-              Estudios PACS
+              {pacsCount != null ? `Estudios PACS (${pacsCount})` : 'Estudios PACS'}
             </button>
           ) : null}
         </div>
       }
     >
-      {modo === 'pacs' && numeroVisita ? <PacsEstudiosPanel numeroVisita={numeroVisita} /> : null}
+      {modo === 'pacs' && numeroVisita ? (
+        <PacsEstudiosPanel
+          numeroVisita={numeroVisita}
+          onEstudiosCountChange={onPacsCountChange}
+        />
+      ) : null}
 
       {modo !== 'pacs' ? <p className={styles.cargadoPor}>Cargás como {etiquetaUsuarioActual()}</p> : null}
 
@@ -395,12 +432,14 @@ export default function AdjuntosSection({
             embedded
             numeroVisita={numeroVisita}
             tiposImagen={tiposImagen}
+            onFilesCountChange={onDicomCountChange}
             onUploaded={async () => {
               showMessage(
                 'Adjunto subido',
                 'Video generado y guardado como adjunto.',
                 'success',
               );
+              setDicomCount(0);
               setModo('visita');
               await loadAdjuntos();
             }}

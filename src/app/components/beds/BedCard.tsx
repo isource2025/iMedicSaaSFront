@@ -453,20 +453,18 @@ function CamaOConsultorioCard({
 					<>
 						<div className={styles.primaryData}>
 							<div className={styles.patientData}>
-								<span className={styles.documentNumber}>{bed.documentoPaciente}</span>
-								{bed.numeroAfiliado ? (
-									<span className={styles.metaIdLine} title="Número de afiliado">
-										Afil. {bed.numeroAfiliado}
-									</span>
-								) : null}
 								{bed.numeroInternacion ? (
 									<span className={styles.metaIdLine} title="Número de internación">
 										Int. {bed.numeroInternacion}
 									</span>
 								) : null}
-								<span className={styles.patientName}>
-									<strong>{bed.NombrePaciente}</strong>
-								</span>
+								<span className={styles.documentNumber}>{bed.documentoPaciente}</span>
+								<div className={styles.idRow}>
+									<span className={styles.patientName}>
+										<strong>{bed.NombrePaciente}</strong>
+									</span>
+									{edadStr ? <span className={styles.date}>{edadStr}</span> : null}
+								</div>
 
 								<div className={styles.dateTimeContainer}>
 									{(bed as { fechaIngresoSQL?: string }).fechaIngresoSQL && (
@@ -488,7 +486,11 @@ function CamaOConsultorioCard({
 								{bed.razonSocialCliente && (
 									<span className={styles.date}>{bed.razonSocialCliente}</span>
 								)}
-								{edadStr && <span className={styles.date}>{edadStr}</span>}
+								{bed.numeroAfiliado ? (
+									<span className={styles.metaIdLine} title="Número de afiliado">
+										Afil. {bed.numeroAfiliado}
+									</span>
+								) : null}
 							</div>
 						</div>
 
