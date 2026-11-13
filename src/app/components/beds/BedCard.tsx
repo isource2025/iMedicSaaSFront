@@ -483,13 +483,17 @@ function CamaOConsultorioCard({
 								{bed.servicioMedicoDescripcion && (
 									<span className={styles.date}>{bed.servicioMedicoDescripcion}</span>
 								)}
-								{bed.razonSocialCliente && (
-									<span className={styles.date}>{bed.razonSocialCliente}</span>
-								)}
-								{bed.numeroAfiliado ? (
-									<span className={styles.metaIdLine} title="Número de afiliado">
-										Afil. {bed.numeroAfiliado}
-									</span>
+								{(bed.razonSocialCliente || bed.numeroAfiliado) ? (
+									<div className={styles.idRow}>
+										{bed.razonSocialCliente ? (
+											<span className={styles.date}>{bed.razonSocialCliente}</span>
+										) : null}
+										{bed.numeroAfiliado ? (
+											<span className={styles.metaIdLine} title="Número de afiliado">
+												Afil. {bed.numeroAfiliado}
+											</span>
+										) : null}
+									</div>
 								) : null}
 							</div>
 						</div>
