@@ -67,6 +67,14 @@ export function repararTextoUi(texto: unknown): string {
 	// "ï¿½" = U+FFFD (EF BF BD) leído como Latin-1: nunca mostrar esa basura.
 	s = s.replace(/\u00EF\u00BF\u00BD/g, '\uFFFD');
 
+	// Personas (RENAPER): vocal + U+FFFD sin consonante después → Ñ (ACU�A, ORGO�).
+	if (s.includes('\uFFFD')) {
+		s = s.replace(
+			/([AEIOUaeiouÁÉÍÓÚáéíóú])\uFFFD(?![bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ])/g,
+			(_m, prev: string) => prev + (prev === prev.toUpperCase() ? 'Ñ' : 'ñ'),
+		);
+	}
+
 	try {
 		return s.normalize('NFC');
 	} catch {

@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import type { Persona } from '../typesForRenaper';
+import { repararTextoUi } from '@/app/utils/repararTextoUi';
 import styles from './SeleccionCobertura.module.css';
 
 interface Props {
@@ -52,7 +53,9 @@ export default function SeleccionPersonaRenaperModal({
 								onClick={() => onSeleccionar(p)}
 							>
 								<span className={styles.nombre}>
-									{[p.apellido, p.nombres].filter(Boolean).join(', ')}
+									{[repararTextoUi(p.apellido), repararTextoUi(p.nombres)]
+										.filter(Boolean)
+										.join(', ')}
 								</span>
 								<span className={styles.meta}>
 									{sexoTexto(p)}
