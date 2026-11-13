@@ -30,6 +30,8 @@ interface FileListProps {
   onSubirNuevo?: () => void;
   /** Ids cuyo archivo no está en el servidor / no se pudo verificar. */
   idsNoDisponibles?: ReadonlySet<number>;
+  /** Si el archivo abrió/descargó bien, quitar falso “No disponible”. */
+  onArchivoConfirmado?: (idAdjunto: number) => void;
 }
 
 function FileIcon({ tipoArchivo, nombreArchivo }: { tipoArchivo: string; nombreArchivo: string }) {
@@ -70,7 +72,13 @@ function FileIcon({ tipoArchivo, nombreArchivo }: { tipoArchivo: string; nombreA
   );
 }
 
-function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
+function AdjuntoThumb({
+  adjunto,
+  onArchivoConfirmado,
+}: {
+  adjunto: Adjunto;
+  onArchivoConfirmado?: (idAdjunto: number) => void;
+}) {
   const [url, setUrl] = useState<string | null>(null);
   const [docHtml, setDocHtml] = useState<string | null>(null);
   const mime = adjunto.TipoArchivo || '';
@@ -91,6 +99,7 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
           adjuntosService.revocarBlobUrl(blobUrl);
           return;
         }
+        onArchivoConfirmado?.(adjunto.IdAdjunto);
         if (office) {
           try {
             const mammoth = await import('mammoth');
@@ -132,7 +141,7 @@ function AdjuntoThumb({ adjunto }: { adjunto: Adjunto }) {
       cancelled = true;
       adjuntosService.revocarBlobUrl(created);
     };
-  }, [adjunto.IdAdjunto, previewable, office, pdf]);
+  }, [adjunto.IdAdjunto, previewable, office, pdf, onArchivoConfirmado]);
 
   if (url && (image || pdf)) {
     return <img src={url} alt="" className={styles.thumbImg} />;
@@ -164,6 +173,7 @@ export default function FileList({
   readOnly = false,
   onSubirNuevo,
   idsNoDisponibles,
+  onArchivoConfirmado,
 }: FileListProps) {
   const [accionId, setAccionId] = useState<number | null>(null);
   const [viewer, setViewer] = useState<AdjuntoViewerState | null>(null);
@@ -205,6 +215,7 @@ export default function FileList({
     setViewerLoading(true);
     try {
       const { blob, blobUrl } = await adjuntosService.cargarBlobAdjunto(adjunto.IdAdjunto);
+      onArchivoConfirmado?.(adjunto.IdAdjunto);
       setViewer({
         blobUrl,
         fileName: adjunto.NombreArchivo,
@@ -229,6 +240,7 @@ export default function FileList({
     setAccionId(adjunto.IdAdjunto);
     try {
       await adjuntosService.descargarArchivo(adjunto.IdAdjunto, adjunto.NombreArchivo);
+      onArchivoConfirmado?.(adjunto.IdAdjunto);
     } catch (err) {
       console.error('Error al descargar adjunto:', err);
       reportError(err);
@@ -462,7 +474,10 @@ export default function FileList({
                           }
                         }}
                       >
-                        <AdjuntoThumb adjunto={adjunto} />
+                        <AdjuntoThumb
+                          adjunto={adjunto}
+                          onArchivoConfirmado={onArchivoConfirmado}
+                        />
                         {noDisponible ? (
                           <span className={styles.brokenOverlay}>No disponible</span>
                         ) : null}

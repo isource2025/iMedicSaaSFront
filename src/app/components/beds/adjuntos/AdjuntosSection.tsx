@@ -89,6 +89,15 @@ export default function AdjuntosSection({
     setFeedback({ title, message, tone });
   }, []);
 
+  const marcarArchivoConfirmado = useCallback((idAdjunto: number) => {
+    setIdsNoDisponibles((prev) => {
+      if (!prev.has(idAdjunto)) return prev;
+      const next = new Set(prev);
+      next.delete(idAdjunto);
+      return next;
+    });
+  }, []);
+
   const verificarArchivos = useCallback(
     async (lista: Adjunto[]) => {
       const gen = ++verifyGenRef.current;
@@ -406,6 +415,7 @@ export default function AdjuntosSection({
             onDelete={handleDelete}
             onErrorFeedback={(fb) => showMessage(fb.title, fb.message, 'error')}
             idsNoDisponibles={idsNoDisponibles}
+            onArchivoConfirmado={marcarArchivoConfirmado}
             readOnly={false}
             onSubirNuevo={() => setModo('archivos')}
           />
