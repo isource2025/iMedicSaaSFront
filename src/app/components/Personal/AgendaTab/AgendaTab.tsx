@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import styles from './AgendaTab.module.css';
 import { agendaConfigService } from '../../../services/agendaConfigService';
+import { personalService } from '../../../services/personalService';
 import {
 	DIAS_SEMANA,
 	type DiaSemana,
@@ -24,6 +25,8 @@ interface AgendaTabProps {
 	hideActions?: boolean;
 	onDirtyChange?: (dirty: boolean) => void;
 }
+
+type ServicioOpt = { valor: string; descripcion: string };
 
 export type AgendaTabHandle = {
 	guardar: () => Promise<boolean>;
@@ -92,6 +95,7 @@ const AgendaTab = forwardRef<AgendaTabHandle, AgendaTabProps>(function AgendaTab
 	const [intervaloMin, setIntervaloMin] = useState<number>(30);
 	const [consultorio, setConsultorio] = useState<string>('');
 	const [servicio, setServicio] = useState<string>('');
+	const [catalogoServicios, setCatalogoServicios] = useState<ServicioOpt[]>([]);
 	const [estado, setEstado] = useState<Record<DiaSemana, DiaState>>(
 		Object.fromEntries(DIAS_SEMANA.map((d) => [d, { ...EMPTY_DIA }])) as Record<
 			DiaSemana,
@@ -162,6 +166,43 @@ const AgendaTab = forwardRef<AgendaTabHandle, AgendaTabProps>(function AgendaTab
 		cargar(matricula);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [matricula]);
+
+	useEffect(() => {
+		let cancel = false;
+		personalService
+			.getServicios()
+			.then((rows) => {
+				if (cancel) return;
+				setCatalogoServicios(
+					(rows || [])
+						.map((s) => ({
+							valor: String(s.valor || '')
+								.trim()
+								.toUpperCase()
+								.slice(0, 4),
+							descripcion: String(s.descripcion || s.valor || '').trim(),
+						}))
+						.filter((s) => s.valor),
+				);
+			})
+			.catch(() => {
+				if (!cancel) setCatalogoServicios([]);
+			});
+		return () => {
+			cancel = true;
+		};
+	}, []);
+
+	const opcionesServicio = useMemo(() => {
+		const opts = [...catalogoServicios];
+		const actual = String(servicio || '')
+			.trim()
+			.toUpperCase();
+		if (actual && !opts.some((s) => s.valor === actual)) {
+			opts.unshift({ valor: actual, descripcion: `${actual} (sin catálogo)` });
+		}
+		return opts;
+	}, [catalogoServicios, servicio]);
 
 	const total = useMemo(() => {
 		if (aDemanda(intervaloMin)) return 0;
@@ -355,14 +396,22 @@ const AgendaTab = forwardRef<AgendaTabHandle, AgendaTabProps>(function AgendaTab
 					/>
 				</div>
 				<div className={styles.field}>
-					<label>Servicio</label>
-					<input
-						type='text'
-						maxLength={4}
+					<label>Servicio (ID)</label>
+					<select
 						value={servicio}
-						onChange={(e) => setServicio(e.target.value.toUpperCase())}
+						onChange={(e) => setServicio(String(e.target.value || '').toUpperCase())}
 						disabled={readOnly}
-					/>
+					>
+						<option value=''>Sin servicio</option>
+						{opcionesServicio.map((s) => (
+							<option key={s.valor} value={s.valor}>
+								{s.valor}
+								{s.descripcion && s.descripcion !== s.valor
+									? ` — ${s.descripcion}`
+									: ''}
+							</option>
+						))}
+					</select>
 				</div>
 				<div className={styles.field}>
 					<label>Total semanal</label>
