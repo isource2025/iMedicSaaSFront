@@ -227,8 +227,19 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 		!puede('INTERNACION.EVOLUCIONES.CREAR') &&
 		!puede('INTERNACION.INDICACIONES.CREAR') &&
 		!puede('INTERNACION.INDICACIONES.APLICAR');
-	/** Perfil solo documental: panel Otras Funciones (adjuntos + cerrar). */
-	const mostrarSoloOtrasFunciones = esCargaHc;
+	/**
+	 * Perfil solo documental: oculta Gestión Médica/Enfermería.
+	 * Si además tiene VER de esos bloques (p. ej. ADMINISTRATIVO + CARGA_HC),
+	 * mandan los permisos: no se esconden.
+	 */
+	const mostrarSoloOtrasFunciones =
+		esCargaHc && !puedeGestionMedica && !puedeGestionEnfermeria;
+	/** Adjuntos en Otras Funciones: carga pura, o CARGA_HC sumado a gestión. */
+	const mostrarAdjuntosEnOtras =
+		puedeVerSeccion('adjuntos') &&
+		(mostrarSoloOtrasFunciones ||
+			(esCargaHc && (puedeGestionMedica || puedeGestionEnfermeria)) ||
+			(!puedeGestionMedica && !puedeGestionEnfermeria && !puedeCargaDocumental));
 
 	return (
 		<div className={styles.wrapper}>
@@ -329,7 +340,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 			)}
 
 			{/* ======= Gestión Enfermería ======= */}
-			{!mostrarSoloOtrasFunciones && puedeGestionEnfermeria && (
+			{puedeGestionEnfermeria && (
 			<div className={styles.section}>
 				<button
 					type='button'
@@ -477,7 +488,7 @@ export default function SidebarFilters({ onCloseDrawer, onExportDetalle }: Props
 					<span>Otras Funciones</span>
 				</div>
 				<nav className={styles.fixedNav}>
-					{(mostrarSoloOtrasFunciones || (!puedeGestionMedica && !puedeGestionEnfermeria && puedeVerSeccion('adjuntos'))) && puedeVerSeccion('adjuntos') && (
+					{mostrarAdjuntosEnOtras && (
 					<button
 						className={`${styles.navButton} ${adjuntosTotalCount > 0 ? styles.navButtonFlex : ''} ${isActive('adjuntos') ? styles.active : ''}`}
 						onClick={() => clickItem('adjuntos')}
