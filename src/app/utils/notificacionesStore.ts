@@ -23,7 +23,7 @@ export type NotificacionesState = {
 	estudios: number;
 	interconsultas: number;
 	bandejaLoaded: boolean;
-	/** Internados vigentes (tipo I) sin habitación/cama asignada. */
+	/** Internados / hospital de día vigentes (I o H) sin habitación/cama asignada. */
 	sinCama: number;
 	sinCamaLoaded: boolean;
 	items: NotificacionItem[];

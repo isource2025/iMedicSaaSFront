@@ -21,8 +21,20 @@ import {
 } from '@/app/services/rolesService';
 import type { Personal } from '@/app/types/personal';
 import { mensajeDeError } from '@/app/utils/apiError';
-import { etiquetaRol } from '@/app/utils/permisos';
+import { ETIQUETA_GRUPO_INTERNACION, etiquetaRol, type GrupoInternacion } from '@/app/utils/permisos';
 import styles from './permisos.module.css';
+
+const ORDEN_GRUPO_INTERNACION: GrupoInternacion[] = [
+	'operativa',
+	'medica',
+	'enfermeria',
+	'documentacion',
+];
+
+function etiquetaGrupoSub(grupo: string | null | undefined): string | null {
+	if (!grupo) return null;
+	return ETIQUETA_GRUPO_INTERNACION[grupo as GrupoInternacion] || grupo;
+}
 
 function etiquetaRolMatriz(r: Pick<RolMatriz, 'idRol' | 'esSistema' | 'nombre' | 'descripcion'>): string {
 	return etiquetaRolCatalogo({
@@ -327,6 +339,21 @@ export default function MatrizPermisosPage() {
 		});
 	};
 
+	/** Marca/desmarca solo los .VER otorgables de un bloque (médica / enfermería). */
+	const alternarSoloVer = (subs: SubmoduloCatalogo[]) => {
+		if (!editable) return;
+		setBorrador((b) => {
+			const codigos = subs
+				.flatMap((s) => otorgables(s))
+				.filter((a) => a.accion === 'VER')
+				.map((a) => a.codigo);
+			const todos = codigos.length > 0 && codigos.every((c) => b.permisos.has(c));
+			const permisos = new Set(b.permisos);
+			codigos.forEach((c) => (todos ? permisos.delete(c) : permisos.add(c)));
+			return { ...b, permisos };
+		});
+	};
+
 	const guardar = async () => {
 		if (!seleccionado) return;
 		setOcupado(true);
@@ -621,61 +648,93 @@ export default function MatrizPermisosPage() {
 													</div>
 													{cerrado ? null : (
 														<div className={styles.moduloBody}>
-															{m.submodulos.map((s) => (
-																<div key={s.id} className={styles.sub}>
-																	<div className={styles.subHead}>
-																		<span className={styles.subTitle}>{s.label}</span>
-																		{editable ? (
-																			<button
-																				type="button"
-																				className={styles.btnLink}
-																				disabled={otorgables(s).length === 0}
-																				onClick={() => alternarGrupo([s])}
-																			>
-																				Todo
-																			</button>
-																		) : null}
-																	</div>
-																	<p className={styles.subDesc}>{s.descripcion}</p>
-																	<div className={styles.acciones}>
-																		{s.acciones.map((a) => {
-																			const activo = marcados.has(a.codigo);
-																			const sinPermisoPropio = !permisosActor.has(a.codigo);
-																			const puedeAsignar = a.asignable || !!seleccionado.esSistema;
-																			const bloqueado =
-																				!editable || (!activo && (!puedeAsignar || sinPermisoPropio));
-																			const motivo = !puedeAsignar
-																				? 'Este permiso no se puede asignar'
-																				: sinPermisoPropio
-																					? 'No podés otorgar un permiso que no tenés'
-																					: '';
-																			return (
-																				<label
-																					key={a.codigo}
-																					className={`${styles.accion} ${bloqueado && !activo ? styles.accionOff : ''}`}
-																					title={editable && bloqueado ? motivo : a.codigo}
+															{(() => {
+																const conGrupo = m.id === 'INTERNACION' && m.submodulos.some((s) => s.grupo);
+																const bloques: { key: string; titulo: string | null; subs: SubmoduloCatalogo[] }[] =
+																	conGrupo
+																		? ORDEN_GRUPO_INTERNACION.map((g) => ({
+																				key: g,
+																				titulo: etiquetaGrupoSub(g),
+																				subs: m.submodulos.filter((s) => s.grupo === g),
+																			})).filter((b) => b.subs.length > 0)
+																		: [{ key: 'all', titulo: null, subs: m.submodulos }];
+
+																const renderSub = (s: SubmoduloCatalogo) => (
+																	<div key={s.id} className={styles.sub}>
+																		<div className={styles.subHead}>
+																			<span className={styles.subTitle}>{s.label}</span>
+																			{editable ? (
+																				<button
+																					type="button"
+																					className={styles.btnLink}
+																					disabled={otorgables(s).length === 0}
+																					onClick={() => alternarGrupo([s])}
 																				>
-																					<input
-																						type="checkbox"
-																						checked={activo}
-																						disabled={bloqueado}
-																						onChange={() => alternar(a.codigo, s)}
-																					/>
-																					<span>
-																						<span className={styles.accionLabel}>
-																							{ROTULO_ACCION[a.accion] ?? a.accion}
+																					Todo
+																				</button>
+																			) : null}
+																		</div>
+																		<p className={styles.subDesc}>{s.descripcion}</p>
+																		<div className={styles.acciones}>
+																			{s.acciones.map((a) => {
+																				const activo = marcados.has(a.codigo);
+																				const sinPermisoPropio = !permisosActor.has(a.codigo);
+																				const puedeAsignar = a.asignable || !!seleccionado.esSistema;
+																				const bloqueado =
+																					!editable || (!activo && (!puedeAsignar || sinPermisoPropio));
+																				const motivo = !puedeAsignar
+																					? 'Este permiso no se puede asignar'
+																					: sinPermisoPropio
+																						? 'No podés otorgar un permiso que no tenés'
+																						: '';
+																				return (
+																					<label
+																						key={a.codigo}
+																						className={`${styles.accion} ${bloqueado && !activo ? styles.accionOff : ''}`}
+																						title={editable && bloqueado ? motivo : a.codigo}
+																					>
+																						<input
+																							type="checkbox"
+																							checked={activo}
+																							disabled={bloqueado}
+																							onChange={() => alternar(a.codigo, s)}
+																						/>
+																						<span>
+																							<span className={styles.accionLabel}>
+																								{ROTULO_ACCION[a.accion] ?? a.accion}
+																							</span>
+																							<span className={styles.accionDesc}>{a.descripcion}</span>
+																							<span className={styles.accionCodigo}>
+																								codigo: {a.codigo.toLowerCase()}
+																							</span>
 																						</span>
-																						<span className={styles.accionDesc}>{a.descripcion}</span>
-																						<span className={styles.accionCodigo}>
-																							codigo: {a.codigo.toLowerCase()}
-																						</span>
-																					</span>
-																				</label>
-																			);
-																		})}
+																					</label>
+																				);
+																			})}
+																		</div>
 																	</div>
-																</div>
-															))}
+																);
+
+																return bloques.map((bloque) => (
+																	<div key={bloque.key}>
+																		{bloque.titulo ? (
+																			<div className={styles.grupoHead}>
+																				<span>{bloque.titulo}</span>
+																				{editable ? (
+																					<button
+																						type="button"
+																						className={styles.btnLink}
+																						onClick={() => alternarSoloVer(bloque.subs)}
+																					>
+																						Marcar / desmarcar VER
+																					</button>
+																				) : null}
+																			</div>
+																		) : null}
+																		{bloque.subs.map(renderSub)}
+																	</div>
+																));
+															})()}
 														</div>
 													)}
 												</div>

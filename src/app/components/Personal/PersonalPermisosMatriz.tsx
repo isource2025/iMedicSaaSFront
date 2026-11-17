@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import type { ModuloCatalogo, SubmoduloCatalogo } from '@/app/services/rolesService';
+import { ETIQUETA_GRUPO_INTERNACION, type GrupoInternacion } from '@/app/utils/permisos';
 import styles from './PersonalPermisosMatriz.module.css';
+
+const ORDEN_GRUPO: GrupoInternacion[] = ['operativa', 'medica', 'enfermeria', 'documentacion'];
 
 const ROTULO_ACCION: Record<string, string> = {
 	VER: 'Ver',
@@ -104,6 +107,18 @@ export default function PersonalPermisosMatriz({
 		onChange(next);
 	};
 
+	const alternarSoloVer = (subs: SubmoduloCatalogo[]) => {
+		if (disabled) return;
+		const codigos = subs
+			.flatMap((s) => otorgables(s))
+			.filter((a) => a.accion === 'VER')
+			.map((a) => a.codigo);
+		const todos = codigos.length > 0 && codigos.every((c) => marcados.has(c));
+		const next = new Set(marcados);
+		codigos.forEach((c) => (todos ? next.delete(c) : next.add(c)));
+		onChange(next);
+	};
+
 	const restaurarBase = () => {
 		if (disabled) return;
 		onChange(new Set(base));
@@ -179,60 +194,89 @@ export default function PersonalPermisosMatriz({
 						</div>
 						{abierto ? (
 							<div className={styles.moduloBody}>
-								{m.submodulos.map((s) => (
-									<div key={s.id} className={styles.sub}>
-										<div className={styles.subTitle}>{s.label}</div>
-										<p className={styles.subDesc}>{s.descripcion}</p>
-										<div className={styles.acciones}>
-											{s.acciones.map((a) => {
-												const activo = marcados.has(a.codigo);
-												const enBase = baseSet.has(a.codigo);
-												const sinPermisoPropio = !actorSet.has(a.codigo);
-												const bloqueado =
-													disabled ||
-													(!activo && (!a.asignable || sinPermisoPropio));
-												const motivo = !a.asignable
-													? 'Este permiso no se puede asignar individualmente'
-													: sinPermisoPropio
-														? 'No podés otorgar un permiso que no tenés'
-														: '';
-												return (
-													<label
-														key={a.codigo}
-														className={`${styles.accion} ${
-															bloqueado && !activo ? styles.accionOff : ''
-														}`}
-														title={bloqueado && !activo ? motivo : a.codigo}
-													>
-														<input
-															type='checkbox'
-															checked={activo}
-															disabled={bloqueado}
-															onChange={() => alternar(a.codigo, s)}
-														/>
-														<span>
-															<span className={styles.accionLabel}>
-																{ROTULO_ACCION[a.accion] ?? a.accion}
-																{activo && !enBase ? (
-																	<span className={styles.badgeExtra}>extra</span>
-																) : null}
-																{!activo && enBase ? (
-																	<span className={styles.badgeQuit}>quitado</span>
-																) : null}
-															</span>
-															<span className={styles.accionDesc}>
-																{a.descripcion}
-															</span>
-															<span className={styles.accionCodigo}>
-																codigo: {a.codigo.toLowerCase()}
-															</span>
-														</span>
-													</label>
-												);
-											})}
+								{(() => {
+									const conGrupo = m.id === 'INTERNACION' && m.submodulos.some((s) => s.grupo);
+									const bloques = conGrupo
+										? ORDEN_GRUPO.map((g) => ({
+												key: g,
+												titulo: ETIQUETA_GRUPO_INTERNACION[g],
+												subs: m.submodulos.filter((s) => s.grupo === g),
+											})).filter((b) => b.subs.length > 0)
+										: [{ key: 'all', titulo: null as string | null, subs: m.submodulos }];
+
+									return bloques.map((bloque) => (
+										<div key={bloque.key}>
+											{bloque.titulo ? (
+												<div className={styles.grupoHead}>
+													<span>{bloque.titulo}</span>
+													{!disabled ? (
+														<button
+															type="button"
+															className={styles.link}
+															onClick={() => alternarSoloVer(bloque.subs)}
+														>
+															Marcar / desmarcar VER
+														</button>
+													) : null}
+												</div>
+											) : null}
+											{bloque.subs.map((s) => (
+												<div key={s.id} className={styles.sub}>
+													<div className={styles.subTitle}>{s.label}</div>
+													<p className={styles.subDesc}>{s.descripcion}</p>
+													<div className={styles.acciones}>
+														{s.acciones.map((a) => {
+															const activo = marcados.has(a.codigo);
+															const enBase = baseSet.has(a.codigo);
+															const sinPermisoPropio = !actorSet.has(a.codigo);
+															const bloqueado =
+																disabled ||
+																(!activo && (!a.asignable || sinPermisoPropio));
+															const motivo = !a.asignable
+																? 'Este permiso no se puede asignar individualmente'
+																: sinPermisoPropio
+																	? 'No podés otorgar un permiso que no tenés'
+																	: '';
+															return (
+																<label
+																	key={a.codigo}
+																	className={`${styles.accion} ${
+																		bloqueado && !activo ? styles.accionOff : ''
+																	}`}
+																	title={bloqueado && !activo ? motivo : a.codigo}
+																>
+																	<input
+																		type="checkbox"
+																		checked={activo}
+																		disabled={bloqueado}
+																		onChange={() => alternar(a.codigo, s)}
+																	/>
+																	<span>
+																		<span className={styles.accionLabel}>
+																			{ROTULO_ACCION[a.accion] ?? a.accion}
+																			{activo && !enBase ? (
+																				<span className={styles.badgeExtra}>extra</span>
+																			) : null}
+																			{!activo && enBase ? (
+																				<span className={styles.badgeQuit}>quitado</span>
+																			) : null}
+																		</span>
+																		<span className={styles.accionDesc}>
+																			{a.descripcion}
+																		</span>
+																		<span className={styles.accionCodigo}>
+																			codigo: {a.codigo.toLowerCase()}
+																		</span>
+																	</span>
+																</label>
+															);
+														})}
+													</div>
+												</div>
+											))}
 										</div>
-									</div>
-								))}
+									));
+								})()}
 							</div>
 						) : null}
 					</div>

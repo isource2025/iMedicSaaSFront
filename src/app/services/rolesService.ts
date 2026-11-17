@@ -68,6 +68,8 @@ export interface SubmoduloCatalogo {
 	id: string;
 	label: string;
 	path: string | null;
+	/** Internación: operativa | medica | enfermeria | documentacion */
+	grupo?: string | null;
 	descripcion: string;
 	acciones: AccionCatalogo[];
 }

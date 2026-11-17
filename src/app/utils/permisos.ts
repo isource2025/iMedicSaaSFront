@@ -41,11 +41,16 @@ export type Accion = (typeof ACCIONES)[keyof typeof ACCIONES];
 
 const CRUD: ReadonlyArray<Accion> = [ACCIONES.VER, ACCIONES.CREAR, ACCIONES.EDITAR, ACCIONES.ELIMINAR];
 
+/** Agrupación visual/lógica dentro de Internación (matriz y plantillas). */
+export type GrupoInternacion = 'operativa' | 'medica' | 'enfermeria' | 'documentacion';
+
 export interface SubmoduloDef {
 	id: string;
 	label: string;
 	path?: string;
 	acciones: ReadonlyArray<Accion>;
+	/** Solo Internación: operativa | médica | enfermería | documentación. */
+	grupo?: GrupoInternacion;
 }
 
 export interface ModuloDef {
@@ -54,6 +59,13 @@ export interface ModuloDef {
 	path?: string;
 	submodulos: ReadonlyArray<SubmoduloDef>;
 }
+
+export const ETIQUETA_GRUPO_INTERNACION: Record<GrupoInternacion, string> = {
+	operativa: 'Operativa (camas / movimientos)',
+	medica: 'Gestión médica',
+	enfermeria: 'Gestión enfermería',
+	documentacion: 'Documentación',
+};
 
 export type RolNombre = 'ADMIN' | 'MEDICO' | 'ENFERMERO' | 'ADMINISTRATIVO' | 'SUPER_ADMIN' | 'CARGA_HC' | 'PANEL_DATOS';
 
@@ -102,32 +114,36 @@ export const MODULOS: ReadonlyArray<ModuloDef> = [
 		id: 'INTERNACION',
 		label: 'Internación',
 		submodulos: [
-			{ id: 'CAMAS',     label: 'Gestión de Camas',     path: '/dashboard/beds',           acciones: [...CRUD, ACCIONES.GESTIONAR] },
-			{ id: 'TABLA',     label: 'Tabla de Internación', path: '/dashboard/beds/tables',    acciones: [ACCIONES.VER, ACCIONES.EXPORTAR] },
-
-			// Funcionalidades clínicas (sidebar de la cama)
-			{ id: 'HISTORIA_CLINICA',     label: 'Historia clínica',           acciones: [...CRUD] },
-			{ id: 'INDICACIONES',         label: 'Indicaciones médicas',       acciones: [...CRUD, ACCIONES.APLICAR, ACCIONES.MARCAR_VISTO] },
-			{ id: 'EVOLUCIONES',          label: 'Evoluciones médicas',        acciones: [...CRUD] },
-			{ id: 'INTERCONSULTAS',       label: 'Interconsultas',             acciones: [...CRUD, ACCIONES.VER_TODOS] },
-			{ id: 'EVOLUCION_ENFERMERIA', label: 'Evolución de enfermería',    acciones: [...CRUD] },
-			{ id: 'SIGNOS_VITALES',       label: 'Controles / signos vitales', acciones: [...CRUD] },
-			{ id: 'MEDICACION',           label: 'Medicación suministrada',    acciones: [...CRUD] },
-			{ id: 'DIETA',                label: 'Dietas',                     acciones: [...CRUD] },
-			{ id: 'BALANCE_HIDRICO',      label: 'Balance hídrico',            acciones: [...CRUD] },
-			{ id: 'INSUMOS',              label: 'Insumos',                    acciones: [...CRUD] },
-			{ id: 'ESTUDIOS',             label: 'Pedidos de estudios (bandeja / responder)', acciones: [...CRUD, ACCIONES.VER_TODOS] },
-			{ id: 'PROTOCOLOS',           label: 'Protocolos',                 acciones: [...CRUD] },
-			{ id: 'PROCEDIMIENTOS',       label: 'Procedimientos',             acciones: [...CRUD] },
+			// —— Operativa ——
+			{ id: 'CAMAS',       label: 'Gestión de Camas',     path: '/dashboard/beds',        acciones: [...CRUD, ACCIONES.GESTIONAR], grupo: 'operativa' },
+			{ id: 'TABLA',       label: 'Tabla de Internación', path: '/dashboard/beds/tables', acciones: [ACCIONES.VER, ACCIONES.EXPORTAR], grupo: 'operativa' },
 			// TRASLADAR = cambio/intercambio/asignación de cama.
-			// GESTIONAR = egreso completo (registrar / modificar / eliminar) + editar último movimiento + trasladar.
-			{ id: 'MOVIMIENTOS',          label: 'Movimientos / traslados',    acciones: [ACCIONES.VER, ACCIONES.TRASLADAR, ACCIONES.GESTIONAR] },
-			{ id: 'ADJUNTOS',             label: 'Adjuntos',                   acciones: [...CRUD] },
-			{ id: 'EPICRISIS',            label: 'Epicrisis',                  acciones: [...CRUD, ACCIONES.IMPRIMIR] },
-			// Historial de cambios de la HC (quién modificó o borró qué). Solo lectura
-			// y reservado a ADMIN: se excluye a mano de la plantilla ADMINISTRATIVO.
-			{ id: 'AUDITORIA_HC',         label: 'Auditoría de historia clínica', acciones: [ACCIONES.VER] },
-			{ id: 'REGISTROS',            label: 'Modificar registros de otro profesional', acciones: [ACCIONES.EDITAR_AJENOS] },
+			// GESTIONAR = egreso completo + editar último movimiento + trasladar.
+			{ id: 'MOVIMIENTOS', label: 'Movimientos / traslados', acciones: [ACCIONES.VER, ACCIONES.TRASLADAR, ACCIONES.GESTIONAR], grupo: 'operativa' },
+
+			// —— Gestión médica (sidebar) ——
+			{ id: 'HISTORIA_CLINICA', label: 'Historia clínica',     acciones: [...CRUD], grupo: 'medica' },
+			{ id: 'INDICACIONES',     label: 'Indicaciones médicas', acciones: [...CRUD, ACCIONES.APLICAR, ACCIONES.MARCAR_VISTO], grupo: 'medica' },
+			{ id: 'EVOLUCIONES',      label: 'Evoluciones médicas',  acciones: [...CRUD], grupo: 'medica' },
+			{ id: 'INTERCONSULTAS',   label: 'Interconsultas',       acciones: [...CRUD, ACCIONES.VER_TODOS], grupo: 'medica' },
+			{ id: 'ESTUDIOS',         label: 'Pedidos de estudios (bandeja / responder)', acciones: [...CRUD, ACCIONES.VER_TODOS], grupo: 'medica' },
+			{ id: 'PROTOCOLOS',       label: 'Protocolos',           acciones: [...CRUD], grupo: 'medica' },
+			{ id: 'PROCEDIMIENTOS',   label: 'Procedimientos',       acciones: [...CRUD], grupo: 'medica' },
+			{ id: 'EPICRISIS',        label: 'Epicrisis',            acciones: [...CRUD, ACCIONES.IMPRIMIR], grupo: 'medica' },
+			// Historial de cambios de la HC. Solo lectura; reservado a ADMIN (excluido de ADMINISTRATIVO).
+			{ id: 'AUDITORIA_HC',     label: 'Auditoría de historia clínica', acciones: [ACCIONES.VER], grupo: 'medica' },
+			{ id: 'REGISTROS',        label: 'Modificar registros de otro profesional', acciones: [ACCIONES.EDITAR_AJENOS], grupo: 'medica' },
+
+			// —— Gestión enfermería (sidebar) ——
+			{ id: 'EVOLUCION_ENFERMERIA', label: 'Evolución de enfermería',    acciones: [...CRUD], grupo: 'enfermeria' },
+			{ id: 'SIGNOS_VITALES',       label: 'Controles / signos vitales', acciones: [...CRUD], grupo: 'enfermeria' },
+			{ id: 'MEDICACION',           label: 'Medicación suministrada',    acciones: [...CRUD], grupo: 'enfermeria' },
+			{ id: 'DIETA',                label: 'Dietas',                     acciones: [...CRUD], grupo: 'enfermeria' },
+			{ id: 'BALANCE_HIDRICO',      label: 'Balance hídrico',            acciones: [...CRUD], grupo: 'enfermeria' },
+			{ id: 'INSUMOS',              label: 'Insumos',                    acciones: [...CRUD], grupo: 'enfermeria' },
+
+			// —— Documentación ——
+			{ id: 'ADJUNTOS', label: 'Adjuntos', acciones: [...CRUD], grupo: 'documentacion' },
 		],
 	},
 	{
@@ -231,6 +247,30 @@ function _soloVer(modId: string, excluir: string[] = []): string[] {
 	return mod.submodulos
 		.filter((s) => s.acciones.includes(ACCIONES.VER) && !excluir.includes(s.id))
 		.map((s) => `${modId}.${s.id}.${ACCIONES.VER}`);
+}
+
+/** Solo VER de un grupo de Internación (médica / enfermería / …). */
+function _soloVerGrupo(grupo: GrupoInternacion, excluir: string[] = []): string[] {
+	const mod = MODULOS.find((m) => m.id === 'INTERNACION');
+	if (!mod) return [];
+	return mod.submodulos
+		.filter(
+			(s) =>
+				s.grupo === grupo &&
+				s.acciones.includes(ACCIONES.VER) &&
+				!excluir.includes(s.id),
+		)
+		.map((s) => `INTERNACION.${s.id}.${ACCIONES.VER}`);
+}
+
+/** Códigos VER de Gestión médica (sin auditoría salvo que se pida). */
+export function verGestionMedica(excluir: string[] = ['AUDITORIA_HC']): string[] {
+	return _soloVerGrupo('medica', excluir);
+}
+
+/** Códigos VER de Gestión enfermería. */
+export function verGestionEnfermeria(): string[] {
+	return _soloVerGrupo('enfermeria');
 }
 
 // ============================================================================
@@ -350,12 +390,16 @@ export const PLANTILLAS: Record<RolNombre, ReadonlyArray<string>> = {
 
 	/**
 	 * ADMINISTRATIVO — ve todo (incl. clínica), gestiona pacientes/admisiones/camas/agenda.
-	 * No crea ni edita lo médico ni de enfermería. Distinto de ADMIN.
+	 * Internación: VER operativa + médica + enfermería + documentación (sin escritura clínica).
+	 * Distinto de ADMIN.
 	 */
 	ADMINISTRATIVO: [
 		..._soloVer('TURNOS'),
 		..._soloVer('ADMISION'),
-		..._soloVer('INTERNACION', ['AUDITORIA_HC']),
+		..._soloVerGrupo('operativa'),
+		...verGestionMedica(['AUDITORIA_HC']),
+		...verGestionEnfermeria(),
+		..._soloVerGrupo('documentacion'),
 		..._soloVer('FACTURACION'),
 		// Almacén operativo: catálogo y remitos (sin escritura clínica).
 		..._todas('ALMACEN', 'PRODUCTOS'),

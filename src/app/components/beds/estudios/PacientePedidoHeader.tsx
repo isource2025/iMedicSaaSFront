@@ -63,6 +63,8 @@ export default function PacientePedidoHeader({ paciente, idVisita }: Props) {
 				<div className={formStyles.pacienteChips}>
 					{paciente.TipoAtencion === 'INTERNADO' ? (
 						<span className={`${formStyles.chip} ${formStyles.chipInternado}`}>Internado</span>
+					) : paciente.TipoAtencion === 'HOSPITAL_DE_DIA' ? (
+						<span className={`${formStyles.chip} ${formStyles.chipInternado}`}>Hospital de día</span>
 					) : paciente.TipoAtencion === 'AMBULATORIO' ? (
 						<span className={`${formStyles.chip} ${formStyles.chipAmbu}`}>Ambulatorio</span>
 					) : null}

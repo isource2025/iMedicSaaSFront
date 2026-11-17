@@ -41,6 +41,7 @@ import type {
 } from '@/app/types/admisionNueva';
 import type { DiagnosticoCie10 } from '@/app/types/diagnosticos';
 import type { Personal } from '@/app/types/personal';
+import { claseRequiereUbicacion } from '@/app/utils/clasePacienteUbicacion';
 
 import styles from '@/app/components/admission/NuevaAdmision/styles.module.css';
 
@@ -218,7 +219,11 @@ export default function NuevaAdmisionClient() {
   const [diagAbierto, setDiagAbierto] = useState(false);
   const [diagResultados, setDiagResultados] = useState<DiagnosticoCie10[]>([]);
 
-  const esInternado = form.clasePaciente.trim().toUpperCase() === 'I';
+  // Internado (I) y Hospital de día (código por tenant; se detecta por descripción).
+  const requiereUbicacion = claseRequiereUbicacion(
+    form.clasePaciente,
+    catalogos?.clasesPaciente,
+  );
   const bloqueado = guardando || Boolean(creada);
 
   // Limpia borradores viejos de sesiones anteriores (ya no se usan).
@@ -612,7 +617,7 @@ export default function NuevaAdmisionClient() {
         numeroInternacion: form.numeroInternacion,
         observaciones: form.observaciones,
         requisitos: requisitos.map((r) => r.valor),
-        cama: esInternado ? cama : null,
+        cama: requiereUbicacion ? cama : null,
       });
 
       setCreada(resultado);
@@ -1014,7 +1019,7 @@ export default function NuevaAdmisionClient() {
             />
           </div>
 
-          {esInternado && (
+          {requiereUbicacion && (
             <label className={styles.campo}>
               <span>N° de internación</span>
               <input
@@ -1068,10 +1073,10 @@ export default function NuevaAdmisionClient() {
         />
       )}
 
-      {esInternado && !enEdicion && (
+      {requiereUbicacion && !enEdicion && (
         <CamaSelector seleccion={cama} onSeleccionar={setCama} disabled={bloqueado} />
       )}
-      {esInternado && enEdicion && (
+      {requiereUbicacion && enEdicion && (
         <div className={styles.bloque}>
           <div className={styles.bloqueHeader}>
             <h2>

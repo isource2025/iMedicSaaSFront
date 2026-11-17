@@ -92,7 +92,11 @@ export default function ModalAsignarCamaAVisita({
         const def = (clasePacienteDefault || CLASE_INTERNADO).trim().toUpperCase();
         const match =
           list.find((c) => String(c.Valor || '').trim().toUpperCase() === def) ||
-          list.find((c) => /INTERN/i.test(String(c.Descripcion || '')));
+          list.find((c) => {
+            const v = String(c.Valor || '').trim().toUpperCase();
+            return v === 'I' || v === 'H';
+          }) ||
+          list.find((c) => /INTERN|HOSPITAL\s*DE\s*D[IÍ]A/i.test(String(c.Descripcion || '')));
         if (match?.Valor != null) setClasePaciente(String(match.Valor).trim());
       })
       .catch(() => {

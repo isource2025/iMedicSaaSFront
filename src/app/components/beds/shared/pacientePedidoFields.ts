@@ -28,6 +28,10 @@ function formatAtencion(row: DatosPacientePedido) {
 		const ubic = txt(row.Ubicacion);
 		return ubic ? `Internado · ${ubic}` : 'Internado';
 	}
+	if (row.TipoAtencion === 'HOSPITAL_DE_DIA') {
+		const ubic = txt(row.Ubicacion);
+		return ubic ? `Hospital de día · ${ubic}` : 'Hospital de día';
+	}
 	if (row.TipoAtencion === 'AMBULATORIO') return 'Ambulatorio';
 	return txt(row.TipoAtencion);
 }

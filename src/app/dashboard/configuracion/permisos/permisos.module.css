@@ -301,6 +301,25 @@
 	padding: 0.4rem 0.8rem 0.8rem;
 }
 
+.grupoHead {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin: 0.85rem 0 0.35rem;
+	padding: 0.35rem 0.45rem;
+	background: #e8eef6;
+	border-radius: 4px;
+	font-weight: 700;
+	font-size: 0.82rem;
+	color: #1e3a5f;
+	letter-spacing: 0.01em;
+}
+
+.grupoHead:first-child {
+	margin-top: 0.25rem;
+}
+
 .sub {
 	padding: 0.65rem 0;
 	border-bottom: 1px dashed #e2e8f0;

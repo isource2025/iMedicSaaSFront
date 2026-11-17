@@ -118,7 +118,7 @@ export default function CamaSelector({ seleccion, onSeleccionar, disabled }: Pro
       </div>
 
       <p className={styles.ayuda}>
-        La clase de paciente es Internado. Elegí sector y cama libre, o dejalo sin asignar y
+        Elegí sector y cama libre (internado u hospital de día), o dejalo sin asignar y
         ubicalo después desde Camas.
       </p>
 
