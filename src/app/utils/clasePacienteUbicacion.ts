@@ -3,7 +3,7 @@ import type { AdmissionCatalogOption } from '@/app/services/admissionSearchServi
 /** Normaliza acentos para comparar descripciones de catálogo (DÍA → DIA). */
 function sinAcentos(texto: string): string {
   try {
-    return texto.normalize('NFD').replace(/\p{M}/gu, '');
+    return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   } catch {
     return texto;
   }
