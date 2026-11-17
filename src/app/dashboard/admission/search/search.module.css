@@ -369,6 +369,57 @@
   outline-offset: 1px;
 }
 
+/* Select nativo de sectores: misma escala que cobertura */
+.sectorField {
+  flex: 0 1 220px;
+  min-width: 180px;
+  max-width: 260px;
+  width: 220px;
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sectorSelect {
+  min-height: 30px;
+  height: 30px;
+  width: 100%;
+  padding: 4px 28px 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background-color: #fff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.sectorSelect:hover {
+  border-color: #94a3b8;
+}
+
+.sectorSelect:focus {
+  outline: none;
+  border-color: #94a3b8;
+}
+
+.sectorSelect:focus-visible {
+  outline: 2px solid #00b5e2;
+  outline-offset: 1px;
+}
+
+.sectorSelect:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .toolbarActions {
   display: flex;
   gap: 8px;
@@ -596,6 +647,9 @@
   font-weight: 700;
   cursor: pointer;
   text-decoration: underline;
+  padding: 0;
+  text-align: left;
+  align-self: flex-start;
 }
 
 .modifyBtn {
@@ -633,6 +687,16 @@
   line-height: 1.2;
 }
 
+.thPrefix,
+.thPrefixHidden {
+  font: inherit;
+  font-weight: inherit;
+}
+
+.thPrefixHidden {
+  visibility: hidden;
+}
+
 .thSub {
   font-size: 0.75em;
   font-weight: 500;
@@ -653,6 +717,7 @@
 .cellStack {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 2px;
   min-width: 0;
   line-height: 1.25;
@@ -873,7 +938,8 @@
 
 /* Paneles muy anchos: compactar cobertura y separar grupos sin aplastar. */
 @container admission-search (min-width: 1480px) {
-  .coberturaField {
+  .coberturaField,
+  .sectorField {
     flex: 0 0 240px;
     width: 240px;
     max-width: 260px;
@@ -974,7 +1040,8 @@
     text-align: center;
   }
 
-  .coberturaField {
+  .coberturaField,
+  .sectorField {
     order: 0;
     width: 100%;
     max-width: none;

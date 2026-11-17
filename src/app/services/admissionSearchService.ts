@@ -15,6 +15,8 @@ export interface AdmissionSearchFilters {
   tipoAtencion?: string;
   /** Código de cobertura (imClientes.Valor / imVisita.CLIENTE). */
   cliente?: string | number;
+  /** Código de sector (imSectores.Valor / imVisita.VALORSECTOR). */
+  sector?: string;
   page?: number;
   limit?: number;
 }
@@ -261,6 +263,11 @@ export interface AdmissionCoberturaOption {
   Descripcion: string;
 }
 
+export interface AdmissionSectorOption {
+  Valor: string;
+  Descripcion: string;
+}
+
 export const admissionSearchService = {
   async buscar(filters: AdmissionSearchFilters): Promise<AdmissionSearchResponse> {
     const params = new URLSearchParams();
@@ -279,6 +286,13 @@ export const admissionSearchService = {
   async getCoberturas(): Promise<AdmissionCoberturaOption[]> {
     const response = await apiService.get<{ success: boolean; data: AdmissionCoberturaOption[] }>(
       '/admission-search/coberturas',
+    );
+    return response.data?.data ?? [];
+  },
+
+  async getSectores(): Promise<AdmissionSectorOption[]> {
+    const response = await apiService.get<{ success: boolean; data: AdmissionSectorOption[] }>(
+      '/admission-search/sectores',
     );
     return response.data?.data ?? [];
   },

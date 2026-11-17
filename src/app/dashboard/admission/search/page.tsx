@@ -38,6 +38,8 @@ const initialFilters = {
   tipoAtencion: '' as '' | 'I' | 'A',
   /** Código imClientes.Valor / imVisita.CLIENTE */
   cliente: '',
+  /** Código imSectores.Valor / imVisita.VALORSECTOR (catálogo: solo AmbInt=A) */
+  sector: '',
 };
 
 type SearchFilters = typeof initialFilters;
@@ -68,6 +70,7 @@ function filtersCacheKey(f: SearchFilters): string {
     porEgreso: Boolean(f.porEgreso),
     tipoAtencion: f.tipoAtencion || '',
     cliente: String(f.cliente || '').trim(),
+    sector: String(f.sector || '').trim(),
   });
 }
 
@@ -97,6 +100,7 @@ function buildSearchHref(filtros: SearchFilters, pageNum: number): string {
   if (filtros.porEgreso) params.set('porEgreso', '1');
   if (filtros.tipoAtencion) params.set('tipoAtencion', filtros.tipoAtencion);
   if (String(filtros.cliente || '').trim()) params.set('cliente', String(filtros.cliente).trim());
+  if (String(filtros.sector || '').trim()) params.set('sector', String(filtros.sector).trim());
   params.set('page', String(Math.max(1, pageNum)));
   const qs = params.toString();
   return qs ? `/dashboard/admission/search?${qs}` : '/dashboard/admission/search';
@@ -158,6 +162,7 @@ function AdmissionSearchPageContent() {
   const porIngresoUrl = parseFlagParam(searchParams.get('porIngreso')) && !porEgresoUrl;
   const tipoAtencionUrl = parseTipoAtencionParam(searchParams.get('tipoAtencion'));
   const clienteUrl = (searchParams.get('cliente') || '').trim();
+  const sectorUrl = (searchParams.get('sector') || '').trim();
   const pageFromUrl = parsePageParam(searchParams.get('page'));
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -169,6 +174,7 @@ function AdmissionSearchPageContent() {
     porEgreso: porEgresoUrl,
     tipoAtencion: tipoAtencionUrl,
     cliente: clienteUrl,
+    sector: sectorUrl,
   });
   const [rows, setRows] = useState<AdmissionSearchRow[]>([]);
   const [page, setPage] = useState(pageFromUrl);
@@ -179,6 +185,8 @@ function AdmissionSearchPageContent() {
   const [viewMode, setViewMode] = useState<'admisiones' | 'pacientes'>('admisiones');
   const [coberturas, setCoberturas] = useState<{ Valor: number; Descripcion: string }[]>([]);
   const [loadingCoberturas, setLoadingCoberturas] = useState(true);
+  const [sectores, setSectores] = useState<{ Valor: string; Descripcion: string }[]>([]);
+  const [loadingSectores, setLoadingSectores] = useState(true);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [adjuntosVisita, setAdjuntosVisita] = useState<number | null>(null);
   const cerrarAdjuntos = useCallback(() => setAdjuntosVisita(null), []);
@@ -351,6 +359,7 @@ function AdmissionSearchPageContent() {
       porEgreso: porEgresoUrl,
       tipoAtencion: tipoAtencionUrl,
       cliente: clienteUrl,
+      sector: sectorUrl,
     };
     setFilters(filtrosFromUrl);
     void runSearch(pageFromUrl, filtrosFromUrl);
@@ -362,6 +371,7 @@ function AdmissionSearchPageContent() {
     porEgresoUrl,
     tipoAtencionUrl,
     clienteUrl,
+    sectorUrl,
     pageFromUrl,
     runSearch,
   ]);
@@ -379,6 +389,25 @@ function AdmissionSearchPageContent() {
       })
       .finally(() => {
         if (!cancel) setLoadingCoberturas(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancel = false;
+    setLoadingSectores(true);
+    admissionSearchService
+      .getSectores()
+      .then((rows) => {
+        if (!cancel) setSectores(rows || []);
+      })
+      .catch(() => {
+        if (!cancel) setSectores([]);
+      })
+      .finally(() => {
+        if (!cancel) setLoadingSectores(false);
       });
     return () => {
       cancel = true;
@@ -440,6 +469,10 @@ function AdmissionSearchPageContent() {
     aplicarFiltros({ ...filters, cliente: value == null || value === '' ? '' : String(value) });
   };
 
+  const onSectorChange = (value: string) => {
+    aplicarFiltros({ ...filters, sector: value === 'all' ? '' : value });
+  };
+
   const opcionesCobertura = useMemo(
     () => [
       { value: '', label: 'Todas las coberturas' },
@@ -473,6 +506,7 @@ function AdmissionSearchPageContent() {
         porEgreso: porEgresoUrl,
         tipoAtencion: tipoAtencionUrl,
         cliente: clienteUrl,
+        sector: sectorUrl,
       },
       targetPage,
       'push',
@@ -633,6 +667,31 @@ function AdmissionSearchPageContent() {
                 options={opcionesCobertura}
               />
             </div>
+
+            <div className={styles.sectorField}>
+              <label className={styles.filterGroupLabel} htmlFor="sector-filtro">
+                Sectores
+              </label>
+              <select
+                id="sector-filtro"
+                className={styles.sectorSelect}
+                value={filters.sector || 'all'}
+                onChange={(e) => onSectorChange(e.target.value)}
+                disabled={loadingSectores}
+                title={
+                  filters.sector
+                    ? sectores.find((s) => s.Valor === filters.sector)?.Descripcion || filters.sector
+                    : 'Todos'
+                }
+              >
+                <option value="all">{loadingSectores ? 'Cargando…' : 'Todos'}</option>
+                {sectores.map((s) => (
+                  <option key={s.Valor} value={s.Valor}>
+                    {s.Descripcion || s.Valor}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className={styles.toolbarActions}>
@@ -684,7 +743,20 @@ function AdmissionSearchPageContent() {
                   <thead>
                     <tr>
                       <th>I/A</th>
-                      <th className={styles.thNowrap}>Nº Admisión</th>
+                      <th className={styles.thNowrap}>
+                        <div className={styles.thStack}>
+                          <span>
+                            <span className={styles.thPrefix}>Nº </span>
+                            Admisión
+                          </span>
+                          <span>
+                            <span className={styles.thPrefixHidden} aria-hidden>
+                              Nº{' '}
+                            </span>
+                            Internación
+                          </span>
+                        </div>
+                      </th>
                       <th>
                         <div className={styles.thStack}>
                           <span>Paciente</span>
@@ -1004,6 +1076,7 @@ function AdmissionSearchPageContent() {
           porEgreso: filters.porEgreso,
           tipoAtencion: filters.tipoAtencion,
           cliente: filters.cliente,
+          sector: filters.sector,
         }}
         rowsActuales={rows}
         total={total}

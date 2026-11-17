@@ -13,6 +13,7 @@ type SearchFiltersLite = {
 	porEgreso: boolean;
 	tipoAtencion: '' | 'I' | 'A';
 	cliente: string;
+	sector: string;
 };
 
 type Props = {
@@ -72,6 +73,7 @@ export default function AdmissionSearchPdfPreviewModal({
 						porEgreso: filtros.porEgreso || undefined,
 						tipoAtencion: filtros.tipoAtencion || undefined,
 						cliente: filtros.cliente || undefined,
+						sector: filtros.sector || undefined,
 						page: 1,
 						limit: EXPORT_LIMIT,
 					});
