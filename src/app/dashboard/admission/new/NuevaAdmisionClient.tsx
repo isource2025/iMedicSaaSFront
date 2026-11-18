@@ -778,7 +778,11 @@ export default function NuevaAdmisionClient() {
         </div>
         <PacienteSelector
           paciente={paciente}
-          onSeleccionar={setPaciente}
+          onSeleccionar={(p) => {
+            setPaciente(p);
+            // Tras elegir paciente, Tab continúa en Fecha → Hora → …
+            window.setTimeout(() => document.getElementById('fechaAdmision')?.focus(), 0);
+          }}
           onLimpiar={() => setPaciente(null)}
           disabled={bloqueado || enEdicion}
         />
@@ -798,31 +802,34 @@ export default function NuevaAdmisionClient() {
         </div>
 
         <div className={styles.grillaCampos}>
-          <label className={styles.campo}>
-            <span>Fecha de admisión *</span>
-            <DateInputDMY
-              value={form.fechaAdmision}
-              disabled={bloqueado}
-              onChange={(v) => setCampo('fechaAdmision', v)}
-              wrapClassName={styles.fechaDMY}
-              className={styles.fechaDMYInput}
-              title="Fecha de admisión"
-            />
-          </label>
+          <div className={styles.filaFechaHora}>
+            <label className={`${styles.campo} ${styles.campoFecha}`}>
+              <span>Fecha de admisión</span>
+              <DateInputDMY
+                id="fechaAdmision"
+                value={form.fechaAdmision}
+                disabled={bloqueado}
+                onChange={(v) => setCampo('fechaAdmision', v)}
+                wrapClassName={styles.fechaDMY}
+                className={styles.fechaDMYInput}
+                title="Fecha de admisión"
+              />
+            </label>
 
-          <label className={styles.campo}>
-            <span>Hora</span>
-            <input
-              type="time"
-              value={form.horaAdmision}
-              disabled={bloqueado}
-              onChange={(e) => setCampo('horaAdmision', e.target.value)}
-            />
-          </label>
+            <label className={`${styles.campo} ${styles.campoHora}`}>
+              <span>Hora</span>
+              <input
+                type="time"
+                value={form.horaAdmision}
+                disabled={bloqueado}
+                onChange={(e) => setCampo('horaAdmision', e.target.value)}
+              />
+            </label>
+          </div>
 
           <div className={styles.campo}>
             <CustomSelect
-              label="Clase de paciente *"
+              label="Clase de paciente"
               name="clasePaciente"
               value={form.clasePaciente}
               isLoading={cargandoCatalogos}

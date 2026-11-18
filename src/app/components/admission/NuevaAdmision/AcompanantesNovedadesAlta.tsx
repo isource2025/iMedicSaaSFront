@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, Users } from 'lucide-react';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import visitaAcompanantesService from '@/app/services/visitaAcompanantesService';
 import type {
@@ -66,6 +66,8 @@ export default function AcompanantesNovedadesAlta({
   const [nuevo, setNuevo] = useState<NuevoAcompanante>(VACIO);
   const [textoNovedad, setTextoNovedad] = useState('');
   const [error, setError] = useState('');
+  /** En nueva admisión arranca minimizado */
+  const [minimizado, setMinimizado] = useState(true);
 
   useEffect(() => {
     visitaAcompanantesService
@@ -102,185 +104,206 @@ export default function AcompanantesNovedadesAlta({
   const labelParentesco = (valor: string) =>
     catalogos.parentescos.find((p) => p.Valor === valor)?.Descripcion || valor || '—';
 
+  const toggleMinimizado = () => setMinimizado((v) => !v);
+
   return (
-    <div className={styles.bloque}>
-      <div className={styles.bloqueHeader}>
-        <h2>
-          <Users size={18} /> Acompañantes y novedades
-        </h2>
+    <div className={`${styles.bloque} ${minimizado ? styles.bloqueMinimizado : ''}`.trim()}>
+      <div
+        className={styles.bloqueHeader}
+        role="button"
+        tabIndex={0}
+        aria-expanded={!minimizado}
+        aria-controls="acompanantes-novedades-cuerpo"
+        onClick={toggleMinimizado}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleMinimizado();
+          }
+        }}
+      >
+        <div className={styles.bloqueToggle}>
+          <h2 className={styles.bloqueTitulo}>
+            <Users size={18} /> Acompañantes y novedades
+          </h2>
+          {minimizado ? <ChevronDown size={18} aria-hidden /> : <ChevronUp size={18} aria-hidden />}
+        </div>
         <span className={styles.contador}>
           {acompanantes.length} acompañante{acompanantes.length === 1 ? '' : 's'} · {novedades.length}{' '}
           novedad{novedades.length === 1 ? '' : 'es'}
         </span>
       </div>
 
-      <p className={styles.ayuda}>
-        Se guardan al confirmar la admisión. La observación de la visita es el campo Observaciones
-        de Datos principales.
-      </p>
+      {!minimizado ? (
+        <div id="acompanantes-novedades-cuerpo">
+          <p className={styles.ayuda}>
+            Se guardan al confirmar la admisión. La observación de la visita es el campo Observaciones
+            de Datos principales.
+          </p>
 
-      {error ? <p className={styles.errorInline}>{error}</p> : null}
+          {error ? <p className={styles.errorInline}>{error}</p> : null}
 
-      <h3 className={styles.subBloqueTitulo}>Acompañantes</h3>
-      <div className={styles.grillaCampos} data-asistente-grupo="Acompañante (familiar o contacto, no el paciente)">
-        <label className={`${styles.campo} ${styles.campoAncho}`}>
-          <span>Apellido y nombre</span>
-          <input
-            type="text"
-            value={nuevo.apellidos}
-            disabled={disabled}
-            maxLength={80}
-            onChange={(e) => setNuevo((n) => ({ ...n, apellidos: e.target.value }))}
-          />
-        </label>
-        <div className={styles.campo}>
-          <CustomSelect
-            label="Parentesco"
-            name="parentescoAlta"
-            value={nuevo.parentesco}
-            isLoading={false}
-            disabled={disabled}
-            onChange={(v) => setNuevo((n) => ({ ...n, parentesco: String(v ?? '') }))}
-            options={opciones(catalogos.parentescos, 'Seleccionar…')}
-          />
+          <h3 className={styles.subBloqueTitulo}>Acompañantes</h3>
+          <div className={styles.grillaCampos} data-asistente-grupo="Acompañante (familiar o contacto, no el paciente)">
+            <label className={`${styles.campo} ${styles.campoAncho}`}>
+              <span>Apellido y nombre</span>
+              <input
+                type="text"
+                value={nuevo.apellidos}
+                disabled={disabled}
+                maxLength={80}
+                onChange={(e) => setNuevo((n) => ({ ...n, apellidos: e.target.value }))}
+              />
+            </label>
+            <div className={styles.campo}>
+              <CustomSelect
+                label="Parentesco"
+                name="parentescoAlta"
+                value={nuevo.parentesco}
+                isLoading={false}
+                disabled={disabled}
+                onChange={(v) => setNuevo((n) => ({ ...n, parentesco: String(v ?? '') }))}
+                options={opciones(catalogos.parentescos, 'Seleccionar…')}
+              />
+            </div>
+            <div className={styles.campo}>
+              <CustomSelect
+                label="Rol de contacto"
+                name="rolContactoAlta"
+                value={nuevo.rolContacto}
+                isLoading={false}
+                disabled={disabled}
+                onChange={(v) => setNuevo((n) => ({ ...n, rolContacto: String(v ?? '') }))}
+                options={opciones(catalogos.rolesContacto, '—')}
+              />
+            </div>
+            <div className={styles.campo}>
+              <CustomSelect
+                label="Tipo doc."
+                name="tipoDocAlta"
+                value={nuevo.tipoDocumento}
+                isLoading={false}
+                disabled={disabled}
+                onChange={(v) => setNuevo((n) => ({ ...n, tipoDocumento: String(v ?? '') }))}
+                options={TIPOS_DOCUMENTO}
+              />
+            </div>
+            <label className={styles.campo}>
+              <span>Nº documento</span>
+              <input
+                type="text"
+                value={nuevo.numeroDocumento}
+                disabled={disabled}
+                maxLength={20}
+                onChange={(e) => setNuevo((n) => ({ ...n, numeroDocumento: e.target.value }))}
+              />
+            </label>
+            <label className={styles.campo}>
+              <span>Teléfono</span>
+              <input
+                type="text"
+                value={nuevo.telefono}
+                disabled={disabled}
+                maxLength={20}
+                onChange={(e) => setNuevo((n) => ({ ...n, telefono: e.target.value }))}
+              />
+            </label>
+            <label className={`${styles.campo} ${styles.campoAncho}`}>
+              <span>Dirección</span>
+              <input
+                type="text"
+                value={nuevo.direccion}
+                disabled={disabled}
+                maxLength={80}
+                onChange={(e) => setNuevo((n) => ({ ...n, direccion: e.target.value }))}
+              />
+            </label>
+          </div>
+          <div className={styles.accionesBloque}>
+            <button
+              type="button"
+              className={styles.botonSecundario}
+              disabled={disabled}
+              onClick={agregarAcompanante}
+            >
+              <Plus size={14} /> Agregar acompañante
+            </button>
+          </div>
+
+          {acompanantes.length === 0 ? (
+            <p className={styles.ayuda}>Todavía no hay acompañantes cargados.</p>
+          ) : (
+            <ul className={styles.listaSimple}>
+              {acompanantes.map((a) => (
+                <li key={a.idLocal} className={styles.filaSimple}>
+                  <div>
+                    <strong>{a.apellidos}</strong>
+                    <span className={styles.metaSimple}>
+                      {labelParentesco(a.parentesco)}
+                      {a.numeroDocumento ? ` · ${a.tipoDocumento || 'Doc'} ${a.numeroDocumento}` : ''}
+                      {a.telefono ? ` · ${a.telefono}` : ''}
+                    </span>
+                  </div>
+                  {!disabled && (
+                    <button
+                      type="button"
+                      className={styles.botonIcono}
+                      title="Quitar"
+                      onClick={() =>
+                        onAcompanantesChange(acompanantes.filter((x) => x.idLocal !== a.idLocal))
+                      }
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <label className={`${styles.campo} ${styles.campoAncho}`}>
+            <span className={styles.campoLabelNegrita}>Novedad</span>
+            <textarea
+              value={textoNovedad}
+              rows={2}
+              maxLength={500}
+              disabled={disabled}
+              onChange={(e) => setTextoNovedad(e.target.value)}
+            />
+          </label>
+          <div className={styles.accionesBloque}>
+            <button
+              type="button"
+              className={styles.botonSecundario}
+              disabled={disabled || !textoNovedad.trim()}
+              onClick={agregarNovedad}
+            >
+              <Plus size={14} /> Agregar novedad
+            </button>
+          </div>
+          {novedades.length === 0 ? (
+            <p className={styles.ayuda}>Todavía no hay novedades.</p>
+          ) : (
+            <ul className={styles.listaSimple}>
+              {novedades.map((n, i) => (
+                <li key={`${i}-${n.slice(0, 12)}`} className={styles.filaSimple}>
+                  <span>{n}</span>
+                  {!disabled && (
+                    <button
+                      type="button"
+                      className={styles.botonIcono}
+                      title="Quitar"
+                      onClick={() => onNovedadesChange(novedades.filter((_, idx) => idx !== i))}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <div className={styles.campo}>
-          <CustomSelect
-            label="Rol de contacto"
-            name="rolContactoAlta"
-            value={nuevo.rolContacto}
-            isLoading={false}
-            disabled={disabled}
-            onChange={(v) => setNuevo((n) => ({ ...n, rolContacto: String(v ?? '') }))}
-            options={opciones(catalogos.rolesContacto, '—')}
-          />
-        </div>
-        <div className={styles.campo}>
-          <CustomSelect
-            label="Tipo doc."
-            name="tipoDocAlta"
-            value={nuevo.tipoDocumento}
-            isLoading={false}
-            disabled={disabled}
-            onChange={(v) => setNuevo((n) => ({ ...n, tipoDocumento: String(v ?? '') }))}
-            options={TIPOS_DOCUMENTO}
-          />
-        </div>
-        <label className={styles.campo}>
-          <span>Nº documento</span>
-          <input
-            type="text"
-            value={nuevo.numeroDocumento}
-            disabled={disabled}
-            maxLength={20}
-            onChange={(e) => setNuevo((n) => ({ ...n, numeroDocumento: e.target.value }))}
-          />
-        </label>
-        <label className={styles.campo}>
-          <span>Teléfono</span>
-          <input
-            type="text"
-            value={nuevo.telefono}
-            disabled={disabled}
-            maxLength={20}
-            onChange={(e) => setNuevo((n) => ({ ...n, telefono: e.target.value }))}
-          />
-        </label>
-        <label className={`${styles.campo} ${styles.campoAncho}`}>
-          <span>Dirección</span>
-          <input
-            type="text"
-            value={nuevo.direccion}
-            disabled={disabled}
-            maxLength={80}
-            onChange={(e) => setNuevo((n) => ({ ...n, direccion: e.target.value }))}
-          />
-        </label>
-      </div>
-      <div className={styles.accionesBloque}>
-        <button
-          type="button"
-          className={styles.botonSecundario}
-          disabled={disabled}
-          onClick={agregarAcompanante}
-        >
-          <Plus size={14} /> Agregar acompañante
-        </button>
-      </div>
-
-      {acompanantes.length === 0 ? (
-        <p className={styles.ayuda}>Todavía no hay acompañantes cargados.</p>
-      ) : (
-        <ul className={styles.listaSimple}>
-          {acompanantes.map((a) => (
-            <li key={a.idLocal} className={styles.filaSimple}>
-              <div>
-                <strong>{a.apellidos}</strong>
-                <span className={styles.metaSimple}>
-                  {labelParentesco(a.parentesco)}
-                  {a.numeroDocumento ? ` · ${a.tipoDocumento || 'Doc'} ${a.numeroDocumento}` : ''}
-                  {a.telefono ? ` · ${a.telefono}` : ''}
-                </span>
-              </div>
-              {!disabled && (
-                <button
-                  type="button"
-                  className={styles.botonIcono}
-                  title="Quitar"
-                  onClick={() =>
-                    onAcompanantesChange(acompanantes.filter((x) => x.idLocal !== a.idLocal))
-                  }
-                >
-                  <Trash2 size={15} />
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <h3 className={styles.subBloqueTitulo}>Novedades</h3>
-      <label className={`${styles.campo} ${styles.campoAncho}`}>
-        <span>Novedad</span>
-        <textarea
-          value={textoNovedad}
-          rows={2}
-          maxLength={500}
-          disabled={disabled}
-          onChange={(e) => setTextoNovedad(e.target.value)}
-        />
-      </label>
-      <div className={styles.accionesBloque}>
-        <button
-          type="button"
-          className={styles.botonSecundario}
-          disabled={disabled || !textoNovedad.trim()}
-          onClick={agregarNovedad}
-        >
-          <Plus size={14} /> Agregar novedad
-        </button>
-      </div>
-      {novedades.length === 0 ? (
-        <p className={styles.ayuda}>Todavía no hay novedades.</p>
-      ) : (
-        <ul className={styles.listaSimple}>
-          {novedades.map((n, i) => (
-            <li key={`${i}-${n.slice(0, 12)}`} className={styles.filaSimple}>
-              <span>{n}</span>
-              {!disabled && (
-                <button
-                  type="button"
-                  className={styles.botonIcono}
-                  title="Quitar"
-                  onClick={() => onNovedadesChange(novedades.filter((_, idx) => idx !== i))}
-                >
-                  <Trash2 size={15} />
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      ) : null}
     </div>
   );
 }

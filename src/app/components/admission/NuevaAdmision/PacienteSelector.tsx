@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Search, UserPlus, X } from 'lucide-react';
-import { searchPatients } from '@/app/services/patientService';
-import type { Patient } from '@/app/types/PatientInterface';
+import ModalAddPatient from '@/app/components/modals/ModalAddPatient';
+import { createPatient, searchPatients } from '@/app/services/patientService';
+import type { Patient, PatientFormData } from '@/app/types/PatientInterface';
 import styles from './styles.module.css';
 
 export interface PacienteElegido {
@@ -49,7 +50,38 @@ export default function PacienteSelector({
   const [abierto, setAbierto] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [error, setError] = useState('');
+  const [modalNuevo, setModalNuevo] = useState(false);
+  const [guardandoPaciente, setGuardandoPaciente] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleCrearPaciente = useCallback(
+    async (data: PatientFormData) => {
+      setGuardandoPaciente(true);
+      try {
+        const file: File | null = (data as { _fotoFile?: File })._fotoFile || null;
+        const created = await createPatient(data, file);
+        onSeleccionar(aPacienteElegido(created));
+        setModalNuevo(false);
+        setAbierto(false);
+        setQuery('');
+        return true;
+      } catch (err) {
+        console.error('Error al crear paciente desde nueva admisión:', err);
+        return false;
+      } finally {
+        setGuardandoPaciente(false);
+      }
+    },
+    [onSeleccionar],
+  );
+
+  // Al entrar a Nueva Admisión, el cursor arranca en el buscador de paciente.
+  useEffect(() => {
+    if (disabled || paciente) return;
+    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [disabled, paciente]);
 
   useEffect(() => {
     const q = query.trim();
@@ -107,6 +139,7 @@ export default function PacienteSelector({
       <div className={styles.buscadorInput}>
         <Search size={16} />
         <input
+          ref={inputRef}
           type="text"
           aria-label="Buscar paciente por apellido, nombre, DNI o nº de visita"
           value={query}
@@ -118,9 +151,16 @@ export default function PacienteSelector({
           onFocus={() => setAbierto(true)}
           disabled={disabled}
         />
-        <a href="/dashboard/patients" className={styles.enlaceNuevoPaciente}>
+        {/* Fuera del Tab: después del buscador sigue Fecha → Hora → resto del form */}
+        <button
+          type="button"
+          className={styles.enlaceNuevoPaciente}
+          tabIndex={-1}
+          disabled={disabled}
+          onClick={() => setModalNuevo(true)}
+        >
           <UserPlus size={14} /> Nuevo paciente
-        </a>
+        </button>
       </div>
 
       {abierto && query.trim().length >= 3 && (
@@ -151,6 +191,13 @@ export default function PacienteSelector({
             ))}
         </ul>
       )}
+
+      <ModalAddPatient
+        isOpen={modalNuevo}
+        onClose={() => setModalNuevo(false)}
+        onSubmit={handleCrearPaciente}
+        isSubmitting={guardandoPaciente}
+      />
     </div>
   );
 }

@@ -99,7 +99,7 @@ export default function CamaSelector({ seleccion, onSeleccionar, disabled }: Pro
   return (
     <div className={styles.bloque}>
       <div className={styles.bloqueHeader}>
-        <h2>
+        <h2 className={styles.bloqueTitulo}>
           <BedDouble size={18} /> Ubicación
         </h2>
         {seleccion && (
