@@ -36,6 +36,8 @@ export function opcionesMenuTurnoAdmin(
 		puedeEditar: boolean;
 		puedeEliminar: boolean;
 		puedeRac: boolean;
+		/** Finalizar / editar atención (TURNOS.AGENDA.CERRAR). */
+		puedeAtender?: boolean;
 	},
 ): TurnoAdminOpcion[] {
 	const list: TurnoAdminOpcion[] = [];
@@ -43,6 +45,7 @@ export function opcionesMenuTurnoAdmin(
 	const cancelado = row.estado === 'CANCELADO';
 	const ocupado = row.estado === 'OCUPADO';
 	const conPac = tienePaciente(row);
+	const puedeAtender = Boolean(opts.puedeAtender);
 	if (row.esLog) return list;
 
 	if (opts.puedeEditar && !atendido) {
@@ -60,10 +63,10 @@ export function opcionesMenuTurnoAdmin(
 	if (opts.puedeEditar && ocupado && conPac) {
 		list.push({ id: 'cancelar', label: 'Cancelar turno', danger: true });
 	}
-	if (opts.puedeEditar && ocupado && conPac && !row.horaAtencion) {
+	if (puedeAtender && ocupado && conPac && !row.horaAtencion) {
 		list.push({ id: 'cerrar', label: 'Finalizar atención' });
 	}
-	if (opts.puedeEditar && atendido && conPac) {
+	if (puedeAtender && atendido && conPac) {
 		list.push({ id: 'editar-atencion', label: 'Editar / agregar (24 h)' });
 	}
 	if (opts.puedeEliminar && !atendido) {

@@ -51,6 +51,9 @@ interface Props {
 	slot: AgendaSlot | null;
 	puedeBorrar?: boolean;
 	puedeRacEnfermeria?: boolean;
+	/** Marcar llegada del paciente (recepción). */
+	puedeMarcarLlegada?: boolean;
+	/** Ingreso a consultorio + finalizar / editar atención. */
 	puedeAtender?: boolean;
 	/** Días pasados: solo ver detalle (historial), sin acciones de gestión */
 	soloHistorial?: boolean;
@@ -96,7 +99,8 @@ export default function SlotTurnoMenu({
 	slot,
 	puedeBorrar = false,
 	puedeRacEnfermeria = false,
-	puedeAtender = true,
+	puedeMarcarLlegada = false,
+	puedeAtender = false,
 	soloHistorial = false,
 	onClose,
 	onAction,
@@ -125,8 +129,12 @@ export default function SlotTurnoMenu({
 				return false;
 			// Llamar por pantalla solo si el paciente ya registró llegada
 			if (o.id === 'llamar-pantalla' && !slot.horaLlegada) return false;
-			if (o.id === 'marcar-llegada' && slot.horaLlegada) return false;
-			if (o.id === 'marcar-ingreso' && (!slot.horaLlegada || slot.horaIngreso)) return false;
+			if (o.id === 'marcar-llegada') {
+				if (!puedeMarcarLlegada || slot.horaLlegada) return false;
+			}
+			if (o.id === 'marcar-ingreso') {
+				if (!puedeAtender || !slot.horaLlegada || slot.horaIngreso) return false;
+			}
 			if (o.id === 'atender') {
 				if (!puedeAtender || !slot.idTurno) return false;
 				if (cerrado) return false;
@@ -155,7 +163,7 @@ export default function SlotTurnoMenu({
 				: [];
 
 		return [...conDetalle, ...conRac, ...conEditar, ...base];
-	}, [slot, puedeBorrar, puedeRacEnfermeria, puedeAtender, soloHistorial]);
+	}, [slot, puedeBorrar, puedeRacEnfermeria, puedeMarcarLlegada, puedeAtender, soloHistorial]);
 
 	useEffect(() => {
 		if (!open) return;

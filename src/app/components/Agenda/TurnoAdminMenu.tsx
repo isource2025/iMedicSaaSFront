@@ -18,6 +18,7 @@ interface Props {
 	puedeEditar: boolean;
 	puedeEliminar: boolean;
 	puedeRac: boolean;
+	puedeAtender?: boolean;
 	onClose: () => void;
 	onAction: (action: TurnoAdminAction, row: TurnoAdminRow) => void;
 }
@@ -30,6 +31,7 @@ export default function TurnoAdminMenu({
 	puedeEditar,
 	puedeEliminar,
 	puedeRac,
+	puedeAtender = false,
 	onClose,
 	onAction,
 }: Props) {
@@ -41,8 +43,9 @@ export default function TurnoAdminMenu({
 			puedeEditar,
 			puedeEliminar,
 			puedeRac,
+			puedeAtender,
 		});
-	}, [row, puedeEditar, puedeEliminar, puedeRac]);
+	}, [row, puedeEditar, puedeEliminar, puedeRac, puedeAtender]);
 
 	useEffect(() => {
 		if (!open) return;

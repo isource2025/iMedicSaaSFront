@@ -39,6 +39,7 @@ interface PermisosMenu {
 	puedeEditar: boolean;
 	puedeEliminar: boolean;
 	puedeRac: boolean;
+	puedeAtender?: boolean;
 }
 
 interface Props {

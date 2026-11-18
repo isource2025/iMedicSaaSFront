@@ -62,6 +62,7 @@ export default function TurnosAdminPage() {
 		puede('TURNOS.ADMIN.EDITAR') || puede('TURNOS.AGENDA.EDITAR');
 	const puedeEliminar =
 		puede('TURNOS.ADMIN.ELIMINAR') || puede('TURNOS.AGENDA.ELIMINAR');
+	const puedeAtender = puede('TURNOS.AGENDA.CERRAR');
 	const puedeRac =
 		puede('TURNOS.AGENDA.EDITAR') ||
 		puede('TURNOS.ADMIN.EDITAR') ||
@@ -94,8 +95,9 @@ export default function TurnosAdminPage() {
 			puedeEditar,
 			puedeEliminar,
 			puedeRac,
+			puedeAtender,
 		}),
-		[puedeEditar, puedeEliminar, puedeRac],
+		[puedeEditar, puedeEliminar, puedeRac, puedeAtender],
 	);
 
 	const abrirMenuTurno = (e: React.MouseEvent, row: TurnoAdminRow) => {
@@ -182,6 +184,7 @@ export default function TurnosAdminPage() {
 		}
 
 		if (action === 'cerrar') {
+			if (!puedeAtender) return;
 			setError(null);
 			setTurnoCerrarEdicion(false);
 			setTurnoCerrar(row);
@@ -189,6 +192,7 @@ export default function TurnosAdminPage() {
 		}
 
 		if (action === 'editar-atencion') {
+			if (!puedeAtender) return;
 			setError(null);
 			setTurnoCerrarEdicion(true);
 			setTurnoCerrar(row);
@@ -411,6 +415,7 @@ export default function TurnosAdminPage() {
 					puedeEditar={puedeEditar}
 					puedeEliminar={puedeEliminar}
 					puedeRac={puedeRac}
+					puedeAtender={puedeAtender}
 					onClose={() => setTurnoMenu(null)}
 					onAction={handleAccionTurno}
 				/>

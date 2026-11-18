@@ -233,7 +233,10 @@ function AgendaPageContent() {
 	const puedeCrearTurno = puede('TURNOS.AGENDA.CREAR');
 	const puedeRacEnfermeria =
 		puede('TURNOS.AGENDA.VER') || puede('INTERNACION.INDICACIONES.APLICAR');
-	const puedeAtender = puede('TURNOS.AGENDA.CERRAR') || (puede('TURNOS.AGENDA.EDITAR') && esMedico);
+	/** Recepción / quien registra presencia del paciente. */
+	const puedeMarcarLlegada = puede('TURNOS.AGENDA.LLEGADA');
+	/** Ingreso a consultorio + finalizar / editar atención clínica. */
+	const puedeAtender = puede('TURNOS.AGENDA.CERRAR');
 	const puedeBorrarTurno = !esMedico && puede('TURNOS.AGENDA.ELIMINAR');
 	const puedeCancelarTurno = puede('TURNOS.AGENDA.EDITAR');
 
@@ -696,6 +699,7 @@ function AgendaPageContent() {
 		}
 
 		if (action === 'marcar-llegada') {
+			if (!puedeMarcarLlegada || !slot.idTurno) return;
 			setError(null);
 			try {
 				const resp = await agendaService.marcarLlegada(mat, slot.idTurno);
@@ -708,11 +712,12 @@ function AgendaPageContent() {
 		}
 
 		if (action === 'marcar-ingreso') {
+			if (!puedeAtender || !slot.idTurno) return;
 			setError(null);
 			try {
 				const resp = await agendaService.marcarIngreso(mat, slot.idTurno);
 				patchSlot(slot.idTurno, { horaIngreso: resp.horaIngreso ?? slot.horaIngreso });
-				if (puedeAtender && slot.idTurno) {
+				if (slot.idTurno) {
 					setCerrarModoEdicion(false);
 					setCerrarSlot({
 						...slot,
@@ -1398,6 +1403,7 @@ function AgendaPageContent() {
 				slot={slotMenu?.slot ?? null}
 				puedeBorrar={puedeBorrarTurno}
 				puedeRacEnfermeria={puedeRacEnfermeria}
+				puedeMarcarLlegada={puedeMarcarLlegada}
 				puedeAtender={puedeAtender}
 				soloHistorial={fechaPasada}
 				onClose={() => setSlotMenu(null)}
