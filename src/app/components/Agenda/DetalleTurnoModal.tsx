@@ -254,12 +254,16 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 										</span>
 									</div>
 									<div className={styles.field}>
-										<span className={styles.lbl}>Teléfono</span>
+										<span className={styles.lbl}>Tel. particular</span>
 										<span className={styles.val}>{val(ficha?.TelefonoParticular)}</span>
 									</div>
 									<div className={styles.field}>
-										<span className={styles.lbl}>Celular</span>
-										<span className={styles.val}>{val(ficha?.TelefonoCelular)}</span>
+										<span className={styles.lbl}>Tel. familiar</span>
+										<span className={styles.val}>{val(ficha?.TelefonoFamiliar)}</span>
+									</div>
+									<div className={styles.field}>
+										<span className={styles.lbl}>Tel. negocio</span>
+										<span className={styles.val}>{val(ficha?.TelefonoNegocio ?? ficha?.TelefonoCelular)}</span>
 									</div>
 									<div className={styles.field}>
 										<span className={styles.lbl}>Correo</span>

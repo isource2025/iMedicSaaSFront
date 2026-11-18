@@ -71,8 +71,9 @@ export const getPatientById = async (id: number): Promise<Patient> => {
 				if (p[k] !== undefined && p[k] !== null) p[k] = String(p[k]);
 			});
 			
-			// Mapear backend -> frontend nuevos alias
+			// Alias legacy: Celular = Negocio (ya no se usa en la ficha)
 			if (p.TelefonoNegocio && !p.TelefonoCelular) p.TelefonoCelular = p.TelefonoNegocio;
+			if (p.TelefonoCelular && !p.TelefonoNegocio) p.TelefonoNegocio = p.TelefonoCelular;
 			if (p.NumeroSSN && !p.nAfiliado) p.nAfiliado = p.NumeroSSN;
 			if (p.NumeroCuenta && !p.Cobertura) p.Cobertura = p.NumeroCuenta;
 			
@@ -141,7 +142,8 @@ export const createPatient = async (data: PatientFormData, fotoFile?: File | nul
 		
 		// Campos laborales
 		if (base.NivelEstudios && !base.NivelDeEstudios) base.NivelDeEstudios = base.NivelEstudios;
-		if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
+		// Negocio es campo propio; Celular solo como alias legacy si Negocio viene vacío
+		if (!base.TelefonoNegocio && base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
 		if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
 		if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;
 
@@ -198,7 +200,7 @@ export const updatePatient = async (id: number, data: PatientFormData | any): Pr
 		}
 		
 		if (base.NivelEstudios && !base.NivelDeEstudios) base.NivelDeEstudios = base.NivelEstudios;
-		if (base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
+		if (!base.TelefonoNegocio && base.TelefonoCelular) base.TelefonoNegocio = base.TelefonoCelular;
 		if (base.nAfiliado !== undefined) base.NumeroSSN = base.nAfiliado;
 		if (base.Cobertura !== undefined) base.NumeroCuenta = base.Cobertura;
 		

@@ -16,7 +16,10 @@ export interface Patient {
 	Religion: string;
 	Raza: string;
 	TelefonoParticular: string;
-	TelefonoCelular: string;
+	TelefonoFamiliar: string;
+	TelefonoNegocio: string;
+	/** @deprecated Usar TelefonoNegocio */
+	TelefonoCelular?: string;
 	Mail: string;
 	/** imClientes.Valor. Para mostrarla en pantalla usar CoberturaDescripcion. */
 	Cobertura: string;
@@ -58,7 +61,10 @@ export interface PatientFormData {
 	Sexo: string;
 	EstadoCivil: string;
 	TelefonoParticular: string;
-	TelefonoCelular: string;
+	TelefonoFamiliar: string;
+	TelefonoNegocio: string;
+	/** @deprecated Usar TelefonoNegocio */
+	TelefonoCelular?: string;
 	Mail: string;
 	Hora: string;
 	Cobertura: string;

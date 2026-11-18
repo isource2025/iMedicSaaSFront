@@ -238,7 +238,7 @@ export default function PersonalDataTab({
 				</div>
 			</div>
 
-			{/* Teléfonos */}
+			{/* Teléfonos: Particular / Familiar / Negocio (campos distintos) */}
 			<div className={`${styles.formRow} ${styles.three}`}>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Teléfono Particular:</label>
@@ -257,23 +257,41 @@ export default function PersonalDataTab({
 					)}
 				</div>
 				<div className={styles.formGroup}>
-					<label className={styles.label}>Teléfono Celular:</label>
+					<label className={styles.label}>Teléfono Familiar:</label>
 					<input
 						type='text'
-						name='TelefonoCelular'
-						value={formData.TelefonoCelular}
+						name='TelefonoFamiliar'
+						value={formData.TelefonoFamiliar}
 						onChange={handleChange}
 						className={`${styles.input} ${
-							errors.TelefonoCelular ? styles.error : ''
+							errors.TelefonoFamiliar ? styles.error : ''
 						}`}
 						tabIndex={13}
 					/>
-					{errors.TelefonoCelular && (
-						<div className={styles.errorMessage}>{errors.TelefonoCelular}</div>
+					{errors.TelefonoFamiliar && (
+						<div className={styles.errorMessage}>{errors.TelefonoFamiliar}</div>
 					)}
 				</div>
+				<div className={styles.formGroup}>
+					<label className={styles.label}>Teléfono Negocio:</label>
+					<input
+						type='text'
+						name='TelefonoNegocio'
+						value={formData.TelefonoNegocio}
+						onChange={handleChange}
+						className={`${styles.input} ${
+							errors.TelefonoNegocio ? styles.error : ''
+						}`}
+						tabIndex={14}
+					/>
+					{errors.TelefonoNegocio && (
+						<div className={styles.errorMessage}>{errors.TelefonoNegocio}</div>
+					)}
+				</div>
+			</div>
 
-				{/* Mail */}
+			{/* Mail */}
+			<div className={`${styles.formRow} ${styles.three}`}>
 				<div className={styles.formGroup}>
 					<label className={styles.label}>Correo Electrónico:</label>
 					<input
@@ -282,7 +300,7 @@ export default function PersonalDataTab({
 						value={formData.Mail}
 						onChange={handleChange}
 						className={`${styles.input} ${errors.Mail ? styles.error : ''}`}
-						tabIndex={14}
+						tabIndex={15}
 					/>
 					{errors.Mail && <div className={styles.errorMessage}>{errors.Mail}</div>}
 				</div>
