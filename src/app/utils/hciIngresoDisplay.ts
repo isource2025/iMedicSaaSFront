@@ -57,31 +57,75 @@ export const HCI_CAMPOS_TEXTO_LIBRE: Record<string, string> = {
 
 const SV_VENOSO_HEADS = new Set(['VARICES', 'FLEBITIS', 'TROMBOSIS', 'CIRCULACIONCOLATERAL']);
 
+/**
+ * imHCI usa el prefijo EO_ para dos exámenes distintos (oftalmológico y obstétrico).
+ * Las columnas que no figuran en ninguna lista (EO_TONO, que existe en ambos, o
+ * columnas propias de una empresa) van con el examen que tenga datos en la HC.
+ */
 const EO_OFTALMO_HEADS = new Set([
   'FONDODEOJO',
   'MEDIOSBIREFRINGENTES',
+  'MEDIOSBIREFRIGENTES',
   'CRUCES',
   'RELACION',
   'HEMORRAGIAEXUDADOS',
+  'REFRACCION',
+  'BIOMOSCROPIA',
+  'BIOMICROSCOPIA',
+  'TONOMETRIA',
+  'PRACTICAQUIRURGICA',
 ]);
+
+const EO_OBSTETRICO_HEADS = new Set([
+  'AU',
+  'LCF',
+  'MFA',
+  'DU',
+  'LEOPOLD',
+  'TACTOVAGINAL',
+  'BISHOP',
+  'MEMBRANASOVULARES',
+  'MANIOBRADETAMIER',
+  'PLANO',
+  'PELVIMETRIA',
+  'HIDRORREA',
+  'GINECORRAGIA',
+  'LOQUIOS',
+  'RETRACCION',
+  'MAMAS',
+  'LACTANCIA',
+  'PERINE',
+  'ESPECULOSCOPIA',
+  'TBM',
+  'DIAGNOSTICO',
+]);
+
+const EXAMEN_OFTALMOLOGICO = 'EXAMEN OFTALMOLÓGICO';
+const EXAMEN_OBSTETRICO = 'EXAMEN OBSTÉTRICO';
 
 function headAfterPrefix(key: string, prefixLen: number): string {
   const rest = key.slice(prefixLen + 1);
   return rest.split('_')[0] || rest;
 }
 
-function obtenerTituloSeccion(fieldKey: string): string | null {
-  if (fieldKey.startsWith('CTRL_')) {
+/** Prefijo de sección de la columna (las columnas de imHCI no siempre vienen en mayúsculas). */
+function prefijoDe(fieldKey: string): { pref: string; head: string } | null {
+  const match = fieldKey.match(/^([A-Za-z]+)_/);
+  if (!match) return null;
+  const pref = match[1].toUpperCase();
+  return { pref, head: headAfterPrefix(fieldKey, pref.length).toUpperCase() };
+}
+
+function obtenerTituloSeccion(fieldKey: string, eoAmbiguo: string): string | null {
+  if (/^CTRL_/i.test(fieldKey)) {
     return SECCIONES_CONFIG.CTRL;
   }
 
-  const match = fieldKey.match(/^([A-Z]+)_/);
-  if (!match) {
+  const p = prefijoDe(fieldKey);
+  if (!p) {
     return null;
   }
-
-  const pref = match[1];
-  const head = headAfterPrefix(fieldKey, pref.length);
+  const { pref, head } = p;
 
   if (pref === 'SV') {
     if (SV_VENOSO_HEADS.has(head)) {
@@ -91,10 +135,9 @@ function obtenerTituloSeccion(fieldKey: string): string | null {
   }
 
   if (pref === 'EO') {
-    if (EO_OFTALMO_HEADS.has(head)) {
-      return 'EXAMEN OFTALMOLÓGICO';
-    }
-    return 'EXAMEN OBSTÉTRICO';
+    if (EO_OFTALMO_HEADS.has(head)) return EXAMEN_OFTALMOLOGICO;
+    if (EO_OBSTETRICO_HEADS.has(head)) return EXAMEN_OBSTETRICO;
+    return eoAmbiguo;
   }
 
   if (pref === 'MI') {
@@ -177,7 +220,7 @@ function splitAllCapsBlob(blob: string): string {
 }
 
 function formatearNombreCampo(key: string): string {
-  const sinPrefijo = key.replace(/^[A-Z]+_/, '');
+  const sinPrefijo = key.replace(/^[A-Za-z]+_/, '');
   if (!sinPrefijo) return key;
   if (sinPrefijo.includes('_')) {
     return titleWords(sinPrefijo.replace(/_/g, ' '));
@@ -202,24 +245,52 @@ const IGNORE_KEYS = new Set([
   'SectorDescripcion',
   'MotivoConsulta',
   'EnfermedadActual',
+  // El back lo devuelve también como SN_PARESCRANEANOS.
+  'SN _PARESCRANEANOS',
   ...Object.keys(HCI_CAMPOS_TEXTO_LIBRE),
 ]);
 
+/**
+ * Texto a mostrar de una columna, o '' si no tiene dato. Clarion guarda los vacíos
+ * como 0, false o espacios; una columna repetida en el SELECT llega como array.
+ */
+function valorVisible(valor: unknown): string {
+  if (valor === undefined || valor === null || valor === false || valor === 0) return '';
+  if (valor === true) return 'Sí';
+  if (Array.isArray(valor)) {
+    return Array.from(new Set(valor.map(valorVisible).filter(Boolean))).join(' / ');
+  }
+  if (typeof valor === 'object') return '';
+  return String(valor).trim();
+}
+
+/** Sección de las columnas EO_ que no son propias de un solo examen. */
+function seccionEoAmbigua(record: HCIIngresoDisplayRecord): string {
+  let obstetrico = false;
+  for (const [key, valor] of Object.entries(record)) {
+    const p = prefijoDe(key);
+    if (p?.pref !== 'EO' || !valorVisible(valor)) continue;
+    if (EO_OFTALMO_HEADS.has(p.head)) return EXAMEN_OFTALMOLOGICO;
+    if (EO_OBSTETRICO_HEADS.has(p.head)) obstetrico = true;
+  }
+  return obstetrico ? EXAMEN_OBSTETRICO : EXAMEN_OFTALMOLOGICO;
+}
+
 function agruparPorSecciones(record: HCIIngresoDisplayRecord): HCIPhysicalExamSection[] {
   const seccionesMap: Record<string, Array<{ label: string; valor: string }>> = {};
+  const eoAmbiguo = seccionEoAmbigua(record);
 
   Object.keys(record).forEach((key) => {
-    const valor = record[key];
-
     if (IGNORE_KEYS.has(key)) {
       return;
     }
 
-    if (valor === undefined || valor === null || valor === '') {
+    const valor = valorVisible(record[key]);
+    if (!valor) {
       return;
     }
 
-    const nombreSeccion = obtenerTituloSeccion(key) || (key.includes('_') ? 'OTROS DATOS DE LA HC' : null);
+    const nombreSeccion = obtenerTituloSeccion(key, eoAmbiguo) || (key.includes('_') ? 'OTROS DATOS DE LA HC' : null);
 
     if (!nombreSeccion) {
       return;
@@ -231,7 +302,7 @@ function agruparPorSecciones(record: HCIIngresoDisplayRecord): HCIPhysicalExamSe
 
     seccionesMap[nombreSeccion].push({
       label: formatearNombreCampo(key),
-      valor: String(valor),
+      valor,
     });
   });
 
