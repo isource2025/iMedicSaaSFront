@@ -18,6 +18,7 @@ export type SlotMenuAction =
 	| 'atender'
 	| 'editar-atencion'
 	| 'ver-detalle'
+	| 'exportar-ticket'
 	| 'llamar-pantalla'
 	| 'cerrar';
 
@@ -39,6 +40,7 @@ const OPCIONES_OCUPADO_BASE: OpcionMenu[] = [
 	{ id: 'atender', label: 'Atender / Finalizar atención' },
 	{ id: 'cambiar', label: 'Cambiar turno', mock: true },
 	{ id: 'sobreturno', label: 'Agregar sobreturno' },
+	{ id: 'exportar-ticket', label: 'Exportar ticket' },
 	{ id: 'cancelar', label: 'Cancelar turno' },
 	{ id: 'borrar', label: 'Borrar turno' },
 	{ id: 'llamar-pantalla', label: 'Llamar por pantalla' },
@@ -111,7 +113,10 @@ export default function SlotTurnoMenu({
 		if (!slot) return [];
 		if (soloHistorial) {
 			if (!slot.idTurno || esSlotLibre(slot) || esCancelado(slot)) return [];
-			return [{ id: 'ver-detalle', label: 'Ver detalle de atención' }];
+			return [
+				{ id: 'ver-detalle', label: 'Ver detalle de atención' },
+				{ id: 'exportar-ticket', label: 'Exportar ticket' },
+			];
 		}
 		if (esSlotLibre(slot)) return OPCIONES_LIBRE;
 		if (esCancelado(slot)) {
@@ -124,6 +129,7 @@ export default function SlotTurnoMenu({
 			if (o.id === 'borrar' && !puedeBorrar) return false;
 			if (o.id === 'cancelar' && !slot.idTurno) return false;
 			if (o.id === 'borrar' && !slot.idTurno) return false;
+			if (o.id === 'exportar-ticket' && !slot.idTurno) return false;
 			// Una vez cerrada la atención no se puede cancelar, cambiar ni llamar por pantalla
 			if (cerrado && (o.id === 'cancelar' || o.id === 'cambiar' || o.id === 'llamar-pantalla'))
 				return false;

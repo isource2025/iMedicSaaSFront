@@ -250,6 +250,22 @@ export interface RacTurnoData {
 	medicacion: MedicacionTurno[];
 }
 
+/** Datos del ticket de turno (comprobante estilo Clarion). */
+export interface TicketTurno {
+	idTurno: number;
+	fecha: string | null;
+	hora: string | null;
+	fechaHoraLegible: string | null;
+	profesional: string | null;
+	servicio: string | null;
+	especialidad: string | null;
+	paciente: string | null;
+	numeroDocumento: number | string | null;
+	observaciones: string | null;
+	otorgadoPor: string | null;
+	sector: string | null;
+}
+
 export interface DetalleAtencionTurno {
 	turno: {
 		idTurno: number;
@@ -687,6 +703,13 @@ export const agendaService = {
 	async getDetalleAtencionTurno(idTurno: number): Promise<DetalleAtencionTurno> {
 		const r = await apiService.get<ApiResp<DetalleAtencionTurno>>(
 			`/agenda/turnos/${idTurno}/detalle`,
+		);
+		return r.data.data;
+	},
+
+	async getTicketTurno(idTurno: number): Promise<TicketTurno> {
+		const r = await apiService.get<ApiResp<TicketTurno>>(
+			`/agenda/turnos/${idTurno}/ticket`,
 		);
 		return r.data.data;
 	},

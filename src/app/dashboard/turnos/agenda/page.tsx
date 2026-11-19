@@ -27,11 +27,14 @@ import {
 	AgendaTurnoTablaHead,
 	AgendaTurnoTablaRow,
 } from '@/app/components/Agenda/AgendaTurnoTabla';
+import PdfPreviewDialog from '@/app/components/pdf/PdfPreviewDialog';
 import CustomSelect from '@/app/components/Patients/AddPatient/LoadingSelect';
 import { personalService } from '@/app/services/personalService';
 import { esFechaPasada } from '@/app/utils/agendaFecha';
 import { claseFilaAgenda } from '@/app/utils/agendaFilaEstilos';
 import { horaWallArgentina } from '@/app/utils/dateUtils';
+import { previsualizarPDF } from '@/app/utils/pdfHeader';
+import { generarPdfTicketTurno } from '@/app/utils/pdfTicketTurno';
 import styles from './agenda.module.css';
 
 function toIso(d: Date): string {
@@ -338,8 +341,23 @@ function AgendaPageContent() {
 	const [cerrarSlot, setCerrarSlot] = useState<AgendaSlot | null>(null);
 	const [cerrarModoEdicion, setCerrarModoEdicion] = useState(false);
 	const [detalleTurnoId, setDetalleTurnoId] = useState<number | null>(null);
+	const [ticketPdf, setTicketPdf] = useState<{
+		busy: boolean;
+		error: string;
+		url: string | null;
+		fileName: string;
+	}>({ busy: false, error: '', url: null, fileName: '' });
+	const [ticketPdfOpen, setTicketPdfOpen] = useState(false);
 	const searchParams = useSearchParams();
 	const router = useRouter();
+
+	const cerrarTicketPdf = useCallback(() => {
+		setTicketPdfOpen(false);
+		setTicketPdf((prev) => {
+			if (prev.url) URL.revokeObjectURL(prev.url);
+			return { busy: false, error: '', url: null, fileName: '' };
+		});
+	}, []);
 
 	useEffect(() => {
 		const bandeja = String(searchParams.get('bandeja') || '').toLowerCase();
@@ -652,7 +670,7 @@ function AgendaPageContent() {
 
 	const handleAccionSlot = async (action: SlotMenuAction, slot: AgendaSlot) => {
 		setSlotMenu(null);
-		if (fechaPasada && action !== 'ver-detalle') {
+		if (fechaPasada && action !== 'ver-detalle' && action !== 'exportar-ticket') {
 			setError('En fechas pasadas solo se puede consultar el historial.');
 			return;
 		}
@@ -663,6 +681,46 @@ function AgendaPageContent() {
 		if (action === 'asignar' || action === 'sobreturno') {
 			setModalModo(action === 'sobreturno' ? 'sobreturno' : 'asignar');
 			setModalSlot(slot);
+			return;
+		}
+		if (action === 'exportar-ticket') {
+			if (!slot.idTurno) return;
+			const idTurno = slot.idTurno;
+			setTicketPdfOpen(true);
+			setTicketPdf((prev) => {
+				if (prev.url) URL.revokeObjectURL(prev.url);
+				return { busy: true, error: '', url: null, fileName: '' };
+			});
+			try {
+				const ticket = await agendaService.getTicketTurno(idTurno);
+				const result = await previsualizarPDF(() => generarPdfTicketTurno(ticket));
+				if (!result) {
+					setTicketPdf({
+						busy: false,
+						error: 'No se pudo generar el ticket',
+						url: null,
+						fileName: '',
+					});
+					return;
+				}
+				setTicketPdf({
+					busy: false,
+					error: '',
+					url: URL.createObjectURL(result.blob),
+					fileName: result.fileName,
+				});
+			} catch (e: unknown) {
+				const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
+				setTicketPdf({
+					busy: false,
+					error:
+						err?.response?.data?.mensaje ||
+						err?.message ||
+						'Error al exportar el ticket',
+					url: null,
+					fileName: '',
+				});
+			}
 			return;
 		}
 		const mat = matriculaMedicoActiva;
@@ -1504,6 +1562,17 @@ function AgendaPageContent() {
 				profesional={profesionalAgenda}
 				onClose={() => setModalSlot(null)}
 				onAssigned={refrescarAgenda}
+			/>
+
+			<PdfPreviewDialog
+				open={ticketPdfOpen}
+				onClose={cerrarTicketPdf}
+				title="Ticket de turno"
+				busy={ticketPdf.busy}
+				error={ticketPdf.error}
+				url={ticketPdf.url}
+				fileName={ticketPdf.fileName || 'ticket-turno.pdf'}
+				zoomPercent={200}
 			/>
 		</div>
 	);
