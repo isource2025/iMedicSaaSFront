@@ -19,6 +19,8 @@ type Props = {
   onSaved?: () => void;
   /** La observación se edita en el bloque principal del formulario de admisión. */
   ocultarObservacion?: boolean;
+  /** Avisa al padre para el contador del header colapsable. */
+  onResumenChange?: (resumen: { acompanantes: number; novedades: number }) => void;
 };
 
 const TIPOS_DOCUMENTO = [
@@ -61,6 +63,7 @@ export default function AdmissionAcompanantesNovedades({
   numeroVisita,
   onSaved,
   ocultarObservacion = false,
+  onResumenChange,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -103,6 +106,13 @@ export default function AdmissionAcompanantesNovedades({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    onResumenChange?.({
+      acompanantes: acompanantes.length,
+      novedades: novedades.length,
+    });
+  }, [acompanantes.length, novedades.length, onResumenChange]);
 
   const setCampo = <K extends keyof NuevoAcompanante>(key: K, value: NuevoAcompanante[K]) => {
     setNuevo((n) => ({ ...n, [key]: value }));
@@ -244,7 +254,6 @@ export default function AdmissionAcompanantesNovedades({
               maxLength={40}
               value={nuevo.apellidos}
               onChange={(e) => setCampo('apellidos', e.target.value)}
-              placeholder="PEREZ JUAN CARLOS"
             />
           </label>
 

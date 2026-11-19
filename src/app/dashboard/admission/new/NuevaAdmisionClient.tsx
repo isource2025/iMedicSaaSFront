@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BedDouble, ClipboardPlus, Pencil, RotateCcw, Save, Stethoscope, UserRound } from 'lucide-react';
+import {
+  BedDouble,
+  ChevronDown,
+  ChevronUp,
+  ClipboardPlus,
+  Pencil,
+  RotateCcw,
+  Save,
+  Stethoscope,
+  UserRound,
+  Users,
+} from 'lucide-react';
 
 import PacienteSelector, {
   type PacienteElegido,
@@ -203,6 +214,12 @@ export default function NuevaAdmisionClient() {
   const [requisitos, setRequisitos] = useState<RequisitoFormulario[]>([]);
   const [acompanantesPendientes, setAcompanantesPendientes] = useState<AcompanantePendiente[]>([]);
   const [novedadesPendientes, setNovedadesPendientes] = useState<string[]>([]);
+  /** En edición arranca minimizado para no empujar el main */
+  const [acompanantesEdicionMinimizado, setAcompanantesEdicionMinimizado] = useState(true);
+  const [resumenAcompanantesEdicion, setResumenAcompanantesEdicion] = useState({
+    acompanantes: 0,
+    novedades: 0,
+  });
   const [cargandoRequisitos, setCargandoRequisitos] = useState(false);
   const [cargandoEdicion, setCargandoEdicion] = useState(enEdicion);
 
@@ -1064,11 +1081,47 @@ export default function NuevaAdmisionClient() {
       />
 
       {enEdicion ? (
-        <div className={styles.bloque}>
-          <AdmissionAcompanantesNovedades
-            numeroVisita={numeroVisitaUrl}
-            ocultarObservacion
-          />
+        <div
+          className={`${styles.bloque} ${acompanantesEdicionMinimizado ? styles.bloqueMinimizado : ''}`.trim()}
+        >
+          <div
+            className={styles.bloqueHeader}
+            role="button"
+            tabIndex={0}
+            aria-expanded={!acompanantesEdicionMinimizado}
+            aria-controls="acompanantes-novedades-edicion-cuerpo"
+            onClick={() => setAcompanantesEdicionMinimizado((v) => !v)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setAcompanantesEdicionMinimizado((v) => !v);
+              }
+            }}
+          >
+            <div className={styles.bloqueToggle}>
+              <h2 className={styles.bloqueTitulo}>
+                <Users size={18} /> Acompañantes y novedades
+              </h2>
+              {acompanantesEdicionMinimizado ? (
+                <ChevronDown size={18} aria-hidden />
+              ) : (
+                <ChevronUp size={18} aria-hidden />
+              )}
+            </div>
+            <span className={styles.contador}>
+              {resumenAcompanantesEdicion.acompanantes} acompañante
+              {resumenAcompanantesEdicion.acompanantes === 1 ? '' : 's'} ·{' '}
+              {resumenAcompanantesEdicion.novedades} novedad
+              {resumenAcompanantesEdicion.novedades === 1 ? '' : 'es'}
+            </span>
+          </div>
+          <div id="acompanantes-novedades-edicion-cuerpo" hidden={acompanantesEdicionMinimizado}>
+            <AdmissionAcompanantesNovedades
+              numeroVisita={numeroVisitaUrl}
+              ocultarObservacion
+              onResumenChange={setResumenAcompanantesEdicion}
+            />
+          </div>
         </div>
       ) : (
         <AcompanantesNovedadesAlta
