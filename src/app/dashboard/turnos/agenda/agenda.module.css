@@ -718,38 +718,123 @@
 	.tableWide tbody {
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
-		padding-top: 0.6rem;
+		gap: 0.85rem;
+		padding-top: 0.65rem;
 	}
 
 	.tableWide tr {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+		column-gap: 0.5rem;
+		row-gap: 0.55rem;
 		border: 1px solid #e2e8f0;
-		border-radius: 10px;
+		border-radius: 12px;
 		overflow: hidden;
 		background: #fff;
+		padding: 0.65rem 0.7rem 0.7rem;
 	}
 
 	.tableWide td {
 		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
+		gap: 0.28rem;
 		min-width: 0;
-		padding: 0.4rem 0.65rem;
+		padding: 0;
 		border-bottom: none;
+		align-self: start;
+		background: transparent;
 	}
 
 	.tableWide td::before {
 		content: attr(data-label);
-		font-size: 0.66rem;
-		font-weight: 600;
-		letter-spacing: 0.04em;
+		font-size: 0.64rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
 		text-transform: uppercase;
 		color: #64748b;
+		line-height: 1.2;
 	}
 
-	.tableWide td[data-celda='ancha'],
+	/* Orden visual en mobile: Paciente → Horarios → Triage/Estado → resto */
+	.tableWide td[data-label='Paciente'] {
+		order: 1;
+	}
+
+	.tableWide td[data-label='Horarios'] {
+		order: 2;
+	}
+
+	.tableWide td[data-label='Triage'] {
+		order: 3;
+	}
+
+	.tableWide td[data-label='Estado'] {
+		order: 4;
+	}
+
+	.tableWide td[data-label='Edad'] {
+		order: 5;
+	}
+
+	.tableWide td[data-label='Cobertura'] {
+		order: 6;
+	}
+
+	.tableWide td[data-label='Sexo / Nac.'] {
+		order: 7;
+	}
+
+	.tableWide td[data-label='Sector'] {
+		order: 8;
+	}
+
+	.tableWide td[data-label='Observaciones'] {
+		order: 9;
+	}
+
+	.tableWide td[data-label='RAC'] {
+		order: 10;
+	}
+
+	.tableWide td[data-celda='menu'] {
+		order: 11;
+		align-items: flex-end;
+		justify-content: flex-end;
+		padding-top: 0.35rem;
+		border-top: 1px solid #f1f5f9;
+	}
+
+	/* Triage + estado debajo de paciente/horarios */
+	.tableWide td[data-celda='corto'] {
+		justify-content: flex-start;
+		padding-top: 0.35rem;
+		margin-top: 0.1rem;
+		border-top: 1px solid #f1f5f9;
+	}
+
+	/* Bloques principales a ancho completo */
+	.tableWide td[data-celda='ancha'] {
+		grid-column: 1 / -1;
+		padding: 0.55rem 0.6rem;
+		margin: 0 -0.15rem;
+		border-radius: 8px;
+		background: #f8fafc;
+		border: 1px solid #eef2f7;
+	}
+
+	.tableWide td[data-label='Paciente'][data-celda='ancha'] {
+		background: #fff7ed;
+		border-color: #ffedd5;
+	}
+
+	.tableWide td[data-label='Observaciones'],
+	.tableWide td[data-label='RAC'] {
+		background: transparent;
+		border: none;
+		padding: 0.25rem 0 0;
+		margin: 0;
+	}
+
 	.tableWide td:not([data-label]) {
 		grid-column: 1 / -1;
 	}
@@ -758,9 +843,9 @@
 		content: none;
 	}
 
-	.tableWide td[data-celda='menu'] {
-		align-items: flex-end;
-		border-top: 1px solid #f1f5f9;
+	/* Si no hay menú, RAC ocupa el ancho completo y no deja hueco */
+	.tableWide tr:not(:has(td[data-celda='menu'])) td[data-label='RAC'] {
+		grid-column: 1 / -1;
 	}
 
 	.tableWide td > * {

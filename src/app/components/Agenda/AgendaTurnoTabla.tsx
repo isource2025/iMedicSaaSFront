@@ -20,8 +20,8 @@ export function AgendaTurnoTablaHead({ conMenu }: { conMenu?: boolean }) {
 				<th>Edad</th>
 				<th>Cobertura</th>
 				<th>Sexo / Nac.</th>
-				<th>Observaciones</th>
 				<th>Sector</th>
+				<th>Observaciones</th>
 				<th>RAC</th>
 				{conMenu ? <th style={{ width: 40 }} aria-label='Acciones' /> : null}
 			</tr>
@@ -51,11 +51,13 @@ export function AgendaTurnoTablaRow({
 	const conPaciente = !libre || cancelado;
 	return (
 		<tr className={trClassName} onClick={onTrClick} style={trStyle}>
-			<td data-label='Triage'>
+			<td data-label='Triage' data-celda='corto'>
 				<CeldaTriage nivel={row.idClasificacionTriage} />
 			</td>
-			<td data-label='Estado'>{badgeEstado}</td>
-			<td data-label='Horarios'>
+			<td data-label='Estado' data-celda='corto'>
+				{badgeEstado}
+			</td>
+			<td data-label='Horarios' data-celda='ancha'>
 				<CeldaHoras
 					horaTurno={row.hora}
 					horaLlegada={row.horaLlegada}
@@ -75,7 +77,9 @@ export function AgendaTurnoTablaRow({
 					numeroVisita={row.numeroVisita}
 				/>
 			</td>
-			<td data-label='Edad'>{conPaciente && row.edad != null ? `${row.edad} años` : '—'}</td>
+			<td data-label='Edad'>
+				{conPaciente && row.edad != null ? `${row.edad} años` : '—'}
+			</td>
 			<td data-label='Cobertura'>
 				<span className={cellStyles.coberturaCol}>
 					{conPaciente && row.cobertura ? row.cobertura : '—'}
@@ -92,6 +96,7 @@ export function AgendaTurnoTablaRow({
 					<span className={cellStyles.muted}>—</span>
 				)}
 			</td>
+			<td data-label='Sector'>{row.sector || '—'}</td>
 			<td data-label='Observaciones' data-celda='ancha'>
 				<span className={cellStyles.obsCol}>
 					{conPaciente && row.observaciones?.trim()
@@ -99,8 +104,7 @@ export function AgendaTurnoTablaRow({
 						: '—'}
 				</span>
 			</td>
-			<td data-label='Sector'>{row.sector || '—'}</td>
-			<td data-label='RAC' data-celda='ancha'>
+			<td data-label='RAC'>
 				{conPaciente ? (
 					<CeldaRacPills
 						nivel={row.idClasificacionTriage}
