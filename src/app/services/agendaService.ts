@@ -138,6 +138,9 @@ export interface AgendaSlot {
 	racControles?: number;
 	racMedicacion?: number;
 	numeroVisita?: number;
+	/** CIE-10 al cerrar el turno (desde imVisita). */
+	diagnosticoCodigo?: string | null;
+	diagnosticoDescripcion?: string | null;
 }
 
 /** 0 = turno de grilla, 1 = sobreturno */

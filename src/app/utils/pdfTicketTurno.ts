@@ -54,48 +54,48 @@ export async function generarPdfTicketTurno(ticket: TicketTurno): Promise<void> 
 
 	const pageW = doc.internal.pageSize.getWidth();
 	const pageH = doc.internal.pageSize.getHeight();
-	const marginX = 4;
+	const marginX = 3;
 	const contentW = pageW - marginX * 2;
-	let y = 4;
+	let y = 3.5;
 
 	doc.setFont('courier', 'normal');
-	doc.setFontSize(pt(7.5));
+	doc.setFontSize(pt(9.5));
 	doc.setTextColor(0, 0, 0);
 
 	doc.text(`Impreso: ${fechaImpreso(ahora)}`, marginX, y);
 	doc.text(`Hora: ${horaImpreso(ahora)}`, pageW - marginX, y, { align: 'right' });
-	y += 3.5;
+	y += 4.5;
 
 	doc.setFont('courier', 'italic');
-	doc.setFontSize(pt(10));
+	doc.setFontSize(pt(13));
 	doc.text('Ticket Turno', pageW / 2, y, { align: 'center' });
-	y += 3.5;
+	y += 4.5;
 
 	doc.setFont('courier', 'bold');
-	doc.setFontSize(pt(7.5));
+	doc.setFontSize(pt(10));
 	const instLines = doc.splitTextToSize(institucion, contentW) as string[];
 	for (const line of instLines.slice(0, 2)) {
 		doc.text(line, marginX, y);
-		y += 3;
+		y += 3.8;
 	}
-	y += 1;
+	y += 1.2;
 
 	const boxTop = y;
-	const pad = 2;
+	const pad = 2.2;
 	const innerX = marginX + pad;
 	const innerW = contentW - pad * 2;
-	y += 3;
+	y += 4;
 
-	const lineGap = 3;
-	const sectionGap = 1.2;
+	const lineGap = 3.8;
+	const sectionGap = 1.6;
 
 	const writePair = (label: string, value: string, boldValue = true) => {
 		doc.setFont('courier', 'normal');
-		doc.setFontSize(pt(7));
+		doc.setFontSize(pt(9));
 		doc.text(label, innerX, y);
-		y += 2.6;
+		y += 3.4;
 		doc.setFont('courier', boldValue ? 'bold' : 'normal');
-		doc.setFontSize(pt(7.5));
+		doc.setFontSize(pt(10.5));
 		const lines = doc.splitTextToSize(value, innerW) as string[];
 		for (const line of lines) {
 			doc.text(line, innerX, y);
@@ -109,53 +109,55 @@ export async function generarPdfTicketTurno(ticket: TicketTurno): Promise<void> 
 	writePair('Servicio:', texto(ticket.servicio).toUpperCase());
 	writePair('Especialidad:', texto(ticket.especialidad).toUpperCase());
 
-	y += 0.6;
+	y += 0.8;
 	doc.setDrawColor(0);
-	doc.setLineWidth(0.25);
+	doc.setLineWidth(0.3);
 	doc.line(innerX, y, innerX + innerW, y);
-	y += 3;
+	y += 3.8;
 
 	writePair('Paciente:', texto(ticket.paciente).toUpperCase());
 
 	const nroDoc = formatearDocumento(ticket.numeroDocumento);
 	doc.setFont('courier', 'normal');
-	doc.setFontSize(pt(7));
+	doc.setFontSize(pt(9));
 	const labelDoc = 'Nro Documento:';
 	const labelDocW = doc.getTextWidth(labelDoc);
 	doc.text(labelDoc, innerX, y);
-	doc.setFontSize(pt(7.5));
+	doc.setFont('courier', 'bold');
+	doc.setFontSize(pt(10.5));
 	doc.text(` ${nroDoc}`, innerX + labelDocW, y);
 	y += lineGap;
 
-	y += 0.6;
+	y += 0.8;
+	doc.setLineWidth(0.3);
 	doc.line(innerX, y, innerX + innerW, y);
-	y += 3;
+	y += 3.8;
 
 	writePair('Observaciones:', texto(ticket.observaciones, ''), false);
 	writePair('Este turno fue otorgado por:', texto(ticket.otorgadoPor).toUpperCase());
 
-	y += 0.6;
+	y += 0.8;
 	doc.line(innerX, y, innerX + innerW, y);
-	y += 3;
+	y += 3.8;
 
 	doc.setFont('courier', 'normal');
-	doc.setFontSize(pt(6.5));
+	doc.setFontSize(pt(8.5));
 	const aviso =
 		'Para una mejor atención presentarse 15 minutos antes de la hora de la cita';
 	const avisoLines = doc.splitTextToSize(aviso, innerW) as string[];
 	for (const line of avisoLines) {
 		doc.text(line, innerX, y);
-		y += 2.6;
+		y += 3.4;
 	}
-	y += 1;
+	y += 1.2;
 	doc.setFont('courier', 'italic');
-	doc.setFontSize(pt(7));
+	doc.setFontSize(pt(9.5));
 	doc.text('Muchas Gracias...', innerX, y);
-	y += 2.5;
+	y += 3;
 
 	const boxBottom = Math.min(Math.max(y, boxTop + 16), pageH - 2);
 	doc.setDrawColor(0);
-	doc.setLineWidth(0.5);
+	doc.setLineWidth(0.55);
 	doc.rect(marginX, boxTop, contentW, boxBottom - boxTop);
 
 	entregarPDF(doc, fileName);

@@ -14,6 +14,13 @@ type Props = {
 	fileName?: string;
 	/** Zoom inicial del visor (p. ej. 200). Usa el hash `#zoom=` del PDF embebido. */
 	zoomPercent?: number;
+	/**
+	 * Ajusta el PDF al ancho del visor (`#view=FitH`) para evitar scroll horizontal.
+	 * Si está activo, tiene prioridad sobre `zoomPercent`.
+	 */
+	fitWidth?: boolean;
+	/** Ocupa todo el viewport (sin márgenes ni ancho máximo). */
+	fullscreen?: boolean;
 	children?: ReactNode;
 };
 
@@ -26,6 +33,8 @@ export default function PdfPreviewDialog({
 	url,
 	fileName = 'documento.pdf',
 	zoomPercent,
+	fitWidth = false,
+	fullscreen = false,
 	children,
 }: Props) {
 	const [mounted, setMounted] = useState(false);
@@ -86,14 +95,23 @@ export default function PdfPreviewDialog({
 		typeof zoomPercent === 'number' && Number.isFinite(zoomPercent) && zoomPercent > 0
 			? Math.round(zoomPercent)
 			: null;
+	const hash = fitWidth
+		? 'view=FitH'
+		: zoom != null
+			? `zoom=${zoom}`
+			: null;
 	const previewSrc =
-		url && zoom != null ? `${url}${url.includes('#') ? '&' : '#'}zoom=${zoom}` : url;
+		url && hash ? `${url}${url.includes('#') ? '&' : '#'}${hash}` : url;
 
 	return createPortal(
-		<div className={styles.overlay} onClick={handleBackdrop} role="presentation">
+		<div
+			className={`${styles.overlay} ${fullscreen ? styles.overlayFullscreen : ''}`}
+			onClick={handleBackdrop}
+			role="presentation"
+		>
 			<div
 				ref={dialogRef}
-				className={styles.dialog}
+				className={`${styles.dialog} ${fullscreen ? styles.dialogFullscreen : ''}`}
 				role="dialog"
 				aria-modal="true"
 				aria-label={title}

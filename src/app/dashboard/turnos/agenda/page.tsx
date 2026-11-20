@@ -18,6 +18,7 @@ import AsignarTurnoModal, {
 import SlotTurnoMenu, { type SlotMenuAction } from '@/app/components/Agenda/SlotTurnoMenu';
 import AgendaEmptyState from '@/app/components/Agenda/AgendaEmptyState';
 import AgendaResumenPanel from '@/app/components/Agenda/AgendaResumenPanel';
+import AgendaOtrasFunciones from '@/app/components/Agenda/AgendaOtrasFunciones';
 import AgendaPacienteBusqueda from '@/app/components/Agenda/AgendaPacienteBusqueda';
 import RacEnfermeriaModal from '@/app/components/Agenda/RacEnfermeriaModal';
 import AtencionTurnoModal from '@/app/components/Agenda/AtencionTurnoModal';
@@ -34,6 +35,7 @@ import { esFechaPasada } from '@/app/utils/agendaFecha';
 import { claseFilaAgenda } from '@/app/utils/agendaFilaEstilos';
 import { horaWallArgentina } from '@/app/utils/dateUtils';
 import { previsualizarPDF } from '@/app/utils/pdfHeader';
+import { generarPdfPlanillaTurnos } from '@/app/utils/pdfPlanillaTurnos';
 import { generarPdfTicketTurno } from '@/app/utils/pdfTicketTurno';
 import styles from './agenda.module.css';
 
@@ -348,12 +350,27 @@ function AgendaPageContent() {
 		fileName: string;
 	}>({ busy: false, error: '', url: null, fileName: '' });
 	const [ticketPdfOpen, setTicketPdfOpen] = useState(false);
+	const [planillaPdf, setPlanillaPdf] = useState<{
+		busy: boolean;
+		error: string;
+		url: string | null;
+		fileName: string;
+	}>({ busy: false, error: '', url: null, fileName: '' });
+	const [planillaPdfOpen, setPlanillaPdfOpen] = useState(false);
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
 	const cerrarTicketPdf = useCallback(() => {
 		setTicketPdfOpen(false);
 		setTicketPdf((prev) => {
+			if (prev.url) URL.revokeObjectURL(prev.url);
+			return { busy: false, error: '', url: null, fileName: '' };
+		});
+	}, []);
+
+	const cerrarPlanillaPdf = useCallback(() => {
+		setPlanillaPdfOpen(false);
+		setPlanillaPdf((prev) => {
 			if (prev.url) URL.revokeObjectURL(prev.url);
 			return { busy: false, error: '', url: null, fileName: '' };
 		});
@@ -936,6 +953,95 @@ function AgendaPageContent() {
 		);
 	}, [medicos, matriculaSel, profesionalAgenda?.nombre]);
 
+	const nombreProfesionalPlanilla = useMemo(() => {
+		if (esMedico) {
+			return (
+				`${user?.nombre || ''} ${user?.apellido || ''}`.trim() ||
+				nombreProfesionalSel ||
+				undefined
+			);
+		}
+		return nombreProfesionalSel;
+	}, [esMedico, user?.nombre, user?.apellido, nombreProfesionalSel]);
+
+	const abrirPlanillaTurnos = useCallback(async () => {
+		setPlanillaPdfOpen(true);
+		setPlanillaPdf((prev) => {
+			if (prev.url) URL.revokeObjectURL(prev.url);
+			return { busy: true, error: '', url: null, fileName: '' };
+		});
+		try {
+			const sector =
+				profesionalAgenda?.sector?.trim() ||
+				todosSlots.find((s) => s.sector)?.sector ||
+				'';
+			const sectoresCat = await personalService.getSectoresCatalogo().catch(() => []);
+			const sectorDescripciones: Record<string, string> = {};
+			for (const s of sectoresCat) {
+				const codigo = String(s.IdSector || '')
+					.trim()
+					.toUpperCase();
+				const desc = String(s.Descripcion || '').trim();
+				if (!codigo || !desc) continue;
+				sectorDescripciones[codigo] = desc;
+				if (codigo.length > 3) sectorDescripciones[codigo.slice(0, 3)] = desc;
+			}
+			for (const s of catalogoServicios) {
+				const codigo = String(s.valor || '')
+					.trim()
+					.toUpperCase();
+				const desc = String(s.descripcion || '').trim();
+				if (!codigo || !desc || sectorDescripciones[codigo]) continue;
+				sectorDescripciones[codigo] = desc;
+			}
+			const result = await previsualizarPDF(() =>
+				generarPdfPlanillaTurnos({
+					fechaIso,
+					profesional: nombreProfesionalPlanilla,
+					servicio: resumenServicioLabel,
+					especialidad: resumenEspecialidadLabel,
+					sector,
+					sectorDescripciones,
+					slots: todosSlots,
+				}),
+			);
+			if (!result) {
+				setPlanillaPdf({
+					busy: false,
+					error: 'No se pudo generar la planilla de turnos',
+					url: null,
+					fileName: '',
+				});
+				return;
+			}
+			setPlanillaPdf({
+				busy: false,
+				error: '',
+				url: URL.createObjectURL(result.blob),
+				fileName: result.fileName,
+			});
+		} catch (e: unknown) {
+			const err = e as { response?: { data?: { mensaje?: string } }; message?: string };
+			setPlanillaPdf({
+				busy: false,
+				error:
+					err?.response?.data?.mensaje ||
+					err?.message ||
+					'Error al generar la planilla de turnos',
+				url: null,
+				fileName: '',
+			});
+		}
+	}, [
+		catalogoServicios,
+		fechaIso,
+		nombreProfesionalPlanilla,
+		profesionalAgenda?.sector,
+		resumenEspecialidadLabel,
+		resumenServicioLabel,
+		todosSlots,
+	]);
+
 	const tituloAgendaAdmin = useMemo(() => {
 		const item = KPI_FILTROS.find((k) => k.id === filtroSlots);
 		if (filtroSlots === 'TODOS') return 'Agenda del día';
@@ -976,6 +1082,12 @@ function AgendaPageContent() {
 								`${user?.nombre || ''} ${user?.apellido || ''}`.trim() || undefined
 							}
 							stats={statsSlots}
+						/>
+					)}
+					{(esMedico ? !!matriculaPropia : !!matriculaSel || !!recursoSel) && (
+						<AgendaOtrasFunciones
+							disabledPlanilla={loadingSlots}
+							onPlanillaTurnos={abrirPlanillaTurnos}
 						/>
 					)}
 				</aside>
@@ -1572,7 +1684,18 @@ function AgendaPageContent() {
 				error={ticketPdf.error}
 				url={ticketPdf.url}
 				fileName={ticketPdf.fileName || 'ticket-turno.pdf'}
-				zoomPercent={200}
+				zoomPercent={150}
+			/>
+
+			<PdfPreviewDialog
+				open={planillaPdfOpen}
+				onClose={cerrarPlanillaPdf}
+				title="Planilla de turnos"
+				busy={planillaPdf.busy}
+				error={planillaPdf.error}
+				url={planillaPdf.url}
+				fileName={planillaPdf.fileName || 'planilla-turnos.pdf'}
+				fitWidth
 			/>
 		</div>
 	);

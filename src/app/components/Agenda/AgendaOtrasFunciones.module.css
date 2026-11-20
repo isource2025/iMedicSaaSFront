@@ -1,0 +1,108 @@
+.wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.toggle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0.875rem 1rem;
+	border: none;
+	border-radius: 0;
+	background: linear-gradient(135deg, #5dade2 0%, #8e7cc3 100%);
+	color: #fff;
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+	text-align: left;
+	transition: background 0.2s ease;
+}
+
+.toggle:hover {
+	background: linear-gradient(135deg, #4a9ed6 0%, #7b6ab0 100%);
+}
+
+.toggleOpen {
+	background: linear-gradient(135deg, #5dade2 0%, #8e7cc3 100%);
+	color: #fff;
+}
+
+.chevron {
+	flex-shrink: 0;
+	font-size: 0.7rem;
+	line-height: 1;
+	color: #fff;
+	opacity: 0.9;
+	transition: transform 0.2s ease;
+}
+
+.toggleOpen .chevron {
+	transform: rotate(180deg);
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 4px;
+	border: none;
+	background: transparent;
+	animation: otrasFadeUp 0.3s ease-out both;
+}
+
+.accion {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0.625rem 0.875rem;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	color: #64748b;
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	cursor: pointer;
+	text-align: left;
+	transition: all 0.2s ease;
+}
+
+.accion:hover:not(:disabled) {
+	background-color: #f1f5f9;
+	color: #0083a9;
+}
+
+.accion:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.accionIcon {
+	font-size: 0.95rem;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.accionTitle {
+	font-weight: 500;
+	color: inherit;
+}
+
+@keyframes otrasFadeUp {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
