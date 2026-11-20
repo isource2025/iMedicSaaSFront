@@ -81,47 +81,44 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 		<PdfPreviewProvider>
 		<div className={styles.root}>
 			<BedSectionsPrefetcher numeroVisita={bed?.NumeroVisita || null} />
-			{/* ====== HEADER (arriba de todo) ====== */}
-			<header className={styles.header}>
-				<PatientMiniHeader
-					numeroVisita={numeroVisita ?? ''}
-					header={headerSnapshot}
-					burgerButton={
-						<button
-							className={styles.burger}
-							onClick={() => setDrawerOpen(true)}
-							aria-label='Abrir menú'
-						>
-							<span className={styles.chevronIcon}>›</span>
-						</button>
-					}
-				/>
-			</header>
 
-			{/* ====== MAIN CONTENT (sidebar + body) ====== */}
-			<div className={styles.mainContent}>
-				{/* LEFT (calendar + sidebar) */}
-				<aside className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''}`}>
-					<div className={styles.leftInner}>
-						<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
-							✕
-						</button>
-						<CalendarPanel
-							selected={selectedDate ?? undefined}
-							fechaIngreso={bed?.fechaIngresoSQL}
-							fechaEgreso={bed?.fechaEgresoSQL}
-							egresada={Boolean(bed?.egresada)}
-						/>
-						<SidebarFilters
-							onCloseDrawer={() => setDrawerOpen(false)}
-							onExportDetalle={numeroVisita ? () => setShowExportAll(true) : undefined}
-						/>
-					</div>
-				</aside>
+			{/* LEFT: calendario + menú a altura completa (gana espacio vertical) */}
+			<aside className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''}`}>
+				<div className={styles.leftInner}>
+					<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
+						✕
+					</button>
+					<CalendarPanel
+						selected={selectedDate ?? undefined}
+						fechaIngreso={bed?.fechaIngresoSQL}
+						fechaEgreso={bed?.fechaEgresoSQL}
+						egresada={Boolean(bed?.egresada)}
+					/>
+					<SidebarFilters
+						onCloseDrawer={() => setDrawerOpen(false)}
+						onExportDetalle={numeroVisita ? () => setShowExportAll(true) : undefined}
+					/>
+				</div>
+			</aside>
 
-				{/* RIGHT (body) */}
-				<section className={styles.right}>
-					<div className={styles.body}>
+			{/* RIGHT: header del paciente + contenido de la sección */}
+			<section className={styles.right}>
+				<header className={styles.header}>
+					<PatientMiniHeader
+						numeroVisita={numeroVisita ?? ''}
+						header={headerSnapshot}
+						burgerButton={
+							<button
+								className={styles.burger}
+								onClick={() => setDrawerOpen(true)}
+								aria-label='Abrir menú'
+							>
+								<span className={styles.chevronIcon}>›</span>
+							</button>
+						}
+					/>
+				</header>
+				<div className={styles.body}>
 					{activeSection === 'indicaciones' ? (
 						<>
 							<IndicacionesSection
@@ -327,9 +324,8 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							</div>
 						</div>
 					)}
-					</div>
-				</section>
-			</div>
+				</div>
+			</section>
 
 			{bed?.NumeroVisita ? (
 				<BedFloatingActions
