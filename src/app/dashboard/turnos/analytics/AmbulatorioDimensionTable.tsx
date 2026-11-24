@@ -34,9 +34,7 @@ function columnasBase(
       render: (f) => (
         <span className={tableStyles.nameCell}>
           {f.descripcion || <span className={tableStyles.muted}>Sin identificar</span>}
-          {f.codigo && f.descripcion ? (
-            <span className={tableStyles.muted}> · {f.codigo}</span>
-          ) : null}
+          {f.codigo ? <span className={tableStyles.muted}> · {f.codigo}</span> : null}
         </span>
       ),
     },
