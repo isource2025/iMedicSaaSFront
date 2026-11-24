@@ -271,7 +271,7 @@ function SectionToolbar({
 export default function AdmissionVisitDetailContent({
   numeroVisita,
   loading,
-  loadingClinico = false,
+  loadingClinico: _loadingClinico = false,
   data,
   error,
   initialSection,
@@ -371,13 +371,7 @@ export default function AdmissionVisitDetailContent({
   return (
     <div className={s.root}>
       <VisitHeader data={data} numeroVisita={numeroVisita} actions={actions} />
-      {loadingClinico ? (
-        <div className={s.stateBox} role="status" aria-live="polite" style={{ marginBottom: 12 }}>
-          <span className={s.spinner} aria-hidden />
-          <span>Cargando historia clínica de la visita…</span>
-        </div>
-      ) : null}
-      {error && data && !loadingClinico ? (
+      {error && data ? (
         <p className={s.muted} role="status" style={{ margin: '0 0 8px' }}>
           {error}
         </p>
