@@ -161,7 +161,7 @@ export interface AgendaProfesionalMeta {
 	matricula: number;
 	nombre: string | null;
 	especialidad: number;
-	valorServicio: number | null;
+	valorServicio: string | null;
 	sector: string | null;
 }
 
