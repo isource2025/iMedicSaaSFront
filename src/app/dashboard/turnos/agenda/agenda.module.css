@@ -434,10 +434,6 @@
 	text-transform: uppercase;
 }
 
-.table tr:hover td {
-	background: #f8fafc;
-}
-
 .rowLibre td {
 	background: #fff;
 }
@@ -450,36 +446,16 @@
 	background: #fffbeb;
 }
 
-.rowLlegada:hover td {
-	background: #fef3c7;
-}
-
 .rowIngreso td {
 	background: #eff6ff;
-}
-
-.rowIngreso:hover td {
-	background: #dbeafe;
 }
 
 .rowCerrado td {
 	background: #f0fdf4;
 }
 
-.rowCerrado:hover td {
-	background: #dcfce7;
-}
-
-.rowOcupado:hover td {
-	background: #ffedd5;
-}
-
 .rowCancelado td {
 	background: #fef2f2;
-}
-
-.rowCancelado:hover td {
-	background: #fee2e2;
 }
 
 .rowCancelado .pacienteNombre {
@@ -560,10 +536,6 @@
 
 .rowSobreturno td {
 	background: #fffbeb;
-}
-
-.rowSobreturno:hover td {
-	background: #fef3c7;
 }
 
 .empty {

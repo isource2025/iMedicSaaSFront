@@ -202,6 +202,13 @@ function AdmissionSearchPageContent() {
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
   const searchReqRef = useRef(0);
+  const terminoInputRef = useRef<HTMLInputElement>(null);
+
+  // Al entrar a consulta general, el cursor arranca en el buscador.
+  useEffect(() => {
+    const t = window.setTimeout(() => terminoInputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const {
     selectedVisit,
@@ -568,8 +575,10 @@ function AdmissionSearchPageContent() {
           <label className={styles.inlineFieldWide}>
             <span>Nombre, DNI o nº de admisión</span>
             <input
+              ref={terminoInputRef}
               value={filters.termino}
               onChange={(e) => setFilters((f) => ({ ...f, termino: e.target.value }))}
+              aria-label="Nombre, DNI o nº de admisión"
             />
           </label>
 

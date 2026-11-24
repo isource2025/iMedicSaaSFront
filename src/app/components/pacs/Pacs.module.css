@@ -361,8 +361,9 @@
   color: #0369a1;
   border-radius: 6px;
   padding: 0.3rem 0.7rem;
+  min-height: 26px;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 1px);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
