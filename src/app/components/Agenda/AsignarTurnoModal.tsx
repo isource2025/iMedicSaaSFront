@@ -372,7 +372,7 @@ export default function AsignarTurnoModal({
 
 					{fechaInvalida && (
 						<div className={styles.error}>
-							No se pueden asignar turnos en fechas anteriores al día de hoy.
+							No se pueden asignar turnos fuera del margen de 12 h tras medianoche.
 						</div>
 					)}
 					{error && <div className={styles.error}>{error}</div>}

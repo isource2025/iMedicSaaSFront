@@ -688,7 +688,9 @@ function AgendaPageContent() {
 	const handleAccionSlot = async (action: SlotMenuAction, slot: AgendaSlot) => {
 		setSlotMenu(null);
 		if (fechaPasada && action !== 'ver-detalle' && action !== 'exportar-ticket') {
-			setError('En fechas pasadas solo se puede consultar el historial.');
+			setError(
+				'Solo se puede consultar el historial: la fecha está fuera del margen de 12 h tras medianoche.',
+			);
 			return;
 		}
 		if (action === 'rac-enfermeria') {
@@ -1187,7 +1189,8 @@ function AgendaPageContent() {
 					{fechaPasada && (
 						<div className={styles.warning}>
 							Historial de consultas: podés ver los turnos de días anteriores. No se
-							pueden asignar ni modificar turnos en fechas pasadas.
+							pueden asignar ni modificar turnos fuera del margen de 12 h tras
+							medianoche.
 						</div>
 					)}
 					{diaMotivo === 'feriado' && (

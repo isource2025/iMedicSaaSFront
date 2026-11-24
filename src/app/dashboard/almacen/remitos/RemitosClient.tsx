@@ -12,6 +12,7 @@ import {
 	Bell,
 	ClipboardList,
 	Plus,
+	Printer,
 	RefreshCw,
 	Search,
 	Trash2,
@@ -22,6 +23,7 @@ import Pagination from '@/app/components/UI/Pagination';
 import c from '@/app/components/Facturacion/Facturacion.module.css';
 import { IoCloseCircleOutline } from 'react-icons/io5';
 import { almacenStockService } from '@/app/services/almacenStockService';
+import { obtenerInfoEmpresa } from '@/app/services/empresaService';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { useToast } from '@/app/components/UI/ToastProvider';
 import { resaltarCampoLuego, resaltarElemento } from '@/app/components/UI/resaltar';
@@ -439,6 +441,7 @@ export default function RemitosClient() {
 		null,
 	);
 	const [excluyendoId, setExcluyendoId] = useState<number | null>(null);
+	const [imprimiendoId, setImprimiendoId] = useState<number | null>(null);
 	const [pendienteMed, setPendienteMed] = useState<MedicacionPendienteServiciosResp | null>(null);
 	const [pendienteMedLoading, setPendienteMedLoading] = useState(false);
 	const [pendienteMedError, setPendienteMedError] = useState<string | null>(null);
@@ -645,6 +648,24 @@ export default function RemitosClient() {
 			setDetailOpen(true);
 		} catch (e) {
 			toast.error(mensajeDeError(e, 'No se pudo abrir el remito'));
+		}
+	};
+
+	const imprimirRemito = async (idTransaccion: number) => {
+		setImprimiendoId(idTransaccion);
+		try {
+			const [remito, empresaInfo] = await Promise.all([
+				detail?.IdTransaccion === idTransaccion && detail.items
+					? Promise.resolve(detail)
+					: almacenStockService.obtenerRemito(idTransaccion),
+				obtenerInfoEmpresa().catch(() => null),
+			]);
+			const { generarPDFRemito } = await import('@/app/utils/pdfRemito');
+			await generarPDFRemito({ remito, empresaInfo });
+		} catch (e) {
+			toast.error(mensajeDeError(e, 'No se pudo generar el PDF del remito'));
+		} finally {
+			setImprimiendoId(null);
 		}
 	};
 
@@ -1605,7 +1626,7 @@ export default function RemitosClient() {
 									<th colSpan={2} className={`${c.grupoTitulo} ${c.grupoInicio}`}>
 										Importe y estado
 									</th>
-									{(canEdit || canDelete) && <th className={c.grupoInicio} />}
+									<th className={c.grupoInicio} />
 								</tr>
 								<tr>
 									<th>Nº remito</th>
@@ -1616,7 +1637,7 @@ export default function RemitosClient() {
 									<th className={c.grupoInicio}>Observaciones</th>
 									<th className={`${c.num} ${c.grupoInicio}`}>Importe</th>
 									<th>Estado</th>
-									{(canEdit || canDelete) && <th className={styles.colActions}>Acciones</th>}
+									<th className={styles.colActions}>Acciones</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -1711,40 +1732,51 @@ export default function RemitosClient() {
 													{estadoLabel(row.IdStatus, row.StatusNombre)}
 												</span>
 											</td>
-											{(canEdit || canDelete) && (
-												<td className={styles.colActions}>
-													<div className={styles.rowActions}>
-														{canEdit && !anulado && !generado && (
-															<button
-																type="button"
-																className={styles.actionEdit}
-																title="Editar"
-																aria-label={`Editar remito ${row.NroRemitoFmt || row.IdTransaccion}`}
-																onClick={(e) => {
-																	e.stopPropagation();
-																	void openEdit(row);
-																}}
-															>
-																<Pencil size={16} />
-															</button>
-														)}
-														{canDelete && !anulado && (
-															<button
-																type="button"
-																className={styles.actionDelete}
-																title="Anular"
-																aria-label={`Anular remito ${row.NroRemitoFmt || row.IdTransaccion}`}
-																onClick={(e) => {
-																	e.stopPropagation();
-																	pedirAnularRemito(row);
-																}}
-															>
-																<IoCloseCircleOutline color="#e11d48" size={18} />
-															</button>
-														)}
-													</div>
-												</td>
-											)}
+											<td className={styles.colActions}>
+												<div className={styles.rowActions}>
+													<button
+														type="button"
+														className={styles.actionEdit}
+														title="Imprimir"
+														aria-label={`Imprimir remito ${row.NroRemitoFmt || row.IdTransaccion}`}
+														disabled={imprimiendoId === row.IdTransaccion}
+														onClick={(e) => {
+															e.stopPropagation();
+															void imprimirRemito(row.IdTransaccion);
+														}}
+													>
+														<Printer size={16} />
+													</button>
+													{canEdit && !anulado && !generado && (
+														<button
+															type="button"
+															className={styles.actionEdit}
+															title="Editar"
+															aria-label={`Editar remito ${row.NroRemitoFmt || row.IdTransaccion}`}
+															onClick={(e) => {
+																e.stopPropagation();
+																void openEdit(row);
+															}}
+														>
+															<Pencil size={16} />
+														</button>
+													)}
+													{canDelete && !anulado && (
+														<button
+															type="button"
+															className={styles.actionDelete}
+															title="Anular"
+															aria-label={`Anular remito ${row.NroRemitoFmt || row.IdTransaccion}`}
+															onClick={(e) => {
+																e.stopPropagation();
+																pedirAnularRemito(row);
+															}}
+														>
+															<IoCloseCircleOutline color="#e11d48" size={18} />
+														</button>
+													)}
+												</div>
+											</td>
 										</tr>
 									);
 								})}
@@ -2045,32 +2077,39 @@ export default function RemitosClient() {
 								</span>
 							</div>
 						</div>
-						{(canEdit || canDelete) && (
-							<div className={styles.modalActions}>
-								<button type="button" className={styles.btnGhost} onClick={() => setDetailOpen(false)}>
-									Cerrar
+						<div className={styles.modalActions}>
+							<button type="button" className={styles.btnGhost} onClick={() => setDetailOpen(false)}>
+								Cerrar
+							</button>
+							<button
+								type="button"
+								className={styles.btnGhost}
+								disabled={imprimiendoId === detail.IdTransaccion}
+								onClick={() => void imprimirRemito(detail.IdTransaccion)}
+							>
+								<Printer size={14} />
+								{imprimiendoId === detail.IdTransaccion ? 'Generando…' : 'Imprimir'}
+							</button>
+							{canDelete && !esRemitoAnulado(detail) && (
+								<button
+									type="button"
+									className={styles.btnGhost}
+									onClick={() => pedirAnularRemito(detail)}
+								>
+									<IoCloseCircleOutline color="#e11d48" size={18} aria-hidden />
+									Anular
 								</button>
-								{canDelete && !esRemitoAnulado(detail) && (
-									<button
-										type="button"
-										className={styles.btnGhost}
-										onClick={() => pedirAnularRemito(detail)}
-									>
-										<IoCloseCircleOutline color="#e11d48" size={18} aria-hidden />
-										Anular
-									</button>
-								)}
-								{canEdit && detailOperable && (
-									<button
-										type="button"
-										className={styles.btnPrimary}
-										onClick={() => void openEdit(detail)}
-									>
-										Editar
-									</button>
-								)}
-							</div>
-						)}
+							)}
+							{canEdit && detailOperable && (
+								<button
+									type="button"
+									className={styles.btnPrimary}
+									onClick={() => void openEdit(detail)}
+								>
+									Editar
+								</button>
+							)}
+						</div>
 					</>
 				)}
 			</Modal>
@@ -2678,6 +2717,15 @@ export default function RemitosClient() {
 										))}
 									</dl>
 									<div className={styles.modalActions}>
+										<button
+											type="button"
+											className={styles.btnGhost}
+											disabled={imprimiendoId === r.IdTransaccion}
+											onClick={() => void imprimirRemito(r.IdTransaccion)}
+										>
+											<Printer size={14} />
+											{imprimiendoId === r.IdTransaccion ? 'Generando…' : 'Imprimir'}
+										</button>
 										<button
 											type="button"
 											className={styles.btnPrimary}
