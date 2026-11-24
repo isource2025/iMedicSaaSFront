@@ -154,14 +154,26 @@ export default function AsignarTurnoModal({
 		setSubmitting(true);
 		setError(null);
 		try {
+			const sectorEnviar = (sectorEdit || slot?.sector || profesional?.sector || '')
+				.trim()
+				.toUpperCase()
+				.slice(0, 4);
+			if (!sectorEnviar || /^[0-9]+$/.test(sectorEnviar)) {
+				setError('Falta el Sector del turno (código de letra).');
+				return;
+			}
 			await agendaService.asignarTurno(matricula, {
 				fecha: fechaEnvio,
 				hora: esSobreturno ? horaSt : slot.hora.replace(/\s*·\s*ST$/i, ''),
 				horaClarion: esSobreturno ? undefined : slot.horaClarion,
-				sector: (sectorEdit || slot?.sector || profesional?.sector || '').trim(),
+				sector: sectorEnviar,
 				idPaciente: paciente.IDPaciente,
 				observaciones: observaciones.trim() || undefined,
 				tipoTurno: tipoTurnoEnvio,
+				especialidad:
+					profesional?.especialidad != null && Number(profesional.especialidad) > 0
+						? Number(profesional.especialidad)
+						: undefined,
 			});
 			onAssigned();
 			onClose();

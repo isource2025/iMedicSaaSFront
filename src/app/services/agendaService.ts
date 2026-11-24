@@ -566,6 +566,7 @@ export const agendaService = {
 			idPaciente: number;
 			observaciones?: string;
 			tipoTurno?: number;
+			especialidad?: number;
 		},
 	): Promise<{ idTurno: number | null; accion: 'created' | 'updated' }> {
 		const r = await apiService.post<ApiResp<{ idTurno: number | null; accion: 'created' | 'updated' }>>(
