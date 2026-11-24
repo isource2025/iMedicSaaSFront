@@ -158,7 +158,7 @@ export default function AsignarTurnoModal({
 				fecha: fechaEnvio,
 				hora: esSobreturno ? horaSt : slot.hora.replace(/\s*·\s*ST$/i, ''),
 				horaClarion: esSobreturno ? undefined : slot.horaClarion,
-				sector: (profesional?.sector || slot?.sector || sectorEdit || '').trim(),
+				sector: (sectorEdit || slot?.sector || profesional?.sector || '').trim(),
 				idPaciente: paciente.IDPaciente,
 				observaciones: observaciones.trim() || undefined,
 				tipoTurno: tipoTurnoEnvio,
@@ -315,7 +315,7 @@ export default function AsignarTurnoModal({
 								value={sectorEdit}
 								maxLength={4}
 								readOnly
-								title='Sector del horario (IdServicio)'
+								title='Código de sector (imSectores)'
 							/>
 						</div>
 						{!esSobreturno ? (
