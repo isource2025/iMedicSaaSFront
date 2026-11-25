@@ -202,12 +202,12 @@ export default function Dashboard() {
       
       <div className={styles.cardsGrid}>
         {/* Dashboard Cards */}
-        <div 
-          className={styles.cardBedsTotal}
+        <div
+          className={styles.dashCard}
           onClick={() => window.location.href = '/dashboard/beds/analytics'}
         >
           <div className={styles.cardHeader}>
-            <Icon path={ICONS.bed} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
+            <Icon path={ICONS.bed} className={styles.cardIcon} style={{ color: '#00B5E2', width: '18px', height: '18px' }} />
             <h3 className={styles.cardLabel}>Análisis de Camas</h3>
             <button className={styles.arrowButton} aria-label="Ver análisis de camas">
               <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
@@ -224,31 +224,50 @@ export default function Dashboard() {
                   <p className={styles.cardValue}>
                     {estadoActualCamas ? estadoActualCamas.totalCamas : bedStats.totalCamas}
                   </p>
-                  <span className={styles.cardMainLabel}>Total Camas</span>
+                  {estadoActualCamas?.porTipo ? (
+                    <div className={styles.cardBreakdown}>
+                      <span className={styles.cardBreakdownItem}>
+                        <strong>{estadoActualCamas.porTipo.cama}</strong>
+                        camas
+                      </span>
+                      <span className={styles.cardBreakdownItem}>
+                        <strong>{estadoActualCamas.porTipo.camilla}</strong>
+                        camillas
+                      </span>
+                      <span className={styles.cardBreakdownItem}>
+                        <strong>{estadoActualCamas.porTipo.sillon}</strong>
+                        sillones
+                      </span>
+                    </div>
+                  ) : (
+                    <span className={styles.cardMainLabel}>Total recursos</span>
+                  )}
                 </div>
-                <div className={styles.cardSecondaryMetric}>
-                  <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
-                    {estadoActualCamas ? estadoActualCamas.disponibles : bedStats.camasDisponibles}
-                  </p>
-                  <span className={styles.cardSecondaryLabel}>Disponibles</span>
-                </div>
-                <div className={styles.cardSecondaryMetric}>
-                  <p className={styles.cardSecondaryValue} style={{ color: '#00B5E2' }}>
-                    {estadoActualCamas ? estadoActualCamas.ocupadas : bedStats.camasOcupadas}
-                  </p>
-                  <span className={styles.cardSecondaryLabel}>Ocupadas</span>
+                <div className={styles.cardStatusGroup} aria-label="Estado de camas">
+                  <div className={styles.cardSecondaryMetric}>
+                    <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
+                      {estadoActualCamas ? estadoActualCamas.disponibles : bedStats.camasDisponibles}
+                    </p>
+                    <span className={styles.cardSecondaryLabel}>Disponibles</span>
+                  </div>
+                  <div className={styles.cardSecondaryMetric}>
+                    <p className={styles.cardSecondaryValue} style={{ color: '#00B5E2' }}>
+                      {estadoActualCamas ? estadoActualCamas.ocupadas : bedStats.camasOcupadas}
+                    </p>
+                    <span className={styles.cardSecondaryLabel}>Ocupadas</span>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </div>
-        
-        <div 
-          className={styles.cardPatients}
+
+        <div
+          className={styles.dashCard}
           onClick={() => window.location.href = '/dashboard/patients/analytics'}
         >
           <div className={styles.cardHeader}>
-            <Icon path={ICONS.users} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
+            <Icon path={ICONS.users} className={styles.cardIcon} style={{ color: '#00B5E2', width: '18px', height: '18px' }} />
             <h3 className={styles.cardLabel}>Análisis de Pacientes</h3>
             <button className={styles.arrowButton} aria-label="Ver análisis de pacientes">
               <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
@@ -265,25 +284,30 @@ export default function Dashboard() {
                   <p className={styles.cardValue}>
                     {patientSummary.totalHoy}
                   </p>
-                  <span className={styles.cardMainLabel}>Ingresados Hoy</span>
+                  <span className={styles.cardMainLabel}>Ingresados hoy</span>
                 </div>
-                <div className={styles.cardSecondaryMetric}>
-                  <p className={styles.cardSecondaryValue} style={{ color: patientSummary.porcentajeCambio >= 0 ? '#388e3c' : '#d32f2f' }}>
-                    {`${patientSummary.porcentajeCambio >= 0 ? '+' : ''}${patientSummary.porcentajeCambio}%`}
-                  </p>
-                  <span className={styles.cardSecondaryLabel}>vs Ayer</span>
+                <div className={styles.cardStatusGroup} aria-label="Variación">
+                  <div className={styles.cardSecondaryMetric}>
+                    <p
+                      className={styles.cardSecondaryValue}
+                      style={{ color: patientSummary.porcentajeCambio >= 0 ? '#388e3c' : '#d32f2f' }}
+                    >
+                      {`${patientSummary.porcentajeCambio >= 0 ? '+' : ''}${patientSummary.porcentajeCambio}%`}
+                    </p>
+                    <span className={styles.cardSecondaryLabel}>vs ayer</span>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </div>
-        
+
         <div
-          className={styles.cardAppointments}
+          className={styles.dashCard}
           onClick={() => router.push('/dashboard/turnos/analytics')}
         >
           <div className={styles.cardHeader}>
-            <Icon path={ICONS.calendar} className={styles.cardIcon} style={{ color: '#00B5E2', width: '20px', height: '20px' }} />
+            <Icon path={ICONS.calendar} className={styles.cardIcon} style={{ color: '#00B5E2', width: '18px', height: '18px' }} />
             <h3 className={styles.cardLabel}>Actividad Ambulatoria</h3>
             <button className={styles.arrowButton} aria-label="Ver análisis ambulatorio">
               <Icon path={ICONS.arrowRight} className={styles.arrowIcon} />
@@ -301,32 +325,45 @@ export default function Dashboard() {
             <div className={styles.cardStats}>
               <div className={styles.statRow}>
                 <div className={styles.cardMainMetric}>
-                  <p className={styles.cardValue}>{ambulatorioHoy.programados}</p>
-                  <span className={styles.cardMainLabel}>Programadas</span>
-                </div>
-                <div className={styles.cardSecondaryMetric}>
-                  <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
-                    {ambulatorioHoy.atendidos}
+                  <p className={styles.cardValue}>
+                    {ambulatorioHoy.programados + (ambulatorioHoy.turnosDemanda ?? 0)}
                   </p>
-                  <span className={styles.cardSecondaryLabel}>Atendidas</span>
+                  <div className={styles.cardBreakdown}>
+                    <span className={styles.cardBreakdownItem}>
+                      <strong>{ambulatorioHoy.programados}</strong>
+                      programados
+                    </span>
+                    <span className={styles.cardBreakdownItem}>
+                      <strong>{ambulatorioHoy.turnosDemanda ?? 0}</strong>
+                      a demanda
+                    </span>
+                  </div>
                 </div>
-                <div className={styles.cardSecondaryMetric}>
-                  <p className={styles.cardSecondaryValue} style={{ color: '#f57c00' }}>
-                    {ambulatorioHoy.pendientes}
-                  </p>
-                  <span className={styles.cardSecondaryLabel}>Pendientes</span>
-                </div>
-                <div className={styles.cardSecondaryMetric}>
-                  <p className={styles.cardSecondaryValue} style={{ color: '#d32f2f' }}>
-                    {ambulatorioHoy.ausentes}
-                  </p>
-                  <span className={styles.cardSecondaryLabel}>Ausentes</span>
-                </div>
-                <div className={styles.cardSecondaryMetric}>
-                  <p className={styles.cardSecondaryValue} style={{ color: '#757575' }}>
-                    {ambulatorioHoy.cancelados ?? 0}
-                  </p>
-                  <span className={styles.cardSecondaryLabel}>Cancelados</span>
+                <div className={styles.cardStatusGroup} aria-label="Estado de turnos">
+                  <div className={styles.cardSecondaryMetric}>
+                    <p className={styles.cardSecondaryValue} style={{ color: '#388e3c' }}>
+                      {ambulatorioHoy.atendidos}
+                    </p>
+                    <span className={styles.cardSecondaryLabel}>Atendidos</span>
+                  </div>
+                  <div className={styles.cardSecondaryMetric}>
+                    <p className={styles.cardSecondaryValue} style={{ color: '#f57c00' }}>
+                      {ambulatorioHoy.pendientes}
+                    </p>
+                    <span className={styles.cardSecondaryLabel}>Pendientes</span>
+                  </div>
+                  <div className={styles.cardSecondaryMetric}>
+                    <p className={styles.cardSecondaryValue} style={{ color: '#d32f2f' }}>
+                      {ambulatorioHoy.ausentes}
+                    </p>
+                    <span className={styles.cardSecondaryLabel}>Ausentes</span>
+                  </div>
+                  <div className={styles.cardSecondaryMetric}>
+                    <p className={styles.cardSecondaryValue} style={{ color: '#757575' }}>
+                      {ambulatorioHoy.cancelados ?? 0}
+                    </p>
+                    <span className={styles.cardSecondaryLabel}>Cancelados</span>
+                  </div>
                 </div>
               </div>
             </div>

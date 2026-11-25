@@ -81,12 +81,20 @@ export interface ResumenCamas {
   };
 }
 
+/** Conteos por imHabitacionCamas.Tipo (CAMA / CAMILLA / SILLON). */
+export interface CamasPorTipo {
+  cama: number;
+  camilla: number;
+  sillon: number;
+}
+
 export interface EstadoActualCamas {
   fecha: string;
   totalCamas: number;
   ocupadas: number;
   disponibles: number;
   porcentajeOcupacion: number;
+  porTipo?: CamasPorTipo;
 }
 
 interface ApiResponse<T> {

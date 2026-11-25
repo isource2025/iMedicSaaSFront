@@ -164,6 +164,8 @@ export interface ResumenAmbulatorioHoy {
   fecha: string;
   graciaMin: number;
   programados: number;
+  /** Sobreturnos / a demanda del día (TipoTurno = 1). */
+  turnosDemanda?: number;
   /** Consultas atendidas del día (agenda + demanda). */
   atendidos: number;
   atendidosAgenda?: number;
