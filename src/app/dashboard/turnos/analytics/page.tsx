@@ -581,7 +581,7 @@ export default function AmbulatorioAnalytics() {
             </h3>
             <p className={styles.chartPanelHint}>
               {heatmapData.metrica === 'espera'
-                ? 'Minutos de espera promedio (desde el horario del turno) según día de la semana y hora asignada'
+                ? 'Minutos de espera promedio (desde el horario del turno) según día de la semana y hora asignada. Pasá el mouse sobre una celda para ver quiénes más se demoran.'
                 : 'Minutos promedio entre la llegada y el cierre de la atención, según día de la semana y hora. Se muestra la permanencia porque no hay marcado de ingreso al consultorio.'}
             </p>
             {heatmapData.horas.length === 0 ? (
@@ -607,6 +607,7 @@ export default function AmbulatorioAnalytics() {
                         {heatmapData.horas.map((h) => {
                           const celda = heatmapData.porClave.get(`${idx}-${h}`);
                           const espera = heatmapData.valorDe(celda);
+                          const retrasos = celda?.retrasos ?? [];
                           return (
                             <div
                               key={`${dia}-${h}`}
@@ -618,13 +619,37 @@ export default function AmbulatorioAnalytics() {
                                   ? { backgroundColor: colorEspera(espera, heatmapData.maximo) }
                                   : undefined
                               }
-                              title={
-                                celda
-                                  ? `${dia} ${String(h).padStart(2, '0')}h · ${celda.programados} turnos · ${heatmapData.metrica} ${minutos(espera)}`
-                                  : `${dia} ${String(h).padStart(2, '0')}h · sin turnos`
-                              }
                             >
                               {espera != null ? Math.round(espera) : ''}
+                              {celda ? (
+                                <div className={styles.heatmapTip} role="tooltip">
+                                  <strong>
+                                    {dia} {String(h).padStart(2, '0')}h
+                                  </strong>
+                                  <span>
+                                    {celda.programados} turnos · {heatmapData.metrica}{' '}
+                                    {minutos(espera)}
+                                  </span>
+                                  {heatmapData.metrica === 'espera' ? (
+                                    retrasos.length > 0 ? (
+                                      <ul className={styles.heatmapTipList}>
+                                        <li className={styles.heatmapTipLabel}>Más demora</li>
+                                        {retrasos.map((r) => (
+                                          <li key={r.matricula}>
+                                            {(r.nombre || `Mat. ${r.matricula}`).slice(0, 28)}
+                                            {': '}
+                                            {minutos(r.esperaProm)}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <span className={styles.heatmapTipMuted}>
+                                        Sin demoras en esta franja
+                                      </span>
+                                    )
+                                  ) : null}
+                                </div>
+                              ) : null}
                             </div>
                           );
                         })}

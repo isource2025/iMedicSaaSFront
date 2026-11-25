@@ -129,6 +129,14 @@ export interface DimensionAmbulatorio {
   consultaProm?: number | null;
 }
 
+/** Profesional con espera promedio > 0 en una celda del heatmap. */
+export interface RetrasoHeatmap {
+  matricula: number;
+  nombre: string;
+  esperaProm: number | null;
+  atendidos: number;
+}
+
 export interface CeldaHeatmap {
   /** 0 = Lunes … 6 = Domingo. */
   diaSemana: number;
@@ -137,6 +145,8 @@ export interface CeldaHeatmap {
   ausentes: number;
   esperaProm: number | null;
   permanenciaProm: number | null;
+  /** Top profesionales con demora (HoraAsignada → HoraIngreso > 0) en esa franja. */
+  retrasos?: RetrasoHeatmap[];
 }
 
 export interface AnaliticaAmbulatorio {
