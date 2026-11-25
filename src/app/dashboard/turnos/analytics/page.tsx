@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, Suspense, lazy, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { usePermiso } from '@/app/hooks/usePermiso';
 import { useAmbulatorio } from '@/app/hooks/useAmbulatorio';
@@ -19,6 +20,16 @@ import { ChartWidget, ChartLegend } from './ChartWidget';
 import { CompactBarChart } from './CompactBarChart';
 import { AmbulatorioDimensionTable } from './AmbulatorioDimensionTable';
 import styles from './AmbulatorioAnalytics.module.css';
+
+type HeatTipState = {
+  dia: string;
+  hora: number;
+  celda: CeldaHeatmap;
+  espera: number | null;
+  left: number;
+  top: number;
+  below: boolean;
+};
 
 const DonutChartLazy = lazy(() => import('@/app/components/Charts/DonutChart'));
 const LineChartLazy = lazy(() => import('@/app/components/Charts/LineChart'));
@@ -85,6 +96,14 @@ function minutos(valor: number | null | undefined): string {
   return `${valor.toFixed(1).replace('.', ',')} min`;
 }
 
+/** Nombres Clarion suelen venir en MAYÚSCULAS. */
+function nombreCorto(nombre: string, max = 26): string {
+  const titulo = nombre
+    .toLowerCase()
+    .replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+  return titulo.length > max ? `${titulo.slice(0, max - 1)}…` : titulo;
+}
+
 function pct(valor: number | null | undefined): string {
   if (valor == null) return '—';
   return `${valor.toFixed(1).replace('.', ',')}%`;
@@ -115,6 +134,28 @@ export default function AmbulatorioAnalytics() {
   const [fechaFin, setFechaFin] = useState(toYYYYMMDD(hoy));
   const [activeTab, setActiveTab] = useState('mes');
   const [graciaMin, setGraciaMin] = useState<number>(GRACIA_MIN_DEFAULT);
+  const [heatTip, setHeatTip] = useState<HeatTipState | null>(null);
+
+  const mostrarHeatTip = (
+    el: HTMLElement,
+    dia: string,
+    hora: number,
+    celda: CeldaHeatmap,
+    espera: number | null,
+  ) => {
+    const rect = el.getBoundingClientRect();
+    const tipW = 268;
+    const tipH = 168;
+    const pad = 10;
+    const cx = rect.left + rect.width / 2;
+    const left = Math.min(
+      Math.max(cx, tipW / 2 + pad),
+      window.innerWidth - tipW / 2 - pad,
+    );
+    const below = rect.top < tipH + 16;
+    const top = below ? rect.bottom + 8 : rect.top - 8;
+    setHeatTip({ dia, hora, celda, espera, left, top, below });
+  };
 
   const {
     resumen,
@@ -607,7 +648,6 @@ export default function AmbulatorioAnalytics() {
                         {heatmapData.horas.map((h) => {
                           const celda = heatmapData.porClave.get(`${idx}-${h}`);
                           const espera = heatmapData.valorDe(celda);
-                          const retrasos = celda?.retrasos ?? [];
                           return (
                             <div
                               key={`${dia}-${h}`}
@@ -619,37 +659,15 @@ export default function AmbulatorioAnalytics() {
                                   ? { backgroundColor: colorEspera(espera, heatmapData.maximo) }
                                   : undefined
                               }
+                              onMouseEnter={
+                                celda
+                                  ? (e) =>
+                                      mostrarHeatTip(e.currentTarget, dia, h, celda, espera)
+                                  : undefined
+                              }
+                              onMouseLeave={celda ? () => setHeatTip(null) : undefined}
                             >
                               {espera != null ? Math.round(espera) : ''}
-                              {celda ? (
-                                <div className={styles.heatmapTip} role="tooltip">
-                                  <strong>
-                                    {dia} {String(h).padStart(2, '0')}h
-                                  </strong>
-                                  <span>
-                                    {celda.programados} turnos · {heatmapData.metrica}{' '}
-                                    {minutos(espera)}
-                                  </span>
-                                  {heatmapData.metrica === 'espera' ? (
-                                    retrasos.length > 0 ? (
-                                      <ul className={styles.heatmapTipList}>
-                                        <li className={styles.heatmapTipLabel}>Más demora</li>
-                                        {retrasos.map((r) => (
-                                          <li key={r.matricula}>
-                                            {(r.nombre || `Mat. ${r.matricula}`).slice(0, 28)}
-                                            {': '}
-                                            {minutos(r.esperaProm)}
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    ) : (
-                                      <span className={styles.heatmapTipMuted}>
-                                        Sin demoras en esta franja
-                                      </span>
-                                    )
-                                  ) : null}
-                                </div>
-                              ) : null}
                             </div>
                           );
                         })}
@@ -714,6 +732,46 @@ export default function AmbulatorioAnalytics() {
           </div>
         </>
       )}
+
+      {heatTip &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className={`${styles.heatmapTip} ${heatTip.below ? styles.heatmapTipBelow : ''}`}
+            role="tooltip"
+            style={{ left: heatTip.left, top: heatTip.top }}
+          >
+            <div className={styles.heatmapTipHead}>
+              <span className={styles.heatmapTipTitle}>
+                {heatTip.dia} · {String(heatTip.hora).padStart(2, '0')}:00
+              </span>
+              <span className={styles.heatmapTipMeta}>
+                {heatTip.celda.programados} turnos · {heatmapData.metrica}{' '}
+                {minutos(heatTip.espera)}
+              </span>
+            </div>
+            {heatmapData.metrica === 'espera' ? (
+              (heatTip.celda.retrasos?.length ?? 0) > 0 ? (
+                <ul className={styles.heatmapTipList}>
+                  <li className={styles.heatmapTipLabel}>Más demora</li>
+                  {heatTip.celda.retrasos!.map((r) => (
+                    <li key={r.matricula} className={styles.heatmapTipRow}>
+                      <span className={styles.heatmapTipName}>
+                        {nombreCorto(r.nombre || `Mat. ${r.matricula}`)}
+                      </span>
+                      <span className={styles.heatmapTipValue}>
+                        {minutos(r.esperaProm)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className={styles.heatmapTipMuted}>Sin demoras en esta franja</span>
+              )
+            ) : null}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

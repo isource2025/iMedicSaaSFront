@@ -691,64 +691,121 @@
 }
 
 .heatmapCell:hover {
-  z-index: 5;
   outline: 1px solid #555;
 }
 
 .heatmapTip {
-  display: none;
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 6px);
-  transform: translateX(-50%);
-  min-width: 180px;
-  max-width: 260px;
-  padding: 8px 10px;
-  background: #1f2937;
-  color: #f3f4f6;
-  border-radius: 6px;
+  position: fixed;
+  z-index: 10000;
+  transform: translate(-50%, -100%);
+  width: 268px;
+  padding: 10px 12px 8px;
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 400;
-  line-height: 1.35;
+  line-height: 1.4;
   text-align: left;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   pointer-events: none;
   white-space: normal;
 }
 
-.heatmapTip strong {
-  display: block;
+.heatmapTipBelow {
+  transform: translate(-50%, 0);
+}
+
+.heatmapTip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #111827;
+}
+
+.heatmapTipBelow::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #111827;
+}
+
+.heatmapTipHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
   margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.heatmapTipTitle {
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: #fff;
 }
 
-.heatmapTip span {
-  display: block;
-  color: #d1d5db;
+.heatmapTipMeta {
+  font-size: 10.5px;
+  color: #9ca3af;
 }
 
 .heatmapTipList {
   list-style: none;
-  margin: 6px 0 0;
+  margin: 0;
   padding: 0;
 }
 
 .heatmapTipLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f59e0b;
+  padding: 6px 0 4px;
+}
+
+.heatmapTipRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.heatmapTipRow + .heatmapTipRow {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.heatmapTipName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e5e7eb;
+}
+
+.heatmapTipValue {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: #fbbf24;
-  margin-bottom: 2px;
 }
 
 .heatmapTipMuted {
   display: block;
   margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   color: #9ca3af;
+  font-size: 10.5px;
   font-style: italic;
-}
-
-.heatmapCell:hover .heatmapTip {
-  display: block;
 }
 
 .heatmapEmpty {
