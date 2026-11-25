@@ -16,9 +16,19 @@ import {
 	mergeBedSnapshots,
 	setBedSnapshot,
 } from '@/app/utils/bedSnapshotCache';
+import { hasIdlePending, isSessionIdleOpen } from '@/app/utils/sessionIdle';
 
 type Props = { id: string };
 
+function puedeUsarSeed() {
+	if (typeof window === 'undefined') return false;
+	if (isSessionIdleOpen() || hasIdlePending()) return false;
+	try {
+		return Boolean(localStorage.getItem('token'));
+	} catch {
+		return false;
+	}
+}
 
 export default function ClientBedView({ id }: Props) {
 	const router = useRouter();
@@ -27,15 +37,20 @@ export default function ClientBedView({ id }: Props) {
 		[id],
 	);
 
-	const seed = useMemo(() => (id ? getBedSnapshot(id) : null), [id]);
+	const seed = useMemo(() => (id && puedeUsarSeed() ? getBedSnapshot(id) : null), [id]);
 	const [bed, setBed] = useState<Bed | null>(seed);
 	const [loading, setLoading] = useState(!seed);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!path) return;
+		if (isSessionIdleOpen() || hasIdlePending()) {
+			setBed(null);
+			setLoading(false);
+			return;
+		}
 		const ctrl = new AbortController();
-		const hasSeed = Boolean(getBedSnapshot(id));
+		const hasSeed = puedeUsarSeed() && Boolean(getBedSnapshot(id));
 
 		(async () => {
 			if (!hasSeed) {
@@ -48,6 +63,12 @@ export default function ClientBedView({ id }: Props) {
 					headers: { accept: 'application/json' },
 					cache: 'no-store',
 				});
+
+				if (res.status === 401) {
+					setBed(null);
+					setLoading(false);
+					return;
+				}
 
 				if (res.status === 404) {
 					if (hasSeed) {
@@ -66,7 +87,7 @@ export default function ClientBedView({ id }: Props) {
 				const fresh = normalizeBedFromApi(
 					(json.data || json) as Record<string, unknown>,
 				);
-				const cached = getBedSnapshot(id);
+				const cached = puedeUsarSeed() ? getBedSnapshot(id) : null;
 				const merged = mergeBedSnapshots(cached, fresh);
 				setBedSnapshot(merged);
 				setBed(merged);

@@ -39,6 +39,16 @@ export function clearBedSnapshot(id?: string): void {
 		return;
 	}
 	memory.clear();
+	try {
+		const keys: string[] = [];
+		for (let i = 0; i < sessionStorage.length; i++) {
+			const k = sessionStorage.key(i);
+			if (k && k.startsWith(SS_PREFIX)) keys.push(k);
+		}
+		for (const k of keys) sessionStorage.removeItem(k);
+	} catch {
+		/* ignore */
+	}
 }
 
 /** Une snapshot de lista con respuesta de GET /beds/:id (lista suele traer más campos de display). */

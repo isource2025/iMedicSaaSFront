@@ -14,6 +14,7 @@ import { guardarInfoEmpresaLocal, EmpresaInfo } from '../services/empresaService
 import type { ModulosEmpresa } from '../types/superAdmin';
 import { startSessionActivityMonitor } from '../utils/sessionActivity';
 import { clearTenantUiCaches } from '../utils/sessionCaches';
+import { clearIdlePending } from '../utils/sessionIdle';
 
 type LoginStep = 'CREDENTIALS' | 'SELECT_EMPRESA' | 'SELECT_SECTOR';
 
@@ -86,6 +87,7 @@ export function useLoginForm() {
     (data: LoginResponse) => {
       // Evitar sectores/camas de otra empresa al reingresar
       clearTenantUiCaches();
+      clearIdlePending();
 
       if (data.token) {
         localStorage.setItem('token', data.token);

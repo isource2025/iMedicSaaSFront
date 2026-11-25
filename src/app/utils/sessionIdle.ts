@@ -2,6 +2,10 @@ import { clearTenantUiCaches } from './sessionCaches';
 
 export const SESSION_IDLE_EVENT = 'imedic:session-idle';
 
+/** Persiste el aviso de inactividad entre F5 / recargas (idleOpen solo vive en memoria). */
+const IDLE_PENDING_KEY = 'imedic_idle_pending';
+const IDLE_TRACK_KEY = 'imedic_idle_track';
+
 let idleOpen = false;
 
 const AUTH_KEYS = [
@@ -41,8 +45,6 @@ export function clearClientAuth() {
 	clearTenantUiCaches();
 }
 
-const IDLE_TRACK_KEY = 'imedic_idle_track';
-
 function peekSessionId(token: string | null) {
 	if (!token || token.split('.').length < 2) return null;
 	try {
@@ -63,12 +65,65 @@ function rememberIdleSession(sessionId: string) {
 	}
 }
 
+function markIdlePending() {
+	try {
+		sessionStorage.setItem(IDLE_PENDING_KEY, '1');
+	} catch {
+		/* ignore */
+	}
+}
+
+export function clearIdlePending() {
+	if (typeof window === 'undefined') return;
+	try {
+		sessionStorage.removeItem(IDLE_PENDING_KEY);
+		sessionStorage.removeItem(IDLE_TRACK_KEY);
+	} catch {
+		/* ignore */
+	}
+}
+
+export function hasIdlePending() {
+	if (typeof window === 'undefined') return false;
+	try {
+		return sessionStorage.getItem(IDLE_PENDING_KEY) === '1';
+	} catch {
+		return false;
+	}
+}
+
+/** Revoca sesión en servidor y limpia cookies httpOnly (localStorage solo no alcanza). */
+function revokeServerSession() {
+	if (typeof window === 'undefined') return;
+	void import('@/app/services/axios')
+		.then(({ apiService }) => apiService.post('/auth/logout', {}))
+		.catch(() => {
+			/* igual limpiamos el cliente */
+		});
+}
+
+/**
+ * Tras F5 el flag en memoria se pierde: si quedó el pending en sessionStorage,
+ * reabre el aviso y vuelve a limpiar auth/caches (sin PHI en snapshot).
+ */
+export function restoreIdleIfPending() {
+	if (typeof window === 'undefined') return false;
+	if (isPublicAuthPath()) return false;
+	if (!hasIdlePending()) return false;
+	if (idleOpen) return true;
+	idleOpen = true;
+	clearClientAuth();
+	window.dispatchEvent(new Event(SESSION_IDLE_EVENT));
+	return true;
+}
+
 /** Cierra la sesión en el cliente y muestra el aviso. No redirige hasta que el usuario acepte. */
 export function notifySessionIdle() {
 	if (typeof window === 'undefined') return;
 	if (idleOpen) return;
 	if (isPublicAuthPath()) return;
 	idleOpen = true;
+	markIdlePending();
 	let token: string | null = null;
 	try {
 		token = localStorage.getItem('token');
@@ -84,12 +139,14 @@ export function notifySessionIdle() {
 	} catch {
 		/* analytics no debe bloquear el modal */
 	}
+	revokeServerSession();
 	clearClientAuth();
 	window.dispatchEvent(new Event(SESSION_IDLE_EVENT));
 }
 
 export function goToLoginFromIdle() {
 	idleOpen = false;
+	clearIdlePending();
 	if (typeof window === 'undefined') return;
 	window.location.href = '/';
 }

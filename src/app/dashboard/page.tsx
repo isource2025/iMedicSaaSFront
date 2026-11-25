@@ -10,6 +10,7 @@ import { useBandejaPedidosCount } from '../hooks/useBandejaPedidosCount';
 // import type { ResumenProduccionMes } from '../types/produccionHospital';
 // import { entero, monedaCompacta } from './reports/facturacion/produccionFormat';
 import { authService } from '../services/authService';
+import { usePermiso } from '../hooks/usePermiso';
 import styles from './DashboardPage.module.css';
 
 function isoLocal(d: Date) {
@@ -93,8 +94,16 @@ function chipLabelForMovimiento(
 
 export default function Dashboard() {
   const router = useRouter();
-  const { count: pedidosPendientes } = useBandejaPedidosCount(true);
+  const { loaded: permisosLoaded, puedeModulo } = usePermiso();
   const [showTooltip, setShowTooltip] = useState(false);
+
+  // Cards del panel = packs contratados (misma regla que el menú lateral).
+  const tieneInternacion = permisosLoaded && puedeModulo('INTERNACION');
+  const tieneAdmision = permisosLoaded && puedeModulo('ADMISION');
+  const tieneTurnos = permisosLoaded && puedeModulo('TURNOS');
+  const hayCardsResumen = tieneInternacion || tieneAdmision || tieneTurnos;
+  const mostrarActividad = tieneInternacion || tieneTurnos;
+  const { count: pedidosPendientes } = useBandejaPedidosCount(tieneInternacion);
 
   // Producción del hospital: sólo quien tiene el permiso (hoy, el administrador).
   // const { loaded: permisosCargados, puede } = usePermiso();
@@ -200,8 +209,9 @@ export default function Dashboard() {
         </div>
       </div>
       
+      {hayCardsResumen && (
       <div className={styles.cardsGrid}>
-        {/* Dashboard Cards */}
+        {tieneInternacion && (
         <div
           className={styles.dashCard}
           onClick={() => window.location.href = '/dashboard/beds/analytics'}
@@ -261,7 +271,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+        )}
 
+        {tieneAdmision && (
         <div
           className={styles.dashCard}
           onClick={() => window.location.href = '/dashboard/patients/analytics'}
@@ -301,7 +313,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+        )}
 
+        {tieneTurnos && (
         <div
           className={styles.dashCard}
           onClick={() => router.push('/dashboard/turnos/analytics')}
@@ -369,6 +383,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+        )}
         
         {/* {puedeVerProduccion && (
           <div className={styles.cardStaff}>
@@ -446,9 +461,12 @@ export default function Dashboard() {
           </div>
         )} */}
       </div>
+      )}
       
-      {/* Activity Overview */}
+      {mostrarActividad && (
       <div className={styles.activitySection}>
+        {tieneInternacion && (
+          <>
         <div className={styles.activityHeader}>
           <div>
             <h3 className={styles.activityTitle}>Actividad Reciente</h3>
@@ -530,8 +548,11 @@ export default function Dashboard() {
             })
           )}
         </div>
+          </>
+        )}
 
         <div className={styles.shortcutsRow}>
+          {tieneInternacion && (
           <button
             type="button"
             className={styles.shortcutCard}
@@ -541,6 +562,8 @@ export default function Dashboard() {
             <span className={styles.shortcutValue}>{pedidosPendientes}</span>
             <span className={styles.shortcutHint}>Ir a bandeja</span>
           </button>
+          )}
+          {tieneInternacion && (
           <button
             type="button"
             className={styles.shortcutCard}
@@ -552,6 +575,8 @@ export default function Dashboard() {
             </span>
             <span className={styles.shortcutHint}>Ver ocupación</span>
           </button>
+          )}
+          {tieneTurnos && (
           <button
             type="button"
             className={styles.shortcutCard}
@@ -563,8 +588,10 @@ export default function Dashboard() {
             </span>
             <span className={styles.shortcutHint}>Abrir agenda</span>
           </button>
+          )}
         </div>
       </div>
+      )}
     </div>
   );
 }

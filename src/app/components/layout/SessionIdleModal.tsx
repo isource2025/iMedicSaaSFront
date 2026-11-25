@@ -5,18 +5,22 @@ import {
 	SESSION_IDLE_EVENT,
 	goToLoginFromIdle,
 	isSessionIdleOpen,
+	restoreIdleIfPending,
 } from '@/app/utils/sessionIdle';
 import { ANALYTICS_EVENTS, trackProductEvent } from '@/app/services/analyticsService';
 import styles from './SessionIdleModal.module.css';
 import shieldSrc from './session-idle-shield.png';
 
 export default function SessionIdleModal() {
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useState(() => {
+		if (typeof window === 'undefined') return false;
+		return restoreIdleIfPending() || isSessionIdleOpen();
+	});
 	const openedAt = useRef(0);
 	const viewed = useRef(false);
 
 	useEffect(() => {
-		if (isSessionIdleOpen()) setOpen(true);
+		if (restoreIdleIfPending() || isSessionIdleOpen()) setOpen(true);
 		const onIdle = () => setOpen(true);
 		window.addEventListener(SESSION_IDLE_EVENT, onIdle);
 		return () => window.removeEventListener(SESSION_IDLE_EVENT, onIdle);
