@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Bed } from '../../types/beds';
 import styles from './BedDetailView.module.css';
@@ -60,6 +60,10 @@ interface BedDetailViewProps {
 const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 	// Drawer (sidebar) en mobile
 	const [drawerOpen, setDrawerOpen] = useState(false);
+	/** Desktop: oculta calendario+menú para agrandar HC de Ingreso */
+	const [leftCollapsed, setLeftCollapsed] = useState(false);
+	/** Solo en agregar/modificar HC se muestra el toggle del panel izquierdo */
+	const [hcEditing, setHcEditing] = useState(false);
 	// Modal de archivos adjuntos
 	const [showAdjuntosModal, setShowAdjuntosModal] = useState(false);
 	const [showNursingModal, setShowNursingModal] = useState(false);
@@ -77,13 +81,38 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 		undefined;
 	useMarcarIndicacionesVistasAlSalir(numeroVisita);
 
+	// Al salir de HC de Ingreso, restaurar el panel izquierdo
+	useEffect(() => {
+		if (activeSection !== 'hcIngreso') {
+			setLeftCollapsed(false);
+			setHcEditing(false);
+		}
+	}, [activeSection]);
+
+	const handleHcEditingChange = useCallback((editing: boolean) => {
+		setHcEditing(editing);
+		if (!editing) {
+			setLeftCollapsed(false);
+			return;
+		}
+		if (typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches) {
+			return;
+		}
+		setLeftCollapsed(true);
+	}, []);
+
 	return (
 		<PdfPreviewProvider>
-		<div className={styles.root}>
+		<div className={`${styles.root} ${leftCollapsed ? styles.rootLeftCollapsed : ''}`}>
 			<BedSectionsPrefetcher numeroVisita={bed?.NumeroVisita || null} />
 
 			{/* LEFT: calendario + menú a altura completa (gana espacio vertical) */}
-			<aside className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''}`}>
+			<aside
+				className={`${styles.left} ${drawerOpen ? styles.leftOpen : ''} ${
+					leftCollapsed ? styles.leftCollapsed : ''
+				}`}
+				aria-hidden={leftCollapsed || undefined}
+			>
 				<div className={styles.leftInner}>
 					<button className={styles.closeBtn} onClick={() => setDrawerOpen(false)}>
 						✕
@@ -100,6 +129,26 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 					/>
 				</div>
 			</aside>
+
+			{/* Toggle fuera del aside: queda por encima de HC; el menú pasa por debajo */}
+			{activeSection === 'hcIngreso' && hcEditing ? (
+				<button
+					type='button'
+					className={styles.toggleLeftBtn}
+					onClick={() => setLeftCollapsed((v) => !v)}
+					aria-label={
+						leftCollapsed
+							? 'Mostrar calendario y menú'
+							: 'Ocultar calendario y menú'
+					}
+					title={leftCollapsed ? 'Mostrar menú' : 'Ocultar menú'}
+					aria-expanded={!leftCollapsed}
+				>
+					<span className={styles.toggleLeftIcon} aria-hidden>
+						{leftCollapsed ? '‹' : '›'}
+					</span>
+				</button>
+			) : null}
 
 			{/* RIGHT: header del paciente + contenido de la sección */}
 			<section className={styles.right}>
@@ -207,13 +256,20 @@ const BedDetailView: React.FC<BedDetailViewProps> = ({ bed }) => {
 							/>
 						</>
 					) : activeSection === 'hcIngreso' ? (
-						<HCIngresoSection
-							numeroVisita={bed?.NumeroVisita || null}
-							patientName={bed?.NombrePaciente}
-							patientLocation={ubicacionCama}
-							documentoPaciente={bed?.documentoPaciente}
-							bedSector={bed?.sector}
-						/>
+						<div
+							className={`${styles.hcExpandHost} ${
+								leftCollapsed ? styles.hcExpandHostExpanded : ''
+							}`}
+						>
+							<HCIngresoSection
+								numeroVisita={bed?.NumeroVisita || null}
+								patientName={bed?.NombrePaciente}
+								patientLocation={ubicacionCama}
+								documentoPaciente={bed?.documentoPaciente}
+								bedSector={bed?.sector}
+								onEditingChange={handleHcEditingChange}
+							/>
+						</div>
 					) : activeSection === 'evoluciones' ? (
 						<>
 							<EvolucionesSection

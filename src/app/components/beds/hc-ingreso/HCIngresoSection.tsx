@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import styles from './HCIngresoSection.module.css';
 import BedSectionLoading from '../shared/BedSectionLoading';
 import { buildPacienteFields } from '../shared/pacientePedidoFields';
@@ -198,6 +198,8 @@ interface HCIngresoSectionProps {
     documentoPaciente?: string;
     /** Sector de la cama/recurso (fallback si el login no trae sector, p. ej. admin Grupo 11). */
     bedSector?: string;
+    /** Avisa al layout cuando se entra/sale de agregar o modificar (para el toggle del panel izq). */
+    onEditingChange?: (editing: boolean) => void;
 }
 
 type ViewMode = "view" | "add" | "edit";
@@ -210,6 +212,7 @@ export default function HCIngresoSection({
     patientLocation,
     documentoPaciente,
     bedSector,
+    onEditingChange,
 }: HCIngresoSectionProps) {
     const { selectedDate } = useBedDetail();
     const { usuario, sectorSeleccionado } = useAppContext();
@@ -223,6 +226,16 @@ export default function HCIngresoSection({
     
     // Estado del componente
     const [mode, setMode] = useState<ViewMode>("view");
+
+    useEffect(() => {
+        onEditingChange?.(mode !== "view");
+    }, [mode, onEditingChange]);
+
+    useEffect(() => {
+        return () => onEditingChange?.(false);
+        // Solo al desmontar la sección
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const hcCacheKey = visitaCacheKey("hcIngreso", numeroVisita);
     const [records, setRecords] = useState<HCIngresoRecord[]>(
         () => peekVisita<HCIngresoRecord[]>(hcCacheKey) ?? [],
@@ -253,6 +266,44 @@ export default function HCIngresoSection({
 
     // Estado del examen físico
     const [examenFisico, setExamenFisico] = useState<ExamenFisicoCompleto>(getEmptyExamenFisico());
+    const motivoTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const enfermedadTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const syncAutoTextareaHeight = useCallback((el: HTMLTextAreaElement | null, minPx: number) => {
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.height = `${Math.max(el.scrollHeight, minPx)}px`;
+    }, []);
+
+    const syncMotivoTextareas = useCallback(() => {
+        syncAutoTextareaHeight(motivoTextareaRef.current, 38);
+        syncAutoTextareaHeight(enfermedadTextareaRef.current, 120);
+    }, [syncAutoTextareaHeight]);
+
+    useEffect(() => {
+        if (mode === "view" || activeSection !== "motivo") return;
+        syncMotivoTextareas();
+
+        // Recalcular al cambiar el ancho (sidebar, resize, resoluciones)
+        const panel = enfermedadTextareaRef.current?.closest(`.${styles.formPanel}`) ?? null;
+        const ro =
+            typeof ResizeObserver !== "undefined"
+                ? new ResizeObserver(() => {
+                        requestAnimationFrame(syncMotivoTextareas);
+                  })
+                : null;
+        if (panel) ro?.observe(panel);
+        else {
+            [enfermedadTextareaRef.current, motivoTextareaRef.current].forEach((el) => {
+                if (el) ro?.observe(el);
+            });
+        }
+        window.addEventListener("resize", syncMotivoTextareas);
+        return () => {
+            ro?.disconnect();
+            window.removeEventListener("resize", syncMotivoTextareas);
+        };
+    }, [mode, activeSection, formData.motivoConsulta, formData.enfermedadActual, syncMotivoTextareas]);
 
     /** Snapshot al entrar en edición: solo se envían campos que difieren */
     const [editBaseline, setEditBaseline] = useState<Record<string, unknown> | null>(null);
@@ -855,16 +906,34 @@ export default function HCIngresoSection({
     // ===== RENDER: MODO ADD/EDIT =====
     return (
         <div className={styles.root}>
-            {/* Header con fecha */}
-            {fechaFormateada && (
-                <div className={styles.dateHeader}>
-                    <h2 className={styles.sectionTitle}>HC de Ingreso</h2>
-                    <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
-                    <span className={styles.dateText}>
-                        {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
-                    </span>
+            <div className={styles.dateHeader}>
+                <h2 className={styles.sectionTitle}>HC de Ingreso</h2>
+                {fechaFormateada && (
+                    <>
+                        <span className={styles.dateNumber}>{fechaFormateada.diaMes}</span>
+                        <span className={styles.dateText}>
+                            {fechaFormateada.diaSemana} {fechaFormateada.diaMes}, {fechaFormateada.mes}
+                        </span>
+                    </>
+                )}
+                <div className={styles.editHeaderActions}>
+                    <button
+                        type="button"
+                        className={styles.footerBtnPrimary}
+                        onClick={handleSave}
+                        disabled={loading}
+                    >
+                        <span className={styles.footerIcon}>✓</span> {loading ? "Guardando..." : "Guardar"}
+                    </button>
+                    <button
+                        type="button"
+                        className={styles.footerBtnSecondary}
+                        onClick={handleCancel}
+                    >
+                        <span className={styles.footerIcon}>✕</span> Cancelar
+                    </button>
                 </div>
-            )}
+            </div>
 
             {/* Contenido del formulario */}
             <div className={styles.editContent}>
@@ -893,8 +962,8 @@ export default function HCIngresoSection({
 
                     {activeSection === "motivo" && (
                         <div className={styles.formFields}>
-                            <div className={styles.formRow}>
-                                <div className={styles.formGroup}>
+                            <div className={styles.metaRow}>
+                                <div className={`${styles.formGroup} ${styles.metaVisita}`}>
                                     <label className={styles.formLabel}>Nro Visita</label>
                                     <input
                                         type="text"
@@ -903,27 +972,26 @@ export default function HCIngresoSection({
                                         disabled
                                     />
                                 </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>Fecha y hora</label>
-                                    <div className={styles.formInputRow}>
-                                        <input
-                                            type="date"
-                                            className={styles.formInput}
-                                            value={formData.fecha}
-                                            onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                                        />
-                                        <input
-                                            type="time"
-                                            className={styles.formInput}
-                                            value={formData.hora}
-                                            onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
-                                        />
-                                    </div>
+                                <div className={`${styles.formGroup} ${styles.metaFecha}`}>
+                                    <label className={styles.formLabel}>Fecha</label>
+                                    <input
+                                        type="date"
+                                        className={styles.formInput}
+                                        value={formData.fecha}
+                                        onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                                    />
                                 </div>
-                            </div>
-
-                            <div className={styles.formRow}>
-                                <div className={styles.formGroup}>
+                                <div className={`${styles.formGroup} ${styles.metaHora}`}>
+                                    <label className={styles.formLabel}>Hora</label>
+                                    <input
+                                        type="time"
+                                        className={styles.formInput}
+                                        value={formData.hora}
+                                        onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
+                                    />
+                                </div>
+                                <div className={styles.metaDivider} aria-hidden />
+                                <div className={`${styles.formGroup} ${styles.metaProf}`}>
                                     <label className={styles.formLabel}>Profesional</label>
                                     <input
                                         type="text"
@@ -933,7 +1001,7 @@ export default function HCIngresoSection({
                                         title={`ID: ${formData.profesionalId}`}
                                     />
                                 </div>
-                                <div className={styles.formGroup}>
+                                <div className={`${styles.formGroup} ${styles.metaSector}`}>
                                     <label className={styles.formLabel}>Sector</label>
                                     <input
                                         type="text"
@@ -944,23 +1012,35 @@ export default function HCIngresoSection({
                                 </div>
                             </div>
 
-                            <div className={styles.formGroupFull}>
+                            <div className={`${styles.formGroupFull} ${styles.motivoConsultaField}`}>
                                 <label className={styles.formLabel}>Motivo consulta</label>
-                                <input
-                                    type="text"
-                                    className={styles.formInput}
+                                <textarea
+                                    ref={motivoTextareaRef}
+                                    className={`${styles.formTextarea} ${styles.formTextareaAuto} ${styles.formTextareaAutoCompact}`}
+                                    rows={1}
                                     value={formData.motivoConsulta}
-                                    onChange={(e) => setFormData({ ...formData, motivoConsulta: e.target.value })}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, motivoConsulta: e.target.value });
+                                        requestAnimationFrame(() =>
+                                            syncAutoTextareaHeight(motivoTextareaRef.current, 38),
+                                        );
+                                    }}
                                 />
                             </div>
 
                             <div className={styles.formGroupFull}>
                                 <label className={styles.formLabel}>Enfermedad actual</label>
                                 <textarea
-                                    className={styles.formTextarea}
-                                    rows={8}
+                                    ref={enfermedadTextareaRef}
+                                    className={`${styles.formTextarea} ${styles.formTextareaAuto}`}
+                                    rows={3}
                                     value={formData.enfermedadActual}
-                                    onChange={(e) => setFormData({ ...formData, enfermedadActual: e.target.value })}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, enfermedadActual: e.target.value });
+                                        requestAnimationFrame(() =>
+                                            syncAutoTextareaHeight(enfermedadTextareaRef.current, 120),
+                                        );
+                                    }}
                                 />
                             </div>
                         </div>
@@ -1214,19 +1294,6 @@ export default function HCIngresoSection({
                     <span>No se pudo guardar: {error}. No cierres ni cambies de sección, volvé a intentar.</span>
                 </div>
             )}
-
-            {/* Footer de acciones */}
-            <div className={styles.editFooter}>
-                <button className={styles.footerBtnPrimary} onClick={handleSave} disabled={loading}>
-                    <span className={styles.footerIcon}>✓</span> {loading ? "Guardando..." : "Guardar"}
-                </button>
-                <button className={styles.footerBtnSecondary} onClick={handleCancel}>
-                    <span className={styles.footerIcon}>✕</span> Cancelar
-                </button>
-                <button className={styles.footerBtnHelp}>
-                    <span className={styles.footerIcon}>?</span> Ayuda
-                </button>
-            </div>
         </div>
     );
 }

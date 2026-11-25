@@ -1,14 +1,27 @@
 /* Layout principal - Migración UI v1 */
 /* Estructura: sidebar izq a altura completa | header + body a la derecha */
 .root {
+	--bed-left-col: 19rem;
+	--bed-left-panel: 19rem; /* ancho fijo del contenido (no se aplasta al colapsar) */
+	--bed-left-ease: cubic-bezier(0.22, 1, 0.36, 1);
+	--bed-left-duration: 0.36s;
+	--bed-left-exit: 0.2s;
+	position: relative;
 	width: 100%;
 	max-width: 100vw;
 	height: 100vh;
 	display: grid;
-	grid-template-columns: 19rem 1fr;
+	grid-template-columns: var(--bed-left-col) 1fr;
 	box-sizing: border-box;
 	overflow-x: hidden;
 	background: transparent;
+	transition: grid-template-columns var(--bed-left-duration) var(--bed-left-ease);
+}
+
+/* HC de Ingreso ampliada: columna izq reduce a riel (salida más rápida) */
+.rootLeftCollapsed {
+	--bed-left-col: 2.25rem;
+	transition: grid-template-columns var(--bed-left-exit) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Header del paciente: solo columna derecha, alineado con el calendario */
@@ -31,52 +44,175 @@
 
 /* ===== Left (sidebar) ===== */
 .left {
+	position: relative;
+	z-index: 1; /* por debajo de HC: al ocultar, el menú pasa debajo */
 	height: 100%;
-	overflow: auto;
+	overflow: hidden; /* recorta el slide; no se superpone al contenido */
 	background: transparent;
 	border-right: none;
 	min-width: 0;
 	box-sizing: border-box;
+}
+
+/* Fade + slide hacia la derecha al colapsar (easing Mi Perfil) */
+.leftCollapsed {
+	pointer-events: none;
+}
+
+.leftCollapsed .leftInner {
+	opacity: 0;
+	transform: translateX(14%);
+	filter: blur(1px);
+	pointer-events: none;
+	/* Salida rápida al ocultar */
+	transition:
+		opacity var(--bed-left-exit) cubic-bezier(0.4, 0, 1, 1),
+		transform var(--bed-left-exit) cubic-bezier(0.4, 0, 0.2, 1),
+		filter var(--bed-left-exit) ease;
+}
+
+.leftInner {
+	position: relative;
+	width: var(--bed-left-panel);
+	max-width: var(--bed-left-panel);
+	height: 100%;
+	overflow: auto;
+	padding: 16px 12px 16px 24px;
+	opacity: 1;
+	transform: translateX(0);
+	filter: blur(0);
+	/* Entrada: slide desde la derecha + fade (como tabs de Mi Perfil) */
+	transition:
+		opacity 0.4s var(--bed-left-ease) 0.06s,
+		transform var(--bed-left-duration) var(--bed-left-ease),
+		filter 0.35s var(--bed-left-ease) 0.04s;
+	will-change: opacity, transform;
 	/* Scrollbar: sin track blanco */
 	scrollbar-width: thin;
 	scrollbar-color: #00B5E2 transparent;
+	box-sizing: border-box;
+}
+
+/* Toggle en el borde de la columna (hermano del aside, z-index alto) */
+.toggleLeftBtn {
+	pointer-events: auto;
+	position: absolute;
+	top: 50%;
+	left: var(--bed-left-col);
+	z-index: 20;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	transform: translate(-50%, -50%);
+	transition:
+		left var(--bed-left-duration) var(--bed-left-ease),
+		transform var(--bed-left-duration) var(--bed-left-ease);
+}
+
+.rootLeftCollapsed .toggleLeftBtn {
+	transition:
+		left var(--bed-left-exit) cubic-bezier(0.4, 0, 0.2, 1),
+		transform var(--bed-left-exit) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggleLeftBtn:hover .toggleLeftIcon,
+.toggleLeftBtn:focus-visible .toggleLeftIcon {
+	background: #e0f7fc;
+	border-color: #00b5e2;
+	color: #0083a9;
+	box-shadow: 0 4px 12px rgba(0, 131, 169, 0.18);
+}
+
+.toggleLeftBtn:focus-visible {
+	outline: none;
+}
+
+.toggleLeftIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	color: #64748b;
+	font-size: 1.15rem;
+	font-weight: 500;
+	line-height: 1;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease,
+		box-shadow 0.15s ease,
+		transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.root {
+		transition: none;
+	}
+
+	.leftInner,
+	.leftCollapsed .leftInner {
+		transition: none;
+		filter: none;
+	}
+
+	.toggleLeftBtn {
+		transition: none;
+	}
+}
+
+.hcExpandHost {
+	min-width: 0;
+	min-height: 100%;
+	height: 100%;
+}
+
+.hcExpandHostExpanded {
+	cursor: default;
 }
 
 /* Estilos personalizados del scrollbar para navegadores Webkit */
-.left::-webkit-scrollbar {
+.leftInner::-webkit-scrollbar {
 	width: 8px;
 }
 
-.left::-webkit-scrollbar-track {
+.leftInner::-webkit-scrollbar-track {
 	background: transparent;
 }
 
-.left::-webkit-scrollbar-thumb {
+.leftInner::-webkit-scrollbar-thumb {
 	background: #00B5E2;
 	border-radius: 4px;
 	transition: background 0.2s ease;
 }
 
-.left::-webkit-scrollbar-thumb:hover {
+.leftInner::-webkit-scrollbar-thumb:hover {
 	background: #0083A9;
 }
 
 /* Eliminar flechas del scrollbar - todas las variantes */
-.left::-webkit-scrollbar-button {
+.leftInner::-webkit-scrollbar-button {
 	display: none !important;
 	width: 0 !important;
 	height: 0 !important;
 }
 
-.left::-webkit-scrollbar-button:start:decrement,
-.left::-webkit-scrollbar-button:end:increment {
+.leftInner::-webkit-scrollbar-button:start:decrement,
+.leftInner::-webkit-scrollbar-button:end:increment {
 	display: none !important;
 	width: 0 !important;
 	height: 0 !important;
-}
-.leftInner {
-	position: relative;
-	padding: 16px 12px 16px 24px;
 }
 .closeBtn {
 	position: sticky;
@@ -91,6 +227,8 @@
 
 /* ===== Right (header + body) ===== */
 .right {
+	position: relative;
+	z-index: 2; /* por encima del menú al colapsar */
 	height: 100%;
 	display: flex;
 	flex-direction: column;
@@ -181,13 +319,23 @@
 /* ====== Responsive ====== */
 @media (max-width: 1200px) {
 	.root {
-		grid-template-columns: 280px 1fr;
+		--bed-left-col: 280px;
+		--bed-left-panel: 280px;
+		grid-template-columns: var(--bed-left-col) 1fr;
+	}
+
+	.rootLeftCollapsed {
+		--bed-left-col: 2.5rem;
 	}
 }
 
 @media (max-width: 980px) {
-	.root {
+	.root,
+	.rootLeftCollapsed {
+		--bed-left-col: 1fr;
+		--bed-left-panel: 100%;
 		grid-template-columns: 1fr;
+		transition: none;
 	}
 
 	.header {
@@ -215,6 +363,24 @@
 		display: none;
 	}
 
+	/* En mobile el colapso desktop no aplica (sigue el drawer) */
+	.leftCollapsed .leftInner {
+		opacity: 1;
+		transform: none;
+		filter: none;
+		pointer-events: auto;
+		width: auto;
+		max-width: none;
+	}
+
+	.toggleLeftBtn {
+		display: none;
+	}
+
+	.hcExpandHost {
+		cursor: default;
+	}
+
 	/* sidebar -> drawer: fondo gris del layout (legible sobre overlay) */
 	.left {
 		position: fixed;
@@ -226,6 +392,8 @@
 		transition: transform 0.25s ease;
 		box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
 		background: var(--background, #F8FAFC);
+		overflow: auto;
+		pointer-events: auto;
 	}
 	.leftOpen {
 		transform: translateX(0);
