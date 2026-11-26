@@ -645,7 +645,7 @@ export default function DetalleTurnoModal({ open, idTurno, onClose, onEditar }: 
 							className={styles.btnPrimary}
 							onClick={() => onEditar(idTurno)}
 						>
-							Editar / agregar (24 h)
+							Editar / agregar (48 h)
 						</button>
 					) : null}
 					<button type='button' className={styles.btnSecondary} onClick={onClose}>
