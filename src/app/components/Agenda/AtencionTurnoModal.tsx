@@ -119,7 +119,7 @@ interface Props {
 	turno: TurnoAtencion | null;
 	onClose: () => void;
 	onCerrado: () => void;
-	/** Reabre atención finalizada para editar/agregar (solo quien cerró, 48 h). */
+	/** Reabre atención finalizada para editar/agregar (solo quien cerró, 24 h). */
 	modoEdicion?: boolean;
 }
 
@@ -303,7 +303,7 @@ export default function AtencionTurnoModal({
 				if (!ed?.puedeEditar) {
 					setError(
 						ed?.motivoBloqueo ||
-							'Solo quien finalizó la atención puede editarla dentro de las 48 horas',
+							'Solo quien finalizó la atención puede editarla dentro de las 24 horas',
 					);
 					return;
 				}

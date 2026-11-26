@@ -159,7 +159,7 @@ export default function SlotTurnoMenu({
 
 		const conEditar: OpcionMenu[] =
 			cerrado && puedeAtender && slot.idTurno
-				? [{ id: 'editar-atencion', label: 'Editar / agregar (48 h)' }]
+				? [{ id: 'editar-atencion', label: 'Editar / agregar (24 h)' }]
 				: [];
 
 		// El RAC de enfermería solo se habilita si el paciente ya registró llegada

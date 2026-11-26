@@ -67,7 +67,7 @@ export function opcionesMenuTurnoAdmin(
 		list.push({ id: 'cerrar', label: 'Finalizar atención' });
 	}
 	if (puedeAtender && atendido && conPac) {
-		list.push({ id: 'editar-atencion', label: 'Editar / agregar (48 h)' });
+		list.push({ id: 'editar-atencion', label: 'Editar / agregar (24 h)' });
 	}
 	if (opts.puedeEliminar && !atendido) {
 		list.push({
