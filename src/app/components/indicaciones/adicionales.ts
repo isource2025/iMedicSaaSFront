@@ -22,6 +22,30 @@ const aNroValido = (v: unknown): number | null => {
 };
 
 /**
+ * El API de alta solo acepta HoraExpiro string|null. Al editar, SQL/Clarion
+ * suele devolver 0 (number) y reventaba el POST de adicionales.
+ */
+export function normalizarHoraExpiro(value: unknown): string | null {
+    if (value == null || value === "") return null;
+    if (typeof value === "string") {
+        const t = value.trim();
+        if (!t || t === "0") return null;
+        return t;
+    }
+    if (typeof value === "number") {
+        if (!Number.isFinite(value) || value <= 0) return null;
+        // Clarion TIME → HH:mm:ss
+        const ms = Math.max(0, (value - 1) * 10);
+        const totalSec = Math.floor(ms / 1000);
+        const hh = Math.floor(totalSec / 3600) % 24;
+        const mm = Math.floor((totalSec % 3600) / 60);
+        const ss = totalSec % 60;
+        return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+    }
+    return null;
+}
+
+/**
  * Nº de la indicación principal a la que se enganchan los adicionales.
  * - Al editar, es la indicación que se está editando (el PUT no devuelve el número).
  * - Al crear, es el `NroIndicacion` que devolvió el alta.
@@ -57,6 +81,7 @@ export function armarPayloadAdicional(
         AliasMedicamento: hija.aliasMedicamento,
         FormaAdicional: hija.formaAdicional,
         FechaCarga: form.FechaCarga || fechaCarga,
+        HoraExpiro: normalizarHoraExpiro(form.HoraExpiro),
         // Va al final: sobrescribe el 0 / null del padre
         NroAdicional: nroIndicacionPadre,
     };

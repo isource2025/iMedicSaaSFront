@@ -13,7 +13,7 @@ import { useAppContext } from "@/app/contexts/AppContext";
 import { parseValorPersonalId } from "@/app/utils/valorPersonal";
 import { fechaCalendarioArgentina, horaWallArgentina, sectorDesdeCamaId } from "@/app/utils/dateUtils";
 import SlideDrawer from "../UI/SlideDrawer";
-import { guardarAdicionalesNuevos, type IndicacionHija } from "./adicionales";
+import { guardarAdicionalesNuevos, normalizarHoraExpiro, type IndicacionHija } from "./adicionales";
 import MessageModal, { type MessageModalTone } from "../UI/MessageModal";
 import {
     mensajeFueraDeVentanaCarga,
@@ -316,7 +316,7 @@ export default function IndicacionForm({
                             // varios
                             Observaciones: res.Observaciones,
                             FechaExpiro: res.FechaExpiro,
-                            HoraExpiro: res.HoraExpiro,
+                            HoraExpiro: normalizarHoraExpiro(res.HoraExpiro),
                             Orden: res.Orden,
                             Estado: res.Estado,
                             CantidadPorTurno: res.CantidadPorTurno,

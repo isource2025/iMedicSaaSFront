@@ -4,6 +4,7 @@ import {
     adicionalesPendientes,
     armarPayloadAdicional,
     guardarAdicionalesNuevos,
+    normalizarHoraExpiro,
     resolverNroIndicacionPadre,
     type IndicacionHija,
 } from "./adicionales";
@@ -43,6 +44,19 @@ describe("adicionalesPendientes", () => {
     });
 });
 
+describe("normalizarHoraExpiro", () => {
+    it("convierte Clarion 0 / number inválido a null", () => {
+        expect(normalizarHoraExpiro(0)).toBeNull();
+        expect(normalizarHoraExpiro(null)).toBeNull();
+        expect(normalizarHoraExpiro("")).toBeNull();
+        expect(normalizarHoraExpiro("0")).toBeNull();
+    });
+    it("deja strings de hora y convierte Clarion TIME > 0", () => {
+        expect(normalizarHoraExpiro("08:30:00")).toBe("08:30:00");
+        expect(normalizarHoraExpiro(1)).toBe("00:00:00");
+    });
+});
+
 describe("armarPayloadAdicional", () => {
     it("copia el padre, pisa lo propio y apunta NroAdicional al padre", () => {
         const p = armarPayloadAdicional(form, hija(), 4000);
@@ -52,6 +66,12 @@ describe("armarPayloadAdicional", () => {
         expect(p.FormaAdicional).toBe("MAS");
         expect(p.NumeroVisita).toBe(100);
         expect(p.FechaCarga).toBe("2026-09-28");
+    });
+
+    it("no reenvía HoraExpiro Clarion number (rompe validación del POST)", () => {
+        const formConClarion = { ...form, HoraExpiro: 0 as unknown as string };
+        const p = armarPayloadAdicional(formConClarion, hija(), 4000);
+        expect(p.HoraExpiro).toBeNull();
     });
 });
 
